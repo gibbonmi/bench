@@ -2,7 +2,7 @@
 
 Blocked by: 11-record-and-reuse-the-delta-green.md
 Writes: specs/chunk-repair-cycle/assets/run-binary-cost.md (new)
-Covers: RC76
+Covers: RC76, RC81
 
 ## What to build
 
@@ -17,6 +17,8 @@ Measure three values in the integration worktree and record them, with the exact
 Record the net saving for each repair: the selection cost times the call count, less the digest cost times the count of `bench` children. If the net saving is not positive, the build stops RC-C7 here and returns to the spec.
 
 Record the answer to the spec's `uncertain` wrapper question. `bin/bench.sh:298-313` checks an inherited `BENCH_RUN_BINARY` for shape only (absolute, regular, executable, not a symbolic link, physical path) and runs it; the Go child's `Inherit` and `Validate` sequence checks the source digest (`internal/runbinary/runbinary.go:155-183`). `internal/systemtest/owner_environment_test.go:36-39` states that the wrapper's own search runs only when the variable is absent. Confirm this route before ticket 13 starts.
+
+The reviewer dropped the exec reuse after this measurement, so this ticket is the last ticket of RC-C7. RC81 is review-owned: the final reconciliation of the build measures one test-only repair cycle against the 45-to-60-minute baseline and records it in the review record. This ticket owns the row so that one ticket holds it; its author records nothing for it.
 
 The asset follows the precedent of `specs/<slug>/assets/` evidence files. Write it in ASD-STE100 prose, with a table for the measured values.
 

@@ -9,8 +9,8 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
-// openChunkGap opens the build's gap after the green checkpoint of a chunk. A failed write
-// exits 1, and a rerun reuses the green verdict and writes the record.
+// openChunkGap opens the build's gap after the green checkpoint of a chunk, whole or delta.
+// A failed write exits 1, and a green rerun writes the record.
 func openChunkGap(root string, checkpoint Checkpoint, stderr io.Writer) int {
 	if err := writeChunkGap(root, checkpoint); err != nil {
 		fmt.Fprintln(stderr, "chunk gap not recorded: "+err.Error())

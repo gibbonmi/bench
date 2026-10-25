@@ -29,12 +29,17 @@ type Probe struct {
 	Restore   string    `json:"restore"`
 	NativeRef NativeRef `json:"native_ref"`
 }
+
+// Verification is one retained run of a requirement. SourceCommit is the commit whose
+// tree a chunk entry graded, and EntryCurrent reads it; the completion check reads only
+// the digest.
 type Verification struct {
 	Evidence
-	Requirement string `json:"requirement"`
-	Command     string `json:"command"`
-	ExitCode    *int   `json:"exit_code"`
-	Probe       *Probe `json:"probe,omitempty"`
+	SourceCommit string `json:"source_commit,omitempty"`
+	Requirement  string `json:"requirement"`
+	Command      string `json:"command"`
+	ExitCode     *int   `json:"exit_code"`
+	Probe        *Probe `json:"probe,omitempty"`
 }
 type Review struct {
 	Evidence

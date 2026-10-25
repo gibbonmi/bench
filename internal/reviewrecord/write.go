@@ -108,6 +108,29 @@ func absent(chunk string) func(path string) (Record, error) {
 	}
 }
 
+// starter starts an absent record of spec from plan, the plan at tip, through createRecord, as
+// the create function of a write. Started notes that create started the record.
+type starter struct {
+	spec, tip string
+	plan      Plan
+	started   bool
+}
+
+// create answers createRecord for the absent record, and notes the start when it succeeds.
+func (s *starter) create(string) (Record, error) {
+	record, err := createRecord(s.spec, s.plan, s.tip)
+	s.started = err == nil
+	return record, err
+}
+
+// action answers created when create started the record, and action otherwise.
+func (s *starter) action(action string) string {
+	if s.started {
+		return "created"
+	}
+	return action
+}
+
 // replace creates the directory of path when that directory is absent, then replaces path
 // with data at mode 0644 through replaceFile, so a reader sees either the old bytes or the
 // new bytes. It returns the replacement error unchanged and rolls back nothing.
@@ -120,32 +143,23 @@ func replace(path string, data []byte) error {
 
 // RecordChunk writes the entry of planned chunk id for the frozen pair base..tip, both
 // full commit IDs, through changeChunk. The tip tree supplies the source digest, the plan
-// digest, and the acceptance rows, and createRecord starts an absent record. The answer is
-// the action, created, added, or updated, and the entry as written.
+// digest, and the acceptance rows, and a starter starts an absent record. The answer is the
+// action, created, added, or updated, and the entry as written.
 func RecordChunk(root, spec, id, base, tip string) (string, Chunk, error) {
 	digest, plan, err := atSource(root, spec, tip)
 	if err != nil {
 		return "", Chunk{}, err
 	}
-	action, entry, created := "", Chunk{}, false
-	create := func(string) (Record, error) {
-		record, err := createRecord(spec, plan, tip)
-		created = err == nil
-		return record, err
-	}
-	err = write(root, spec, create, func(record *Record) error {
+	action, entry, start := "", Chunk{}, &starter{spec: spec, tip: tip, plan: plan}
+	err = write(root, spec, start.create, func(record *Record) error {
 		action, entry, err = changeChunk(record, plan, digest, id, base, tip)
 		return err
 	})
-	if created {
-		action = "created"
-	}
-	return action, entry, err
+	return start.action(action), entry, err
 }
 
 // ErrNoChunkEntry marks a result that needs a current chunk entry first: the record is
-// absent, the chunk has no entry, or the result names a source that the entry does not
-// hold.
+// absent, the chunk has no entry, or the result names a source off the line of the entry.
 var ErrNoChunkEntry = errors.New("the result needs a current chunk entry")
 
 // ErrProbe marks a result whose probe does not match the planned probe of its requirement.

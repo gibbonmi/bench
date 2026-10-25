@@ -53,12 +53,21 @@ var gateFaces = []Face{
 		Route:     []Step{Command(Text("bench record"), Fact(FactForm), Text("--help"))},
 	},
 	{
-		// The landing publishes only committed bytes, so the caller commits its own
-		// uncommitted work and grades the committed source again.
+		// The landing publishes only committed bytes, and the chunk checkpoint grades only
+		// committed bytes. So the caller commits its own uncommitted work and grades the
+		// committed source again.
 		Verb:      Gate,
 		Name:      "checkpoint-dirty-checkout",
 		Authority: Agent,
 		Route:     []Step{commitAt(FactLabel), gateRerun},
+	},
+	{
+		// The chunk checkpoint grades the prose of the committed review record under the
+		// committed exclusion policy, so a correction of either counts only after its commit.
+		Verb:      Gate,
+		Name:      "checkpoint-record-prose",
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("correct the review record or the prose exclusion file that the diagnostics name")), commitAt(FactLabel), gateRerun},
 	},
 	{
 		// The landing's closure transform refuses the spec: its status or its delivery

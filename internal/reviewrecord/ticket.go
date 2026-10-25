@@ -16,16 +16,16 @@ func TicketSteps() []Step {
 // TicketCall is the caller's part of one ticket record. Chunk and Ticket name the planned
 // chunk and ticket, and Tip is the full commit ID whose plan owes the requirements. Base is the
 // full commit ID of the chunk base, or empty to derive it. Results answers one chunk
-// verification call for each owed requirement at source, the full commit ID of the chunk
-// source. The transaction runs Results before any step changes the record.
+// verification call for each owed requirement against chunk, the chunk entry after the chunk
+// step.
 type TicketCall struct {
 	Chunk, Ticket, Base, Tip string
-	Results                  func(source string) ([]VerificationCall, error)
+	Results                  func(chunk Chunk) ([]VerificationCall, error)
 }
 
 // TicketRecord is one ticket record as written. Amendment is nil when the plan digest did not
-// move. Action is created, added, or updated for the freeze of the last ticket, and empty for an
-// earlier ticket. Chunk is the chunk entry after the write.
+// move. Action is created, added, or updated when the call freezes the chunk, and empty when the
+// call leaves the chunk entry as it is. Chunk is the chunk entry after the write.
 type TicketRecord struct {
 	Amendment    *Amendment
 	Action       string
@@ -34,15 +34,15 @@ type TicketRecord struct {
 }
 
 // TicketRequirements answers the requirements of chunk in plan, the plan at tip, that ticket
-// owes, in plan order, and the last ticket of the chunk. It refuses a chunk that the plan does
-// not name, a ticket that the chunk does not list, and chunk requirements that name no ticket.
-func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, string, error) {
+// owes, in plan order. It refuses a chunk that the plan does not name, a ticket that the chunk
+// does not list, and chunk requirements that name no ticket.
+func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, error) {
 	planned, err := plannedChunk(plan, tip, chunk)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	if !slices.Contains(planned.Tickets, ticket) {
-		return nil, "", fmt.Errorf("ticket %s is not a ticket of chunk %s in the plan at %s; the chunk tickets are %s", ticket, chunk, tip, strings.Join(planned.Tickets, ", "))
+		return nil, fmt.Errorf("ticket %s is not a ticket of chunk %s in the plan at %s; the chunk tickets are %s", ticket, chunk, tip, strings.Join(planned.Tickets, ", "))
 	}
 	owed, named := []Requirement{}, false
 	for _, requirement := range planned.Verification {
@@ -52,9 +52,9 @@ func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, st
 		}
 	}
 	if !named {
-		return nil, "", fmt.Errorf("the requirements of chunk %s in the plan at %s name no ticket; the ticket form reads a version 2 plan", chunk, tip)
+		return nil, fmt.Errorf("the requirements of chunk %s in the plan at %s name no ticket; the ticket form reads a version 2 plan", chunk, tip)
 	}
-	return owed, planned.Tickets[len(planned.Tickets)-1], nil
+	return owed, nil
 }
 
 // EvidenceID is the evidence ID of requirement under prefix. A requirement ID that already
@@ -78,47 +78,20 @@ func plannedChunk(plan Plan, source, id string) (*PlannedChunk, error) {
 
 // RecordTicket writes the entries that call.Ticket owes in one write transaction, with the
 // steps in TicketSteps order. The amendment step applies when the record plan digest differs
-// from the plan at the tip, and the chunk step freezes the chunk for the last ticket of the
-// chunk. The verification step appends one entry for each owed requirement at the chunk
-// source: the freeze tip for the last ticket, and the tip of the chunk entry for an earlier
-// ticket. An earlier ticket's call needs that entry and never changes it. A refusal at any
-// step leaves the record bytes unchanged.
+// from the plan at the tip. The chunk step freezes the chunk at the commit that freezeTip
+// answers, and the first call of a chunk creates its entry. The verification step appends one
+// entry for each call that call.Results answers against the chunk entry after that step. A
+// refusal at any step leaves the record bytes unchanged.
 func RecordTicket(root, spec string, call TicketCall) (TicketRecord, error) {
 	digest, plan, err := atSource(root, spec, call.Tip)
 	if err != nil {
 		return TicketRecord{}, err
 	}
-	_, last, err := TicketRequirements(plan, call.Tip, call.Chunk, call.Ticket)
-	if err != nil {
+	if _, err := TicketRequirements(plan, call.Tip, call.Chunk, call.Ticket); err != nil {
 		return TicketRecord{}, err
 	}
 	var result TicketRecord
-	var calls []VerificationCall
-	created := false
-	create := func(path string) (Record, error) {
-		_, err := absent(call.Chunk)(path)
-		return Record{}, lastFreezes(call.Chunk, last, err)
-	}
-	if call.Ticket == last {
-		create = func(string) (Record, error) {
-			record, err := createRecord(spec, plan, call.Tip)
-			created = err == nil
-			return record, err
-		}
-	}
-	bind := func(record *Record) error {
-		source := call.Tip
-		if call.Ticket != last {
-			entry, err := entryOf(record, call.Chunk)
-			if err != nil {
-				return lastFreezes(call.Chunk, last, err)
-			}
-			source = entry.Tip
-		}
-		var err error
-		calls, err = call.Results(source)
-		return err
-	}
+	start := &starter{spec: spec, tip: call.Tip, plan: plan}
 	steps := map[string]func(*Record) error{
 		FormAmendment: func(record *Record) error {
 			if currentPlan(*record, plan, call.Tip) == nil {
@@ -132,16 +105,25 @@ func RecordTicket(root, spec string, call TicketCall) (TicketRecord, error) {
 			return nil
 		},
 		FormChunk: func(record *Record) error {
-			if call.Ticket != last {
-				return nil
+			tip, err := freezeTip(root, spec, record, call.Chunk, call.Tip)
+			if err != nil || tip == "" {
+				return err
 			}
 			base, err := chunkBase(root, *record, plan, call.Chunk, call.Base)
 			if err == nil {
-				result.Action, _, err = changeChunk(record, plan, digest, call.Chunk, base, call.Tip)
+				result.Action, _, err = changeChunk(record, plan, digest, call.Chunk, base, tip)
 			}
 			return err
 		},
 		FormVerification: func(record *Record) error {
+			chunk, err := entryOf(record, call.Chunk)
+			if err != nil {
+				return err
+			}
+			calls, err := call.Results(*chunk)
+			if err != nil {
+				return err
+			}
 			for _, verification := range calls {
 				entry, err := changeVerification(root, spec, record, verification)
 				if err != nil {
@@ -149,35 +131,39 @@ func RecordTicket(root, spec string, call TicketCall) (TicketRecord, error) {
 				}
 				result.Verification = append(result.Verification, entry)
 			}
-			chunk, err := entryOf(record, call.Chunk)
-			if err == nil {
-				result.Chunk = *chunk
-			}
-			return err
+			result.Chunk = *chunk
+			return nil
 		},
 	}
-	sequence := []func(*Record) error{bind}
-	for _, step := range TicketSteps() {
-		sequence = append(sequence, steps[step.Form])
-	}
-	err = write(root, spec, create, func(record *Record) error {
-		for _, step := range sequence {
-			if err := step(record); err != nil {
+	err = write(root, spec, start.create, func(record *Record) error {
+		for _, step := range TicketSteps() {
+			if err := steps[step.Form](record); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
-	if created {
-		result.Action = "created"
-	}
+	result.Action = start.action(result.Action)
 	return result, err
 }
 
-// lastFreezes wraps the refusal of an earlier ticket's call whose chunk has no entry as a
-// repair of the ticket form for last, the last ticket of chunk, whose call freezes the chunk.
-func lastFreezes(chunk, last string, err error) error {
-	return Repair{Form: FormTicket, Chunk: chunk, Ticket: last, Err: err}
+// freezeTip answers the commit at which a ticket call at tip freezes chunk id of record, or
+// empty when the call leaves the chunk entry as it is. A chunk with no entry freezes at tip. A
+// recorded chunk freezes at the commit that boundCommit answers for tip when that commit
+// descends from the chunk tip.
+func freezeTip(root, spec string, record *Record, id, tip string) (string, error) {
+	entry, missing := entryOf(record, id)
+	if missing != nil {
+		return tip, nil
+	}
+	bound, err := boundCommit(root, spec, *entry, tip)
+	if err != nil {
+		return "", err
+	}
+	if descends, err := isAncestor(root, entry.Tip, bound); err != nil || !descends {
+		return "", err
+	}
+	return bound, nil
 }
 
 // chunkBase answers the base of the freeze of chunk id in record: base when it is not empty,

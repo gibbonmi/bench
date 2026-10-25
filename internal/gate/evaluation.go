@@ -26,6 +26,9 @@ type gateEvaluation struct {
 	checkpoint       Checkpoint
 	checkpointTip    string
 	completionSource string
+	// checkpointTree is the committed tree of a chunk checkpoint; it is empty on every other
+	// evaluation.
+	checkpointTree string
 	// completionFolder is the tickets-only folder whose prospective close completes a
 	// delivery with no checkpoint spec; it is empty on every other evaluation.
 	completionFolder string

@@ -24,18 +24,19 @@ func repairValues(repair rr.Repair) [6]string {
 	return [6]string{repair.Form, repair.Chunk, repair.Requirement, repair.Ticket, repair.Axis, repair.Source}
 }
 
-// verifyChunk asks for one chunk verification result of requirement tests.
-func verifyChunk(f *recordtest.Fixture, chunk string) error {
-	_, err := rr.RecordVerification(f.Root, f.Record.Spec, rr.VerificationCall{Chunk: chunk, Requirement: "tests",
+// verifyChunk asks for one chunk verification result of requirement tests at source.
+func verifyChunk(f *recordtest.Fixture, chunk, source string) error {
+	_, err := rr.RecordVerification(f.Root, f.Record.Spec, rr.VerificationCall{Chunk: chunk, Source: source, Requirement: "tests",
 		Evidence: rr.Evidence{ID: "tests-" + chunk, Performer: "fixture-author", Model: "unknown", Effort: "unknown", NativeRef: recordtest.Native("ok")}})
 	return err
 }
 
 // TestRecordRepairPreservesErrorIdentity covers NR33: a missing record and a missing chunk
 // entry name the chunk form, and the existing sentinel stays reachable through the repair.
+// A source off the chunk line does the same, and its refusal names the source and the line.
 func TestRecordRepairPreservesErrorIdentity(t *testing.T) {
 	t.Run("missing record", func(t *testing.T) {
-		err := verifyChunk(recordtest.New(t, 1), "1")
+		err := verifyChunk(recordtest.New(t, 1), "1", "")
 		if repair := repairOf(t, err); !errors.Is(err, rr.ErrNoChunkEntry) || repair.Form != rr.FormChunk {
 			t.Fatalf("missing record = %v with repair %+v, want ErrNoChunkEntry and the chunk form", err, repair)
 		}
@@ -44,9 +45,20 @@ func TestRecordRepairPreservesErrorIdentity(t *testing.T) {
 		f := recordtest.New(t, 2)
 		f.AddChunk()
 		f.Save()
-		err := verifyChunk(f, "2")
+		err := verifyChunk(f, "2", "")
 		if repair := repairOf(t, err); !errors.Is(err, rr.ErrNoChunkEntry) || repair.Form != rr.FormChunk || repair.Chunk != "2" {
 			t.Fatalf("missing chunk = %v with repair %+v, want ErrNoChunkEntry and the chunk form for chunk 2", err, repair)
+		}
+	})
+	t.Run("source off the chunk line", func(t *testing.T) {
+		f := recordtest.New(t, 1)
+		f.AddChunk()
+		f.Save()
+		chunk, source := f.Record.Chunks[0], f.OffLine()
+		err := verifyChunk(f, "1", source)
+		want := "source " + source + " is not on the chunk line " + chunk.Base + ".." + chunk.Tip + ": " + rr.ErrNoChunkEntry.Error()
+		if repair := repairOf(t, err); !errors.Is(err, rr.ErrNoChunkEntry) || repair.Form != rr.FormChunk || repair.Chunk != "1" || err.Error() != want {
+			t.Fatalf("source off the chunk line = %v with repair %+v, want %q from the chunk form for chunk 1", err, repair, want)
 		}
 	})
 }
@@ -86,7 +98,7 @@ func TestRecordRepairNamesOwnerValues(t *testing.T) {
 			// An undispatched ticket has no author, so the record holds no result of its own.
 			f.Record.Chunks[0].Verification = nil
 			f.Save()
-			return verifyChunk(f, "1"), ""
+			return verifyChunk(f, "1", ""), ""
 		}},
 		{name: "missing completion", want: rr.Repair{Form: rr.FormCompletion}, err: func(t *testing.T) (error, string) {
 			f := recorded(t)
@@ -102,7 +114,7 @@ func TestRecordRepairNamesOwnerValues(t *testing.T) {
 			return rr.Check(f.Root, f.Tree(), f.Tip(), f.Record.Spec, "1", false), f.Tip()
 		}},
 		{name: "absent record verification", want: rr.Repair{Form: rr.FormChunk, Chunk: "1"}, err: func(t *testing.T) (error, string) {
-			return verifyChunk(recordtest.New(t, 1), "1"), ""
+			return verifyChunk(recordtest.New(t, 1), "1", ""), ""
 		}},
 		{name: "absent record review", want: rr.Repair{Form: rr.FormChunk, Chunk: "1"}, err: func(t *testing.T) (error, string) {
 			f := recordtest.New(t, 1)

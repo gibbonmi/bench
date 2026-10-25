@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
@@ -181,6 +182,41 @@ func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 		t.Fatalf("store files after the stage = %q, want one new file beside %s whose name holds no ID character", after, before[0])
 	}
 	requireNoWorktreeWrite(t, f)
+}
+
+// RC48: a requirement whose planned command runs the gate keeps the staged native excerpt. The
+// excerpt form stages only the retained call of that planned command, a reused green as it
+// printed included, and the ticket form refuses that requirement with no staged excerpt. The
+// ticket entry then holds the staged bytes with their digest.
+func TestGateRequirementKeepsTheNativeExcerpt(t *testing.T) {
+	f, home := recordtest.Staging(t)
+	planned := []string{"--checkpoint", recordtest.Spec, "--chunk", "1"}
+	f.Plan.Chunks[0].Verification[1].Command = "bench gate " + strings.Join(planned, " ")
+	f.RewritePlan()
+	base, _ := advance(f, "chunk 1")
+	const reused = "gate: green (fresh verdict reused for this tree)\n"
+	f.Retain(home, "gate", planned[:2], 0, reused)
+	if out, code := recordcmd.Command(f.Root, stageArgs(t, "quoted")); code != 1 || !strings.Contains(out, "differs from the planned command") {
+		t.Fatalf("excerpt of another gate call = exit %d, output %q; want the planned-command refusal", code, out)
+	}
+	f.Stage(home, "1", "tests", f.Run(0, biting))
+	if out, code := recordcmd.Command(f.Root, ticketArgs(t, "1", "1.md", "g", "--base", base)); code != 1 || !strings.Contains(out, "have no staged excerpt: quoted") {
+		t.Fatalf("ticket with no staged gate excerpt = exit %d, output %q; want the refusal of the gate requirement", code, out)
+	}
+	f.Retain(home, "gate", planned, 0, reused)
+	succeed(t, f, stageArgs(t, "quoted"))
+	succeed(t, f, ticketArgs(t, "1", "1.md", "g", "--base", base))
+	record, err := rr.Read(f.Root, recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gate := slices.IndexFunc(record.Chunks[0].Verification, func(entry rr.Verification) bool { return entry.Requirement == "quoted" })
+	if gate < 0 {
+		t.Fatalf("entries = %+v, want one for the gate requirement", record.Chunks[0].Verification)
+	}
+	if native := record.Chunks[0].Verification[gate].NativeRef; native.Excerpt != reused || native.Digest != rr.Digest([]byte(reused)) {
+		t.Fatalf("gate entry native reference = %+v, want the staged bytes %q and their digest", native, reused)
+	}
 }
 
 // The excerpt form refuses a --mutant value that is not a positive decimal row with its usage.

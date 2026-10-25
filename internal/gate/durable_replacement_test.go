@@ -54,13 +54,21 @@ var (
 			return writeLaneRecord(replacer, dir, LaneResult{Outcome: lanePass, Tree: "abc123", Lane: "fast", RunBinary: "beef", RecordedAt: time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC)})
 		},
 	}
+	deltaWriter = gateWriter{
+		name:  "delta",
+		entry: benchgit.DeltaCacheFile,
+		want:  `{"schema":1,"tree":"abc123","recorded_at":"2026-10-12T00:00:00Z","run_binary":"beef","delta":"[\"./.\"]","base_tree":"def456"}` + "\n",
+		write: func(replacer durablefile.Replacer, dir string) error {
+			return writeDeltaGreen(replacer, dir, deltaRun{plan: subject{Tree: "abc123"}, set: `["./."]`, base: "def456"}, "beef", time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC))
+		},
+	}
 )
 
 // D16, D17: each gate record writer returns the injected directory-sync failure of its
 // replacement after the rename, and its entry holds the encoded record.
 func TestGateReplacement(t *testing.T) {
 	t.Parallel()
-	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter} {
+	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter, deltaWriter} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dir := t.TempDir()
@@ -77,7 +85,7 @@ func TestGateReplacement(t *testing.T) {
 // wraps its cause and leaves no entry.
 func TestGatePreRenameFailure(t *testing.T) {
 	t.Parallel()
-	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter} {
+	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter, deltaWriter} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dir := t.TempDir()

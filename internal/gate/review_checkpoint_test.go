@@ -13,6 +13,7 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -42,10 +43,12 @@ func attachedCheckpointFixture(t *testing.T, attach func(testing.TB, string, int
 var (
 	AttachedCheckpointFixture = attachedCheckpointFixture
 	RetainCompletion          = retainCompletion
+	ProsePolicy               = prosePolicy
+	CommitOverBoundRecord     = commitOverBoundRecord
 )
 
-// RunCheckpointArmed runs the checkpoint that args select at root, and calls arm once the run
-// holds its execution lock: after it accepts its subject and before it validates that
+// RunCheckpointArmed runs the chunk checkpoint that args select at root, and calls arm once the
+// run holds its execution lock: after it accepts its subject and before it validates that
 // subject. It answers the exit.
 func RunCheckpointArmed(t *testing.T, root string, args []string, arm func(), stderr io.Writer) int {
 	t.Helper()
@@ -54,7 +57,7 @@ func RunCheckpointArmed(t *testing.T, root string, args []string, arm func(), st
 		t.Fatal(err)
 	}
 	armed := func(ctx context.Context) (context.Context, func()) { arm(); return ctx, func() {} }
-	return executeAfterAcquire(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, io.Discard, stderr, armed, mode).ActionExit
+	return executeChunkCheckpoint(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, checkpoint.Spec, io.Discard, stderr, armed, mode).ActionExit
 }
 
 // RunCompletionTree grades tree as the gate verb grades a complete checkpoint of spec at tip,
@@ -66,9 +69,24 @@ func RunCompletionTree(root, spec, tip, tree string, stderr io.Writer) int {
 
 func runCheckpoint(t *testing.T, f *recordtest.Fixture) (int, string) {
 	t.Helper()
+	return runCheckpointWith(t, f)
+}
+
+// runCheckpointWith runs the gate verb's checkpoint of chunk 1 at the root of f, with flags
+// after it, and answers the exit and the output.
+func runCheckpointWith(t *testing.T, f *recordtest.Fixture, flags ...string) (int, string) {
+	t.Helper()
 	var out, err bytes.Buffer
-	code := RunCommand([]string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}, &out, &err)
+	code := RunCommand(append([]string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}, flags...), &out, &err)
 	return code, out.String() + err.String()
+}
+
+// requirePrepared requires that the prepared run of chunk 1 of f exits 0 after one oracle run.
+func requirePrepared(t *testing.T, f *recordtest.Fixture) {
+	t.Helper()
+	if code, out := runCheckpointWith(t, f, flagPrepare); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("prepared run = %d %s; want exit 0 after one oracle run", code, out)
+	}
 }
 
 func TestReviewCheckpoint(t *testing.T) {
@@ -97,7 +115,7 @@ func TestReviewCheckpoint(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := checkpointFixture(t)
 			tc.change(f)
-			f.Save()
+			resave(t, f, "retain the invalid evidence")
 			code, out := runCheckpoint(t, f)
 			if code == 0 || !strings.Contains(out, tc.reason) {
 				t.Fatalf("checkpoint accepted invalid evidence or lost reason: exit %d: %s", code, out)
@@ -109,49 +127,105 @@ func TestReviewCheckpoint(t *testing.T) {
 	}
 }
 
+// TestReviewCheckpointReuse grades reuse across purposes. A whole green of the stripped
+// subject serves the chunk checkpoint, because the evidence pass still runs on the reuse. A
+// chunk green never serves the complete purpose.
 func TestReviewCheckpointReuse(t *testing.T) {
 	f := checkpointFixture(t)
 	f.Complete()
 	f.Save()
 	f.Commit("retain complete evidence")
-	if result := Execute(context.Background(), f.Root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
-		t.Fatalf("ordinary: %+v", result)
+	stripped, err := rr.SourceDigest(f.Root, f.Tree(), recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if code, out := runCheckpoint(t, f); code != 0 {
-		t.Fatalf("checkpoint: %d %s", code, out)
+	if result := ExecuteTree(context.Background(), f.Root, stripped, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
+		t.Fatalf("ordinary green of the stripped subject: %+v", result)
 	}
-	if got := outcomeRuns(t, f.Root); got != 2 {
-		t.Fatalf("ordinary green satisfied stronger checkpoint: %d runs", got)
-	}
-	if code, out := runCheckpoint(t, f); code != 0 || !strings.Contains(out, "reused") {
-		t.Fatalf("checkpoint reuse: %d %s", code, out)
-	}
+	requireReuse(t, f, "after an ordinary green of its subject")
 	var out, diagnostic bytes.Buffer
 	if code := RunCommand([]string{f.Root, "--checkpoint", f.Record.Spec, "--complete"}, &out, &diagnostic); code != 0 {
 		t.Fatalf("complete checkpoint: %d %s", code, diagnostic.String())
 	}
-	if got := outcomeRuns(t, f.Root); got != 3 {
+	if got := outcomeRuns(t, f.Root); got != 2 {
 		t.Fatalf("chunk green satisfied complete purpose: %d runs", got)
-	}
-	f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
-	f.Save()
-	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "missing Coverage") {
-		t.Fatalf("record mutation reused green: %d %s", code, out)
 	}
 }
 
-func TestReviewCheckpointLaterSource(t *testing.T) {
-	for _, committed := range []bool{false, true} {
-		t.Run(map[bool]string{false: "dirty source", true: "unreviewed repair"}[committed], func(t *testing.T) {
-			f := checkpointFixture(t)
-			f.Write("source.txt", "later repair\n")
-			if committed {
-				f.Commit("unreviewed repair")
-			}
-			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "chunk 1: stale reviewed source") {
-				t.Fatalf("uncovered delta accepted: %d %s", code, out)
-			}
+// TestCheckpointAcceptsAnEntryAtAnEarlierTicketCommit covers RC8: the chunk verification
+// stays at the commit of the first ticket after a later ticket moves the tip.
+func TestCheckpointAcceptsAnEntryAtAnEarlierTicketCommit(t *testing.T) {
+	f := laterTicketFixture(t)
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint with the entries at an earlier ticket commit = %d %s", code, out)
+	}
+}
+
+// TestCheckpointRefusesAnEntryOffTheChunkLine covers RC13 and the descent from the chunk base.
+// Each entry names the digest of its own commit, so only the line test refuses it.
+func TestCheckpointRefusesAnEntryOffTheChunkLine(t *testing.T) {
+	for name, commit := range map[string]func(*recordtest.Fixture) string{
+		"side commit":     func(f *recordtest.Fixture) string { return f.OffLine() },
+		"before the base": func(f *recordtest.Fixture) string { return f.Git("rev-parse", f.Record.Chunks[0].Base+"^") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := laterTicketFixture(t)
+			refusesStaleEntries(t, f, bindTo(f, commit(f)))
 		})
+	}
+}
+
+// TestCheckpointRefusesAnEntryAtTheChunkBase covers RC14: the ancestry query is reflexive, so
+// only the base test refuses an entry at the chunk base.
+func TestCheckpointRefusesAnEntryAtTheChunkBase(t *testing.T) {
+	f := laterTicketFixture(t)
+	refusesStaleEntries(t, f, bindTo(f, f.Record.Chunks[0].Base))
+}
+
+// TestCheckpointKeepsTheLegacyEntryRule covers RC18: an entry with no commit at the chunk
+// digest passes.
+func TestCheckpointKeepsTheLegacyEntryRule(t *testing.T) {
+	f := checkpointFixture(t)
+	for i := range f.Record.Chunks[0].Verification {
+		f.Record.Chunks[0].Verification[i].SourceCommit = ""
+	}
+	f.Save()
+	f.Commit("retain the entries with no commit")
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint with entries at the chunk digest and no commit = %d %s", code, out)
+	}
+}
+
+// TestCheckpointRefusesAStaleLegacyEntry covers RC19: an entry with no commit at the digest of
+// the first ticket refuses after a later ticket moves the chunk digest.
+func TestCheckpointRefusesAStaleLegacyEntry(t *testing.T) {
+	f := laterTicketFixture(t)
+	refusesStaleEntries(t, f, func(entry *rr.Verification) { entry.SourceCommit = "" })
+}
+
+// TestCheckpointRefusesARelabeledEntryDigest covers RC15: an entry at the commit of the first
+// ticket that names the chunk digest refuses, because that digest is not the digest of its
+// commit.
+func TestCheckpointRefusesARelabeledEntryDigest(t *testing.T) {
+	f := laterTicketFixture(t)
+	refusesStaleEntries(t, f, func(entry *rr.Verification) { entry.SourceDigest = f.Record.Chunks[0].SourceDigest })
+}
+
+// TestCheckpointCarriesAnotherTicketsProbeForward covers RC17: after a confirmed test-only
+// repair moves the tip, the probe entry stays at the reviewed commit and passes.
+func TestCheckpointCarriesAnotherTicketsProbeForward(t *testing.T) {
+	f, _ := confirmedFixture(t, modifyTest)
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint with the carried probe entry = %d %s", code, out)
+	}
+}
+
+// TestCheckpointRunsTheGateWithCarriedEntries covers RC22: every entry is current at the
+// commit of the first ticket, and the gate still grades the chunk tip that holds a red.
+func TestCheckpointRunsTheGateWithCarriedEntries(t *testing.T) {
+	f := laterTicketFixture(t, ".gate-red")
+	if code, out := runCheckpoint(t, f); code != 7 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("checkpoint over a planted red = %d %s; want the gate exit 7 after one run", code, out)
 	}
 }
 
@@ -167,7 +241,7 @@ func TestReviewCheckpointCanonicalAxes(t *testing.T) {
 				}
 			}
 			f.Record.Chunks[0].Reviews = reviews
-			f.Save()
+			resave(t, f, "omit the "+axis+" review")
 			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "missing "+axis) {
 				t.Fatalf("canonical axis omitted without refusal: %d %s", code, out)
 			}
@@ -212,6 +286,7 @@ func TestReviewCheckpointMissingRecord(t *testing.T) {
 	if err := os.Remove(filepath.Join(f.Root, "reviews/example.md")); err != nil {
 		t.Fatal(err)
 	}
+	f.Commit("remove the review record")
 	if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "retain a valid native result record") {
 		t.Fatalf("missing legacy record passed checkpoint: %d %s", code, out)
 	}
@@ -231,6 +306,7 @@ func TestReviewCheckpointRefusalRoute(t *testing.T) {
 			if err := os.Remove(filepath.Join(f.Root, "reviews/example.md")); err != nil {
 				t.Fatal(err)
 			}
+			f.Commit("remove the review record")
 		}},
 		{"missing plan", "completion evidence", func(f *recordtest.Fixture) {
 			f.Write(recordtest.Spec, "# Example\n\nStatus: staged\n")
@@ -304,7 +380,7 @@ func TestReviewCheckpointFindingAndReviewIdentity(t *testing.T) {
 			case "pair":
 				r.Tip = f.Record.Chunks[0].Base
 			}
-			f.Save()
+			resave(t, f, "retain the invalid "+kind)
 			if code, out := runCheckpoint(t, f); code == 0 || !strings.Contains(out, "Standards") {
 				t.Fatalf("invalid axis accepted: %d %s", code, out)
 			}

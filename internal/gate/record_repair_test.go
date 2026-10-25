@@ -30,7 +30,7 @@ func TestCheckpointEntryRepairForms(t *testing.T) {
 		})
 		// An undispatched ticket has no author, so the chunk holds no result of its own.
 		f.Record.Chunks[0].Verification = nil
-		f.Save()
+		resave(t, f, "retain the undispatched chunk")
 		return f
 	}
 	// An empty chunk selects the complete checkpoint.
@@ -41,19 +41,19 @@ func TestCheckpointEntryRepairForms(t *testing.T) {
 		{"missing chunk", "1", "bench record 'chunk' --help", func(t *testing.T) *recordtest.Fixture {
 			f := checkpointFixture(t)
 			f.Record.Chunks = nil
-			f.Save()
+			resave(t, f, "drop the chunk")
 			return f
 		}},
 		{"missing verification", "1", "bench record 'verification' --help", func(t *testing.T) *recordtest.Fixture {
 			f := checkpointFixture(t)
 			f.Record.Chunks[0].Verification = nil
-			f.Save()
+			resave(t, f, "drop the verification")
 			return f
 		}},
 		{"missing axis", "1", "bench record 'review' --help", func(t *testing.T) *recordtest.Fixture {
 			f := checkpointFixture(t)
 			f.Record.Chunks[0].Reviews = f.Record.Chunks[0].Reviews[:2]
-			f.Save()
+			resave(t, f, "drop the Coverage review")
 			return f
 		}},
 		{"missing completion", "", "bench record 'completion' --help", checkpointFixture},

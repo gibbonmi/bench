@@ -136,6 +136,9 @@ func validateVerification(items []Verification) error {
 		if item.State != "pending" && item.ExitCode == nil {
 			return fmt.Errorf("%s: missing verification exit code", item.ID)
 		}
+		if item.SourceCommit != "" && !objectID.MatchString(item.SourceCommit) {
+			return fmt.Errorf("%s: invalid source commit; record the full object id of the commit that the entry graded", item.ID)
+		}
 		if item.Probe != nil {
 			if err := validateProbe(item.ID, *item.Probe); err != nil {
 				return err

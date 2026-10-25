@@ -59,7 +59,8 @@ func namedChecks() []string {
 	return append(registry.Names(registry.Dev), gate.SystemPhaseName, ProseCheckName, RootConformanceCheckName)
 }
 
-func isNamedCheck(check string) bool {
+// IsNamedCheck answers whether check is a name that `bench test --check` takes.
+func IsNamedCheck(check string) bool {
 	return slices.Contains(namedChecks(), check)
 }
 

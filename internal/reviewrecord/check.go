@@ -24,10 +24,11 @@ func CheckTrees(root, sourceTree, evidenceTree, tip, spec, chunk string, complet
 // checkVerification grades retained occurrences against one requirement
 // inventory. The plan resolves each obligation's owed performer and role, so a
 // version 1 record keeps its one implementation session and a version 2 record
-// reads each obligation's owner from its own frozen plan. at holds the chunk ID of
-// a chunk inventory, or no chunk and the requested source of the final inventory;
-// each refusal repairs through the verification form there.
-func checkVerification(items []Verification, requirements []Requirement, plan Plan, record Record, source string, at Repair) error {
+// reads each obligation's owner from its own frozen plan. fresh reports whether an
+// entry is current for the source of the inventory. at holds the chunk ID of a chunk
+// inventory, or no chunk and the requested source of the final inventory; each
+// refusal repairs through the verification form there.
+func checkVerification(items []Verification, requirements []Requirement, plan Plan, record Record, fresh func(Verification) (bool, error), at Repair) error {
 	scope := "completion"
 	if at.Chunk != "" {
 		scope = "chunk " + at.Chunk
@@ -51,7 +52,11 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 		if current == nil {
 			return refused("missing verification %s; execute and retain %s", requirement.ID, requirement.Command)
 		}
-		if current.Role != role || current.Performer != performer || current.SourceDigest != source || current.Command != requirement.Command || current.State != "completed" || current.Outcome != "pass" || current.ExitCode == nil || *current.ExitCode != 0 {
+		ok, err := fresh(*current)
+		if err != nil {
+			return fmt.Errorf("%s: verification %s: %w", scope, requirement.ID, err)
+		}
+		if !ok || current.Role != role || current.Performer != performer || current.Command != requirement.Command || current.State != "completed" || current.Outcome != "pass" || current.ExitCode == nil || *current.ExitCode != 0 {
 			return refused("verification %s is incomplete, failed, or stale; execute and retain %s", requirement.ID, requirement.Command)
 		}
 		if requirement.Probe != "" {
@@ -68,6 +73,59 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 		}
 	}
 	return nil
+}
+
+// EntryCurrent is the one predicate of whether a chunk verification entry is current
+// for chunk; spec names the record that the source digest excludes. An entry with a
+// source commit is current when that commit strictly descends from the chunk base, is
+// an ancestor of the chunk tip, and has the entry digest as the source digest of its
+// tree. An entry with no source commit is current when its digest is the chunk digest.
+// The error reports a failed query.
+func EntryCurrent(root, spec string, chunk Chunk, entry Verification) (bool, error) {
+	if entry.SourceCommit == "" {
+		return entry.SourceDigest == chunk.SourceDigest, nil
+	}
+	fault, err := chunkLine(root, chunk, entry.SourceCommit)
+	if err != nil || fault != onLine {
+		return false, err
+	}
+	digest, err := commitDigest(root, spec, entry.SourceCommit)
+	return err == nil && digest == entry.SourceDigest, err
+}
+
+// lineFault names the first condition under which a commit is off the line of a chunk.
+type lineFault int
+
+const (
+	onLine  lineFault = iota
+	atBase            // the commit is the chunk base
+	offBase           // the commit does not descend from the chunk base
+	offTip            // the commit is not an ancestor of the chunk tip
+)
+
+// chunkLine answers onLine, or the first fault of commit against chunk in the order above.
+func chunkLine(root string, chunk Chunk, commit string) (lineFault, error) {
+	// The ancestry query is reflexive, so it accepts a commit equal to the chunk base.
+	if commit == chunk.Base {
+		return atBase, nil
+	}
+	if descends, err := isAncestor(root, chunk.Base, commit); err != nil || !descends {
+		return offBase, err
+	}
+	if precedes, err := isAncestor(root, commit, chunk.Tip); err != nil || !precedes {
+		return offTip, err
+	}
+	return onLine, nil
+}
+
+// commitDigest is the source digest of the tree of commit; spec names the record that the
+// digest excludes.
+func commitDigest(root, spec, commit string) (string, error) {
+	tree, err := sourceTree(root, commit)
+	if err != nil {
+		return "", err
+	}
+	return SourceDigest(root, tree, spec)
 }
 
 // ProbeBites is the one probe-bite predicate of the planned-probe check, the confirmation
@@ -93,7 +151,8 @@ func checkCompletion(record Record, plan Plan, source, tip string) error {
 			}
 		}
 	}
-	return checkVerification(completion.Verification, finalRequirements(plan, record), plan, record, source, Repair{Source: tip})
+	atDigest := func(entry Verification) (bool, error) { return entry.SourceDigest == source, nil }
+	return checkVerification(completion.Verification, finalRequirements(plan, record), plan, record, atDigest, Repair{Source: tip})
 }
 
 // TestCommand is the command whose requirements run test selections.

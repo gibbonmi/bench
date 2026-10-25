@@ -174,6 +174,10 @@ func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 // one gate owner resolves and composes with its absolute Git-directory path.
 const GateCacheFile = "bench-last-gate"
 
+// DeltaCacheFile is the filename of the delta green of a chunk checkpoint, written beside
+// GateCacheFile under the git directory. Only the chunk checkpoint reads it.
+const DeltaCacheFile = "bench-last-delta"
+
 // LandedInDefault proves a local branch landed by ancestry, patch containment, or
 // reverse-applying the branch's cumulative diff to def's tree. The reverse-apply proof
 // alone proves a squash-landing, where the branch's commits compose into one commit no

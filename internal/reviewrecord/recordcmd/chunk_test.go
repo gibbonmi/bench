@@ -2,13 +2,17 @@ package recordcmd_test
 
 import (
 	"bytes"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
@@ -43,13 +47,19 @@ func slug(t *testing.T) string {
 	return slug
 }
 
-func recordFile(t *testing.T, f *recordtest.Fixture) string {
+// recordPath is the record path of the fixture spec, as a run's dirty paths name it.
+func recordPath(t *testing.T) string {
 	t.Helper()
 	path, err := rr.RecordPath(recordtest.Spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return filepath.Join(f.Root, filepath.FromSlash(path))
+	return path
+}
+
+func recordFile(t *testing.T, f *recordtest.Fixture) string {
+	t.Helper()
+	return filepath.Join(f.Root, filepath.FromSlash(recordPath(t)))
 }
 
 // advance commits one source change and returns the commit before it and the commit it made.
@@ -99,6 +109,40 @@ func onlyChunk(t *testing.T, f *recordtest.Fixture) rr.Chunk {
 		t.Fatalf("record chunks = %d, want 1", len(record.Chunks))
 	}
 	return record.Chunks[0]
+}
+
+// recordBytes answers the record bytes of f, or nil when the record is absent.
+func recordBytes(t *testing.T, f *recordtest.Fixture) []byte {
+	t.Helper()
+	data, err := os.ReadFile(recordFile(t, f))
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+// chunkEntry is the entry of chunk id in the record of f.
+func chunkEntry(t *testing.T, f *recordtest.Fixture, id string) rr.Chunk {
+	t.Helper()
+	for _, chunk := range read(t, f).Chunks {
+		if chunk.ID == id {
+			return chunk
+		}
+	}
+	t.Fatalf("the record holds no chunk %s", id)
+	return rr.Chunk{}
+}
+
+// verificationIDs is the evidence ID of each verification entry of chunk, in record order.
+func verificationIDs(chunk rr.Chunk) []string {
+	ids := []string{}
+	for _, entry := range chunk.Verification {
+		ids = append(ids, entry.ID)
+	}
+	return ids
 }
 
 func TestRecordChunkWritesFullCommitIDs(t *testing.T) {
@@ -313,11 +357,37 @@ func TestRecordChangesOnlyTheRecordPath(t *testing.T) {
 	f := linked(t, 1)
 	base, tip := advance(f, "chunk 1")
 	record(t, f, "1", base, tip)
-	path, err := rr.RecordPath(recordtest.Spec)
+	path := recordPath(t)
+	if status := f.Git("status", "--porcelain", "--untracked-files=all"); status != "?? "+path {
+		t.Fatalf("git status = %q, want only %q", status, path)
+	}
+}
+
+// A requirement ID that already starts with the prefix and a hyphen is the evidence ID, and
+// any other requirement ID takes the prefix once.
+func TestTicketPrefixesTheEvidenceIDOnce(t *testing.T) {
+	f, home := pooled(t, 1, func(plan *rr.Plan) { plan.Chunks[0].Verification[0].ID = "p-tests" })
+	base, _ := advance(f, "chunk 1")
+	stageOwed(f, home, "1", "1.md")
+	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
+	if ids, want := verificationIDs(chunkEntry(t, f, "1")), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
+		t.Fatalf("verification IDs = %q, want %q", ids, want)
+	}
+}
+
+// A ticket record call with a --tip that does not descend from the chunk tip leaves the chunk
+// entry as it was: the base and the tip stay, and the freeze cell is none.
+func TestTicketBeforeTheChunkTipLeavesTheChunkEntry(t *testing.T) {
+	f, home := pooled(t, 3, twoTickets)
+	own := stagedBeforeTheTip(t, f, home)
+	frozen := chunkEntry(t, f, "2")
+	out := succeed(t, f, ticketArgs(t, "2", "2.md", "early", "--tip", own))
+	document, err := axitest.DecodeDocument(out)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status := f.Git("status", "--porcelain", "--untracked-files=all"); status != "?? "+path {
-		t.Fatalf("git status = %q, want only %q", status, path)
+	rows, err := document.Rows("ticket")
+	if chunk := chunkEntry(t, f, "2"); err != nil || len(rows) != 1 || rows[0].(map[string]any)["freeze"] != "none" || chunk.Base != frozen.Base || chunk.Tip != frozen.Tip {
+		t.Errorf("chunk 2 after the 2.md call at %s = %s..%s with the output %q, want %s..%s with freeze none", own, chunk.Base, chunk.Tip, out, frozen.Base, frozen.Tip)
 	}
 }

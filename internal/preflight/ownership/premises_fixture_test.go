@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/preflight/ownership"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
+	"github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
@@ -139,7 +140,47 @@ const (
 	evidenceTestFunc = "TestReused"
 	evidenceMutation = "omit source check"
 	evidenceNeedle   = "expected behavioral needle"
+	// behavioralExcerpt is a probe excerpt that names the reused test and red_needle.
+	behavioralExcerpt = "FAIL: " + evidenceTestFunc + " (0.00s)\n    reused_test.go:5: " + evidenceNeedle
 )
+
+// seedEvidenceRepo seeds a repository whose reused test file declares the reused test.
+func seedEvidenceRepo(t *testing.T) string {
+	t.Helper()
+	files := map[string]string{evidenceTestPath: "package reused\n\nimport \"testing\"\n\nfunc " + evidenceTestFunc + "(t *testing.T) {}\n"}
+	return ownershiptest.Repo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
+}
+
+// laterTicketPremise seeds the reused test and freezes chunk 1 of the prior spec record at the
+// commit of its first ticket. A later ticket's commit then holds the chunk tip and its
+// reviews, and the verification stays at the first commit. A non-nil edit changes the chunk
+// before the record commit. It answers the premise row of verification at the chunk tip.
+func laterTicketPremise(t *testing.T, verification string, edit func(*recordtest.Fixture, *rr.Chunk)) ownership.Premise {
+	t.Helper()
+	root := seedEvidenceRepo(t)
+	f := recordtest.AttachAt(t, root, 1, evidenceSpec)
+	f.AddChunk()
+	f.LaterTicket()
+	chunk := &f.Record.Chunks[0]
+	chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
+	if edit != nil {
+		edit(f, chunk)
+	}
+	f.Save()
+	f.Commit("record the later chunk tip")
+	writeEvidenceSpec(t, root, withItems("premises", reusedTestItem("evidence-later", evidenceTestPath, evidenceTestFunc, evidenceSpec, chunk.Tip, f.Tip(), "1", verification, evidenceMutation, evidenceNeedle)))
+	return onePremise(t, premises(t, root), "evidence-later")
+}
+
+// offLineExtra adds the verification extra, which the plan does not name: a copy of the probe
+// entry at a commit off the chunk line. CheckTrees grades only the planned requirements, so
+// only the currency test of the premise grades extra.
+func offLineExtra(f *recordtest.Fixture, chunk *rr.Chunk) {
+	extra := chunk.Verification[0]
+	extra.ID, extra.Requirement = "chunk-1-extra", "extra"
+	f.Bind(&extra, f.OffLine())
+	chunk.Verification = append(chunk.Verification, extra)
+}
 
 // evidenceCommits holds the source commit and each committed evidence variant that
 // TestEvidencePremises grades.
@@ -171,7 +212,6 @@ func seedEvidenceCommits(t *testing.T, root string) evidenceCommits {
 		return f.Tip()
 	}
 
-	behavioralExcerpt := "FAIL: " + evidenceTestFunc + " (0.00s)\n    reused_test.go:5: " + evidenceNeedle
 	commits.valid = saveVariant("record valid evidence", func(chunk *rr.Chunk) {
 		chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
 		f.Confirm("confirm-1", chunk.Base)

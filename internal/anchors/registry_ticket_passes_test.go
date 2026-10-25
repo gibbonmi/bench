@@ -19,6 +19,7 @@ func TestTicketSlicingAnchors(t *testing.T) {
 		{file: ".agents/skills/bench-craft-line/SKILL.md", needle: "| Chunk ticket review (`/bench-write-spec`) | cheap + high |", want: "write-spec slicing: craft-line kept the retired chunk ticket review row", forbidden: true},
 		{file: issues, needle: "Cap the witnesses in a charge", want: "witness cap: the known-issues row kept a copy of the cap", forbidden: true},
 		{file: issues, needle: "| FT405: the record verb reads an excerpt from the last response of the worktree. |", want: "record ticket: the known-issues file kept a row that FT405 retires", forbidden: true},
+		{file: issues, needle: "| Run a confirming round of all three axes on the test-only delta. | FT438: a delegated repair's assignment and plan records keep a test-only repair eligible for `bench record confirmation`. |", want: "assignment exemption: the known-issues file kept a row that FT438 retires", forbidden: true},
 		{file: slicing, needle: "## Enforced rules", want: "closure removal: the slicing checks kept the enforced-rules copy of the preflight checks", forbidden: true},
 		{file: slicing, needle: "--propose-writes", want: "closure removal: the slicing checks kept a writes-proposal step", forbidden: true},
 		{file: slicing, needle: "--breakdown", want: "closure removal: the slicing checks kept a breakdown step", forbidden: true},

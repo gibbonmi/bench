@@ -13,6 +13,10 @@ import (
 type Floor struct {
 	// Packages are the directory-relative package patterns, in sorted order.
 	Packages []string
+	// Checks are the named checks that the ticket owes in place of a package run: the
+	// system check for the system-suite package, whose package run builds no file of the
+	// suite.
+	Checks []string
 	// Embed reports that an entry is an embed file or selects a package that declares
 	// an embed pattern.
 	Embed bool
@@ -70,7 +74,11 @@ func writesFloorWithLoader(ctx context.Context, root string, entries []string, l
 		}
 	}
 	for directory, importPath := range index.byDirectory {
-		if selected[importPath] {
+		switch {
+		case !selected[importPath]:
+		case importPath == index.system:
+			floor.Checks = []string{gate.SystemPhaseName}
+		default:
 			floor.Packages = append(floor.Packages, packagePattern(root, directory))
 		}
 	}

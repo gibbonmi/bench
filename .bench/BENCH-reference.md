@@ -338,6 +338,8 @@ file at the path answers a structured refusal at exit 1.
 
 A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Before the first dispatch, the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket. The last ticket's author freezes each chunk's base and current tip. Each accepted finding of the chunk review goes to a fresh repair session under the repair rule of `.bench/BENCH.md`.
 
+The Land section of `/bench-implement-spec` says when the orchestrator starts the prepared run of the chunk checkpoint.
+
 A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass
 publishes onto the worktree branch. The lane writes a lane record and no gate
@@ -380,7 +382,8 @@ A green `bench gate --checkpoint <spec-path> --chunk <id>` in a bound worktree o
 build's chunk gap when the plan names a later chunk. The first
 `bench record assignment` of the next chunk closes the gap. That record refuses
 until the source holds the default branch tip, and its refusal names the fold
-and `bench record fold`. The last chunk opens no gap.
+and `bench record fold`. The last chunk opens no gap. A prepared run opens no gap,
+because it grades no evidence.
 
 The reviewer grants one landing a landing override with
 `bench commitment override --assignment <id> --reason <text>`. The verb runs only
@@ -540,9 +543,9 @@ shaped like the kit's; it is not the route the kit itself takes.
 The ordinary test phase carries the graded root and the dev tier to the
 conformance entry point. The conformance registry owns check order,
 subject, and tier. That one ordinary test run executes the complete dev-tier
-check set, meta checks included, and so validates the registry itself. There
-is no separate conformance phase, driver, or per-check evidence partition.
-`gate --fresh`, prospective execution, and ship remain full boundaries.
+check set, meta checks included, and so validates the registry itself. The whole
+phase table has no separate conformance phase, driver, or per-check evidence partition.
+`gate --fresh`, the landing's prospective execution, and ship remain full boundaries.
 
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
@@ -556,8 +559,18 @@ Before the first dispatch, the plan amendment makes the authored version 1 fence
 The `bench-review-record` fence in `reviews/<slug>.md` holds the evidence the checkpoint grades.
 When the record lacks an entry that one `bench record` form writes, the checkpoint refusal routes to the help of that form.
 Each other evidence refusal routes to `bench preflight review <slug>`.
-Checkpoint purpose and record bytes participate in the existing gate verdict identity.
+
+The chunk checkpoint grades the committed tree without the record through prospective execution.
+It keys its verdict to that tree, so a record-only commit reuses its green.
+Each call without `--prepare` still grades the record evidence and the record prose, and the complete checkpoint keeps its purpose in its key.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
+
+`--prepare` with `--chunk <id>` starts the prepared run of the chunk checkpoint.
+It runs the gate on the same subject and writes its green under the same key.
+It skips the evidence pass, the record prose grade, and the tip-moved guard.
+So a record write or a record commit during the run leaves its green valid.
+The chunk checkpoint after the record commit reuses that green.
+A change of the spec or another source path, or an expired green, makes the checkpoint run the gate again.
 
 The document is one object with a `phases` array. Each phase carries:
 
@@ -617,6 +630,29 @@ more row names the file that holds the complete stream.
 A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
 `capability-skips` line, and then `gate: green`. Above seven phases the table
 collapses to one `phases: N/N green` row.
+
+A run that reuses a fresh green of its subject prints one
+`gate: green (fresh verdict reused for this tree)` line and runs no phase. So a chunk
+checkpoint after a green prepared run of its subject prints that line alone.
+
+A chunk checkpoint runs the delta set when its change since the reviewed tip is test-only
+and that tip has a whole green. The delta set is the one reduced schedule: gofmt, vet, the
+changed test packages, and root conformance. The checkpoint runs the whole gate instead in each of these cases:
+
+- a changed test file is in the system suite or in a race-table package
+- the gate does not run the built-in phase table of a Go module
+- the change has no test file
+- the call has `--fresh`
+
+A delta run prints the phase table of those phases and then
+`gate: green (delta checkpoint)`. That green writes no verdict. It writes only a record of the
+delta class, the one reduced record, to `<git-dir>/bench-last-delta`. So no landing, no
+complete checkpoint, and no whole checkpoint accepts it.
+
+A later chunk checkpoint of the same base and subject reuses the delta green when the delta
+is still eligible. It prints one `gate: green (delta green reused for this subject)` line and
+runs no phase. A prepared run at a test-only repair commit takes the delta too, so the
+checkpoint after the record commit reuses its green.
 
 The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
 the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.

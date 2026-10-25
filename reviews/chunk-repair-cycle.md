@@ -1,0 +1,5038 @@
+# Review outcomes
+
+```bench-review-record
+{
+  "version": 2,
+  "spec": "specs/chunk-repair-cycle/spec.md",
+  "plan_digest": "sha256:e236f34ab6ac414fd0618aa6912e43695326570a7acd6e2153d970e2ef46cb4d",
+  "implementation_session": "",
+  "chunks": [
+    {
+      "id": "RC-C1",
+      "base": "59386368bcdacf9545d599eb5201311250ad84eb",
+      "tip": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+      "plan_digest": "sha256:525de4d7efd9137522a26e8497432f3cadb01473ce26d8c57dbbf2d5fba78694",
+      "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+      "acceptance_rows": [
+        "RC1",
+        "RC2",
+        "RC3",
+        "RC4",
+        "RC5",
+        "RC6",
+        "RC7"
+      ],
+      "verification": [
+        {
+          "id": "t01-record",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:822204b2bbcb96f4953c3be59f10b895a9ba955a2e83259ac7a9de04f7ae0dd9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4040,110\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-record-command",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:978150e3311d9edffe106769a1dd34f4da0c2799585e4b9a49f64de152703d95",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,27088,265\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-gate",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:ab4db6b59c06cc84abecba0bb2e6f05037ad0c941739a07af9b3a99779f21abd",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,42980,517\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-testgap",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:8af99d99bcfbac3e7d0c10716349cf509457414bb6ac453821c2f4d97579e1d6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,pass,324,20\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testgap",
+          "command": "bench test --package ./internal/testgap",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-anchors",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:86cf992eeb857beb65f47d74bfd15a9cc042c6aa665c971b252cd3531491c9d6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,127,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-conformance",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:79770fd89c02d513d0a13103b409aa0c35512cd7b67ecf7dc9d6db381d509406",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18390,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-floor",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:6845efc3a3f2f892b608c00e4a5c6464ed1c0ce118d9db07025e09bcc8d80d43",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,28798,404\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "floor",
+          "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t01-exemption-probe",
+          "performer": "claude:rc-t01-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+            "digest": "sha256:da5609dea3a62468fe3a0076503b03336d9ce28e9e0def55ca703ae4ce40a811",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,1,TestRecordConfirmationRefusesAPlanFenceChange,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,265\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,572\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,27046,265\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange,\"confirmation_test.go:154: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,e2b944dd49945f730e66648eb8dff744fe4c2dc2,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "exemption-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "clear the whole plan fence instead of the assignment block",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t01-author-20261024",
+              "digest": "sha256:da5609dea3a62468fe3a0076503b03336d9ce28e9e0def55ca703ae4ce40a811",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,1,TestRecordConfirmationRefusesAPlanFenceChange,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,265\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,572\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,27046,265\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange,\"confirmation_test.go:154: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,e2b944dd49945f730e66648eb8dff744fe4c2dc2,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t01r1-record",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:847153a758bd82696b210ab6a7b6d20b436efb1647f12b4cd924aee9a464db0d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,2766,110\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-record-command",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:e642229389cc8e4120e7a7c8a758a845fef2d81dc98aa630be15cbe338626d90",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,18219,272\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-gate",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:27093678f327fe8e6bed172d9851e7cdf2d8622a756c15cbc801ccd6f2cb932d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,31217,517\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-testgap",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:f8d77e9fd74e7d8defcf3254ae0245e72619f48000719342ca053aefc60dc7d0",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,pass,247,21\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "testgap",
+          "command": "bench test --package ./internal/testgap",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-anchors",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:577076f8eb19252a4e60e1a94803e145edcf97367afa48be02de12df84c47c5d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,101,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-conformance",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:70180b15124881c601375171c511ac47db4e8f4bd0e20ee665dccd34874270a0",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13753,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-floor",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:e1c2693ad84759624da94c40fb9ce4eaee6f12842e798ccaf88151e692ff0cae",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22741,404\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "floor",
+          "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t01r1-exemption-probe",
+          "performer": "claude:rc-t01-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+            "digest": "sha256:9aabeab6ff0db3cd8929938d3443d9debc0eda64b0119ec8271f773ebc645c75",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,3,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1301\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18428,272\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "exemption-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "clear the whole plan fence instead of the assignment block",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t01-repair1-20261024",
+              "digest": "sha256:9aabeab6ff0db3cd8929938d3443d9debc0eda64b0119ec8271f773ebc645c75",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,3,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1301\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18428,272\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,880ef768dad40d212a83dbf86db4f8a1ec75ee3e,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c1-r1-standards",
+          "performer": "claude:rc-c1-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c1-standards-r1",
+            "digest": "sha256:b4e59eed402c1966d26455493c334658575f1e4105dcb8349d8019db83151990",
+            "excerpt": "## Standards\n\n0 findings. Worst issue: none. I found no binding-requirement or concrete-defect candidate that survived refutation.\n\nAuthor notes: the whitespace-only fence change passes by the spec's re-encode rule (spec.md:142); the mode-only spec change is consistent with the byte-equal rule and harmless because ReadTreeFile rejects non-regular blobs.\n\n### Advice\n- Stale path:line cites into files the chunk edited (ticket 04:21, spec.md:504,526,587, ticket 10:15, ticket 05:17, ticket 03:19).\n- covers RC1..RC5 tags reuse an RC prefix that an older spec also uses.\n- testgap.TestFiles has no production caller yet; RC-C6 reads it.\n- testgap_test.go:81-87 special-cases \"equal trees\" and discards the TestFiles error.\n"
+          },
+          "axis": "Standards",
+          "base": "59386368bcdacf9545d599eb5201311250ad84eb",
+          "tip": "ab1f498ff019cd1548677d142a63ec10b0e38326",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c1-r1-spec",
+          "performer": "claude:rc-c1-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c1-spec-r1",
+            "digest": "sha256:931321ea5cf7d5991a202cfa530f19b0c2b75cbb8b53f09ca325912f1ef9d906",
+            "excerpt": "## Spec\n\n1 finding. Worst issue: P1, a ticket-required record is missing, and no acceptance row fails.\n\n- P1 | severity 3 | auto-fix | confidence 5 | specs/chunk-repair-cycle/tickets/01-exempt-the-assignment-block.md:19 with internal/anchors/registry_ticket_passes_test.go:22 | The ticket says \"record the demonstrated red that the AGENTS.md exception for an independent expectation requires\" for the mirrored FT438 Forbid row; no such record exists in reviews/chunk-repair-cycle.md or the ab1f498ff commit message.\n\nRows RC1-RC7: held (RC7 held except P1).\n\n### Advice\n- Compare the spec entry's mode in the delta.\n- A combined case (spec assignment change plus a production .go file).\n- The delta holds pre-dispatch orchestrator plan commits; no bench learning was visible for them.\n"
+          },
+          "axis": "Spec",
+          "base": "59386368bcdacf9545d599eb5201311250ad84eb",
+          "tip": "ab1f498ff019cd1548677d142a63ec10b0e38326",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c1-r1-coverage",
+          "performer": "claude:rc-c1-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3b3f3a5f46939dfdb981f5a8aefa59d875832164",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c1-coverage-r1",
+            "digest": "sha256:1e5498eb70977c3d289b907c8d0b824f3f72efcd71a1c00fa76234362dcbda1b",
+            "excerpt": "## Coverage\n\n4 findings. Worst: C1 and C2, severity 5 each.\n\n- C1 | sev 5 | auto-fix | conf 8 | internal/reviewrecord/confirmation.go (plan.Execution != nil guard in withoutAssignments) | No test reaches a spec change in a version 1 plan at the proof fallback. Probe: swap `if plan.Execution != nil {` with `if true {`: silent, restored yes.\n- C2 | sev 5 | auto-fix | conf 8 | internal/reviewrecord/confirmation.go (error returns of TreeWithoutFile and withoutAssignments in proveTestOnly) | The error returns can fail open with no red: `return err` -> `return nil` (silent), the withoutAssignments error -> `return nil` (silent), the wrap -> `return err` (silent). Missing inputs: the spec absent in one tree; a corrupt or duplicate plan fence in the later spec.\n- C3 | sev 3 | auto-fix | conf 8 | internal/reviewrecord/confirmation.go (plan.Execution.Assignments = nil) | Swap to `plan.Execution = nil`: silent. No case changes an execution field other than assignments (author_limit, run_id, orchestrator_session, review_mode).\n- C4 | sev 3 | auto-fix | conf 7 | internal/testgap/testgap.go (files accumulation in TestFiles) and testgap_test.go:81-87 | Append -> overwrite: silent; `files := []string{}` -> `var files []string`: silent. No case changes two accepted test paths.\n\n### Advice\n- The early Prove return is unpinned.\n- No test passes a spec path with spaces through TreeWithoutFile or ReadTreeFile.\n- The FT438 Forbid needle is the bare token, as the FT405 precedent.\n- Absent block and empty list clear alike; no test pins it.\n\nBit: Refreeze drops PlanDigest; second Prove(rest) to fail-open; checkpoint caller spec path wrong.\n"
+          },
+          "axis": "Coverage",
+          "base": "59386368bcdacf9545d599eb5201311250ad84eb",
+          "tip": "ab1f498ff019cd1548677d142a63ec10b0e38326",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ],
+      "confirmations": [
+        {
+          "id": "rc-c1-confirm-1",
+          "performer": "claude:rc-orchestrator-20261024",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "658c733af7751baa32533ee9d79abafb0adeeeb9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:rc-orchestrator-20261024:rc-c1-confirm-1",
+            "digest": "sha256:be67f8d53537ad94d60da4d32324be19e865e17bba63be884cd4d2c4ced31073",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,4,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1679\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18038,272\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesASpecProseChange,\"confirmation_test.go:229: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "59386368bcdacf9545d599eb5201311250ad84eb",
+          "reviewed_tip": "ab1f498ff019cd1548677d142a63ec10b0e38326",
+          "repaired_tip": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "finding_ids": [
+            "P1",
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "disable the byte comparison of the cleared spec documents in proveTestOnly",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:rc-orchestrator-20261024:rc-c1-confirm-1",
+              "digest": "sha256:be67f8d53537ad94d60da4d32324be19e865e17bba63be884cd4d2c4ced31073",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/confirmation.go,swap,failed,4,TestFindReviewedPairRefusesASpecChange/version_1_plan,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,272\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1679\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,18038,272\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestFindReviewedPairRefusesASpecChange/version_1_plan,\"confirmation_test.go:205: reviewed pair error = <nil>, want \\\"the delta to the chunk tip is not test-only: specs/example/spec.md: the change reaches beyond the assignment block of the completion plan\\\"\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/author_limit,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesAPlanFenceChange/final_requirement,\"confirmation_test.go:166: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestRecordConfirmationRefusesASpecProseChange,\"confirmation_test.go:229: confirmation = exit 0, output \\\"confirmation[1]{chunk,id,reviewed_tip,reviewed_digest,repaired_tip,source_digest,supersedes,excerpt_digest}:\\\\\\\\n  \\\\\\\\\\\"1\\\\\\\\\\\",confirm-1,567036c6c7d7ba92d8d97518661dc25d195093c7,bdf67c11e41390… (592 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RC-C2",
+      "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+      "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+      "plan_digest": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+      "acceptance_rows": [
+        "RC8",
+        "RC13",
+        "RC14",
+        "RC15",
+        "RC17",
+        "RC18",
+        "RC19",
+        "RC20",
+        "RC21",
+        "RC22",
+        "RC23"
+      ],
+      "verification": [
+        {
+          "id": "t02-record",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:7e62098dc9e8fd5b332d18e2feba5a28af8a243051d60aa7909bee6c52a2eaca",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3334,111\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-record-command",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:205013acc1563205c14f27ae38674ff0b93e93ec98d8533cfff807d61e410ead",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17338,272\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-record-fixture",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ownership",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:4f1b04800bda0936460ff658314e6c08c2ab95e87f16f062e1622b7dbb8144cd",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,7139,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ownership",
+          "command": "bench test --package ./internal/preflight/ownership",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-gate",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:0d8742f72fc84611fdd673a8e89cc62dfa7363fb7b3a05000313215364d630e0",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35097,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-conformance",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:976a27d80d21e6366dc6e8622daded0a149eb3ea1bd0ee6ec6680171acaf3812",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12509,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-floor",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:e3c916b3556e63a2188626f103615fc77921755280124e36bd1fb7d99cda650b",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26828,404\n  github.com/gibbonmi/bench/internal/landing,pass,10662,221\n  github.com/gibbonmi/bench/internal/worktree,pass,72673,1514\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "floor",
+          "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-line-probe",
+          "performer": "claude:rc-t02-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+            "digest": "sha256:38e813bcd7bbf3895dc572ed223ce4c61c5f50ed5cc0b507d17799f34a1b7a18",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35093,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "line-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the ancestry test of the entry commit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t02-author-20261024",
+              "digest": "sha256:38e813bcd7bbf3895dc572ed223ce4c61c5f50ed5cc0b507d17799f34a1b7a18",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35093,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t02r1-record",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:fb77143fd4f470e1fc78f4a9aaab04389a4d7178d8d22f2f74a8b32bc457d49c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3342,111\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-record-command",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:f88b7318ed695f89d1db69744d770a94cfc93e668d1126c6056fdf93614765ee",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,17669,272\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-record-fixture",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-ownership",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:9b5a20a827a28bbf4d14718e458cb63220d5bf41556288d74ddb3d4caa7c1a89",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,7444,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "ownership",
+          "command": "bench test --package ./internal/preflight/ownership",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-gate",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:27519b1eccf40b89976c43a33a4fa48b9f7add2d258244e34c23f8e8aaa35e8f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35235,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-conformance",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:6decfb18a91ed775c62887c0094b9f38733122ce18f4e9a3db372dc1fff3dcbf",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12843,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-floor",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:cba3a894999aa62f21fe28186d003aabfb6570f324aaf83a58e2885903ccad2b",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,27008,404\n  github.com/gibbonmi/bench/internal/landing,pass,10974,221\n  github.com/gibbonmi/bench/internal/worktree,pass,73303,1514\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "requirement": "floor",
+          "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t02r1-line-probe",
+          "performer": "claude:rc-t02-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+            "digest": "sha256:043cef4e8c069894e4b93944e4e0b8292bfd8730fa1bf526a86a45b9303b281f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35519,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "requirement": "line-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the ancestry test of the entry commit",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024",
+              "digest": "sha256:043cef4e8c069894e4b93944e4e0b8292bfd8730fa1bf526a86a45b9303b281f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/check.go,swap,failed,1,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,527\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,355\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,35519,527\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointRefusesAnEntryOffTheChunkLine/side_commit,\"review_checkpoint_test.go:162: checkpoint = 0 ; want the stale entry refused\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c2-r1-standards",
+          "performer": "claude:rc-c2-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-standards-r1",
+            "digest": "sha256:0ed5734158da7771af3c5f67333fee0db03d56611dfa4a0001de77ca25cd1689",
+            "excerpt": "## Standards\n\n3 findings. Worst: S1, severity 3, a duplicated tree-to-digest derivation.\n\n- S1 | sev 3 | auto-fix | conf 6 | internal/reviewrecord/coverage.go:83-87 (also internal/reviewrecord/fold.go:138-145) | The diff extracts commitDigest (check.go:123) and leaves two byte-equivalent derivations of the same fact in the same package (AGENTS.md one source per fact).\n- S2 | sev 3 | auto-fix | conf 6 | internal/gate/review_checkpoint_commits_test.go:15 | TestReviewCheckpointLaterSource moves between files unchanged; no acceptance row asks for the move.\n- S3 | sev 3 | ask-user | conf 4 | specs/chunk-repair-cycle/spec.md:298 | The ticket 02 author is assigned opus/xhigh while the spec declares opus/high.\n\n### Advice\n- The full-object-id rule applies to completion entries, which accept and ignore a commit.\n- A stale entry gets no cause in its refusal text.\n- freeze hashes one tip N+1 times; digestAt lives in confirmation.go but fixture.go uses it.\n- OffLine repeats the identity config pair of fixture.go.\n- The Verification doc comment states another function's behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2-r1-spec",
+          "performer": "claude:rc-c2-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-spec-r1",
+            "digest": "sha256:ba2be08507533cae3eb1c0f2b995726d52e0750aa0e2563a1c88e55f273a5d4e",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. All 11 mapped rows (RC8, RC13-RC15, RC17-RC23) hold by re-derivation from the frozen tip 4af3d955c.\n\nPredicate against the spec: strict descent with a separate C == base test, tip ancestry, digest of C's tree, legacy empty-commit rule, full-object-id parse rule, adoption at the checkpoint and the reused-test premise. The \"verification at the reviewed digest\" case flips with ticket 03.\n\n### Advice\n- RC17 uses a single-ticket fixture; EntryCurrent ignores the ticket.\n- An absent but well-formed commit returns a plain error with no route.\n- The RC13-RC15 and RC19 cases call Save without Commit; ticket 06's RC44 must commit them.\n"
+          },
+          "axis": "Spec",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2-r1-coverage",
+          "performer": "claude:rc-c2-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8b2be62612bb47313ae8ec2321a3a3c7c47207da",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-coverage-r1",
+            "digest": "sha256:b36ed00d09a7e324398c5904b7cb6190348b4eea28f97f6264ba77e9e346e96b",
+            "excerpt": "## Coverage\n\n0 findings. Every surviving mutant fails closed.\n\nProbe set on internal/reviewrecord/check.go: atBase -> false bit; offBase descend drop invalid (build failed); offBase error swallowed silent; offTip error swallowed silent; legacy rule -> true bit. Restored yes on every row.\n\n### Advice\n- A1: the failed-ancestry-query path in chunkLine has no test (rows 3 and 4 silent); the entry still refuses as stale.\n- A2: the source_commit parse rule has no uppercase or off-by-one length case.\n- A3: the offBase branch has no measured probe row.\n- A4: the premise call site is graded only through RC21.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "4af3d955c58d75eae6d061ad598ea00707ad23d1",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2-r2-standards",
+          "performer": "claude:rc-c2-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-standards-r2",
+            "digest": "sha256:52f50002b4a69af97505d4f9e4e98f7088e9d43f3392b07bf67630b770f7dd81",
+            "excerpt": "## Standards\n\nRC-C2 confirming round (repair delta 4af3d955c..b721e5a7c). S1: closed. commitDigest (check.go:123-129) is the one source; follows (fold.go:138-141) and the checkSource base path (coverage.go:82) call it with unchanged error handling. No new finding at severity 5 or more.\n\n### Advice\n- coverage.go:54 repeats sourceTree's rev-parse without --quiet (severity 3).\n- atSource repeats the two-step body of commitDigest; leave it (severity 2).\n- commitDigest could sit beside sourceTree in source.go (severity 2).\n"
+          },
+          "axis": "Standards",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c2-r2-spec",
+          "performer": "claude:rc-c2-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-spec-r2",
+            "digest": "sha256:bc0fc03d36749d6b33937c712c8d2835c8000ecc918dfd74232ab6801b16f5b6",
+            "excerpt": "## Spec\n\nRC-C2 confirming round (repair delta 4af3d955c..b721e5a7c). Behaviors preserved: yes. The RC-C2 predicate is untouched; the chunk-chain base digest and the fold digest compute the same values; the widening to fold.go stays inside ticket 02's signed-off directory; no acceptance changed. No new finding at severity 5 or more.\n\n### Advice\n- atSource and plan.go:155 hold similar derivations outside the delta.\n- The unreadable-base error text changed; no test pins it.\n"
+          },
+          "axis": "Spec",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c2-r2-coverage",
+          "performer": "claude:rc-c2-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "36835dfe85da638e80a5ec880fa51e3103d6b6f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-coverage-r2",
+            "digest": "sha256:e06834280065681339d3d3331363a40292c0d70bd0db9a486aa370cf8d4b7d5b",
+            "excerpt": "## Coverage\n\nRC-C2 confirming round (repair delta 4af3d955c..b721e5a7c). S1-repair coverage: held. Probe: fold.go commitDigest(root, spec, commit) -> commitDigest(root, spec, covered): bit, 1 failed, TestRecordFoldRefusesANonFold/unreviewed_work, restored yes. No changed error path lost coverage. No new finding at severity 5 or more.\n\n### Advice\n- No test pins the false branch of follows at fold.go:93.\n- The checkSource base-unreadable error text changed and no test pins it.\n"
+          },
+          "axis": "Coverage",
+          "base": "2a1619cc0237fc3147781b9cada0bc26cf4c4ac0",
+          "tip": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2-r1-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC-C2B",
+      "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+      "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+      "plan_digest": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+      "acceptance_rows": [
+        "RC9",
+        "RC10",
+        "RC11",
+        "RC12",
+        "RC16",
+        "RC24"
+      ],
+      "verification": [
+        {
+          "id": "t03-record",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:a6fd0bd7fc5a6257edfad3ec69eb8b11cbb459232c88eb9af2d5928a587ebfc3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3282,111\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-record-command",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:afa767055993f042ec5b7d4d8c439ff4331b186f3ba91499822e04fa78777946",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,20562,277\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-record-fixture",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-gate",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:894a53688bd14d0ac4e305f2c9912e321504ebfac810ee424616221c09f23aa4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,37813,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-conformance",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:3710f4f59bb70b3b5a9ec9b335da2a22c2463c68aee47aa3d6c205cb466f0461",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12484,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-floor",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:5618d6adcad5d5b059b18f4409781da43ad54cb07b41424589fbf09e3333ec35",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22150,404\n  github.com/gibbonmi/bench/internal/anchors,pass,102,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-writer-probe",
+          "performer": "claude:rc-t03-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+            "digest": "sha256:08a2166c654cd9787e59c2814f9a3aa626e9970cb27088dd5cde087cb25e43ea",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,277\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20548,277\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 2c0f5d8e7c19e7a555b1ef278b47266a6ff34df7 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 11ac1f6ff63709f32333fad816d644e0e834d1ba with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "requirement": "writer-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "bind an earlier ticket to the chunk tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t03-author-20261024",
+              "digest": "sha256:08a2166c654cd9787e59c2814f9a3aa626e9970cb27088dd5cde087cb25e43ea",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,277\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20548,277\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 2c0f5d8e7c19e7a555b1ef278b47266a6ff34df7 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 11ac1f6ff63709f32333fad816d644e0e834d1ba with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t03r1-record",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:6e178a4b8d7cffbd7f90de27bf259ee9dae6271947a27f091f621a8b71f7c309",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3458,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-record-command",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:0c952d9d8316ad160ce540fd44b2bbafd73d6906f0bcfd3875d1550da66282ce",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,21033,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-record-fixture",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "record-fixture",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-gate",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:ef094e62aef512c93f89acf40ce139cebf420aec307f71b18b51feb5f66ef549",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35336,527\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-conformance",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:474f0438f365396cbd1793d72014e464c0913eeea8363a3b87066c41980718de",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12540,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-floor",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:476288bb12ed6772bf5722b42db7f5333e40754565c88bcfd5d680a09ac3a69f",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19303,404\n  github.com/gibbonmi/bench/internal/anchors,pass,106,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-writer-probe",
+          "performer": "claude:rc-t03-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+            "digest": "sha256:e35fbb84f8e4e2f98b5249c53198b1080c6774492ca07e1d311063c34273a559",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,279\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20872,279\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 767f9d4168e811c78d5863944549b1d973e02c58 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 268ad39c815237277a1b786763d792264bd20a34 with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "requirement": "writer-probe",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "bind an earlier ticket to the chunk tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024",
+              "digest": "sha256:e35fbb84f8e4e2f98b5249c53198b1080c6774492ca07e1d311063c34273a559",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,1,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,all,passed,279\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,560\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,20872,279\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketRecordsAtItsOwnCommitOnTheChunkLine,\"ticket_test.go:337: earlier ticket entry = early-tests at 767f9d4168e811c78d5863944549b1d973e02c58 with digest 37b1ff8d87b492aa99b99f4199bac58f858c14f8, want early-tests at 268ad39c815237277a1b786763d792264bd20a34 with digest e80601fec2c040… (266 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c2b-r1-standards",
+          "performer": "claude:rc-c2b-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-standards-r1",
+            "digest": "sha256:fbdb62b52f617e9c2c202eda17f7870e12132305b877ca3ce5f742205f9fff73",
+            "excerpt": "## Standards\n\n1 finding. Worst: S1, severity 3.\n\n- S1 | sev 3 | auto-fix | conf 6 | internal/reviewrecord/ticket.go:95 | RecordTicket holds a create closure and a created flag identical to RecordChunk (write.go:130-135, 140-142); one fact has two derivations (AGENTS.md one source per fact).\n\n### Advice\n- The \"verification at the reviewed digest\" case assigns a digest the fixture already holds, so its mutation is a no-op.\n- freezeTip and TicketRecord.Action docs say a call at the tip leaves the entry as is; it reports updated.\n- RunBinding runs twice per call; the knowledge is single-sourced.\n- Two guidance sentences sit at 25 words and join two facts.\n- Test moves for the 400-line cap cost some cohesion.\n"
+          },
+          "axis": "Standards",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2b-r1-spec",
+          "performer": "claude:rc-c2b-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-spec-r1",
+            "digest": "sha256:664f1e96ac65f1bdc7319ef8fd8071056dea1f6ced3bffcb167198125292b82c",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC9, RC10, RC11, RC12, RC16, RC24, the guidance acceptance, the recordtest Refreeze change, and the caller dispositions hold.\n\nrefusePlanned on every record call contradicts no spec sentence: the spec sets no precondition (spec lines 152-177), the ticket says \"keep the planned-cell refusal on every call that freezes\" (ticket 03 line 15), and the guidance already requires cited cells (bench-implement-spec.md:52). Story 7 holds, because staged runs at the author's own commit stay valid.\n\n### Advice\n- No test pins the planned-cell refusal for an earlier ticket in a multi-ticket chunk.\n- The RC16 row text could name the tip for a record-only descendant.\n- bench-implement-spec.md:66 leaves implicit when an earlier author records.\n"
+          },
+          "axis": "Spec",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2b-r1-coverage",
+          "performer": "claude:rc-c2b-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "521e4cfaf2135af05e893d5ed9d6d33c0623fb04",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-coverage-r1",
+            "digest": "sha256:668af90918cf7791917cd32ec75d40ca176a8c924b02cd544cec8c2ae3e8e07a",
+            "excerpt": "## Coverage\n\n4 findings. Worst: C1, severity 5.\n\n- C1 | sev 5 | auto-fix | conf 8 | internal/reviewrecord/ticket.go:170-172 | No test runs a recorded chunk through a ticket call at a commit that does not descend from the entry tip. Probe: omit the freezeTip isAncestor(entry.Tip, bound) guard: silent, restored yes.\n- C2 | sev 4 | auto-fix | conf 8 | internal/reviewrecord/ticket.go:114 | The tip == \"\" skip in the FormChunk step is unpinned. Probe: drop || tip == \"\": silent, restored yes.\n- C3 | sev 3 | auto-fix | conf 6 | internal/reviewrecord/change.go:186-188 | No test reads SourceCommit from the bench record verification form.\n- C4 | sev 2 | auto-fix | conf 6 | internal/reviewrecord/change.go:152 | The off-line refusal text and its ErrNoChunkEntry wrap have no direct assertion.\n\nProbe set on ticket.go: guard omit silent; boundCommit skip bit (TestTicketStagedAfterARecordCommitBindsTheTip); tip == \"\" drop silent. Restored yes on every row.\n\n### Advice\n- ReadStaged does not check that Head is a full object id.\n- A call at the tip reports freeze=updated with an unchanged tip.\n"
+          },
+          "axis": "Coverage",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "a6531d2da80cf055c7adef563b428ab0814ac8ba",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c2b-r2-standards",
+          "performer": "claude:rc-c2b-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-standards-r2",
+            "digest": "sha256:ced624069471e2d2c3a408fde7af928fbb35f39fd8516594a07455ca9e87e21b",
+            "excerpt": "## Standards\n\nRC-C2B confirming round (repair delta a6531d2da..bda45ae07). S1: closed. starter (write.go:111-130) owns the create closure, the started flag, and the created action; RecordChunk and RecordTicket both use it, with unchanged errors and actions. No new finding at severity 5 or more.\n\n### Advice\n- repair_test.go:59 rebuilds the refusal text of change.go:152 and needs a recorded red under the AGENTS.md exception.\n- The starter doc comment reads as a fragment.\n"
+          },
+          "axis": "Standards",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2b-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c2b-r2-spec",
+          "performer": "claude:rc-c2b-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-spec-r2",
+            "digest": "sha256:a2c69a2e4a633f7face3ffbe4c4b1fc4aa66534b1e0bc37747ef3cecdf6b08eb",
+            "excerpt": "## Spec\n\nRC-C2B confirming round (repair delta a6531d2da..bda45ae07). Behaviors preserved: yes. The starter refactor is a pure extraction; RC9-RC12, RC16, and RC24 are untouched; the new tests check stated or ticket-owned behavior; no acceptance changed. No new finding at severity 5 or more.\n\n### Advice\n- The off-line test pins the full message text, which the spec does not fix.\n- TestRecordVerificationWritesTheSourceCommit has no doc comment.\n"
+          },
+          "axis": "Spec",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2b-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c2b-r2-coverage",
+          "performer": "claude:rc-c2b-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ae8e3becb5712221727c16302f813808cfaf1016",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2b-coverage-r2",
+            "digest": "sha256:a58191ccc57f1842c5f56c3d183f8983fcecd53a5bfe3df44d53c1eb761b872b",
+            "excerpt": "## Coverage\n\nRC-C2B confirming round (repair delta a6531d2da..bda45ae07). C1 closed (repair mutant bit), C2 closed (repair mutant bit), C3 closed (probe: entry.SourceCommit = source -> _ = source: bit, TestRecordVerificationWritesTheSourceCommit, restored yes), C4 closed by reading. No new finding at severity 5 or more.\n\n### Advice\n- C3 does not probe SourceCommit = call.Source.\n- The chunk != nil gate at change.go:186 may be unpinned.\n- C4's exact-string check breaks on a harmless rewording.\n"
+          },
+          "axis": "Coverage",
+          "base": "b721e5a7cc8960bc02b37f104a0e5d57a0d06eab",
+          "tip": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c2b-r1-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC-C3",
+      "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+      "tip": "a469af52209db035ff0f271583be5d94951ccdc4",
+      "plan_digest": "sha256:35f578a3c0b6d7811653bb152703150a32a70034e33c94aba51a7106dab30df1",
+      "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+      "acceptance_rows": [
+        "RC25",
+        "RC26",
+        "RC27",
+        "RC28",
+        "RC29",
+        "RC30",
+        "RC31",
+        "RC32",
+        "RC33",
+        "RC84"
+      ],
+      "verification": [
+        {
+          "id": "t04-preflight",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:fbbc51ba8b0f7db982c64d34de056c5808cc76791154f3e62c20d31671013fe7",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,23846,379\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-record-command",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:d5e81d9505b0202c01a44c88f7b41327e9b1e37433d127e1cdb0d289220a0d0e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,20866,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-conformance",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:7cdded9a992dda9e6aeb65034cf5b74566d79c2112c93ec93d7150816711979b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12249,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-floor",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:8f9d0e9b1e0f7688f8a23a0db7004cfcbe7afd7b7977484bc19487fe5014c212",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19443,404\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3665,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-floor-probe",
+          "performer": "claude:rc-t04-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "25ebffe0275f48494d7cd3abac01fd2c015ab801",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+            "digest": "sha256:94d8d4125254b31e06d8d4e57555c9972a64cd2f78db50d8b80382ad7b82fb01",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,2,TestCheckFloorGradesTheChunkUnion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23677,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorGradesTheChunkUnion,\"check_floor_test.go:351: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: ./internal/y (add bench test --package ./internal/y) Next: exempt:false}, want green\",1\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorNamesTheChunkElement,\"check_floor_test.go:211: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: root-conformance (add bench test --check root-conformance); chunk c1: ./internal/x (add bench test --package ./i… (663 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a4bcc6aa33f1af8249320938195f55789a178ecb",
+          "requirement": "floor-probe",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "grade each ticket against its own requirements only",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t04-author-20261024",
+              "digest": "sha256:94d8d4125254b31e06d8d4e57555c9972a64cd2f78db50d8b80382ad7b82fb01",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,2,TestCheckFloorGradesTheChunkUnion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23677,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorGradesTheChunkUnion,\"check_floor_test.go:351: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: ./internal/y (add bench test --package ./internal/y) Next: exempt:false}, want green\",1\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorNamesTheChunkElement,\"check_floor_test.go:211: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: root-conformance (add bench test --check root-conformance); chunk c1: ./internal/x (add bench test --package ./i… (663 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05-guidance-conformance",
+          "performer": "claude:rc-t05-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-author-20261024",
+            "digest": "sha256:04c144cccfe71dc65bc4fc9f9201e0f4a26edcbb016122910ad1d5aa622588b5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12554,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "requirement": "guidance-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t05-guidance-floor",
+          "performer": "claude:rc-t05-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-author-20261024",
+            "digest": "sha256:54faf254dd112601b7fceb0d77a5d46edca6eec8d4643987c73a2b71bb6321f4",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,25082,404\n  github.com/gibbonmi/bench/internal/anchors,pass,104,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "requirement": "guidance-floor",
+          "command": "bench test --package ./internal/anchors --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-preflight",
+          "performer": "claude:rc-t04-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261024",
+            "digest": "sha256:de6a3dfe7507b87f85c0db5ea403ff3b2a75bc655788f41450e27f752d360165",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,23509,379\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-record-command",
+          "performer": "claude:rc-t04-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261024",
+            "digest": "sha256:087603371567930a3cd4e85cd1ec9990c5a2e021121f733e7f263a37dff6bda9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,21251,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "requirement": "record-command",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-conformance",
+          "performer": "claude:rc-t04-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261024",
+            "digest": "sha256:ba2414418e53d6b9346023f4d60bbe8b4903643f3b7a88c4cf687f2005dce8fe",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12651,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-floor",
+          "performer": "claude:rc-t04-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261024",
+            "digest": "sha256:95dc69f39f146c87cd89da232f3ee91bf72a4650ea7c6c08db0b5dd153a15038",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,19268,404\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3519,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-floor-probe",
+          "performer": "claude:rc-t04-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261024",
+            "digest": "sha256:38a466190f238a2f9feaeeeca860e51f64f702e2485cf3115df07a9a1db50c2f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,2,TestCheckFloorGradesTheChunkUnion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23598,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorGradesTheChunkUnion,\"check_floor_test.go:357: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: ./internal/y (add bench test --package ./internal/y) Next: exempt:false}, want green\",1\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorNamesTheChunkElement,\"check_floor_test.go:212: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: root-conformance (add bench test --check root-conformance); chunk c1: ./internal/x (add bench test --package ./i… (663 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "requirement": "floor-probe",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "grade each ticket against its own requirements only",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261024",
+              "digest": "sha256:38a466190f238a2f9feaeeeca860e51f64f702e2485cf3115df07a9a1db50c2f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,2,TestCheckFloorGradesTheChunkUnion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23598,379\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorGradesTheChunkUnion,\"check_floor_test.go:357: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: ./internal/y (add bench test --package ./internal/y) Next: exempt:false}, want green\",1\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorNamesTheChunkElement,\"check_floor_test.go:212: check-floor row = {Check:check-floor Verdict:red Detail:completion plan omits a floor check: chunk c1: root-conformance (add bench test --check root-conformance); chunk c1: ./internal/x (add bench test --package ./i… (663 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c3-r1-standards",
+          "performer": "claude:rc-c3-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-standards-r1",
+            "digest": "sha256:cfff446f6a7516f1a12ff21592ec8aaac7ee5c512a09bd057fae98a74dd2e25b",
+            "excerpt": "## Standards\n\n1 finding, worst severity 2.\n\n- S1 | sev 2 | auto-fix (evidence-only prose correction) | conf 5 | reviews/chunk-repair-cycle.md (RC-C2B prose line added at 7aa9256c8) | The coordinator sentence ends in the telegraphic fragment \"restored yes\".\n\n### Advice\n- bench-implement-spec.md:21 merged two ideas into one sentence near the procedural limit.\n- \"any floor edit\" uses \"floor\" bare where line 48 says \"check floor\".\n- CheckFloorFacts.omitted and a local variable share a name.\n- .bench/commitment.json:950-951 still states the old plan-commit rule; it changes through bench commitment plan.\n- No CHANGELOG entry covers the check-floor change.\n"
+          },
+          "axis": "Standards",
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c3-r1-spec",
+          "performer": "claude:rc-c3-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-spec-r1",
+            "digest": "sha256:0d7771b01f42560565fd7459adccfeb253639f136161b3a5e190157ea298b642",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC25-RC33 and RC84 hold. RC29: bench consumers reviewrecord.TicketRequirements lists only the reviewrecord callers, and ticketRequirements is gone. RC31, RC32, RC84 hold in bench-implement-spec.md:21, :62, :68. The anchored sentences stay verbatim.\n\n### Advice\n- ownership/premises.go:252 holds a membership check, not an ownership derivation.\n- bench-implement-spec.md:21 leaves the repair charge point implicit.\n- .bench/commitment.json:950-951 still requires --preflight-build for each plan commit.\n"
+          },
+          "axis": "Spec",
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c3-r1-coverage",
+          "performer": "claude:rc-c3-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ea405dec70245144ff5ea82d52d234bb30e5146",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-coverage-r1",
+            "digest": "sha256:0b506c7f619317f7140fc95a4ed310607405be81f70dcc4ee1409315270ecb6d",
+            "excerpt": "## Coverage\n\n3 findings. Worst: C1, severity 5.\n\n- C1 | sev 5 | auto-fix (test-only) | conf 8 | internal/preflight/check_floor.go:131-135 | An unplanned ticket graded against the plan-wide requirement union stays silent; no test gives an unplanned ticket an element another chunk covers. Probe mutant 5: silent, restored yes.\n- C2 | sev 3 | auto-fix (test-only) | conf 8 | internal/preflight/check_floor.go:129,133,168-172 | No test pins the red-detail order. Probe mutants 2 and 3: silent, restored yes.\n- C3 | sev 4 | auto-fix (test-only) | conf 6 | internal/preflight/check_floor.go:119-129 | No test catches floor elements shared across chunks (not measured; mutant 4 substring-miss).\n\nProbe set on check_floor.go: dedup -> true bit; chunk order reversed silent; unplanned first silent; shared elements invalid (substring-miss); unplanned plan-wide union silent; empty verification skip silent (equivalent in production). Restored yes on every run row.\n\n### Advice\n- The empty-verification chunk cannot reach check-floor; the plan refuses first.\n"
+          },
+          "axis": "Coverage",
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "finding_ids": [
+            "C1",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ],
+      "confirmations": [
+        {
+          "id": "rc-c3-confirm-1",
+          "performer": "claude:rc-orchestrator-20261024",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "77601154ef9ede2c4e785c71465cb7f3151a8477",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:rc-orchestrator-20261024:rc-c3-confirm-1",
+            "digest": "sha256:4631c28a5dd821374e16375420738c8604dd364bf6ddd2f39c91aab9d97e1201",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,1,TestCheckFloorRedsAnUnplannedTicket,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,497\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23707,379\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorRedsAnUnplannedTicket,\"check_floor_test.go:192: check-floor row = {Check:check-floor Verdict:green Detail: Next: exempt:false}, want the red detailed \\\"completion plan omits a floor check: two.md: ./internal/y (add bench test --package ./internal/y)\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "bda45ae07bde12756003f4aaa9f451f622589772",
+          "reviewed_tip": "0b649e867928047dfdb5f48684dfa08eb6c4e7b0",
+          "repaired_tip": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "finding_ids": [
+            "S1",
+            "C1",
+            "C3"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "skip the unplanned-ticket grade in checkFloorCheck",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:rc-orchestrator-20261024:rc-c3-confirm-1",
+              "digest": "sha256:4631c28a5dd821374e16375420738c8604dd364bf6ddd2f39c91aab9d97e1201",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/check_floor.go,swap,failed,1,TestCheckFloorRedsAnUnplannedTicket,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,all,passed,379\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,497\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,23707,379\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestCheckFloorRedsAnUnplannedTicket,\"check_floor_test.go:192: check-floor row = {Check:check-floor Verdict:green Detail: Next: exempt:false}, want the red detailed \\\"completion plan omits a floor check: two.md: ./internal/y (add bench test --package ./internal/y)\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RC-C4",
+      "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+      "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+      "plan_digest": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+      "acceptance_rows": [
+        "RC44",
+        "RC39",
+        "RC40",
+        "RC41",
+        "RC46",
+        "RC48"
+      ],
+      "verification": [
+        {
+          "id": "t07-gate",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:93725aa33d1c3b9bc2f87f2cf35579361ed37fbf080915d202486ae78f67fd3e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,49285,533\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-record",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:843859f3f2493f3c2398f62cb3b88d54e93362254d2deac41268c3381d981693",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4485,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-command",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:bf7b65878bf1b3a2c0f4b85ed73b62d0171b100df3d9f4ae578fb580afc87b0d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,29201,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-conformance",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:cde3821afcab81678e178e63aa7b4443cff50b650ac8a4e63fd3890e17560ab8",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16100,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-system",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:70d48dc6cd3bbd91dfb65267f64b81b62a13f8a87ee1a03f9d532fb99077e5a1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,65661,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-floor",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:194e4fbc26e96f9ac9953ee1151e6c931680581b22d209a93e7da45f20611920",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,29670,280\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t07-key-probe",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:c0837e4df0ec77f296c0b9b2f048c21b6b269fabb599b27ccd9ef5ce7a036315",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestChunkCheckpointGradesTheRecordProseOnReuse,533,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,849\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,50497,533\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:66: checkpoint after the record prose is corrected = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointReuseKeepsTheEvidencePass,\"checkpoint_prepare_test.go:45: checkpoint after a record-only commit = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:135: checkpoint after an ordinary green of its subject = 0  after 2 runs; want the reused green and one run\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "key-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "frame the HEAD tip into the chunk-checkpoint oracle",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+              "digest": "sha256:c0837e4df0ec77f296c0b9b2f048c21b6b269fabb599b27ccd9ef5ce7a036315",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestChunkCheckpointGradesTheRecordProseOnReuse,533,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,849\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,50497,533\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:66: checkpoint after the record prose is corrected = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointReuseKeepsTheEvidencePass,\"checkpoint_prepare_test.go:45: checkpoint after a record-only commit = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:135: checkpoint after an ordinary green of its subject = 0  after 2 runs; want the reused green and one run\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t07-prose-probe",
+          "performer": "claude:rc-t07-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+            "digest": "sha256:d879bec7c835932185060a8093ad4b861c8d3a75f22b2b2a98bbb2e70ff8cdb6",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,533,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49666,533\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:64: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "requirement": "prose-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the record prose grade after a reuse",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t07-author-20261024",
+              "digest": "sha256:d879bec7c835932185060a8093ad4b861c8d3a75f22b2b2a98bbb2e70ff8cdb6",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,533,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49666,533\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:64: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t06-dirty-gate",
+          "performer": "claude:rc-t06-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4d79fad0bc756227cb050a2079213794ae6e5d17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t06-author-20261024",
+            "digest": "sha256:42810aaff60499d67991473bb65961c6da31f948377df5365982a19136bc444f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,35753,530\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b97628459ab7f45c84b760459cc812a19fd4885",
+          "requirement": "dirty-gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-dirty-conformance",
+          "performer": "claude:rc-t06-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4d79fad0bc756227cb050a2079213794ae6e5d17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t06-author-20261024",
+            "digest": "sha256:45735cb69836475a9dd0b6a504685843233338088bf5901007d167bd4a192244",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13093,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b97628459ab7f45c84b760459cc812a19fd4885",
+          "requirement": "dirty-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t06-dirty-floor",
+          "performer": "claude:rc-t06-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "4d79fad0bc756227cb050a2079213794ae6e5d17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t06-author-20261024",
+            "digest": "sha256:510489ad30ad7ef77a585e5be2e5ee8dec74a53fdb190ecf761f62d6f7bf2c00",
+            "excerpt": "packages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26447,404\n  github.com/gibbonmi/bench/internal/refusalroute,pass,6,22\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/worktree,pass,72099,1514\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b97628459ab7f45c84b760459cc812a19fd4885",
+          "requirement": "dirty-floor",
+          "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/worktree --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-gate",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:94db291f96bda06e564c3b37db88424db7c08a4241eda1b34f2030f0ee69f9e9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,53694,544\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-record",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:35281a189d7c327115975b53d1211891199e13f5c0eab26c63ed015460761ffa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4565,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "record",
+          "command": "bench test --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-command",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:95818776aad17103a49b3e4400092bbc60d00521a2c1834cfc0c9980c403c234",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,31031,404\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-conformance",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:6bce115714b4684cc823c15ccea8f705eed1e35a9d1ba50d099d744345eaf31a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16929,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-system",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:2fef1df8954509a2e46cac39a5a95b15968395ffd7af5892c65613c4e0504a6f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69082,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-floor",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:985ec6d7042efd9e2a605b6ab8a77f262149323261784f56b7f4f517dc4299e4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,31044,280\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-key-probe",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:602dc03a0dd85e2cb396090b8183887cb7106bbe4fe19c456913ad8850aa58c7",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,992\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,53968,544\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:68: checkpoint after the record prose is corrected = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointReuseKeepsTheEvidencePass,\"checkpoint_prepare_test.go:48: checkpoint after a record-only commit = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:137: checkpoint after an ordinary green of its subject = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestUnrecordedGapExitsOne,\"chunk_gap_test.go:107: rerun = exit 0: ; want the reused green verdict\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "key-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "frame the HEAD tip into the chunk-checkpoint oracle",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+              "digest": "sha256:602dc03a0dd85e2cb396090b8183887cb7106bbe4fe19c456913ad8850aa58c7",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,4,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,992\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,53968,544\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:68: checkpoint after the record prose is corrected = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointReuseKeepsTheEvidencePass,\"checkpoint_prepare_test.go:48: checkpoint after a record-only commit = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestReviewCheckpointReuse,\"review_checkpoint_test.go:137: checkpoint after an ordinary green of its subject = 0  after 2 runs; want the reused green and one run\",1\n  github.com/gibbonmi/bench/internal/gate,TestUnrecordedGapExitsOne,\"chunk_gap_test.go:107: rerun = exit 0: ; want the reused green verdict\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t07r1-prose-probe",
+          "performer": "claude:rc-t07-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+            "digest": "sha256:8016157435dd52e26d5b17890cdaa115f780b73fc00bc4f8a1983b7cccf3a5f0",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,52222,544\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:66: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "requirement": "prose-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip the record prose grade after a reuse",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024",
+              "digest": "sha256:8016157435dd52e26d5b17890cdaa115f780b73fc00bc4f8a1983b7cccf3a5f0",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,1,TestChunkCheckpointGradesTheRecordProseOnReuse,544,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,412\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,52222,544\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestChunkCheckpointGradesTheRecordProseOnReuse,\"checkpoint_prepare_test.go:66: checkpoint over record prose = 0 gate: green (fresh verdict reused for this tree)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c4-r1-standards",
+          "performer": "claude:rc-c4-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-standards-r1",
+            "digest": "sha256:706e64cef4db1afc8838817d9efa01378dce6183a3e670d6ea216f98b558acf7",
+            "excerpt": "## Standards\n\n2 findings, both judgment calls. Worst: S1, severity 4.\n\n- S1 | sev 4 | ask-user | conf 6 | internal/gate/gate_prose.go:250-252 | recordProse returns no findings when the tree lacks .bench/prose-exclusions, while the precedent NewGraderFromIndex refuses an absent policy (internal/prose/subject.go:94-97).\n- S2 | sev 3 | ask-user | conf 5 | internal/gate/gate_prose.go:216-217,235 | The record-prose refusal uses a bare operational refusal with no face and no route; every other agent-recoverable chunk-checkpoint refusal has a face (checkpoint.go:142-148, faces_gate.go:37-94).\n\n### Advice\n- Three discriminators mark a chunk checkpoint without one source.\n- committedSource returns a data clump that chunkSource already holds.\n- checkpoint.go and run_transaction.go near their line budgets.\n- runCheckpoint is a one-line pass-through.\n"
+          },
+          "axis": "Standards",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4-r1-spec",
+          "performer": "claude:rc-c4-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-spec-r1",
+            "digest": "sha256:503bb8a6b2dee161cb23169c1855095906af8191a87ad8642c53afdaab704575",
+            "excerpt": "## Spec\n\n3 findings. Worst: P2, severity 4.\n\n- P1 | sev 3 | auto-fix (test-only) | conf 6 | internal/reviewrecord/recordcmd/stage_test.go:190-216 | No test gives a gate-command requirement with no staged excerpt (RC48 why-clause).\n- P2 | sev 4 | ask-user | conf 7 | internal/gate/gate_prose.go:250-252 | Spec line 203 says the record prose is graded on every call; the absent-policy skip is unrecorded, and every consumer repo reaches it.\n- P3 | sev 3 | ask-user | conf 5 | internal/gate/checkpoint.go:280 | The chunk run uses the ordinary gate script instead of the prospective evaluation that spec line 197 names; in a repo with a real preparation step the key hashes a preparation the run never executes.\n\nRows: RC39, RC40, RC41, RC44, RC46 held; RC48 partial gap (P1).\n\n### Advice\n- The RC44 tracked-edit case cannot show the dirty refusal comes before the evidence pass.\n- BENCH-reference does not yet state the chunk dirty-checkout refusal (RC47, RC-C4B).\n"
+          },
+          "axis": "Spec",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4-r1-coverage",
+          "performer": "claude:rc-c4-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8d7b993d3b86a116763f75a48ec057d49cca3813",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-coverage-r1",
+            "digest": "sha256:d5c7fc4fea8b0d0bcd4e06c917f3ef2db6a4bb4e051edded8c62101a8fd15490",
+            "excerpt": "## Coverage\n\n4 findings. Worst: C1, severity 6.\n\n- C1 | sev 6 | ask-user | conf 7 | internal/gate/gate_prose.go:253-256 | No chunk-checkpoint test gives the record grade a non-empty exclusion policy. Probe row 1 (drop the policy-entries loop): silent, restored yes.\n- C2 | sev 5 | ask-user | conf 7 | internal/gate/gate_prose.go:258-268 | The refusals of an unreadable policy, an unreadable record, and a malformed policy have no checkpoint test. Probe rows 3, 4, 5: silent, restored yes.\n- C3 | sev 5 | ask-user | conf 6 | internal/gate/gate_prose.go:265-268 | The edge-inventory symbolic link at the record path has no test.\n- C4 | sev 3 | ask-user | conf 6 | internal/gate/gate_prose.go:250-252 | The absent-policy skip has no spec row and no naming test. Probe row 2 (diagnostic on absent): bit, 25 tests.\n\n### Advice\n- The tip-guard preset at checkpoint.go:53 has no test.\n- RC34-RC38 and RC42 stay planned for RC-C4B.\n"
+          },
+          "axis": "Coverage",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "f28e61ef95f37727ebc2c3c3cc852812a5c65d48",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4-r2-standards",
+          "performer": "claude:rc-c4-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-standards-r2",
+            "digest": "sha256:d535a58c7d12372061a8c61e82f621118822b51a716175e77344c73d64b0735a",
+            "excerpt": "## Standards\n\nRC-C4 confirming round (repair delta a91c31f29..0ddd2727d). S1: closed. The absent-policy skip is stated once, at gate_prose.go:237-250, and TestChunkCheckpointSkipsTheRecordGradeWithNoPolicy pins it. S2: closed. The checkpoint-record-prose face is in the registry at faces_gate.go:64-71, and the recovery text constant is gone. No new finding at severity 5 or more.\n\n### Advice\n- refusal_route_test.go is at its 400-line ceiling, so a later addition needs a split.\n- proseFixture couples the route walk to the prose fixture shape.\n"
+          },
+          "axis": "Standards",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c4-r2-spec",
+          "performer": "claude:rc-c4-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-spec-r2",
+            "digest": "sha256:be5ffe94c94d9f47111a8e72b748ea8bd42ec260af84d993a2fe03db1c71f69d",
+            "excerpt": "## Spec\n\nRC-C4 confirming round (repair delta a91c31f29..0ddd2727d). P1: closed. stage_test.go:202-205 requires the no-excerpt refusal from ownedStages. P2: closed. Spec line 203 and flagged addition 16 record the absent-policy skip, and a test pins it. P3: closed. executeChunkCheckpoint runs through executeTreeWithOwner, as spec line 197 states. RC39, RC40, RC41, RC44, RC46, and RC48 still hold. No new finding at severity 5 or more.\n"
+          },
+          "axis": "Spec",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c4-r2-coverage",
+          "performer": "claude:rc-c4-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8f9214d7a6177a53cce1eb6ac1dbc7dc7202883c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4-coverage-r2",
+            "digest": "sha256:bb4fe6bb4d1ae2ad7da9d49f6a41329b5cc816fda19588ae78eb17fd89636f7e",
+            "excerpt": "## Coverage\n\nRC-C4 confirming round (repair delta a91c31f29..0ddd2727d). C1, C2, C3, and C4: closed, and the repair mutant set bit each row. P1: closed. One probe of the ownedStages guard in ticket.go bit TestGateRequirementKeepsTheNativeExcerpt and restored the file. No new finding at severity 5 or more.\n\n### Advice\n- No test pins the prose grade's own refusal of a linked record alone, because the evidence pass refuses the link first.\n"
+          },
+          "axis": "Coverage",
+          "base": "a469af52209db035ff0f271583be5d94951ccdc4",
+          "tip": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4-r1-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC-C4B",
+      "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+      "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+      "plan_digest": "sha256:487fbc81fa0f46887b029701c80277e1fcc979d9000fa3e6bde8ffc21d360412",
+      "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+      "acceptance_rows": [
+        "RC34",
+        "RC35",
+        "RC36",
+        "RC37",
+        "RC38",
+        "RC42",
+        "RC43",
+        "RC45",
+        "RC47",
+        "RC49",
+        "RC50",
+        "RC51",
+        "RC52"
+      ],
+      "verification": [
+        {
+          "id": "t08-gate",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:09756b3a0345d42c345a671ed899e4d4860f9fcdff23c0f575aa0611c3d200b9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,47370,554\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-command",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:3a5a5d01bcaae629e9d6ad3b08a29a10d61e4c64c71b6ed29b3728df1c5c6b07",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23225,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-conformance",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:7bfcf857f0353143820280df77b661679781411e5150c198ae2e438bdf25dbe1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15143,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-system",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:4d098bfa88f365ff4c0c72597cac1c999ae6cb77e3abd02cc3ece1200d5e720b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,60485,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-floor",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:18f4460b239580541811ca4f62c52b15dc9d363607bbba72e7b16e533e6dfea1",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,108,123\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/refusalroute --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-tip-probe",
+          "performer": "claude:rc-t08-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+            "digest": "sha256:824a7a8af01706870e559dc6f3e9b816da45104a8e7577c5e8123aa6803efe5c",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,1,TestCheckpointPrepareSurvivesARecordCommit,554,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,436\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47909,554\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareSurvivesARecordCommit,\"checkpoint_prepare_test.go:220: prepared run across a record commit = 1 gate subject changed before execution: checkpoint source tip changed\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "requirement": "tip-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "keep the tip-moved guard in the prepared run",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t08-author-20261024",
+              "digest": "sha256:824a7a8af01706870e559dc6f3e9b816da45104a8e7577c5e8123aa6803efe5c",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,1,TestCheckpointPrepareSurvivesARecordCommit,554,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,436\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47909,554\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareSurvivesARecordCommit,\"checkpoint_prepare_test.go:220: prepared run across a record commit = 1 gate subject changed before execution: checkpoint source tip changed\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t08r1-gate",
+          "performer": "claude:rc-t08-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+            "digest": "sha256:36ea30860ffd775c8eb00b5e1b7b011bec7a6257f06931e7baaf7959460c4d8e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,55531,555\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-command",
+          "performer": "claude:rc-t08-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+            "digest": "sha256:45b909ff2fb57b3e59cb6c099acc6d997cbc87718f3ec6887cfba5040a186bf8",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26334,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-conformance",
+          "performer": "claude:rc-t08-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+            "digest": "sha256:092867dcb3d8ce67a22753fa61d2cfcf4d6122feb68873b0c919fee7cb694015",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16821,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-system",
+          "performer": "claude:rc-t08-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+            "digest": "sha256:61bd7a45e0e5374dc7cd06d200b2e7f76d97ba385a685b57b4370af50b9eed15",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,67695,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-floor",
+          "performer": "claude:rc-t08-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+            "digest": "sha256:b25a085567bd818ff9198080f8f4c7976bc365e6fa9f9123b84be1806ccb62a3",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,124,123\n  github.com/gibbonmi/bench/internal/refusalroute,pass,6,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/refusalroute --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-tip-probe",
+          "performer": "claude:rc-t08-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+            "digest": "sha256:a4fed36831c75ee662e3444e64e51d5da56b7c8cde1730670b375829c042b1a6",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,1,TestCheckpointPrepareSurvivesARecordCommit,555,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,436\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,54179,555\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareSurvivesARecordCommit,\"checkpoint_prepare_test.go:221: prepared run across a record commit = 1 gate subject changed before execution: checkpoint source tip changed\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "requirement": "tip-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "keep the tip-moved guard in the prepared run",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024",
+              "digest": "sha256:a4fed36831c75ee662e3444e64e51d5da56b7c8cde1730670b375829c042b1a6",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,1,TestCheckpointPrepareSurvivesARecordCommit,555,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,436\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,54179,555\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareSurvivesARecordCommit,\"checkpoint_prepare_test.go:221: prepared run across a record commit = 1 gate subject changed before execution: checkpoint source tip changed\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c4b-r1-standards",
+          "performer": "claude:rc-c4b-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-standards-r1",
+            "digest": "sha256:6510b7a8fc38cfde7385189868e0512b5ec4ca4c3da9edfe921c4e7f00f2ab06",
+            "excerpt": "## Standards\n\n4 findings. Worst: S1, severity 4.\n\n- S1 | sev 4 | auto-fix | conf 7 | .bench/BENCH-reference.md:341 | The reference starts the prepared run at every freeze, but bench-implement-spec.md:66 starts it only when each axis probes in its own worktree, so one rule has two derivations that disagree.\n- S2 | sev 3 | auto-fix | conf 6 | .bench/BENCH-reference.md:565 | The sentence \"Each call still grades the record evidence and the record prose\" contradicts the new prepared-run paragraph at line 570.\n- S3 | sev 3 | auto-fix | conf 5 | internal/gate/checkpoint.go:290 | The prepared run's skip of the source is derived twice: applyCheckpoint tests the flag, and gradeCheckpointRecord keys the prose skip to an absent context value.\n- S4 | sev 3 | ask-user | conf 5 | internal/gate/checkpoint.go:85 | The new public --prepare flag has no typed CHANGELOG.md entry, and no FT445 ticket's Writes: line holds CHANGELOG.md.\n\n### Advice\n- bench-implement-spec.md:68 merges a descriptive clause with an imperative.\n- ADR 0002 posture 5 and the bounded repair policy use \"prepared chunk run\" without a definition.\n- expireEvidence couples the test to the persisted recorded_at field.\n- TestGateUsageNamesPrepare is a weaker duplicate of the hand-typed row in help_inventory_test.go:128.\n"
+          },
+          "axis": "Standards",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4b-r1-spec",
+          "performer": "claude:rc-c4b-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-spec-r1",
+            "digest": "sha256:e9c15c6f8b0ed8461d97dd600eabd88674afa06d27a2aacb759b998616ffaa13",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC34-RC38, RC42, RC45, and RC49-RC52 hold by trace at cb2a96952. RC43 holds in bench-implement-spec.md:66,68, and RC47 holds in the reference, the profile, the bounded repair policy, and ADR 0002 posture 5. RC35 lives in chunk_gap_test.go, where the gap fixture is, and the row cites it there.\n\n### Advice\n- The guidance starts a prepared run at the last chunk's freeze, which no chunk checkpoint consumes; the spec requires it as written.\n- The guidance does not say outright that the prepared run starts after the record commit.\n- bounded-repair-policy.md:64 keeps its unqualified sentence; the paragraph at :66-68 qualifies it.\n"
+          },
+          "axis": "Spec",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4b-r1-coverage",
+          "performer": "claude:rc-c4b-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "39922d0fa38557674c40429bdaf7148a3231a35b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-coverage-r1",
+            "digest": "sha256:fbc95d71c056b42f0bcca0422154540e246d40e48dc493649846efaf0b9f3d65",
+            "excerpt": "## Coverage\n\n0 findings. Worst issue: none. One mutant set of 8 on internal/gate/checkpoint.go: 7 bit and 1 silent, all restored. The silent row removed json:\"-\" from Checkpoint.Prepare.\n\n### Advice\n- No test pins the complete form's purpose bytes, so a lost json:\"-\" tag on Checkpoint.Prepare stays silent.\n- No test runs a prepared run on a chunk id that the record lacks.\n- No test covers a red prepared run.\n"
+          },
+          "axis": "Coverage",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "cb2a96952895b2bbfd0d3e1a56894aaca0cc5dc8",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c4b-r2-standards",
+          "performer": "claude:rc-c4b-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-standards-r2",
+            "digest": "sha256:c03dec214be85109192ac0e297674889b64d71a67ad2aa4b91cf062581873527",
+            "excerpt": "## Standards\n\nRC-C4B confirming round (repair delta 1838a97f4..665bc44fb). S1, S2, S3, and S4: closed. The reference points to the implement phase for the prepared-run trigger, the stale sentence is qualified, gradesSubjectAlone holds the prepared-run decision once, and the changelog group matches tickets 01-08. 1 new finding.\n\n- S5 | sev 5 | auto-fix | conf 6 | internal/gate/checkpoint_prepare_test.go:234-241 | The independent literal in TestCompleteCheckpointPurposeOmitsPrepare has no recorded red in the review record, as the AGENTS.md exception requires.\n\n### Advice\n- The changelog's old-key sentence omits the HEAD tip, and its prepared-run bullet omits the tip-moved guard skip.\n- gradesSubjectAlone names the consequence of the Prepare flag as a one-line alias.\n"
+          },
+          "axis": "Standards",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [
+            "S5"
+          ],
+          "supersedes": [
+            "rc-c4b-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c4b-r2-spec",
+          "performer": "claude:rc-c4b-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-spec-r2",
+            "digest": "sha256:d4814a4ea7efa16b73118128c1f0b213516ddd7ca6f67318f067a39926cc1e51",
+            "excerpt": "## Spec\n\nRC-C4B confirming round (repair delta 1838a97f4..665bc44fb). Rows RC34-RC38, RC42, RC45, and RC49-RC52 still hold by trace, and RC43 and RC47 still hold in the guidance and documents. The gradesSubjectAlone predicate gives the same truth value at all three sites. The changelog bullets claim nothing beyond the spec and tickets 01-08, and the widening obeys the plan-expansion rule. No new finding at severity 5 or more.\n\n### Advice\n- The plan commit message of 16f4900f3 cites no decision reference; the widening and the learning entry carry it.\n"
+          },
+          "axis": "Spec",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4b-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c4b-r2-coverage",
+          "performer": "claude:rc-c4b-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-coverage-r2",
+            "digest": "sha256:b32ef3eb3ce0550cd423818b5201828fad88c7187b706e82b14501c7c30c982b",
+            "excerpt": "## Coverage\n\nRC-C4B confirming round (repair delta 1838a97f4..665bc44fb). A1: closed. TestCompleteCheckpointPurposeOmitsPrepare pins the complete purpose bytes, and the removal of json:\"-\" bit it. All three gradesSubjectAlone sites are pinned: one probe of the early return in applyCheckpoint bit 8 tests and restored the file. The refactor dropped no assertion. No new finding at severity 5 or more.\n\n### Advice\n- gradesSubjectAlone is an alias of Prepare, so a later mode that sets only some of the three sites would need its own tests.\n"
+          },
+          "axis": "Coverage",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4b-r1-coverage"
+          ]
+        },
+        {
+          "id": "rc-c4b-r3-standards",
+          "performer": "claude:rc-c4b-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2fc11e56d0ed8b3c1a6d13cc04b33d4569637d8d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c4b-standards-r2",
+            "digest": "sha256:e65ec55dc4caa43733958f574ded0da0bbcd755a404ba214ff6b5c1dc2dd380d",
+            "excerpt": "## Standards\n\nRC-C4B reaffirmation of S5 (record-only correction 38bb0c221). S5: closed. The Repair state records the coordinator's red: the removal of the json:\"-\" tag from Checkpoint.Prepare failed TestCompleteCheckpointPurposeOmitsPrepare, and the probe restored the file. No new finding at severity 5 or more.\n"
+          },
+          "axis": "Standards",
+          "base": "0ddd2727d49a4940ace2f34d0b403fb78a100efa",
+          "tip": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c4b-r2-standards"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC-C5",
+      "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+      "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+      "plan_digest": "sha256:22690b62e0e3e86ada7998c0151c19faa5bd24dfa0e8b7076e533cc98193c3ba",
+      "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+      "acceptance_rows": [
+        "RC53",
+        "RC54",
+        "RC55",
+        "RC56",
+        "RC57"
+      ],
+      "verification": [
+        {
+          "id": "t09-testreport",
+          "performer": "claude:rc-t09-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+            "digest": "sha256:a86ac030883cbd6512df4111785057b4dea96f48e4a89b9a82f62865f6d88005",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,75996,280\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-preflight",
+          "performer": "claude:rc-t09-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+            "digest": "sha256:6d70b9ade53c0e6d2fdfe187198126421f1afc357dd45e08856a401095260512",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,37392,380\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-conformance",
+          "performer": "claude:rc-t09-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+            "digest": "sha256:df52e9ae7280043384c22ea98db2fcca0c3995c438f019470aea327d5996cecb",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17235,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-system",
+          "performer": "claude:rc-t09-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+            "digest": "sha256:801bd3e5cfe3d3370977db5d6d5c5adcbe060517cc3f75fb6dea3cb37b11d166",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,68977,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-floor",
+          "performer": "claude:rc-t09-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+            "digest": "sha256:daa745022f4b2f49701720c888876a94fb1e372f4716ddd831df07cf87144116",
+            "excerpt": "packages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,54830,1142\n  github.com/gibbonmi/bench/internal/gate,pass,67785,555\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,6689,112\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,39256,280\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-index-probe",
+          "performer": "claude:rc-t09-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+            "digest": "sha256:96c9995b8f1b4caa9b6a0cdf70cc1703f805e4bf5a9d85e3a0d81d1856edc7a9",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,2,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,280\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,556\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,81807,280\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:310: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite,\"selection_test.go:289: changed command = 1\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "requirement": "index-probe",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the system-suite package from the index",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t09-author-20261024",
+              "digest": "sha256:96c9995b8f1b4caa9b6a0cdf70cc1703f805e4bf5a9d85e3a0d81d1856edc7a9",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,2,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,280\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,556\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,81807,280\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:310: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite,\"selection_test.go:289: changed command = 1\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t09r1-testreport",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:c3b3c53b498230df9efcf8752cc88cd91cd4eb441fab92ed67c86e47e6b5909a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,77777,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "testreport",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-preflight",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:bac878711c4215e8b6aee6e519db9293b9894cfe36d7b0329208b258de1439c9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,35968,380\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "preflight",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-conformance",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:c93d5e2194e90197ad4237bf2ad9e5892f8c162693f8dbc9640d14f777087b20",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16960,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-system",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:9de2897041b71619df3a6ccfeb9e182abf66bcf81a9ca2190c58558adbd0e0cb",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,69322,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-floor",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:61c12601e441cc2ed7b3dfbe29e1e29d013d300e2c7c3e0c91c6c843b20ff8eb",
+            "excerpt": "packages[4]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,51924,1142\n  github.com/gibbonmi/bench/internal/gate,pass,63893,555\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,6188,112\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,36331,280\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-index-probe",
+          "performer": "claude:rc-t09-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+            "digest": "sha256:031d89eef5ae3925bb00802ef9b7573df3ae562755b68b7b58bb630711240bb4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,3,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,283\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,74708,283\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:307: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_file,\"selection_test.go:281: changed command = 1\",2\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_import,\"selection_test.go:290: Go child holds \\\" -tags=system ./internal/systemtest changedcommand/changed\\\\\\\\n\\\" = false, want true:\",84\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "requirement": "index-probe",
+          "command": "bench test --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the system-suite package from the index",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t09-repair1-20261024",
+              "digest": "sha256:031d89eef5ae3925bb00802ef9b7573df3ae562755b68b7b58bb630711240bb4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testreport/selection.go,swap,failed,3,TestChangedSelectionReachesTheSystemSuiteByImport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/testreport,all,passed,283\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,801\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,fail,74708,283\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionReachesTheSystemSuiteByImport,\"selection_test.go:307: selection = map[changedcommand/changed:changed], want changedcommand/internal/systemtest selected by its import\",1\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_file,\"selection_test.go:281: changed command = 1\",2\n  github.com/gibbonmi/bench/internal/testreport,TestChangedSelectionSelectsTheSystemSuite/suite_import,\"selection_test.go:290: Go child holds \\\" -tags=system ./internal/systemtest changedcommand/changed\\\\\\\\n\\\" = false, want true:\",84\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c5-r1-standards",
+          "performer": "claude:rc-c5-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-standards-r1",
+            "digest": "sha256:988927545bcea368db4c45a048d9e0f37bd87a018170931f6c70c56e628ffe7c",
+            "excerpt": "## Standards\n\n4 findings. Worst: S1, severity 4.\n\n- S1 | sev 4 | auto-fix | conf 8 | CHANGELOG.md:18 | The first sentence of the new bullet is 40 words, over the 25-word bound for a descriptive sentence.\n- S2 | sev 4 | auto-fix | conf 7 | internal/preflight/check_floor_test.go:335-336 | TestCheckFloorOwesTheSystemCheck restates the full red detail as a literal instead of the existing c1Red seam.\n- S3 | sev 3 | auto-fix | conf 6 | internal/preflight/check_floor_test.go:334 | The --check system --run ^TestX$ case pins the unfiltered guard with no recorded red.\n- S4 | sev 4 | auto-fix | conf 6 | internal/testreport/selection_test.go:489 | writeListingGo repeats the recording stub of writeCheckGo in check_test.go:294.\n\n### Advice\n- resolveChangedRun derives the system import path a second time through a loader closure.\n- systemSuitePackage reads the first operand without a leading dash from gate.SystemSuite.\n- floorElements merges Checks and Packages, and satisfies and floorCommand sort them apart again.\n"
+          },
+          "axis": "Standards",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c5-r1-spec",
+          "performer": "claude:rc-c5-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-spec-r1",
+            "digest": "sha256:58ede75786b0f94b2a577d8397aea71e71149b6d205144d973359096a3255ae4",
+            "excerpt": "## Spec\n\n0 findings. Worst issue: none. RC53-RC56 hold by trace at dbc23a663, and RC57 holds: bench consumers gate.SystemSuite lists the index, and no second tag or package list enters the selector. The linked-repository acceptance holds through TestChangedSelectionKeepsTheLinkedIndex. The changelog bullet claims only what ticket 09 delivers.\n\n### Advice\n- A go.mod change gives the floor ./... without the system check, while the changed selection selects the suite; no row decides it.\n- A fold that merges a system-suite test owes no system run, as before.\n- In a mixed changed run, -tags=system and the suite environment apply to the other selected packages too.\n"
+          },
+          "axis": "Spec",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c5-r1-coverage",
+          "performer": "claude:rc-c5-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f15896243cbc8820cb6997c4c0e847cc5df34cd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-coverage-r1",
+            "digest": "sha256:de770cf929af8d93cfed6536ecc203ed05e53e3a5b7761f8451073838750606a",
+            "excerpt": "## Coverage\n\n3 findings. Worst: C1, severity 7. One mutant set of 6 on internal/testreport/selection.go: 2 bit and 4 silent, all restored.\n\n- C1 | sev 7 | ask-user | conf 8 | internal/testreport/selection.go:132 | No test runs a changed selection that holds the suite plus another package; dropping or reordering the other packages stayed silent (mutants 1 and 2).\n- C2 | sev 5 | ask-user | conf 7 | internal/testreport/selection.go:127 | No test pins the !selected guard, so a suite that the change does not select can run with its environment (mutant 5, silent).\n- C3 | sev 3 | ask-user | conf 7 | internal/preflight/check_floor.go:186 | A plan command with --run all satisfies the unfiltered rule, because the run pattern collides with the AllTests sentinel; the package form has the same collision.\n\n### Advice\n- The IsDir half of the suite-directory guard is silent (mutant 4).\n- The consumer line that appends the suite environment in command.go was not probed.\n"
+          },
+          "axis": "Coverage",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "dbc23a6631fe4df99abcb79fa2b1c1dda387b13a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c5-r2-spec",
+          "performer": "claude:rc-c5-spec-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-spec-r2",
+            "digest": "sha256:94414f55f679a31bdc538b74d40e4d3364ea1b2928ce64d63aa3046c02e524c1",
+            "excerpt": "## Spec\n\nRC-C5 delta-only reaffirmation (repair delta 78202f768..e05ef7e0d). Earlier evidence still holds: RC53-RC57 cite tests that exist and check the row's behavior, and bench coverage reports the map as mapped. The new --run rule is stricter, stays inside RC55 and RC56, and leaves RC28 true. The changelog bullet claims only what ticket 09 and its repair deliver. No new finding at severity 5 or more.\n\n### Advice\n- Ticket 09 and the spec do not state the --run rule; a short sentence in ticket 09 would close that.\n"
+          },
+          "axis": "Spec",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c5-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c5-r2-standards",
+          "performer": "claude:rc-c5-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-standards-r2",
+            "digest": "sha256:733bce9b41992e5107795fe7485154cf8f1fb664ae316d3ee40b6046af573658",
+            "excerpt": "## Standards\n\nRC-C5 confirming round (repair delta 78202f768..e05ef7e0d). S1, S2, and S4: closed. S3: open for the record only. Request.Filtered() holds the explicit-run fact once, both branches of satisfies read it, and the removed guard loses nothing because parseFocusedRequest refuses --run on a check with no pattern. No new finding at severity 5 or more.\n\n- S3 | sev 3 | auto-fix | conf 7 | reviews/chunk-repair-cycle.md | The record holds no red of the two filtered-run cases.\n\n### Advice\n- Run() still spells the explicit-run test instead of reading Filtered().\n- The new --run changelog sentence has no stated before-behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [
+            "S3"
+          ],
+          "supersedes": [
+            "rc-c5-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c5-r2-coverage",
+          "performer": "claude:rc-c5-coverage-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-coverage-r2",
+            "digest": "sha256:5ea2105ed673d903a6ff649bb0e9db7239c4dd7c9c04e4a08bc9d67596189dc2",
+            "excerpt": "## Coverage\n\nRC-C5 confirming round (repair delta 78202f768..e05ef7e0d). C1, C2, and C3: closed. The suite import row pins the mixed-run argv order, the no-suite row pins the absence of suite operands and environment, and both floor forms refuse --run all. The table rewrite and the writeListingGo delegation dropped no assertion. No new finding at severity 5 or more.\n\n### Advice\n- No test literal pins the system element's command text any more; floorCommand has one generic branch.\n- Request.Filtered has no direct row in selection_facts_test.go.\n"
+          },
+          "axis": "Coverage",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c5-r1-coverage"
+          ]
+        },
+        {
+          "id": "rc-c5-r3-standards",
+          "performer": "claude:rc-c5-standards-r2-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2804457195933e57f40d5c627335609f39a1fd24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c5-standards-r2",
+            "digest": "sha256:e359b8c8ac9c1f3220e9340a21f892058cb273dfa59a30e17f7b8089142aff1b",
+            "excerpt": "## Standards\n\nRC-C5 reaffirmation of S3 (record-only correction 04df0f34d). S3: closed. The Repair state records the repair's reds: the check form reverted to the sentinel compare failed TestCheckFloorOwesTheSystemCheck, and the package form reverted to the sentinel compare failed TestCheckFloorRejectsAFilteredRun. No new finding at severity 5 or more.\n"
+          },
+          "axis": "Standards",
+          "base": "665bc44fb86d9095b22ad956e49d5bd47f15c901",
+          "tip": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c5-r2-standards"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC-C6",
+      "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+      "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+      "plan_digest": "sha256:1ae1c0cfa9857af1135e5615b5a5e4de59e1561667a5e3ffb50a3697d555b935",
+      "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+      "acceptance_rows": [
+        "RC58",
+        "RC59",
+        "RC60",
+        "RC61",
+        "RC62",
+        "RC63",
+        "RC64",
+        "RC65",
+        "RC66",
+        "RC67",
+        "RC71",
+        "RC72",
+        "RC73"
+      ],
+      "verification": [
+        {
+          "id": "t10-gate",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:8f0ea50e0b6553a85ea9c3ed1c07cc33ae809ee6c3a0dc88d2a0c86a6145177b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,69352,571\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-testgap",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:c09bdbfc14df5e317d3cb2f5873cac879164cb66ca55ca22c7aea58706f649e5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,pass,316,21\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "testgap",
+          "command": "bench test --package ./internal/testgap",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-conformance",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:75a8cb8f4e8f35adf16993f527d6df543af6b470981f8a411a4c1d689b0616ad",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17404,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-system",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:ea4b155c65e5c392b00198932fa4f1ba99d4f5b7ca9b586fd897281b62e08af7",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,73080,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-floor",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:422111bbe5b8c6f8d4057effad36b6e9f3246e47f79659b968f04e9b0a80fd78",
+            "excerpt": "packages[2]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,300,14\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4938,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/gate/authorization --package ./internal/reviewrecord",
+          "exit_code": 0
+        },
+        {
+          "id": "t10-tag-probe",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:98605fa8fbc8673def56df73856efcca64d7b79b6a6f03888a593926efbfcfc9",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,571,1,0,null,yes\n  2,bit,swap,failed,6,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,571,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1871\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70395,571\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:114: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,69164,571\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:107: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:144: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:72: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:85: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:155: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:126: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "tag-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "admit a system-suite file to the delta",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+              "digest": "sha256:98605fa8fbc8673def56df73856efcca64d7b79b6a6f03888a593926efbfcfc9",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,571,1,0,null,yes\n  2,bit,swap,failed,6,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,571,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1871\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70395,571\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:114: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,69164,571\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:107: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:144: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:72: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:85: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:155: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:126: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10-operand-probe",
+          "performer": "claude:rc-t10-author-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+            "digest": "sha256:98605fa8fbc8673def56df73856efcca64d7b79b6a6f03888a593926efbfcfc9",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,571,1,0,null,yes\n  2,bit,swap,failed,6,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,571,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1871\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70395,571\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:114: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,69164,571\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:107: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:144: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:72: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:85: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:155: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:126: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "requirement": "operand-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "take the delta base from the record chunk tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t10-author-20261024",
+              "digest": "sha256:98605fa8fbc8673def56df73856efcca64d7b79b6a6f03888a593926efbfcfc9",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,571,1,0,null,yes\n  2,bit,swap,failed,6,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,571,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,1871\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70395,571\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:114: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,69164,571\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:107: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:144: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:72: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:85: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:155: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:126: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10r1-gate",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:459b59bfd049ce74c2dd436c58457487d87b4eb2eb9a7bd2f7c9c586f4e5c6c9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,58244,574\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t10r1-testgap",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:eab143b81458f9bd2a54abc4640197642eccb9be1d3065d2101911ae460198d4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testgap,pass,260,21\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "testgap",
+          "command": "bench test --package ./internal/testgap",
+          "exit_code": 0
+        },
+        {
+          "id": "t10r1-conformance",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:d95431c735f25c07a63083321ca5f995184ec2c49337075600c7ba77649f146a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15401,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t10r1-system",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:392c9f3f2650c397173e6d5891cce90185b24608fb601e201df9b295b6708623",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,60147,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t10r1-floor",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:2682be62e840af195b8d784034369905e3ce027cb01977035eab5d48c0c81ac1",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,281,14\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4018,112\n  github.com/gibbonmi/bench/internal/testreport,pass,66713,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/gate/authorization --package ./internal/reviewrecord --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t10r1-tag-probe",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:9edd1111f69b60bed431344bf70d2d9109503130be9fc2f8658f819347b9cca7",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,574,1,0,null,yes\n  2,bit,swap,failed,7,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,574,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2087\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59845,574\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:118: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59691,574\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:173: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointTimesOutAsAWholeRun,\"delta_checkpoint_test.go:162: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "tag-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "admit a system-suite file to the delta",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+              "digest": "sha256:9edd1111f69b60bed431344bf70d2d9109503130be9fc2f8658f819347b9cca7",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,574,1,0,null,yes\n  2,bit,swap,failed,7,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,574,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2087\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59845,574\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:118: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59691,574\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:173: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointTimesOutAsAWholeRun,\"delta_checkpoint_test.go:162: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t10r1-operand-probe",
+          "performer": "claude:rc-t10-repair1-20261024",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+            "digest": "sha256:9edd1111f69b60bed431344bf70d2d9109503130be9fc2f8658f819347b9cca7",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,574,1,0,null,yes\n  2,bit,swap,failed,7,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,574,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2087\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59845,574\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:118: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59691,574\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:173: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointTimesOutAsAWholeRun,\"delta_checkpoint_test.go:162: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "requirement": "operand-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "take the delta base from the record chunk tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024",
+              "digest": "sha256:9edd1111f69b60bed431344bf70d2d9109503130be9fc2f8658f819347b9cca7",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRunsWholeForTheSystemSuite,574,1,0,null,yes\n  2,bit,swap,failed,7,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,574,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2087\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59845,574\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRunsWholeForTheSystemSuite,\"delta_checkpoint_test.go:118: checkpoint = 0  after the schedules [\\\"whole\\\" \\\"[\\\\\\\\\\\"./internal/systemtest\\\\\\\\\\\"]\\\"]; want one more whole run\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,59691,574\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:173: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointTimesOutAsAWholeRun,\"delta_checkpoint_test.go:162: gate schedules = [\\\"whole\\\" \\\"whole\\\"]; want the prepared whole run and then the delta set [\\\"./.\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c6-r1-standards",
+          "performer": "claude:rc-c6-standards-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-standards-r1",
+            "digest": "sha256:9b656f42d8d47b5268c9a0859a89626aeca708e596d8ab49e4a25bea15d4ef7d",
+            "excerpt": "## Standards\n\n4 findings. Worst: S1, severity 4.\n\n- S1 | sev 4 | auto-fix | conf 8 | internal/gate/delta_checkpoint.go:149 | The -run ^TestRootConformance$ filter is derived here and again at internal/testreport/selection_facts.go:93.\n- S2 | sev 3 | auto-fix | conf 6 | internal/gate/delta_checkpoint.go:118-120 | runDelta repeats the cancel and timeout classification of the whole path and prints no gate: timeout line.\n- S3 | sev 3 | auto-fix | conf 6 | .bench/BENCH-reference.md:546 | \"The phase table\" names both the whole table, which has no conformance phase, and the delta table, which has one.\n- S4 | sev 1 | auto-fix | conf 10 | internal/gate/delta_checkpoint_test.go:234 | A comment repeats the word \"repair\".\n\n### Advice\n- The system-suite package is picked out of the SystemSuite operands three ways.\n- runDelta and settleRun take long parameter lists of same-typed strings.\n- The CHANGELOG bullet uses a list as its subject.\n"
+          },
+          "axis": "Standards",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6-r1-spec",
+          "performer": "claude:rc-c6-spec-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-spec-r1",
+            "digest": "sha256:d12b8a4e8311d183662f1d4609c0f38e1f64994f4a5fcd189658e492b5591408",
+            "excerpt": "## Spec\n\n2 findings. Worst: P1, severity 3.\n\n- P1 | sev 3 | auto-fix | conf 6 | .bench/BENCH-reference.md:638-639 | The reference states delta eligibility as test-only plus a whole green, but the code also runs whole for a system-suite or race-table file, a non-kit phase table, no changed test file, and --fresh.\n- P2 | sev 3 | auto-fix | conf 5 | internal/gate/delta_checkpoint.go:118 | A delta timeout prints no gate: timeout line and exits with the killed child's code, unlike the whole path.\n\n### Advice\n- The spec's eligibility list does not record the two fail-closed guards.\n- The prepared run stays whole only because it carries no chunk source.\n- ReviewedAt has no direct unit test with a target other than the chunk tip.\n"
+          },
+          "axis": "Spec",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6-r1-coverage",
+          "performer": "claude:rc-c6-coverage-r1-20261024",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d89bcf9e75f866e2567741c5028ebdf59d5be713",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-coverage-r1",
+            "digest": "sha256:5366cabc6aa4d22ac9aeb9a0d0dd1ee03cb94c397943f03ff0eebfda1f6ea3ff",
+            "excerpt": "## Coverage\n\n2 findings. Worst: C1, severity 4. One mutant set of 9 on internal/gate/delta_checkpoint.go: 3 bit and 6 silent, all restored.\n\n- C1 | sev 4 | auto-fix | conf 6 | internal/gate/delta_checkpoint.go:66 | Two of the four clauses of narrowsKitTable have no isolating test: the Go-module clause and the manifest read error (mutants 3 and 4, silent).\n- C2 | sev 3 | auto-fix | conf 5 | internal/gate/delta_checkpoint.go:118-120 | No test pins the delta timeout path (mutant 5, silent).\n\n### Advice\n- The schedule refusal has one input that both clauses reject (mutants 1 and 2, silent).\n- Dropping the anchors from the conformance -run stays silent (mutant 6).\n"
+          },
+          "axis": "Coverage",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "f324a1621156abd0e34ceabc19b9c47d31ff4f7b",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6-r2-standards",
+          "performer": "claude:rc-c6-standards-r2-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-standards-r2",
+            "digest": "sha256:2d4781f16ad68f13a6403fd4b9867adff790bd319862d2b02caef50e733d7ba1",
+            "excerpt": "## Standards\n\nRC-C6 confirming round (repair delta 2af78b087..7562758544). S1, S2, S3, and S4: closed. RootConformanceRunPattern is the one source of the conformance filter, interruptedExit holds the one timeout classification for both tails, and the reference names the whole phase table. The Repair state records each red. No new finding at severity 5 or more.\n\n### Advice\n- The binary-select error branch in run_transaction.go spells the timeout classification a third time.\n- interruptedExit lives in delta_checkpoint.go although the whole-run tail also reads it.\n"
+          },
+          "axis": "Standards",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c6-r2-spec",
+          "performer": "claude:rc-c6-spec-r2-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-spec-r2",
+            "digest": "sha256:f1e77ed019d76b2fbbaa3a311278d68c0e443a8f7112058fa5cdb7bc57ea05df",
+            "excerpt": "## Spec\n\nRC-C6 confirming round (repair delta 2af78b087..7562758544). P1: closed; the reference lists every case that runs the whole gate, and each maps to a refusal path in the delta decision. P2: closed; a delta timeout prints gate: timeout and exits 124, pinned by TestDeltaCheckpointTimesOutAsAWholeRun. RC58-RC67 and RC71-RC73 still hold. The spec additions and the manifest-guard sentence match narrowsKitTable. No new finding at severity 5 or more.\n\n### Advice\n- When ticket 11 adds the delta record, re-read the changelog and reference sentences that say a delta records no green.\n"
+          },
+          "axis": "Spec",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c6-r2-coverage",
+          "performer": "claude:rc-c6-coverage-r2-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-coverage-r2",
+            "digest": "sha256:3c0745fcc98fe2830207c20d37972de2970bd587532d562107637f6474ad7884",
+            "excerpt": "## Coverage\n\nRC-C6 confirming round (repair delta 2af78b087..7562758544). C1: closed; each of the four narrowsKitTable clauses has its own case. C2: closed; TestDeltaCheckpointTimesOutAsAWholeRun pins exit 124, the timeout line, no gap, and no evidence. The shared fixture and the requireDelta return dropped no assertion, and the whole run's cancel and timeout paths keep their tests. No new finding at severity 5 or more.\n\n### Advice\n- The delta cancel path has no test of its own.\n- The timeout test's schedule assertion depends on the gate script reaching its record line within one second.\n"
+          },
+          "axis": "Coverage",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c6-r1-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC-C6B",
+      "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+      "tip": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+      "plan_digest": "sha256:834cc5b8fe96129f12e1df67ee87ceb805610b9c13ae057518c1e7f55112e839",
+      "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+      "acceptance_rows": [
+        "RC68",
+        "RC69",
+        "RC70",
+        "RC74",
+        "RC75",
+        "RC82",
+        "RC83"
+      ],
+      "verification": [
+        {
+          "id": "t11-gate",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:cecf1b4e8fcac0c12c0c16375605f00ed21459592ef135a27c5170f97c6d8b09",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,56219,584\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-conformance",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:bfa6e571ddef8084277738071585f7ce0e0be446864468b15428ba079229088b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13294,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-system",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:21cdeefe7cb7c987645d92eebfdcfb4f491c57029a26d73eb65fea97c44937db",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,54517,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-floor",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:ee59afc57cd11ca2f18d1aaba31de6e8db7537a72d540d17cf39d9c2e4e03292",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1328,179\n  github.com/gibbonmi/bench/internal/status,pass,5971,142\n  github.com/gibbonmi/bench/internal/testreport,pass,61150,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/git --package ./internal/status --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t11-store-probe",
+          "performer": "claude:rc-t11-verify1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+            "digest": "sha256:565811d66961aaef3253afdb77408f4adb7bc608d41e3ea5a526ab11ac5907d7",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,11,TestCheckpointPrepareRunsWholeForANonTestRepair,584,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2709\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,54884,584\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareRunsWholeForANonTestRepair,\"lane_record_test.go:301: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:286: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestCheckpointPrepareTakesTheDelta1059107337/002/.git/bench… (391 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:192: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:261: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:328: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestDeltaGreenNeedsTheCurrentBase2759964528/002/.git/bench-… (390 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenPersistenceFailureFailsTheCheckpoint,\"lane_record_test.go:345: checkpoint with an unwritable delta record = 0 ; want exit 1 and the persistence cause\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "requirement": "store-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "write the delta green to the evidence store",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t11-verify1-20261025",
+              "digest": "sha256:565811d66961aaef3253afdb77408f4adb7bc608d41e3ea5a526ab11ac5907d7",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,11,TestCheckpointPrepareRunsWholeForANonTestRepair,584,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2709\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,54884,584\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareRunsWholeForANonTestRepair,\"lane_record_test.go:301: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:286: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestCheckpointPrepareTakesTheDelta1059107337/002/.git/bench… (391 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:192: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:261: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:328: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JIX4RS/t/TestDeltaGreenNeedsTheCurrentBase2759964528/002/.git/bench-… (390 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenPersistenceFailureFailsTheCheckpoint,\"lane_record_test.go:345: checkpoint with an unwritable delta record = 0 ; want exit 1 and the persistence cause\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t11r1-gate",
+          "performer": "claude:rc-t11-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-repair1-20261025",
+            "digest": "sha256:a33ef4d1f7837790a47356cdef2d854dbd21ce72c660f2a33e138f29db2796a3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,74634,585\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t11r1-conformance",
+          "performer": "claude:rc-t11-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-repair1-20261025",
+            "digest": "sha256:b22502b2d27fdfdd01626e825af6070d0645052070e879d44f0273c6567ee5c9",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16477,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t11r1-system",
+          "performer": "claude:rc-t11-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-repair1-20261025",
+            "digest": "sha256:3f02558460bcd8919d1fa5a8284f5705f436ba8a47fea9541d410bb0a0e98689",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,67611,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "requirement": "system",
+          "command": "bench test --check system",
+          "exit_code": 0
+        },
+        {
+          "id": "t11r1-floor",
+          "performer": "claude:rc-t11-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-repair1-20261025",
+            "digest": "sha256:62ba8f00dab1330d0fe104a495e450540c310a86230876ba0864955e151bcb2f",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1652,179\n  github.com/gibbonmi/bench/internal/status,pass,7634,142\n  github.com/gibbonmi/bench/internal/testreport,pass,77683,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "requirement": "floor",
+          "command": "bench test --package ./internal/git --package ./internal/status --package ./internal/testreport",
+          "exit_code": 0
+        },
+        {
+          "id": "t11r1-store-probe",
+          "performer": "claude:rc-t11-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t11-repair1-20261025",
+            "digest": "sha256:74039aa51621119ce3ba3aa38bc508060609e108579a393597ff64342a9e7a1f",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,12,TestCheckpointPrepareRunsWholeForANonTestRepair,585,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2896\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,72672,585\nfailures[12]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareRunsWholeForANonTestRepair,\"lane_record_test.go:302: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:287: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JADDFW/t/TestCheckpointPrepareTakesTheDelta1482792442/002/.git/bench… (473 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:192: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:262: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsAValidRecord,\"lane_record_test.go:344: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:324: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JADDFW/t/TestDeltaGreenNeedsTheCurrentBase3952779853/002/.git/bench-… (472 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenPersistenceFailureFailsTheCheckpoint,\"lane_record_test.go:361: checkpoint with an unwritable delta record = 0 ; want exit 1 and the persistence cause\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "requirement": "store-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "write the delta green to the evidence store",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:rc-t11-repair1-20261025",
+              "digest": "sha256:74039aa51621119ce3ba3aa38bc508060609e108579a393597ff64342a9e7a1f",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,12,TestCheckpointPrepareRunsWholeForANonTestRepair,585,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2896\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,72672,585\nfailures[12]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareRunsWholeForANonTestRepair,\"lane_record_test.go:302: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:287: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JADDFW/t/TestCheckpointPrepareTakesTheDelta1482792442/002/.git/bench… (473 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:192: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit,\"delta_checkpoint_test.go:111: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointOpensTheChunkGap,\"delta_checkpoint_test.go:145: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointPackagesComeFromTheTestGapList,\"delta_checkpoint_test.go:76: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointReadsTheBaseWithoutExpiry,\"delta_checkpoint_test.go:89: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenAuthorizesNoLanding,\"delta_checkpoint_test.go:130: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:262: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsAValidRecord,\"lane_record_test.go:344: delta checkpoint = 0  with 2 evidence entries after 1; want exit 0 and no new entry\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:324: delta record = {Schema:0 State: Status: Tree: Oracle: RecordedAt: StartedAt: OwnerPID:0 Lane: Outcome: RunBinary: Delta: BaseTree:}, open /dev/shm/JADDFW/t/TestDeltaGreenNeedsTheCurrentBase3952779853/002/.git/bench-… (472 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenPersistenceFailureFailsTheCheckpoint,\"lane_record_test.go:361: checkpoint with an unwritable delta record = 0 ; want exit 1 and the persistence cause\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c6b-r1-standards",
+          "performer": "claude:rc-c6b-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6b-standards-20261025",
+            "digest": "sha256:64e179eeafe85b1a9d6e6d06a0c0bd5d52bb77ea185d2954994691d4e4925dbe",
+            "excerpt": "## Standards\n\nRC-C6B round r1 (7562758544..1234e9ecde). Count: 8 findings, all severity 3 or lower. Worst: severity 3, advice only. No correctness defect, no hard violation.\n\n### Advice\n- Sev 3: delta_checkpoint.go:158-160 relies on a commented invariant that an eligible delta always has a selected run binary; no nil dereference is reachable today.\n- Sev 3: verdict_registry.go:53-63 repeats the content-address and recordTimeAt tail of validateLaneRecord.\n- Sev 3: checkpoint.go:55-57,299-303 keeps deltaSourceKey and chunkSourceKey for one chunkSource value.\n- Sev 2: the new delta tests sit in lane_record_test.go; the coverage map records the placement.\n- Sev 2: new test comments tag spec row ids; the tree already uses the `covers RC<n>` form.\n- Sev 2: testreport tests hard-code \".git/bench-last-delta\" like their neighbours.\n- Sev 2: \"whole checkpoint\" is a new prose term at BENCH-reference.md:650 and CHANGELOG.md:20.\n- Sev 2: reusableDelta tells the delta class by BaseTree equality, not by a declared class posture.\n\nThe implementation command did not contribute. No command change is necessary.\n"
+          },
+          "axis": "Standards",
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6b-r1-spec",
+          "performer": "claude:rc-c6b-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6b-spec-20261025",
+            "digest": "sha256:7d236ec6a26d815cb33cff2dd81cac94c2e9070f4376cceb6e1f1e5b7919b12c",
+            "excerpt": "## Spec\n\nRC-C6B round r1 (7562758544..1234e9ecde). Result: 0 findings at severity 4 or higher. Worst issue: severity 3 (Advice). Verdict: positive.\n\nRow verdicts: RC68 met, RC69 met, RC70 met, RC74 met, RC75 met, RC82 met, RC83 met. The run decision order is whole-green reuse, delta reuse, delta run, whole run; --fresh skips the first three.\n\n### Advice\n- Sev 3: the delta reuse runs after the lock and the run-binary selection; the order is still correct.\n- Sev 2: the RC83 test uses prepared runs, not the non-prepared chunk checkpoint.\n- Sev 2: the new delta reuse line is documented in the reference; the spec is silent on it.\n- Sev 3: reusableDelta has no freshness window and no run_binary comparison; the spec does not decide this.\n- Sev 1: the range repoints the RC68, RC69, RC74, RC82, RC83 seam cells to the real tests.\n\nThe implementation command did not cause any issue. No command change is necessary.\n"
+          },
+          "axis": "Spec",
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c6b-r1-coverage",
+          "performer": "claude:rc-c6b-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b7d1b2493356fe169237f912e8925689e9a501bb",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6b-coverage-20261025",
+            "digest": "sha256:0c501bfa91c476e7d0d73d75b726c5b5b3a7253793f330c92cbeea97799d6787",
+            "excerpt": "## Coverage\n\nRC-C6B round r1 (7562758544..1234e9ecde): 4 findings at severity 4 or higher, plus 4 advice items. Probe: bench probe internal/gate/delta_checkpoint.go --mutants (15 mutants, baseline pass, every row restored yes).\n\n1. Sev 7, conf 9. delta_checkpoint.go:165 (`if rc == 0`). Nothing pins that a red delta writes no delta record. Mutant 4 (`rc >= 0`) silent. auto-fix (add the test).\n2. Sev 7, conf 9. delta_checkpoint.go:180 (`loaded.record.Tree == delta.plan.Tree`). No test varies the subject tree while holding the base. Mutant 2 silent. auto-fix (add the test).\n3. Sev 4, conf 8. delta_checkpoint.go:180 (`loaded.state == Ready`). An invalid delta record with matching operands would be reused. Mutant 3 silent. auto-fix (add the test).\n4. Sev 4, conf 7. delta_checkpoint.go:160,166. The digest failure path, the digest-before-settleRun order, and the stored run_binary value are unpinned. Mutants 5, 9, 10 silent. ask-user; mutant 9 alone is a one-line requireDeltaGreen assertion.\n\n### Advice\n- A. Sev 2: the gate.reused log event is unpinned (mutant 7 silent). Telemetry only.\n- B. Sev 3: reuse never compares run_binary with the current selection; the spec is silent.\n- C. Sev 3: validateDeltaRecord's empty-delta, base_tree, and recordTimeAt branches have no case of their own (inferred, not probed).\n- D. Sev 2: removing `.UTC()` alone was not probed.\n\nThe implementation command contributed only indirectly: one named probe for three conjuncts and an rc guard. No command change is necessary.\n"
+          },
+          "axis": "Coverage",
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ],
+      "confirmations": [
+        {
+          "id": "rc-c6b-confirm-1",
+          "performer": "claude:rc-orchestrator-20261024",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a1693c0c5c621ce28cfd87638cc6c8a30115c796",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:rc-orchestrator-20261024",
+            "digest": "sha256:50a313ee476659b55b043ce240a18741a4c7a9bec7beb2c793fc6b4a1b8435b6",
+            "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRedStaysRed,585,1,0,null,yes\n  2,bit,omit,failed,1,TestDeltaGreenNeedsTheCurrentBase,585,1,0,null,yes\n  3,bit,omit,failed,1,TestDeltaGreenNeedsAValidRecord,585,1,0,null,yes\n  4,bit,swap,failed,4,TestCheckpointPrepareTakesTheDelta,585,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2887\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71459,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:176: evidence after a red delta = {Tree:8af9fc206fb61f3321392e3c8c5308f8e14aa283 Oracle:d26b306b04e52568c7dfeeb15f6cd4a84ce1444c95ffefdafe4257687a2305d4 RecordedAt:0001-01-01 00:00:00 +0000 UTC ReusableGreen:false R… (339 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70659,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:331: prepared run = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71795,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsAValidRecord,\"lane_record_test.go:349: checkpoint after an invalid delta record = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71592,585\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:287: delta record = {Schema:1 State: Status: Tree:4dc710cc1cd79935a8cb98a664772e0bbf0abae3 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:193: delta record = {Schema:1 State: Status: Tree:18fb76e3c12567b76ed4ed1ac0c61a8954ad41a0 Oracle: RecordedAt:2026-10-25T15:29:21Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:0000000000000000000000000000000000… (537 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:263: delta record = {Schema:1 State: Status: Tree:9715373d91d3211a1ab18ec342c26174db41f0b8 Oracle: RecordedAt:2026-10-25T15:29:41Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:324: delta record = {Schema:1 State: Status: Tree:3b2e613446bd53e80407cf0cb8a1039bc89324c6 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "reviewed_tip": "79ebf07c296d37239150772dbd1e391cd2b0e851",
+          "repaired_tip": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "omit the tree term of the delta reuse",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:rc-orchestrator-20261024",
+              "digest": "sha256:50a313ee476659b55b043ce240a18741a4c7a9bec7beb2c793fc6b4a1b8435b6",
+              "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDeltaCheckpointRedStaysRed,585,1,0,null,yes\n  2,bit,omit,failed,1,TestDeltaGreenNeedsTheCurrentBase,585,1,0,null,yes\n  3,bit,omit,failed,1,TestDeltaGreenNeedsAValidRecord,585,1,0,null,yes\n  4,bit,swap,failed,4,TestCheckpointPrepareTakesTheDelta,585,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/gate,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,2887\nmutant_report[1]{mutant}:\n  1\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71459,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaCheckpointRedStaysRed,\"delta_checkpoint_test.go:176: evidence after a red delta = {Tree:8af9fc206fb61f3321392e3c8c5308f8e14aa283 Oracle:d26b306b04e52568c7dfeeb15f6cd4a84ce1444c95ffefdafe4257687a2305d4 RecordedAt:0001-01-01 00:00:00 +0000 UTC ReusableGreen:false R… (339 bytes)\",1\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  2\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70659,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:331: prepared run = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  3\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71795,585\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsAValidRecord,\"lane_record_test.go:349: checkpoint after an invalid delta record = 0 gate: green (delta green reused for this subject)\",2\nskips[0]{package,test,reason}:\nmutant_report[1]{mutant}:\n  4\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,71592,585\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestCheckpointPrepareTakesTheDelta,\"lane_record_test.go:287: delta record = {Schema:1 State: Status: Tree:4dc710cc1cd79935a8cb98a664772e0bbf0abae3 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestCompleteCheckpointIgnoresADeltaGreen,\"complete_checkpoint_test.go:193: delta record = {Schema:1 State: Status: Tree:18fb76e3c12567b76ed4ed1ac0c61a8954ad41a0 Oracle: RecordedAt:2026-10-25T15:29:21Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:0000000000000000000000000000000000… (537 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenLeavesTheGateCacheUntouched,\"lane_record_test.go:263: delta record = {Schema:1 State: Status: Tree:9715373d91d3211a1ab18ec342c26174db41f0b8 Oracle: RecordedAt:2026-10-25T15:29:41Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\n  github.com/gibbonmi/bench/internal/gate,TestDeltaGreenNeedsTheCurrentBase,\"lane_record_test.go:324: delta record = {Schema:1 State: Status: Tree:3b2e613446bd53e80407cf0cb8a1039bc89324c6 Oracle: RecordedAt:2026-10-25T15:29:42Z StartedAt: OwnerPID:0 Lane: Outcome: RunBinary:000000000000000000000000000000000000000000… (529 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "RC-C7",
+      "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+      "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+      "plan_digest": "sha256:e236f34ab6ac414fd0618aa6912e43695326570a7acd6e2153d970e2ef46cb4d",
+      "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+      "acceptance_rows": [
+        "RC76",
+        "RC81"
+      ],
+      "verification": [
+        {
+          "id": "t12-measure-conformance",
+          "performer": "claude:rc-t12-author-20261025",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t12-author-20261025",
+            "digest": "sha256:31562746a45c342ae9ecf8d20b6a52ef30196f3bda6ce6d1838bfed50851894a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14650,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "requirement": "measure-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t12r1-measure-conformance",
+          "performer": "claude:rc-t12-author-20261025",
+          "role": "author-verification",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t12-author-20261025",
+            "digest": "sha256:e33ede84df316798113f64a3de5181bc8d158b085c196ff703a3055c3569fb67",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14304,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "requirement": "measure-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "rc-c7-r1-standards",
+          "performer": "claude:rc-c7-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-standards-20261025",
+            "digest": "sha256:81a12bc18effe24d89972030a3fcfb06292658ee2f806190f5d8730969811249",
+            "excerpt": "## Standards axis, RC-C7 (frozen pair ef387b3..5a3524a)\n\nCount: 2 findings kept (1 at severity 5, 1 at severity 3). Worst: stale spec text for the dropped exec reuse.\n\n- S5, confidence 9, specs/chunk-repair-cycle/spec.md:262-272, also :46, :331-335, :307, :27. auto-fix. The plan commit dropped ticket 13 and RC77-RC80, but the spec still describes the dropped exec reuse as current design (BENCH.md invariant 3).\n- S3, confidence 8, specs/chunk-repair-cycle/assets/run-binary-cost.md:107 (also :44, :101, :126). no-op, advice only. The asset's stop decision reads \"RC-C7 continues with ticket 13\".\n\nImplementation command: plausibly contributed to S5; a plan commit that drops a ticket has no sweep step for prose that describes the dropped behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c7-r1-spec",
+          "performer": "claude:rc-c7-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-spec-20261025",
+            "digest": "sha256:1d77d147f20bf9019354d8c10efca0645932ce065039715b9662556843cdb9d7",
+            "excerpt": "## Spec axis, RC-C7\n\nSpec axis: 5 findings. Worst: severity 4, F1. Nothing at severity 5 or higher.\n\n- F1 sev 4, conf 8. spec.md:46, :262-272, :331-335. The descope left three current-state descriptions of the dropped exec reuse. auto-fix.\n- F2 sev 3, conf 7. assets/run-binary-cost.md:44, :107, :121-126 and tickets/12:13, :19 still treat ticket 13 as live. no-op (Advice).\n- F3 sev 2, conf 5. run-binary-cost.md:116: the empty source root claim holds for a direct Inherit only. no-op.\n- F4 sev 2, conf 6. The asset's probe facts come from code reading only; held_runs.go:75-81 supports them. no-op.\n- F5 sev 2, conf 6. roadmap/FT445.md:18 still lists change 6. no-op; the board row belongs to the reviewer or the final reconciliation.\n\nRC76: met. RC81 assignment: consistent.\n\nImplementation command: contributed in part to F1 and F2; the descope step has no sweep of current-state text for the dropped behavior.\n"
+          },
+          "axis": "Spec",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c7-r1-coverage",
+          "performer": "claude:rc-c7-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6a87fe45b0d009fa64030e6d0b2ffce2375a78d0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-coverage-20261025",
+            "digest": "sha256:a918b0b5e683a603c4dd1e3106f21767e4098aecbd8dbfc049154ba9fa09c772",
+            "excerpt": "Coverage axis, RC-C7, frozen pair ef387b3f9..5a3524aaa.\n\nCount: 2 findings, both severity 3 or lower (Advice). Worst issue: the asset still states the pre-drop decision. No correctness defect. No probe ran; the delta holds no Go code.\n\n- sev 3, conf 7, assets/run-binary-cost.md:313,413,427-433. no-op (Advice). The asset still says RC-C7 continues with ticket 13.\n- sev 3, conf 6, roadmap/FT445.md:18. no-op (Advice, reviewer-owned). The roadmap row still lists change 6.\n\nThe measurement supports its conclusion: the subject has no Go change, both formulas recompute, a cold cache can only raise the saving, the count of 8 selecting children holds in code, and held_runs.go:75-81 confirms the probe refusal. No RC77-RC80 cell, test name, or gate check remains.\n\nImplementation command: did not contribute. No command change is necessary.\n"
+          },
+          "axis": "Coverage",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "28314fb45718b985aaa65ea1d95120d29315712c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rc-c7-r2-standards",
+          "performer": "claude:rc-c7-r2-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-r2-standards-20261025",
+            "digest": "sha256:ae5d409fb4253f4dfbfd88e168e3338c9acbc3290a40869fe1f7b43690dcce43",
+            "excerpt": "## Standards axis, RC-C7 r2 (repair delta 5a3524aaa..866726ad6)\n\nS1 is closed. No new finding at severity 5 or higher. The solution, the RC-C7 decision section, the chunk-order sentence, the prior-art list, and the seam diagram now state the decided state. The sweep left no current-state description of the reuse. The edits obey invariant 3 and the STE rules.\n\n### Advice\n- spec.md:476: the dated consultant table still names the exec reuse; the reviewer decision supersedes it.\n- spec.md:405: the RC76 row says \"the first RC-C7 ticket\".\n- spec.md:264: one carried-over sentence of about 33 words.\n"
+          },
+          "axis": "Standards",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c7-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c7-r2-spec",
+          "performer": "claude:rc-c7-r2-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-r2-spec-20261025",
+            "digest": "sha256:b5ebc6a4bebac3cfc76dae6493db5aac626594308781aceb15fe9cee51507a82",
+            "excerpt": "## Spec axis, RC-C7 r2 (repair delta 5a3524aaa..866726ad6)\n\nP1 is closed. No new finding at severity 5 or higher. The corrected text agrees with the reviewer decision, the Won't handle line, contradiction 6, the chunk table, and ticket 12. The delta changes no acceptance row, coverage cell, or plan fence. bench coverage --check: ok, 80 rows. RC76 and RC81 keep their rows and owners.\n\n### Advice\n- spec.md:123: story 50 reads like a pending change.\n- spec.md:567: VerifyAt and Inherit stay in the cited-symbol list.\n- tickets/12:13,19 and the asset still mention ticket 13 (r1 F2).\n"
+          },
+          "axis": "Spec",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c7-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c7-r2-coverage",
+          "performer": "claude:rc-c7-r2-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c7-r2-coverage-20261025",
+            "digest": "sha256:45b9fcf89d5958a38a7b152ec50c028207e757cc9d38a9418100cced003a079f",
+            "excerpt": "## Coverage axis, RC-C7 r2 (repair delta 5a3524aaa..866726ad6)\n\nReaffirmed, delta-only. The delta changes no coverage-map row, test reference, or check that a row needs. The removed prior-art test and seam-diagram block backed only the dropped RC77-RC80. No Go file changes. New findings at severity 5 or higher: none. Evidence sha256:6df878c9 current=true at 866726ad6.\n"
+          },
+          "axis": "Coverage",
+          "base": "ef387b3f9a6f99831772abe809428d6d14b19f3a",
+          "tip": "d4adb19cd49c612e6c629a28132d2a8684206c5e",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c7-r1-coverage"
+          ]
+        }
+      ]
+    }
+  ],
+  "completion": {
+    "state": "completed",
+    "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+    "performer": "claude:rc-orchestrator-20261024",
+    "reconciliation": {
+      "RC1": "covered",
+      "RC10": "covered",
+      "RC11": "covered",
+      "RC12": "covered",
+      "RC13": "covered",
+      "RC14": "covered",
+      "RC15": "covered",
+      "RC16": "covered",
+      "RC17": "covered",
+      "RC18": "covered",
+      "RC19": "covered",
+      "RC2": "covered",
+      "RC20": "covered",
+      "RC21": "covered",
+      "RC22": "covered",
+      "RC23": "covered",
+      "RC24": "covered",
+      "RC25": "covered",
+      "RC26": "covered",
+      "RC27": "covered",
+      "RC28": "covered",
+      "RC29": "covered",
+      "RC3": "covered",
+      "RC30": "covered",
+      "RC31": "covered",
+      "RC32": "covered",
+      "RC33": "covered",
+      "RC34": "covered",
+      "RC35": "covered",
+      "RC36": "covered",
+      "RC37": "covered",
+      "RC38": "covered",
+      "RC39": "covered",
+      "RC4": "covered",
+      "RC40": "covered",
+      "RC41": "covered",
+      "RC42": "covered",
+      "RC43": "covered",
+      "RC44": "covered",
+      "RC45": "covered",
+      "RC46": "covered",
+      "RC47": "covered",
+      "RC48": "covered",
+      "RC49": "covered",
+      "RC5": "covered",
+      "RC50": "covered",
+      "RC51": "covered",
+      "RC52": "covered",
+      "RC53": "covered",
+      "RC54": "covered",
+      "RC55": "covered",
+      "RC56": "covered",
+      "RC57": "covered",
+      "RC58": "covered",
+      "RC59": "covered",
+      "RC6": "covered",
+      "RC60": "covered",
+      "RC61": "covered",
+      "RC62": "covered",
+      "RC63": "covered",
+      "RC64": "covered",
+      "RC65": "covered",
+      "RC66": "covered",
+      "RC67": "covered",
+      "RC68": "covered",
+      "RC69": "covered",
+      "RC7": "covered",
+      "RC70": "covered",
+      "RC71": "covered",
+      "RC72": "covered",
+      "RC73": "covered",
+      "RC74": "covered",
+      "RC75": "covered",
+      "RC76": "covered",
+      "RC8": "covered",
+      "RC81": "covered",
+      "RC82": "covered",
+      "RC83": "covered",
+      "RC84": "covered",
+      "RC9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:71ff4ab34035d81eb73f83cf2855381e9159314c511f1f39bab52ac609927f4e",
+          "excerpt": "ok: coverage map valid — 80 row(s)\nuncited: 13 row(s) with no seam-cell citation — RC7, RC29, RC31, RC32, RC33, RC43, RC47, RC57, RC60, RC75, RC76, RC81, RC84\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/chunk-repair-cycle/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-record",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:676100b7121b3a885bc1425abbeef52ff6b66d5f3c92736591b177777584da52",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,3771,112\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "record",
+        "command": "bench test --package ./internal/reviewrecord",
+        "exit_code": 0
+      },
+      {
+        "id": "final-record-command",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:fd316f391b277914611d7241820524954b00cf8fa6930a0ed94f18a7c2a9ae3b",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,24573,280\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "record-command",
+        "command": "bench test --package ./internal/reviewrecord/recordcmd",
+        "exit_code": 0
+      },
+      {
+        "id": "final-gate",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:6558aaf55c955ef519469d6232ef5916f90d3c249c9a06a04ffe0360cad2a6e3",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,64412,585\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-preflight",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:b93aa2db7d1984355a54e134a898e82c169c896d196aa249091eceff0c28cc3e",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,pass,27957,380\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "preflight",
+        "command": "bench test --package ./internal/preflight",
+        "exit_code": 0
+      },
+      {
+        "id": "final-testreport",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:54a35b5cb6f97fd64bfcc2211cd10ae08ca9b5d34c307df2e232d263a36fb53f",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/testreport,pass,64923,283\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "testreport",
+        "command": "bench test --package ./internal/testreport",
+        "exit_code": 0
+      },
+      {
+        "id": "final-worktree",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:5d79949df4c2c7296f28861b26dee360666ffc38f4daf37b2d3094a2edb4d6f0",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,78934,1514\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "worktree",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:e3d1e2fc676c2a6a78a7db1ebc4a94ef0305849d7ef48da65c3dc9a01d3abae0",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14497,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "conformance",
+        "command": "bench test --check root-conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "claude:rc-orchestrator-20261024",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "aae3bc89208a7a5ceed6ff145ddda265f6e7a2e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:rc-orchestrator-20261024",
+          "digest": "sha256:b9790a2faaae49e47361711ecaca5d3a57c4f01efa4f74df8cd3eaaf8396097c",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,55874,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
+  },
+  "amendments": [
+    {
+      "from": "sha256:68913aa65a504eabc2a572c91a8a600690705f0748af15025c62b7b900b5e4be",
+      "to": "sha256:525de4d7efd9137522a26e8497432f3cadb01473ce26d8c57dbbf2d5fba78694",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:525de4d7efd9137522a26e8497432f3cadb01473ce26d8c57dbbf2d5fba78694",
+      "to": "sha256:1dfc3c1f28c98e409ade20a689c66a8b4fc652d771b8dd2f17687a1e24578e74",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1dfc3c1f28c98e409ade20a689c66a8b4fc652d771b8dd2f17687a1e24578e74",
+      "to": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f1fc33ce170a8cf2b185d2cd081dc053ced014083d0f5da6cd840e228bf93107",
+      "to": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:bca0562cf26f7838331ce130f3e09067fdfc3748aa1ec7490ccb4b1098657830",
+      "to": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6111e13c1b938948744fe0b963f1d8ad713222530ac2a92b8bfa05f4785c040",
+      "to": "sha256:2a22a088386d37db0a964cbc4eb23354ccc311926f3d411cb53d727d543031a5",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2a22a088386d37db0a964cbc4eb23354ccc311926f3d411cb53d727d543031a5",
+      "to": "sha256:17ed5e835e1963747c0b2dbb48d8a8a490e1bf45447649c7cd6cfea4fba33e1d",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:17ed5e835e1963747c0b2dbb48d8a8a490e1bf45447649c7cd6cfea4fba33e1d",
+      "to": "sha256:35f578a3c0b6d7811653bb152703150a32a70034e33c94aba51a7106dab30df1",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:35f578a3c0b6d7811653bb152703150a32a70034e33c94aba51a7106dab30df1",
+      "to": "sha256:db40ae1366be2947e1a8e9abe37bf2174d04aec9eac2d6965940fd6ad7251ca2",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:db40ae1366be2947e1a8e9abe37bf2174d04aec9eac2d6965940fd6ad7251ca2",
+      "to": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:45fcb4bfa421e66e161cd5d27bd95a95cfb54666c13e9655df37ff661e53866a",
+      "to": "sha256:7952bb4f575ccc795e0f267b2232e7d7e9e2097388f56cd7ed8f375e321f34f8",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:7952bb4f575ccc795e0f267b2232e7d7e9e2097388f56cd7ed8f375e321f34f8",
+      "to": "sha256:487fbc81fa0f46887b029701c80277e1fcc979d9000fa3e6bde8ffc21d360412",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:487fbc81fa0f46887b029701c80277e1fcc979d9000fa3e6bde8ffc21d360412",
+      "to": "sha256:5582b967bf63e088ac4e2a0e57c6d5977f7511793d1b9b8465bfcc6f7690bbf6",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5582b967bf63e088ac4e2a0e57c6d5977f7511793d1b9b8465bfcc6f7690bbf6",
+      "to": "sha256:22690b62e0e3e86ada7998c0151c19faa5bd24dfa0e8b7076e533cc98193c3ba",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:22690b62e0e3e86ada7998c0151c19faa5bd24dfa0e8b7076e533cc98193c3ba",
+      "to": "sha256:3338d5e1a1e6e5357371e347dba405bc42aabeb04e395860b50010dee382da99",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3338d5e1a1e6e5357371e347dba405bc42aabeb04e395860b50010dee382da99",
+      "to": "sha256:1ae1c0cfa9857af1135e5615b5a5e4de59e1561667a5e3ffb50a3697d555b935",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1ae1c0cfa9857af1135e5615b5a5e4de59e1561667a5e3ffb50a3697d555b935",
+      "to": "sha256:35029ba1b18a8812846fc1dd55fef51e0c5eeaeec6bc3db2880c4ae29e9ee2a1",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:35029ba1b18a8812846fc1dd55fef51e0c5eeaeec6bc3db2880c4ae29e9ee2a1",
+      "to": "sha256:834cc5b8fe96129f12e1df67ee87ceb805610b9c13ae057518c1e7f55112e839",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ],
+        "RC-C6B": [
+          "RC-C6B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:834cc5b8fe96129f12e1df67ee87ceb805610b9c13ae057518c1e7f55112e839",
+      "to": "sha256:9df303de1190b8a2b58cea0854e93d4cef5aa07974d706c84a5ab48dd523a257",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ],
+        "RC-C6B": [
+          "RC-C6B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9df303de1190b8a2b58cea0854e93d4cef5aa07974d706c84a5ab48dd523a257",
+      "to": "sha256:e236f34ab6ac414fd0618aa6912e43695326570a7acd6e2153d970e2ef46cb4d",
+      "chunk_ids": {
+        "RC-C1": [
+          "RC-C1"
+        ],
+        "RC-C2": [
+          "RC-C2"
+        ],
+        "RC-C2B": [
+          "RC-C2B"
+        ],
+        "RC-C3": [
+          "RC-C3"
+        ],
+        "RC-C4": [
+          "RC-C4"
+        ],
+        "RC-C4B": [
+          "RC-C4B"
+        ],
+        "RC-C5": [
+          "RC-C5"
+        ],
+        "RC-C6": [
+          "RC-C6"
+        ],
+        "RC-C6B": [
+          "RC-C6B"
+        ],
+        "RC-C7": [
+          "RC-C7"
+        ]
+      }
+    }
+  ]
+}
+```
+
+## Repair state
+
+RC-C1 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair at `2a1619cc0` closed P1 and C1 to C4, and the coordinator confirmation `rc-c1-confirm-1` replaced a confirming round. The run is under `--auto-approve`, so a later cycle past the allowance needs no stop.
+
+RC-C2 consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `b721e5a7c` closed S1, and the confirming round r2 passed on all three axes with no new finding.
+
+RC-C2B consumed repair cycle 1 of 2 after its initial review (round r1). The repair at `bda45ae07` closed S1 and C1 to C4, and the confirming round r2 passed on all three axes. The coordinator demonstrated the red of the C4 text expectation in `repair_test.go`: a reworded refusal in `change.go` failed `TestRecordRepairPreservesErrorIdentity/source_off_the_chunk_line`, and the probe restored the file.
+
+RC-C3 consumed repair cycle 1 of 2 after its initial review (round r1). The test-only repair of ticket 04 at `a469af522` closed C1 and C3, and the coordinator confirmation `rc-c3-confirm-1` replaced a confirming round. That repair recorded only ticket 04's entries at its own commit, and ticket 05's entries at `0b649e867` carried forward with no restage.
+
+RC-C4 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S1, S2, P2, P3, and C4 on 2026-10-24. Opus/medium and sonnet/high agreed on P3. The fable/medium tie-break chose the skip and the face. The repair at `0ddd2727d` closed S1, S2, P1 to P3, and C1 to C4. The confirming round r2 passed on all three axes with no new finding.
+
+RC-C4B consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided S4 on 2026-10-24. Opus/medium chose the last ticket, sonnet/high chose ticket 08, and the fable/medium tie-break chose ticket 08 because RC-C7 can stop before ticket 13. Both consultants also chose a test-only pin of the complete form's purpose bytes from Coverage advice.
+
+The RC-C4B repair at `665bc44fb` closed S1 to S4 and the pin. In the confirming round r2, Standards raised S5, because the pin's red was not on record. The coordinator demonstrated that red: removing the `json:"-"` tag from `Checkpoint.Prepare` failed `TestCompleteCheckpointPurposeOmitsPrepare`, and the probe restored the file.
+
+RC-C5 consumed repair cycle 1 of 2 after its initial review (round r1). The consultants decided C3 on 2026-10-24: opus/medium and sonnet/high both chose a request accessor for an explicit run, used by both floor forms. The coordinator accepted C1 and C2 as test-only fixes.
+
+The RC-C5 repair at `8dc575f27` and `e05ef7e0d` closed S1 to S4 and C1 to C3. Its probe of `internal/preflight/check_floor.go` demonstrated the red of the filtered-run cases. The check form reverted to the sentinel compare failed `TestCheckFloorOwesTheSystemCheck`. The package form reverted to the sentinel compare failed `TestCheckFloorRejectsAFilteredRun`. Its probe of `internal/testreport/selection.go` bit `TestChangedSelectionSelectsTheSystemSuite` for each of the three C1 and C2 mutations, and every row restored the file.
+
+RC-C6 consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted all eight findings as fixes with no consultant round. Standards S2, Spec P2, and Coverage C2 name one defect, the timeout path that the delta run repeats.
+
+The RC-C6 repair at `8b79ba0ab` closed all eight findings, and `7562758544` corrected the spec's manifest guard sentence. Its probe of `internal/gate/delta_checkpoint.go` demonstrated four reds, and every row restored the file. A delta run with its timeout branch turned off failed `TestDeltaCheckpointTimesOutAsAWholeRun`. Removing the Go-module clause failed the `no Go module` case, and accepting a refused manifest failed the `refused manifest` case. Unanchoring the conformance filter failed `TestDeltaCheckpointRunsTheDeltaSet`.
+
+The RC-C6 confirming round r2 passed on all three axes with no new finding. It needed no reaffirmation round, because the record held the repair's reds before the round started.
+
+RC-C6B consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted C1 to C4 as test-only fixes with no consultant round, and it narrowed C4 to the stored `run_binary` value. The coordinator probe before the axes found the same gap as C2: the omitted tree term of `reusableDelta` left `./internal/gate` green.
+
+The test-only repair at `ef387b3f9` closed C1 to C4, and the coordinator confirmation `rc-c6b-confirm-1` replaced a confirming round. The coordinator probe of `internal/gate/delta_checkpoint.go` bit each finding's mutant, and every row restored the file. A red delta that writes its record failed `TestDeltaCheckpointRedStaysRed`. The omitted tree term failed `TestDeltaGreenNeedsTheCurrentBase`, and the omitted `Ready` term failed `TestDeltaGreenNeedsAValidRecord`. A constant run-binary digest failed four tests, the first `TestCheckpointPrepareTakesTheDelta`.
+
+RC-C7 consumed repair cycle 1 of 2 after its initial review (round r1). Standards S1 and Spec P1 name one defect: the spec still describes the dropped exec reuse as current design. The spec is on no `Writes:` line, so the coordinator corrects it in one prose-only plan commit.
+
+The RC-C7 correction at `d4adb19cd` closed S1 and P1, and the refreeze at `866726ad6` recorded the ticket 12 verification at that tip. The confirming round r2 passed on all three axes with no new finding. Standards and Spec re-reviewed the repair delta in full, and Coverage gave a delta-only reaffirmation.
+
+RC81, final reconciliation: the RC-C6B test-only repair cycle took 40 minutes 23 seconds. It ran from the findings commit to the green checkpoint, on 2026-10-25 from 10:56 to 11:36. That is below the 45-to-60-minute baseline, and it misses the 11-to-14-minute target.
+
+The repair author took about 26 minutes for four tests, the plan rows with the system suite, the store probe, and an extra mutant set. The coordinator probe and confirmation took about 8 minutes. The checkpoint ran whole with `--fresh` in 5 minutes 40 seconds, because the bootstrap rule keeps the candidate from serving its own delta checkpoint. No restage ran.
+
+## Standards
+
+RC-C1 round r1: 0 findings. Worst issue: none.
+
+RC-C2 round r1: 3 findings. Worst issue: S1, a third derivation of the source digest of a commit's tree.
+
+- S1 | auto-fix | confidence 6 | `internal/reviewrecord/coverage.go:83-87` | `commitDigest`, `baseDigest`, and `follows` in `fold.go` derive one fact three times.
+- S2 | no-op | confidence 6 | `internal/gate/review_checkpoint_commits_test.go:15` | The author moved the test to keep the gate test file under its 400-line budget.
+- S3 | no-op | confidence 4 | `specs/chunk-repair-cycle/spec.md:298` | The scorecard decision moves a harder, uncertain-seam ticket one effort step up, and the assignment commit records it.
+
+RC-C2B round r1: 1 finding. Worst issue: S1, a duplicated record-creation closure.
+
+- S1 | auto-fix | confidence 6 | `internal/reviewrecord/ticket.go:95` | `RecordTicket` repeats the `create` closure and the created action of `RecordChunk`.
+
+RC-C3 round r1: 1 finding. Worst issue: S1, a telegraphic fragment in the RC-C2B record prose.
+
+- S1 | auto-fix | confidence 5 | `reviews/chunk-repair-cycle.md` | The RC-C2B coordinator sentence ended in a fragment; this record commit rewrites it as an evidence-only correction.
+
+RC-C4 round r1: 2 findings. Worst issue: S1, the record prose grade skips an absent exclusion policy without a recorded rule.
+
+- S1 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:250-252` | The consultants kept the skip. The repair pins it with a test, and the spec flags it.
+- S2 | auto-fix | confidence 5 | `internal/gate/gate_prose.go:216-217` | The consultants chose a refusal-route face for the prose refusal, through a widening into `internal/refusalroute/`.
+
+RC-C4B round r1: 4 findings. Worst issue: S1, two derivations of the prepared-run trigger that disagree.
+
+- S1 | auto-fix | confidence 7 | `.bench/BENCH-reference.md:341` | The reference drops the condition that each axis probes in its own worktree.
+- S2 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:565` | A stale sentence says each call grades the record evidence and prose.
+- S3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:290` | The prose skip keys on an absent context value, not on the prepared flag.
+- S4 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:85` | The consultants chose a changelog section for tickets 01 to 08, through a widening of ticket 08.
+
+RC-C4B round r2: 1 finding. Worst issue: S5, the pin's red was not on record.
+
+- S5 | auto-fix | confidence 6 | `internal/gate/checkpoint_prepare_test.go:234-241` | The Repair state records the coordinator's red of the pin.
+
+RC-C5 round r1: 4 findings. Worst issue: S1, a changelog sentence over the prose bound.
+
+- S1 | auto-fix | confidence 8 | `CHANGELOG.md:18` | The first sentence of the new bullet is 40 words.
+- S2 | auto-fix | confidence 7 | `internal/preflight/check_floor_test.go:335-336` | The test restates the red detail instead of the `c1Red` seam.
+- S3 | auto-fix | confidence 6 | `internal/preflight/check_floor_test.go:334` | The filtered-run case has no recorded red.
+- S4 | auto-fix | confidence 6 | `internal/testreport/selection_test.go:489` | `writeListingGo` repeats the recording stub of `writeCheckGo`.
+
+RC-C6 round r1: 4 findings. Worst issue: S1, a conformance filter derived twice.
+
+- S1 | auto-fix | confidence 8 | `internal/gate/delta_checkpoint.go:149` | The gate and `internal/testreport` each derive the root-conformance filter.
+- S2 | auto-fix | confidence 6 | `internal/gate/delta_checkpoint.go:118-120` | The delta run repeats the timeout classification and prints no timeout line.
+- S3 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:546` | One term names the whole phase table and the delta table.
+- S4 | auto-fix | confidence 10 | `internal/gate/delta_checkpoint_test.go:234` | A comment repeats a word.
+
+RC-C6B round r1: 0 findings at severity 4 or more. Worst issue: none; eight items at severity 3 or lower go to Advice.
+
+RC-C7 round r1: 1 finding. Worst issue: S1, spec text that describes the dropped exec reuse as current design.
+
+- S1 | auto-fix | confidence 9 | `specs/chunk-repair-cycle/spec.md:262-272` | The summary, the solution, the RC-C7 decision section, the prior art, and the seam diagram still describe the exec reuse.
+
+## Spec
+
+RC-C1 round r1: 1 finding. Worst issue: P1, the RC7 independent-expectation red is not on record.
+
+- P1 | auto-fix | confidence 5 | `specs/chunk-repair-cycle/tickets/01-exempt-the-assignment-block.md:19` | The mirrored `FT438` row of `TestTicketSlicingAnchors` has no recorded red.
+
+RC-C2 round r1: 0 findings. Worst issue: none.
+
+RC-C2B round r1: 0 findings. Worst issue: none.
+
+RC-C3 round r1: 0 findings. Worst issue: none.
+
+RC-C4 round r1: 3 findings. Worst issue: P2, the same unrecorded absent-policy skip.
+
+- P1 | auto-fix | confidence 6 | `internal/reviewrecord/recordcmd/stage_test.go:190-216` | No test gives a gate-command requirement with no staged excerpt.
+- P2 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:250-252` | The skip is unrecorded; it closes with S1.
+- P3 | auto-fix | confidence 5 | `internal/gate/checkpoint.go:280` | The consultants chose the prospective evaluation that spec line 197 names, through a widening to the worktree integration test.
+
+RC-C4B round r1: 0 findings. Worst issue: none.
+
+RC-C5 round r1: 0 findings. Worst issue: none.
+
+RC-C6 round r1: 2 findings. Worst issue: P1, a reference sentence that omits eligibility rules.
+
+- P1 | auto-fix | confidence 6 | `.bench/BENCH-reference.md:638-639` | The reference omits the cases that run the whole gate.
+- P2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118` | A delta timeout differs from a whole-run timeout.
+
+RC-C6B round r1: 0 findings at severity 4 or more. Worst issue: none; RC68 to RC70, RC74, RC75, RC82, and RC83 are met, and five items at severity 3 or lower go to Advice.
+
+RC-C7 round r1: 1 finding. Worst issue: P1, the same stale spec text; RC76 is met, and the RC81 assignment is consistent.
+
+- P1 | auto-fix | confidence 8 | `specs/chunk-repair-cycle/spec.md:46` | The solution, the RC-C7 decision section, and the seam diagram contradict the reviewer decision; it closes with S1.
+
+## Coverage
+
+RC-C1 round r1: 4 findings. Worst issue: C2, the error returns of the exemption can fail open with no red.
+
+- C1 | auto-fix | confidence 8 | `internal/reviewrecord/confirmation.go` | No test reaches a spec change in a version 1 plan, so the `plan.Execution != nil` guard is unpinned.
+- C2 | auto-fix | confidence 8 | `internal/reviewrecord/confirmation.go` | Both error returns can return nil with no red. No test covers a spec absent in one tree or a corrupt plan fence.
+- C3 | auto-fix | confidence 8 | `internal/reviewrecord/confirmation.go` | No test changes an execution field other than the assignments, so clearing the whole execution block stays silent (spec.md:144).
+- C4 | auto-fix | confidence 7 | `internal/testgap/testgap.go` | No test changes two accepted test paths, so an overwrite of the `TestFiles` list stays silent.
+
+RC-C2 round r1: 0 findings. Worst issue: none.
+
+RC-C2B round r1: 4 findings. Worst issue: C1, a backward refreeze guard with no test.
+
+- C1 | auto-fix | confidence 8 | `internal/reviewrecord/ticket.go:170-172` | No test records a recorded chunk at a commit that does not descend from the entry tip.
+- C2 | auto-fix | confidence 8 | `internal/reviewrecord/ticket.go:114` | The empty-tip skip of the chunk step has no test.
+- C3 | auto-fix | confidence 6 | `internal/reviewrecord/change.go:186-188` | No test reads `source_commit` from the verification form.
+- C4 | auto-fix | confidence 6 | `internal/reviewrecord/change.go:152` | The off-line refusal text and its marker have no direct assertion.
+
+RC-C3 round r1: 2 accepted findings. Worst issue: C1, an unplanned ticket graded against requirements of other chunks.
+
+- C1 | auto-fix | confidence 8 | `internal/preflight/check_floor.go:131-135` | No test gives an unplanned ticket an element that another chunk covers.
+- C3 | auto-fix | confidence 6 | `internal/preflight/check_floor.go:119-129` | No test catches floor elements that leak from one chunk into the next.
+
+RC-C4 round r1: 4 findings. Worst issue: C1, a non-empty exclusion policy that no checkpoint test uses.
+
+- C1 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:253-256` | No chunk-checkpoint test gives the record grade a non-empty policy.
+- C2 | auto-fix | confidence 7 | `internal/gate/gate_prose.go:258-268` | No checkpoint test refuses an unreadable policy, an unreadable record, or a malformed policy.
+- C3 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:265-268` | No test refuses a symbolic link at the record path.
+- C4 | auto-fix | confidence 6 | `internal/gate/gate_prose.go:250-252` | No test names the absent-policy skip; it closes with S1.
+
+RC-C4B round r1: 0 findings. Worst issue: none.
+
+RC-C5 round r1: 3 findings. Worst issue: C1, a mixed changed run with no test.
+
+- C1 | auto-fix | confidence 8 | `internal/testreport/selection.go:132` | No test runs the suite with another selected package.
+- C2 | auto-fix | confidence 7 | `internal/testreport/selection.go:127` | No test keeps an unselected suite out of the run.
+- C3 | auto-fix | confidence 7 | `internal/preflight/check_floor.go:186` | The consultants chose an accessor, so `--run all` counts as a filtered run in both floor forms.
+
+RC-C6 round r1: 2 findings. Worst issue: C1, a kit-table guard that is half isolated.
+
+- C1 | auto-fix | confidence 6 | `internal/gate/delta_checkpoint.go:66` | Two clauses of the kit-table guard have no isolating test.
+- C2 | auto-fix | confidence 5 | `internal/gate/delta_checkpoint.go:118-120` | No test pins the delta timeout path.
+
+RC-C6B round r1: 4 findings. Worst issue: C1, a red delta that can write a delta green with no red.
+
+- C1 | auto-fix | confidence 9 | `internal/gate/delta_checkpoint.go:165` | No test pins that a red delta writes no delta record.
+- C2 | auto-fix | confidence 9 | `internal/gate/delta_checkpoint.go:180` | No test changes the subject tree on one base, so the tree term of the reuse is unpinned.
+- C3 | auto-fix | confidence 8 | `internal/gate/delta_checkpoint.go:180` | No test gives the reuse an invalid delta record with matching operands.
+- C4 | auto-fix | confidence 7 | `internal/gate/delta_checkpoint.go:160` | No test asserts that the stored `run_binary` is the digest of the selected executable.
+
+RC-C7 round r1: 0 findings at severity 4 or more. Worst issue: none; the measurement supports its stop decision, and no dropped row, test, or check remains.
+
+## Advice
+
+- The repair can compare the spec entry's mode in the delta; the spec is silent on mode.
+- Citations into files that ticket 01 edited moved by a few lines; no rule requires a refresh between chunks.
+- The early `Prove` return and a spec path with spaces have no test.
+
+- RC-C2: a failed ancestry query in `chunkLine` has no test, and the entry still refuses as stale.
+- RC-C2: the `source_commit` parse rule has no uppercase or length-boundary case.
+
+- RC-C2B: the "verification at the reviewed digest" case sets a digest that the fixture already holds.
+- RC-C2B: a call at the tip reports `updated` with an unchanged tip, and the doc says it leaves the entry as is.
+
+- RC-C3: no test pins the order of the red detail (Coverage C2, no binding requirement).
+- RC-C3: `.bench/commitment.json` still states the old plan-commit rule; it changes through `bench commitment plan`.
+
+- RC-C4: the tip-guard preset in `checkpoint.go` has no test.
+- RC-C4: three conditions mark a chunk checkpoint without one source.
+- RC-C4: `refusal_route_test.go` is at its 400-line ceiling, so a later addition needs a split.
+- RC-C4: no test pins the prose grade's own refusal of a linked record, because the evidence pass refuses the link first.
+
+- RC-C4B: the guidance starts a prepared run at the last chunk's freeze, which no chunk checkpoint consumes.
+- RC-C4B: the guidance does not say outright that the prepared run starts after the record commit.
+- RC-C4B: no test covers a red prepared run or a prepared run on a chunk id that the record lacks.
+
+- RC-C5: a `go.mod` change gives the floor `./...` without the system check, while the changed selection selects the suite.
+- RC-C5: in a mixed changed run, the system tag and environment also reach the other selected packages.
+
+- RC-C6: the prepared run stays whole only because it carries no chunk source; ticket 11 pins it.
+- RC-C6: the system-suite package is picked out of the suite operands in three places.
+
+- RC-C6B: `validateDeltaRecord` repeats the tail of `validateLaneRecord`.
+- RC-C6B: two context keys carry one chunk source value.
+- RC-C6B: the digest read relies on a commented invariant of a selected executable, and no test pins the read order or the digest failure path.
+- RC-C6B: the delta reuse compares no `run_binary` and has no freshness window; the spec does not decide either.
+- RC-C6B: "whole checkpoint" is a new prose term in the reference and the changelog.
+
+- RC-C7: the run-binary cost asset and ticket 12 still name ticket 13 as the next step; the spec records the reviewer decision that dropped it.
+- RC-C7: `roadmap/FT445.md` still lists change 6; the closing drain owns the row.
+- RC-C7: the asset keeps no measurement source, so its commands cannot run again as written.

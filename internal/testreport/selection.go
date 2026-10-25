@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -44,6 +45,9 @@ type packageIndex struct {
 	byEmbed map[string]string
 	// byImport maps an import path to its package, which holds its embed patterns.
 	byImport map[string]listedPackage
+	// system is the import path of the system-suite package, or empty when the index does
+	// not hold it.
+	system string
 }
 
 func newPackageIndex(root string, packages []listedPackage) (packageIndex, error) {
@@ -51,6 +55,7 @@ func newPackageIndex(root string, packages []listedPackage) (packageIndex, error
 		byDirectory: make(map[string]string, len(packages)),
 		byEmbed:     make(map[string]string),
 		byImport:    make(map[string]listedPackage, len(packages)),
+		system:      systemSuiteImport(packages),
 	}
 	for _, pkg := range packages {
 		directory, err := filepath.Rel(root, pkg.Dir)
@@ -108,10 +113,23 @@ func resolveChangedPackages(ctx context.Context, root string, paths []string) (c
 	return resolveChangedPackagesWithLoader(ctx, root, paths, listCurrentPackages)
 }
 
-func resolveChangedPackagesWithEnvironment(ctx context.Context, root string, paths, env []string) (changedSelection, error) {
-	return resolveChangedPackagesWithLoader(ctx, root, paths, func(ctx context.Context, root string) ([]listedPackage, error) {
-		return currentPackagesWithEnvironment(ctx, root, env)
+// resolveChangedRun resolves the `--changed` selection of paths, and the `go test` operands
+// and added environment that run it. A selected system-suite package runs as `bench test
+// --check system` runs it: under the gate's system-suite operands and environment, because
+// a package operand without the tag builds no file of the suite.
+func resolveChangedRun(ctx context.Context, root string, paths, env []string) (selection changedSelection, operands, suiteEnv []string, err error) {
+	var system string
+	selection, err = resolveChangedPackagesWithLoader(ctx, root, paths, func(ctx context.Context, root string) ([]listedPackage, error) {
+		packages, err := currentPackagesWithEnvironment(ctx, root, env)
+		system = systemSuiteImport(packages)
+		return packages, err
 	})
+	if _, selected := selection[system]; err != nil || !selected {
+		return selection, selection.packages(), nil, err
+	}
+	operands, suiteEnv = gate.SystemSuite(root)
+	others := slices.DeleteFunc(selection.packages(), func(importPath string) bool { return importPath == system })
+	return selection, append(operands, others...), suiteEnv, nil
 }
 
 func resolveChangedPackagesWithLoader(ctx context.Context, root string, paths []string, load func(context.Context, string) ([]listedPackage, error)) (changedSelection, error) {
@@ -170,8 +188,42 @@ func currentPackages(ctx context.Context, root string) ([]listedPackage, error) 
 	return currentPackagesWithEnvironment(ctx, root, os.Environ())
 }
 
+// systemSuitePackage is the package operand among the gate's system-suite operands. The
+// other operands are flags.
+func systemSuitePackage() string {
+	operands, _ := gate.SystemSuite("")
+	return operands[slices.IndexFunc(operands, func(operand string) bool { return !strings.HasPrefix(operand, "-") })]
+}
+
+// systemSuiteOperands are the gate's system-suite operands where the suite runs and root
+// holds its package, and nil otherwise. A linked repository keeps its untagged index, and
+// a module without the package keeps a listing that `go list` can answer.
+func systemSuiteOperands(root string) []string {
+	operands, _ := gate.SystemSuite(root)
+	info, err := os.Stat(filepath.Join(root, filepath.FromSlash(systemSuitePackage())))
+	if !gate.SystemSuiteRuns(root, testBenchSource(root)) || err != nil || !info.IsDir() {
+		return nil
+	}
+	return operands
+}
+
+// systemSuiteImport is the import path of the listed package that `go list` matched by the
+// system-suite package operand, or empty when the listing holds no such package.
+func systemSuiteImport(packages []listedPackage) string {
+	system := systemSuitePackage()
+	for _, pkg := range packages {
+		if slices.Contains(pkg.Match, system) {
+			return pkg.ImportPath
+		}
+	}
+	return ""
+}
+
 func currentPackagesWithEnvironment(ctx context.Context, root string, env []string) ([]listedPackage, error) {
-	cmd := exec.Command("go", "list", "-buildvcs=false", "-json", "-test", currentPackagePattern)
+	// The tag among the system-suite operands also makes `./...` match the suite, so the
+	// match filter below keeps it.
+	args := append(append([]string{"list", "-buildvcs=false", "-json", "-test"}, systemSuiteOperands(root)...), currentPackagePattern)
+	cmd := exec.Command("go", args...)
 	cmd.Dir = root
 	cmd.Env = env
 	child := runGoChild(ctx, cmd, nil)

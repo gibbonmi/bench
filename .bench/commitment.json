@@ -1773,6 +1773,14 @@
       "identity": "sha256:13b0002589b86f4166e2448a2f84bd2df3ed519a702d02225679f968550e1ec4",
       "source": "0fba401dfb43379beb46ed65dc933f9e31692cd5",
       "evidence": "fe46a46bd06cbb56fc3208c5f7858d57119ce20c"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT445-repair-cycle",
+      "binding": "chunk-repair-cycle",
+      "identity": "sha256:a5c35bc4efdffc271047b0370c3fce2efe68c4323ec06627715442333ec10b74",
+      "source": "6889a3de4f3d3bec6c45fbc9b6de16483dfa58c6",
+      "evidence": "cb918c5cba16501ee2a98e0fa51dd42a8c5b4d58"
     }
   ]
 }

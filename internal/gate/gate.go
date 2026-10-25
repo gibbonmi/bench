@@ -156,15 +156,15 @@ func (r Resolution) command(root string) *exec.Cmd {
 // no absolute HOME cannot name that directory, so gateEnv refuses rather than let a
 // child fall back to Go's default.
 func gateEnv() ([]string, error) {
-	// The baseline phase-schedule selector goes too. It addresses the one gate-phases
-	// process the owner launched; a phase child that inherited it would resolve its own
-	// schedule against a root it was never handed.
+	// The baseline phase-schedule selector and the delta schedule go too. Each addresses the
+	// one gate-phases process the owner launched; a phase child that inherited one would
+	// select its own schedule from the values of a run it is not part of.
 	//
 	// The seam record's two entries go too, for the same reason. They address the gate
 	// run that started this process. A phase child that inherited them would attach its
 	// own record lines to a run it is not part of. The parent sets them back on the one
 	// child that runs the phase table.
-	base := env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv))
+	base := env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv), deltaScheduleEnv))
 	for _, name := range otelrecord.HandoffVariables() {
 		base = capability.WithoutEnvironment(base, name)
 	}
@@ -179,9 +179,11 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 
 // RunCommand executes the gate-run plumbing command and records its completed verdict.
 // It uses the first non-flag argument as root, or the current repository root. --fresh
-// requires execution instead of reuse; it can appear on either side of root. A complete
-// checkpoint grades the tree that the landing publishes from the committed source; every
-// other run grades the checkout.
+// requires execution instead of reuse; it can appear on either side of root. A checkpoint
+// refuses a checkout with an uncommitted change. A complete checkpoint grades the tree that
+// the landing publishes from the committed source, and a chunk checkpoint grades the committed
+// source without its review record; every other run grades the checkout. A prepared chunk
+// checkpoint grades that subject alone and opens no chunk gap.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	root, mode, checkpoint, err := parseGateArgs(args, true)
 	if err != nil {
@@ -198,26 +200,28 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, finishSpan := beginGateSpan(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
-	// The candidate check precedes both execute paths, so its refusal comes before the owner
-	// lookup, the review-record read, and the chunk-gap write.
+	// The candidate check precedes every execute path, so its refusal comes before the
+	// clean-checkout check, the owner lookup, the review-record read, and the chunk-gap write.
 	result, refused := refuseUninstalled(ctx, root, checkpoint, stderr, mode)
 	switch {
 	case refused:
 	case checkpoint.Complete:
 		result = executeCompleteCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
+	case checkpoint.Chunk != "":
+		result = executeChunkCheckpoint(ctx, root, checkpoint.Spec, stdout, stderr, notifyGateSignals, mode)
 	default:
 		result = executeAfterAcquire(ctx, root, stdout, stderr, notifyGateSignals, mode)
 	}
 	finishLog(result)
 	finishSpan(result)
-	if result.ActionExit == 0 && checkpoint.Chunk != "" {
+	if result.ActionExit == 0 && checkpoint.Chunk != "" && !checkpoint.gradesSubjectAlone() {
 		return openChunkGap(root, checkpoint, stderr)
 	}
 	return result.ActionExit
 }
 
 // CommandUsage is the public grammar shared with the CLI inventory.
-const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> | " + flagComplete + ")]"
+const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> [" + flagPrepare + "] | " + flagComplete + ")]"
 
 // Command validates the public grammar before entering the gate owner.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {

@@ -32,8 +32,6 @@ and review cost that recent builds paid.
 
 ## Delivery queue
 
-**FT445 (HIGH) — a chunk repair commits once with no restage, and the checkpoint gate alone grades the chunk tip.**
-
 **FT215 (HIGH, decision required) — the path-aware lane closes its correctness edges before cost tuning.**
 
 **FT258 (HIGH, decision required) — `bench commit` derives a complete change set from the checkout.**
@@ -121,8 +119,6 @@ and the small cuts. The rows below hold the rest.
 **FT318 (MEDIUM, decision required) — the completion form records a capability-blocked row's decided value, and `bench record` closes its native-operation residuals.**
 
 **FT414 (HIGH) — the record, commit, and landing verbs state their preconditions before an attempt.**
-
-**FT438 (HIGH) — a delegated repair's assignment and plan records keep a test-only repair eligible for `bench record confirmation`.**
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.**
 
@@ -346,18 +342,17 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT445-repair-cycle
-2. FT360-shared-fixtures
-3. FT411
-4. FT314-gate-reuse
-5. FT125-exact-readers
-6. FT375-residual
-7. FT344-remedy
-8. FT406-rebuild
-9. FT366-rg-guard
-10. FT380-residual
-11. FT354-strict-json
-12. FT363-member-set
-13. FT358-block-reader
-14. FT365-conformance
-15. FT414-preconditions
+1. FT360-shared-fixtures
+2. FT411
+3. FT314-gate-reuse
+4. FT125-exact-readers
+5. FT375-residual
+6. FT344-remedy
+7. FT406-rebuild
+8. FT366-rg-guard
+9. FT380-residual
+10. FT354-strict-json
+11. FT363-member-set
+12. FT358-block-reader
+13. FT365-conformance
+14. FT414-preconditions

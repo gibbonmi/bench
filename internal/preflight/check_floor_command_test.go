@@ -1,16 +1,20 @@
 package preflight
 
 import (
+	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/testreport"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // floorOmission is the check-floor detail of the seeded package that the seeded plan omits.
 // The seeded plan runs the whole suite, so the fixture replaces it with a foreign command.
-var floorOmission = floorRedDetail([]string{omittedElement("one.md", "./internal/example")})
+var floorOmission = floorRedDetail([]string{c1Red("./internal/example")})
 
 // seedFloorRepo seeds the conformant fixture, folds a Go module into its base, and plans
 // a command that satisfies nothing. The ticket's package is then a floor element that no
@@ -103,4 +107,18 @@ func TestCheckFloorDetailRendersEscaped(t *testing.T) {
 		return
 	}
 	t.Fatalf("output renders no red check-floor row:\n%s", out)
+}
+
+func TestCheckFloorRedsALoaderFailure(t *testing.T) {
+	root := floorModule(t, "internal/x")
+	preflighttest.MustWriteFile(t, filepath.Join(root, "go.mod"), "module example.com/floor\n\nnot a directive\n")
+	one := writer("one.md", "internal/x/p.go")
+	_, err := testreport.WritesFloor(context.Background(), root, one.Writes)
+	if err == nil {
+		t.Fatal("fixture invalid: the package loader read a malformed go.mod")
+	}
+	row := floorRow(t, root, onePlan([]tickets.Ticket{one}, "bench test --package ./internal/x"), one)
+	if want := "package index not readable: " + err.Error(); row.Verdict != verdictRed || row.Detail != want {
+		t.Fatalf("check-floor row = %+v, want the red detailed %q", row, want)
+	}
 }

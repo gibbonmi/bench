@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"github.com/gibbonmi/bench/internal/benchhome"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/otelrecord"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
 // OG25: the record names the composed tree, the lane identity, and the outcome. OG16 and
@@ -246,4 +249,148 @@ func laneSpanAttributes(t *testing.T, home, root string) map[string]string {
 		t.Fatal("the record holds no ended lane span")
 	}
 	return found
+}
+
+// TestDeltaGreenLeavesTheGateCacheUntouched covers RC69. A green delta writes its own record
+// and leaves the gate cache as the prepared whole run left it. Once the whole base green is
+// gone, the delta green serves no checkpoint, so the checkpoint runs the whole gate.
+func TestDeltaGreenLeavesTheGateCacheUntouched(t *testing.T) {
+	var base string
+	f := deltaFixture(t, graded(t, func(f *recordtest.Fixture) { base = strippedSubject(t, f); modifyTest(f) }))
+	cache := filepath.Join(outcomeGit(t, f.Root, "rev-parse", "--absolute-git-dir"), benchgit.GateCacheFile)
+	before := outcomeRead(t, cache)
+	requireDelta(t, f, 0, "./.")
+	requireDeltaGreen(t, f, base)
+	if after := outcomeRead(t, cache); !bytes.Equal(after, before) {
+		t.Fatalf("gate cache after a delta green = %s; want the prepared record %s", after, before)
+	}
+	common, err := benchgit.CommonDir(f.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(filepath.Dir(evidencePath(common, subject{}))); err != nil {
+		t.Fatal(err)
+	}
+	requireWhole(t, f)
+}
+
+// TestCheckpointPrepareTakesTheDelta covers RC74. The prepared run at the test repair runs
+// before the record commits refreeze the chunk, so the record names the reviewed tip as the
+// chunk tip. It runs the delta set and writes its green, and the checkpoint after the record
+// commits reuses that green with no run.
+func TestCheckpointPrepareTakesTheDelta(t *testing.T) {
+	f := frozenDeltaFixture(t)
+	base := strippedSubject(t, f)
+	confirmRepair(f, repairChunk(f, graded(t, func(f *recordtest.Fixture) {
+		modifyTest(f)
+		f.Commit("repair the test")
+		requirePreparedDelta(t, f, base)
+		// The record commit of the failed result follows the prepared run.
+		f.Save()
+	})))
+	code, out := runCheckpoint(t, f)
+	if schedules := gateSchedules(t, f); code != 0 || !strings.Contains(out, deltaReusedLine) || len(schedules) != 2 {
+		t.Fatalf("checkpoint after the prepared delta = %d %s with the schedules %q; want the reuse line and no run", code, out, schedules)
+	}
+}
+
+// TestCheckpointPrepareRunsWholeForANonTestRepair covers RC82. The record names the test repair
+// as the chunk tip, and a later production repair is not refrozen. The prepared run proves
+// the change from the reviewed tip, so it runs the whole gate and keeps the earlier delta green.
+func TestCheckpointPrepareRunsWholeForANonTestRepair(t *testing.T) {
+	f := deltaFixture(t, graded(t, modifyTest))
+	requireDelta(t, f, 0, "./.")
+	recorded := outcomeRead(t, deltaRecordPath(t, f))
+	modifySource(f)
+	f.Commit("repair the source")
+	requireWhole(t, f, flagPrepare)
+	if after := outcomeRead(t, deltaRecordPath(t, f)); !bytes.Equal(after, recorded) {
+		t.Fatalf("delta record after the whole prepared run = %s; want the earlier delta green %s", after, recorded)
+	}
+}
+
+// TestDeltaGreenNeedsTheCurrentBase covers RC83. A new review round moves the three axis
+// results to the test repair, so the base moves, and the delta green over the old base serves
+// no run. The prepared run shares the run decision of the chunk checkpoint and runs no
+// evidence pass, so the fixture moves the results alone. Before the round, a second test
+// commit on the same base is a new subject, so the delta green of the first serves it no run.
+func TestDeltaGreenNeedsTheCurrentBase(t *testing.T) {
+	f := frozenDeltaFixture(t)
+	first := strippedSubject(t, f)
+	requirePrepared(t, f)
+	modifyTest(f)
+	f.Commit("repair the test")
+	round, second := f.Tip(), strippedSubject(t, f)
+	requirePreparedDelta(t, f, first)
+	// A fresh prepared run grades the test repair whole, so the new base has its green.
+	if code, out := runCheckpointWith(t, f, flagPrepare, flagFresh); code != 0 {
+		t.Fatalf("fresh prepared run = %d %s", code, out)
+	}
+	addTest(f)
+	f.Commit("add a test")
+	requirePreparedDelta(t, f, first)
+	for i := range f.Record.Chunks[0].Reviews {
+		f.Record.Chunks[0].Reviews[i].Tip = round
+	}
+	f.Save()
+	f.Commit("review the test repair")
+	requirePreparedDelta(t, f, second)
+}
+
+// TestDeltaGreenNeedsAValidRecord is the witness that a delta record of the current base and
+// subject whose run_binary is invalid serves no run, so the checkpoint runs the delta set again.
+func TestDeltaGreenNeedsAValidRecord(t *testing.T) {
+	f := deltaFixture(t, graded(t, modifyTest))
+	requireDelta(t, f, 0, "./.")
+	path := deltaRecordPath(t, f)
+	outcomeWrite(t, filepath.Dir(path), filepath.Base(path), strings.Replace(string(outcomeRead(t, path)), `"run_binary":"`, `"run_binary":"x`, 1), 0o600)
+	code, out := runCheckpoint(t, f)
+	if schedules := gateSchedules(t, f); code != 0 || strings.Contains(out, deltaReusedLine) || len(schedules) != 3 {
+		t.Fatalf("checkpoint after an invalid delta record = %d %s with the schedules %q; want a second run of the delta set", code, out, schedules)
+	}
+}
+
+// TestDeltaGreenPersistenceFailureFailsTheCheckpoint is the witness that a green delta whose
+// record does not persist fails the checkpoint with the cause.
+func TestDeltaGreenPersistenceFailureFailsTheCheckpoint(t *testing.T) {
+	f := deltaFixture(t, graded(t, modifyTest))
+	if err := os.Mkdir(deltaRecordPath(t, f), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if code, out := runCheckpoint(t, f); code != 1 || !strings.Contains(out, "gate delta persistence failed: ") {
+		t.Fatalf("checkpoint with an unwritable delta record = %d %s; want exit 1 and the persistence cause", code, out)
+	}
+}
+
+// requirePreparedDelta requires that the prepared run of f exits 0 after one run of the delta
+// set of the root package, and that its green names base.
+func requirePreparedDelta(t *testing.T, f *recordtest.Fixture, base string) {
+	t.Helper()
+	before := gateSchedules(t, f)
+	code, out := runCheckpointWith(t, f, flagPrepare)
+	if schedules := gateSchedules(t, f); code != 0 || !slices.Equal(schedules, append(before, `["./."]`)) {
+		t.Fatalf("prepared run = %d %s with the schedules %q; want one more run of the delta set", code, out, schedules)
+	}
+	requireDeltaGreen(t, f, base)
+}
+
+// requireDeltaGreen requires that the delta record in the Git dir of f names base, the
+// current subject of f, and the digest of the selected fixture executable.
+func requireDeltaGreen(t *testing.T, f *recordtest.Fixture, base string) {
+	t.Helper()
+	var record verdictRecord
+	data, err := os.ReadFile(deltaRecordPath(t, f))
+	if err == nil {
+		err = json.Unmarshal(data, &record)
+	}
+	binary, _ := fileDigest(os.Getenv(runbinary.Env))
+	if want := strippedSubject(t, f); err != nil || record.BaseTree != base || record.Tree != want || record.RunBinary != binary {
+		t.Fatalf("delta record = %+v, %v; want the base %s, the subject %s, and the run binary %s", record, err, base, want, binary)
+	}
+}
+
+// deltaRecordPath is the path of the delta record in the Git dir of f.
+func deltaRecordPath(t *testing.T, f *recordtest.Fixture) string {
+	t.Helper()
+	return filepath.Join(outcomeGit(t, f.Root, "rev-parse", "--absolute-git-dir"), benchgit.DeltaCacheFile)
 }

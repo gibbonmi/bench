@@ -265,8 +265,8 @@ func TestNamedChecksWriteNoGateOwnedRecords(t *testing.T) {
 		Verify: func(string, string) error { return nil },
 	})
 	records := map[string]string{
-		".git/bench-last-gate":            "cache",
-		".git/bench-last-lane":            "lane",
+		".git/bench-last-gate": "cache",
+		".git/bench-last-lane": "lane", ".git/bench-last-delta": "delta",
 		".git/bench-gate-owner":           "owner",
 		".git/bench-gate-evidence/record": "evidence",
 		".git/refs/bench/green/main":      "green",

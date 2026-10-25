@@ -22,22 +22,32 @@ var (
 // every testdata directory. A rename arrives as a deletion and an addition, so the
 // deletion refuses it.
 func Prove(root, reviewed, later string) error {
+	_, err := TestFiles(root, reviewed, later)
+	return err
+}
+
+// TestFiles answers the changed paths of the delta from reviewed to later in path order
+// when Prove accepts the delta, and the refusal of Prove otherwise. Equal trees answer an
+// empty list.
+func TestFiles(root, reviewed, later string) ([]string, error) {
+	files := []string{}
 	if reviewed == later {
-		return nil
+		return files, nil
 	}
 	changes, err := benchgit.TreeChangesIncludingSubmodules(root, reviewed, later)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrUnreadable, err)
+		return nil, fmt.Errorf("%w: %v", ErrUnreadable, err)
 	}
 	if len(changes) == 0 {
-		return ErrEmptyChanges
+		return nil, ErrEmptyChanges
 	}
 	for _, change := range changes {
 		if err := proveFile(change); err != nil {
-			return fmt.Errorf("%s: %w", change.Path, err)
+			return nil, fmt.Errorf("%s: %w", change.Path, err)
 		}
+		files = append(files, change.Path)
 	}
-	return nil
+	return files, nil
 }
 
 func proveFile(change benchgit.TreeChange) error {

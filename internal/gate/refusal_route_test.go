@@ -220,6 +220,7 @@ func gateFaceFixtures() []gateFaceFixture {
 		evidenceFixture(record),
 		repairFixture(record),
 		dirtyFixture(record),
+		proseFixture(record),
 		candidateFixture(),
 		overlapFixture(),
 		{
@@ -282,8 +283,8 @@ func gateFaceFixtures() []gateFaceFixture {
 }
 
 // evidenceFixture is the completion-evidence fixture: a delivery that the preflight read
-// grades green, with its review record removed. The read reports the gap, and the operator
-// writes the record back. The chunk is the one the conformant plan declares.
+// grades green, with its review record removed in a commit. The read reports the gap, and the
+// operator commits the record again. The chunk is the one the conformant plan declares.
 func evidenceFixture(record string) gateFaceFixture {
 	var saved []byte
 	return gateFaceFixture{
@@ -298,9 +299,14 @@ func evidenceFixture(record string) gateFaceFixture {
 			if err := os.Remove(filepath.Join(root, record)); err != nil {
 				t.Fatal(err)
 			}
-			return gateSet{f: &recordtest.Fixture{T: t, Root: root}}
+			f := &recordtest.Fixture{T: t, Root: root}
+			f.Commit("remove the review record")
+			return gateSet{f: f}
 		},
-		after: func(_ *testing.T, set gateSet) { set.f.Write(record, string(saved)) },
+		after: func(_ *testing.T, set gateSet) {
+			set.f.Write(record, string(saved))
+			set.f.Commit("restore the review record")
+		},
 	}
 }
 
@@ -318,15 +324,20 @@ func repairFixture(record string) gateFaceFixture {
 			saved = readFile(t, set.f.Root, record)
 			set.f.Record.Chunks[0].Reviews = set.f.Record.Chunks[0].Reviews[:2]
 			set.f.Save()
+			set.f.Commit("drop the Coverage review")
 			return set
 		},
-		after: func(_ *testing.T, set gateSet) { set.f.Write(record, string(saved)) },
+		after: func(_ *testing.T, set gateSet) {
+			set.f.Write(record, string(saved))
+			set.f.Commit("restore the Coverage review")
+		},
 	}
 }
 
 // dirtyFixture is the dirty-checkout fixture: the completion record waits uncommitted in a
 // linked worktree that an assignment owns. The label holds a space, so the route quotes it.
-func dirtyFixture(record string) gateFaceFixture {
+// Each prepare step writes into the checkout before its review evidence commits.
+func dirtyFixture(record string, prepare ...func(*recordtest.Fixture)) gateFaceFixture {
 	const label = "gate route"
 	return gateFaceFixture{
 		face:     "checkpoint-dirty-checkout",
@@ -336,7 +347,7 @@ func dirtyFixture(record string) gateFaceFixture {
 		build: func(t *testing.T) gateSet {
 			t.Setenv("BENCH_HOME", t.TempDir())
 			t.Setenv("BENCH_KIT", t.TempDir())
-			f := gate.AttachedCheckpointFixture(t, linkedAttach)
+			f := gate.AttachedCheckpointFixture(t, linkedAttach, prepare...)
 			commitmenttest.Register(t, f.Root, label)
 			commitmenttest.Admit(t, f.Root, label, recordtest.Spec)
 			f.Complete()
@@ -344,6 +355,16 @@ func dirtyFixture(record string) gateFaceFixture {
 			return gateSet{f: f, label: label}
 		},
 	}
+}
+
+// proseFixture commits a record sentence over the prose bound under the dirty-checkout fixture.
+func proseFixture(record string) gateFaceFixture {
+	fixture, saved := dirtyFixture(record, gate.ProsePolicy), ""
+	dirty := fixture.build
+	fixture.face, fixture.args = "checkpoint-record-prose", chunkArgs
+	fixture.build = func(t *testing.T) gateSet { set := dirty(t); saved = gate.CommitOverBoundRecord(t, set.f); return set }
+	fixture.carry = map[int]func(*testing.T, gateSet){0: func(_ *testing.T, set gateSet) { set.f.Write(record, saved) }}
+	return fixture
 }
 
 // linkedAttach attaches the review fixture to the primary checkout, approves its delivery

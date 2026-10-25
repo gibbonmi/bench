@@ -66,15 +66,10 @@ func RecordAssignment(root, spec string, call AssignmentCall) ([]Assignment, err
 	item.Source = call.Source
 	history = append(history, item)
 	execution.Assignments[call.Ticket] = history
-	encoded, err := payload(plan, "")
+	candidate, err := withPlan(data, plan)
 	if err != nil {
 		return nil, err
 	}
-	span, err := locate(data, planFence)
-	if err != nil {
-		return nil, err
-	}
-	candidate := span.splice(data, encoded)
 	if _, err := checkPlan(spec, candidate, read); err != nil {
 		return nil, err
 	}
@@ -89,6 +84,20 @@ func RecordAssignment(root, spec string, call AssignmentCall) ([]Assignment, err
 		}
 	}
 	return history, replace(filepath.Join(root, filepath.FromSlash(spec)), candidate)
+}
+
+// withPlan returns spec document data with plan as the payload of its completion-plan fence.
+// Every other byte of data stays.
+func withPlan(data []byte, plan Plan) ([]byte, error) {
+	encoded, err := payload(plan, "")
+	if err != nil {
+		return nil, err
+	}
+	span, err := locate(data, planFence)
+	if err != nil {
+		return nil, err
+	}
+	return span.splice(data, encoded), nil
 }
 
 // ticketPaths is the repository path of every planned ticket beside spec.

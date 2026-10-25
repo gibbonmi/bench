@@ -68,6 +68,11 @@ type verdictRecord struct {
 	Lane      string `json:"lane,omitempty"`
 	Outcome   string `json:"outcome,omitempty"`
 	RunBinary string `json:"run_binary,omitempty"`
+
+	// The delta class carries these two and the run binary. A delta grades the delta set of
+	// a test-only change from the base tree, so it has no oracle identity and no status.
+	Delta    string `json:"delta,omitempty"`
+	BaseTree string `json:"base_tree,omitempty"`
 }
 
 type manifest struct {

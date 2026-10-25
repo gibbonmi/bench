@@ -4,7 +4,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -69,6 +68,12 @@ func (r Request) Run() string {
 	return AllTests
 }
 
+// Filtered answers whether the caller passed a run pattern. A `--run all` pattern filters
+// too, although Run answers the same word as for a run with no pattern.
+func (r Request) Filtered() bool {
+	return r.focused.run != ""
+}
+
 // GradesProse answers whether the request names the prose check.
 func (r Request) GradesProse() bool {
 	return r.focused.check == ProseCheckName
@@ -81,10 +86,10 @@ func CheckTakesRun(check string) bool {
 	return check == gate.SystemPhaseName
 }
 
-// namedCheckRunPattern is the one spelling of the test a named conformance check runs.
-// The Go argv and the selection facts both read it here.
+// namedCheckRunPattern is the run pattern of a named conformance check: the gate's spelling of
+// the root-conformance entry. The Go argv and the selection facts both read it here.
 func namedCheckRunPattern() string {
-	return "^" + registry.RootConformanceTest + "$"
+	return gate.RootConformanceRunPattern
 }
 
 // PackageExpressionNote is the package note of the bench test help and the probe help. The

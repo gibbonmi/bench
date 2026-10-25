@@ -87,8 +87,17 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	for _, line := range greenLines {
 		fmt.Fprintln(stdout, line)
 	}
-	fmt.Fprintln(stdout, "gate: green")
+	fmt.Fprintln(stdout, greenVerdict())
 	return 0
+}
+
+// greenVerdict answers the verdict line of a green run. A run of the delta set names its
+// reduced schedule, so no reader takes that green for a whole green.
+func greenVerdict() string {
+	if deltaScheduled() {
+		return "gate: green (delta checkpoint)"
+	}
+	return "gate: green"
 }
 
 // printPhases emits the green run's one table, in phase-table order: what ran, how it

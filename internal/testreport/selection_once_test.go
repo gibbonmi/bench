@@ -3,8 +3,12 @@ package testreport
 import (
 	"context"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -48,5 +52,85 @@ func TestOwnedSelectionBuildsOnce(t *testing.T) {
 	}
 	if builds != 1 || len(selected) != 1 || selected[""] {
 		t.Fatalf("two kit copies ran the builder %d times and selected %v; want one build and one selection", builds, selected)
+	}
+}
+
+func TestChangedGraphUsesOneClosedSelectionEnvironment(t *testing.T) {
+	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+	listEnvironment := filepath.Join(t.TempDir(), "list-environment")
+	testEnvironment := filepath.Join(t.TempDir(), "test-environment")
+	goDir := t.TempDir()
+	writeChangedSubjectGo(t, filepath.Join(goDir, "go"), listEnvironment, testEnvironment, []listedPackage{{
+		Dir:        filepath.Join(root, "changed"),
+		ImportPath: "changedcommand/changed",
+		Match:      []string{currentPackagePattern},
+	}}, "changedcommand/changed")
+	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	for name, value := range map[string]string{
+		registry.ConformanceRootEnv:      "/ambient/root",
+		registry.ConformanceTierEnv:      "ship",
+		registry.ConformanceScopeEnv:     "ambient-scope",
+		registry.ConformanceChecksEnv:    "ambient-checks",
+		registry.ConformanceInheritedEnv: "ambient-inherited",
+		capability.LogEnv:                filepath.Join(t.TempDir(), "capability-log"),
+	} {
+		t.Setenv(name, value)
+	}
+
+	builds := 0
+	var selected, source string
+	installTestSelectionFactory(t, runbinary.Factory{
+		TempRoot: t.TempDir(),
+		Build: func(_ context.Context, sourceRoot, output string) error {
+			builds++
+			source, selected = sourceRoot, output
+			return os.WriteFile(output, []byte("selected"), 0o755)
+		},
+		Verify: func(string, string) error { return nil },
+	})
+
+	output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip})
+	if code != 0 {
+		t.Fatalf("changed command = %d\n%s", code, output)
+	}
+	if builds != 1 {
+		t.Fatalf("selection builds = %d, want one", builds)
+	}
+	for _, environment := range []string{listEnvironment, testEnvironment} {
+		got := readTestReportFile(t, environment)
+		for _, name := range []string{
+			registry.ConformanceRootEnv,
+			registry.ConformanceTierEnv,
+			registry.ConformanceScopeEnv,
+			registry.ConformanceChecksEnv,
+			registry.ConformanceInheritedEnv,
+			capability.LogEnv,
+		} {
+			if strings.Contains(got, name+"=") {
+				t.Errorf("%s retained ambient %s:\n%s", environment, name, got)
+			}
+		}
+		for name, want := range map[string]string{"BENCH_KIT": source, runbinary.Env: selected} {
+			if !strings.Contains(got, name+"="+want+"\n") {
+				t.Errorf("%s missing %s=%q:\n%s", environment, name, want, got)
+			}
+		}
+	}
+}
+
+func TestChangedRunsWriteNoGateOwnedRecords(t *testing.T) {
+	root, base, tip := changedCommandRepository(t, "", "", "changed/changed.go", "package changed\n")
+	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
+		return os.WriteFile(output, []byte("selected"), 0o755)
+	}, Verify: func(string, string) error { return nil }})
+	record := filepath.Join(root, ".git", "bench-last-gate")
+	if err := os.WriteFile(record, []byte("before"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if output, code := Command(root, []string{"--changed", "--base", base, "--source-tip", tip}); code != 0 {
+		t.Fatalf("changed run = %d\n%s", code, output)
+	}
+	if got := readTestReportFile(t, record); got != "before" {
+		t.Fatalf("gate record = %q, want unchanged", got)
 	}
 }

@@ -5,13 +5,13 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/landing/published"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
-	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -81,11 +81,14 @@ func publishedEvidence(t *testing.T, f *recordtest.Fixture) EvidenceInspection {
 // annotateRecord adds prose to the review record and leaves the evidence unchanged.
 func annotateRecord(t *testing.T, f *recordtest.Fixture) {
 	t.Helper()
-	path, err := rr.RecordPath(recordtest.Spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.Write(path, string(outcomeRead(t, filepath.Join(f.Root, path)))+"\nThe orchestrator reconciled the final evidence.\n")
+	appendRecordProse(t, f, "The orchestrator reconciled the final evidence.")
+}
+
+// appendRecordProse appends text as one paragraph of the review record of f.
+func appendRecordProse(t *testing.T, f *recordtest.Fixture, text string) {
+	t.Helper()
+	path := fixtureRecord(t)
+	f.Write(path, string(outcomeRead(t, filepath.Join(f.Root, path)))+"\n"+text+"\n")
 }
 
 func assertNoOracleRun(t *testing.T, f *recordtest.Fixture) {
@@ -93,6 +96,20 @@ func assertNoOracleRun(t *testing.T, f *recordtest.Fixture) {
 	if _, err := os.Stat(runCountWitness.path(t, f.Root)); !os.IsNotExist(err) {
 		t.Fatalf("oracle ran before the refusal: %v", err)
 	}
+}
+
+// requireCleanCheckoutRefusal requires that a checkpoint run of f refused its dirty checkout
+// alone: exit 1, no evidence reason, a next= route that commits the checkout, and no oracle
+// run.
+func requireCleanCheckoutRefusal(t *testing.T, f *recordtest.Fixture, code int, out, evidence string) {
+	t.Helper()
+	if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, evidence) {
+		t.Errorf("dirty checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
+	}
+	if !strings.Contains(out, "\nnext=bench commit --in ") {
+		t.Errorf("dirty checkpoint = %q, want a next= route that commits the checkout", out)
+	}
+	assertNoOracleRun(t, f)
 }
 
 func TestCompleteCheckpointGradesTheClosedTree(t *testing.T) {
@@ -147,6 +164,37 @@ func TestCompleteCheckpointEvidenceNamesThePublishedTree(t *testing.T) {
 	}
 	if got := publishedEvidence(t, f); !got.ReusableGreen {
 		t.Fatalf("published tree of the new tip has no reusable green: %+v", got)
+	}
+}
+
+// TestCompleteCheckpointIgnoresAPreparedChunkGreen covers RC45. The complete checkpoint keeps
+// its own key, so a prepared chunk green of the same source never serves it: the complete
+// checkpoint runs the gate, and its green names the published tree.
+func TestCompleteCheckpointIgnoresAPreparedChunkGreen(t *testing.T) {
+	f := closureSource(t, false)
+	requirePrepared(t, f)
+	if code, out := completeCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 2 {
+		t.Fatalf("complete checkpoint after a prepared chunk green = %d %s after %d runs; want a second run", code, out, outcomeRuns(t, f.Root))
+	}
+	if got := publishedEvidence(t, f); !got.ReusableGreen {
+		t.Fatalf("published tree of HEAD has no reusable green under the completion obligation: %+v", got)
+	}
+}
+
+// TestCompleteCheckpointIgnoresADeltaGreen covers RC68. The one green of the chunk is a delta
+// green, which the complete checkpoint never reads, so the complete checkpoint runs the whole
+// gate.
+func TestCompleteCheckpointIgnoresADeltaGreen(t *testing.T) {
+	inheritFixtureBinary(t)
+	var base string
+	f := attachedCheckpointFixture(t, recordtest.AttachDelegated, seedRepair, deltaGate(t))
+	confirmRepair(f, repairChunk(f, graded(t, func(f *recordtest.Fixture) { base = strippedSubject(t, f); modifyTest(f) })))
+	requireDelta(t, f, 0, "./.")
+	requireDeltaGreen(t, f, base)
+	retainCompletion(f)
+	before := gateSchedules(t, f)
+	if code, out := completeCheckpoint(t, f); code != 0 || !slices.Equal(gateSchedules(t, f), append(before, wholeSchedule)) {
+		t.Fatalf("complete checkpoint after a delta green = %d %s with the schedules %q; want one more whole run", code, out, gateSchedules(t, f))
 	}
 }
 
@@ -239,14 +287,7 @@ func TestCompleteCheckpointRefusesADirtyCheckout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.dirty(t)
 			code, out := completeCheckpoint(t, f)
-			if code != 1 || !strings.Contains(out, cleanCheckoutRefusal) || strings.Contains(out, "completion is incomplete or stale") {
-				t.Errorf("dirty complete checkpoint = (%d, %q), want exit 1 and only %q", code, out, cleanCheckoutRefusal)
-			}
-			// The refusal names the commit that cleans the checkout.
-			if !strings.Contains(out, "\nnext=bench commit --in ") {
-				t.Errorf("dirty complete checkpoint = %q, want a next= route that commits the checkout", out)
-			}
-			assertNoOracleRun(t, f)
+			requireCleanCheckoutRefusal(t, f, code, out, "completion is incomplete or stale")
 		})
 	}
 	// A fresh caller's rerun stays fresh, though the face does not force it.

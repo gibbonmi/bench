@@ -60,10 +60,11 @@ func gatherCheckFloor(ctx context.Context, root string, parsed []tickets.Ticket,
 	return facts
 }
 
-// floorElements is one ticket's floor: root conformance where it applies, each package
-// that the ticket writes, and the command tests for a command package or an embed. An
-// entry can name a command package that holds no package yet, and a directory entry can
-// hold a command package below it, so both the entries and the floor packages are asked.
+// floorElements is one ticket's floor: root conformance where it applies, each check and
+// each package that the ticket writes, and the command tests for a command package or an
+// embed. An entry can name a command package that holds no package yet, and a directory
+// entry can hold a command package below it, so both the entries and the floor packages
+// are asked.
 func floorElements(ctx context.Context, root string, writes []string, conformance bool) ([]string, error) {
 	floor, err := testreport.WritesFloor(ctx, root, writes)
 	if err != nil {
@@ -73,7 +74,7 @@ func floorElements(ctx context.Context, root string, writes []string, conformanc
 	if conformance {
 		elements = append(elements, testreport.RootConformanceCheckName)
 	}
-	elements = append(elements, floor.Packages...)
+	elements = append(append(elements, floor.Checks...), floor.Packages...)
 	commandWrite := slices.ContainsFunc(writes, func(entry string) bool {
 		path, _ := tickets.WritesPath(entry)
 		return tickets.CommandPackage(path)
@@ -103,27 +104,10 @@ func planSelection(root, command string) (testreport.Request, bool) {
 	return request, line == ""
 }
 
-// ticketRequirements answers the requirements that grade one ticket. A version 1 chunk
-// grades every ticket against all of its requirements. A delegated chunk grades each
-// ticket against the requirements that name it. A ticket that no chunk names gets none.
-func ticketRequirements(plan reviewrecord.Plan, name string) []reviewrecord.Requirement {
-	for _, chunk := range plan.Chunks {
-		if !slices.Contains(chunk.Tickets, name) {
-			continue
-		}
-		var owned []reviewrecord.Requirement
-		for _, requirement := range chunk.Verification {
-			if !plan.Delegated() || requirement.Ticket == name {
-				owned = append(owned, requirement)
-			}
-		}
-		return owned
-	}
-	return nil
-}
-
-// checkFloorCheck grades each ticket's floor against its requirements. An invalid plan is
-// completion-plan's red, so this row does not grade it a second time.
+// checkFloorCheck grades each chunk once: the union of its tickets' floors against the
+// union of its requirements, whatever ticket a requirement names. A ticket that no chunk
+// names meets no element. An invalid plan is completion-plan's red, so this row does not
+// grade it a second time.
 func checkFloorCheck(f Facts) CheckResult {
 	if f.CompletionPlanError != "" {
 		return notApplicable(checkFloorName)
@@ -132,16 +116,22 @@ func checkFloorCheck(f Facts) CheckResult {
 		return red(checkFloorName, "package index not readable: "+f.CheckFloor.LoaderError)
 	}
 	var omitted []string
-	for _, ticket := range f.Tickets {
-		requirements := ticketRequirements(f.CompletionPlan, ticket.Name)
-		for _, element := range f.CheckFloor.Elements[ticket.Name] {
-			satisfied := slices.ContainsFunc(requirements, func(requirement reviewrecord.Requirement) bool {
-				selection, ok := f.CheckFloor.Selections[requirement.Command]
-				return ok && satisfies(selection, element)
-			})
-			if !satisfied {
-				omitted = append(omitted, omittedElement(ticket.Name, element))
+	planned := map[string]bool{}
+	for _, chunk := range f.CompletionPlan.Chunks {
+		var elements []string
+		for _, name := range chunk.Tickets {
+			planned[name] = true
+			for _, element := range f.CheckFloor.Elements[name] {
+				if !slices.Contains(elements, element) {
+					elements = append(elements, element)
+				}
 			}
+		}
+		omitted = append(omitted, f.CheckFloor.omitted(chunkOwner(chunk.ID), elements, chunk.Verification)...)
+	}
+	for _, ticket := range f.Tickets {
+		if !planned[ticket.Name] {
+			omitted = append(omitted, f.CheckFloor.omitted(ticket.Name, f.CheckFloor.Elements[ticket.Name], nil)...)
 		}
 	}
 	if len(omitted) > 0 {
@@ -150,29 +140,52 @@ func checkFloorCheck(f Facts) CheckResult {
 	return green(checkFloorName)
 }
 
-// omittedElement is the red item of one unsatisfied element.
-func omittedElement(ticket, element string) string {
-	return ticket + ": " + element + " (add " + floorCommand(element) + ")"
+// omitted is the red item of each element of owner that no requirement satisfies.
+func (facts CheckFloorFacts) omitted(owner string, elements []string, requirements []reviewrecord.Requirement) []string {
+	var omitted []string
+	for _, element := range elements {
+		satisfied := slices.ContainsFunc(requirements, func(requirement reviewrecord.Requirement) bool {
+			selection, ok := facts.Selections[requirement.Command]
+			return ok && satisfies(selection, element)
+		})
+		if !satisfied {
+			omitted = append(omitted, omittedElement(owner, element))
+		}
+	}
+	return omitted
 }
 
-// floorRedDetail is the red detail over the omitted items, in ticket order.
+// chunkOwner is the owner name of a chunk's red items.
+func chunkOwner(id string) string {
+	return "chunk " + id
+}
+
+// omittedElement is the red item of one unsatisfied element of owner, a chunk or a ticket
+// that no chunk names.
+func omittedElement(owner, element string) string {
+	return owner + ": " + element + " (add " + floorCommand(element) + ")"
+}
+
+// floorRedDetail is the red detail over the omitted items, in plan chunk order and then in
+// the order of the tickets that no chunk names.
 func floorRedDetail(omitted []string) string {
 	return "completion plan omits a floor check: " + strings.Join(omitted, "; ")
 }
 
 // satisfies applies the satisfaction rules to one selection. A form that runs no test
-// satisfies nothing. Only the root-conformance check satisfies its element. A package
-// element needs an unfiltered package run that is not `--changed`, whose target equals
-// the element or covers it at a segment boundary. A run of several package expressions
-// satisfies each element that one of its expressions satisfies.
+// satisfies nothing, and a run with a run pattern is filtered, `--run all` included. Only an
+// unfiltered run of the named check satisfies a check element. A package element needs an
+// unfiltered package run that is not `--changed`, whose target equals the element or covers
+// it at a segment boundary. A run of several package expressions satisfies each element
+// that one of its expressions satisfies.
 func satisfies(selection testreport.Request, element string) bool {
 	if !selection.Runs() {
 		return false
 	}
-	if element == testreport.RootConformanceCheckName {
-		return selection.Form() == testreport.CheckForm && selection.Target() == element
+	if testreport.IsNamedCheck(element) {
+		return selection.Form() == testreport.CheckForm && selection.Target() == element && !selection.Filtered()
 	}
-	if selection.Form() != testreport.PackageForm || selection.Run() != testreport.AllTests || selection.Changed() {
+	if selection.Form() != testreport.PackageForm || selection.Filtered() || selection.Changed() {
 		return false
 	}
 	return slices.ContainsFunc(selection.Packages(), func(target string) bool {
@@ -196,7 +209,7 @@ func packageCovers(target, element string) bool {
 
 // floorCommand is the exact command that satisfies one element.
 func floorCommand(element string) string {
-	if element == testreport.RootConformanceCheckName {
+	if testreport.IsNamedCheck(element) {
 		return testCommand + " --check " + element
 	}
 	return reviewrecord.PackageTestCommand(element)

@@ -23,9 +23,22 @@ import (
 type Checkpoint struct {
 	Spec, Chunk string
 	Complete    bool
+	// Prepare selects the prepared run of a chunk checkpoint. It stays out of the purpose JSON,
+	// so the complete form keeps its key.
+	Prepare bool `json:"-"`
 }
 type checkpointKey struct{}
 type verbKey struct{}
+
+// chunkSourceKey carries the committed source that a chunk checkpoint accepted.
+type chunkSourceKey struct{}
+
+// deltaSourceKey carries the HEAD source of a chunk checkpoint, prepared or not, to the delta
+// decision, which derives the reviewed tip from the record of that source.
+type deltaSourceKey struct{}
+
+// chunkSource is the HEAD commit and the HEAD tree of a chunk checkpoint.
+type chunkSource struct{ tip, tree string }
 
 // WithCheckpoint carries the obligation through the existing gate execution owner.
 func WithCheckpoint(ctx context.Context, checkpoint Checkpoint) context.Context {
@@ -41,12 +54,16 @@ func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gate
 	evaluation.checkpoint, _ = ctx.Value(checkpointKey{}).(Checkpoint)
 	evaluation.completionSource, _ = ctx.Value(completionSourceKey{}).(string)
 	evaluation.completionFolder, _ = ctx.Value(completionFolderKey{}).(string)
+	// The accepted tip starts the tip-moved guard, so a tip that moves before the first
+	// capture refuses too.
+	source, _ := ctx.Value(chunkSourceKey{}).(chunkSource)
+	evaluation.checkpointTip, evaluation.checkpointTree = source.tip, source.tree
 	return evaluation
 }
 
 func (checkpoint Checkpoint) validate() error {
 	if checkpoint.Spec == "" {
-		if checkpoint.Chunk != "" || checkpoint.Complete {
+		if checkpoint.Chunk != "" || checkpoint.Complete || checkpoint.Prepare {
 			return errors.New("checkpoint spec is required")
 		}
 		return nil
@@ -57,8 +74,17 @@ func (checkpoint Checkpoint) validate() error {
 	if (checkpoint.Chunk != "") == checkpoint.Complete || hasUnsafeText(checkpoint.Chunk) {
 		return errors.New("select one checkpoint chunk or complete")
 	}
+	if checkpoint.Prepare && checkpoint.Complete {
+		return errors.New("prepare a chunk checkpoint only")
+	}
 	return nil
 }
+
+// gradesSubjectAlone reports a prepared run, which accepts no committed source. So it guards
+// no tip, reads no completion evidence and no record prose, and opens no chunk gap. A record
+// commit during the run then moves no accepted tip, and its key holds only the stripped tree
+// that it captured. Only its delta decision reads the record, from the source it captured.
+func (checkpoint Checkpoint) gradesSubjectAlone() bool { return checkpoint.Prepare }
 
 // The gate's flags. The parser, the usage line, and a route's rerun read these spellings.
 const (
@@ -66,6 +92,7 @@ const (
 	flagCheckpoint = "--checkpoint"
 	flagChunk      = "--chunk"
 	flagComplete   = "--complete"
+	flagPrepare    = "--prepare"
 )
 
 func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, error) {
@@ -94,6 +121,8 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 			}
 		case flagComplete:
 			checkpoint.Complete = true
+		case flagPrepare:
+			checkpoint.Prepare = true
 		default:
 			if !plumbing || root != "" || strings.HasPrefix(arg, "-") {
 				return "", mode, checkpoint, errors.New("unknown gate argument")
@@ -131,6 +160,7 @@ type checkpointFace struct{ name, form string }
 var (
 	faceCompletionEvidence = checkpointFace{name: "checkpoint-completion-evidence"}
 	faceDirtyCheckout      = checkpointFace{name: "checkpoint-dirty-checkout"}
+	faceRecordProse        = checkpointFace{name: "checkpoint-record-prose"}
 	faceComposition        = checkpointFace{name: "checkpoint-composition"}
 	faceTipMoved           = checkpointFace{name: "checkpoint-tip-moved"}
 	faceSubjectUnavailable = checkpointFace{name: "checkpoint-subject-unavailable"}
@@ -218,8 +248,64 @@ func refuseUninstalled(ctx context.Context, root string, checkpoint Checkpoint, 
 	return refuseWith(ctx, root, stderr, mode, face, err.Error(), raised.Values), true
 }
 
+// cleanCheckoutRefusal names the recovery for a checkpoint on a dirty checkout.
+const cleanCheckoutRefusal = "checkpoint requires a clean checkout: commit or remove each uncommitted change"
+
+// committedSource answers the HEAD commit of root and its tree. A checkpoint grades only
+// committed bytes, so a working tree that differs from that tree refuses, and the review
+// record has no exemption. It also answers whether it refused, and the refusal. A caller runs
+// it before the evidence pass and the oracle.
+func committedSource(ctx context.Context, root string, stderr io.Writer, mode runMode) (string, string, Result, bool) {
+	unavailable := func(err error) (string, string, Result, bool) {
+		return "", "", sourceUnavailable(ctx, root, stderr, mode, err), true
+	}
+	tip, err := benchgit.ResolveCommit(root, "HEAD")
+	if err != nil {
+		return unavailable(err)
+	}
+	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", tip+"^{tree}")
+	if err != nil {
+		return unavailable(err)
+	}
+	working, err := workingTreeSource{root: root}.tree()
+	if err != nil {
+		return unavailable(err)
+	}
+	if working != tree {
+		return "", "", refuse(ctx, root, stderr, mode, faceDirtyCheckout, cleanCheckoutRefusal), true
+	}
+	return tip, tree, Result{}, false
+}
+
+// sourceUnavailable refuses a checkpoint whose committed source does not read.
+func sourceUnavailable(ctx context.Context, root string, stderr io.Writer, mode runMode, err error) Result {
+	return refuse(ctx, root, stderr, mode, faceSubjectUnavailable, "checkpoint source unavailable: "+err.Error())
+}
+
+// executeChunkCheckpoint grades the HEAD tree of root without the review record of spec,
+// once committedSource accepts the checkout. That tree runs through the prospective owner in
+// a private checkout, with root as the storage and identity root, so a record-only commit
+// keeps the subject of an earlier chunk green. The evidence pass and the record grade read
+// the record from the HEAD tree of the source that the call accepts.
+func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
+	tip, tree, refusal, refused := committedSource(ctx, root, stderr, mode)
+	if refused {
+		return refusal
+	}
+	stripped, err := reviewrecord.SourceDigest(root, tree, spec)
+	if err != nil {
+		return sourceUnavailable(ctx, root, stderr, mode, err)
+	}
+	source := chunkSource{tip: tip, tree: tree}
+	ctx = context.WithValue(ctx, deltaSourceKey{}, source)
+	if checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint); !checkpoint.gradesSubjectAlone() {
+		ctx = context.WithValue(ctx, chunkSourceKey{}, source)
+	}
+	return executeTreeWithOwner(ctx, root, stripped, stdout, stderr, arm, mode, nil)
+}
+
 // rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh
-// rerun names --fresh.
+// rerun names --fresh, and the rerun of a prepared run prepares again.
 func rerunArguments(checkpoint Checkpoint, fresh bool) string {
 	var args []string
 	if fresh {
@@ -231,6 +317,9 @@ func rerunArguments(checkpoint Checkpoint, fresh bool) string {
 			args = append(args, flagComplete)
 		} else {
 			args = append(args, flagChunk, refusalroute.Arg("id", checkpoint.Chunk))
+		}
+		if checkpoint.Prepare {
+			args = append(args, flagPrepare)
 		}
 	}
 	return strings.Join(args, " ")
@@ -244,6 +333,9 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 		return subject{}, err
 	}
 	if e.checkpoint.Spec == "" && e.completionFolder == "" {
+		return plan, nil
+	}
+	if e.checkpoint.gradesSubjectAlone() {
 		return plan, nil
 	}
 	tip, err := benchgit.ResolveCommit(e.identityRoot, "HEAD")
@@ -261,7 +353,12 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	} else if e.checkpointTip != tip {
 		return subject{}, errCheckpointTipMoved
 	}
-	sourceTree := generation.tree
+	sourceTree, evidenceTree := generation.tree, generation.tree
+	if e.checkpointTree != "" {
+		// The graded tree of a chunk checkpoint holds no record, so its committed tree is
+		// both its source and its evidence.
+		sourceTree, evidenceTree = e.checkpointTree, e.checkpointTree
+	}
 	if e.completionSource != "" {
 		sourceTree, err = e.completionTree(generation)
 		if err != nil {
@@ -270,9 +367,14 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	}
 	// A tickets-only close has no completion record; its completion tree is its evidence.
 	if e.checkpoint.Spec != "" {
-		if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, generation.tree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
+		if err := reviewrecord.CheckTrees(e.identityRoot, sourceTree, evidenceTree, tip, e.checkpoint.Spec, e.checkpoint.Chunk, e.checkpoint.Complete); err != nil {
 			return subject{}, evidenceError{fmt.Errorf("completion evidence: %w", err)}
 		}
+	}
+	// A chunk green answers for its subject alone, because the evidence pass above runs on
+	// every call. So the chunk checkpoint keeps the base oracle of its subject.
+	if e.checkpoint.Chunk != "" {
+		return plan, nil
 	}
 	purpose, _ := json.Marshal(e.checkpoint)
 	hash := sha256.New()

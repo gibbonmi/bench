@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // floorFixture returns the changed-selection module and its canned graph. Each extra
@@ -23,6 +26,15 @@ func floorFixture(t *testing.T, extra ...string) (string, []listedPackage) {
 		}
 		packages = append(packages, listedPackage{Dir: filepath.Join(root, directory), ImportPath: "changedfixture/" + directory})
 	}
+	return root, packages
+}
+
+// systemFloorFixture is floorFixture with the system-suite package, which `go list` matches
+// by its own operand.
+func systemFloorFixture(t *testing.T) (string, []listedPackage) {
+	t.Helper()
+	root, packages := floorFixture(t, path.Dir(systemSuiteFile()))
+	packages[len(packages)-1].Match = []string{systemSuitePackage()}
 	return root, packages
 }
 
@@ -178,11 +190,20 @@ func TestWritesFloorReturnsTheGraphError(t *testing.T) {
 	}
 }
 
+// TestWritesFloorNamesTheSystemCheck grades that a system-suite file owes the system check
+// in place of a package run of the suite.
+func TestWritesFloorNamesTheSystemCheck(t *testing.T) {
+	root, packages := systemFloorFixture(t)
+	if got := floorOf(t, root, packages, systemSuiteFile()); got.Packages != nil || !slices.Equal(got.Checks, []string{gate.SystemPhaseName}) {
+		t.Fatalf("floor = %+v, want the system check alone", got)
+	}
+}
+
 // TestWritesFloorAgreesWithChangedSelection grades that the floor and the `--changed`
-// selection give the same direct packages for each canned path, across the Go file and
-// the three embed classes.
+// selection give the same direct packages for each canned path, across the Go file, the
+// three embed classes, and the system suite, whose floor element is the system check.
 func TestWritesFloorAgreesWithChangedSelection(t *testing.T) {
-	root, packages := floorFixture(t)
+	root, packages := systemFloorFixture(t)
 	patterns := map[string]string{}
 	for _, pkg := range packages {
 		directory, err := filepath.Rel(root, pkg.Dir)
@@ -191,7 +212,8 @@ func TestWritesFloorAgreesWithChangedSelection(t *testing.T) {
 		}
 		patterns[pkg.ImportPath] = packagePattern(root, filepath.ToSlash(directory))
 	}
-	for _, path := range []string{"direct/direct.go", "embedprod/input.txt", "embedtest/input.txt", "embedxtest/input.txt", "space [glob]/embed input[*].txt"} {
+	patterns[packages[len(packages)-1].ImportPath] = gate.SystemPhaseName
+	for _, path := range []string{"direct/direct.go", "embedprod/input.txt", "embedtest/input.txt", "embedxtest/input.txt", "space [glob]/embed input[*].txt", systemSuiteFile()} {
 		selection, err := resolveChangedPackagesWithLoader(context.Background(), root, []string{path}, cannedLoader(packages))
 		if err != nil {
 			t.Fatal(err)
@@ -203,7 +225,8 @@ func TestWritesFloorAgreesWithChangedSelection(t *testing.T) {
 			}
 		}
 		slices.Sort(direct)
-		if got := floorOf(t, root, packages, path).Packages; len(direct) == 0 || !reflect.DeepEqual(got, direct) {
+		floor := floorOf(t, root, packages, path)
+		if got := slices.Sorted(slices.Values(append(floor.Packages, floor.Checks...))); len(direct) == 0 || !reflect.DeepEqual(got, direct) {
 			t.Errorf("floor of %q = %q, want the selection's direct packages %q", path, got, direct)
 		}
 	}

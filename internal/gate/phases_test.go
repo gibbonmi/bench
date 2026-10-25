@@ -226,22 +226,32 @@ func TestFixturePhaseLinesReachTheRunsStreamFile(t *testing.T) {
 	}
 }
 
-// phaseTableRow answers one phase's row of the green table as its three cells. The green
-// table's cells are a filtered name and two engine-owned values, so a plain split is
-// exact here.
+// phaseTableRow answers one phase's row of the green table as its three cells.
 func phaseTableRow(t *testing.T, stdout, phase string) []string {
 	t.Helper()
-	for _, line := range strings.Split(stdout, "\n") {
-		if !strings.HasPrefix(line, "  ") {
-			continue
-		}
-		cells := strings.Split(strings.TrimPrefix(line, "  "), ",")
-		if len(cells) == 3 && cells[0] == phase {
+	for _, cells := range greenTableRows(stdout) {
+		if cells[0] == phase {
 			return cells
 		}
 	}
 	t.Fatalf("phase %s has no row in\n%s", phase, stdout)
 	return nil
+}
+
+// greenTableRows answers the rows of the green table as their three cells, in table order.
+// The green table's cells are a filtered name and two engine-owned values, so a plain split
+// is exact here.
+func greenTableRows(stdout string) [][]string {
+	var rows [][]string
+	for _, line := range strings.Split(stdout, "\n") {
+		if !strings.HasPrefix(line, "  ") {
+			continue
+		}
+		if cells := strings.Split(strings.TrimPrefix(line, "  "), ","); len(cells) == 3 {
+			rows = append(rows, cells)
+		}
+	}
+	return rows
 }
 
 // phaseFinishElapsed answers the elapsed_ms of one phase's finish record in the run log

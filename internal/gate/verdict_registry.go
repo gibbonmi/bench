@@ -42,6 +42,24 @@ var verdictRecordClasses = []verdictRecordClass{
 		reuseRefusal: "lane record",
 		validate:     validateLaneRecord,
 	},
+	{
+		name:         "delta record",
+		fields:       []string{"base_tree", "delta", "recorded_at", "run_binary", "schema", "tree"},
+		reuseRefusal: "delta record",
+		validate:     validateDeltaRecord,
+	},
+}
+
+// validateDeltaRecord grades one delta green. A delta grades the delta set from a base tree
+// and not the whole oracle, so the record names its set and its base rather than an oracle.
+func validateDeltaRecord(_ []byte, r verdictRecord, now time.Time) error {
+	if r.Delta == "" || !treeHashRE.MatchString(r.BaseTree) || !isContentAddress(r.RunBinary) {
+		return errors.New("invalid delta record")
+	}
+	if _, err := recordTimeAt(r.RecordedAt, now); err != nil {
+		return errors.New("invalid delta record time")
+	}
+	return nil
 }
 
 // validateLaneRecord grades one fast-lane record. A lane grades a declared check list

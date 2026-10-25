@@ -244,10 +244,7 @@ func TestSymbolPremises(t *testing.T) {
 // verification carries a restored, biting behavioral probe of the named test subject with
 // red_needle turns green; every unproved form stays unknown with a diagnostic reason.
 func TestEvidencePremises(t *testing.T) {
-	files := map[string]string{
-		evidenceTestPath: "package reused\n\nimport \"testing\"\n\nfunc " + evidenceTestFunc + "(t *testing.T) {}\n",
-	}
-	root := ownershiptest.Repo{Writes: []string{"internal/example/after.go"}, Files: files}.Seed(t)
+	root := seedEvidenceRepo(t)
 	commits := seedEvidenceCommits(t, root)
 	facts := withItems("premises",
 		reusedTestItem("evidence-certified", evidenceTestPath, evidenceTestFunc, evidenceSpec, commits.source, commits.valid, "1", "tests", evidenceMutation, evidenceNeedle),
@@ -284,6 +281,22 @@ func TestEvidencePremises(t *testing.T) {
 				t.Fatalf("premise %s = %v, want %s and a reason naming %q", test.id, row, test.state, test.reason)
 			}
 		})
+	}
+}
+
+// TestReusedTestPremiseAcceptsAnEarlierTicketCommit covers RC20: the premise names the chunk
+// tip, and its probe entry stays at the commit of the first ticket.
+func TestReusedTestPremiseAcceptsAnEarlierTicketCommit(t *testing.T) {
+	if row := laterTicketPremise(t, "tests", nil); string(row.State) != "green" {
+		t.Fatalf("premise = %v, want green", row)
+	}
+}
+
+// TestReusedTestPremiseRefusesAnEntryOffTheChunkLine covers RC21 through an entry that only the
+// currency test of the premise grades.
+func TestReusedTestPremiseRefusesAnEntryOffTheChunkLine(t *testing.T) {
+	if row := laterTicketPremise(t, "extra", offLineExtra); string(row.State) != "unknown" || !strings.Contains(row.Reason, "is not current for chunk 1") {
+		t.Fatalf("premise = %v, want unknown and a reason that names the entry off the chunk line", row)
 	}
 }
 

@@ -1,6 +1,6 @@
 # A chunk repair commits once, and the checkpoint gate alone grades the chunk tip
 
-Status: staged
+Status: implemented
 
 Roadmap: FT445
 
@@ -43,7 +43,7 @@ The orchestrator starts the checkpoint gate when a chunk freezes or a repair com
 
 A test-only delta after a whole green at the reviewed tip takes a delta checkpoint. The delta checkpoint runs gofmt, vet, the changed packages, and root conformance. A delta that touches a tagged or race-table package runs the whole gate. The landing gate always runs whole.
 
-An exec call of a Bench command reuses the worktree's fresh `dist/bench`. The change ships last, after a measurement shows a net saving.
+The build measures the run-binary cost of exec calls. Exec keeps its private selection for each Bench child, because the measured saving does not pay for the reuse.
 
 ## User stories
 
@@ -118,13 +118,9 @@ Harder chunks: RC-C2, RC-C2B, RC-C4, RC-C4B, RC-C6, RC-C6B.
 48. As an orchestrator, I want a green delta checkpoint to open the chunk gap, so that the next chunk starts as after a whole checkpoint.
 49. As a reviewer, I want a red delta run to make the checkpoint red, so that a reduced run never hides a failure behind a whole rerun.
 
-### Exec calls reuse the worktree binary
+### The run-binary cost of exec
 
 50. As a maintainer, I want the build to measure the run-binary cost before it changes exec, so that a change with no net saving stops.
-51. As an orchestrator, I want an exec call of a Bench command to reuse the worktree's fresh `dist/bench`, so that each call does not build a private binary.
-52. As an orchestrator, I want a stale `dist/bench` to leave the child to build its own binary and to print `bench worktree build`, so that a stale binary never grades and I know the fix.
-53. As a maintainer, I want an exec call of another command to keep today's environment, so that the reuse costs nothing outside Bench.
-54. As a reviewer, I want a child to refuse a binary that became stale after the exec check, so that a race cannot grade with a stale binary.
 
 ### Scope and evidence
 
@@ -151,7 +147,7 @@ The chunk removes the FT438 row of `docs/known-issues.md`. A Forbid anchor on `F
 
 ### Commit-bound evidence (RC-C2, RC-C2B)
 
-Each chunk verification entry gains the field `source_commit`. It holds the full commit id of the staged run's HEAD (`internal/responsebound/retain.go:94-97`). The parser refuses a value that is not a full object id. `DisallowUnknownFields` makes an older executable refuse a record with the field (`internal/reviewrecord/parse.go:232`), so this build is a declared build.
+Each chunk verification entry gains the field `source_commit`. It holds the full commit id of the staged run's HEAD (`internal/responsebound/retain.go:21-27`). The parser refuses a value that is not a full object id. `DisallowUnknownFields` makes an older executable refuse a record with the field (`internal/reviewrecord/parse.go:232`), so this build is a declared build.
 
 One exported `reviewrecord` predicate decides whether an entry is current for a chunk. With a commit C, the entry is current when C strictly descends from the chunk base, C is an ancestor of the chunk tip, and the entry digest equals `SourceDigest` of C's tree. The ancestry query is reflexive, so the predicate refuses C equal to the chunk base by a separate test, as `FindReviewedPair` does (`internal/reviewrecord/confirmation.go:95-98`). The command, performer, role, outcome, exit, and probe-bite rules stay as they are (`internal/reviewrecord/check.go:54-68`).
 
@@ -200,7 +196,7 @@ The chunk-checkpoint oracle is the base oracle of that subject. The purpose JSON
 
 The tip-moved guard and the evidence pass still run on every chunk-checkpoint call. The evidence pass reads the record from the HEAD tree, not from the stripped subject.
 
-The checkpoint grades the prose of `reviews/<slug>.md` on every call. It reads the record blob and the exclusion-policy blob from the HEAD tree and grades them through `prose.NewGraderFromIndex` and `GradeBytes`. The staged form of `bench gate-prose` is the precedent (`internal/gate/gate_prose.go:132-176`). The spec adds no second splitter and no exclusion row.
+The checkpoint grades the prose of `reviews/<slug>.md` on every call. It reads the record blob and the exclusion-policy blob from the HEAD tree and grades them through `prose.NewGraderFromIndex` and `GradeBytes`. The staged form of `bench gate-prose` is the precedent (`internal/gate/gate_prose.go:132-176`). A HEAD tree with no `.bench/prose-exclusions` has no prose rule, so the checkpoint grades no record prose there. The spec adds no second splitter and no exclusion row.
 
 A new flag starts the prepared run: `bench gate --checkpoint <spec-path> --chunk <id> --prepare`. It runs the oracle on the same subject that the chunk checkpoint grades. It skips the evidence pass, the record prose grade, the tip-moved guard, and the chunk gap. It writes the green to the evidence store under the subject key, and that key holds only the stripped tree that the run captured at its start. A moved HEAD cannot misattribute that green, because a checkpoint at the new HEAD computes its own key (RC37, RC38). A `--prepare` with `--complete`, or with no `--checkpoint`, is a usage error at exit 2. The help line comes from the flag constants (`internal/gate/checkpoint.go:64-69`). The refusal routes reuse the existing gate faces.
 
@@ -244,6 +240,8 @@ A delta is eligible when every condition below holds:
 - The test-gap proof, with the RC-C1 exemption, proves the change from the base to the subject test-only.
 - A whole green exists for the base under the prospective base oracle of the base subject. The read uses the prospective inspection (`internal/gate/engine.go:90-102`) with the non-expiring window (`internal/gate/engine.go:108-141`), because the freshness window is 60 minutes.
 - No changed test file sits in the system-suite package (`gate.SystemSuite`) or in a race-table package (`raceTests`, `internal/gate/gate_go.go:32-40`).
+- The gate is the kit phase table: the phase-table hand-off, a Go module, and no phase manifest at the root, readable or refused (RC-C6 review addition).
+- At least one changed test file exists, so an expired green of the subject itself runs the whole gate (RC-C6 review addition).
 
 The delta record's `base_tree` and `tree` are exactly the two operands. Step 2 of the run decision reuses a delta green only when both fields equal the current operands, and it checks the base-green condition again.
 
@@ -261,17 +259,11 @@ A red delta makes the checkpoint red, with no fallback to the whole gate. A gree
 
 The gate output prints the delta phases table and the line `gate: green (delta checkpoint)`. `.bench/BENCH-reference.md` Gate output owns that account. `projects/benchkit.md` (lines 339-348, 387-389, 469-472) names the delta schedule as the one reduced schedule and the delta class as the one reduced record.
 
-### Run-binary reuse in exec (RC-C7)
+### The run-binary cost of exec (RC-C7)
 
-The first ticket measures the wall time of `freshness.Digest`, of one run-binary selection, and the count of exec calls that select a binary in one test-only repair. If the measured net saving for each repair is not positive, the build stops this chunk and returns to the spec.
+The RC-C7 ticket measures the wall time of `freshness.Digest`, of one run-binary selection, and the count of exec calls that select a binary in one test-only repair. It records the net saving for each repair and the wrapper route for an inherited `BENCH_RUN_BINARY` in the chunk's measurement asset.
 
-When the base name of the child's `argv[0]` is `bench`, `exec` runs `freshness.VerifyAt(worktree, worktree, dist/bench)` (`internal/freshness/freshness_verify.go:23-40`). On a pass, it sets `BENCH_RUN_BINARY` to the worktree's `dist/bench`. On a refusal, it omits the variable, the child builds its private selection as today, and exec prints `bench worktree build` on stderr. For any other `argv[0]`, exec runs no freshness check and keeps today's environment (`internal/worktree/exec.go:244-252`).
-
-The child's `ReuseOrOwn`, `Inherit`, and `Validate` sequence checks the source digest again (`internal/runbinary/runbinary.go:155-183`). A binary that became stale after the exec check refuses, and the refusal names `bench worktree build`.
-
-The worktree assignment owns `dist/bench`, and `Close` does nothing for an inherited selection (`internal/runbinary/runbinary.go:232-235`). The spec adds no new process owner. The comment at `internal/worktree/exec.go:217-229` changes, because `Inherit` with a named root checks the source digest.
-
-`uncertain`: the wrapper may treat an inherited `BENCH_RUN_BINARY` as its own resolution (`internal/systemtest/owner_environment_test.go:38`). The measurement ticket reads that route before the second ticket starts.
+Exec keeps today's environment for every child: it strips `BENCH_RUN_BINARY`, and each Bench child makes its private selection (`internal/worktree/exec.go:217-252`). The reviewer decision during the build states why.
 
 ## Implementation chunks
 
@@ -286,157 +278,16 @@ The worktree assignment owns `dist/bench`, and `Close` does nothing for an inher
 | RC-C5 / 09-list-the-system-suite-in-the-selector.md | The selector and the floor select the system check | RC53, RC54, RC55, RC56, RC57 | Changed selection, writes floor | no |
 | RC-C6 / 10-run-the-delta-checkpoint.md | A test-only delta takes a delta checkpoint that no landing accepts | RC58, RC59, RC60, RC61, RC62, RC63, RC64, RC65, RC66, RC67, RC71, RC72, RC73 | Delta checkpoint, delta operands, eligibility | yes |
 | RC-C6B / 11-record-and-reuse-the-delta-green.md | The delta green has its own record class, and only the chunk checkpoint reuses it | RC68, RC69, RC70, RC74, RC75, RC82, RC83 | Verdict class guard, complete checkpoint, prepared delta | yes |
-| RC-C7 / 12-measure-the-run-binary-cost.md, 13-reuse-the-worktree-binary-in-exec.md | Exec calls of Bench commands reuse a fresh worktree binary | RC76, RC77, RC78, RC79, RC80, RC81 | Exec environment, run-binary inherit | no |
+| RC-C7 / 12-measure-the-run-binary-cost.md | The run-binary cost of exec is measured, and the repair cycle is timed | RC76, RC81 | Measurement record | no |
 
-RC-C1 comes first, because change 3 needs the exemption. A seam chunk closes its review before its consumer chunk starts (`craft-tickets`): RC-C2 before RC-C2B, RC-C4 before RC-C4B, and RC-C6 before RC-C6B. RC-C2 and RC-C2B land before RC-C3, because the chunk-level floor assumes that each entry is graded at its own commit. RC-C4 and RC-C4B land before RC-C6, because the delta checkpoint shares the prepared run decision and the subject key. RC-C5 lands before RC-C6, as precondition 3 requires. RC-C7 ships last, and its measurement can stop it.
+RC-C1 comes first, because change 3 needs the exemption. A seam chunk closes its review before its consumer chunk starts (`craft-tickets`): RC-C2 before RC-C2B, RC-C4 before RC-C4B, and RC-C6 before RC-C6B. RC-C2 and RC-C2B land before RC-C3, because the chunk-level floor assumes that each entry is graded at its own commit. RC-C4 and RC-C4B land before RC-C6, because the delta checkpoint shares the prepared run decision and the subject key. RC-C5 lands before RC-C6, as precondition 3 requires. RC-C7 ships last, and it holds only the measurement.
 
 ### Completion plan
 
 The authored version 1 plan states the verification obligations. The approved build records its fresh authors through the version 2 amendment before dispatch. From RC-C4 on, each chunk checkpoint of this build runs with `--fresh`, because the candidate under build owns the new key.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "RC-C1",
-      "tickets": ["01-exempt-the-assignment-block.md"],
-      "verification": [
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "testgap", "command": "bench test --package ./internal/testgap"},
-        {"id": "anchors", "command": "bench test --package ./internal/anchors"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench"},
-        {"id": "exemption-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "clear the whole plan fence instead of the assignment block"}
-      ]
-    },
-    {
-      "id": "RC-C2",
-      "tickets": ["02-grade-entries-at-their-own-commit.md"],
-      "verification": [
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "record-fixture", "command": "bench test --package ./internal/reviewrecord/recordtest"},
-        {"id": "ownership", "command": "bench test --package ./internal/preflight/ownership"},
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench"},
-        {"id": "line-probe", "command": "bench test --package ./internal/gate", "probe": "drop the ancestry test of the entry commit"}
-      ]
-    },
-    {
-      "id": "RC-C2B",
-      "tickets": ["03-record-entries-at-the-own-commit.md"],
-      "verification": [
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "record-fixture", "command": "bench test --package ./internal/reviewrecord/recordtest"},
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/anchors --package ./cmd/bench"},
-        {"id": "writer-probe", "command": "bench test --package ./internal/reviewrecord/recordcmd", "probe": "bind an earlier ticket to the chunk tip"}
-      ]
-    },
-    {
-      "id": "RC-C3",
-      "tickets": ["04-grade-the-floor-per-chunk.md", "05-one-plan-commit-and-preflight-per-dispatch.md"],
-      "verification": [
-        {"id": "preflight", "command": "bench test --package ./internal/preflight"},
-        {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "floor", "command": "bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./internal/anchors --package ./cmd/bench"},
-        {"id": "floor-probe", "command": "bench test --package ./internal/preflight", "probe": "grade each ticket against its own requirements only"}
-      ]
-    },
-    {
-      "id": "RC-C4",
-      "tickets": ["06-refuse-a-dirty-chunk-checkout.md", "07-key-the-chunk-checkpoint-without-the-record.md"],
-      "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-        {"id": "command", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/reviewrecord/recordcmd --package ./internal/worktree"},
-        {"id": "key-probe", "command": "bench test --package ./internal/gate", "probe": "frame the HEAD tip into the chunk-checkpoint oracle"},
-        {"id": "prose-probe", "command": "bench test --package ./internal/gate", "probe": "skip the record prose grade after a reuse"}
-      ]
-    },
-    {
-      "id": "RC-C4B",
-      "tickets": ["08-prepare-the-checkpoint-gate.md"],
-      "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "command", "command": "bench test --package ./cmd/bench"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/refusalroute --package ./internal/anchors"},
-        {"id": "tip-probe", "command": "bench test --package ./internal/gate", "probe": "keep the tip-moved guard in the prepared run"}
-      ]
-    },
-    {
-      "id": "RC-C5",
-      "tickets": ["09-list-the-system-suite-in-the-selector.md"],
-      "verification": [
-        {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-        {"id": "preflight", "command": "bench test --package ./internal/preflight"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd"},
-        {"id": "index-probe", "command": "bench test --package ./internal/testreport", "probe": "drop the system-suite package from the index"}
-      ]
-    },
-    {
-      "id": "RC-C6",
-      "tickets": ["10-run-the-delta-checkpoint.md"],
-      "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "testgap", "command": "bench test --package ./internal/testgap"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/gate/authorization --package ./internal/reviewrecord"},
-        {"id": "tag-probe", "command": "bench test --package ./internal/gate", "probe": "admit a system-suite file to the delta"},
-        {"id": "operand-probe", "command": "bench test --package ./internal/gate", "probe": "take the delta base from the record chunk tip"}
-      ]
-    },
-    {
-      "id": "RC-C6B",
-      "tickets": ["11-record-and-reuse-the-delta-green.md"],
-      "verification": [
-        {"id": "gate", "command": "bench test --package ./internal/gate"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/git --package ./internal/status --package ./internal/testreport"},
-        {"id": "store-probe", "command": "bench test --package ./internal/gate", "probe": "write the delta green to the evidence store"}
-      ]
-    },
-    {
-      "id": "RC-C7",
-      "tickets": ["12-measure-the-run-binary-cost.md", "13-reuse-the-worktree-binary-in-exec.md"],
-      "verification": [
-        {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "runbinary", "command": "bench test --package ./internal/runbinary"},
-        {"id": "conformance", "command": "bench test --check root-conformance"},
-        {"id": "system", "command": "bench test --check system"},
-        {"id": "floor", "command": "bench test --package ./internal/freshness --package ./internal/treetarget --package ./internal/usage --package ./cmd/bench"},
-        {"id": "stale-probe", "command": "bench test --package ./internal/worktree", "probe": "pass a stale worktree binary to the child"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "coverage", "command": "bench coverage --check specs/chunk-repair-cycle/spec.md"},
-    {"id": "record", "command": "bench test --package ./internal/reviewrecord"},
-    {"id": "record-command", "command": "bench test --package ./internal/reviewrecord/recordcmd"},
-    {"id": "gate", "command": "bench test --package ./internal/gate"},
-    {"id": "preflight", "command": "bench test --package ./internal/preflight"},
-    {"id": "testreport", "command": "bench test --package ./internal/testreport"},
-    {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-    {"id": "conformance", "command": "bench test --check root-conformance"},
-    {"id": "system", "command": "bench test --check system"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft445-repair-cycle-full-20261024","orchestrator_session":"claude:rc-orchestrator-20261024","author_limit":3,"assignments":{"01-exempt-the-assignment-block.md":[{"session":"claude:rc-t01-author-20261024","assignment":"aa7435c8d0031009239fa5fb68b92b67","model":"opus","effort":"high","source":"183dd4f2e22796bb88e30b7ac126bf4cef59830d","native_ref":"claude-agent:bench-writer-high:rc-t01-author-20261024"},{"session":"claude:rc-t01-repair1-20261024","assignment":"aa7435c8d0031009239fa5fb68b92b67","model":"opus","effort":"high","source":"c01f9b8cb1fd92b5ecbad6a302f4b493cc6827bc","native_ref":"claude-agent:bench-writer-high:rc-t01-repair1-20261024","predecessor":"claude:rc-t01-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:rc-t01-author-20261024","preserved":"c01f9b8cb1fd92b5ecbad6a302f4b493cc6827bc"}],"02-grade-entries-at-their-own-commit.md":[{"session":"claude:rc-t02-author-20261024","assignment":"c8cfd1b42d799126bbf9a6aff35d1ab3","model":"opus","effort":"xhigh","source":"b410a3f3dbafd5fe91b7b0cf7887f30eb99cc3ca","native_ref":"claude-agent:bench-writer-xhigh:rc-t02-author-20261024"},{"session":"claude:rc-t02-repair1-20261024","assignment":"c8cfd1b42d799126bbf9a6aff35d1ab3","model":"opus","effort":"xhigh","source":"5bd2a526d67074a4bd07024f52886fcd5801323c","native_ref":"claude-agent:bench-writer-xhigh:rc-t02-repair1-20261024","predecessor":"claude:rc-t02-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:rc-t02-author-20261024","preserved":"5bd2a526d67074a4bd07024f52886fcd5801323c"}],"03-record-entries-at-the-own-commit.md":[{"session":"claude:rc-t03-author-20261024","assignment":"5a03d130da674f0ad7b251f37506e5fc","model":"opus","effort":"xhigh","source":"0f637ca8879c83c03422af7b9f83516537160a1a","native_ref":"claude-agent:bench-writer-xhigh:rc-t03-author-20261024"},{"session":"claude:rc-t03-repair1-20261024","assignment":"5a03d130da674f0ad7b251f37506e5fc","model":"opus","effort":"xhigh","source":"5fd813ea21d2a90b71a59b04575e64a9c72a8572","native_ref":"claude-agent:bench-writer-xhigh:rc-t03-repair1-20261024","predecessor":"claude:rc-t03-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:rc-t03-author-20261024","preserved":"5fd813ea21d2a90b71a59b04575e64a9c72a8572"}],"04-grade-the-floor-per-chunk.md":[{"session":"claude:rc-t04-author-20261024","assignment":"d5312d8cb94033f49954bd1df32dc1a3","model":"opus","effort":"high","source":"7aa9256c802a5f6cfe4d9e1bb8a3dcf1ef21aa3c","native_ref":"claude-agent:bench-writer-high:rc-t04-author-20261024"},{"session":"claude:rc-t04-repair1-20261024","assignment":"d5312d8cb94033f49954bd1df32dc1a3","model":"opus","effort":"high","source":"44a4e21286b329632d7ea6eeaa5a3e0030960753","native_ref":"claude-agent:bench-writer-high:rc-t04-repair1-20261024","predecessor":"claude:rc-t04-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:rc-t04-author-20261024","preserved":"44a4e21286b329632d7ea6eeaa5a3e0030960753"}],"05-one-plan-commit-and-preflight-per-dispatch.md":[{"session":"claude:rc-t05-author-20261024","assignment":"78e692ab9f542d168c6f7257aa532f4d","model":"opus","effort":"high","source":"1d02223fff82def1d12c0c284f0a550914b2ffd6","native_ref":"claude-agent:bench-writer-high:rc-t05-author-20261024"}],"06-refuse-a-dirty-chunk-checkout.md":[{"session":"claude:rc-t06-author-20261024","assignment":"28903206f6c64deb4ceb82370c9083ff","model":"opus","effort":"xhigh","source":"b77e4be404e76eef13b3e0f714ee80cce08bd2d9","native_ref":"claude-agent:bench-writer-xhigh:rc-t06-author-20261024"}],"07-key-the-chunk-checkpoint-without-the-record.md":[{"session":"claude:rc-t07-author-20261024","assignment":"2c6d8ab766ce223656ec23a8c9909518","model":"opus","effort":"xhigh","source":"0b97628459ab7f45c84b760459cc812a19fd4885","native_ref":"claude-agent:bench-writer-xhigh:rc-t07-author-20261024"},{"session":"claude:rc-t07-repair1-20261024","assignment":"2c6d8ab766ce223656ec23a8c9909518","model":"opus","effort":"xhigh","source":"a91c31f295b834be59377652e75988f877ebe436","native_ref":"claude-agent:bench-writer-xhigh:rc-t07-repair1-20261024","predecessor":"claude:rc-t07-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:rc-t07-author-20261024","preserved":"a91c31f295b834be59377652e75988f877ebe436"}],"08-prepare-the-checkpoint-gate.md":[{"session":"claude:rc-t08-author-20261024","assignment":"675e85cf4f6cc4a6822b618debd57b6b","model":"opus","effort":"xhigh","source":"1f6485e7cc148bbf23546f69221bfca25b1ce6b0","native_ref":"claude-agent:bench-writer-xhigh:rc-t08-author-20261024"},{"session":"claude:rc-t08-repair1-20261024","assignment":"675e85cf4f6cc4a6822b618debd57b6b","model":"opus","effort":"xhigh","source":"1838a97f4e2c58109657d3e429ed102853e6b55b","native_ref":"claude-agent:bench-writer-xhigh:rc-t08-repair1-20261024","predecessor":"claude:rc-t08-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:rc-t08-author-20261024","preserved":"1838a97f4e2c58109657d3e429ed102853e6b55b"}],"09-list-the-system-suite-in-the-selector.md":[{"session":"claude:rc-t09-author-20261024","assignment":"a763bcdad1974c79a3534b5a29be8689","model":"opus","effort":"high","source":"4b5d24913bc168db7d2128f7f711c8b3ddf4da21","native_ref":"claude-agent:bench-writer-high:rc-t09-author-20261024"},{"session":"claude:rc-t09-repair1-20261024","assignment":"a763bcdad1974c79a3534b5a29be8689","model":"opus","effort":"high","source":"78202f768e5758e7c7458498c27d733c30c618a1","native_ref":"claude-agent:bench-writer-high:rc-t09-repair1-20261024","predecessor":"claude:rc-t09-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:rc-t09-author-20261024","preserved":"78202f768e5758e7c7458498c27d733c30c618a1"}],"10-run-the-delta-checkpoint.md":[{"session":"claude:rc-t10-author-20261024","assignment":"6ab4d9c9f7b9691e20271b1741b9879d","model":"opus","effort":"xhigh","source":"9f00a85886fbf6190426ec3015c87ebf704afc17","native_ref":"claude-agent:bench-writer-xhigh:rc-t10-author-20261024"},{"session":"claude:rc-t10-repair1-20261024","assignment":"6ab4d9c9f7b9691e20271b1741b9879d","model":"opus","effort":"xhigh","source":"2af78b0876663409ee34cec0097ddfd638ab7ae1","native_ref":"claude-agent:bench-writer-xhigh:rc-t10-repair1-20261024","predecessor":"claude:rc-t10-author-20261024","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:rc-t10-author-20261024","preserved":"2af78b0876663409ee34cec0097ddfd638ab7ae1"}],"11-record-and-reuse-the-delta-green.md":[{"session":"claude:rc-t11-author-20261025","assignment":"6ad1836ae8425ec742dccf7d2a2224c0","model":"opus","effort":"high","source":"6cc6f26b3936dc3000fef25124825ebdd2aea1ea","native_ref":"claude-agent:bench-writer-high:rc-t11-author-20261025"},{"session":"claude:rc-t11-verify1-20261025","assignment":"6ad1836ae8425ec742dccf7d2a2224c0","model":"opus","effort":"high","source":"ff84930f7eed356edcba929c6bb73a0b533f6630","native_ref":"claude-agent:bench-writer-high:rc-t11-verify1-20261025","predecessor":"claude:rc-t11-author-20261025","trigger":"session-lost","stopped":"claude-agent:bench-writer-high:rc-t11-author-20261025","preserved":"ff84930f7eed356edcba929c6bb73a0b533f6630"},{"session":"claude:rc-t11-repair1-20261025","assignment":"6ad1836ae8425ec742dccf7d2a2224c0","model":"opus","effort":"high","source":"6a17b0caac328680a14c70f1f8c4fbac7d063f9f","native_ref":"claude-agent:bench-writer-high:rc-t11-repair1-20261025","predecessor":"claude:rc-t11-verify1-20261025","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:rc-t11-verify1-20261025","preserved":"6a17b0caac328680a14c70f1f8c4fbac7d063f9f"}],"12-measure-the-run-binary-cost.md":[{"session":"claude:rc-t12-author-20261025","assignment":"bc9120ed3dcf06b5a8fd1f977ec9c00a","model":"sonnet","effort":"high","source":"2aa770dbe6c7d588a4f3c3742283d0cb1e88416f","native_ref":"claude-agent:bench-writer-high:rc-t12-author-20261025"}]}},"chunks":[{"id":"RC-C1","tickets":["01-exempt-the-assignment-block.md"],"verification":[{"id":"record","command":"bench test --package ./internal/reviewrecord","ticket":"01-exempt-the-assignment-block.md"},{"id":"record-command","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"01-exempt-the-assignment-block.md"},{"id":"gate","command":"bench test --package ./internal/gate","ticket":"01-exempt-the-assignment-block.md"},{"id":"testgap","command":"bench test --package ./internal/testgap","ticket":"01-exempt-the-assignment-block.md"},{"id":"anchors","command":"bench test --package ./internal/anchors","ticket":"01-exempt-the-assignment-block.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"01-exempt-the-assignment-block.md"},{"id":"floor","command":"bench test --package ./internal/reviewrecord/recordtest --package ./cmd/bench","ticket":"01-exempt-the-assignment-block.md"},{"id":"exemption-probe","command":"bench test --package ./internal/reviewrecord/recordcmd","probe":"clear the whole plan fence instead of the assignment block","ticket":"01-exempt-the-assignment-block.md"}]},{"id":"RC-C2","tickets":["02-grade-entries-at-their-own-commit.md"],"verification":[{"id":"record","command":"bench test --package ./internal/reviewrecord","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"record-command","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"record-fixture","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"ownership","command":"bench test --package ./internal/preflight/ownership","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"gate","command":"bench test --package ./internal/gate","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"floor","command":"bench test --package ./internal/landing --package ./internal/worktree --package ./cmd/bench","ticket":"02-grade-entries-at-their-own-commit.md"},{"id":"line-probe","command":"bench test --package ./internal/gate","probe":"drop the ancestry test of the entry commit","ticket":"02-grade-entries-at-their-own-commit.md"}]},{"id":"RC-C2B","tickets":["03-record-entries-at-the-own-commit.md"],"verification":[{"id":"record","command":"bench test --package ./internal/reviewrecord","ticket":"03-record-entries-at-the-own-commit.md"},{"id":"record-command","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"03-record-entries-at-the-own-commit.md"},{"id":"record-fixture","command":"bench test --package ./internal/reviewrecord/recordtest","ticket":"03-record-entries-at-the-own-commit.md"},{"id":"gate","command":"bench test --package ./internal/gate","ticket":"03-record-entries-at-the-own-commit.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"03-record-entries-at-the-own-commit.md"},{"id":"floor","command":"bench test --package ./internal/anchors --package ./cmd/bench","ticket":"03-record-entries-at-the-own-commit.md"},{"id":"writer-probe","command":"bench test --package ./internal/reviewrecord/recordcmd","probe":"bind an earlier ticket to the chunk tip","ticket":"03-record-entries-at-the-own-commit.md"}]},{"id":"RC-C3","tickets":["04-grade-the-floor-per-chunk.md","05-one-plan-commit-and-preflight-per-dispatch.md"],"verification":[{"id":"preflight","command":"bench test --package ./internal/preflight","ticket":"04-grade-the-floor-per-chunk.md"},{"id":"record-command","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"04-grade-the-floor-per-chunk.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"04-grade-the-floor-per-chunk.md"},{"id":"floor","command":"bench test --package ./internal/preflight/preflighttest --package ./internal/reviewrecord --package ./cmd/bench","ticket":"04-grade-the-floor-per-chunk.md"},{"id":"floor-probe","command":"bench test --package ./internal/preflight","probe":"grade each ticket against its own requirements only","ticket":"04-grade-the-floor-per-chunk.md"},{"id":"guidance-conformance","command":"bench test --check root-conformance","ticket":"05-one-plan-commit-and-preflight-per-dispatch.md"},{"id":"guidance-floor","command":"bench test --package ./internal/anchors --package ./cmd/bench","ticket":"05-one-plan-commit-and-preflight-per-dispatch.md"}]},{"id":"RC-C4","tickets":["06-refuse-a-dirty-chunk-checkout.md","07-key-the-chunk-checkpoint-without-the-record.md"],"verification":[{"id":"dirty-gate","command":"bench test --package ./internal/gate","ticket":"06-refuse-a-dirty-chunk-checkout.md"},{"id":"dirty-conformance","command":"bench test --check root-conformance","ticket":"06-refuse-a-dirty-chunk-checkout.md"},{"id":"dirty-floor","command":"bench test --package ./internal/refusalroute --package ./internal/reviewrecord/recordtest --package ./internal/worktree --package ./cmd/bench","ticket":"06-refuse-a-dirty-chunk-checkout.md"},{"id":"gate","command":"bench test --package ./internal/gate","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"record","command":"bench test --package ./internal/reviewrecord","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"command","command":"bench test --package ./cmd/bench","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"system","command":"bench test --check system","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"floor","command":"bench test --package ./internal/reviewrecord/recordcmd","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"key-probe","command":"bench test --package ./internal/gate","probe":"frame the HEAD tip into the chunk-checkpoint oracle","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"},{"id":"prose-probe","command":"bench test --package ./internal/gate","probe":"skip the record prose grade after a reuse","ticket":"07-key-the-chunk-checkpoint-without-the-record.md"}]},{"id":"RC-C4B","tickets":["08-prepare-the-checkpoint-gate.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate","ticket":"08-prepare-the-checkpoint-gate.md"},{"id":"command","command":"bench test --package ./cmd/bench","ticket":"08-prepare-the-checkpoint-gate.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"08-prepare-the-checkpoint-gate.md"},{"id":"system","command":"bench test --check system","ticket":"08-prepare-the-checkpoint-gate.md"},{"id":"floor","command":"bench test --package ./internal/refusalroute --package ./internal/anchors","ticket":"08-prepare-the-checkpoint-gate.md"},{"id":"tip-probe","command":"bench test --package ./internal/gate","probe":"keep the tip-moved guard in the prepared run","ticket":"08-prepare-the-checkpoint-gate.md"}]},{"id":"RC-C5","tickets":["09-list-the-system-suite-in-the-selector.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport","ticket":"09-list-the-system-suite-in-the-selector.md"},{"id":"preflight","command":"bench test --package ./internal/preflight","ticket":"09-list-the-system-suite-in-the-selector.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"09-list-the-system-suite-in-the-selector.md"},{"id":"system","command":"bench test --check system","ticket":"09-list-the-system-suite-in-the-selector.md"},{"id":"floor","command":"bench test --package ./internal/conformance --package ./internal/gate --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd","ticket":"09-list-the-system-suite-in-the-selector.md"},{"id":"index-probe","command":"bench test --package ./internal/testreport","probe":"drop the system-suite package from the index","ticket":"09-list-the-system-suite-in-the-selector.md"}]},{"id":"RC-C6","tickets":["10-run-the-delta-checkpoint.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate","ticket":"10-run-the-delta-checkpoint.md"},{"id":"testgap","command":"bench test --package ./internal/testgap","ticket":"10-run-the-delta-checkpoint.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"10-run-the-delta-checkpoint.md"},{"id":"system","command":"bench test --check system","ticket":"10-run-the-delta-checkpoint.md"},{"id":"floor","command":"bench test --package ./internal/gate/authorization --package ./internal/reviewrecord --package ./internal/testreport","ticket":"10-run-the-delta-checkpoint.md"},{"id":"tag-probe","command":"bench test --package ./internal/gate","probe":"admit a system-suite file to the delta","ticket":"10-run-the-delta-checkpoint.md"},{"id":"operand-probe","command":"bench test --package ./internal/gate","probe":"take the delta base from the record chunk tip","ticket":"10-run-the-delta-checkpoint.md"}]},{"id":"RC-C6B","tickets":["11-record-and-reuse-the-delta-green.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate","ticket":"11-record-and-reuse-the-delta-green.md"},{"id":"conformance","command":"bench test --check root-conformance","ticket":"11-record-and-reuse-the-delta-green.md"},{"id":"system","command":"bench test --check system","ticket":"11-record-and-reuse-the-delta-green.md"},{"id":"floor","command":"bench test --package ./internal/git --package ./internal/status --package ./internal/testreport","ticket":"11-record-and-reuse-the-delta-green.md"},{"id":"store-probe","command":"bench test --package ./internal/gate","probe":"write the delta green to the evidence store","ticket":"11-record-and-reuse-the-delta-green.md"}]},{"id":"RC-C7","tickets":["12-measure-the-run-binary-cost.md"],"verification":[{"id":"measure-conformance","command":"bench test --check root-conformance","ticket":"12-measure-the-run-binary-cost.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/chunk-repair-cycle/spec.md"},{"id":"record","command":"bench test --package ./internal/reviewrecord"},{"id":"record-command","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"conformance","command":"bench test --check root-conformance"},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -447,7 +298,7 @@ The authored version 1 plan states the verification obligations. The approved bu
 - A row that compares a run against a reuse uses the phase rows and the reuse line, never elapsed times.
 - A delta row plants a red in a package outside the delta set. The delta must stay green there, and the whole run must go red. That proves the delta ran only its set.
 - The gate seam observes every change of this spec: the checkpoint gate, the prepared run, and the delta checkpoint all run through `bench gate`.
-- Prior art: `TestReviewCheckpointReuse` (reuse refusals), `TestReviewCheckpointConfirmationRefusals` (test-only proof), `TestTicketRefusals` (stage refusals), `TestCheckFloorReadsOnlyTheOwnChunk` (floor scope), `TestVerdictRecordClassRegistryMatchesExpectation` (class table), `TestExecChildOwnsRatherThanInheritsItsRunBinary` (exec environment).
+- Prior art: `TestReviewCheckpointReuse` (reuse refusals), `TestReviewCheckpointConfirmationRefusals` (test-only proof), `TestTicketRefusals` (stage refusals), `TestCheckFloorReadsOnlyTheOwnChunk` (floor scope), `TestVerdictRecordClassRegistryMatchesExpectation` (class table).
 - No fixed wall-clock threshold enters the gate. The final reconciliation measures the repair cycle as review-owned evidence.
 
 ### Seam diagram
@@ -470,101 +321,91 @@ trigger: the orchestrator before a successor chunk
     ▼
 HEAD commit ──▶ [ chunk checkpoint: reuse | delta | whole ] ──▶ evidence pass + record prose + chunk gap
                    ◀ tests: planted red outside the delta, store and cache files, landing inspection
-
-trigger: bench worktree exec with a Bench argv[0]
-    │
-    ▼
-dist/bench + seal ──▶ [ exec freshness check ] ──▶ BENCH_RUN_BINARY or a private build
-                        ◀ tests: child environment, stale-binary refusal
 ```
 
 ### Acceptance coverage map
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| RC1 | 1 | A repair delta of one test file plus an assignment-only plan commit records a confirmation. | planned TestRecordConfirmationAcceptsAnAssignmentOnlyPlanCommit in internal/reviewrecord/recordcmd/confirmation_test.go. | Today the spec path fails the test-only proof, so the call refuses. |
-| RC2 | 2 | A repair delta that changes a plan-fence field outside the assignment block refuses the confirmation. | planned TestRecordConfirmationRefusesAPlanFenceChange in internal/reviewrecord/recordcmd/confirmation_test.go. | An exemption that clears the whole fence accepts the changed field. |
-| RC3 | 3 | A repair delta that widens a ticket `Writes:` line refuses the confirmation. | planned TestRecordConfirmationRefusesATicketWidening in internal/reviewrecord/recordcmd/confirmation_test.go. | An exemption that admits every spec-folder path accepts the ticket file. |
-| RC4 | 4 | A repair delta that changes a seam cell outside the plan fence refuses the confirmation. | planned TestRecordConfirmationRefusesASpecProseChange in internal/reviewrecord/recordcmd/confirmation_test.go. | An exemption that compares only the decoded fence accepts the changed prose. |
-| RC5 | 5 | The chunk checkpoint accepts the assignment-only confirmation from RC1. | planned TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit in internal/gate/review_checkpoint_confirmation_test.go. | An exemption in the writer alone leaves the checkpoint refusing the same delta. |
+| RC1 | 1 | A repair delta of one test file plus an assignment-only plan commit records a confirmation. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationAcceptsAnAssignmentOnlyPlanCommit`). | Today the spec path fails the test-only proof, so the call refuses. |
+| RC2 | 2 | A repair delta that changes a plan-fence field outside the assignment block refuses the confirmation. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusesAPlanFenceChange`). | An exemption that clears the whole fence accepts the changed field. |
+| RC3 | 3 | A repair delta that widens a ticket `Writes:` line refuses the confirmation. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusesATicketWidening`). | An exemption that admits every spec-folder path accepts the ticket file. |
+| RC4 | 4 | A repair delta that changes a seam cell outside the plan fence refuses the confirmation. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusesASpecProseChange`). | An exemption that compares only the decoded fence accepts the changed prose. |
+| RC5 | 5 | The chunk checkpoint accepts the assignment-only confirmation from RC1. | `internal/gate/review_checkpoint_confirmation_test.go` (`TestReviewCheckpointConfirmationAcceptsAnAssignmentOnlyPlanCommit`). | An exemption in the writer alone leaves the checkpoint refusing the same delta. |
 | RC6 | 5 | A repair delta with a non-test Go file still refuses the confirmation. | `internal/reviewrecord/recordcmd/confirmation_test.go` (`TestRecordConfirmationRefusals`). | An exemption that skips the test-gap proof accepts the production file. |
 | RC7 | 6 | The known-issues file holds no row that names FT438. | Gate check: the `docs-currency-workflow` anchors with a Forbid row on `FT438` in docs/known-issues.md. | A kept or restored row matches the forbidden needle. |
-| RC8 | 7 | The checkpoint accepts an earlier ticket's entry at that ticket's commit after a later ticket moves the tip. | planned TestCheckpointAcceptsAnEntryAtAnEarlierTicketCommit in internal/gate/review_checkpoint_test.go. | Today the entry digest differs from the chunk digest, so the checkpoint calls it stale. |
-| RC9 | 7 | An earlier ticket's `bench record ticket` at its own commit writes its entries after the tip moved past it. | planned TestTicketRecordsAtItsOwnCommitOnTheChunkLine in internal/reviewrecord/recordcmd/ticket_test.go. | Today the call refuses because the staged run is not at the chunk source. |
-| RC10 | 8 | A repair session's record call writes entries for its own ticket only and leaves the other entries unchanged. | planned TestRepairRecordLeavesOtherTicketsEntries in internal/reviewrecord/recordcmd/ticket_test.go. | A writer that restages the chunk rewrites the other tickets' entries. |
-| RC11 | 9 | A non-last ticket's record call at a commit that descends from the chunk tip refreezes the chunk at that commit. | planned TestNonLastTicketRefreezesAtItsRepairCommit in internal/reviewrecord/recordcmd/ticket_test.go. | Today only the last ticket can freeze, so the call refuses. |
-| RC12 | 10 | A staged run at a record-only descendant of the chunk tip binds the tip commit and leaves the tip unchanged. | planned TestTicketStagedAfterARecordCommitBindsTheTip in internal/reviewrecord/recordcmd/ticket_test.go. | A writer that binds HEAD literally refreezes the chunk on a record commit. |
-| RC13 | 11 | The checkpoint refuses an entry whose commit is not an ancestor of the chunk tip. | planned TestCheckpointRefusesAnEntryOffTheChunkLine in internal/gate/review_checkpoint_test.go. | A predicate without the tip ancestry test accepts a commit from another branch. |
-| RC14 | 11 | The checkpoint refuses an entry whose commit is the chunk base. | planned TestCheckpointRefusesAnEntryAtTheChunkBase in internal/gate/review_checkpoint_test.go. | A predicate that uses the reflexive ancestry query alone accepts the base, which is the tip of the earlier chunk. |
-| RC15 | 12 | The checkpoint refuses an entry whose digest differs from the digest of its commit's tree. | planned TestCheckpointRefusesARelabeledEntryDigest in internal/gate/review_checkpoint_test.go. | A predicate that trusts the recorded commit alone accepts a relabeled entry. |
-| RC16 | 13 | A written entry carries `source_commit` equal to the staged run's HEAD. | planned TestTicketWritesTheSourceCommit in internal/reviewrecord/recordcmd/ticket_test.go. | A writer that omits the field drops every new entry to the legacy rule. |
-| RC17 | 14 | The checkpoint accepts another ticket's probe entry at its own commit after a repair moved the tip. | planned TestCheckpointCarriesAnotherTicketsProbeForward in internal/gate/review_checkpoint_test.go. | A predicate that demands each probe at the tip refuses the carried probe. |
-| RC18 | 15 | The checkpoint accepts an entry with no `source_commit` at the chunk digest. | planned TestCheckpointKeepsTheLegacyEntryRule in internal/gate/review_checkpoint_test.go. | A predicate that requires the new field refuses every older record. |
-| RC19 | 15 | The checkpoint refuses an entry with no `source_commit` at a digest other than the chunk digest. | planned TestCheckpointRefusesAStaleLegacyEntry in internal/gate/review_checkpoint_test.go. | A legacy rule that accepts any digest lets a stale older entry pass. |
-| RC20 | 16 | The reused-test premise accepts an entry at an earlier commit on the chunk line. | planned TestReusedTestPremiseAcceptsAnEarlierTicketCommit in internal/preflight/ownership/premises_test.go. | Today the premise requires the chunk tip and the chunk digest. |
-| RC21 | 16 | The reused-test premise refuses an entry whose commit is not on the chunk line. | planned TestReusedTestPremiseRefusesAnEntryOffTheChunkLine in internal/preflight/ownership/premises_test.go. | A premise that drops the tip test without the ancestry test accepts any commit. |
-| RC22 | 17 | The checkpoint goes red on a red planted at the chunk tip when every entry is current. | planned TestCheckpointRunsTheGateWithCarriedEntries in internal/gate/review_checkpoint_test.go. | A checkpoint that skips the gate when all entries carry forward misses the planted red. |
-| RC23 | 13 | The record parser refuses a `source_commit` that is not a full object id. | planned TestParseRefusesAMalformedSourceCommit in internal/reviewrecord/record_test.go. | A parser with no form rule accepts a short or hostile commit text. |
+| RC8 | 7 | The checkpoint accepts an earlier ticket's entry at that ticket's commit after a later ticket moves the tip. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointAcceptsAnEntryAtAnEarlierTicketCommit`). | Today the entry digest differs from the chunk digest, so the checkpoint calls it stale. |
+| RC9 | 7 | An earlier ticket's `bench record ticket` at its own commit writes its entries after the tip moved past it. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRecordsAtItsOwnCommitOnTheChunkLine`). | Today the call refuses because the staged run is not at the chunk source. |
+| RC10 | 8 | A repair session's record call writes entries for its own ticket only and leaves the other entries unchanged. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestRepairRecordLeavesOtherTicketsEntries`). | A writer that restages the chunk rewrites the other tickets' entries. |
+| RC11 | 9 | A non-last ticket's record call at a commit that descends from the chunk tip refreezes the chunk at that commit. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestNonLastTicketRefreezesAtItsRepairCommit`). | Today only the last ticket can freeze, so the call refuses. |
+| RC12 | 10 | A staged run at a record-only descendant of the chunk tip binds the tip commit and leaves the tip unchanged. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketStagedAfterARecordCommitBindsTheTip`). | A writer that binds HEAD literally refreezes the chunk on a record commit. |
+| RC13 | 11 | The checkpoint refuses an entry whose commit is not an ancestor of the chunk tip. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointRefusesAnEntryOffTheChunkLine`). | A predicate without the tip ancestry test accepts a commit from another branch. |
+| RC14 | 11 | The checkpoint refuses an entry whose commit is the chunk base. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointRefusesAnEntryAtTheChunkBase`). | A predicate that uses the reflexive ancestry query alone accepts the base, which is the tip of the earlier chunk. |
+| RC15 | 12 | The checkpoint refuses an entry whose digest differs from the digest of its commit's tree. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointRefusesARelabeledEntryDigest`). | A predicate that trusts the recorded commit alone accepts a relabeled entry. |
+| RC16 | 13 | A written entry carries `source_commit` equal to the staged run's HEAD. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketWritesTheSourceCommit`). | A writer that omits the field drops every new entry to the legacy rule. |
+| RC17 | 14 | The checkpoint accepts another ticket's probe entry at its own commit after a repair moved the tip. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointCarriesAnotherTicketsProbeForward`). | A predicate that demands each probe at the tip refuses the carried probe. |
+| RC18 | 15 | The checkpoint accepts an entry with no `source_commit` at the chunk digest. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointKeepsTheLegacyEntryRule`). | A predicate that requires the new field refuses every older record. |
+| RC19 | 15 | The checkpoint refuses an entry with no `source_commit` at a digest other than the chunk digest. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointRefusesAStaleLegacyEntry`). | A legacy rule that accepts any digest lets a stale older entry pass. |
+| RC20 | 16 | The reused-test premise accepts an entry at an earlier commit on the chunk line. | `internal/preflight/ownership/premises_test.go` (`TestReusedTestPremiseAcceptsAnEarlierTicketCommit`). | Today the premise requires the chunk tip and the chunk digest. |
+| RC21 | 16 | The reused-test premise refuses an entry whose commit is not on the chunk line. | `internal/preflight/ownership/premises_test.go` (`TestReusedTestPremiseRefusesAnEntryOffTheChunkLine`). | A premise that drops the tip test without the ancestry test accepts any commit. |
+| RC22 | 17 | The checkpoint goes red on a red planted at the chunk tip when every entry is current. | `internal/gate/review_checkpoint_test.go` (`TestCheckpointRunsTheGateWithCarriedEntries`). | A checkpoint that skips the gate when all entries carry forward misses the planted red. |
+| RC23 | 13 | The record parser refuses a `source_commit` that is not a full object id. | `internal/reviewrecord/record_test.go` (`TestParseRefusesAMalformedSourceCommit`). | A parser with no form rule accepts a short or hostile commit text. |
 | RC24 | 7 | A staged run with a dirty path other than the record still refuses. | `internal/reviewrecord/recordcmd/ticket_test.go` (`TestTicketRefusals`). | Removing the dirty-path predicate with the source predicate accepts an uncommitted change. |
-| RC25 | 18 | `check-floor` is green when one ticket's requirement covers a package that another ticket of the chunk writes. | planned TestCheckFloorGradesTheChunkUnion in internal/preflight/check_floor_test.go. | The per-ticket filter reds the uncovered ticket today. |
-| RC26 | 19 | A `check-floor` red names the chunk and the omitted element. | planned TestCheckFloorNamesTheChunkElement in internal/preflight/check_floor_test.go. | A detail that keeps the ticket name points at a ticket that owes nothing. |
+| RC25 | 18 | `check-floor` is green when one ticket's requirement covers a package that another ticket of the chunk writes. | `internal/preflight/check_floor_test.go` (`TestCheckFloorGradesTheChunkUnion`). | The per-ticket filter reds the uncovered ticket today. |
+| RC26 | 19 | A `check-floor` red names the chunk and the omitted element. | `internal/preflight/check_floor_test.go` (`TestCheckFloorNamesTheChunkElement`). | A detail that keeps the ticket name points at a ticket that owes nothing. |
 | RC27 | 20 | A requirement of another chunk covers no element of this chunk. | `internal/preflight/check_floor_test.go` (`TestCheckFloorReadsOnlyTheOwnChunk`). | A union over the whole plan lets one chunk borrow another chunk's run. |
 | RC28 | 20 | A `--changed` run satisfies no floor element. | `internal/preflight/check_floor_test.go` (`TestCheckFloorRejectsAChangedRun`). | A union that admits every `bench test` form accepts a selector run. |
 | RC29 | 21 | The preflight package holds no requirement-ownership derivation of its own. | Review-owned: `bench consumers reviewrecord.TicketRequirements` lists the only ownership derivation. No gate check can red it, because the chunk-union grade calls no ownership filter, so a kept `ticketRequirements` has no caller, and no gate phase reds an uncalled unexported function. | A kept `ticketRequirements` survives as a second rule that a later caller can revive. |
-| RC30 | 22 | `bench record assignment` refuses while a ticket file differs from HEAD. | planned TestRecordAssignmentRefusesADirtyTicket in internal/reviewrecord/recordcmd/assignment_test.go. | The repair order depends on this refusal, and a lost refusal records an assignment over an unreviewed widening. |
+| RC30 | 22 | `bench record assignment` refuses while a ticket file differs from HEAD. | `internal/reviewrecord/recordcmd/assignment_test.go` (`TestAssignmentSourceRefusals`). | The repair order depends on this refusal, and a lost refusal records an assignment over an unreviewed widening. |
 | RC31 | 23 | The implement phase names the charge preparation as the one build preflight of a dispatch. | Review-owned: the RC-C3 review reads .agents/commands/bench-implement-spec.md. | A guidance that keeps the chain for a dispatching plan commit runs two preflights. |
 | RC32 | 24 | The implement phase keeps `bench commit --preflight-build <slug>` for a plan commit that no dispatch follows. | Review-owned: the RC-C3 review reads .agents/commands/bench-implement-spec.md. | A guidance that drops every chain leaves such a commit with no build preflight. |
 | RC33 | 56 | Each edited guidance file stays inside its line budget. | Gate check: `bench test --check guidance-prose-budgets`. | A guidance edit that grows past its budget reds the check. |
-| RC34 | 25 | `--prepare` runs the whole gate on the record-stripped HEAD tree and writes a green to the evidence store. | planned TestCheckpointPrepareRunsTheGateWithoutEvidence in internal/gate/checkpoint_prepare_test.go. | A prepare that runs the evidence pass refuses before the record commit. |
-| RC35 | 25 | `--prepare` leaves the chunk gap closed. | planned TestCheckpointPrepareOpensNoChunkGap in internal/gate/checkpoint_prepare_test.go. | A prepare that opens the gap lets a successor start before the evidence grade. |
-| RC36 | 26 | A chunk checkpoint in a second process after a record-only commit reuses the prepared green and runs no phase. | planned TestChunkCheckpointReusesThePreparedGreen in internal/gate/checkpoint_prepare_test.go. | Today the tip and the purpose in the oracle force a new run. |
-| RC37 | 27 | A spec change after the prepared run makes the chunk checkpoint run the gate. | planned TestChunkCheckpointRunsAfterASpecChange in internal/gate/checkpoint_prepare_test.go. | A key that strips the spec with the record reuses a green for a changed plan. |
-| RC38 | 27 | A source change other than the record after the prepared run makes the chunk checkpoint run the gate. | planned TestChunkCheckpointRunsAfterASourceChange in internal/gate/checkpoint_prepare_test.go. | A key without the tree reuses a green for changed code. |
-| RC39 | 28 | A reused green with a stale verification entry refuses through the evidence pass. | planned TestChunkCheckpointReuseKeepsTheEvidencePass in internal/gate/checkpoint_prepare_test.go. | A reuse path that returns before the evidence pass accepts stale evidence. |
-| RC40 | 29 | A record with a sentence over the prose bound reds the chunk checkpoint on a reused green. | planned TestChunkCheckpointGradesTheRecordProseOnReuse in internal/gate/checkpoint_prepare_test.go. | A record grade only inside the gate run never sees the record on a reuse. |
-| RC41 | 29 | The same record reds the chunk checkpoint on a fresh run. | planned TestChunkCheckpointGradesTheRecordProseOnARun in internal/gate/checkpoint_prepare_test.go. | A record grade only on the reuse path misses the record, because the run grades the stripped tree. |
-| RC42 | 30 | A record write and a record commit in the worktree during the prepared run leave its green. | planned TestCheckpointPrepareSurvivesARecordCommit in internal/gate/checkpoint_prepare_test.go. | A prepare that captures the working tree after the run returns exit 1, and a prepare that keeps the tip-moved guard refuses on the moved HEAD. |
+| RC34 | 25 | `--prepare` runs the whole gate on the record-stripped HEAD tree and writes a green to the evidence store. | `internal/gate/checkpoint_prepare_test.go` (`TestCheckpointPrepareRunsTheGateWithoutEvidence`). | A prepare that runs the evidence pass refuses before the record commit. |
+| RC35 | 25 | `--prepare` leaves the chunk gap closed. | `internal/gate/chunk_gap_test.go` (`TestCheckpointPrepareOpensNoChunkGap`). | A prepare that opens the gap lets a successor start before the evidence grade. |
+| RC36 | 26 | A chunk checkpoint in a second process after a record-only commit reuses the prepared green and runs no phase. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointReusesThePreparedGreen`). | Today the tip and the purpose in the oracle force a new run. |
+| RC37 | 27 | A spec change after the prepared run makes the chunk checkpoint run the gate. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointRunsAfterASpecChange`). | A key that strips the spec with the record reuses a green for a changed plan. |
+| RC38 | 27 | A source change other than the record after the prepared run makes the chunk checkpoint run the gate. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointRunsAfterASourceChange`). | A key without the tree reuses a green for changed code. |
+| RC39 | 28 | A reused green with a stale verification entry refuses through the evidence pass. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointReuseKeepsTheEvidencePass`). | A reuse path that returns before the evidence pass accepts stale evidence. |
+| RC40 | 29 | A record with a sentence over the prose bound reds the chunk checkpoint on a reused green. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointGradesTheRecordProseOnReuse`). | A record grade only inside the gate run never sees the record on a reuse. |
+| RC41 | 29 | The same record reds the chunk checkpoint on a fresh run. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointGradesTheRecordProseOnARun`). | A record grade only on the reuse path misses the record, because the run grades the stripped tree. |
+| RC42 | 30 | A record write and a record commit in the worktree during the prepared run leave its green. | `internal/gate/checkpoint_prepare_test.go` (`TestCheckpointPrepareSurvivesARecordCommit`). | A prepare that captures the working tree after the run returns exit 1, and a prepare that keeps the tip-moved guard refuses on the moved HEAD. |
 | RC43 | 31 | The implement phase runs the coordinator probe before the prepared run and waits on the run's PID before the checkpoint. | Review-owned: the RC-C4B review reads .agents/commands/bench-implement-spec.md and the bounded repair policy. | A guidance that overlaps the probe and the run meets the `gate-held` refusal. |
-| RC44 | 32 | The chunk checkpoint refuses a working tree that differs from HEAD with the `checkpoint-dirty-checkout` face. | planned TestChunkCheckpointRefusesADirtyCheckout in internal/gate/checkpoint_prepare_test.go. | A checkpoint that grades HEAD and ignores the working tree passes an uncommitted change silently. |
-| RC45 | 33 | A complete checkpoint after a prepared chunk green runs the gate on its published tree. | planned TestCompleteCheckpointIgnoresAPreparedChunkGreen in internal/gate/complete_checkpoint_test.go. | A complete form that takes the chunk key reuses a green over the wrong tree. |
+| RC44 | 32 | The chunk checkpoint refuses a working tree that differs from HEAD with the `checkpoint-dirty-checkout` face. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointRefusesADirtyCheckout`). | A checkpoint that grades HEAD and ignores the working tree passes an uncommitted change silently. |
+| RC45 | 33 | A complete checkpoint after a prepared chunk green runs the gate on its published tree. | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointIgnoresAPreparedChunkGreen`). | A complete form that takes the chunk key reuses a green over the wrong tree. |
 | RC46 | 33 | Prospective landing evidence still keys to the tree and the baseline runner identity. | `internal/gate/prospective_owner_test.go` (`TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity`). | A shared key change that reaches the landing reuses a green across a changed baseline. |
 | RC47 | 34 | The reference, the profile, the bounded repair policy, and ADR 0002 state the chunk-checkpoint key and the prepared run. | Review-owned: the RC-C4B review reads each named document. | A stale sentence tells a fresh reader that record bytes still enter the key. |
-| RC48 | 35 | A plan requirement whose command runs the gate accepts only a staged native excerpt with a matching digest. | planned TestGateRequirementKeepsTheNativeExcerpt in internal/reviewrecord/recordcmd/stage_test.go. | A reuse path that writes a synthesized entry passes with no native output. |
-| RC49 | 25 | `bench gate --help` names `--prepare` in its usage line. | planned TestGateUsageNamesPrepare in internal/gate/checkpoint_prepare_test.go. | A flag missing from the usage line is a dead key for a fresh reader. |
-| RC50 | 25 | `--prepare` with `--complete` is a usage error at exit 2. | planned TestCheckpointPrepareRefusesComplete in cmd/bench/gate_route_test.go. | A prepare of the complete form writes a chunk-shaped green under the complete purpose. |
-| RC51 | 25 | `--prepare` without `--checkpoint` is a usage error at exit 2. | planned TestCheckpointPrepareRefusesNoCheckpoint in cmd/bench/gate_route_test.go. | A bare prepare runs an ordinary gate under a name that promises a checkpoint subject. |
-| RC52 | 26 | A prepared green past the freshness window makes the chunk checkpoint run the gate. | planned TestChunkCheckpointRunsAfterThePreparedGreenExpires in internal/gate/checkpoint_prepare_test.go. | A reuse with no window check accepts an expired green. |
-| RC53 | 36 | A changed system-suite test file selects `bench test --check system`. | planned TestChangedSelectionSelectsTheSystemSuite in internal/testreport/selection_test.go. | Today the selector refuses the path as outside every current package. |
-| RC54 | 37 | A production change in a package that the system suite imports selects `bench test --check system`. | planned TestChangedSelectionReachesTheSystemSuiteByImport in internal/testreport/selection_test.go. | An index without the tagged package never reaches the suite through imports. |
-| RC55 | 38 | The floor of a ticket that writes the system suite names `bench test --check system`. | planned TestWritesFloorNamesTheSystemCheck in internal/testreport/floor_test.go. | Today the floor adds no element for a system-suite path. |
+| RC48 | 35 | A plan requirement whose command runs the gate accepts only a staged native excerpt with a matching digest. | `internal/reviewrecord/recordcmd/stage_test.go` (`TestGateRequirementKeepsTheNativeExcerpt`). | A reuse path that writes a synthesized entry passes with no native output. |
+| RC49 | 25 | `bench gate --help` names `--prepare` in its usage line. | `internal/gate/checkpoint_prepare_test.go` (`TestGateUsageNamesPrepare`). | A flag missing from the usage line is a dead key for a fresh reader. |
+| RC50 | 25 | `--prepare` with `--complete` is a usage error at exit 2. | `cmd/bench/gate_route_test.go` (`TestCheckpointPrepareRefusesComplete`). | A prepare of the complete form writes a chunk-shaped green under the complete purpose. |
+| RC51 | 25 | `--prepare` without `--checkpoint` is a usage error at exit 2. | `cmd/bench/gate_route_test.go` (`TestCheckpointPrepareRefusesNoCheckpoint`). | A bare prepare runs an ordinary gate under a name that promises a checkpoint subject. |
+| RC52 | 26 | A prepared green past the freshness window makes the chunk checkpoint run the gate. | `internal/gate/checkpoint_prepare_test.go` (`TestChunkCheckpointRunsAfterThePreparedGreenExpires`). | A reuse with no window check accepts an expired green. |
+| RC53 | 36 | A changed system-suite test file selects `bench test --check system`. | `internal/testreport/selection_test.go` (`TestChangedSelectionSelectsTheSystemSuite`). | Today the selector refuses the path as outside every current package. |
+| RC54 | 37 | A production change in a package that the system suite imports selects `bench test --check system`. | `internal/testreport/selection_test.go` (`TestChangedSelectionReachesTheSystemSuiteByImport`). | An index without the tagged package never reaches the suite through imports. |
+| RC55 | 38 | The floor of a ticket that writes the system suite names `bench test --check system`. | `internal/testreport/floor_test.go` (`TestWritesFloorNamesTheSystemCheck`). | Today the floor adds no element for a system-suite path. |
 | RC56 | 38 | The floor and the changed selection agree on a system-suite path. | `internal/testreport/floor_test.go` (`TestWritesFloorAgreesWithChangedSelection`). | A fix in one reader leaves the other reader with the old answer. |
 | RC57 | 39 | The tagged operands of the index come from `gate.SystemSuite`. | Review-owned: `bench consumers gate.SystemSuite` lists the index as a consumer. RC53 derives its expected operands from `gate.SystemSuite`, so a second list with other values reds RC53. A second list with equal values reds no test, so review owns that case. | A second tag list in the selector drifts from the gate's system phase. |
-| RC58 | 40 | An eligible test-only delta runs gofmt and vet over the whole root, `go test` of the changed packages, and root conformance, and no other phase. | planned TestDeltaCheckpointRunsTheDeltaSet in internal/gate/delta_checkpoint_test.go. | A red planted outside the delta set stays green only when the delta set alone runs. |
-| RC59 | 41 | The delta package set equals the directories of the test-gap file list, a path with a space included. | planned TestDeltaCheckpointPackagesComeFromTheTestGapList in internal/gate/delta_checkpoint_test.go. | A set from another source adds or drops a package against the proven list. |
+| RC58 | 40 | An eligible test-only delta runs gofmt and vet over the whole root, `go test` of the changed packages, and root conformance, and no other phase. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointRunsTheDeltaSet`). | A red planted outside the delta set stays green only when the delta set alone runs. |
+| RC59 | 41 | The delta package set equals the directories of the test-gap file list, a path with a space included. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointPackagesComeFromTheTestGapList`). | A set from another source adds or drops a package against the proven list. |
 | RC60 | 41 | No checkpoint path calls the changed-package selector. | Review-owned: Go refuses the import, because `internal/testreport` imports `internal/gate`. | The compile fails on any direct call, and review reads any subprocess route. |
-| RC61 | 42 | A test-only delta with no whole green at the reviewed tip runs the whole gate. | planned TestDeltaCheckpointNeedsAWholeBaseGreen in internal/gate/delta_checkpoint_test.go. | A delta that skips the base test grades a test-only delta over an ungraded base. |
-| RC62 | 42 | A whole base green older than the freshness window still makes the delta eligible. | planned TestDeltaCheckpointReadsTheBaseWithoutExpiry in internal/gate/delta_checkpoint_test.go. | A base read through the expiring window drops every delta after 60 minutes. |
-| RC63 | 43 | A delta with a non-test file runs the whole gate. | planned TestDeltaCheckpointRunsWholeForANonTestDelta in internal/gate/delta_checkpoint_test.go. | A delta that skips the test-gap proof grades a production change with the reduced set. |
-| RC64 | 43 | A delta whose only non-test change is an assignment-only plan commit stays eligible. | planned TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit in internal/gate/delta_checkpoint_test.go. | A delta proof without the RC-C1 exemption sends every delegated repair to the whole gate. |
-| RC65 | 44 | A delta that touches the system-suite package runs the whole gate. | planned TestDeltaCheckpointRunsWholeForTheSystemSuite in internal/gate/delta_checkpoint_test.go. | A delta without the tag rule leaves the edited system test unrun. |
-| RC66 | 44 | A delta that touches a race-table package runs the whole gate. | planned TestDeltaCheckpointRunsWholeForARacePackage in internal/gate/delta_checkpoint_test.go. | A delta without the race rule leaves the race sentinels unrun. |
-| RC67 | 45 | After a green delta, the landing inspection is not green and the evidence store holds no new entry. | planned TestDeltaGreenAuthorizesNoLanding in internal/gate/delta_checkpoint_test.go. | A delta written to the store under a whole key authorizes the landing. |
-| RC68 | 45 | A complete checkpoint after a delta-only chunk runs the whole gate. | planned TestCompleteCheckpointIgnoresADeltaGreen in internal/gate/complete_checkpoint_test.go. | A complete form that reads the delta file passes on a reduced run. |
-| RC69 | 45 | A green delta leaves `bench-last-gate` unchanged, and a later whole chunk checkpoint does not reuse the delta. | planned TestDeltaGreenLeavesTheGateCacheUntouched in internal/gate/delta_checkpoint_test.go. | A delta in the one-slot cache overwrites the whole green that `Inspect` and the composed-green reader report. |
+| RC61 | 42 | A test-only delta with no whole green at the reviewed tip runs the whole gate. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointNeedsAWholeBaseGreen`). | A delta that skips the base test grades a test-only delta over an ungraded base. |
+| RC62 | 42 | A whole base green older than the freshness window still makes the delta eligible. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointReadsTheBaseWithoutExpiry`). | A base read through the expiring window drops every delta after 60 minutes. |
+| RC63 | 43 | A delta with a non-test file runs the whole gate. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointRunsWholeForANonTestDelta`). | A delta that skips the test-gap proof grades a production change with the reduced set. |
+| RC64 | 43 | A delta whose only non-test change is an assignment-only plan commit stays eligible. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointAcceptsAnAssignmentOnlyPlanCommit`). | A delta proof without the RC-C1 exemption sends every delegated repair to the whole gate. |
+| RC65 | 44 | A delta that touches the system-suite package runs the whole gate. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointRunsWholeForTheSystemSuite`). | A delta without the tag rule leaves the edited system test unrun. |
+| RC66 | 44 | A delta that touches a race-table package runs the whole gate. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointRunsWholeForARacePackage`). | A delta without the race rule leaves the race sentinels unrun. |
+| RC67 | 45 | After a green delta, the landing inspection is not green and the evidence store holds no new entry. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaGreenAuthorizesNoLanding`). | A delta written to the store under a whole key authorizes the landing. |
+| RC68 | 45 | A complete checkpoint after a delta-only chunk runs the whole gate. | `internal/gate/complete_checkpoint_test.go` (`TestCompleteCheckpointIgnoresADeltaGreen`). | A complete form that reads the delta file passes on a reduced run. |
+| RC69 | 45 | A green delta leaves `bench-last-gate` unchanged, and a later whole chunk checkpoint does not reuse the delta. | `internal/gate/lane_record_test.go` (`TestDeltaGreenLeavesTheGateCacheUntouched`). | A delta in the one-slot cache overwrites the whole green that `Inspect` and the composed-green reader report. |
 | RC70 | 46 | The class table holds the delta class with a non-empty reuse refusal and no oracle field. | `internal/gate/verdict_registry_guard_test.go` (`TestVerdictRecordClassRegistryMatchesExpectation`). | A class row with an empty refusal or an oracle field changes the pinned table. |
-| RC71 | 47 | `--fresh` on an eligible delta runs the whole gate. | planned TestDeltaCheckpointFreshRunsWhole in internal/gate/delta_checkpoint_test.go. | A fresh flag that the run decision ignores gives no way to buy the whole grade. |
-| RC72 | 48 | A green delta checkpoint opens the chunk gap. | planned TestDeltaCheckpointOpensTheChunkGap in internal/gate/delta_checkpoint_test.go. | A delta path that returns before the gap write strands the successor chunk. |
-| RC73 | 49 | A red delta run makes the checkpoint red and records no green. | planned TestDeltaCheckpointRedStaysRed in internal/gate/delta_checkpoint_test.go. | A fallback to the whole gate after a red delta hides a failure that the delta found. |
-| RC74 | 40 | A prepared run at a repair commit, before the record commit refreezes the chunk, writes a delta green for an eligible delta, and the checkpoint after the record commit reuses it. | planned TestCheckpointPrepareTakesTheDelta in internal/gate/delta_checkpoint_test.go. | A derivation that reads the record's chunk tip finds the axis results at the chunk pair, so the prepared run always runs whole. |
+| RC71 | 47 | `--fresh` on an eligible delta runs the whole gate. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointFreshRunsWhole`). | A fresh flag that the run decision ignores gives no way to buy the whole grade. |
+| RC72 | 48 | A green delta checkpoint opens the chunk gap. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointOpensTheChunkGap`). | A delta path that returns before the gap write strands the successor chunk. |
+| RC73 | 49 | A red delta run makes the checkpoint red and records no green. | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointRedStaysRed`). | A fallback to the whole gate after a red delta hides a failure that the delta found. |
+| RC74 | 40 | A prepared run at a repair commit, before the record commit refreezes the chunk, writes a delta green for an eligible delta, and the checkpoint after the record commit reuses it. | `internal/gate/lane_record_test.go` (`TestCheckpointPrepareTakesTheDelta`). | A derivation that reads the record's chunk tip finds the axis results at the chunk pair, so the prepared run always runs whole. |
 | RC75 | 34 | The reference and the profile name the delta schedule and the delta class as the one reduced schedule and record. | Review-owned: the RC-C6B review reads .bench/BENCH-reference.md and projects/benchkit.md. | A kept sentence that forbids every reduced schedule contradicts the decided state. |
 | RC76 | 50 | The first RC-C7 ticket records the digest cost, the selection cost, and the exec calls of one repair, and the chunk stops when the net saving is not positive. | Review-owned: the RC-C7 review reads the measurement record. | A build that skips the measurement ships a change that can cost more than it saves. |
-| RC77 | 51 | An exec call of a `bench` child with a fresh `dist/bench` sets `BENCH_RUN_BINARY` to that path. | planned TestExecPassesTheFreshWorktreeBinary in internal/worktree/exec_test.go. | Today exec strips the variable from every child. |
-| RC78 | 52 | An exec call of a `bench` child with a stale `dist/bench` omits the variable and prints `bench worktree build`. | planned TestExecOmitsAStaleWorktreeBinary in internal/worktree/exec_test.go. | An exec that passes the binary without the freshness check grades with a stale binary. |
-| RC79 | 53 | An exec call of a non-Bench child runs no freshness check and keeps today's environment. | planned TestExecLeavesANonBenchChildUnchanged in internal/worktree/exec_test.go. | An exec that checks every child pays the digest cost on each shell command. |
-| RC80 | 54 | A child that inherits a binary that became stale refuses and names `bench worktree build`. | planned TestInheritedStaleBinaryNamesTheRebuild in internal/runbinary/runbinary_test.go. | A refusal with no route leaves the operator with no fix after the race. |
 | RC81 | 55 | The final reconciliation records the wall time of one test-only repair cycle against the 45-to-60-minute baseline. | Review-owned: the final reconciliation of the build. | A faster green run alone does not show that the cycle met its target. |
-| RC82 | 43 | A prepared run at a repair commit whose record names an earlier chunk tip, and whose change from the reviewed tip holds a non-test file, runs the whole gate and writes no delta green. | planned TestCheckpointPrepareRunsWholeForANonTestRepair in internal/gate/delta_checkpoint_test.go. | A proof over the reviewed tip and the record's earlier chunk tip misses the new production file and writes a delta green for it. |
-| RC83 | 42 | After a new review round moves the reviewed tip, the chunk checkpoint does not reuse a delta green whose `base_tree` is the old base. | planned TestDeltaGreenNeedsTheCurrentBase in internal/gate/delta_checkpoint_test.go. | A reuse that matches the subject tree alone accepts a delta over a base that no current review holds. |
+| RC82 | 43 | A prepared run at a repair commit whose record names an earlier chunk tip, and whose change from the reviewed tip holds a non-test file, runs the whole gate and writes no delta green. | `internal/gate/lane_record_test.go` (`TestCheckpointPrepareRunsWholeForANonTestRepair`). | A proof over the reviewed tip and the record's earlier chunk tip misses the new production file and writes a delta green for it. |
+| RC83 | 42 | After a new review round moves the reviewed tip, the chunk checkpoint does not reuse a delta green whose `base_tree` is the old base. | `internal/gate/lane_record_test.go` (`TestDeltaGreenNeedsTheCurrentBase`). | A reuse that matches the subject tree alone accepts a delta over a base that no current review holds. |
 | RC84 | 22 | The implement phase orders the repair plan edits: `bench record assignment`, then `bench spec widen` and any floor edit, then one `bench commit`. | Review-owned: the RC-C3 review reads .agents/commands/bench-implement-spec.md. | A guidance that widens first meets the dirty-ticket refusal of RC30 and splits the plan commit. |
 
 Not covered: story 57 — the FT438 row retires in the spec-retire commit after the landing, outside the build.
@@ -586,7 +427,6 @@ The walk applies the profile's hostile-input checklist to the record, the gate, 
 - Two concurrent gate runs in one worktree: the existing lock refuses the second run (`internal/gate/run_transaction.go:90-96`).
 - A probe during the prepared run: the probe refuses with `gate-held`. The guidance orders the coordinator probe first, and an axis probe runs in its own worktree (RC43).
 - An expired prepared green: the checkpoint runs the gate (RC52). An expired base green still serves the delta (RC62).
-- A race between the exec check and the child: the child refuses (RC80).
 
 **Won't handle:** A file-overlap skip of checks — FT445 puts it out of scope, and the whole checkpoint gate at the tip stays the surviving grade.
 
@@ -598,7 +438,7 @@ The walk applies the profile's hostile-input checklist to the record, the gate, 
 
 **Won't handle:** A delta checkpoint that adds the system or race run — the whole gate covers those packages (RC65, RC66).
 
-**Won't handle:** A run-binary store that spans processes — the worktree's sealed `dist/bench` is the surviving holder (RC77).
+**Won't handle:** Exec reuse of the worktree's `dist/bench` for a Bench child — the measured saving is about 1.5 seconds for each test-only repair (RC76), an inherited binary goes stale under `bench probe`, and the private selection of each child stays the surviving holder.
 
 **Won't handle:** An exclusion row for `reviews/` in the prose policy — the checkpoint record grade is the surviving caller (RC40, RC41).
 
@@ -659,21 +499,20 @@ Each item below goes beyond the literal decision source. Each cites its research
 7. A prepared run when a chunk freezes: change 7 needs a whole green at the reviewed tip, and today no run writes a green that a later key can find, because the checkpoint key frames the purpose and the tip (`internal/gate/checkpoint.go:277-285`; Q4 opus finding d).
 8. The exported test-file list of `testgap`: the delta needs the proven list, and `Prove` returns only an error (`internal/testgap/testgap.go:24`).
 9. The delta package set by directory: the gate cannot import `testreport` (`internal/testreport/floor.go:7`).
-10. The exec reuse limit to a `bench` child: exec runs any argv directly (`internal/worktree/exec.go:118-130`), and the freshness check costs a `go list -deps` run (`internal/freshness/freshness_buildinputs.go:55`; Sonnet's narrowing of T3).
-11. An axis probe in its own worktree when a prepared run starts at a freeze: `bench probe` refuses while the gate lock of its worktree is held (`internal/probe/set.go:223`).
-12. `--fresh` forces the whole gate over an eligible delta (RC71): the existing flag already forces a run (`internal/gate/checkpoint.go:65,83-84`).
-13. A red delta takes no fallback to the whole gate (RC73): a fallback would hide the red that the delta found (consultant C2b).
-14. The stale-binary hint and the route text of an inherited refusal name `bench worktree build` (RC78, RC80): an inherited stale binary refuses and does not rebuild (`internal/runbinary/runbinary.go:155-168`; Sonnet F5).
-15. The one reviewed-tip derivation with a target commit: at a repair commit, the record names the earlier freeze tip, so the record's chunk tip cannot serve as the delta operand (`internal/reviewrecord/confirmation.go:92-93`; spec review B2).
+10. An axis probe in its own worktree when a prepared run starts at a freeze: `bench probe` refuses while the gate lock of its worktree is held (`internal/probe/set.go:223`).
+11. `--fresh` forces the whole gate over an eligible delta (RC71): the existing flag already forces a run (`internal/gate/checkpoint.go:65,83-84`).
+12. A red delta takes no fallback to the whole gate (RC73): a fallback would hide the red that the delta found (consultant C2b).
+13. The one reviewed-tip derivation with a target commit: at a repair commit, the record names the earlier freeze tip, so the record's chunk tip cannot serve as the delta operand (`internal/reviewrecord/confirmation.go:92-93`; spec review B2).
+14. The record prose grade skips a HEAD tree with no `.bench/prose-exclusions`: no consumer repo receives that file (`.bench/consumer-payload.json`), and the prose package defines a tree with no policy as ungradeable (`internal/prose/subject.go:89-97`). The consultants decided this on 2026-10-24 (RC-C4 round r1).
 
 ### Contradictions flagged for reviewer veto
 
 1. FT438 names "the review record" among the changes that still take a confirming round. `SourceDigest` already strips the record, so the clause has no effect. The spec follows the tree.
-2. Change 4 and open point 2 conflict with the criterion `FT380-residual.before-publication` (`.bench/commitment.json:1323`). That criterion has every plan commit run the build preflight before it publishes. Recommendation: FT445 narrows that criterion to the one preflight run before a dispatch, and the next commitment plan amends its text.
+2. Change 4 and open point 2 conflict with the criterion `FT380-residual.before-publication` (`.bench/commitment.json:1361-1362`). That criterion had every plan commit run the build preflight before it publishes. The spec-stage commitment plan narrowed it to the one preflight run before a dispatch (sign-off decision 2).
 3. Change 5 conflicts in intent with the staged spec `landing-test-efficiency`: "No verdict format, token, schema, or reuse policy changes" (`specs/landing-test-efficiency/spec.md:167`) and "Won't handle: Broader verdict reuse" (line 277). That spec also fences `internal/gate/engine.go` (line 309). Neither spec binds an outcome that runs first, but a later build of that spec must fold this one.
 4. The profile states that reduced-scope records are never authored (`projects/benchkit.md:469-473`) and that no stripped-subject phase schedule exists (lines 387-389). FT445 change 7 reverses both for the delta checkpoint. ADR 0002 posture 5 says that the subject binds the working tree. The reviewer approved the changes in FT445, and RC47 and RC75 update the text.
 5. `TestReviewCheckpointReuse` (`internal/gate/review_checkpoint_test.go:117-125`) pins that an ordinary green never satisfies a checkpoint. Under the new key, any whole green over the same stripped subject and oracle can serve, because the evidence pass still runs. The RC-C4 ticket rewrites that pin.
-6. FT445 change 6 reverses a deliberate strip in exec (`internal/worktree/exec.go:217-229`, `TestExecChildOwnsRatherThanInheritsItsRunBinary`). RC76 can stop it.
+6. FT445 change 6 would reverse a deliberate strip in exec (`internal/worktree/exec.go:217-229`, `TestExecChildOwnsRatherThanInheritsItsRunBinary`). The reviewer dropped change 6 after the RC76 measurement, so the strip stays.
 
 ### Reviewer decisions at sign-off (2026-10-24)
 
@@ -682,6 +521,10 @@ Each item below goes beyond the literal decision source. Each cites its research
 3. The same plan records `FT380-plan-commit.preflight-build` as superseded by FT445. It also states in `FT405.verb` that any ticket's record call can refreeze the chunk.
 4. `internal/gate/` takes three new files over its directory budget: `delta_checkpoint.go`, `delta_checkpoint_test.go`, and `checkpoint_prepare_test.go`.
 5. From RC-C3 on, this build records each ticket at its own commit, and no ticket restages. By then, the installed candidate holds the RC-C2B record rules.
+
+### Reviewer decision during the build (2026-10-25)
+
+The reviewer dropped ticket 13, FT445 change 6. The RC76 measurement gives a net saving of about 1.5 seconds for each test-only repair, under 1% of the cycle. The child refusal of a stale inherited binary also breaks `bench probe` under exec, because the first mutant makes the binary stale. RC77 to RC80 leave the map, and ticket 12 owns RC81.
 
 ### Bootstrap authority
 
@@ -698,7 +541,7 @@ The installed broker runs the landing. It builds the gate executable from the pr
 | Each repair writes one plan commit, and only the last plan commit runs the preflight build. | RC30, RC31, RC32, RC84 |
 | The gate starts when the repair commits, in parallel with the confirmation. | RC34, RC35, RC42, RC43, RC49, RC50, RC51 |
 | The checkpoint reuses that green when the reuse key excludes the record path. | RC36, RC37, RC38, RC39, RC40, RC41, RC44, RC45, RC52 |
-| Exec calls in one session reuse one run binary. | RC76, RC77, RC78, RC79, RC80 |
+| Exec calls in one session reuse one run binary. | RC76; the reviewer decision during the build and a Won't handle line |
 | A test-only delta after a whole-gate green takes a delta checkpoint. | RC58, RC61, RC62, RC63, RC64, RC74, RC82, RC83 |
 | The delta checkpoint runs the changed packages, root-conformance, conformance, vet, and gofmt. | RC58, RC59 |
 | The landing gate always runs whole. | RC46, RC67, RC68 |
@@ -754,7 +597,6 @@ Three anchored command sentences stay verbatim: the charge command at line 21, t
 | `TestReviewCheckpointConfirmationRefusals` case "verification at the reviewed digest" | Invert to RC17. |
 | `TestReviewCheckpointReuse` first case | Rewrite under contradiction 5. Keep its record-mutation case as RC39. |
 | `TestCheckFloorReadsOnlyTheOwnTicket` | Replace with RC25. |
-| `TestExecChildOwnsRatherThanInheritsItsRunBinary`, `TestExecChildDropsWrapperRouting` | Rewrite to RC77 and RC79. |
 | `recordtest` `Refreeze` | Stop re-retaining entries. |
 | `internal/worktree/delegated_integration_test.go:203-209` relabel case | Keep. It must still refuse under RC15. |
 | `TestChunkCheckpointGradesTheCheckoutTree` | Keep. Its committed fixture passes the dirty-checkout rule. |
