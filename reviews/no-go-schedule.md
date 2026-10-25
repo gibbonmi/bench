@@ -89,7 +89,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1r1-standards",
+          "performer": "claude:ngs-c1-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eb1341d34a4433afe8b6c7856211f62971757177",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c1-standards-20261025",
+            "digest": "sha256:0c62646a2acec3f28d69d0064cbe87b2933e2b40e2e461a974852847b92ae43d",
+            "excerpt": "Axis: Standards, NG-C1, ticket 01. Session claude:ngs-c1-standards-20261025. Frozen pair d30ccffe..8c68fe1f.\nCount: 0 findings. Worst issue: none.\nRe-derived: oracle frame order unchanged (subject.go:73-81; tree to h only, all other frames through w); one pass feeds both digests; posture read from strict() and framed into id only (subject.go:131-132); subject.go 456/513 lines; three callers of buildSubjectForTree, field additive; tests map one-to-one to NG1-NG3.\nAdvice (no ID): (1) oracle_identity_test.go:37,52,71 open comments with row IDs NG1-NG3; dropping them is cleaner. (2) verdict.go:~88 comment names a landing consumer that later tickets add.\nImplementation command contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "d30ccffeac02152febd38db38dfccfdcf0f6cf7f",
+          "tip": "8c68fe1fcc1111a64f6c7f5f5fcbe9cbf0e4bd54",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1r1-spec",
+          "performer": "claude:ngs-c1-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eb1341d34a4433afe8b6c7856211f62971757177",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c1-spec-20261025",
+            "digest": "sha256:b6c3fd85f7baa327774b376978e46e04b2c7fc4a709926bda2b25f51af700c5e",
+            "excerpt": "Axis: Spec, NG-C1, ticket 01, rows NG1-NG4. Session claude:ngs-c1-spec-20261025. Frozen pair d30ccffe..8c68fe1f.\nCount: 0 findings. Worst issue: none.\nNG4 audited in buildSubjectForTree (subject.go:73-133): h receives the same seven leading frames in the same order; the tree goes to h only; id alone gets requireCapabilitiesEnv and strict() after s.Oracle. NG1-NG3 tests match their rows. Plan commits c0d1266d6, f80bbf194, bcdb41cb7: citation corrections and the v2 split hold; union of checks equal; probes recorded by a bench learning entry; no material acceptance change.\nAdvice: none.\n"
+          },
+          "axis": "Spec",
+          "base": "d30ccffeac02152febd38db38dfccfdcf0f6cf7f",
+          "tip": "8c68fe1fcc1111a64f6c7f5f5fcbe9cbf0e4bd54",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1r1-coverage",
+          "performer": "claude:ngs-c1-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eb1341d34a4433afe8b6c7856211f62971757177",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c1-coverage-20261025",
+            "digest": "sha256:31cad880f835500ad9de5be807488cd733a9a2871ef53402d662e10619175d67",
+            "excerpt": "Axis: Coverage, NG-C1, ticket 01, rows NG1-NG4. Session claude:ngs-c1-coverage-20261025. Frozen pair d30ccffe..8c68fe1f.\nCount: 1 finding. Worst issue: C1.\nC1 severity 4, confidence 6, auto-fix, ticket 01 (internal/gate/oracle_identity_test.go): no test varies a non-tree, non-tool input of the identity digest. A w->h swap at subject.go:77, :78, :80-82, :89, :99-101, or :104-105 drops an input from the identity and leaves NG1-NG3 green. Proposed: one table-driven test that changes each input (policy, identity root, BENCH_GATE, PATH, a declared environment value, a declared path's bytes, the manifest text) and asserts that both digests move. Implementation command contributed: yes; the ticket lacks a row for \"any non-tree oracle input changes the identity\".\nAdvice (no ID): sameSubject skips Identity (sound today); NG2 survives framing raw os.Getenv; NG4 has no golden value (review-owned); open subjects get an Identity; spec cites subject.go:73 and :123, now stale.\n"
+          },
+          "axis": "Coverage",
+          "base": "d30ccffeac02152febd38db38dfccfdcf0f6cf7f",
+          "tip": "8c68fe1fcc1111a64f6c7f5f5fcbe9cbf0e4bd54",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -101,3 +164,28 @@
   }
 }
 ```
+
+## Repair state
+
+NG-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
+
+## Standards
+
+NG-C1 round r1: 0 findings. Worst issue: none.
+
+## Spec
+
+NG-C1 round r1: 0 findings. Worst issue: none.
+
+## Coverage
+
+NG-C1 round r1: 1 finding. Worst issue: C1, no test varies an identity input other than the tree, the posture, and the tool bytes.
+
+- C1 | auto-fix | confidence 6 | `internal/gate/oracle_identity_test.go` | A writer swap at `internal/gate/subject.go:77-105` drops an identity input and leaves NG1-NG3 green. Ticket 01 line 9 gives the identity every oracle frame except the tree.
+
+## Advice
+
+- The row-ID prefixes in the comments of `internal/gate/oracle_identity_test.go` are provenance; dropping them is cleaner.
+- `sameSubject` does not compare `Identity`; a later ticket that compares the field must add it there or check `Closed` first.
+- NG2 would survive a frame of the raw `BENCH_REQUIRE_CAPABILITIES` value in place of `strict()`.
+- The spec cites `internal/gate/subject.go:73` and `:123`, which moved in this delta.
