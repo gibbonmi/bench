@@ -244,7 +244,7 @@ A delta is eligible when every condition below holds:
 - The test-gap proof, with the RC-C1 exemption, proves the change from the base to the subject test-only.
 - A whole green exists for the base under the prospective base oracle of the base subject. The read uses the prospective inspection (`internal/gate/engine.go:90-102`) with the non-expiring window (`internal/gate/engine.go:108-141`), because the freshness window is 60 minutes.
 - No changed test file sits in the system-suite package (`gate.SystemSuite`) or in a race-table package (`raceTests`, `internal/gate/gate_go.go:32-40`).
-- The gate is the kit phase table: the phase-table hand-off, a Go module, and no readable phase manifest at the root (RC-C6 review addition).
+- The gate is the kit phase table: the phase-table hand-off, a Go module, and no phase manifest at the root, readable or refused (RC-C6 review addition).
 - At least one changed test file exists, so an expired green of the subject itself runs the whole gate (RC-C6 review addition).
 
 The delta record's `base_tree` and `tree` are exactly the two operands. Step 2 of the run decision reuses a delta green only when both fields equal the current operands, and it checks the base-green condition again.
