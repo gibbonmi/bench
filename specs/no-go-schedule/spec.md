@@ -31,8 +31,8 @@ The ambient dashboard shows a quiet `reader green (<n> of 5)` row for such a tip
 ## User stories
 
 Line: opus / medium.
-Implementation-line reason: the spec fixes every predicate and the gate tests cover each one, but the trace and the landing schedule are new seams in the oracle. The harder chunks move one effort step up.
-Harder chunks: NG-C2, NG-C3.
+Implementation-line reason: the spec fixes every predicate and the gate tests cover each one, but the trace and the landing schedule are new seams in the oracle. The harder chunks move one effort step up. NG-C6 edits guidance prose, so the leverage override also routes it to high effort.
+Harder chunks: NG-C2, NG-C3, NG-C6.
 
 ### Trace and reader table
 
@@ -122,7 +122,9 @@ The posture enters the identity only. A green recorded under one posture therefo
 
 ### The trace
 
-The kit's whole `test` phase becomes `go test -trimpath -count=1 -timeout=10m0s -exec=<bench-run-binary> gate-go exec ./...`. `withRunBinary` replaces the run-binary token inside the `-exec=` operand as it does in the first element. A linked repository's `test` phase, the delta set, and the reader set keep their current argv.
+The kit's whole `test` phase argv becomes these seven elements: `go`, `test`, `-trimpath`, `-count=1`, `-timeout=10m0s`, `-exec=<bench-run-binary> gate-go exec`, and `./...`. The sixth element is one element. A linked repository's `test` phase, the delta set, and the reader set keep their current argv.
+
+`cmd/go` splits the `-exec` value with its quoted-string rules. `withRunBinary` therefore replaces the run-binary token inside the `-exec=` element with the selection path in quoted form, so a path with a space stays one word. Its second caller, the lane at `internal/gate/lane.go:306`, carries no `-exec=` element, so the lane is unchanged.
 
 `bench gate-go exec <binary> <args...>` is the shim. When `BENCH_GATE_TESTLOG` names a directory, the shim creates the file `<dir>/<package key>.log`. It then replaces its image with `<binary> -test.testlogfile=<file> <args...>`. The package key is the package directory relative to the graded root, in an encoding that maps two different directories to two different names. Without `BENCH_GATE_TESTLOG`, the shim replaces its image with `<binary> <args...>`.
 
@@ -132,7 +134,14 @@ The gate owner creates the log directory for a whole run of the kit's built-in t
 
 ### The reader table
 
-The derivation is one pure function. Its inputs are the package logs, the graded root, the tracked symbolic links of the graded tree, the reader-family declaration, and the declared child-reader rows. Its output is a table or a refusal reason.
+The derivation is one pure function. Its output is a table or a refusal reason. Its inputs are these:
+
+- the package logs
+- the list of test packages: each package of the graded root that holds a test file, as `go list` reports it after the run
+- the graded root
+- the tracked symbolic links of the graded tree
+- the reader-family declaration
+- the declared child-reader rows
 
 For each log, the derivation applies these rules in order:
 
@@ -140,9 +149,15 @@ For each log, the derivation applies these rules in order:
 - A relative path resolves against the package directory, and each `chdir` line changes that directory.
 - A path outside the graded root adds nothing. A path inside the package's own directory adds nothing.
 - A path whose prefix is a tracked symbolic link resolves to the link's target. The target's family counts.
-- Each remaining path adds its covered family, if it has one, to the package's reader set.
+- Each remaining `open` or `stat` path adds its covered family, if it has one, to the package's reader set. A `chdir` line and a `getenv` line add no family.
 
-The derivation refuses the table when a log is empty. It also refuses the table when `internal/conformance` is not a reader of every covered family.
+The derivation refuses the table in each of these cases:
+
+- A listed test package has no log.
+- A log is empty.
+- `internal/conformance` is not a reader of every covered family.
+
+Go's test log drops a name that holds a newline, so such a read leaves no line. Its family still counts through the package's other reads, or the witness refuses the table.
 
 The declared child-reader list sits beside the derivation. Each row is one pair of a test package and a covered family. Today it holds one row: `internal/releaseevidence` with `CHANGELOG.md`.
 
@@ -176,8 +191,8 @@ The reader plan reads the landing value and runs these cases in order. The first
 2. The run carries no landing value.
 3. The green marker is absent, or it is not an ancestor of the destination.
 4. A changed path between the destination tree and the graded tree sits outside every covered family.
-5. A changed path is an embed target of either tree, or a path of the shellcheck inventory.
-6. A changed path has a symbolic-link or gitlink mode on either side.
+5. A changed path matches an embed directive of the composed tree, or it is a path of the shellcheck inventory. A path matches a directive when it equals the directive's path, sits below it, or matches its glob.
+6. A changed path has a symbolic-link or gitlink mode on its old side or on its new side.
 7. The store holds no valid reader table for the green marker's tree.
 8. The table's identity differs from the identity of this run.
 9. A reader hold names the current green marker.
@@ -189,6 +204,8 @@ When a case holds, the gate prints `gate: whole gate (reader set refused: <case>
 ### Authorization and publication
 
 `gate.Result` states the schedule that ran and the suspects of a red whole landing run. `authorization` maps a green reader set to the new kind `reader green`, and a red reader set to `candidate`. The kind `reader green` carries no evidence token.
+
+A red reader set is `candidate` because the chain proof stands in for the green baseline. Each commit from the green marker to the destination passed its own readers, so a red of those readers on the composed tree belongs to the diff. The flagged additions list this choice.
 
 The reviewed landing publishes on `green` and on `reader green`. The worktree-commit landing keeps `green` and `lane pass`. After a `reader green` publication, the landing skips the green-marker advance. The resume marker policy gains one fact: when the published tree holds a reader record, the resume accepts the marker and advances nothing.
 
@@ -213,11 +230,11 @@ Each chunk is one coherent outcome with one review checkpoint. A chunk's predece
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | NG-C1 / `01-compute-the-oracle-identity.md` | One pass computes the tree-free oracle identity beside the oracle digest | NG1, NG2, NG3, NG4 | Completion-plan checks | no |
-| NG-C2 / `02-record-a-test-log-per-package.md`, `03-derive-the-reader-table.md` | Each whole kit run records test logs and persists a reader table on green | NG5, NG6, NG7, NG8, NG9, NG10, NG11, NG12, NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26 | Completion-plan checks | yes |
-| NG-C3 / `04-run-the-reader-set-schedule.md`, `05-plan-the-reader-set-at-a-landing.md`, `06-publish-a-reader-landing.md` | A covered kit landing runs the reader set, publishes, and keeps the marker | NG27, NG28, NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36, NG37, NG38, NG39, NG40, NG41, NG42, NG43, NG44, NG45, NG46, NG47, NG48, NG49, NG50, NG51, NG52, NG53, NG54, NG55, NG56, NG57, NG58 | Completion-plan checks | yes |
-| NG-C4 / `07-hold-the-whole-gate-after-a-red.md` | A red whole landing run holds the whole gate and names its suspects | NG59, NG60, NG61, NG62, NG63, NG64 | Completion-plan checks | no |
+| NG-C2 / `02-record-a-test-log-per-package.md`, `03-derive-the-reader-table.md` | Each whole kit run records test logs and persists a reader table on green | NG5, NG6, NG7, NG8, NG9, NG10, NG11, NG12, NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71, NG72 | Completion-plan checks | yes |
+| NG-C3 / `04-run-the-reader-set-schedule.md`, `05-plan-the-reader-set-at-a-landing.md`, `06-publish-a-reader-landing.md` | A covered kit landing runs the reader set, publishes, and keeps the marker | NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36, NG37, NG38, NG39, NG40, NG41, NG42, NG43, NG44, NG45, NG46, NG47, NG48, NG49, NG50, NG51, NG52, NG53, NG54, NG55, NG56, NG57, NG58, NG59, NG60, NG73, NG74, NG75, NG76 | Completion-plan checks | yes |
+| NG-C4 / `07-hold-the-whole-gate-after-a-red.md` | A red whole landing run holds the whole gate and names its suspects | NG61, NG62, NG63, NG64 | Completion-plan checks | no |
 | NG-C5 / `08-show-reader-green-on-the-dashboard.md` | The gate signal shows a reader-record tip as reader green | NG65, NG66, NG67 | Completion-plan checks | no |
-| NG-C6 / `09-amend-the-landing-rule-docs.md` | The ADR, the profile, the reference, and the glossary state the reader set | NG68, NG69, NG70 | Completion-plan checks | no |
+| NG-C6 / `09-amend-the-landing-rule-docs.md` | The ADR, the profile, the reference, and the glossary state the reader set | NG68, NG69, NG70 | Completion-plan checks | yes |
 
 ### Completion plan
 
@@ -231,7 +248,7 @@ A good test drives the owner seam with exact inputs and observes its output: a t
 
 The plan tests build a real Git fixture with a `main` branch, a green-marker ref, chain commits, and stored records. Each refusal case gets its own fixture change, so each row reaches exactly one case.
 
-The landing tests replace the authorizer, as `internal/landing/landing_test.go` does today. The end-to-end proof of the real trace and the real table is the measured landing of row NG58. It runs in a disposable clone of the integration source, because the open build holds the landing window of `main`.
+The landing tests replace the authorizer, as `internal/landing/landing_test.go` does today. The end-to-end proof of the real trace and the real table is the measured landing of row NG60. It runs in a disposable clone of the integration source, because the open build holds the landing window of `main`.
 
 The gate's own whole run grades this build at every chunk checkpoint and at the landing. After the build lands, the first covered landing on `main` runs the whole gate, because no table exists yet. That run derives the first table.
 
@@ -264,7 +281,7 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 | NG6 | 1 | Without `BENCH_GATE_TESTLOG`, the shim runs the binary with its arguments unchanged | planned TestGateGoExecWithoutALogDirectory in internal/gate/testlog_exec_test.go | A shim that always adds the flag changes the recorded argv. |
 | NG7 | 1 | The shim creates the log file before it replaces its image, so a binary that exits at once leaves an empty file | planned TestGateGoExecCreatesTheLogFirst in internal/gate/testlog_exec_test.go | A shim that leaves creation to the binary leaves no file for a binary that exits at once. |
 | NG8 | 1 | Two package directories that differ only by a separator map to two different log names | planned TestTestLogKeysAreDistinct in internal/gate/testlog_exec_test.go | A key that maps `/` to `__` gives `a/b` and `a__b` one name. |
-| NG9 | 2 | The kit's whole `test` phase argv is `go test -trimpath -count=1 -timeout=10m0s -exec=<bench-run-binary> gate-go exec ./...` | planned TestOrdinaryBuildCensusRequiresTheTracedTestArgv in internal/conformance/ordinary_build_census_test.go | The census check reds the old argv and any argv without the shim. |
+| NG9 | 2 | The kit's whole `test` phase argv is the seven elements `go`, `test`, `-trimpath`, `-count=1`, `-timeout=10m0s`, `-exec=<bench-run-binary> gate-go exec`, and `./...` | planned TestOrdinaryBuildCensusRequiresTheTracedTestArgv in internal/conformance/ordinary_build_census_test.go | The census check compares the elements exactly, so the old argv and a split `-exec` element both red. |
 | NG10 | 2 | `withRunBinary` replaces the run-binary token inside the `-exec=` operand | planned TestWithRunBinaryReplacesTheExecToken in internal/gate/testlog_exec_test.go | A substitution of the first element alone leaves the token in the operand. |
 | NG11 | 13 | A linked repository's `test` phase argv carries no `-exec=` operand | planned TestLinkedTestPhaseCarriesNoTrace in internal/gate/testlog_exec_test.go | A trace added to every Go module reaches the linked root. |
 | NG12 | 1 | A phase-child run of the whole kit table with `BENCH_GATE_TESTLOG` set leaves one log that starts with `# test log` for each test package | planned TestWholeTestPhaseWritesOneLogPerPackage in internal/gate/testlog_exec_test.go | A missing shim or a shared log name leaves fewer logs than packages. |
@@ -297,10 +314,10 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 | NG39 | 26 | The race flag holds when a race-table package reads a changed family | planned TestReaderPlanFlagsTheRaceTable in internal/gate/reader_plan_test.go | A plan without the flag rule leaves the flag off. |
 | NG40 | 18 | A change to `AGENTS.md` runs the whole gate | planned TestReaderPlanRunsWholeForAnUncoveredPath in internal/gate/reader_plan_test.go | A plan that ignores uncovered paths selects the reader set. |
 | NG41 | 22 | A rename of `docs/x.md` to `x.md` runs the whole gate | planned TestReaderPlanRunsWholeForARenameOutOfAFamily in internal/gate/reader_plan_test.go | A plan that reads only the old path selects the reader set. |
-| NG42 | 19 | A change to `docs/x.txt`, which a fixture Go file embeds, runs the whole gate | planned TestReaderPlanRunsWholeForAnEmbedTarget in internal/gate/reader_plan_test.go | A plan without the embed case selects the reader set. |
+| NG42 | 19 | A change to `docs/x.txt`, which a fixture Go file embeds by its exact path, runs the whole gate | planned TestReaderPlanRunsWholeForAnEmbedTarget in internal/gate/reader_plan_test.go | A plan without the embed case selects the reader set. |
 | NG43 | 20 | A change to a path of an injected shellcheck inventory runs the whole gate | planned TestReaderPlanRunsWholeForAShellcheckPath in internal/gate/reader_plan_test.go | A plan without the inventory case selects the reader set. |
-| NG44 | 21 | A changed path with a symbolic-link mode on either side runs the whole gate | planned TestReaderPlanRunsWholeForASymlink in internal/gate/reader_plan_test.go | A plan that reads the destination mode alone misses a link that the change removes. |
-| NG45 | 21 | A changed path with a gitlink mode runs the whole gate | planned TestReaderPlanRunsWholeForAGitlink in internal/gate/reader_plan_test.go | A plan without the gitlink case selects the reader set. |
+| NG44 | 21 | A change that adds `docs/link` as a symbolic link runs the whole gate | planned TestReaderPlanRunsWholeForAnAddedSymlink in internal/gate/reader_plan_test.go | A plan without the link case selects the reader set. |
+| NG45 | 21 | A change that adds `docs/module` as a gitlink runs the whole gate | planned TestReaderPlanRunsWholeForAnAddedGitlink in internal/gate/reader_plan_test.go | A plan without the gitlink case selects the reader set. |
 | NG46 | 28 | A store without a table for the green marker's tree runs the whole gate | planned TestReaderPlanRunsWholeWithoutATable in internal/gate/reader_plan_test.go | A plan that falls back to an empty table selects the reader set. |
 | NG47 | 29 | A table whose identity digest differs from the run's runs the whole gate | planned TestReaderPlanRunsWholeForANewOracle in internal/gate/reader_plan_test.go | A plan that skips the identity comparison selects the reader set. |
 | NG48 | 30 | Five reader-record commits after the green marker run the whole gate | planned TestReaderPlanRunsWholeAfterFiveReaderLandings in internal/gate/reader_plan_test.go | An off-by-one bound of six selects the reader set. |
@@ -326,6 +343,12 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 | NG68 | 50 | ADR 0017 states that a kit landing inside the reader table runs the reader set | review-owned: the ADR diff and `bench gate-prose` | An unamended ADR keeps the whole-gate-only rule. |
 | NG69 | 51 | The profile and the reference state the reader set, the reader record, the reader hold, and the traced `test` argv | review-owned: the docs diff and `bench test --check docs-currency-workflow` | An unamended profile keeps the no-partition statement and the old argv. |
 | NG70 | 52 | `CONTEXT.md` defines the covered family and the reader hold, each with an Avoid list | review-owned: the glossary diff | A missing entry leaves sessions to invent a name. |
+| NG71 | 6 | Three listed test packages with two logs refuse the table and name the package without a log | planned TestReaderTableRefusesAMissingLog in internal/gate/reader_table_test.go | A derivation that reads only the logs it finds returns a table. |
+| NG72 | 2 | With a run-binary path that holds a space, `go test` runs the shim at the whole path | planned TestTraceExecSurvivesASpaceInThePath in internal/gate/testlog_exec_test.go | An unquoted substitution makes `cmd/go` split the path and fail to start the shim. |
+| NG73 | 19 | A change that deletes `docs/assets/a.txt`, below a directory that a fixture Go file embeds, runs the whole gate | planned TestReaderPlanRunsWholeBelowAnEmbeddedDirectory in internal/gate/reader_plan_test.go | An exact-path match misses a file below the embedded directory. |
+| NG74 | 19 | A change to `docs/a.txt`, which a fixture embed glob `docs/*.txt` matches, runs the whole gate | planned TestReaderPlanRunsWholeForAnEmbedGlob in internal/gate/reader_plan_test.go | An exact-path match misses a glob match. |
+| NG75 | 21 | A change that replaces the symbolic link `docs/link` with a regular file runs the whole gate | planned TestReaderPlanRunsWholeForARemovedSymlink in internal/gate/reader_plan_test.go | A plan that reads only the new mode misses the old link. |
+| NG76 | 21 | A change that removes the gitlink `docs/module` runs the whole gate | planned TestReaderPlanRunsWholeForARemovedGitlink in internal/gate/reader_plan_test.go | A plan that reads only the new mode misses the old gitlink. |
 
 Not covered: story 24 — row NG38 covers the child readers inside the reader-package union, so no separate row exists.
 Not covered: story 25 — row NG29 covers the `system` phase of every reader schedule, so no separate row exists.
@@ -339,8 +362,10 @@ Not covered: story 47 — row NG36 shows that a red reader set writes no record,
 | A spec-flip completion landing whose every path is covered | The plan treats it like any landing. The completion proof check keeps running before the plan. |
 | A landing with no changed path | The landing refuses `nothing to commit` before the gate, as today. |
 | A deleted file in a covered family | The deletion is a changed path in its family, so its family readers run. NG13 and NG37 cover the family rule. |
-| A path with a space in a covered family | Git's `-z` change list and the test log both keep the space. NG13 uses such a path. |
-| A path with a newline in a test log | The log line no longer parses, so the derivation refuses the table. NG20 covers the refusal. |
+| A path with a space in a covered family | Git's `-z` change list and the test log both keep the space. The plan tests use `docs/a file.md` as one changed path. |
+| A run-binary path with a space | NG72: the quoted substitution keeps the path as one word. |
+| A read of a name with a newline | Go's test log drops the name, so no line appears. The family still counts through the package's other reads, or the witness of NG22 refuses the table. |
+| A test that runs its own binary again with its own arguments | The child inherits `-test.testlogfile` and truncates the parent's log. The log then fails to parse, so the derivation refuses the table (NG19, NG21). |
 | An absent table store, or an empty one | NG46: both read as no table. |
 | An absent hold, or a hold of an older marker | NG63: the plan reads no hold that applies. |
 | Two landings at once | The landing lease and the gate lock serialize them, as today. Each record write happens under the gate lock. |
@@ -380,6 +405,11 @@ The author read these current-code facts in this session:
 - The green verdict line has one renderer (`internal/gate/report.go:94-101`).
 - The gate row reads stale and routes to `bench gate` (`internal/status/status.go:424-427`, `:463-468`).
 - `internal/subprocess` owns image replacement (`internal/subprocess/startgate.go:46`).
+- `cmd/go` splits the `-exec` value with its quoted-string rules (`$GOROOT/src/cmd/go/internal/test/testflag.go:39`, `$GOROOT/src/cmd/go/internal/base/flag.go:20-27`).
+- The prospective gate builds its run binary below the artifact root, a temporary directory (`internal/gate/prospective.go:28-40`).
+- Go's test log drops a name that holds a newline (`$GOROOT/src/testing/internal/testdeps/deps.go:93-96`).
+- `EmbedTargets` returns each directive's resolved path or pattern (`internal/packagesurface/assets.go:87-92`).
+- The traced pass of 2026-10-25 shows `internal/conformance` reading all eleven covered families in process. So the witness holds on the tree of that date.
 
 ### Reader and writer sweep
 
@@ -407,13 +437,13 @@ The writers of the new stores are the gate owner alone, under the gate lock. The
 | #4 the landing only | NG52 |
 | #5 the complete conformance entry | NG29, NG38 |
 | #6 the reader record and the marker | NG34, NG35, NG58, NG59 |
-| #7 the derived table | NG5 to NG28 |
+| #7 the derived table | NG5 to NG28, NG71, NG72 |
 | #8 the bounds | NG46 to NG51, NG62 |
 | #9 the red after reader landings | NG61 to NG64 |
 | #10 the child readers | NG23 |
 | #11 the child-reader list and the `system` phase | NG23, NG29, NG38 |
 | #12 the dashboard row | NG65, NG66, NG67 |
-| #13 the forced whole gate and the phases | NG29 to NG32, NG41 to NG45 |
+| #13 the forced whole gate and the phases | NG29 to NG32, NG41 to NG45, NG73 to NG76 |
 | #14 the ADR and the profile | NG68, NG69 |
 
 ### Pre-review proof checklist
@@ -422,7 +452,7 @@ The writers of the new stores are the gate owner alone, under the gate lock. The
 - `Import edges`: no new cross-package edge beyond `internal/gate` to `internal/subprocess`, which exists today.
 - `Source-row clauses and occurrences`: the table above maps each map decision to its rows.
 - `Promised field labels`: `gate: green (reader set)`, `gate: whole gate (reader set refused: <case>)`, `reader green (<n> of 5)`, the kind `reader green`, and the refusal suffix `; reader landings since the green marker: <commits>`.
-- `Changed-function callers`: `withRunBinary` has one caller (`phasesCommandAtKitWithSelection`). `refusalMessage` serves every authorization caller. `ResumeMarker` has one caller (`internal/worktree/land_resume.go:80`).
+- `Changed-function callers`: `withRunBinary` has two callers, `phasesCommandAtKitWithSelection` (`internal/gate/phases.go:295`) and the lane (`internal/gate/lane.go:306`). The lane's checks carry no `-exec=` element, so the lane keeps its argv. `refusalMessage` serves every authorization caller. `ResumeMarker` has one caller (`internal/worktree/land_resume.go:80`).
 - `Copy survival`: none.
 - `Rendered-shape readers`: the old `test` argv has the three readers of the sweep table. The `gate: green` line keeps its text, and the reader line is new.
 - `Pin operators`: the census check compares the `test` argv with `slices.Equal` (`internal/conformance/ordinary_build_census_test.go:39`).
@@ -438,6 +468,9 @@ The writers of the new stores are the gate owner alone, under the gate lock. The
 - The capability posture enters the identity digest only (NG2, NG4). The full-verdict oracle digest keeps its value, so current greens stay reusable.
 - The table store bound of 32 tables and the marker exception (NG27).
 - The shim lives in the existing internal verb `bench gate-go` as `exec`, not in a new verb.
+- A red reader set attributes `candidate` (NG56). No map ticket names the kind. The chain proof is the reason, as the authorization decision states.
+- The embed case matches a directive's exact path, a path below it, and a glob match (NG42, NG73, NG74). The map names "the embed targets of the composed tree", and a directory or glob directive names more than one file.
+- The oracle identity keeps the `PATH` frame of the subject identity (`internal/gate/subject.go:73`), as map decision #8 reads. A landing from a session with another `PATH` therefore runs the whole gate. The NG60 measurement runs from the session shape of a real landing. If `PATH` drift defeats the reader set, the build returns to the spec.
 - The ticket order puts the hold in its own chunk after the landing chunk. Until NG-C4 lands, a red whole run writes no hold, but the build window holds every landing of `main` until the build completes.
 
 ### Slice accounting
