@@ -3544,6 +3544,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rc-c6-r2-standards",
+          "performer": "claude:rc-c6-standards-r2-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-standards-r2",
+            "digest": "sha256:2d4781f16ad68f13a6403fd4b9867adff790bd319862d2b02caef50e733d7ba1",
+            "excerpt": "## Standards\n\nRC-C6 confirming round (repair delta 2af78b087..7562758544). S1, S2, S3, and S4: closed. RootConformanceRunPattern is the one source of the conformance filter, interruptedExit holds the one timeout classification for both tails, and the reference names the whole phase table. The Repair state records each red. No new finding at severity 5 or more.\n\n### Advice\n- The binary-select error branch in run_transaction.go spells the timeout classification a third time.\n- interruptedExit lives in delta_checkpoint.go although the whole-run tail also reads it.\n"
+          },
+          "axis": "Standards",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c6-r1-standards"
+          ]
+        },
+        {
+          "id": "rc-c6-r2-spec",
+          "performer": "claude:rc-c6-spec-r2-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-spec-r2",
+            "digest": "sha256:f1e77ed019d76b2fbbaa3a311278d68c0e443a8f7112058fa5cdb7bc57ea05df",
+            "excerpt": "## Spec\n\nRC-C6 confirming round (repair delta 2af78b087..7562758544). P1: closed; the reference lists every case that runs the whole gate, and each maps to a refusal path in the delta decision. P2: closed; a delta timeout prints gate: timeout and exits 124, pinned by TestDeltaCheckpointTimesOutAsAWholeRun. RC58-RC67 and RC71-RC73 still hold. The spec additions and the manifest-guard sentence match narrowsKitTable. No new finding at severity 5 or more.\n\n### Advice\n- When ticket 11 adds the delta record, re-read the changelog and reference sentences that say a delta records no green.\n"
+          },
+          "axis": "Spec",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c6-r1-spec"
+          ]
+        },
+        {
+          "id": "rc-c6-r2-coverage",
+          "performer": "claude:rc-c6-coverage-r2-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8243237cd63346579b033949611a696ade4cca96",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c6-coverage-r2",
+            "digest": "sha256:3c0745fcc98fe2830207c20d37972de2970bd587532d562107637f6474ad7884",
+            "excerpt": "## Coverage\n\nRC-C6 confirming round (repair delta 2af78b087..7562758544). C1: closed; each of the four narrowsKitTable clauses has its own case. C2: closed; TestDeltaCheckpointTimesOutAsAWholeRun pins exit 124, the timeout line, no gap, and no evidence. The shared fixture and the requireDelta return dropped no assertion, and the whole run's cancel and timeout paths keep their tests. No new finding at severity 5 or more.\n\n### Advice\n- The delta cancel path has no test of its own.\n- The timeout test's schedule assertion depends on the gate script reaching its record line within one second.\n"
+          },
+          "axis": "Coverage",
+          "base": "e05ef7e0d70661a70875c2aa0799a07070ab2e69",
+          "tip": "7562758544b4569f4b4b1384aeb58eb4f3f934b1",
+          "finding_ids": [],
+          "supersedes": [
+            "rc-c6-r1-coverage"
+          ]
         }
       ]
     }
@@ -3883,6 +3949,8 @@ The RC-C5 repair at `8dc575f27` and `e05ef7e0d` closed S1 to S4 and C1 to C3. It
 RC-C6 consumed repair cycle 1 of 2 after its initial review (round r1). The coordinator accepted all eight findings as fixes with no consultant round. Standards S2, Spec P2, and Coverage C2 name one defect, the timeout path that the delta run repeats.
 
 The RC-C6 repair at `8b79ba0ab` closed all eight findings, and `7562758544` corrected the spec's manifest guard sentence. Its probe of `internal/gate/delta_checkpoint.go` demonstrated four reds, and every row restored the file. A delta run with its timeout branch turned off failed `TestDeltaCheckpointTimesOutAsAWholeRun`. Removing the Go-module clause failed the `no Go module` case, and accepting a refused manifest failed the `refused manifest` case. Unanchoring the conformance filter failed `TestDeltaCheckpointRunsTheDeltaSet`.
+
+The RC-C6 confirming round r2 passed on all three axes with no new finding. It needed no reaffirmation round, because the record held the repair's reds before the round started.
 
 ## Standards
 
