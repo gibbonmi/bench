@@ -26,6 +26,18 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   It names the tree, the lane identity, and a `pass` or `fail` outcome. It is never
   reusable green, and no consumer reads it as a gate verdict. Not "lane verdict",
   not "lane evidence", not "lane cache" — lane record.
+- **reader table** — the one table that maps each covered non-Go path family of
+  the kit to the test packages and gate phases that read it. A path outside the
+  table sends its landing to the whole gate. A reader here is a test package or
+  a phase, not a consumer that a **reader sweep** finds. Not "census", not
+  "reader census", not "input map" — reader table.
+- **reader set** — the reduced schedule a kit landing runs when the reader table
+  covers every changed path. It runs the complete root-conformance entry, the
+  readers of each changed family, and the `system` phase. Not "reduced gate",
+  not "partial gate", not "component partition" — reader set.
+- **reader record** — the record class that a green reader set writes. It
+  authorizes its own landing and nothing else, and it advances no green marker.
+  Not "reader verdict", not "partial green" — reader record.
 - **oracle** — the authority that decides done-ness. The gate is this repo's oracle.
   The model is never the oracle; the model does not grade its own work.
 - **run binary** — the exact source-bound executable the gate authorizes and runs;
