@@ -159,6 +159,10 @@ The 9 record readers are `cmd/bench`, `internal/conformance`,
 `internal/adopt/repairtest`, `internal/anchors`, `internal/chargeevidence`,
 `internal/commit`, `internal/prose`, and `internal/tickets`.
 
+The log of `internal/conformance` names each of the eleven covered families: the
+seven folder families and the four file families `ROADMAP.md`, `CHANGELOG.md`,
+`.bench/commitment.json`, and `.bench/BENCH.md`.
+
 Five record readers each opened 143 files under `specs/`, so they read the whole
 tree or a copy of it. The slowest reader is `internal/testreport`, at 74 seconds
 in the gate run of Q2.
