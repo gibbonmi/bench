@@ -12,7 +12,9 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
@@ -26,8 +28,9 @@ import (
 )
 
 // TestDeltaCheckpointRunsTheDeltaSet covers RC58. A red planted outside the delta set reds
-// the whole schedule, and the delta set stays green over it with exactly its own phases. A
-// root that is not the kit runs no root conformance, and a malformed schedule refuses.
+// the whole schedule, and the delta set stays green over it with exactly its own phases. Its
+// conformance phase runs the entry alone, past a red test whose name extends the entry name.
+// A root that is not the kit runs no root conformance, and a malformed schedule refuses.
 func TestDeltaCheckpointRunsTheDeltaSet(t *testing.T) {
 	t.Setenv(baselinePolicyEnv, "")
 	root := gittest.Repo(t)
@@ -35,7 +38,8 @@ func TestDeltaCheckpointRunsTheDeltaSet(t *testing.T) {
 		"go.mod":                  "module fixture\n\ngo 1.21\n",
 		"changed/changed_test.go": goTest("changed", "TestChanged", ""),
 		"other/other_test.go":     goTest("other", "TestPlanted", `t.Fatal("planted red")`),
-		conformancePackagePath + "/entry_test.go": goTest("conformance", registry.RootConformanceTest, ""),
+		conformancePackagePath + "/entry_test.go":   goTest("conformance", registry.RootConformanceTest, ""),
+		conformancePackagePath + "/sibling_test.go": goTest("conformance", registry.RootConformanceTest+"Sibling", `t.Fatal("sibling red")`),
 	} {
 		outcomeWrite(t, root, path, body, 0o644)
 	}
@@ -134,17 +138,31 @@ func TestDeltaCheckpointFreshRunsWhole(t *testing.T) {
 	requireWhole(t, deltaFixture(t, graded(t, modifyTest)), flagFresh)
 }
 
-// TestDeltaCheckpointOpensTheChunkGap covers RC72: the checkout's assignment binds the build,
-// and a green delta of chunk 1 opens the gap before chunk 2.
+// TestDeltaCheckpointOpensTheChunkGap covers RC72: a green delta of chunk 1 opens the gap
+// before chunk 2.
 func TestDeltaCheckpointOpensTheChunkGap(t *testing.T) {
-	t.Setenv("BENCH_HOME", t.TempDir())
-	f := deltaFixture(t, graded(t, modifyTest), func(f *recordtest.Fixture) { commitmenttest.SeedAdmission(t, f.Root, recordtest.Spec) })
-	commitmenttest.Register(t, f.Root, "build")
-	commitmenttest.Admit(t, f.Root, "build", recordtest.Spec)
+	f := admittedDeltaFixture(t)
 	requireDelta(t, f, 0, "./.")
 	gaps, claim := commitmenttest.ClaimedGaps(t, f.Root)
 	if want := []intent.ChunkGap{{Milestone: claim.Milestone, Outcome: claim.Outcome, Chunk: "1", Open: true}}; !reflect.DeepEqual(gaps, want) {
 		t.Fatalf("gap records after a delta green = %+v, want %+v", gaps, want)
+	}
+}
+
+// TestDeltaCheckpointTimesOutAsAWholeRun is the witness that the gate timeout ends a delta run
+// as it ends a whole run, with the timeout line and exit 124, no chunk gap, and no green.
+func TestDeltaCheckpointTimesOutAsAWholeRun(t *testing.T) {
+	f := admittedDeltaFixture(t)
+	if err := syscall.Mkfifo(hangWitness.path(t, f.Root), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	previous := gateTimeout
+	gateTimeout = time.Second
+	t.Cleanup(func() { gateTimeout = previous })
+	out := requireDelta(t, f, 124, "./.")
+	gaps, _ := commitmenttest.ClaimedGaps(t, f.Root)
+	if green := InspectTree(f.Root, strippedSubject(t, f)).ReusableGreen; !strings.Contains(out, "gate: timeout\n") || len(gaps) != 0 || green {
+		t.Fatalf("delta timeout = %s with the gaps %+v and green %t; want the timeout line, no gap, and no green", out, gaps, green)
 	}
 }
 
@@ -159,16 +177,23 @@ func TestDeltaCheckpointRedStaysRed(t *testing.T) {
 }
 
 // TestDeltaCheckpointNarrowsOnlyThePhaseTable is the witness of the schedule rule: a gate with
-// no phase-table hand-off, and a declared phase manifest, each keep the whole gate.
+// no phase-table hand-off, a root with no Go module, a declared phase manifest, and a manifest
+// that the loader refuses, here a directory at its path, each keep the whole gate.
 func TestDeltaCheckpointNarrowsOnlyThePhaseTable(t *testing.T) {
 	for name, prepare := range map[string]func(*recordtest.Fixture){
 		"no hand-off": func(f *recordtest.Fixture) {
 			script := string(outcomeRead(t, filepath.Join(f.Root, ".bench", "gate.sh")))
 			outcomeWrite(t, f.Root, ".bench/gate.sh", strings.Replace(script, phaseTableHandoff, "", 1), 0o755)
 		},
+		"no Go module": func(f *recordtest.Fixture) {
+			if err := os.Remove(filepath.Join(f.Root, "go.mod")); err != nil {
+				t.Fatal(err)
+			}
+		},
 		"manifest": func(f *recordtest.Fixture) {
 			f.Write(canary.PhaseManifestPath, `{"phases":[{"name":"x","argv":["true"]}]}`)
 		},
+		"refused manifest": func(f *recordtest.Fixture) { f.Write(canary.PhaseManifestPath+"/entry", "") },
 	} {
 		t.Run(name, func(t *testing.T) { requireWhole(t, deltaFixture(t, graded(t, modifyTest), prepare)) })
 	}
@@ -185,8 +210,12 @@ func TestPhaseChildrenDropTheDeltaSchedule(t *testing.T) {
 }
 
 // scheduleWitness is the file in the Git common directory where the delta gate records the
-// schedule of each run: the delta set that the run names, or wholeSchedule.
-const scheduleWitness outcomeWitness = ".gate-schedules"
+// schedule of each run: the delta set that the run names, or wholeSchedule. When a FIFO sits
+// at hangWitness, each run waits on it after that record, until the gate timeout ends the run.
+const (
+	scheduleWitness outcomeWitness = ".gate-schedules"
+	hangWitness     outcomeWitness = ".gate-hang"
+)
 
 const (
 	wholeSchedule = "whole"
@@ -202,7 +231,9 @@ func deltaGate(t *testing.T) func(*recordtest.Fixture) {
 	return func(f *recordtest.Fixture) {
 		script := string(outcomeRead(t, filepath.Join(f.Root, ".bench", "gate.sh")))
 		record := "printf '%s\\n' \"${" + deltaScheduleEnv + ":-" + wholeSchedule + "}\" >> \"$common/" + string(scheduleWitness) + "\"\n"
-		outcomeWrite(t, f.Root, ".bench/gate.sh", script+record+phaseTableHandoff+"if [ -e "+plantedRed+" ]; then exit 7; fi\n", 0o755)
+		fifo := "\"$common/" + string(hangWitness) + "\""
+		hang := "if [ -p " + fifo + " ]; then read hang < " + fifo + "; fi\n"
+		outcomeWrite(t, f.Root, ".bench/gate.sh", script+record+hang+phaseTableHandoff+"if [ -e "+plantedRed+" ]; then exit 7; fi\n", 0o755)
 		f.Write("go.mod", "module fixture\n\ngo 1.21\n")
 	}
 }
@@ -231,11 +262,23 @@ func frozenDeltaFixture(t *testing.T, prepare ...func(*recordtest.Fixture)) *rec
 	return attachedCheckpointFixture(t, twoChunks, append([]func(*recordtest.Fixture){seedRepair, deltaGate(t)}, prepare...)...)
 }
 
-// deltaFixture is the frozen delta fixture after the confirmed repair repair.
+// deltaFixture is the frozen delta fixture after repair changes chunk 1 and a confirmation
+// closes its finding.
 func deltaFixture(t *testing.T, repair func(*recordtest.Fixture), prepare ...func(*recordtest.Fixture)) *recordtest.Fixture {
 	t.Helper()
 	f := frozenDeltaFixture(t, prepare...)
 	confirmRepair(f, repairChunk(f, repair))
+	return f
+}
+
+// admittedDeltaFixture is the delta fixture of a graded test change, whose checkout's
+// assignment binds the build, so a green chunk checkpoint opens the chunk gap.
+func admittedDeltaFixture(t *testing.T) *recordtest.Fixture {
+	t.Helper()
+	t.Setenv("BENCH_HOME", t.TempDir())
+	f := deltaFixture(t, graded(t, modifyTest), func(f *recordtest.Fixture) { commitmenttest.SeedAdmission(t, f.Root, recordtest.Spec) })
+	commitmenttest.Register(t, f.Root, "build")
+	commitmenttest.Admit(t, f.Root, "build", recordtest.Spec)
 	return f
 }
 
@@ -256,8 +299,8 @@ func addTestIn(operand string) func(*recordtest.Fixture) {
 }
 
 // requireDelta requires that the chunk checkpoint of f exits code after one run of the delta
-// set of packages, and that the run adds no evidence.
-func requireDelta(t *testing.T, f *recordtest.Fixture, code int, packages ...string) {
+// set of packages, and that the run adds no evidence. It answers the checkpoint output.
+func requireDelta(t *testing.T, f *recordtest.Fixture, code int, packages ...string) string {
 	t.Helper()
 	before := evidenceEntries(t, f.Root)
 	got, out := runCheckpoint(t, f)
@@ -271,6 +314,7 @@ func requireDelta(t *testing.T, f *recordtest.Fixture, code int, packages ...str
 	if schedules := gateSchedules(t, f); !slices.Equal(schedules, []string{wholeSchedule, string(set)}) {
 		t.Fatalf("gate schedules = %q; want the prepared whole run and then the delta set %s", schedules, set)
 	}
+	return out
 }
 
 // requireWhole requires that the chunk checkpoint of f, with flags, exits 0 after one more

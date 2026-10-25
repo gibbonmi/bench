@@ -28,6 +28,9 @@ const deltaScheduleEnv = "BENCH_GATE_DELTA"
 // conformancePhaseName names the delta set's run of the root-conformance entry.
 const conformancePhaseName = "conformance"
 
+// RootConformanceRunPattern is the run pattern that selects the root-conformance entry alone.
+const RootConformanceRunPattern = "^" + registry.RootConformanceTest + "$"
+
 // deltaPlan answers plan with the environment entry that names the delta set of a chunk
 // checkpoint, and whether the delta is eligible. Only a chunk checkpoint that accepts its
 // committed source carries that source, so every other run finds no delta. The delta needs
@@ -60,7 +63,8 @@ func deltaPlan(ctx context.Context, root, runtimeRoot string, plan subject, mode
 
 // narrowsKitTable reports whether the whole schedule of the run is the kit table of a Go
 // module, the one table that the delta set narrows. The gate routes through the phase table,
-// and root, the baseline whose manifest selects a chunk checkpoint's table, declares none.
+// and root, the baseline whose manifest selects a chunk checkpoint's table, has no manifest.
+// A manifest that the loader refuses also keeps the whole gate.
 func narrowsKitTable(runtimeRoot, root string, resolution Resolution) bool {
 	_, declared, err := readManifest(manifestPath(root))
 	return phaseTableGate(runtimeRoot, resolution) && GoModuleRoot(runtimeRoot) && err == nil && !declared
@@ -115,14 +119,28 @@ func runDelta(ctx, runCtx context.Context, runtimeRoot, storageRoot string, decl
 	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, local...)
 	rc := run.Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
-	if ctx.Err() != nil || errors.Is(context.Cause(runCtx), errGateTimeout) {
-		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, time.Now().UTC())}
+	if code, _, interrupted := interruptedExit(ctx, runCtx, rc, stderr); interrupted {
+		return Result{GateExit: code, ActionExit: code, Inspection: inspectAt(storageRoot, time.Now().UTC())}
 	}
 	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
 	if refused {
 		return refusal
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
+}
+
+// interruptedExit classifies an oracle run that a cancel of the gate or the gate timeout ended.
+// A cancel answers the child's code. A timeout prints its line and answers 124. A whole run and
+// a delta run both read it, so they end alike. interrupted is false when neither ended the run.
+func interruptedExit(ctx, runCtx context.Context, rc int, stderr io.Writer) (code int, timedOut, interrupted bool) {
+	if ctx.Err() != nil {
+		return rc, false, true
+	}
+	if errors.Is(context.Cause(runCtx), errGateTimeout) {
+		fmt.Fprintln(stderr, "gate: timeout")
+		return 124, true, true
+	}
+	return rc, false, false
 }
 
 // deltaScheduled reports whether this process runs the delta set.
@@ -146,7 +164,7 @@ func scheduledTable(root, kit string) ([]Phase, error) {
 func deltaPhases(root, kit string, packages []string) []Phase {
 	phases := append(sourcePhases(root), testPhase(root, kit, packages...))
 	if RootConformanceRuns(root, kit) {
-		conformance := testPhase(root, kit, "./"+conformancePackagePath, "-run", "^"+registry.RootConformanceTest+"$")
+		conformance := testPhase(root, kit, "./"+conformancePackagePath, "-run", RootConformanceRunPattern)
 		conformance.Name = conformancePhaseName
 		phases = append(phases, conformance)
 	}

@@ -202,19 +202,17 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, local...)
 	rc := run.Code
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.finish", Root: runtimeRoot, Exit: &rc})
-	if ctx.Err() != nil {
-		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, time.Now().UTC())}
-	}
-	if errors.Is(context.Cause(runCtx), errGateTimeout) {
-		fmt.Fprintln(stderr, "gate: timeout")
-		if err := invalidateEvidence(storageRoot, plan); err != nil {
-			return operational(storageRoot, 124, stderr, "gate evidence invalidation failed")
+	if code, timedOut, interrupted := interruptedExit(ctx, runCtx, rc, stderr); interrupted {
+		if timedOut {
+			if err := invalidateEvidence(storageRoot, plan); err != nil {
+				return operational(storageRoot, code, stderr, "gate evidence invalidation failed")
+			}
+			ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+			if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
+				return persistenceFailure(storageRoot, code, stderr, "gate timeout persistence failed", err)
+			}
 		}
-		ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
-		if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
-			return persistenceFailure(storageRoot, 124, stderr, "gate timeout persistence failed", err)
-		}
-		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(storageRoot, time.Now().UTC())}
+		return Result{GateExit: code, ActionExit: code, Inspection: inspectAt(storageRoot, time.Now().UTC())}
 	}
 	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
 	if refused {

@@ -4,7 +4,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -87,10 +86,10 @@ func CheckTakesRun(check string) bool {
 	return check == gate.SystemPhaseName
 }
 
-// namedCheckRunPattern is the one spelling of the test a named conformance check runs.
-// The Go argv and the selection facts both read it here.
+// namedCheckRunPattern is the run pattern of a named conformance check: the gate's spelling of
+// the root-conformance entry. The Go argv and the selection facts both read it here.
 func namedCheckRunPattern() string {
-	return "^" + registry.RootConformanceTest + "$"
+	return gate.RootConformanceRunPattern
 }
 
 // PackageExpressionNote is the package note of the bench test help and the probe help. The
