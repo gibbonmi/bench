@@ -1,7 +1,7 @@
 # Amend the landing rule docs for the reader set
 
 Blocked by: 07-hold-the-whole-gate-after-a-red.md, 08-show-reader-green-on-the-dashboard.md
-Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json, decisions/no-go-schedule.md, decisions/no-go-schedule/
+Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json, decisions/no-go-schedule.md (deleted), decisions/no-go-schedule/ (deleted)
 Covers: NG68, NG69, NG70
 
 ## What to build
