@@ -6,7 +6,12 @@ Covers: LS54, LS55, LS56, LS57, LS58, LS59, LS60, LS61, LS62, LS64, LS65, LS96, 
 
 ## What to build
 
-Add the stack reader to `internal/worktree`. It is a function that takes the stack path, the caller's working directory, and the override values, and it returns the members in file order or one refusal. It reads no ledger and no repository state, so it lands green with no caller. Ticket 07 calls it from the verb and maps each refusal to exit 2.
+Add the stack reader to `internal/worktree`. It is a function that takes the stack path, the caller's working directory, and the override values. It returns the members in file order and the parsed overrides, or one refusal:
+
+- Each member carries its file fields, its file tip, and its effective tip, which is the override tip when an override names its request.
+- The parsed overrides are the list of `<request>=<commit>` pairs in argument order, keyed by request.
+
+It reads no ledger and no repository state, so it lands green with no caller. Ticket 07 calls it from the verb, maps each refusal to exit 2, and gives the parsed overrides to its rerun composer. No other code splits an override value.
 
 The reader does these steps:
 
@@ -14,7 +19,7 @@ The reader does these steps:
 2. It decodes the file with `jsonfile.DecodeExactDocument` into `{"members":[{"path","request","base","source_tip","spec","message"}]}`. The `spec` field is optional, and each other field is required. So an empty file, a duplicate key, an unknown field, and trailing content refuse.
 3. It refuses fewer than two members and more than sixteen members.
 4. It maps each member to the argument vector of one landing and parses that vector with `landGrammar`. So a member accepts exactly what one landing accepts, and a refusal names the member's 1-based index and the grammar line.
-5. It parses each override value `<request>=<commit>`. It refuses a value with no `=`, an empty side, a request that names no member, and a second override for one request. Each valid override replaces the `source_tip` of its member.
+5. It parses each override value `<request>=<commit>`. It refuses a value with no `=`, an empty side, a request that names no member, and a second override for one request. Each valid override sets the effective tip of its member.
 
 The members keep the path value as written. Ticket 07 resolves each path to a canonical worktree path.
 
@@ -34,6 +39,7 @@ The members keep the path value as written. Ticket 07 resolves each path to a ca
 - [ ] The reader refuses an override whose request names no member (LS96).
 - [ ] The reader refuses two overrides for one request (LS97).
 - [ ] The reader refuses an override with no `=`, an empty request, or an empty commit (LS98).
+- [ ] A valid override gives its member the override tip as its effective tip, keeps the file tip beside it, and appears in the parsed overrides keyed by its request.
 
 ## Checkpoint verification
 

@@ -8,7 +8,7 @@ Covers: none
 
 This ticket is a prefactor. It changes no output.
 
-`cmd/bench/main.go` is over its 400-line limit, so the lane's growth ratchet reds any growth of that file. Tickets 07 and 11 each add one `bench help` row to the `worktree` family.
+`cmd/bench/main.go` is over its 400-line limit, so the lane's growth ratchet reds any growth of that file. Ticket 11 adds two `bench help` rows to the `worktree` family, one for each stack form.
 
 Move the `helpRow` list of the `worktree` command in `commandRegistry` into one function in `cmd/bench/worktree_leaves.go`, beside `worktreeLeaves` and `worktreeSuffix`. `commandRegistry` calls that function. Each row keeps its order, its suffix, its gap, and its description, so `bench help` and `bench worktree --help` print the same bytes.
 

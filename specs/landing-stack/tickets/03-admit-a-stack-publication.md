@@ -6,7 +6,7 @@ Covers: LS18, LS19, LS20, LS21, LS22, LS23
 
 ## What to build
 
-Add two exported operations to the commitment store in `internal/commitment/repository/publication.go`, beside `PublishAdmitted`. The directory already holds 16 source files, so they take no new production file.
+Add two exported operations to the commitment store in `internal/commitment/repository/publication.go`, beside `PublishAdmitted`.
 
 `Store.PublishStackAdmitted(members []Publication, trees []string, publish func() error) error` decides a stack under one intent transaction, as `PublishAdmitted` decides one landing:
 

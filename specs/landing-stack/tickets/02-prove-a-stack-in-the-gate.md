@@ -1,12 +1,12 @@
 # Prove a stack tree in the gate and grade it whole
 
 Blocked by: 01-share-the-stack-owner-rule.md
-Writes: internal/gate/stack_completion.go (new), internal/gate/stack_completion_test.go (new), internal/gate/checkpoint.go, internal/gate/evaluation.go, internal/gate/reader_plan.go
+Writes: internal/gate/stack_completion.go (new), internal/gate/stack_completion_test.go (new), internal/gate/checkpoint.go, internal/gate/completion.go, internal/gate/evaluation.go, internal/gate/reader_plan.go
 Covers: LS7, LS8, LS9, LS10, LS11, LS12, LS13, LS14, LS15, LS16, LS17
 
 ## What to build
 
-Export `gate.WithStack(ctx, members)`. Each member names its source tip and its tickets folder, and the folder is empty for a spec-less member. A stack context goes with the landing value of `gate.WithLanding`, which names the destination commit.
+Export `gate.StackMember{Source, Folder string}` and `gate.WithStack(ctx context.Context, members []gate.StackMember) context.Context`. `Source` is the member's source tip, and `Folder` is its tickets folder, which is empty for a spec-less member. Tickets 04 and 08 call this one signature. A stack context goes with the landing value of `gate.WithLanding`, which names the destination commit.
 
 `checkpointEvaluation` reads the stack context beside the completion context, and its signature stays. So its four callers in `internal/gate/engine.go` and `internal/gate/gate.go` keep their calls, and the reuse path of `inspectProspective` reads the same context.
 
@@ -20,7 +20,7 @@ The proof captures the destination tree and each member tree, and it calls `stac
 4. A `capture/` path that two or more members change passes.
 5. A path outside `capture/` that two or more members change faults, and the message names both member indexes.
 
-The proof also applies the verified closure of each member through `completionClosure`, as the single proof does. Each fault is a `completionProofError`, so the authorization keeps the `completion proof` cause.
+The proof also applies the verified closure of each member that has a tickets folder, as the single proof does. `completionClosure` reads `e.completionSource` today (`internal/gate/completion.go:124`), and a stack context sets no such field. So `completionClosure` takes the source tip as a parameter, and its one caller in `completionTree` passes `e.completionSource`. The stack proof passes each member's own tip. A spec-less member skips the closure, because `Closure` of an empty path reaches `reviewrecord.RecordPath("")` and fails with a non-proof error. Each fault is a `completionProofError`, so the authorization keeps the `completion proof` cause.
 
 The reader plan gets the case `landing stack` right after `no landing value`. A landing with a stack context then prints `gate: whole gate (reader set refused: landing stack)` and runs the whole gate.
 
