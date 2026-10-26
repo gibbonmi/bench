@@ -1474,7 +1474,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gr-c4-standards-1",
+          "performer": "claude:gr-c4-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5b229b7832f034a9a16eac392ee54b886f5901e0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c4-standards-20261026",
+            "digest": "sha256:820cab8cbcdbf326d46873cbb3e2d3454ba193347b57ee8feb7b3f82d76aaf2c",
+            "excerpt": "Standards axis, GR-C4, pair 44d934d41..a4ae3c3e3, check-current current=true. sonnet/high.\nS1 advisory: ADR 0031:34-38, .bench/BENCH-reference.md:429-435, CHANGELOG.md:14 each list three broker refusal cases \"in each of these cases\"; internal/gate/complete_checkpoint.go:68-90 refuses in five (also an unresolved primary and a failed exec).\nS2 advisory no-op: the changelog repeats the member list of ADR 0031 as a release note.\nS3 advisory no-op: ADR 0031 names the identifier checkpoint-broker-unavailable.\nS4 advisory: ADR 0002:47 and ADR 0016:23 write \"ADR 31\"; the tree writes \"ADR 0031\".\nS5 advisory: ADR 0002:48 is not wrapped like its neighbours.\nRaw 5 (0 blocking).\nDisposition (orchestrator): S1, S4, S5 accepted, ticket 06 repair (the ADR states the decision without a case list; the reference keeps the full list; the changelog takes one clause). S2 no-op. S3 no-op, and the S1 fix removes the name.\n"
+          },
+          "axis": "Standards",
+          "base": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "tip": "fd2e75ab2de3fa8829221327633b351023a96c00",
+          "finding_ids": [
+            "S1",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c4-spec-1",
+          "performer": "claude:gr-c4-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5b229b7832f034a9a16eac392ee54b886f5901e0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c4-spec-20261026",
+            "digest": "sha256:be3a059f355bf5be824255784f3a4f04a11a4099f6daf26cdba4e4e297e2bac5",
+            "excerpt": "Spec axis, GR-C4, pair 44d934d41..a4ae3c3e3, check-current current=true. sonnet/high.\nGR29 pass: ADR 0031 states the members, reuse across checkouts and verbs, the posture binding, and the broker checkpoint, with no path and no code.\nGR30 pass: ADR 0016, ADR 0002, projects/benchkit.md, .bench/BENCH-reference.md, and CONTEXT.md state the grade key as the reuse rule; no sentence says a green stays in one checkout.\nP1 advisory: .bench/BENCH-reference.md:694 says \"oracle identity\" where internal/gate/reader_plan.go:137 compares the grade identity.\nP2 advisory: the three-case broker refusal list reads as exhaustive (same as Standards S1).\nP3 advisory: .bench/BENCH-reference.md:426 and :437 no longer say the complete checkpoint refuses with declared-builds-overlap, and the line 426 claim is universal.\nP4 advisory: ADR 0031:22 lists the reader set among the whole-gate verbs; it is a reduced schedule.\nP5 advisory: \"ADR 31\" against \"ADR 0031\" (same as Standards S4).\nP6 advisory no-op: \"records the gate cache\" omits the skip; ADR 0002 says \"at most\".\nRaw 6 (0 blocking).\nDisposition (orchestrator): P1, P3, P4 accepted, ticket 06 repair. P2 and P5 merged with Standards S1 and S4. P6 no-op. The reader_plan.go label and the unresolved-primary edge went to bench learning.\n"
+          },
+          "axis": "Spec",
+          "base": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "tip": "fd2e75ab2de3fa8829221327633b351023a96c00",
+          "finding_ids": [
+            "P1",
+            "P3",
+            "P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c4-coverage-1",
+          "performer": "claude:gr-c4-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5b229b7832f034a9a16eac392ee54b886f5901e0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c4-coverage-20261026",
+            "digest": "sha256:30eefdc927261a806b19110f4b79db9efb3843316ce6f0b27f0148cce847615e",
+            "excerpt": "Coverage axis, GR-C4, pair 44d934d41..a4ae3c3e3, check-current current=true. sonnet/high.\nK1 advisory: the three-case broker refusal list is incomplete against complete_checkpoint.go:69,88-90 (same as Standards S1).\nK2 advisory: \"ADR 31\" against \"ADR 0031\" (same as Standards S4).\nK3 advisory: nothing mechanical grades the ADR member list, the glossary term, or the profile and reference reuse prose; GR29 and GR30 are review-owned by design.\nK4 advisory: the chunk plan runs only root-conformance and prose; the FT369 rule says a charge that edits phase guidance also runs the ./internal/conformance package test.\nFace registry and spec-row tests behind the doc claims hold. ADR numbering is contiguous.\nRaw 4 (0 blocking).\nDisposition (orchestrator): K1 and K2 merged with Standards S1 and S4. K4 accepted: the plan adds a ticket 06 requirement conformance-package (bench test --package ./internal/conformance). K3 no-op: an accepted gap the spec decides.\n"
+          },
+          "axis": "Coverage",
+          "base": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "tip": "fd2e75ab2de3fa8829221327633b351023a96c00",
+          "finding_ids": [
+            "K4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
