@@ -1,7 +1,7 @@
 # Run the complete checkpoint under the landing broker
 
 Blocked by: 02-name-evidence-by-the-grade-key.md
-Writes: internal/gate/gate.go, internal/gate/complete_checkpoint.go, internal/gate/complete_checkpoint_broker_test.go (new), internal/gate/refusal_route_test.go, internal/gate/refusal_route_fixtures_test.go (new), internal/refusalroute/faces_gate.go, internal/gate/checkpoint_persisted_test.go, internal/worktree/land_reuse_test.go
+Writes: internal/gate/gate.go, internal/gate/complete_checkpoint.go, internal/gate/complete_checkpoint_broker_test.go (new), internal/gate/refusal_route_test.go, internal/gate/refusal_route_fixtures_test.go (new), internal/refusalroute/faces_gate.go, internal/gate/checkpoint_persisted_test.go, internal/worktree/land_reuse_test.go, internal/brokermanifest/brokermanifest.go
 Covers: GR59, GR60, GR61, GR62, GR63, GR64, GR67
 
 ## What to build

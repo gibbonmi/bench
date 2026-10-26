@@ -1064,7 +1064,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gr-c3-standards-1",
+          "performer": "claude:gr-c3-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c3-standards-20261026",
+            "digest": "sha256:8fe2c1fb648001620f9d966acb581dfeb89a3360b36da8e03dcf873bcc8682f5",
+            "excerpt": "Standards axis, GR-C3, pair 1c9f15870..c3d73015d, check-current current=true. sonnet/high.\nS1 advisory: internal/gate/complete_checkpoint.go:67 reads the broker manifest key \"path\" as a literal that internal/brokermanifest owns (brokermanifest.go:39, :57; DigestField at :36 is the precedent).\nS2 advisory: internal/worktree/land_reuse_test.go:132-134 repeats the running-binary bind step of gate.InstallRunning and install_check_test.go:113.\nS3 advisory auto-fix: complete_checkpoint.go:42-43 doc comment states the return values in the wrong order.\nS4 advisory no-op: checkpoint_persisted_test.go:48 one-line alias.\nS5 advisory no-op: faces_gate.go:119 repeats broker repair advice that ticket 05 decides to repeat.\nRaw 5 (0 blocking).\nDisposition (orchestrator): S1 accepted, ticket 05 repair (PathField constant; ticket 05 widened to brokermanifest.go; the adopt reader went to bench learning). S3 accepted, ticket 05 repair. S2 bench learning (one commitmenttest helper across packages). S4 and S5 no-op.\n"
+          },
+          "axis": "Standards",
+          "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+          "tip": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "finding_ids": [
+            "S1",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c3-spec-1",
+          "performer": "claude:gr-c3-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c3-spec-20261026",
+            "digest": "sha256:b863cdb6f3e16f7dbdf94a8f4bbb9b3cba8b8191507df888338e4e045e4e907f",
+            "excerpt": "Spec axis, GR-C3, pair 1c9f15870..c3d73015d, check-current current=true. sonnet/high. Every mapped row GR25-28, GR48-52, GR58-64, GR66, GR67 has a named test.\nP1 advisory: .bench/BENCH-reference.md:417-425 still lists the complete checkpoint among the candidate-not-installed refusals that GR67 reverses.\nP2 advisory auto-fix: internal/gate/checkpoint_persisted_test.go:1-2 and :149-152 comments still say the declared-build checkpoint refuses.\nP3 advisory: complete_checkpoint.go:118-127 an unresolved primary refuses the complete checkpoint even with no build inputs (GR63 says such a repository reads no manifest).\nP4 advisory no-op: complete_checkpoint.go:134-141 no loop guard on the exec.\nP5 advisory: complete_checkpoint_broker_test.go:138 the GR59 expected argv repeats the implementation expression os.Args[1:].\nJudgments: (a) the GR67 test holds the reversed case, no weakening; (b) the GR67 file move is non-behavioral; (c) os.Args[1:] keeps the arguments and working directory; (d) the refusal keeps the bounded response.\nRaw 5 (0 blocking).\nDisposition (orchestrator): P1 to ticket 06 (plan commit adds it to the ticket body; the file is already on its Writes line). P2, P3, P5 accepted, ticket 05 repair (check build inputs before the primary; an independent argv expectation). P4 merged with Coverage K4 and accepted as a fail-closed refusal.\n"
+          },
+          "axis": "Spec",
+          "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+          "tip": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "finding_ids": [
+            "P2",
+            "P3",
+            "P5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c3-coverage-1",
+          "performer": "claude:gr-c3-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c3-coverage-20261026",
+            "digest": "sha256:fbdbbaab642c44d9765088a4c43b143111a3fa26edc11233ac8e99a6f532781a",
+            "excerpt": "Coverage axis, GR-C3, pair 1c9f15870..c3d73015d, check-current current=true. sonnet/high. The three land and merge reuse tests pass at the tip.\nK1 advisory: the planned land-probe swaps engine.go:143 inside the shared evidence read, so the landing's own authorization refuses as infrastructure (land_reuse_test.go:89) and the GR27 tally (:91) is unreachable; its bit verdict is not valid evidence.\nK2 advisory no-op: record line numbers for land_reuse_test.go are stale at the tip.\nK3 advisory: complete_checkpoint.go:79 real syscall.Exec is untested, and the code does not compose subprocess.Replace (subprocess/replace.go:13), which has a real-exec test.\nK4 advisory: complete_checkpoint.go:72 an unreadable running executable digest (\"\") never equals the bound digest, so a broker that cannot digest itself re-execs without end.\nK5 advisory: no check runs a complete checkpoint through the system suite or cmd/bench in a repository that declares build inputs; an unresolved primary refuses even with no build inputs.\nRaw 5 (0 blocking).\nDisposition (orchestrator): K1 accepted, plan amendment re-cuts the probe to both run_transaction.go lookup sites (trial run bit at land_reuse_test.go:91 with tally gg) and records a bench learning. K3 and K4 accepted, ticket 05 repair (compose subprocess.Replace; refuse when the running executable does not digest). K5 second half merged with Spec P3; first half no-op, because the final verification runs the system suite. K2 no-op.\n"
+          },
+          "axis": "Coverage",
+          "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+          "tip": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "finding_ids": [
+            "K1",
+            "K3",
+            "K4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
