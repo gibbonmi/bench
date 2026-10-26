@@ -14,8 +14,8 @@ This map reconciles the staged draft spec on this branch with those criteria.
 Domain: the gate subject, the prospective evidence store, and the checkpoint, merge, and landing verbs.
 Use `bench-craft-domain` for each ticket. Use `bench-craft-research` for tickets #2 and #7.
 
-The staged draft `specs/gate-reuse/spec.md` on this branch holds reviewed identity, posture, cache-write, and merge-plan rows.
-The spec stage keeps each draft row that the decisions here do not change.
+The reviewer signed off a draft spec at commit `9b9150893` before this map existed.
+Ticket #12 sorts its rows into kept, changed, and retired rows.
 
 These decisions stay closed. Cross-run reuse is approved (2026-10-14). One key serves all runs, the capability posture binds every reuse, and the reader-table identity is path-free (2026-10-26).
 The cost disclosure form is `bench worktree merge --plan` (2026-10-26).
@@ -41,6 +41,8 @@ A map-owned asset stays in the map's assets folder, decisions/gate-reuse/assets/
 - [Measurement design](gate-reuse/tickets/6.md): a git upper bound over spec landings and retries since 2026-10-01; ticket #11 decides.
 - [Measured saving](gate-reuse/tickets/7.md): 53 minutes per week at most; 14 minutes per week while checkpoints run under worktree builds.
 - [Build scope](gate-reuse/tickets/11.md): full scope, and the complete checkpoint runs under the authenticated landing broker.
+- [Kept draft rows](gate-reuse/tickets/12.md): 27 rows kept, six changed, and the merge plan rows retired.
+- [Broker seam](gate-reuse/tickets/13.md): in the kit, the complete checkpoint execs the manifest's broker through `internal/brokermanifest`.
 
 ## Not yet specified
 
@@ -72,6 +74,9 @@ A map-owned asset stays in the map's assets folder, decisions/gate-reuse/assets/
 - Path: `internal/gate/checkpoint.go`
   Supports: ticket #1. A chunk green answers for its subject alone because the evidence pass runs on every call, and a complete checkpoint frames its purpose.
   Drift: a change to `applyCheckpoint`.
-- Path: `specs/gate-reuse/spec.md`
-  Supports: the staged draft rows that the spec stage keeps.
-  Drift: an edit of the draft.
+- Path: `decisions/gate-reuse/assets/draft-rows.md`
+  Supports: ticket #12, the kept, changed, and retired draft rows.
+  Drift: a change to a decision of this map.
+- Path: `internal/commitment/repository/window.go`
+  Supports: ticket #13, the digest comparison of the running executable with the broker manifest.
+  Drift: a change to `checkCandidate`.
