@@ -139,11 +139,76 @@ GR-C2 keys the store and the gate cache to it. GR-C3 proves each verb and moves 
 
 ### Completion plan
 
-The plan uses version 1. The build records one fresh author for each ticket on the declared line, and review closes each frozen chunk before the next author starts.
-A probe names bytes that the chunk keeps or writes. The plan amendment re-cuts a probe whose bytes the author moved.
-
-```bench-completion-plan
-{"version":1,"chunks":[{"id":"GR-C1","tickets":["01-compute-the-grade-identity.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"posture-probe","command":"bench probe internal/gate/subject.go --swap 'frame(id, strconv.FormatBool(strict()))' --with 'frame(id, \"false\")' --package ./internal/gate --run TestOracleIdentityCarriesTheCapabilityPosture --expect TestOracleIdentityCarriesTheCapabilityPosture","probe":"Drop the posture from the grade identity. The two postures then give one identity, so the posture row fails."}]},{"id":"GR-C2","tickets":["02-name-evidence-by-the-grade-key.md","03-record-a-reused-green.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"reuse-probe","command":"bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/gate --run TestGradeKeyCrossesCheckouts --expect TestGradeKeyCrossesCheckouts","probe":"Make the store answer no green. The primary run then runs the gate again, so the cross-checkout row fails."}]},{"id":"GR-C3","tickets":["04-reuse-a-green-in-every-whole-gate-verb.md","05-run-the-complete-checkpoint-under-the-broker.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"refusalroute","command":"bench test --package ./internal/refusalroute"},{"id":"commands","command":"bench test --package ./cmd/bench"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"land-probe","command":"bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/worktree --run TestLandReusesTheCompleteCheckpointGreen --expect TestLandReusesTheCompleteCheckpointGreen","probe":"Make the store answer no green. The landing then runs the gate again, so the checkpoint-then-landing row fails."}]},{"id":"GR-C4","tickets":["06-record-the-grade-key-rule.md"],"verification":[{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"prose","command":"bench test --check prose"}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base cfbd1d360c2d0048bad07d142468c4bb47f8fc20"},{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"}]}
+The plan uses version 2 with a delegate execution block. Each verification names its ticket, and each ticket of a multi-ticket chunk owns its own gate and conformance runs. The build records one fresh author for each ticket on the declared line, and review closes each frozen chunk before the next author sta{
+  "version": 2,
+  "chunks": [
+    {
+      "id": "GR-C1",
+      "tickets": ["01-compute-the-grade-identity.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "01-compute-the-grade-identity.md"},
+        {"id": "authorization", "command": "bench test --package ./internal/gate/authorization", "ticket": "01-compute-the-grade-identity.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "01-compute-the-grade-identity.md"},
+        {"id": "posture-probe", "command": "bench probe internal/gate/subject.go --swap 'frame(id, strconv.FormatBool(strict()))' --with 'frame(id, \"false\")' --package ./internal/gate --run TestOracleIdentityCarriesTheCapabilityPosture --expect TestOracleIdentityCarriesTheCapabilityPosture", "probe": "Drop the posture from the grade identity. The two postures then give one identity, so the posture row fails.", "ticket": "01-compute-the-grade-identity.md"}
+      ]
+    },
+    {
+      "id": "GR-C2",
+      "tickets": ["02-name-evidence-by-the-grade-key.md", "03-record-a-reused-green.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "02-name-evidence-by-the-grade-key.md"},
+        {"id": "authorization", "command": "bench test --package ./internal/gate/authorization", "ticket": "02-name-evidence-by-the-grade-key.md"},
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "02-name-evidence-by-the-grade-key.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "02-name-evidence-by-the-grade-key.md"},
+        {"id": "reuse-probe", "command": "bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/gate --run TestGradeKeyCrossesCheckouts --expect TestGradeKeyCrossesCheckouts", "probe": "Make the store answer no green. The primary run then runs the gate again, so the cross-checkout row fails.", "ticket": "02-name-evidence-by-the-grade-key.md"},
+        {"id": "gate-03", "command": "bench test --package ./internal/gate", "ticket": "03-record-a-reused-green.md"},
+        {"id": "root-conformance-03", "command": "bench test --check root-conformance", "ticket": "03-record-a-reused-green.md"}
+      ]
+    },
+    {
+      "id": "GR-C3",
+      "tickets": ["04-reuse-a-green-in-every-whole-gate-verb.md", "05-run-the-complete-checkpoint-under-the-broker.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "04-reuse-a-green-in-every-whole-gate-verb.md"},
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "04-reuse-a-green-in-every-whole-gate-verb.md"},
+        {"id": "commit", "command": "bench test --package ./internal/commit", "ticket": "04-reuse-a-green-in-every-whole-gate-verb.md"},
+        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute", "ticket": "05-run-the-complete-checkpoint-under-the-broker.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "05-run-the-complete-checkpoint-under-the-broker.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "04-reuse-a-green-in-every-whole-gate-verb.md"},
+        {"id": "land-probe", "command": "bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/worktree --run TestLandReusesTheCompleteCheckpointGreen --expect TestLandReusesTheCompleteCheckpointGreen", "probe": "Make the store answer no green. The landing then runs the gate again, so the checkpoint-then-landing row fails.", "ticket": "04-reuse-a-green-in-every-whole-gate-verb.md"},
+        {"id": "gate-05", "command": "bench test --package ./internal/gate", "ticket": "05-run-the-complete-checkpoint-under-the-broker.md"},
+        {"id": "root-conformance-05", "command": "bench test --check root-conformance", "ticket": "05-run-the-complete-checkpoint-under-the-broker.md"}
+      ]
+    },
+    {
+      "id": "GR-C4",
+      "tickets": ["06-record-the-grade-key-rule.md"],
+      "verification": [
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "06-record-the-grade-key-rule.md"},
+        {"id": "prose", "command": "bench test --check prose", "ticket": "06-record-the-grade-key-rule.md"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "integration", "command": "bench test --changed --base cfbd1d360c2d0048bad07d142468c4bb47f8fc20"},
+    {"id": "system", "command": "bench test --check system"},
+    {"id": "whole-project", "command": "bench gate"}
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft314-gate-reuse-full-20261026",
+    "orchestrator_session": "claude:gr-orchestrator-20261026",
+    "author_limit": 3,
+    "assignments": {
+      "01-compute-the-grade-identity.md": [],
+      "02-name-evidence-by-the-grade-key.md": [],
+      "03-record-a-reused-green.md": [],
+      "04-reuse-a-green-in-every-whole-gate-verb.md": [],
+      "05-run-the-complete-checkpoint-under-the-broker.md": [],
+      "06-record-the-grade-key-rule.md": []
+    }
+  }
+}ase cfbd1d360c2d0048bad07d142468c4bb47f8fc20"},{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"}]}
 ```
 
 ## Further notes
