@@ -984,3 +984,19 @@ The ticket 03 repair session reported this red for repair commit f40e49568. The 
 
 - C3: a `cacheDescribesFreshGreen` body that also accepts any same-tree green cache skips the write. It failed both rows of TestReusedGreenReplacesAStaleGreenCacheOfItsTree at `reused_green_test.go:79`, which are the expired row and the drifted-oracle row.
 - S2 and S3 change no behavior, and the whole `internal/gate` package passes at f40e49568.
+
+## GR-C3 ticket 04 author witness reds
+
+The ticket 04 author probed each row at its ticket work with `bench probe`. Each mutant made its named test fail, and each probe restored its subject.
+
+- GR58: `frame(id, executable)` changed to `frame(id, "")` failed TestCheckpointUnderAnotherExecutableRunsTheGate at `verb_reuse_test.go:31`.
+- GR48 and GR52: the planned `engine.go:143` swap failed TestGateReusesASiblingGreen at `verb_reuse_test.go:41` and TestReaderSetLandingReusesAWholeGreen at `verb_reuse_test.go:66`.
+- GR49: both lookup sites in `run_transaction.go` disabled failed TestCommitReusesAGreenOfTheComposedTree at `commit_reuse_test.go:59`.
+- GR51: a commit that drops its lane when a green exists failed TestLaneCommitKeepsItsLane at `commit_reuse_test.go:71`.
+- GR25, GR27, and GR66: the disabled lookup failed TestLandReusesTheMergeGreen, TestLandReusesTheCompleteCheckpointGreen, and TestMergeReusesAGreenOfTheComposedTree with tally "gg" in `land_reuse_test.go`.
+- GR26: `reusedGreenResult` with a reader schedule failed TestLandReusesTheMergeGreen, because the marker did not advance.
+- GR50: `forceRun` changed to `reuseFreshGreen` failed TestGateRunCommandFreshRerunsGreen at `run_outcomes_test.go:118`.
+
+The ticket 04 continuation session made GR28 parallel at 4432fb125 and raised the census count pin to 834. Its build-input mutant, which computes the member over the identity root, failed TestLandReusesACheckpointGreenOfAGoChange at `land_reuse_test.go:121` with tally "gg".
+
+The orchestrator ran and staged the planned `land-probe` at 4432fb125. The probe bit, but the failure is the landing's infrastructure refusal at `land_reuse_test.go:87`, not the tally assertion at line 89. The GR-C3 Coverage axis judges whether that refusal hides the tally assertion.
