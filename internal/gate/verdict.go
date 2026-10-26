@@ -116,6 +116,11 @@ func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRec
 	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
 }
 
+// readyVerdict answers the gate cache record of a terminal status of plan, recorded at at.
+func readyVerdict(plan subject, status string, at time.Time) verdictRecord {
+	return verdictRecord{Schema: verdictSchema, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: at.UTC().Truncate(time.Second).Format(time.RFC3339)}
+}
+
 func Inspect(root string) Inspection {
 	return withReaderFacts(root, inspectAt(root, time.Now().UTC()))
 }

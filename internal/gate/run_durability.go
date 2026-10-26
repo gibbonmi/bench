@@ -65,6 +65,31 @@ func besideDemotion(message string, err error) string {
 	return message + "; interrupted-green demotion failed: " + err.Error()
 }
 
+// reuseWritesNothing answers whether a reuse before the gate lock answers with no write. The
+// gate cache can already describe this subject's fresh green. Another run can hold the gate
+// lock, and a reuse does not wait for it.
+func reuseWritesNothing(root string, plan subject, now time.Time) bool {
+	if inspectSubjectAt(root, plan, now).ReusableGreen {
+		return true
+	}
+	gitdir, err := benchgit.AdminDir(root)
+	if err != nil {
+		return false
+	}
+	held, err := lockHeld(gitdir)
+	return err == nil && held
+}
+
+// recordReusedGreen installs reuse as the gate cache of gitdir, unless that cache already
+// describes this subject's fresh green. The record keeps the time of the store record, so a
+// reuse does not move the freshness window.
+func recordReusedGreen(replacer durablefile.Replacer, root, gitdir string, plan subject, reuse Inspection, now time.Time) error {
+	if inspectSubjectAt(root, plan, now).ReusableGreen {
+		return nil
+	}
+	return durableReplace(replacer, gitdir, readyVerdict(plan, "green", reuse.RecordedAt))
+}
+
 func interruptedRecord(plan subject, now time.Time) verdictRecord {
 	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
 }

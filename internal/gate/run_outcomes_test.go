@@ -47,6 +47,10 @@ func TestGateRunGreenReusesRecordedVerdict(t *testing.T) {
 		t.Fatalf("inspection = %#v, want reusable ready green", inspection)
 	}
 	record := outcomeRecord(t, root)
+	written, err := os.Stat(outcomeCachePath(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	var secondOut, secondErr bytes.Buffer
 	second := Execute(context.Background(), root, &secondOut, &secondErr)
@@ -61,6 +65,10 @@ func TestGateRunGreenReusesRecordedVerdict(t *testing.T) {
 	}
 	if got := outcomeRecord(t, root); !bytes.Equal(got, record) {
 		t.Fatalf("recorded verdict changed on reuse\nbefore: %s\nafter: %s", record, got)
+	}
+	// A rewrite of equal bytes still replaces the file.
+	if after, err := os.Stat(outcomeCachePath(t, root)); err != nil || !os.SameFile(written, after) {
+		t.Fatalf("gate cache replaced on reuse: stat error %v", err)
 	}
 }
 
@@ -307,8 +315,12 @@ func outcomeRead(t *testing.T, path string) []byte {
 
 func outcomeRecord(t *testing.T, root string) []byte {
 	t.Helper()
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
-	return outcomeRead(t, filepath.Join(gitdir, "bench-last-gate"))
+	return outcomeRead(t, outcomeCachePath(t, root))
+}
+
+func outcomeCachePath(t *testing.T, root string) string {
+	t.Helper()
+	return filepath.Join(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"), "bench-last-gate")
 }
 
 func outcomeRuns(t *testing.T, root string) int {
