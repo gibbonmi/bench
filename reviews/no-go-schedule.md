@@ -664,6 +664,72 @@
             "C6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2r2-standards",
+          "performer": "claude:ngs-c2r2-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c2r2-standards-20261025",
+            "digest": "sha256:266ad3751a8e04bff4bb9fa76d74d5147e12e1770ca57f451f5f827d64c47020",
+            "excerpt": "Axis: Standards, NG-C2 confirming round r2. Session claude:ngs-c2r2-standards-20261025. Repair delta 5aaad0ad..8885e8d8.\nCount: 0 findings. Worst issue: none.\nS1 confirmed: testBuildFlags (phases.go:220-222) is the one source, read by BaseTestArgv and testPackages; testRunFlags is gone. S2 confirmed: internal/git exports SymlinkMode and GitlinkMode; lane_select.go:303 reads them. C2 fold: a direct exec.Command in gate production code is allowed (precedent gate_go.go:254,277, runner.go:335; census, process-lifetime-closure, and bounds-policy do not grade a synchronous cmd.Output()).\nAdvice (no ID): an env parameter on stepOutput would remove the re-spelled call shape; go-build-vcs cannot grade a variadic go list argv; older copies of the link modes sit outside the delta.\n"
+          },
+          "axis": "Standards",
+          "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "tip": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "finding_ids": [],
+          "supersedes": [
+            "c2r1-standards"
+          ]
+        },
+        {
+          "id": "c2r2-spec",
+          "performer": "claude:ngs-c2r2-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c2r2-spec-20261025",
+            "digest": "sha256:3d6dcd41acecda7d97e615a327fd72761dc5af514fa78c525739ccddaa1c37d9",
+            "excerpt": "Axis: Spec, NG-C2 confirming round r2. Session claude:ngs-c2r2-spec-20261025. Repair delta 5aaad0ad..8885e8d8 and plan amendment 4d4d7950..621c9f2f.\nCount: 0 findings. Worst issue: none.\nNG82 holds (reader_table.go:101; TestReaderTableCountsTheRootPackageReads), NG16 still holds, the citation cell is valid. Spec line 113 matches familyOf. C2: the listing runs under mergeEnv(plan.Env, phase.Env), the traced run's environment. S1: every phase argv stays byte-identical.\nAdvice (no ID): the directory claim of familyOf has no unit test; testBuildFlags is a mutable package slice, copied at both uses.\n"
+          },
+          "axis": "Spec",
+          "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "tip": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "finding_ids": [],
+          "supersedes": [
+            "c2r1-spec"
+          ]
+        },
+        {
+          "id": "c2r2-coverage",
+          "performer": "claude:ngs-c2r2-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c2r2-coverage-20261025",
+            "digest": "sha256:89835154387a708a3649f303f78d2ea34f3d1c3de29433a4f2dcacb5708ac441",
+            "excerpt": "Axis: Coverage, NG-C2 confirming round r2. Session claude:ngs-c2r2-coverage-20261025. Repair delta 5aaad0ad..8885e8d8.\nCount: 0 findings. Worst issue: none.\nC1, C2, C3, C4, and NG82: each new test is red-capable against the defect it names (traced: verdict-before-table order at run_transaction.go:239-243; ambient GOFLAGS tag lists an unlogged package; absolute chdir through logPath's IsAbs branch; empty-name refusal at reader_table.go:87-89; root-package skip at reader_table.go:101).\nAdvice (no ID): the lane gitlink branch (lane_select.go:303) and the tree.go:89 gitlink guard have no biting test; both predate the chunk.\n"
+          },
+          "axis": "Coverage",
+          "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "tip": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "finding_ids": [],
+          "supersedes": [
+            "c2r1-coverage"
+          ]
         }
       ]
     }
@@ -730,6 +796,8 @@ NG-C2 round r1: 2 findings. Worst issue: S1, a restated list of the run flags of
 NG-C1 round r1: 0 findings. Worst issue: none.
 
 NG-C2 round r1: 0 findings. Worst issue: none.
+
+NG-C2 round r2 (confirming): all three axes pass with 0 findings. Each repair test is red-capable against the finding it closes.
 
 ## Coverage
 
