@@ -1553,6 +1553,72 @@
           "supersedes": [
             "c3r1-coverage"
           ]
+        },
+        {
+          "id": "c3r3-standards",
+          "performer": "claude:ngs-c3r3-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "19e419008a71273091c26b576cdc720e90b4cb0f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3r3-standards-20261025",
+            "digest": "sha256:532b493775fe0fd77005478b5c35a8adf99b48424dc25fb0692a48499dc8401e",
+            "excerpt": "Axis: Standards, NG-C3 confirming round r3. Session claude:ngs-c3r3-standards-20261025. Delta 92c79f1a..72042235.\nCount: 0 findings. S4 closed: gate.PhaseTableRedExit (report.go:37-38) is the one source, returned at report.go:85 and compared at authorization.go:176; phaseTableRed is gone; behavior unchanged.\n"
+          },
+          "axis": "Standards",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "7204223529757f414366245ec4f8db01de7a3f65",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r2-standards"
+          ]
+        },
+        {
+          "id": "c3r3-spec",
+          "performer": "claude:ngs-c3r3-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "19e419008a71273091c26b576cdc720e90b4cb0f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3r3-spec-20261025",
+            "digest": "sha256:e032f5d25b82e91b417ec687b067c5be8a6b30c4b5d34d0061695451251bc3f6",
+            "excerpt": "Axis: Spec, NG-C3 confirming round r3. Session claude:ngs-c3r3-spec-20261025. Delta 92c79f1a..72042235.\nCount: 0 findings. The rename changes no behavior of NG55 or NG56: a red reader set still maps to candidate, and 124 and 130 still map to infrastructure.\n"
+          },
+          "axis": "Spec",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "7204223529757f414366245ec4f8db01de7a3f65",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r2-spec"
+          ]
+        },
+        {
+          "id": "c3r3-coverage",
+          "performer": "claude:ngs-c3r3-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "19e419008a71273091c26b576cdc720e90b4cb0f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3r3-coverage-20261025",
+            "digest": "sha256:5ca20586ca129ec2f3751332b116b7b4f5600b9e5f6406770f1790a975e856f7",
+            "excerpt": "Axis: Coverage, NG-C3 confirming round r3. Session claude:ngs-c3r3-coverage-20261025. Delta 92c79f1a..72042235.\nCount: 0 findings. reader_kind_test.go keeps the literal exit map {1: Candidate, 124: Infrastructure, 130: Infrastructure}, so a change of PhaseTableRedExit turns it red.\n"
+          },
+          "axis": "Coverage",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "7204223529757f414366245ec4f8db01de7a3f65",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r2-coverage"
+          ]
         }
       ]
     }
@@ -1681,6 +1747,8 @@ NG-C3 round r1: 3 findings. Worst issue: S2, a duplicated embed parse that alrea
 NG-C3 round r2 (confirming): S1, S2, and S3 are closed. 1 new finding.
 
 - S4 | auto-fix | confidence 6 | `internal/gate/authorization/authorization.go:38-39` | `phaseTableRed = 1` restates the red exit of `internal/gate/report.go:82`.
+
+NG-C3 round r3 (confirming): all three axes pass with 0 findings. S4 is closed by `PhaseTableRedExit`.
 
 ## Spec
 
