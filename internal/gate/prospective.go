@@ -3,6 +3,7 @@ package gate
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -69,6 +70,21 @@ func buildInputsIdentity(root string) string {
 		return unreadableBaselineRunner
 	}
 	return digest
+}
+
+// frameBaselineSchedule frames the phase-table loader's answer at the identity root: present
+// bytes as bytes, an absence as one value, and a defect as one value with no path.
+func frameBaselineSchedule(w io.Writer, identityRoot string) {
+	data, present, err := readManifest(manifestPath(identityRoot))
+	switch {
+	case err != nil:
+		frame(w, "schedule defect")
+	case !present:
+		frame(w, "schedule absent")
+	default:
+		frame(w, "schedule")
+		frame(w, string(data))
+	}
 }
 
 func buildProspectiveSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {

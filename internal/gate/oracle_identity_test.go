@@ -89,6 +89,21 @@ func setRunningExecutable(t *testing.T, digest string) {
 	runningExecutableDigest = func() string { return digest }
 }
 
+// An unreadable running executable opens the subject, like every other unavailable closure
+// member, so it reuses nothing.
+func TestOracleIdentityOpensWithoutTheRunningExecutable(t *testing.T) {
+	root := oracleIdentityFixture(t)
+	setRunningExecutable(t, "")
+
+	s, err := buildSubjectForTree(root, root, policyVersion, strings.Repeat("a", 40))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Closed || s.Reason != "running executable unavailable" {
+		t.Fatalf("subject closed = %t, reason %q, want open with \"running executable unavailable\"", s.Closed, s.Reason)
+	}
+}
+
 // NG3, GR8: one pass feeds the closure to both digests, so a change of a verdict input moves
 // both. The policy, the identity root, and the baseline runner move the oracle digest only,
 // and the run binary member and the running executable move the grade identity only. Each

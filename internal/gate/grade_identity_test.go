@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -10,18 +11,36 @@ import (
 
 // GR1, GR2: two checkouts with equal content, one of them under a path with a space, give
 // one grade identity. The oracle digest keeps the checkout path, so the gate cache of each
-// checkout keeps its own key.
+// checkout keeps its own key. An absolute link to a tool inside the checkout leaves the
+// checkout path out too.
 func TestGradeIdentityLeavesOutTheCheckoutPath(t *testing.T) {
 	t.Setenv("BENCH_KIT", "")
 	tree := strings.Repeat("a", 40)
-	first := oracleIdentitySubject(t, oracleIdentityFixtureAt(t, filepath.Join(t.TempDir(), "checkout")), tree)
-	second := oracleIdentitySubject(t, oracleIdentityFixtureAt(t, filepath.Join(t.TempDir(), "other checkout")), tree)
+	for _, linked := range []bool{false, true} {
+		checkout := func(name string) subject {
+			root := oracleIdentityFixtureAt(t, filepath.Join(t.TempDir(), name))
+			if linked {
+				tool, err := filepath.EvalSymlinks(filepath.Join(root, "bin", "tool"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(tool, tool+".real"); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Symlink(tool+".real", tool); err != nil {
+					t.Fatal(err)
+				}
+			}
+			return oracleIdentitySubject(t, root, tree)
+		}
+		first, second := checkout("checkout"), checkout("other checkout")
 
-	if first.Identity != second.Identity {
-		t.Fatalf("identity = %s and %s, want one grade identity across checkouts", first.Identity, second.Identity)
-	}
-	if first.Oracle == second.Oracle {
-		t.Fatalf("oracle = %s for both checkouts, want two oracle digests", first.Oracle)
+		if first.Identity != second.Identity {
+			t.Fatalf("identity = %s and %s with linked = %t, want one grade identity across checkouts", first.Identity, second.Identity, linked)
+		}
+		if first.Oracle == second.Oracle {
+			t.Fatalf("oracle = %s for both checkouts with linked = %t, want two oracle digests", first.Oracle, linked)
+		}
 	}
 }
 
@@ -87,6 +106,16 @@ func TestGradeIdentityFollowsTheRunBinarySource(t *testing.T) {
 
 	if fromWorktree.Identity != fromPrimary.Identity {
 		t.Fatalf("identity = %s from the worktree and %s from the primary checkout, want one grade identity", fromWorktree.Identity, fromPrimary.Identity)
+	}
+
+	// An ordinary subject of the same source runs the identity root's kit, so the two build
+	// inputs give two identities.
+	ordinary := t.TempDir()
+	writeGateFixtureFile(t, ordinary, ".bench/gate.sh", "#!/bin/sh\nexit 0\n", 0o755)
+	writeOracleIdentityManifest(t, ordinary, ``, ``, ``)
+	writeRunBinarySource(t, ordinary, "")
+	if one, other := oracleIdentitySubjectFor(t, ordinary, worktree, policyVersion, tree), oracleIdentitySubjectFor(t, ordinary, primary, policyVersion, tree); one.Identity == other.Identity {
+		t.Fatalf("identity = %s for an ordinary subject from both kits, want two identities", one.Identity)
 	}
 }
 

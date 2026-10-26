@@ -140,8 +140,12 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	frameBaselineSchedule(id, identityRoot)
 	frame(id, "run binary")
 	frame(id, buildInputsIdentity(runBinarySource(sourceKind, root, identityRoot)))
+	executable := runningExecutableDigest()
+	if executable == "" {
+		s.open("running executable unavailable")
+	}
 	frame(id, "running executable")
-	frame(id, runningExecutableDigest())
+	frame(id, executable)
 	frame(id, requireCapabilitiesEnv)
 	frame(id, strconv.FormatBool(strict()))
 	s.Identity = hex.EncodeToString(id.Sum(nil))
@@ -317,8 +321,7 @@ func confinedPath(root, path string) error {
 	if err != nil {
 		return err
 	}
-	rel, err := filepath.Rel(root, resolved)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+	if _, ok := relativeInside(root, resolved); !ok {
 		return errors.New("escaped path")
 	}
 	return nil
@@ -405,10 +408,14 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 		if err != nil {
 			return err
 		}
-		frame(c.w, target)
+		// The oracle keeps the raw target, and the grade identity spells an absolute target
+		// through gradePath, so it frames no checkout path.
+		frame(c.oracle, target)
 		if filepath.IsAbs(target) {
+			frame(c.identity, c.gradePath(target))
 			path = target
 		} else {
+			frame(c.identity, target)
 			path = filepath.Join(filepath.Dir(absolute), target)
 		}
 	}
@@ -416,40 +423,33 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 }
 
 // framePath frames an executable path in each digest's spelling. The oracle spells a path in
-// the runtime root under the identity root. The grade identity spells a path in the runtime
-// root, then one in the identity root, relative to that root, so it frames no checkout path.
+// the runtime root under the identity root, and gradePath gives the grade identity's spelling.
 func (c *identityCollector) framePath(path string) {
-	oracle, grade := path, path
+	oracle := path
 	if rel, ok := relativeInside(c.runtimeRoot, path); ok {
-		oracle, grade = filepath.Join(c.identityRoot, rel), rel
-	} else if rel, ok := relativeInside(c.identityRoot, path); ok {
-		grade = rel
+		oracle = filepath.Join(c.identityRoot, rel)
 	}
 	frame(c.oracle, oracle)
-	frame(c.identity, grade)
+	frame(c.identity, c.gradePath(path))
+}
+
+// gradePath answers the grade identity's spelling of an absolute path: relative to the
+// runtime root, then relative to the identity root, and otherwise the path itself.
+func (c *identityCollector) gradePath(path string) string {
+	for _, root := range []string{c.runtimeRoot, c.identityRoot} {
+		if rel, ok := relativeInside(root, path); ok {
+			return rel
+		}
+	}
+	return path
 }
 func relativeInside(root, path string) (string, bool) {
 	rel, err := filepath.Rel(root, path)
 	return rel, err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
 }
 
-// frameBaselineSchedule frames the phase-table loader's answer at the identity root: present
-// bytes as bytes, an absence as one value, and a defect as one value with no path.
-func frameBaselineSchedule(w io.Writer, identityRoot string) {
-	data, present, err := readManifest(manifestPath(identityRoot))
-	switch {
-	case err != nil:
-		frame(w, "schedule defect")
-	case !present:
-		frame(w, "schedule absent")
-	default:
-		frame(w, "schedule")
-		frame(w, string(data))
-	}
-}
-
-// runningExecutableDigest answers the running executable's digest once for each process, or a
-// stable value when it does not read. It is a seam, so a test can vary the executable.
+// runningExecutableDigest answers the running executable's digest once for each process, or
+// an empty value when it does not read. It is a seam, so a test can vary the executable.
 var runningExecutableDigest = sync.OnceValue(func() string {
 	value, err := os.Executable()
 	if err == nil {
@@ -459,7 +459,7 @@ var runningExecutableDigest = sync.OnceValue(func() string {
 		value, err = brokermanifest.Digest(value)
 	}
 	if err != nil {
-		return "unreadable"
+		return ""
 	}
 	return value
 })
