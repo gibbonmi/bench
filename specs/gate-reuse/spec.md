@@ -139,7 +139,11 @@ GR-C2 keys the store and the gate cache to it. GR-C3 proves each verb and moves 
 
 ### Completion plan
 
-The plan uses version 2 with a delegate execution block. Each verification names its ticket, and each ticket of a multi-ticket chunk owns its own gate and conformance runs. The build records one fresh author for each ticket on the declared line, and review closes each frozen chunk before the next author sta{
+The plan uses version 2 with a delegate execution block. Each verification names its ticket, and each ticket of a multi-ticket chunk owns its own gate and conformance runs. The build records one fresh author for each ticket on the declared line, and review closes each frozen chunk before the next author starts.
+A probe names bytes that the chunk keeps or writes. The plan amendment re-cuts a probe whose bytes the author moved.
+
+```bench-completion-plan
+{
   "version": 2,
   "chunks": [
     {
@@ -208,7 +212,7 @@ The plan uses version 2 with a delegate execution block. Each verification names
       "06-record-the-grade-key-rule.md": []
     }
   }
-}ase cfbd1d360c2d0048bad07d142468c4bb47f8fc20"},{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"}]}
+}
 ```
 
 ## Further notes
