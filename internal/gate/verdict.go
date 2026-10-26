@@ -50,6 +50,12 @@ type Inspection struct {
 	// whether a record describes the tree its reader is on. A red graded elsewhere is not
 	// this tree's red.
 	Drifted bool
+	// Only Inspect fills the two reader facts, so a gate run pays no history read for them.
+	// ReaderRecorded marks a current tree that holds a reader record. ReaderLandings is the
+	// count of reader-record commits after the green marker up to HEAD, and it is counted
+	// only when ReaderRecorded holds.
+	ReaderRecorded bool
+	ReaderLandings int
 }
 
 type verdictRecord struct {
@@ -106,7 +112,9 @@ func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRec
 	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
 }
 
-func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }
+func Inspect(root string) Inspection {
+	return withReaderFacts(root, inspectAt(root, time.Now().UTC()))
+}
 
 func inspectAt(root string, now time.Time) Inspection {
 	s, err := buildSubject(root)
