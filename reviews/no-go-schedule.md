@@ -220,6 +220,41 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "c1r1-confirmation",
+          "performer": "claude:ngs-orchestrator-20261025",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6f1577e3ac031bfcffccbb20ad32254da0ef9ee0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ngs-orchestrator-20261025:c1-probe",
+            "digest": "sha256:cf37a82458551c87994c502007bdad3e88e1d7dde63f67f2864272d3bde224e8",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/subject.go,insert,failed,7,TestOracleIdentityAndOracleShareTheClosure/PATH,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestOracleIdentity,passed,10\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1908\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49,10\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/PATH,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across PATH, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/baseline_runner,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across baseline runner, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/declared_path_bytes,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across declared path bytes, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/environment_value,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across environment value, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/identity_root,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across identity root, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/policy,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across policy, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/tool_bytes,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across tool bytes, want two identities\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "d30ccffeac02152febd38db38dfccfdcf0f6cf7f",
+          "reviewed_tip": "8c68fe1fcc1111a64f6c7f5f5fcbe9cbf0e4bd54",
+          "repaired_tip": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "insert id.Reset() before the identity posture frames in internal/gate/subject.go",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ngs-orchestrator-20261025:c1-probe",
+              "digest": "sha256:cf37a82458551c87994c502007bdad3e88e1d7dde63f67f2864272d3bde224e8",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/subject.go,insert,failed,7,TestOracleIdentityAndOracleShareTheClosure/PATH,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestOracleIdentity,passed,10\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1908\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49,10\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/PATH,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across PATH, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/baseline_runner,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across baseline runner, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/declared_path_bytes,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across declared path bytes, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/environment_value,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across environment value, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/identity_root,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across identity root, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/policy,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across policy, want two identities\",1\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/tool_bytes,\"oracle_identity_test.go:146: identity = b936ce0d10832c24f6c7ac516e9fb524d5cb8279265c987f40f4fb5009ba7f79 across tool bytes, want two identities\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -261,6 +296,19 @@ NG-C1 round r1: 0 findings. Worst issue: none.
 NG-C1 round r1: 1 finding. Worst issue: C1, no test varies an identity input other than the tree, the posture, and the tool bytes.
 
 - C1 | auto-fix | confidence 6 | `internal/gate/oracle_identity_test.go` | A writer swap at `internal/gate/subject.go:77-105` drops an identity input and leaves NG1-NG3 green. Ticket 01 line 9 gives the identity every oracle frame except the tree.
+
+## Repair witnesses
+
+The NG-C1 repair commit `9768ad919` makes `TestOracleIdentityAndOracleShareTheClosure` a table of seven inputs. Each mutant below swapped the identity writer for the oracle writer in `internal/gate/subject.go`. Each one read `bit` with `restored` `yes`:
+
+- The policy frame failed the `policy` case.
+- The identity-root frame failed the `identity_root` case.
+- The resolution loop failed the `PATH` case.
+- The prospective preparation failed the `baseline_runner` case.
+- The environment frames failed the `environment_value` case.
+- A `hashRepoPath` call replaced with `error(nil)` failed the `declared_path_bytes` case.
+
+The swap of the `path` frames stayed silent. The orchestrator accepts it as an equivalent mutant, because `manifestIdentity` already frames each declared path name into both digests. The coordinator probe inserted `id.Reset()` before the posture frames, and seven cases failed.
 
 ## Advice
 
