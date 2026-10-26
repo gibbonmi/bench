@@ -2842,13 +2842,79 @@
           "supersedes": [
             "c6r2-coverage"
           ]
+        },
+        {
+          "id": "c6r4-standards",
+          "performer": "claude:ngs-c6r4-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r4-standards-20261026",
+            "digest": "sha256:5de2988fd32705200de7ea122c78dffc50ec5d36c3da75c9d74b386c60f5b8b8",
+            "excerpt": "Axis: Standards, NG-C6 round r4, ticket 09, rows NG68-NG70. Session claude:ngs-c6r4-standards-20261026. Frozen pair 91ee7be0..cc84f5c7.\nCount: 0 findings. The decision map entry swaps roadmap/FT449.md for specs/no-go-schedule/spec.md and keeps the Path, Supports, Drift form of internal/maps/schema.go, as the FT290 precedent did. NG68-NG70 evidence files are untouched by the pair.\nAdvice (no ID): the Supports line says \"of the row\", and the entry no longer names the row.\n"
+          },
+          "axis": "Standards",
+          "base": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "tip": "cc84f5c78583104fc11173e379dcfe8fb4f77c89",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r3-standards"
+          ]
+        },
+        {
+          "id": "c6r4-spec",
+          "performer": "claude:ngs-c6r4-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r4-spec-20261026",
+            "digest": "sha256:331aebf1dbc669d13a23413b37bc267428eb6119326f5578ed528473b93f60c0",
+            "excerpt": "Axis: Spec, NG-C6 round r4, ticket 09, rows NG68-NG70. Session claude:ngs-c6r4-spec-20261026. Frozen pair 91ee7be0..cc84f5c7.\nCount: 0 findings. The spec carries the destination and the three decisions of the deleted row (census owner, fresh-run interval, record), so the support claim holds; the cited path survives the landing. NG68-NG70 stay met.\nAdvice (no ID): none.\n"
+          },
+          "axis": "Spec",
+          "base": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "tip": "cc84f5c78583104fc11173e379dcfe8fb4f77c89",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r3-spec"
+          ]
+        },
+        {
+          "id": "c6r4-coverage",
+          "performer": "claude:ngs-c6r4-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r4-coverage-20261026",
+            "digest": "sha256:2c483552069b49ddd9c37f23457965c832d7a9027fb5185514e095b4501846e2",
+            "excerpt": "Axis: Coverage, NG-C6 round r4, ticket 09, rows NG68-NG70. Session claude:ngs-c6r4-coverage-20261026. Frozen pair 91ee7be0..cc84f5c7.\nCount: 0 findings. The pair's only source delta is the Sources citation, which no row grades; the support claim and the source form hold.\nAdvice (no ID): the Supports line says \"of the row\"; the map and the spec cite each other, as in the FT290 precedent.\n"
+          },
+          "axis": "Coverage",
+          "base": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "tip": "cc84f5c78583104fc11173e379dcfe8fb4f77c89",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r3-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+    "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
     "performer": "claude:ngs-orchestrator-20261025",
     "reconciliation": {
       "NG1": "covered",
@@ -2986,6 +3052,60 @@
           "ref": "claude-session:ngs-orchestrator-20261025",
           "digest": "sha256:4f98d539fcd5a1ee6ceec4099981109cdbd2fec4cc9539282d84c7c5b596c4db",
           "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,70027,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-coverage",
+        "performer": "claude:ngs-orchestrator-20261025",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ngs-orchestrator-20261025",
+          "digest": "sha256:c6bf646b7f6a75b174a3ffe393f6fe99408991e5007c2b2376a27fd1dbc4b97a",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT449-no-go-schedule,9b7f89ebee94477f6c2b2ec8d6ec0a42bead9c72,false\nok: coverage map valid — 84 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/no-go-schedule/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-census",
+        "performer": "claude:ngs-orchestrator-20261025",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ngs-orchestrator-20261025",
+          "digest": "sha256:3f8ebb1012548b5898b316553a7826be8cc04c6995d1b6ac49855f0f3c05ef1f",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,496,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "census",
+        "command": "bench test --check ordinary-build-census",
+        "exit_code": 0
+      },
+      {
+        "id": "final2-system",
+        "performer": "claude:ngs-orchestrator-20261025",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a70a5728a5fdc0a90b24a6ea457a536d63b4b9a3",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ngs-orchestrator-20261025",
+          "digest": "sha256:ab27e7d7bfbde3f05fd5665a57c92a582bb7ab9578f79a2580fa133296cd23bc",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,76289,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
         },
         "requirement": "system",
         "command": "bench test --check system",
@@ -3354,6 +3474,8 @@ The orchestrator ran the measurement again in a disposable clone of `e4cd9398d`,
 ## Final reconciliation
 
 The orchestrator reconciled all 84 coverage rows at `c95098b5b`. The coverage check, the ordinary-build census, and the system suite (279 tests) all passed. The NG-C5 checkpoint ran green and graded NG-C4 in its walk. NG-C6 is the last chunk, so the landing's complete checkpoint grades it.
+
+The first landing attempt ran red in root conformance, because the decision map cited `roadmap/FT449.md`, which the landing deletes. Commit `cc84f5c78` cites the spec instead, as the FT290 fix did. NG-C6 refroze at that commit, its checks passed again, and round r4 found 0 findings. The final verification ran again at `9b7f89ebe` and passed.
 
 ## Repair witnesses
 
