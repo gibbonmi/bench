@@ -271,6 +271,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gr-c1-standards-2",
+          "performer": "claude:gr-c1-standards2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c1-standards2-20261026",
+            "digest": "sha256:241c88996ee86014f529575d94fff80f3a9f56d4c8773dc2f030cfd0c9d676f4",
+            "excerpt": "Standards confirming round, GR-C1, repair delta 8b1fd9cb1..71fa9105a, record 38f86f2f2. sonnet/high.\nS1 confirmed: confinedPath calls relativeInside (internal/gate/subject.go:324); the only inside-root predicate in subject.go is relativeInside (446-449).\ngradePath (subject.go:436-445): one derivation shared by framePath and hashLinkChain; no duplication.\nframeBaselineSchedule move confirmed unchanged (prospective.go:75-88); subject.go 512 of its 513-line budget.\nNew findings: none. Raw count 0.\n"
+          },
+          "axis": "Standards",
+          "base": "21b5918db91ee0badcfd4fc26678f3d180ae9e6a",
+          "tip": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c1-standards-1"
+          ]
+        },
+        {
+          "id": "gr-c1-spec-2",
+          "performer": "claude:gr-c1-spec2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c1-spec2-20261026",
+            "digest": "sha256:a9c3e29875993c2cf429e55eb6dac561126bb4bc7b8dc8583a800645b1ecd111",
+            "excerpt": "Spec confirming round, GR-C1, repair delta 8b1fd9cb1..71fa9105a. sonnet/high.\nP1 confirmed: subject.go:411-420 frames the raw target to the oracle at the same position (oracle bytes unchanged, ticket 01 line 27) and the gradePath spelling to the grade identity for an absolute target.\nP2 confirmed: subject.go:143-148 opens the subject when the running executable digest is empty, after s.Oracle is set; unreadableBaselineRunner stays oracle-only.\nNo acceptance row changes behavior. New findings: none. Raw count 0.\n"
+          },
+          "axis": "Spec",
+          "base": "21b5918db91ee0badcfd4fc26678f3d180ae9e6a",
+          "tip": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c1-spec-1"
+          ]
+        },
+        {
+          "id": "gr-c1-coverage-2",
+          "performer": "claude:gr-c1-coverage2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c1-coverage2-20261026",
+            "digest": "sha256:076fb12d0da848bcf5a54488c4acf8d5df7370815048d5a39ff37064cec2782c",
+            "excerpt": "Coverage confirming round, GR-C1, repair delta 8b1fd9cb1..71fa9105a. sonnet/high. bench test --run of the three repair tests passed at 38f86f2f2.\nC1 confirmed: grade_identity_test.go:111-119 fails an always-runtime-root or always-ProspectiveGateSh mutant.\nP1/C3 confirmed: linked case at grade_identity_test.go:20-44 fails under the old raw-target frame.\nP2 confirmed: oracle_identity_test.go:92-96 fails under the old closed subject.\nNew findings: K1 low auto-fix, the repair witness reds were not recorded; closed by the orchestrator's record prose \"GR-C1 repair witness reds\". K2 low no-op, the oracle raw-target half is not isolated; the Spec confirming axis confirmed unchanged oracle bytes. K3 low no-op, the production \"\" default is not unit-tested; GR58 in GR-C3 covers the real executable chain.\nRaw count 3 (0 blocking).\n"
+          },
+          "axis": "Coverage",
+          "base": "21b5918db91ee0badcfd4fc26678f3d180ae9e6a",
+          "tip": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c1-coverage-1"
+          ]
         }
       ]
     }
@@ -309,3 +375,13 @@ The author then probed `internal/gate/subject.go` at the ticket commit, and each
 - A run-binary member replaced with `resolutionName(sourceKind)` failed TestOracleIdentityAndOracleShareTheClosure (GR8).
 
 Two first cuts of these mutants did not compile, and the author cut them again with the same intent. The planned posture probe is in the fenced record as `gr-t01-posture-probe`.
+
+## GR-C1 repair witness reds
+
+The ticket 01 repair session reported these reds in its `Witness return:` field for repair commit 71fa9105a:
+
+- P2: TestOracleIdentityOpensWithoutTheRunningExecutable ran against the code before the repair and failed with "subject closed = true, reason "", want open with "running executable unavailable"".
+- P1 and C3: the linked case of TestGradeIdentityLeavesOutTheCheckoutPath failed on the old code with "want one grade identity across checkouts" for `linked = true`.
+- C1: the new expectation of TestGradeIdentityFollowsTheRunBinarySource passes on the code before the repair, so two `bench probe --run` mutants demonstrated its red. The mutant that changes `return kitRoot(storageRoot)` to `return runtimeRoot` in `internal/gate/gate.go` made the test fail. The mutant that changes `sourceKind := res.Kind` to `sourceKind := ProspectiveGateSh` in `internal/gate/subject.go` also made it fail. Both probes restored their subject.
+
+The orchestrator wrote these reds after it prepared the confirming charge. A `bench learning` entry records that slip.
