@@ -68,6 +68,10 @@ type verdictRecord struct {
 	StartedAt  string `json:"started_at,omitempty"`
 	OwnerPID   int    `json:"owner_pid,omitempty"`
 
+	// An evidence record carries the grade key in place of the oracle digest, because the
+	// oracle digest frames the checkout path and the grade key does not.
+	Grade string `json:"grade,omitempty"`
+
 	// The lane class carries these three and none of the verdict fields above. A lane
 	// grades a declared check list rather than the oracle, so it has no state, no
 	// status, and no oracle identity to record.

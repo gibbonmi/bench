@@ -70,12 +70,17 @@ func completeCheckpoint(t *testing.T, f *recordtest.Fixture, flags ...string) (i
 // publishes from HEAD, under the landing's completion obligation.
 func publishedEvidence(t *testing.T, f *recordtest.Fixture) EvidenceInspection {
 	t.Helper()
-	tip := f.Tip()
-	tree, err := published.Tree(f.Root, f.Tree(), recordtest.Spec, tip)
+	return InspectTreeContext(WithCompletion(context.Background(), recordtest.Spec, f.Tip()), f.Root, publishedTree(t, f))
+}
+
+// publishedTree answers the tree that the landing publishes from the HEAD of f.
+func publishedTree(t *testing.T, f *recordtest.Fixture) string {
+	t.Helper()
+	tree, err := published.Tree(f.Root, f.Tree(), recordtest.Spec, f.Tip())
 	if err != nil {
 		t.Fatalf("closure transform: %v", err)
 	}
-	return InspectTreeContext(WithCompletion(context.Background(), recordtest.Spec, tip), f.Root, tree)
+	return tree
 }
 
 // annotateRecord adds prose to the review record and leaves the evidence unchanged.

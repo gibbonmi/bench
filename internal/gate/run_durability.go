@@ -78,8 +78,8 @@ func retainGreen(replacer durablefile.Replacer, root string, plan subject, recor
 	if err := ensureEvidenceDir(gitdir, dir); err != nil {
 		return err
 	}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	return durableReplaceAt(replacer, dir, evidenceName(plan), record)
+	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Grade: evidenceName(plan), RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	return durableReplaceAt(replacer, dir, record.Grade, record)
 }
 
 func ensureEvidenceDir(parent, dir string) error {
