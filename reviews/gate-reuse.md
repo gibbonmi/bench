@@ -358,6 +358,20 @@
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "GR-C1",
+      "from": "9777f212d75559847ddc797441539ca9ea82d693",
+      "commit": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+      "incoming": "59897559fc09fc158277b4219064d20062eaa30b",
+      "source_digest": "ca3e7b301f1a455a1c2a903c739db24e4d5db4be",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [],
+      "reviews": []
+    }
   ]
 }
 ```
