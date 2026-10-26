@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:fe8eec05cb96401f72af5a70e983c0f599e7a6c35d83366b8c15758f6f77e8be",
+  "plan_digest": "sha256:68ef1b1ef031160d9eec83650abcea4fd38721acdb6654476a69446626e82429",
   "implementation_session": "",
   "chunks": [
     {
@@ -260,9 +260,9 @@
     {
       "id": "NG-C2",
       "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
-      "tip": "5aaad0ad36af9a7ee95845845585a233c6713621",
-      "plan_digest": "sha256:fe8eec05cb96401f72af5a70e983c0f599e7a6c35d83366b8c15758f6f77e8be",
-      "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+      "tip": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+      "plan_digest": "sha256:68ef1b1ef031160d9eec83650abcea4fd38721acdb6654476a69446626e82429",
+      "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
       "acceptance_rows": [
         "NG5",
         "NG6",
@@ -290,7 +290,8 @@
         "NG26",
         "NG27",
         "NG28",
-        "NG71"
+        "NG71",
+        "NG82"
       ],
       "verification": [
         {
@@ -504,6 +505,93 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/testlog_exec.go,swap,failed,2,TestGateGoExecAddsTheTestLog,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,606\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,586\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,68453,606\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateGoExecAddsTheTestLog,\"testlog_exec_test.go:47: probe arguments = [\\\"-a\\\" \\\"b c\\\"], want [\\\"-test.testlogfile=/dev/shm/VZFZMN/t/TestGateGoExecAddsTheTestLog424366856/001/pkg%2Fsub.log\\\" \\\"-a\\\" \\\"b c\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestWholeTestPhaseWritesOneLogPerPackage,\"testlog_exec_test.go:132: log of a = \\\"\\\", <nil>; want a Go test log\",4\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t03r1-ticket-3-check-1",
+          "performer": "claude:ngs-t03-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-repair1-20261025",
+            "digest": "sha256:ce1be5f00ad0fd2146a46924b09ab4b6a58c67b71430fb9b45fa5c731f4ab8d5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,70161,626\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "requirement": "ticket-3-check-1",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-ticket-3-check-2",
+          "performer": "claude:ngs-t03-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-repair1-20261025",
+            "digest": "sha256:1cd04fea799c67744b14b77464813667326efb072bce803b2c86157230296942",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1351,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "requirement": "ticket-3-check-2",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-ticket-3-check-3",
+          "performer": "claude:ngs-t03-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-repair1-20261025",
+            "digest": "sha256:751d53a21543a06741096484acef7ba69c933ea122e0c0ca666b1fc2ae66fd4b",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13502,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "requirement": "ticket-3-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-ticket-3-probe",
+          "performer": "claude:ngs-t03-repair1-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b5a4125d38d9546033c0264cf0a91e491a8032d5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-repair1-20261025",
+            "digest": "sha256:ed1a90352fd82dc06906ae0d0adf33797773a2605cf8ebce433506f090037dc4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_table.go,omit,failed,1,TestReaderTableRequiresTheConformanceWitness,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,626\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,523\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70516,626\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderTableRequiresTheConformanceWitness,\"reader_table_test.go:182: derivation = map[.agents/:[internal/conformance] .bench/BENCH.md:[internal/conformance] .bench/commitment.json:[internal/conformance] CHANGELOG.md:[internal/conformance] ROADMAP.md:[internal/conformance] capture/:[… (454 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8885e8d8ab5717f8da8b3e6eba35d3a176af0dab",
+          "requirement": "ticket-3-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the reader-table derivation, remove the internal/conformance witness refusal. TestReaderTableRequiresTheConformanceWitness must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t03-repair1-20261025",
+              "digest": "sha256:ed1a90352fd82dc06906ae0d0adf33797773a2605cf8ebce433506f090037dc4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_table.go,omit,failed,1,TestReaderTableRequiresTheConformanceWitness,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,626\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,523\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,70516,626\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderTableRequiresTheConformanceWitness,\"reader_table_test.go:182: derivation = map[.agents/:[internal/conformance] .bench/BENCH.md:[internal/conformance] .bench/commitment.json:[internal/conformance] CHANGELOG.md:[internal/conformance] ROADMAP.md:[internal/conformance] capture/:[… (454 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -603,6 +691,18 @@
       "chunk_ids": {
         "NG-C1": [
           "NG-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:fe8eec05cb96401f72af5a70e983c0f599e7a6c35d83366b8c15758f6f77e8be",
+      "to": "sha256:68ef1b1ef031160d9eec83650abcea4fd38721acdb6654476a69446626e82429",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ],
+        "NG-C2": [
+          "NG-C2"
         ]
       }
     }
