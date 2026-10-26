@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/gate-reuse/spec.md",
-  "plan_digest": "sha256:99a53aa7b6eaee91fb9b3ac47a50d59b64e1313ddd3eb348932b26da0b60be7c",
+  "plan_digest": "sha256:4e73a10e6fba94a23b56ea5e07c1c84597c1d941628077fe37dd81c4631b1a0d",
   "implementation_session": "",
   "chunks": [
     {
@@ -834,6 +834,237 @@
           ]
         }
       ]
+    },
+    {
+      "id": "GR-C3",
+      "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+      "tip": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+      "plan_digest": "sha256:4e73a10e6fba94a23b56ea5e07c1c84597c1d941628077fe37dd81c4631b1a0d",
+      "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+      "acceptance_rows": [
+        "GR25",
+        "GR26",
+        "GR27",
+        "GR28",
+        "GR66",
+        "GR58",
+        "GR48",
+        "GR49",
+        "GR50",
+        "GR51",
+        "GR52",
+        "GR59",
+        "GR60",
+        "GR61",
+        "GR62",
+        "GR63",
+        "GR64",
+        "GR67"
+      ],
+      "verification": [
+        {
+          "id": "gr-t04-gate",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "50e0449c3193016716ba09c3d85d6bff36280011",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:74f563c5c59cba2fa5a454e9e98f7e9e095841f01951f400c07b1e14e9fed1bf",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,225366,703\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4432fb125be35367b4c93e2fd7eb3a4f5b1a724f",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-worktree",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "50e0449c3193016716ba09c3d85d6bff36280011",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:52b27a087d118dda9d03af8f9ab17dec22c102d5ebb684361e63fdcd5d2ce4c6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,132031,1520\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4432fb125be35367b4c93e2fd7eb3a4f5b1a724f",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-commit",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "50e0449c3193016716ba09c3d85d6bff36280011",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:b45d39d290e614b43bdb89e38d6b732360ea693fab930b8cd916c65e5df2d6d2",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,9290,119\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4432fb125be35367b4c93e2fd7eb3a4f5b1a724f",
+          "requirement": "commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-root-conformance",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "50e0449c3193016716ba09c3d85d6bff36280011",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:df07496cb807d5e81e08bcc7e773dcd9a5c8dc8cefab2f6569d1dec231e1b6ec",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12321,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4432fb125be35367b4c93e2fd7eb3a4f5b1a724f",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-land-probe",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "50e0449c3193016716ba09c3d85d6bff36280011",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:907bafdae68d0c17b2c2ef1e3b8c00bd99835ed6989cfb809cecae91e660b8d7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/engine.go,swap,failed,1,TestLandReusesTheCompleteCheckpointGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandReusesTheCompleteCheckpointGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,1567,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandReusesTheCompleteCheckpointGreen,\"land_reuse_test.go:87: landing = (1, \\\"refused{detail=prospective authorization refused: infrastructure,next=bench doctor; then bench worktree land --request 'land-reuse-checkpoint' --base '296329b25f5075f70d347f25f55e1ec4a13f156c' --source-… (706 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4432fb125be35367b4c93e2fd7eb3a4f5b1a724f",
+          "requirement": "land-probe",
+          "command": "bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/worktree --run TestLandReusesTheCompleteCheckpointGreen --expect TestLandReusesTheCompleteCheckpointGreen",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make the store answer no green. The landing then runs the gate again, so the checkpoint-then-landing row fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+              "digest": "sha256:907bafdae68d0c17b2c2ef1e3b8c00bd99835ed6989cfb809cecae91e660b8d7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/engine.go,swap,failed,1,TestLandReusesTheCompleteCheckpointGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandReusesTheCompleteCheckpointGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,1567,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandReusesTheCompleteCheckpointGreen,\"land_reuse_test.go:87: landing = (1, \\\"refused{detail=prospective authorization refused: infrastructure,next=bench doctor; then bench worktree land --request 'land-reuse-checkpoint' --base '296329b25f5075f70d347f25f55e1ec4a13f156c' --source-… (706 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "gr-t05-refusalroute",
+          "performer": "claude:gr-t05-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-author-20261026",
+            "digest": "sha256:dfc1f80e92253a521ca1579e11429f1c67360e7423b85e70e953e27a91619ee5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "requirement": "refusalroute",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-commands",
+          "performer": "claude:gr-t05-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-author-20261026",
+            "digest": "sha256:a9bd3702b03672339e37e678aad38ab5da1d9c62bfceaf0640e5730cc788f348",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26074,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "requirement": "commands",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-gate-05",
+          "performer": "claude:gr-t05-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-author-20261026",
+            "digest": "sha256:e413e0de9d96be47fc504bc34e0c94efcff6295761584537a6fc6c4afc862fd6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,212253,713\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "requirement": "gate-05",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-root-conformance-05",
+          "performer": "claude:gr-t05-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-author-20261026",
+            "digest": "sha256:242489321546a23d84f83276f6ed257eb4594c4e80744d5e014a250aa6488c01",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11407,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "requirement": "root-conformance-05",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-worktree-05",
+          "performer": "claude:gr-t05-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-author-20261026",
+            "digest": "sha256:252156b93b4fb8cf97d4e7b85dbffcebaddc8d80c670c23d91f46dce3230755a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,129631,1520\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
+          "requirement": "worktree-05",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -877,6 +1108,18 @@
     {
       "from": "sha256:36f992a233ba0bcc938f4bb62a282818e29c760fec821b62412e53d16d56ac9e",
       "to": "sha256:99a53aa7b6eaee91fb9b3ac47a50d59b64e1313ddd3eb348932b26da0b60be7c",
+      "chunk_ids": {
+        "GR-C1": [
+          "GR-C1"
+        ],
+        "GR-C2": [
+          "GR-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:99a53aa7b6eaee91fb9b3ac47a50d59b64e1313ddd3eb348932b26da0b60be7c",
+      "to": "sha256:4e73a10e6fba94a23b56ea5e07c1c84597c1d941628077fe37dd81c4631b1a0d",
       "chunk_ids": {
         "GR-C1": [
           "GR-C1"
