@@ -4,7 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/durablefile"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 // GR22: a primary run with no gate cache that reuses a linked-worktree green records the
@@ -40,6 +45,42 @@ func TestReusedGreenReplacesARedCacheOfItsTree(t *testing.T) {
 
 	requireReusedGreenCache(t, primary, linked, tree)
 	requireRuns(t, primary, 2, "after a primary reuse over its own red")
+}
+
+// GR47: a primary run whose gate cache holds an expired or an oracle-drifted green of the
+// same tree replaces it with a fresh record of the store green.
+func TestReusedGreenReplacesAStaleGreenCacheOfItsTree(t *testing.T) {
+	for _, row := range []struct {
+		name  string
+		stale func(*verdictRecord)
+	}{
+		{"expired", func(r *verdictRecord) {
+			r.RecordedAt = time.Now().UTC().Add(-2 * freshness).Format(time.RFC3339)
+		}},
+		{"oracle drifted", func(r *verdictRecord) { r.Oracle = strings.Repeat("0", 64) }},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			primary, _, tree := gradeKeyFixture(t)
+			gradeKeyRun(t, primary, tree, reuseFreshGreen, 0)
+			fresh := decodeGateCache(t, primary)
+			stale := fresh
+			row.stale(&stale)
+			gitdir, err := benchgit.AdminDir(primary)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := durableReplace(durablefile.Native(), gitdir, stale); err != nil {
+				t.Fatal(err)
+			}
+
+			gradeKeyRun(t, primary, tree, reuseFreshGreen, 0)
+
+			if got := decodeGateCache(t, primary); got != fresh {
+				t.Fatalf("gate cache = %+v, want the fresh record %+v", got, fresh)
+			}
+			requireRuns(t, primary, 1, "after a reuse over a stale green of its tree")
+		})
+	}
 }
 
 // GR44: a reuse while another run holds the primary gate lock prints the reuse line and

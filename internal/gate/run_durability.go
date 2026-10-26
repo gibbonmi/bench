@@ -69,7 +69,7 @@ func besideDemotion(message string, err error) string {
 // gate cache can already describe this subject's fresh green. Another run can hold the gate
 // lock, and a reuse does not wait for it.
 func reuseWritesNothing(root string, plan subject, now time.Time) bool {
-	if inspectSubjectAt(root, plan, now).ReusableGreen {
+	if cacheDescribesFreshGreen(root, plan, now) {
 		return true
 	}
 	gitdir, err := benchgit.AdminDir(root)
@@ -84,10 +84,16 @@ func reuseWritesNothing(root string, plan subject, now time.Time) bool {
 // describes this subject's fresh green. The record keeps the time of the store record, so a
 // reuse does not move the freshness window.
 func recordReusedGreen(replacer durablefile.Replacer, root, gitdir string, plan subject, reuse Inspection, now time.Time) error {
-	if inspectSubjectAt(root, plan, now).ReusableGreen {
+	if cacheDescribesFreshGreen(root, plan, now) {
 		return nil
 	}
 	return durableReplace(replacer, gitdir, readyVerdict(plan, "green", reuse.RecordedAt))
+}
+
+// cacheDescribesFreshGreen answers whether the gate cache of root already describes the fresh
+// green of plan at now. A reuse writes nothing over such a cache.
+func cacheDescribesFreshGreen(root string, plan subject, now time.Time) bool {
+	return inspectSubjectAt(root, plan, now).ReusableGreen
 }
 
 func interruptedRecord(plan subject, now time.Time) verdictRecord {
@@ -103,7 +109,8 @@ func retainGreen(replacer durablefile.Replacer, root string, plan subject, recor
 	if err := ensureEvidenceDir(gitdir, dir); err != nil {
 		return err
 	}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Grade: evidenceName(plan), RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	record := readyVerdict(plan, "green", recordedAt)
+	record.Oracle, record.Grade = "", evidenceName(plan)
 	return durableReplaceAt(replacer, dir, record.Grade, record)
 }
 
