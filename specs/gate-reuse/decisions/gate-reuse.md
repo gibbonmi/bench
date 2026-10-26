@@ -26,7 +26,7 @@ Term: **grade key** — the digest that names one gate verdict by its verdict in
 Avoid: authorization key, evidence key, reuse key. The authorization of a verb is the grade lookup plus that verb's own checks.
 The build adds this term to `CONTEXT.md` when the key ships.
 
-A map-owned asset stays in the map's assets folder, decisions/gate-reuse/assets/.
+A map-owned asset stays in the map's assets folder, specs/gate-reuse/decisions/gate-reuse/assets/.
 
 ## Decisions so far
 
@@ -43,6 +43,7 @@ A map-owned asset stays in the map's assets folder, decisions/gate-reuse/assets/
 - [Build scope](gate-reuse/tickets/11.md): full scope, and the complete checkpoint runs under the authenticated landing broker.
 - [Kept draft rows](gate-reuse/tickets/12.md): 27 rows kept, six changed, and the merge plan rows retired.
 - [Broker seam](gate-reuse/tickets/13.md): in the kit, the complete checkpoint execs the manifest's broker through `internal/brokermanifest`.
+- [Run binary member](gate-reuse/tickets/14.md): the seal's source digest of the run binary's source root, computed before the lookup.
 
 ## Not yet specified
 
@@ -56,10 +57,10 @@ A map-owned asset stays in the map's assets folder, decisions/gate-reuse/assets/
 
 ## Sources
 
-- Path: `decisions/gate-reuse/assets/executable-roles.md`
+- Path: `specs/gate-reuse/decisions/gate-reuse/assets/executable-roles.md`
   Supports: tickets #2 and #3, the running executable, run binary, and identity root of each run.
   Drift: a change to the wrapper selection, the landing route, or the run binary source.
-- Path: `decisions/gate-reuse/assets/saving-measurement.md`
+- Path: `specs/gate-reuse/decisions/gate-reuse/assets/saving-measurement.md`
   Supports: tickets #7 and #11, the measured saving of the grade key.
   Drift: a change to the destination-moved refusal, the wrapper selection, or the final-check order.
 - Path: `.bench/commitment.json`
@@ -74,7 +75,7 @@ A map-owned asset stays in the map's assets folder, decisions/gate-reuse/assets/
 - Path: `internal/gate/checkpoint.go`
   Supports: ticket #1. A chunk green answers for its subject alone because the evidence pass runs on every call, and a complete checkpoint frames its purpose.
   Drift: a change to `applyCheckpoint`.
-- Path: `decisions/gate-reuse/assets/draft-rows.md`
+- Path: `specs/gate-reuse/decisions/gate-reuse/assets/draft-rows.md`
   Supports: ticket #12, the kept, changed, and retired draft rows.
   Drift: a change to a decision of this map.
 - Path: `internal/commitment/repository/window.go`
