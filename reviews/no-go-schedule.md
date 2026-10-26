@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:44a38079f9734bd6a1f106fe16ba748911098f8d5a19e6f5cbd42d7c7d55e6e4",
+  "plan_digest": "sha256:d1077d01a3ec7991d40fabd7a7b56e387cb8b270c52105ccd278f5b050ffea11",
   "implementation_session": "",
   "chunks": [
     {
@@ -1621,6 +1621,78 @@
           ]
         }
       ]
+    },
+    {
+      "id": "NG-C6",
+      "base": "7204223529757f414366245ec4f8db01de7a3f65",
+      "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+      "plan_digest": "sha256:d1077d01a3ec7991d40fabd7a7b56e387cb8b270c52105ccd278f5b050ffea11",
+      "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+      "acceptance_rows": [
+        "NG68",
+        "NG69",
+        "NG70"
+      ],
+      "verification": [
+        {
+          "id": "t09-ticket-9-check-1",
+          "performer": "claude:ngs-t09-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
+            "digest": "sha256:ed928f34f1288fb0d387ed1b0e9cc58578ce113e40764b8aa83b62678e90436c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7305,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-1",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-ticket-9-check-2",
+          "performer": "claude:ngs-t09-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
+            "digest": "sha256:2db154f2b4366e26a6effddda9090149ac1cf97e63d38a0076bcfbef6cb27b77",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,120,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-2",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-ticket-9-check-3",
+          "performer": "claude:ngs-t09-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
+            "digest": "sha256:c311dfbca31e591521ee7ab0cf3252a196cff97c42c0a49b388cb50a25b074fa",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18035,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1691,6 +1763,21 @@
     {
       "from": "sha256:6a41bd1bd06ebac944ca1dcf933eb7f3ec560f7ac75908afb40859eaae1674b7",
       "to": "sha256:44a38079f9734bd6a1f106fe16ba748911098f8d5a19e6f5cbd42d7c7d55e6e4",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ],
+        "NG-C2": [
+          "NG-C2"
+        ],
+        "NG-C3": [
+          "NG-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:44a38079f9734bd6a1f106fe16ba748911098f8d5a19e6f5cbd42d7c7d55e6e4",
+      "to": "sha256:d1077d01a3ec7991d40fabd7a7b56e387cb8b270c52105ccd278f5b050ffea11",
       "chunk_ids": {
         "NG-C1": [
           "NG-C1"
