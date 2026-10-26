@@ -1623,587 +1623,6 @@
       ]
     },
     {
-      "id": "NG-C6",
-      "base": "7204223529757f414366245ec4f8db01de7a3f65",
-      "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-      "plan_digest": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
-      "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-      "acceptance_rows": [
-        "NG68",
-        "NG69",
-        "NG70"
-      ],
-      "verification": [
-        {
-          "id": "t09-ticket-9-check-1",
-          "performer": "claude:ngs-t09-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
-            "digest": "sha256:ed928f34f1288fb0d387ed1b0e9cc58578ce113e40764b8aa83b62678e90436c",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7305,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
-          "requirement": "ticket-9-check-1",
-          "command": "bench test --check docs-currency-workflow",
-          "exit_code": 0
-        },
-        {
-          "id": "t09-ticket-9-check-2",
-          "performer": "claude:ngs-t09-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
-            "digest": "sha256:2db154f2b4366e26a6effddda9090149ac1cf97e63d38a0076bcfbef6cb27b77",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,120,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
-          "requirement": "ticket-9-check-2",
-          "command": "bench test --check prose-mechanics",
-          "exit_code": 0
-        },
-        {
-          "id": "t09-ticket-9-check-3",
-          "performer": "claude:ngs-t09-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
-            "digest": "sha256:c311dfbca31e591521ee7ab0cf3252a196cff97c42c0a49b388cb50a25b074fa",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18035,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
-          "requirement": "ticket-9-check-3",
-          "command": "bench test --check root-conformance",
-          "exit_code": 0
-        },
-        {
-          "id": "t09r1-ticket-9-check-1",
-          "performer": "claude:ngs-t09-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "medium",
-          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
-            "digest": "sha256:a92791fd09ee5659f0ca3b71dc1c4fcee2e5055971826b707af0d0b871fcf9bc",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4616,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-          "requirement": "ticket-9-check-1",
-          "command": "bench test --check docs-currency-workflow",
-          "exit_code": 0
-        },
-        {
-          "id": "t09r1-ticket-9-check-2",
-          "performer": "claude:ngs-t09-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "medium",
-          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
-            "digest": "sha256:fcce8b0ae6c3b9770e029893439d93dd897b4f786c1c1e346c02a1cc5a9bf8df",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,114,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-          "requirement": "ticket-9-check-2",
-          "command": "bench test --check prose-mechanics",
-          "exit_code": 0
-        },
-        {
-          "id": "t09r1-ticket-9-check-3",
-          "performer": "claude:ngs-t09-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "medium",
-          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
-            "digest": "sha256:63498c96103ae6be6e139aea2a98f27bd7138099e37e4ce22fc688635dd1d97a",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16975,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-          "requirement": "ticket-9-check-3",
-          "command": "bench test --check root-conformance",
-          "exit_code": 0
-        }
-      ],
-      "reviews": [
-        {
-          "id": "c6r1-standards",
-          "performer": "claude:ngs-c6-standards-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
-          "state": "completed",
-          "outcome": "fail",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c6-standards-20261026",
-            "digest": "sha256:fa7807963b343a9715467831359cdc904b9cfd1bb8f55650ab1e84a8fc0f682d",
-            "excerpt": "Axis: Standards, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-standards-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding. Worst issue: S1.\nS1 sev 5, conf 8, auto-fix, ticket 09: .bench/BENCH-reference.md:346-347 still says bench worktree land \"composes and runs the one whole-project gate\"; the same file now states the reader set (:37-66, :548-549). One-source violation inside a Writes file.\nAdvice (no ID): the same stale claim outside ticket 09's Writes (README.md, .bench/BENCH.md:52, bench-final-check, craft-synthesis, field-guide); the ADR and profile simplify the reader-set selection to the covered-family test; the ADR's \"every other landing\" sentence precedes more whole-gate cases; the reference does not state the traced test argv; \"So that record\" at reference :46 reads as a purpose conjunction.\n"
-          },
-          "axis": "Standards",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
-          "finding_ids": [
-            "S1"
-          ],
-          "supersedes": []
-        },
-        {
-          "id": "c6r1-spec",
-          "performer": "claude:ngs-c6-spec-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
-          "state": "completed",
-          "outcome": "fail",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c6-spec-20261026",
-            "digest": "sha256:e1e9d8bc4d28247059b8d8347471dccc4b77a10a52b955dc4a89e9c91a45e39d",
-            "excerpt": "Axis: Spec, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-spec-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding. Worst issue: P1. NG68, NG69, NG70 met; the reference matches reader_plan.go cases, the bound of five, and the gate output lines.\nP1 sev 5, conf 7, auto-fix, ticket 09: .bench/BENCH-reference.md:346-347 says the landing runs \"the one whole-project gate\"; reader_plan.go:76-150 runs the reader set for a covered landing. Story 51 asks that the docs match the gate. Same defect as S1.\nAdvice (no ID): the ADR and profile \"every path in a covered family runs the reader set\" is over-broad against the refusal cases; the reference states no traced test argv; the same stale claim stands outside ticket 09's Writes.\n"
-          },
-          "axis": "Spec",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
-          "finding_ids": [
-            "P1"
-          ],
-          "supersedes": []
-        },
-        {
-          "id": "c6r1-coverage",
-          "performer": "claude:ngs-c6-coverage-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
-          "state": "completed",
-          "outcome": "fail",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c6-coverage-20261026",
-            "digest": "sha256:dbbeb0b30cd7563691b0e66f268f48b12b20ea15b478f12902211035153502b4",
-            "excerpt": "Axis: Coverage, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-coverage-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding (C2 moved to Advice by consultant decision). Worst issue: C1. NG68, NG69, NG70 met; every site of the spec's landing-rule prose table was amended; t09-ticket-9-check-1..3 pass.\nC1 sev 5, conf 8, auto-fix, ticket 09: .bench/BENCH-reference.md:346-348 still says bench worktree land \"composes and runs the one whole-project gate\", which contradicts :548 and :669 of the same file. Same defect as S1 and P1.\nAdvice (no ID): C2 as raised (sev 5, ask-user): whole-gate landing sentences outside every Writes line (.bench/BENCH.md:52, README.md:86-87 and :93, docs/field-guide.html:854, bench-final-check.md:2 and :53, bench-drain.md:285, craft-synthesis SKILL.md:65). The fable tiebreaker deferred all of them to a bench learning entry; BENCH.md:52 needs the reviewer. Also: the reference states no traced test argv; CHANGELOG.md:743 is history and stays.\n"
-          },
-          "axis": "Coverage",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
-          "finding_ids": [
-            "C1"
-          ],
-          "supersedes": []
-        },
-        {
-          "id": "c6r2-standards",
-          "performer": "claude:ngs-c6r2-standards-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-standards-20261026",
-            "digest": "sha256:0253c07ae1743a8144f8886bcb7b1af5215a3a3ab84a4249167d0db4e2aa9311",
-            "excerpt": "Axis: Standards, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. S1 is closed: .bench/BENCH-reference.md:346-349 now says the landing runs the gate, which is the whole-project gate unless the landing plan selects the reader set. The repair touches only ticket 09 Writes paths and adds no duplicated fact.\nAdvice (no ID): the reference states the landing rule at :348 and :551 in two phrasings; a pointer from one to the other would reduce drift.\n"
-          },
-          "axis": "Standards",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-          "finding_ids": [],
-          "supersedes": [
-            "c6r1-standards"
-          ]
-        },
-        {
-          "id": "c6r2-spec",
-          "performer": "claude:ngs-c6r2-spec-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-spec-20261026",
-            "digest": "sha256:602b4bdfb1941d3d0de08bb883116e5322f1c3e4e0d780220cfa6b43288d6689",
-            "excerpt": "Axis: Spec, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. P1 is closed: .bench/BENCH-reference.md:346-349 and CONTEXT.md:433-436 match the reader-set account at :660-689. No whole-gate-only landing claim remains inside ticket 09's Writes. NG68, NG69, NG70 stay met.\nAdvice (no ID): none.\n"
-          },
-          "axis": "Spec",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-          "finding_ids": [],
-          "supersedes": [
-            "c6r1-spec"
-          ]
-        },
-        {
-          "id": "c6r2-coverage",
-          "performer": "claude:ngs-c6r2-coverage-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-coverage-20261026",
-            "digest": "sha256:7e5f87c3b8639173f95049c346f84e54cee352dfe6bde5eed995b52685a3c70a",
-            "excerpt": "Axis: Coverage, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. C1 is closed: .bench/BENCH-reference.md:346-349 and CONTEXT.md:432-436 now state the whole-project gate or the reader set, in agreement with :550-551, :660-689, projects/benchkit.md, and ADR 0017. No anchored needle sits on the edited lines. NG68-NG70 stay met.\nAdvice (no ID): none.\n"
-          },
-          "axis": "Coverage",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
-          "finding_ids": [],
-          "supersedes": [
-            "c6r1-coverage"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "NG-C5",
-      "base": "7204223529757f414366245ec4f8db01de7a3f65",
-      "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-      "plan_digest": "sha256:e32437706fd694f5d878bbdd576677f22f0897b8e76490d60b388e4f699ae896",
-      "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-      "acceptance_rows": [
-        "NG65",
-        "NG66",
-        "NG67"
-      ],
-      "verification": [
-        {
-          "id": "t08-ticket-8-check-1",
-          "performer": "claude:ngs-t08-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
-            "digest": "sha256:130bf4420873e0f3f44c95fb780b7bc7f08af0edfc6cb8b8ffd4f9c903f3002f",
-            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,pass,7392,144\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "requirement": "ticket-8-check-1",
-          "command": "bench test --package ./internal/status",
-          "exit_code": 0
-        },
-        {
-          "id": "t08-ticket-8-check-2",
-          "performer": "claude:ngs-t08-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
-            "digest": "sha256:aca58ea8703e89fc6e871b170c181c436d9b833e707ff5af50bfc541171305aa",
-            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,105021,663\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "requirement": "ticket-8-check-2",
-          "command": "bench test --package ./internal/gate",
-          "exit_code": 0
-        },
-        {
-          "id": "t08-ticket-8-check-3",
-          "performer": "claude:ngs-t08-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
-            "digest": "sha256:a54e98ac313eb395833fa1b8fbe3f74e142d215e36c516b516eb9e2049c92625",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18708,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "requirement": "ticket-8-check-3",
-          "command": "bench test --check root-conformance",
-          "exit_code": 0
-        },
-        {
-          "id": "t08-ticket-8-probe",
-          "performer": "claude:ngs-t08-author-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
-            "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "requirement": "ticket-8-probe",
-          "command": "bench test --package ./internal/status",
-          "exit_code": 0,
-          "probe": {
-            "mutation": "In appendGateInfo, drop the reader-green branch. TestGateRowShowsReaderGreen must fail, then pass after the restore.",
-            "outcome": "bit",
-            "exit_code": 1,
-            "restore": "pass",
-            "native_ref": {
-              "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
-              "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
-            }
-          }
-        },
-        {
-          "id": "t08r1-ticket-8-check-1",
-          "performer": "claude:ngs-t08-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
-            "digest": "sha256:b7e413039a986be25ff390c53cf30296985d60311b7369d83f997141903f92c6",
-            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,pass,7636,146\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "requirement": "ticket-8-check-1",
-          "command": "bench test --package ./internal/status",
-          "exit_code": 0
-        },
-        {
-          "id": "t08r1-ticket-8-check-2",
-          "performer": "claude:ngs-t08-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
-            "digest": "sha256:463f56cc9633a579134b6163ead40bb871a1d02e018e892893bf37fcebfc1e26",
-            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,101147,667\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "requirement": "ticket-8-check-2",
-          "command": "bench test --package ./internal/gate",
-          "exit_code": 0
-        },
-        {
-          "id": "t08r1-ticket-8-check-3",
-          "performer": "claude:ngs-t08-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
-            "digest": "sha256:847b18245cbcb42f5c4d8b82f6f9225f313e8b120696f73f32f7a3fa7ab34a8d",
-            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18975,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "requirement": "ticket-8-check-3",
-          "command": "bench test --check root-conformance",
-          "exit_code": 0
-        },
-        {
-          "id": "t08r1-ticket-8-probe",
-          "performer": "claude:ngs-t08-repair1-20261026",
-          "role": "author-verification",
-          "model": "opus",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
-            "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
-          },
-          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "requirement": "ticket-8-probe",
-          "command": "bench test --package ./internal/status",
-          "exit_code": 0,
-          "probe": {
-            "mutation": "In appendGateInfo, drop the reader-green branch. TestGateRowShowsReaderGreen must fail, then pass after the restore.",
-            "outcome": "bit",
-            "exit_code": 1,
-            "restore": "pass",
-            "native_ref": {
-              "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
-              "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
-            }
-          }
-        }
-      ],
-      "reviews": [
-        {
-          "id": "c5r1-standards",
-          "performer": "claude:ngs-c5-standards-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "fail",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c5-standards-20261026",
-            "digest": "sha256:8f8cb9bd98ca7083504134cee14a4dd930386db4bfc910a519aa27dba704a8be",
-            "excerpt": "Axis: Standards, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 2 findings. Worst issue: S1, a one-source violation.\nS1 sev 5, conf 7, auto-fix, ticket 08: readerLandings (internal/gate/reader_inspect.go:36-60) re-derives the reader-chain walk that readerChain (reader_plan.go:155-174) owns. Compose readerChain and count its landings; the error rule (a partial count or none) needs a decision.\nS2 sev 4, conf 6, ask-user, ticket 08: writeReaderRecord (internal/status/status_reader_test.go:196-213) repeats the reader-record JSON fixture of internal/worktree/land_facts_test.go:118-127; no shared seam exists.\nAdvice (no ID): the test helper readerLandings shares its name with the production function; the tests hard-code (2 of 5), which is the independent spec literal.\n"
-          },
-          "axis": "Standards",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "finding_ids": [
-            "S1",
-            "S2"
-          ],
-          "supersedes": []
-        },
-        {
-          "id": "c5r1-spec",
-          "performer": "claude:ngs-c5-spec-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c5-spec-20261026",
-            "digest": "sha256:0ac2b723ad4f3d1fe9b97da1fe1a0654b69c219e41cc19f1d7aece5e6a7eeec3",
-            "excerpt": "Axis: Spec, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. NG65: the gate row reads reader green (2 of 5) at the stale row's rank, with the bound from gate.ReaderLandingBound. NG66: one row only, never a stale detail. NG67: a tip without its own record keeps the stale row and the bench gate route. The handoff and dashboard page are a deferred non-goal (spec.md:399).\nAdvice (no ID): the duplicated chain walk (Standards S1); a green marker that is not an ancestor of HEAD makes the row count every unreachable commit (severity 3, no spec expectation); withReaderFacts adds a store read to every Inspect call.\n"
-          },
-          "axis": "Spec",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "finding_ids": [],
-          "supersedes": []
-        },
-        {
-          "id": "c5r1-coverage",
-          "performer": "claude:ngs-c5-coverage-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c5-coverage-20261026",
-            "digest": "sha256:55efc1713b36d2913487ffafbf4b30880ba76c5ff7cf86f3de25b1c1176282de",
-            "excerpt": "Axis: Coverage, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. The tests catch a dropped reader branch, a second row, a read of any record, a count of every landing, and a changed bound.\nAdvice (no ID): no test pins that a non-stale tip with a reader record prints no reader row (severity 4); a record with an absent or diverged marker prints (0 of 5) or a count above 5, and the commitTree error path has no test; the duplicated chain walk (Standards S1); roadmap, the HTML badge, and the handoff still read stale (deferred, spec.md:399).\n"
-          },
-          "axis": "Coverage",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-          "finding_ids": [],
-          "supersedes": []
-        },
-        {
-          "id": "c5r2-standards",
-          "performer": "claude:ngs-c5r2-standards-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-standards-20261026",
-            "digest": "sha256:3fe21c7fa4769d723a80936bb1e459ac1b83c0ab10c78b0c78c632c886d4d9e4",
-            "excerpt": "Axis: Standards, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-standards-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed: readerLandings calls readerChain, which has three callers (plan, hold, dashboard) and no copy. The comments match the behavior. All changed paths sit in ticket 08's Writes.\nAdvice (no ID): the ancestry check now precedes readerChain at reader_plan.go:93 and reader_inspect.go:43, and holdWholeGate has none; moving it into readerChain would give one owner but changes the plan's refusal case; the NG67 test name does not name the new case.\n"
-          },
-          "axis": "Standards",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "finding_ids": [],
-          "supersedes": [
-            "c5r1-standards"
-          ]
-        },
-        {
-          "id": "c5r2-spec",
-          "performer": "claude:ngs-c5r2-spec-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-spec-20261026",
-            "digest": "sha256:3e8d587c0a06ffd254c3b0d1a5d02cc7002c24d88ceac3f355417dfea5aa16bb",
-            "excerpt": "Axis: Spec, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-spec-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed: readerLandings composes readerChain, now the one walk for the plan, the hold, and the dashboard. The reader facts are set only when the marker read, IsAncestor(marker, HEAD), and the walk succeed. NG67's test has a non-ancestor-marker case. NG65 and NG66 are unchanged.\nAdvice (no ID): ticket 08 line 9 still names FirstParentsAfter and ReaderRecorded as the count source (prose drift); a marker equal to HEAD with a recorded tree prints (0 of 5).\n"
-          },
-          "axis": "Spec",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "finding_ids": [],
-          "supersedes": [
-            "c5r1-spec"
-          ]
-        },
-        {
-          "id": "c5r2-coverage",
-          "performer": "claude:ngs-c5r2-coverage-20261026",
-          "role": "independent-review",
-          "model": "sonnet",
-          "effort": "high",
-          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
-          "state": "completed",
-          "outcome": "pass",
-          "native_ref": {
-            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-coverage-20261026",
-            "digest": "sha256:d96b3aadfa5567d20a96dccc948ace13ee879044f853439cf08f26e4fe33ad59",
-            "excerpt": "Axis: Coverage, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-coverage-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed for coverage: the non-ancestor case exercises the guard, and TestGateRowShowsReaderGreen (2 landings in a chain of 3) catches a count of the chain.\nAdvice (no ID): an unresolved default branch, an absent marker, and a readerChain error have no direct test.\n"
-          },
-          "axis": "Coverage",
-          "base": "7204223529757f414366245ec4f8db01de7a3f65",
-          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
-          "finding_ids": [],
-          "supersedes": [
-            "c5r1-coverage"
-          ]
-        }
-      ]
-    },
-    {
       "id": "NG-C4",
       "base": "7204223529757f414366245ec4f8db01de7a3f65",
       "tip": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
@@ -2595,6 +2014,587 @@
           "finding_ids": [],
           "supersedes": [
             "c4r1-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "NG-C5",
+      "base": "7204223529757f414366245ec4f8db01de7a3f65",
+      "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+      "plan_digest": "sha256:e32437706fd694f5d878bbdd576677f22f0897b8e76490d60b388e4f699ae896",
+      "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+      "acceptance_rows": [
+        "NG65",
+        "NG66",
+        "NG67"
+      ],
+      "verification": [
+        {
+          "id": "t08-ticket-8-check-1",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:130bf4420873e0f3f44c95fb780b7bc7f08af0edfc6cb8b8ffd4f9c903f3002f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,pass,7392,144\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-check-1",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-ticket-8-check-2",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:aca58ea8703e89fc6e871b170c181c436d9b833e707ff5af50bfc541171305aa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,105021,663\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-ticket-8-check-3",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:a54e98ac313eb395833fa1b8fbe3f74e142d215e36c516b516eb9e2049c92625",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18708,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-ticket-8-probe",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-probe",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In appendGateInfo, drop the reader-green branch. TestGateRowShowsReaderGreen must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+              "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t08r1-ticket-8-check-1",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:b7e413039a986be25ff390c53cf30296985d60311b7369d83f997141903f92c6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,pass,7636,146\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-check-1",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-ticket-8-check-2",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:463f56cc9633a579134b6163ead40bb871a1d02e018e892893bf37fcebfc1e26",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,101147,667\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-ticket-8-check-3",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:847b18245cbcb42f5c4d8b82f6f9225f313e8b120696f73f32f7a3fa7ab34a8d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18975,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-ticket-8-probe",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-probe",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In appendGateInfo, drop the reader-green branch. TestGateRowShowsReaderGreen must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+              "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "c5r1-standards",
+          "performer": "claude:ngs-c5-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5-standards-20261026",
+            "digest": "sha256:8f8cb9bd98ca7083504134cee14a4dd930386db4bfc910a519aa27dba704a8be",
+            "excerpt": "Axis: Standards, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 2 findings. Worst issue: S1, a one-source violation.\nS1 sev 5, conf 7, auto-fix, ticket 08: readerLandings (internal/gate/reader_inspect.go:36-60) re-derives the reader-chain walk that readerChain (reader_plan.go:155-174) owns. Compose readerChain and count its landings; the error rule (a partial count or none) needs a decision.\nS2 sev 4, conf 6, ask-user, ticket 08: writeReaderRecord (internal/status/status_reader_test.go:196-213) repeats the reader-record JSON fixture of internal/worktree/land_facts_test.go:118-127; no shared seam exists.\nAdvice (no ID): the test helper readerLandings shares its name with the production function; the tests hard-code (2 of 5), which is the independent spec literal.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c5r1-spec",
+          "performer": "claude:ngs-c5-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5-spec-20261026",
+            "digest": "sha256:0ac2b723ad4f3d1fe9b97da1fe1a0654b69c219e41cc19f1d7aece5e6a7eeec3",
+            "excerpt": "Axis: Spec, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. NG65: the gate row reads reader green (2 of 5) at the stale row's rank, with the bound from gate.ReaderLandingBound. NG66: one row only, never a stale detail. NG67: a tip without its own record keeps the stale row and the bench gate route. The handoff and dashboard page are a deferred non-goal (spec.md:399).\nAdvice (no ID): the duplicated chain walk (Standards S1); a green marker that is not an ancestor of HEAD makes the row count every unreachable commit (severity 3, no spec expectation); withReaderFacts adds a store read to every Inspect call.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c5r1-coverage",
+          "performer": "claude:ngs-c5-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5-coverage-20261026",
+            "digest": "sha256:55efc1713b36d2913487ffafbf4b30880ba76c5ff7cf86f3de25b1c1176282de",
+            "excerpt": "Axis: Coverage, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. The tests catch a dropped reader branch, a second row, a read of any record, a count of every landing, and a changed bound.\nAdvice (no ID): no test pins that a non-stale tip with a reader record prints no reader row (severity 4); a record with an absent or diverged marker prints (0 of 5) or a count above 5, and the commitTree error path has no test; the duplicated chain walk (Standards S1); roadmap, the HTML badge, and the handoff still read stale (deferred, spec.md:399).\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c5r2-standards",
+          "performer": "claude:ngs-c5r2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-standards-20261026",
+            "digest": "sha256:3fe21c7fa4769d723a80936bb1e459ac1b83c0ab10c78b0c78c632c886d4d9e4",
+            "excerpt": "Axis: Standards, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-standards-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed: readerLandings calls readerChain, which has three callers (plan, hold, dashboard) and no copy. The comments match the behavior. All changed paths sit in ticket 08's Writes.\nAdvice (no ID): the ancestry check now precedes readerChain at reader_plan.go:93 and reader_inspect.go:43, and holdWholeGate has none; moving it into readerChain would give one owner but changes the plan's refusal case; the NG67 test name does not name the new case.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r1-standards"
+          ]
+        },
+        {
+          "id": "c5r2-spec",
+          "performer": "claude:ngs-c5r2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-spec-20261026",
+            "digest": "sha256:3e8d587c0a06ffd254c3b0d1a5d02cc7002c24d88ceac3f355417dfea5aa16bb",
+            "excerpt": "Axis: Spec, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-spec-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed: readerLandings composes readerChain, now the one walk for the plan, the hold, and the dashboard. The reader facts are set only when the marker read, IsAncestor(marker, HEAD), and the walk succeed. NG67's test has a non-ancestor-marker case. NG65 and NG66 are unchanged.\nAdvice (no ID): ticket 08 line 9 still names FirstParentsAfter and ReaderRecorded as the count source (prose drift); a marker equal to HEAD with a recorded tree prints (0 of 5).\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r1-spec"
+          ]
+        },
+        {
+          "id": "c5r2-coverage",
+          "performer": "claude:ngs-c5r2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-coverage-20261026",
+            "digest": "sha256:d96b3aadfa5567d20a96dccc948ace13ee879044f853439cf08f26e4fe33ad59",
+            "excerpt": "Axis: Coverage, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-coverage-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed for coverage: the non-ancestor case exercises the guard, and TestGateRowShowsReaderGreen (2 landings in a chain of 3) catches a count of the chain.\nAdvice (no ID): an unresolved default branch, an absent marker, and a readerChain error have no direct test.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r1-coverage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "NG-C6",
+      "base": "7204223529757f414366245ec4f8db01de7a3f65",
+      "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+      "plan_digest": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
+      "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+      "acceptance_rows": [
+        "NG68",
+        "NG69",
+        "NG70"
+      ],
+      "verification": [
+        {
+          "id": "t09-ticket-9-check-1",
+          "performer": "claude:ngs-t09-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
+            "digest": "sha256:ed928f34f1288fb0d387ed1b0e9cc58578ce113e40764b8aa83b62678e90436c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,7305,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-1",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-ticket-9-check-2",
+          "performer": "claude:ngs-t09-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
+            "digest": "sha256:2db154f2b4366e26a6effddda9090149ac1cf97e63d38a0076bcfbef6cb27b77",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,120,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-2",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t09-ticket-9-check-3",
+          "performer": "claude:ngs-t09-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t09-author-20261026",
+            "digest": "sha256:c311dfbca31e591521ee7ab0cf3252a196cff97c42c0a49b388cb50a25b074fa",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18035,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-ticket-9-check-1",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:a92791fd09ee5659f0ca3b71dc1c4fcee2e5055971826b707af0d0b871fcf9bc",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4616,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "requirement": "ticket-9-check-1",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-ticket-9-check-2",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:fcce8b0ae6c3b9770e029893439d93dd897b4f786c1c1e346c02a1cc5a9bf8df",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,114,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "requirement": "ticket-9-check-2",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-ticket-9-check-3",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:63498c96103ae6be6e139aea2a98f27bd7138099e37e4ce22fc688635dd1d97a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16975,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "requirement": "ticket-9-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": [
+        {
+          "id": "c6r1-standards",
+          "performer": "claude:ngs-c6-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6-standards-20261026",
+            "digest": "sha256:fa7807963b343a9715467831359cdc904b9cfd1bb8f55650ab1e84a8fc0f682d",
+            "excerpt": "Axis: Standards, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-standards-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding. Worst issue: S1.\nS1 sev 5, conf 8, auto-fix, ticket 09: .bench/BENCH-reference.md:346-347 still says bench worktree land \"composes and runs the one whole-project gate\"; the same file now states the reader set (:37-66, :548-549). One-source violation inside a Writes file.\nAdvice (no ID): the same stale claim outside ticket 09's Writes (README.md, .bench/BENCH.md:52, bench-final-check, craft-synthesis, field-guide); the ADR and profile simplify the reader-set selection to the covered-family test; the ADR's \"every other landing\" sentence precedes more whole-gate cases; the reference does not state the traced test argv; \"So that record\" at reference :46 reads as a purpose conjunction.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c6r1-spec",
+          "performer": "claude:ngs-c6-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6-spec-20261026",
+            "digest": "sha256:e1e9d8bc4d28247059b8d8347471dccc4b77a10a52b955dc4a89e9c91a45e39d",
+            "excerpt": "Axis: Spec, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-spec-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding. Worst issue: P1. NG68, NG69, NG70 met; the reference matches reader_plan.go cases, the bound of five, and the gate output lines.\nP1 sev 5, conf 7, auto-fix, ticket 09: .bench/BENCH-reference.md:346-347 says the landing runs \"the one whole-project gate\"; reader_plan.go:76-150 runs the reader set for a covered landing. Story 51 asks that the docs match the gate. Same defect as S1.\nAdvice (no ID): the ADR and profile \"every path in a covered family runs the reader set\" is over-broad against the refusal cases; the reference states no traced test argv; the same stale claim stands outside ticket 09's Writes.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c6r1-coverage",
+          "performer": "claude:ngs-c6-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6-coverage-20261026",
+            "digest": "sha256:dbbeb0b30cd7563691b0e66f268f48b12b20ea15b478f12902211035153502b4",
+            "excerpt": "Axis: Coverage, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-coverage-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding (C2 moved to Advice by consultant decision). Worst issue: C1. NG68, NG69, NG70 met; every site of the spec's landing-rule prose table was amended; t09-ticket-9-check-1..3 pass.\nC1 sev 5, conf 8, auto-fix, ticket 09: .bench/BENCH-reference.md:346-348 still says bench worktree land \"composes and runs the one whole-project gate\", which contradicts :548 and :669 of the same file. Same defect as S1 and P1.\nAdvice (no ID): C2 as raised (sev 5, ask-user): whole-gate landing sentences outside every Writes line (.bench/BENCH.md:52, README.md:86-87 and :93, docs/field-guide.html:854, bench-final-check.md:2 and :53, bench-drain.md:285, craft-synthesis SKILL.md:65). The fable tiebreaker deferred all of them to a bench learning entry; BENCH.md:52 needs the reviewer. Also: the reference states no traced test argv; CHANGELOG.md:743 is history and stays.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c6r2-standards",
+          "performer": "claude:ngs-c6r2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-standards-20261026",
+            "digest": "sha256:0253c07ae1743a8144f8886bcb7b1af5215a3a3ab84a4249167d0db4e2aa9311",
+            "excerpt": "Axis: Standards, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. S1 is closed: .bench/BENCH-reference.md:346-349 now says the landing runs the gate, which is the whole-project gate unless the landing plan selects the reader set. The repair touches only ticket 09 Writes paths and adds no duplicated fact.\nAdvice (no ID): the reference states the landing rule at :348 and :551 in two phrasings; a pointer from one to the other would reduce drift.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r1-standards"
+          ]
+        },
+        {
+          "id": "c6r2-spec",
+          "performer": "claude:ngs-c6r2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-spec-20261026",
+            "digest": "sha256:602b4bdfb1941d3d0de08bb883116e5322f1c3e4e0d780220cfa6b43288d6689",
+            "excerpt": "Axis: Spec, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. P1 is closed: .bench/BENCH-reference.md:346-349 and CONTEXT.md:433-436 match the reader-set account at :660-689. No whole-gate-only landing claim remains inside ticket 09's Writes. NG68, NG69, NG70 stay met.\nAdvice (no ID): none.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r1-spec"
+          ]
+        },
+        {
+          "id": "c6r2-coverage",
+          "performer": "claude:ngs-c6r2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-coverage-20261026",
+            "digest": "sha256:7e5f87c3b8639173f95049c346f84e54cee352dfe6bde5eed995b52685a3c70a",
+            "excerpt": "Axis: Coverage, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. C1 is closed: .bench/BENCH-reference.md:346-349 and CONTEXT.md:432-436 now state the whole-project gate or the reader set, in agreement with :550-551, :660-689, projects/benchkit.md, and ADR 0017. No anchored needle sits on the edited lines. NG68-NG70 stay met.\nAdvice (no ID): none.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r1-coverage"
           ]
         }
       ]
