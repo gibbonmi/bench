@@ -2462,6 +2462,63 @@
           "requirement": "ticket-9-check-3",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t09r2-ticket-9-check-1",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:5aa50d31c834e9360d0033a66c6d2a16ee8cd78d2fceb21096b498ad85701426",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4740,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "531c9beaf7e7e023c8b8c1aa89dff0f26140dd49",
+          "requirement": "ticket-9-check-1",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r2-ticket-9-check-2",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:08d8c07fc61bc8d95d996a34f1aef8a9e3f03d69f9d53caebc56c3fc675ee2f8",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,113,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "531c9beaf7e7e023c8b8c1aa89dff0f26140dd49",
+          "requirement": "ticket-9-check-2",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r2-ticket-9-check-3",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:d527a4515e86380542bea1f8acce5a738480bc997c7576f82058db7299449c37",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16812,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "531c9beaf7e7e023c8b8c1aa89dff0f26140dd49",
+          "requirement": "ticket-9-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
