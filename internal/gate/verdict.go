@@ -390,8 +390,8 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRe
 	if err != nil {
 		return verdictRecordClass{}, err
 	}
-	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) {
-		return verdictRecordClass{}, errors.New("invalid record")
+	if err := validateStoreRecordCommon(r); err != nil {
+		return verdictRecordClass{}, err
 	}
 	if class.isGateVerdict() {
 		if len(r.Oracle) != 64 {
@@ -402,6 +402,15 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRe
 		}
 	}
 	return class, class.validate(data, r, now)
+}
+
+// validateStoreRecordCommon grades the fields that every record of the store shares: the
+// schema and the tree. The gate cache classes and the evidence store both read through it.
+func validateStoreRecordCommon(r verdictRecord) error {
+	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) {
+		return errors.New("invalid record")
+	}
+	return nil
 }
 
 func strictRecordTime(value string) (time.Time, error) {

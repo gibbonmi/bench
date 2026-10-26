@@ -164,7 +164,7 @@ Standalone execution and standalone evidence inspection retain their current ent
 
 The installed broker remains the independent authority for landing. It selects the prospective tree and trusted baseline phase schedule.
 The graded tree supplies the run binary under the existing build and identity checks. The shared owner grants no new executable authority.
-Evidence remains bound to the exact tree, baseline runner identity, and freshness window. No verdict format, token, schema, or reuse policy changes.
+Evidence remains bound to the exact tree, run binary member, and freshness window. No verdict format, token, schema, or reuse policy changes.
 
 ## Implementation chunks
 

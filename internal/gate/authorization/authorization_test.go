@@ -4,7 +4,9 @@ package authorization
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/gate"
 )
@@ -71,5 +73,17 @@ func TestInfrastructureDiagnosticNamesTheSilentOutcomes(t *testing.T) {
 				t.Fatalf("infrastructureDiagnostic = %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+// The evidence token binds the grade key, so two inspections that differ only in their
+// grade key give two tokens.
+func TestEvidenceTokenBindsTheGradeKey(t *testing.T) {
+	tree := strings.Repeat("b", 40)
+	one := gate.EvidenceInspection{Tree: tree, Grade: strings.Repeat("a", 64), RecordedAt: time.Unix(0, 0), ReusableGreen: true}
+	other := one
+	other.Grade = strings.Repeat("c", 64)
+	if evidenceToken(Green, tree, one) == evidenceToken(Green, tree, other) {
+		t.Fatalf("evidence tokens of grades %s and %s are equal, want two tokens", one.Grade, other.Grade)
 	}
 }

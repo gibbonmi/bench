@@ -172,7 +172,7 @@ func loadEvidence(path string, now time.Time) loadedVerdict {
 	}
 	record := &loaded.record
 	if strictJSON(read.data, record) != nil || requireObjectFields(read.data, evidenceFields) != nil ||
-		record.Schema != verdictSchema || !treeHashRE.MatchString(record.Tree) || validateReadyRecord(*record, now) != nil {
+		validateStoreRecordCommon(*record) != nil || validateReadyRecord(*record, now) != nil {
 		loaded.state, loaded.reason = Invalid, "invalid cache record"
 		return loaded
 	}

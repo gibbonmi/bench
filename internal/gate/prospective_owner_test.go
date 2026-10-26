@@ -1,6 +1,6 @@
 // Stable-owner tests for the prospective gate: the graded tree supplies the gate
-// executable, the landing baseline supplies the phase schedule, and prospective
-// evidence keys to the graded tree together with the baseline runner identity.
+// executable, the landing baseline supplies the phase schedule, and prospective evidence
+// keys to the grade key: the graded tree framed with a grade identity that binds the run binary.
 package gate
 
 import (

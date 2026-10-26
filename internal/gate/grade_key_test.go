@@ -162,3 +162,41 @@ func TestGradeKeyRefusesAMisnamedRecord(t *testing.T) {
 	gradeKeyRun(t, primary, tree, reuseFreshGreen, 0)
 	requireRuns(t, primary, 2, "after a primary run beside a misnamed record")
 }
+
+// A malformed evidence record never answers a lookup. The well-formed row proves that the
+// record bytes otherwise load as a ready green.
+func TestMalformedEvidenceAnswersNoLookup(t *testing.T) {
+	now := time.Now().UTC()
+	at := now.Truncate(time.Second).Format(time.RFC3339)
+	key, tree := strings.Repeat("a", 64), strings.Repeat("b", 40)
+	record := func(schema, tree, keyField string) string {
+		return `{` + keyField + `"recorded_at":"` + at + `","schema":` + schema + `,"state":"ready","status":"green","tree":"` + tree + `"}`
+	}
+	grade := `"grade":"` + key + `",`
+	for _, row := range []struct {
+		name, body string
+		mode       os.FileMode
+		want       State
+	}{
+		{"well formed", record("1", tree, grade), 0o600, Ready},
+		{"missing grade", record("1", tree, ""), 0o600, Invalid},
+		{"legacy oracle", record("1", tree, `"oracle":"`+key+`",`), 0o600, Invalid},
+		{"duplicate key", record("1", tree, grade+grade), 0o600, Invalid},
+		{"wrong schema", record("2", tree, grade), 0o600, Invalid},
+		{"wrong tree", record("1", "not-a-tree", grade), 0o600, Invalid},
+		{"wrong mode", record("1", tree, grade), 0o644, Invalid},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), key)
+			if err := os.WriteFile(path, []byte(row.body), row.mode); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(path, row.mode); err != nil {
+				t.Fatal(err)
+			}
+			if got := loadEvidence(path, now); got.state != row.want {
+				t.Fatalf("loadEvidence(%s) = %#v, want state %q", row.body, got, row.want)
+			}
+		})
+	}
+}
