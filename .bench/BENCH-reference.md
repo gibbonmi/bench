@@ -344,8 +344,10 @@ A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass
 publishes onto the worktree branch. The lane writes a lane record and no gate
 verdict. From the destination, `bench worktree land` is the operational handoff: it
-composes and runs the one whole-project gate on that pair before publication and
-source release. Executable help owns its flags and positional grammar.
+composes that pair and runs the gate on it before publication and source release.
+That run is the whole-project gate, unless the landing plan selects the reader set.
+Executable help owns its flags and positional grammar.
+
 During a pending merge, a worktree `bench commit` requires every path that the
 merge changed. It records each merge head as a further parent and then ends the
 merge.

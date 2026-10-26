@@ -431,8 +431,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   override.
 - **prospective landing tree** — the exact Git tree produced by composing a
   landing source onto an expected landing destination, including any authorized
-  final transition. It is the whole-project gate subject. Not the source diff,
-  not the ambient working tree.
+  final transition. It is the subject of the landing's gate run: the
+  whole-project gate, or the reader set when the landing plan selects it. Not the
+  source diff, not the ambient working tree.
 - **settle verdict** — the settle policy's answer for one conflicted path: a
   side, a union, a removal, or a refusal with a reason. The composition applies
   each verdict to the prospective landing tree, and a refusal names its reason
