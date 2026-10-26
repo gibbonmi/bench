@@ -1601,6 +1601,72 @@
             "K4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gr-c4-standards-2",
+          "performer": "claude:gr-c4-standards2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "fb5b0aa4a9eba5b58b97b88a40e63b701e48acb8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c4-standards2-20261026",
+            "digest": "sha256:d5205e6c0b9fab96769e2fcdf4e45de2f0cfd9c568ed4d79c22e337d12ff582d",
+            "excerpt": "Standards confirming round, GR-C4, repair delta 17a4c4963..59ae08f79. sonnet/high. Evidence check-current current=true at 5318e0cad.\nS1 confirmed: ADR 0031:34 states the broker decision in one sentence with no case list and no face name; .bench/BENCH-reference.md:430-437 holds the one full list; CHANGELOG.md:14 says it in one clause.\nS4 confirmed: ADR 0002:47, ADR 0016:23, and the reference use \"ADR 0031\".\nS5 confirmed: ADR 0002:47-51 is wrapped like its neighbours.\nNew advisory: \"cannot authenticate the broker\" is vaguer than the reference list. Disposition (orchestrator): no-op; the ADR states the decision and the reference holds the one list.\n"
+          },
+          "axis": "Standards",
+          "base": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "tip": "59ae08f790741c0b11b6db1dde68e14a45ef8662",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c4-standards-1"
+          ]
+        },
+        {
+          "id": "gr-c4-spec-2",
+          "performer": "claude:gr-c4-spec2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "fb5b0aa4a9eba5b58b97b88a40e63b701e48acb8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c4-spec2-20261026",
+            "digest": "sha256:72eeee8a8310362a4c054d5230f8b90b3d90e6f2005bc1eb29bf1543d526cd74",
+            "excerpt": "Spec confirming round, GR-C4, repair delta 17a4c4963..59ae08f79. sonnet/high. Evidence check-current current=true at 5318e0cad.\nP1 confirmed: .bench/BENCH-reference.md:698 says \"grade identity\", matching internal/gate/reader_plan.go:137.\nP3 confirmed: the reference (426-440) states declared-builds-overlap for the complete checkpoint and scopes the candidate-not-installed claim to a resolving primary (gate.go:205, :212; window.go:124-129).\nP4 confirmed: ADR 0031:22 lists the whole-gate verbs without the reader set.\nThe five broker causes in the reference match runUnderBroker (complete_checkpoint.go:68-89) in order.\nGR29 pass and GR30 pass at the repair tip.\nNew findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "tip": "59ae08f790741c0b11b6db1dde68e14a45ef8662",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c4-spec-1"
+          ]
+        },
+        {
+          "id": "gr-c4-coverage-2",
+          "performer": "claude:gr-c4-coverage2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "fb5b0aa4a9eba5b58b97b88a40e63b701e48acb8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c4-coverage2-20261026",
+            "digest": "sha256:4c525b1e2f87da18a0c4adebcd6fbf7b2ad92208a16cea83b0a824e4ca6cb967",
+            "excerpt": "Coverage confirming round, GR-C4, repair delta 17a4c4963..59ae08f79. sonnet/high. Evidence check-current current=true at 5318e0cad.\nK4 confirmed: the GR-C4 verification includes conformance-package (bench test --package ./internal/conformance); the root-conformance, prose, and conformance-package runs pass and bind source commit 59ae08f79.\nThe five checkpoint-broker-unavailable causes each have a test (complete_checkpoint_broker_test.go:208, :230, :239; GR61; GR62), the face is registered (faces_gate.go:117), and GR67 covers the reversed candidate-not-installed case.\nNew advisory: no test runs the complete checkpoint against a declared-builds overlap. Disposition (orchestrator): no-op for this build, recorded with bench learning.\n"
+          },
+          "axis": "Coverage",
+          "base": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "tip": "59ae08f790741c0b11b6db1dde68e14a45ef8662",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c4-coverage-1"
+          ]
         }
       ]
     }
