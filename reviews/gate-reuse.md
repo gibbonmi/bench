@@ -1676,7 +1676,44 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "gr-final-integration",
+        "performer": "claude:gr-orchestrator-20261026",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb5b0aa4a9eba5b58b97b88a40e63b701e48acb8",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:gr-orchestrator-20261026",
+          "digest": "sha256:01c1c2b47ab461747596ea1ddcd10b8684ad67dd4b6a1f16d8cadc0b56ab9eea",
+          "excerpt": "timeout_warnings[1]{package,elapsed_ms,timeout_ms}:\n  github.com/gibbonmi/bench/internal/gate,304608,600000\npackages[48]{package,status,elapsed_ms,tests_run,selected_by}:\n  github.com/gibbonmi/bench/cmd/bench,pass,44770,406,imports github.com/gibbonmi/bench/internal/adopt\n  github.com/gibbonmi/bench/internal/adopt,pass,19489,244,imports github.com/gibbonmi/bench/internal/brokermanifest\n  github.com/gibbonmi/bench/internal/adopt/repairtest,pass,3766,28,imports github.com/gibbonmi/bench/internal/adopt\n  github.com/gibbonmi/bench/internal/brokermanifest,pass,3,5,changed\n  github.com/gibbonmi/bench/internal/commit,pass,21751,119,changed\n  github.com/gibbonmi/bench/internal/commitment,pass,7665,175,imports github.com/gibbonmi/bench/internal/commitment/commitcmd\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,1351,25,imports github.com/gibbonmi/bench/internal/commitment\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0,imports github.com/gibbonmi/bench/internal/brokermanifest\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,10475,181,imports github.com/gibbonmi/bench/internal/adopt\n  github.com/gibbonmi/bench/internal/conformance,pass,50505,1143,imports github.com/gibbonmi/bench/internal/coverage\n  github.com/gibbonmi/bench/internal/consumers,pass,3360,66,imports github.com/gibbonmi/bench/internal/diff\n  github.com/gibbonmi/bench/internal/coverage,pass,4667,153,imports github.com/gibbonmi/bench/internal/gate\n  github.com/gibbonmi/bench/internal/dashboard,pass,4925,23,imports github.com/gibbonmi/bench/internal/commitment\n  github.com/gibbonmi/bench/internal/diff,pass,8728,101,imports github.com/gibbonmi/bench/internal/preflight/preflighttest\n  github.com/gibbonmi/bench/internal/freshness,pass,14809,80,imports github.com/gibbonmi/bench/internal/brokermanifest\n  github.com/gibbonmi/bench/internal/freshness/check,no-tests,0,0,imports github.com/gibbonmi/bench/internal/freshness\n  github.com/gibbonmi/bench/internal/gate,pass,304608,715,changed\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,2402,18,changed\n  github.com/gibbonmi/bench/internal/guards,pass,6391,54,imports github.com/gibbonmi/bench/internal/adopt\n  github.com/gibbonmi/bench/internal/handoff,pass,21050,56,imports github.com/gibbonmi/bench/internal/commitment\n  github.com/gibbonmi/bench/internal/harness,pass,46,14,imports github.com/gibbonmi/bench/internal/worktree\n  github.com/gibbonmi/bench/internal/landing,pass,28816,223,imports github.com/gibbonmi/bench/internal/diff\n  github.com/gibbonmi/bench/internal/landing/published,no-tests,0,0,imports github.com/gibbonmi/bench/internal/commitment/repository\n  github.com/gibbonmi/bench/internal/preflight,pass,38181,380,imports github.com/gibbonmi/bench/internal/commitment/commitmenttest\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,23718,232,imports github.com/gibbonmi/bench/internal/commitment/repository\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,11840,179,imports github.com/gibbonmi/bench/internal/commitment/commitmenttest\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0,imports github.com/gibbonmi/bench/internal/commitment/commitmenttest\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0,imports github.com/gibbonmi/bench/internal/commitment/commitmenttest\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5275,70,imports github.com/gibbonmi/bench/internal/consumers\n  github.com/gibbonmi/bench/internal/preprelease,pass,2032,15,imports github.com/gibbonmi/bench/internal/gate\n  github.com/gibbonmi/bench/internal/probe,pass,55170,321,imports github.com/gibbonmi/bench/internal/freshness\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0,imports github.com/gibbonmi/bench/internal/freshness\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,22,changed\n  github.com/gibbonmi/bench/internal/refusalroute/routetest,pass,3,8,imports github.com/gibbonmi/bench/internal/refusalroute\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,28861,280,imports github.com/gibbonmi/bench/internal/commitment/commitmenttest\n  github.com/gibbonmi/bench/internal/roadmap,pass,1928,177,imports github.com/gibbonmi/bench/internal/commitment\n  github.com/gibbonmi/bench/internal/roadmapflow,pass,147,9,imports github.com/gibbonmi/bench/internal/roadmap\n  github.com/gibbonmi/bench/internal/runbinary,pass,20316,38,imports github.com/gibbonmi/bench/internal/brokermanifest\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,130,11,imports github.com/gibbonmi/bench/internal/guards\n  github.com/gibbonmi/bench/internal/shift,pass,40861,121,imports github.com/gibbonmi/bench/internal/commitment/commitmenttest\n  github.com/gibbonmi/bench/internal/spec,pass,1927,178,imports github.com/gibbonmi/bench/internal/commitment\n  github.com/gibbonmi/bench/internal/status,pass,26953,146,imports github.com/gibbonmi/bench/internal/adopt\n  github.com/gibbonmi/bench/internal/systemtest,pass,72105,279,imports github.com/gibbonmi/bench/internal/adopt\n  github.com/gibbonmi/bench/internal/testreport,pass,75290,283,imports github.com/gibbonmi/bench/internal/diff\n  github.com/gibbonmi/bench/internal/treetarget,pass,1114,45,imports github.com/gibbonmi/bench/internal/freshness\n  github.com/gibbonmi/bench/internal/treetarget/kittest,no-tests,0,0,imports github.com/gibbonmi/bench/internal/freshness\n  github.com/gibbonmi/bench/internal/treetarget/treetargettest,no-tests,0,0,imports github.com/gibbonmi/bench/internal/treetarget\n  github.com/gibbonmi/bench/internal/worktree,pass,152509,1520,changed\nfailures[0]{package,test,line,lines}:\nskips[3]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+        },
+        "requirement": "integration",
+        "command": "bench test --changed --base cfbd1d360c2d0048bad07d142468c4bb47f8fc20",
+        "exit_code": 0
+      },
+      {
+        "id": "gr-final-system",
+        "performer": "claude:gr-orchestrator-20261026",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb5b0aa4a9eba5b58b97b88a40e63b701e48acb8",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:gr-orchestrator-20261026",
+          "digest": "sha256:0f0754ccb2e8e32310663669000a92c0f6c6462d29d386e27badef6979d3fd51",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT314-gate-reuse,c68fa1ede7b3545fb4779b9365a2d61b47200814,true\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,61411,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
