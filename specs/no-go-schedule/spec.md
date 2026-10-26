@@ -110,7 +110,7 @@ Harder chunks: NG-C2, NG-C3, NG-C6.
 
 `CONTEXT.md` owns the reader table, the reader set, and the reader record. This build adds two terms there. A **covered family** is one of the eleven path families in the reader-family declaration. A **reader hold** is the record that a red whole landing run writes.
 
-The reader-family declaration is one Go table in `internal/gate`. It holds eleven families: `specs/`, `roadmap/`, `ROADMAP.md`, `capture/`, `reviews/`, `decisions/`, `CHANGELOG.md`, `.bench/commitment.json`, `.agents/`, `.bench/BENCH.md`, and `docs/`. A family that ends with `/` claims every path below it. Each other family claims its exact path. The commit lane's path classes stay a separate fact, because they select lane checks.
+The reader-family declaration is one Go table in `internal/gate`. It holds eleven families: `specs/`, `roadmap/`, `ROADMAP.md`, `capture/`, `reviews/`, `decisions/`, `CHANGELOG.md`, `.bench/commitment.json`, `.agents/`, `.bench/BENCH.md`, and `docs/`. A family that ends with `/` claims every path below it and its own directory, because a listing of that directory reads which paths the family holds. Each other family claims its exact path. The commit lane's path classes stay a separate fact, because they select lane checks.
 
 The reader set applies only when the graded root is the kit and the gate runs the kit's built-in table. The test is the one that the delta set uses today: `narrowsKitTable` and `RootConformanceRuns`.
 
@@ -150,6 +150,7 @@ For each log, the derivation applies these rules in order:
 - The first line must be `# test log`. Each other line must be `<op> <path>`, where `<op>` is `open`, `stat`, `chdir`, or `getenv`. Any other line refuses the table.
 - A relative path resolves against the package directory, and each `chdir` line changes that directory.
 - A path outside the graded root adds nothing. A path inside the package's own directory adds nothing.
+- The own-directory rule does not apply to the root package `.`. Its directory is the graded root, and a covered family is never its package-local data.
 - A path whose prefix is a tracked symbolic link resolves to the link's target. The target's family counts.
 - Each remaining `open` or `stat` path adds its covered family, if it has one, to the package's reader set. A `chdir` line and a `getenv` line add no family.
 
@@ -234,7 +235,7 @@ Each chunk is one coherent outcome with one review checkpoint. A chunk's predece
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | NG-C1 / `01-compute-the-oracle-identity.md` | One pass computes the tree-free oracle identity beside the oracle digest | NG1, NG2, NG3, NG4 | Completion-plan checks | no |
-| NG-C2 / `02-record-a-test-log-per-package.md`, `03-derive-the-reader-table.md` | Each whole kit run records test logs and persists a reader table on green | NG5, NG6, NG7, NG8, NG9, NG10, NG11, NG12, NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71, NG72, NG81 | Completion-plan checks | yes |
+| NG-C2 / `02-record-a-test-log-per-package.md`, `03-derive-the-reader-table.md` | Each whole kit run records test logs and persists a reader table on green | NG5, NG6, NG7, NG8, NG9, NG10, NG11, NG12, NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71, NG72, NG81, NG82 | Completion-plan checks | yes |
 | NG-C3 / `04-run-the-reader-set-schedule.md`, `05-plan-the-reader-set-at-a-landing.md`, `06-publish-a-reader-landing.md` | A covered kit landing runs the reader set, publishes, and keeps the marker | NG29, NG30, NG31, NG32, NG33, NG34, NG35, NG36, NG37, NG38, NG39, NG40, NG41, NG42, NG43, NG44, NG45, NG46, NG47, NG48, NG49, NG50, NG51, NG52, NG53, NG54, NG55, NG56, NG57, NG58, NG59, NG60, NG73, NG74, NG75, NG76, NG77, NG79, NG80 | Completion-plan checks | yes |
 | NG-C4 / `07-hold-the-whole-gate-after-a-red.md` | A red whole landing run holds the whole gate and names its suspects | NG61, NG62, NG63, NG64, NG78 | Completion-plan checks | no |
 | NG-C5 / `08-show-reader-green-on-the-dashboard.md` | The gate signal shows a reader-record tip as reader green | NG65, NG66, NG67 | Completion-plan checks | no |
@@ -358,6 +359,7 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 | NG79 | 39 | `gate.ReaderRecorded` answers true for a tree with a valid reader record and false for a tree without one | planned TestReaderRecordedAnswersForItsTree in internal/gate/reader_set_test.go | A query that reads any record, or none, answers the same for both trees. |
 | NG80 | 34 | A phase child's environment holds no reader schedule that it inherited | planned TestPhaseChildrenDropTheReaderSchedule in internal/gate/reader_set_test.go | Without the strip, a nested gate run inside a reader set runs the reduced schedule. |
 | NG81 | 1 | A phase child's environment holds no `BENCH_GATE_TESTLOG` that it inherited | `internal/gate/testlog_exec_test.go` (`TestPhaseChildrenDropTheTestLogDirectory`) | Without the strip, a nested gate run writes into the outer run's logs. |
+| NG82 | 5 | A read of `docs/x.md` by the root test package `.` makes the root package a reader of `docs/` | planned TestReaderTableCountsTheRootPackageReads in internal/gate/reader_table_test.go | A derivation that applies the own-directory rule to the root package adds no family. |
 
 Not covered: story 24 — row NG38 covers the child readers inside the reader-package union, so no separate row exists.
 Not covered: story 25 — row NG29 covers the `system` phase of every reader schedule, so no separate row exists.
@@ -447,7 +449,7 @@ The writers of the new stores are the gate owner alone, under the gate lock. The
 | #4 the landing only | NG52, NG80 |
 | #5 the complete conformance entry | NG29, NG38 |
 | #6 the reader record and the marker | NG34, NG35, NG58, NG59, NG79 |
-| #7 the derived table | NG5 to NG28, NG71, NG72, NG81 |
+| #7 the derived table | NG5 to NG28, NG71, NG72, NG81, NG82 |
 | #8 the bounds | NG46 to NG51, NG62 |
 | #9 the red after reader landings | NG61 to NG64, NG78 |
 | #10 the child readers | NG23 |

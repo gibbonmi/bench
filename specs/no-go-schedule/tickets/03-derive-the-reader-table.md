@@ -1,12 +1,12 @@
 # Derive and persist the reader table after a green whole kit run
 
 Blocked by: 01-compute-the-oracle-identity.md, 02-record-a-test-log-per-package.md
-Writes: internal/gate/reader_families.go (new), internal/gate/reader_table.go (new), internal/gate/reader_table_test.go (new), internal/gate/reader_store.go (new), internal/gate/reader_store_test.go (new), internal/gate/run_transaction.go, internal/gate/run_settle.go (new), internal/git/git.go, internal/git/tree.go
-Covers: NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71
+Writes: internal/gate/reader_families.go (new), internal/gate/reader_table.go (new), internal/gate/reader_table_test.go (new), internal/gate/reader_store.go (new), internal/gate/reader_store_test.go (new), internal/gate/run_transaction.go, internal/gate/run_settle.go (new), internal/git/git.go, internal/git/tree.go, internal/gate/testlog_exec.go, internal/gate/phases.go, internal/gate/lane_select.go
+Covers: NG13, NG14, NG15, NG16, NG17, NG18, NG19, NG20, NG21, NG22, NG23, NG24, NG25, NG26, NG27, NG28, NG71, NG82
 
 ## What to build
 
-`reader_families.go` declares the eleven covered families once: `specs/`, `roadmap/`, `ROADMAP.md`, `capture/`, `reviews/`, `decisions/`, `CHANGELOG.md`, `.bench/commitment.json`, `.agents/`, `.bench/BENCH.md`, and `docs/`. A family that ends with `/` claims every path below it. It also declares the child-reader list, one row today: `internal/releaseevidence` with `CHANGELOG.md`.
+`reader_families.go` declares the eleven covered families once: `specs/`, `roadmap/`, `ROADMAP.md`, `capture/`, `reviews/`, `decisions/`, `CHANGELOG.md`, `.bench/commitment.json`, `.agents/`, `.bench/BENCH.md`, and `docs/`. A family that ends with `/` claims every path below it and its own directory. It also declares the child-reader list, one row today: `internal/releaseevidence` with `CHANGELOG.md`.
 
 The derivation is one pure function in `reader_table.go`. Its inputs are the package logs, the list of test packages, the graded root, the tracked symbolic links of the graded tree, the families, and the child rows. It applies the rules of the spec's "The reader table" section in order and returns a table or a refusal reason.
 
