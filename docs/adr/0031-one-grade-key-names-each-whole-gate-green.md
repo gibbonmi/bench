@@ -19,7 +19,7 @@ The oracle digest keeps them, and that digest names the gate cache of each check
 A running executable that does not read opens the subject, so that run reuses no green.
 
 A green under a grade key answers a run of the same key from any checkout of the repository and from any whole-gate verb.
-The whole-gate verbs are the gate, the commit, the merge, the landing, the checkpoints, and the reader set.
+The whole-gate verbs are the gate, the commit, the merge, the landing, and the checkpoints.
 Each verb looks up a green under the key before it selects a reduced schedule.
 On a hit, each verb still runs its own purpose checks and evidence checks, so a reused green skips no refusal of that verb.
 A reused green records the gate cache of its checkout, with the recorded time of the source run.
@@ -31,11 +31,7 @@ The running executable binds every reuse, so a green from a candidate build neve
 In the kit, the complete checkpoint runs under the installed landing broker, so its green answers the landing of the same tree.
 When the running executable differs from the broker, the checkpoint replaces its process with the broker.
 The broker then runs with the same arguments in the same working directory.
-The checkpoint refuses with `checkpoint-broker-unavailable`, and runs no gate, in each of these cases:
-
-- the broker manifest does not read
-- the digest of the broker differs from the digest that the manifest binds
-- the running executable does not give a digest
+When the checkpoint cannot authenticate the broker, it refuses and runs no gate.
 
 A repository that declares no build inputs runs the complete checkpoint in its own process.
 The chunk checkpoint always runs in its own process, so it keeps the grammar of the candidate.

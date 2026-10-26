@@ -44,10 +44,11 @@ A record that implies coverage it does not have is worse than silence.
    green verdict under the grade key of a closed subject.** **Every other
    consumer observes the verdict without granting authority.**
 
-   ADR 31 records the grade key and its members. The key holds no checkout path, so
-   a green answers a run of the same key from any checkout. The graded tree is the working tree, but a chunk checkpoint
-   grades its committed tree without the review record. The checkpoint grades that
-   review record on every call.
+   ADR 0031 records the grade key and its members. The key holds no checkout
+   path, so a green answers a run of the same key from any checkout. The graded
+   tree is the working tree, but a chunk checkpoint grades its committed tree
+   without the review record. The checkpoint grades that review record on every
+   call.
 
    Gate execution serializes on one lock in each checkout. A reuse writes at most
    the gate cache of its checkout, and that cache keeps the recorded time of the

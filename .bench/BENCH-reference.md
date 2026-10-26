@@ -423,19 +423,23 @@ refusal names the install:
 - the chunk checkpoint
 - the gap close of `bench record assignment`
 
-The complete checkpoint does not refuse with `candidate-not-installed`. In a repository
-that declares build inputs, it runs under the installed broker. When the running executable
-differs from the broker, the checkpoint execs the broker with the same arguments and working
-directory. It refuses with `checkpoint-broker-unavailable` and runs no gate in each of these cases:
+When the primary checkout resolves, the complete checkpoint does not refuse with
+`candidate-not-installed`. In a repository that declares build inputs, it runs under the
+installed broker. When the running executable differs from the broker, the checkpoint execs
+the broker with the same arguments and working directory. It refuses with
+`checkpoint-broker-unavailable` and runs no gate in each of these cases:
 
-- the broker manifest does not read
-- the broker digest differs from the manifest digest
+- the primary checkout does not resolve
+- the primary broker manifest does not read
 - the running executable does not digest
+- the broker digest differs from the manifest digest
+- the exec of the broker fails
 
 A repository without build inputs and the chunk checkpoint keep their own process.
 
-While two declared builds are open, each of these entries refuses with
-`declared-builds-overlap`, because one primary executable serves one candidate.
+While two declared builds are open, each entry in the list above and the complete
+checkpoint refuse with `declared-builds-overlap`. One primary executable serves one
+candidate, so it cannot serve both builds.
 The reviewer ends one of the builds with `bench commitment block`, and the
 operator then runs the refused command again.
 
@@ -691,7 +695,7 @@ The landing runs the whole gate instead in each of these cases:
 - a changed path is an embed target or a shellcheck-inventory path
 - a changed path has a symbolic-link or gitlink mode
 - no reader table exists for the tree of the green marker
-- the oracle identity differs from the identity of the table, or the oracle subject is open
+- the grade identity differs from the identity of the table, or the oracle subject is open
 - a reader hold names the current green marker
 - a commit after the green marker has no reader record
 - five commits follow the green marker
