@@ -506,7 +506,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2r1-standards",
+          "performer": "claude:ngs-c2-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c2-standards-20261025",
+            "digest": "sha256:a138d14875ed1233c5281e5612d447dc495f1d17455576af4e4f56abc77ba5df",
+            "excerpt": "Axis: Standards, NG-C2, tickets 02 and 03. Session claude:ngs-c2-standards-20261025. Frozen pair 9768ad91..5aaad0ad.\nCount: 2 findings. Worst issue: S1.\nS1 severity 5, confidence 7, auto-fix, ticket 03 (internal/gate/reader_store.go:35-38,137-145): testRunFlags {-count,-timeout,-exec} restates the run flags that BaseTestArgv (phases.go:230) and traceExecOperand (testlog_exec.go:29) emit; ticket 03 line 17 forbids a restated list. Fix: the traced phase builder exposes the build flags as one value that BaseTestArgv and testPackages both read.\nS2 severity 4, confidence 8, auto-fix, ticket 03 (internal/git/tree.go:175-176): symlinkMode \"120000\" duplicates lane_select.go:110 (and settlepolicy.go:47). Fix: export the mode from internal/git and point lane_select.go at it.\nAdvice (no ID): three test-binary trampolines (processtest init, the shim init, Replace's probe) could share one processtest entry; optional.\n"
+          },
+          "axis": "Standards",
+          "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "tip": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2r1-spec",
+          "performer": "claude:ngs-c2-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c2-spec-20261025",
+            "digest": "sha256:3c0c11edb7ed1a2169b8d4dc304259779b2d34aa709f5b4c27e2435d88451649",
+            "excerpt": "Axis: Spec, NG-C2, tickets 02 and 03, rows NG5-NG28, NG71, NG72, NG81. Session claude:ngs-c2-spec-20261025. Frozen pair 9768ad91..5aaad0ad.\nCount: 0 findings. Worst issue: none.\nEach row's named test exists and drives its behavior. Shim, key, traced argv, quoting, env strip, derivation rule order and refusals, persistence after the green verdict only, log-directory removal, and the marker-keeping prune all match the spec.\nAdvice (no ID): testPackages runs go list with the ambient env, not gateEnv; a run-binary path with both quote marks has no cmd/go spelling (a red run, not a pass); branch_native_phases_test.go:104 derives its expectation from traceExecOperand; no negative test that other phases lack BENCH_GATE_TESTLOG; no direct unit test of TreeSymlinks; the root-package skip changes no table today.\n"
+          },
+          "axis": "Spec",
+          "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "tip": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2r1-coverage",
+          "performer": "claude:ngs-c2-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c2-coverage-20261025",
+            "digest": "sha256:8b7427ea547372232213e7505654bdec4e45ef940ecd1959c542423369a83e5a",
+            "excerpt": "Axis: Coverage, NG-C2, tickets 02 and 03. Session claude:ngs-c2-coverage-20261025. Frozen pair 9768ad91..5aaad0ad.\nCount: 6 findings. Worst issue: C1.\nC1 sev 5, conf 7, auto-fix, ticket 03: no test pins that the table persists only after the green verdict persists (spec edge inventory; run_transaction.go:239-244).\nC2 sev 5, conf 5, ask-user, ticket 03: go list runs under the operator's environment (reader_store.go:146 via stepOutput) instead of the closed oracle environment, so ambient GOFLAGS/GOOS can change the package list; no test.\nC3 sev 4, conf 8, auto-fix, ticket 03: no test of an absolute chdir followed by a relative open (reader_table.go:93).\nC4 sev 3, conf 8, auto-fix, ticket 03: the empty-name refusal (reader_table.go:86-88) has no test.\nC5 sev 4, conf 5, ask-user, ticket 03: familyOf also claims a family's own directory (reader_families.go:42); not in the spec text; no test.\nC6 sev 4, conf 6, ask-user, ticket 03: the eleven-family declaration is not pinned member by member (reader_families.go:10-22).\nAdvice (no ID): persisted Children not asserted; link chains and cycles untested; prune with no marker and tied mtimes untested; withTestLog reads the ambient env in-process; testLogFile resolves links but the derivation compares against the unresolved root.\n"
+          },
+          "axis": "Coverage",
+          "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+          "tip": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -543,19 +614,37 @@
 
 NG-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
 
+NG-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
+
 ## Standards
 
 NG-C1 round r1: 0 findings. Worst issue: none.
 
+NG-C2 round r1: 2 findings. Worst issue: S1, a restated list of the run flags of the traced test phase.
+
+- S1 | auto-fix | confidence 7 | `internal/gate/reader_store.go:35-38` | `testRunFlags` restates the run flags that the traced phase builder emits. Ticket 03 line 17 forbids a restated list.
+- S2 | auto-fix | confidence 8 | `internal/git/tree.go:175-176` | The symbolic-link mode gets a second production copy beside `internal/gate/lane_select.go:110`.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
+
+NG-C2 round r1: 0 findings. Worst issue: none.
 
 ## Coverage
 
 NG-C1 round r1: 1 finding. Worst issue: C1, no test varies an identity input other than the tree, the posture, and the tool bytes.
 
 - C1 | auto-fix | confidence 6 | `internal/gate/oracle_identity_test.go` | A writer swap at `internal/gate/subject.go:77-105` drops an identity input and leaves NG1-NG3 green. Ticket 01 line 9 gives the identity every oracle frame except the tree.
+
+NG-C2 round r1: 6 findings. Worst issue: C1, no test pins that the table persists only after the green verdict persists.
+
+- C1 | auto-fix | confidence 7 | `internal/gate/run_transaction.go:239-244` | No test pins the persistence order that the spec's edge inventory states.
+- C2 | auto-fix | confidence 5 | `internal/gate/reader_store.go:146` | The package listing runs under the operator's environment, not the closed oracle environment. The axis asked for the user; the orchestrator routed the environment part as auto-fix.
+- C3 | auto-fix | confidence 8 | `internal/gate/reader_table.go:93` | No test reads a relative path after an absolute `chdir`.
+- C4 | auto-fix | confidence 8 | `internal/gate/reader_table.go:86-88` | No test feeds a log line with an empty name.
+- C5 | no-op | confidence 5 | `internal/gate/reader_families.go:42` | The consultants kept the claim of a family's own directory, and the spec text now states it.
+- C6 | no-op | confidence 6 | `internal/gate/reader_families.go:10-22` | A test that pins each family duplicates the declaration, which AGENTS.md forbids, and review owns that declaration.
 
 ## Repair witnesses
 
@@ -576,3 +665,10 @@ The swap of the `path` frames stayed silent. The orchestrator accepts it as an e
 - `sameSubject` does not compare `Identity`; a later ticket that compares the field must add it there or check `Closed` first.
 - NG2 would survive a frame of the raw `BENCH_REQUIRE_CAPABILITIES` value in place of `strict()`.
 - The spec cites `internal/gate/subject.go:73` and `:123`, which moved in this delta.
+- Three test binaries serve as helper programs through their own `init` trampolines; one shared `processtest` entry could replace them.
+- The persisted child rows, link chains and cycles, and a prune with no green marker have no direct test.
+- A run-binary path that holds both quote marks has no `cmd/go` spelling, so the run goes red.
+
+## Consultant decisions
+
+The ticket 03 author asked for three decisions. The consultants (opus / high, sonnet / high) kept the directory claim of `familyOf` and the prune by modification time. They split on the root test package. The tie-breaker (fable / medium) chose to amend: the own-directory rule does not apply to the root package, and row NG82 covers the change.
