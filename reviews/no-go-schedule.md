@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:d1077d01a3ec7991d40fabd7a7b56e387cb8b270c52105ccd278f5b050ffea11",
+  "plan_digest": "sha256:26b98edd3b6c695cbba5c95d91ef2ca8e7bc16f0cc4ec1b025572380bc11cb47",
   "implementation_session": "",
   "chunks": [
     {
@@ -1693,6 +1693,108 @@
         }
       ],
       "reviews": []
+    },
+    {
+      "id": "NG-C5",
+      "base": "7204223529757f414366245ec4f8db01de7a3f65",
+      "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+      "plan_digest": "sha256:26b98edd3b6c695cbba5c95d91ef2ca8e7bc16f0cc4ec1b025572380bc11cb47",
+      "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+      "acceptance_rows": [
+        "NG65",
+        "NG66",
+        "NG67"
+      ],
+      "verification": [
+        {
+          "id": "t08-ticket-8-check-1",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:130bf4420873e0f3f44c95fb780b7bc7f08af0edfc6cb8b8ffd4f9c903f3002f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,pass,7392,144\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-check-1",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-ticket-8-check-2",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:aca58ea8703e89fc6e871b170c181c436d9b833e707ff5af50bfc541171305aa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,105021,663\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-ticket-8-check-3",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:a54e98ac313eb395833fa1b8fbe3f74e142d215e36c516b516eb9e2049c92625",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18708,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08-ticket-8-probe",
+          "performer": "claude:ngs-t08-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+            "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "requirement": "ticket-8-probe",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In appendGateInfo, drop the reader-green branch. TestGateRowShowsReaderGreen must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+              "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1787,6 +1889,24 @@
         ],
         "NG-C3": [
           "NG-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d1077d01a3ec7991d40fabd7a7b56e387cb8b270c52105ccd278f5b050ffea11",
+      "to": "sha256:26b98edd3b6c695cbba5c95d91ef2ca8e7bc16f0cc4ec1b025572380bc11cb47",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ],
+        "NG-C2": [
+          "NG-C2"
+        ],
+        "NG-C3": [
+          "NG-C3"
+        ],
+        "NG-C6": [
+          "NG-C6"
         ]
       }
     }
