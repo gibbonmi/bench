@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/gate-reuse/spec.md",
-  "plan_digest": "sha256:36f992a233ba0bcc938f4bb62a282818e29c760fec821b62412e53d16d56ac9e",
+  "plan_digest": "sha256:99a53aa7b6eaee91fb9b3ac47a50d59b64e1313ddd3eb348932b26da0b60be7c",
   "implementation_session": "",
   "chunks": [
     {
@@ -343,9 +343,9 @@
     {
       "id": "GR-C2",
       "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
-      "tip": "f1fe7d8bc736ef1d209f7a98df721c1edfe1a144",
-      "plan_digest": "sha256:36f992a233ba0bcc938f4bb62a282818e29c760fec821b62412e53d16d56ac9e",
-      "source_digest": "284e8acfb4e04c41dbad217431941138e992b782",
+      "tip": "f40e49568deeaff93e72b607d8f94724ff1a5bc0",
+      "plan_digest": "sha256:99a53aa7b6eaee91fb9b3ac47a50d59b64e1313ddd3eb348932b26da0b60be7c",
+      "source_digest": "d0eb2c5d8d0ca8a2643cc6628bf8fda02e53638e",
       "acceptance_rows": [
         "GR12",
         "GR13",
@@ -656,6 +656,44 @@
           "requirement": "commands",
           "command": "bench test --package ./cmd/bench",
           "exit_code": 0
+        },
+        {
+          "id": "gr-t03-r1-gate-03",
+          "performer": "claude:gr-t03-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0eb2c5d8d0ca8a2643cc6628bf8fda02e53638e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t03-repair1-20261026",
+            "digest": "sha256:7eda3da9e79d601202f727743d66c1de5a22c974732dd6801f3a6ab07f7cc42c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,208528,700\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f40e49568deeaff93e72b607d8f94724ff1a5bc0",
+          "requirement": "gate-03",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t03-r1-root-conformance-03",
+          "performer": "claude:gr-t03-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0eb2c5d8d0ca8a2643cc6628bf8fda02e53638e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t03-repair1-20261026",
+            "digest": "sha256:63fd92107f3f6ef5f92add872b9c4dd67bb49854ed4028ae245ed4b2a4b02789",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13501,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f40e49568deeaff93e72b607d8f94724ff1a5bc0",
+          "requirement": "root-conformance-03",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -761,6 +799,18 @@
     {
       "from": "sha256:3b9a6ca1ff2998dcbf24b991500bcc26ad4419bed38ebfdb7cd7ad81a9187f70",
       "to": "sha256:36f992a233ba0bcc938f4bb62a282818e29c760fec821b62412e53d16d56ac9e",
+      "chunk_ids": {
+        "GR-C1": [
+          "GR-C1"
+        ],
+        "GR-C2": [
+          "GR-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:36f992a233ba0bcc938f4bb62a282818e29c760fec821b62412e53d16d56ac9e",
+      "to": "sha256:99a53aa7b6eaee91fb9b3ac47a50d59b64e1313ddd3eb348932b26da0b60be7c",
       "chunk_ids": {
         "GR-C1": [
           "GR-C1"
