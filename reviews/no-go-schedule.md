@@ -1815,6 +1815,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c6r2-standards",
+          "performer": "claude:ngs-c6r2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-standards-20261026",
+            "digest": "sha256:0253c07ae1743a8144f8886bcb7b1af5215a3a3ab84a4249167d0db4e2aa9311",
+            "excerpt": "Axis: Standards, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. S1 is closed: .bench/BENCH-reference.md:346-349 now says the landing runs the gate, which is the whole-project gate unless the landing plan selects the reader set. The repair touches only ticket 09 Writes paths and adds no duplicated fact.\nAdvice (no ID): the reference states the landing rule at :348 and :551 in two phrasings; a pointer from one to the other would reduce drift.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r1-standards"
+          ]
+        },
+        {
+          "id": "c6r2-spec",
+          "performer": "claude:ngs-c6r2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-spec-20261026",
+            "digest": "sha256:602b4bdfb1941d3d0de08bb883116e5322f1c3e4e0d780220cfa6b43288d6689",
+            "excerpt": "Axis: Spec, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. P1 is closed: .bench/BENCH-reference.md:346-349 and CONTEXT.md:433-436 match the reader-set account at :660-689. No whole-gate-only landing claim remains inside ticket 09's Writes. NG68, NG69, NG70 stay met.\nAdvice (no ID): none.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r1-spec"
+          ]
+        },
+        {
+          "id": "c6r2-coverage",
+          "performer": "claude:ngs-c6r2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r2-coverage-20261026",
+            "digest": "sha256:7e5f87c3b8639173f95049c346f84e54cee352dfe6bde5eed995b52685a3c70a",
+            "excerpt": "Axis: Coverage, NG-C6 confirming round r2, ticket 09, rows NG68-NG70. Session claude:ngs-c6r2-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. C1 is closed: .bench/BENCH-reference.md:346-349 and CONTEXT.md:432-436 now state the whole-project gate or the reader set, in agreement with :550-551, :660-689, projects/benchkit.md, and ADR 0017. No anchored needle sits on the edited lines. NG68-NG70 stay met.\nAdvice (no ID): none.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r1-coverage"
+          ]
         }
       ]
     },
@@ -1918,7 +1984,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c5r1-standards",
+          "performer": "claude:ngs-c5-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5-standards-20261026",
+            "digest": "sha256:8f8cb9bd98ca7083504134cee14a4dd930386db4bfc910a519aa27dba704a8be",
+            "excerpt": "Axis: Standards, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 2 findings. Worst issue: S1, a one-source violation.\nS1 sev 5, conf 7, auto-fix, ticket 08: readerLandings (internal/gate/reader_inspect.go:36-60) re-derives the reader-chain walk that readerChain (reader_plan.go:155-174) owns. Compose readerChain and count its landings; the error rule (a partial count or none) needs a decision.\nS2 sev 4, conf 6, ask-user, ticket 08: writeReaderRecord (internal/status/status_reader_test.go:196-213) repeats the reader-record JSON fixture of internal/worktree/land_facts_test.go:118-127; no shared seam exists.\nAdvice (no ID): the test helper readerLandings shares its name with the production function; the tests hard-code (2 of 5), which is the independent spec literal.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c5r1-spec",
+          "performer": "claude:ngs-c5-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5-spec-20261026",
+            "digest": "sha256:0ac2b723ad4f3d1fe9b97da1fe1a0654b69c219e41cc19f1d7aece5e6a7eeec3",
+            "excerpt": "Axis: Spec, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. NG65: the gate row reads reader green (2 of 5) at the stale row's rank, with the bound from gate.ReaderLandingBound. NG66: one row only, never a stale detail. NG67: a tip without its own record keeps the stale row and the bench gate route. The handoff and dashboard page are a deferred non-goal (spec.md:399).\nAdvice (no ID): the duplicated chain walk (Standards S1); a green marker that is not an ancestor of HEAD makes the row count every unreachable commit (severity 3, no spec expectation); withReaderFacts adds a store read to every Inspect call.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c5r1-coverage",
+          "performer": "claude:ngs-c5-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5-coverage-20261026",
+            "digest": "sha256:55efc1713b36d2913487ffafbf4b30880ba76c5ff7cf86f3de25b1c1176282de",
+            "excerpt": "Axis: Coverage, NG-C5, ticket 08, rows NG65-NG67. Session claude:ngs-c5-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. The tests catch a dropped reader branch, a second row, a read of any record, a count of every landing, and a changed bound.\nAdvice (no ID): no test pins that a non-stale tip with a reader record prints no reader row (severity 4); a record with an absent or diverged marker prints (0 of 5) or a count above 5, and the commitTree error path has no test; the duplicated chain walk (Standards S1); roadmap, the HTML badge, and the handoff still read stale (deferred, spec.md:399).\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     },
     {
       "id": "NG-C4",
@@ -2060,7 +2190,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4r1-standards",
+          "performer": "claude:ngs-c4-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "85c92907f4cf8d67fc26c241497c757e45dfe47b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c4-standards-20261026",
+            "digest": "sha256:572f09a33a637183fdd8b9ffe2187e4f8cf18778efa8ed635b5292536122185d",
+            "excerpt": "Axis: Standards, NG-C4, ticket 07, rows NG61-NG64, NG78. Session claude:ngs-c4-standards-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings in ticket 07's delta. One cross-chunk finding, recorded as NG-C5 S1: readerLandings (internal/gate/reader_inspect.go, ticket 08's Writes) re-derives the walk of readerChain (reader_plan.go:153-174). The repair belongs to ticket 08 and reads readerChain without a change to ticket 07's code.\nChecked and clean: run_transaction.go at 370 lines; the hold is written only on a whole-oracle red; benchgit.ReaderHoldFile is the one source of the hold file name; the refusal literal is single-sourced in refusalMessage; the new comments obey craft-comments.\nAdvice (no ID): the hold writer is not in the durable_replacement_test.go writer table (outside the fence); ticket 07's Writes marks reader_plan.go and landing_refusal.go as new although both existed; a chain read error leaves the suspects empty, as the comment states.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "4144def9819a3b4989cb0d6af7b5f6668b5b573f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4r1-spec",
+          "performer": "claude:ngs-c4-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "85c92907f4cf8d67fc26c241497c757e45dfe47b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c4-spec-20261026",
+            "digest": "sha256:5cc69bc382774c9419e455bc52912daeabb59120b62b5789c0acee8c14e63469",
+            "excerpt": "Axis: Spec, NG-C4, ticket 07, rows NG61-NG64, NG78. Session claude:ngs-c4-spec-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 0 findings. NG61: the hold is written only in the whole-oracle red branch, so a red reader set writes none. NG62, NG63: case 9 sits between cases 8 and 10, and readerHeld compares the hold to the marker exactly and fails closed. NG78: readerChain feeds both the gap check and the suspects. NG64: the suffix appears only for a non-empty list. A hold-write failure returns a persistence failure.\nAdvice (no ID): no test covers authorization.attribute copying Suspects; the duplicated chain walk (NG-C5 S1); holdWholeGate and readerHeld each re-derive CommonDir.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "4144def9819a3b4989cb0d6af7b5f6668b5b573f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4r1-coverage",
+          "performer": "claude:ngs-c4-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "85c92907f4cf8d67fc26c241497c757e45dfe47b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c4-coverage-20261026",
+            "digest": "sha256:4d6c5f9f98089c977fa1fa3e31cab85c7a2c6e6be9fa7a784aff2466ffc7755f",
+            "excerpt": "Axis: Coverage, NG-C4, ticket 07, rows NG61-NG64, NG78. Session claude:ngs-c4-coverage-20261026. Frozen pair 72042235..04ac1b9d.\nCount: 1 finding. Worst issue: C1.\nC1 sev 6, conf 8, auto-fix, ticket 07: no test covers the copy of Suspects in authorization.attribute (internal/gate/authorization/authorization.go:191). A deletion of that field leaves NG61-NG64 and NG78 green, and story 46's refusal suffix never prints. Add a test in internal/gate/authorization/ that gives attribute a gate.Result with Suspects and reads them back.\nAdvice (no ID): the hold writer is not in the durable_replacement_test.go writer table, and the hold persistence-failure branch has no test; the swallowed chain error in holdWholeGate has no test; a marker that is not an ancestor lists every unreachable reader commit as a suspect; no test pins case 9 before the chain cases; the duplicated chain walk (NG-C5 S1).\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "4144def9819a3b4989cb0d6af7b5f6668b5b573f",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2247,6 +2440,8 @@ NG-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No revie
 
 NG-C3 consumed repair cycle 1 of 2 after its initial review (round r1), and cycle 2 of 2 for the round r2 finding S4. One combined repair session on ticket 06 carries every accepted finding, because the findings share files across tickets 03, 05, and 06. No reviewer extension applies.
 
+NG-C6 consumed repair cycle 1 of 2 after round r1. Round r2 closed it.
+
 ## Standards
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -2272,6 +2467,15 @@ NG-C6 round r1: 1 finding. Worst issue: S1, a stale whole-gate landing sentence 
 
 - S1 | auto-fix | confidence 8 | `.bench/BENCH-reference.md:346-347` | The landing still "runs the one whole-project gate", while `:548-549` of the same file states the reader set.
 
+NG-C6 round r2 (confirming): 0 findings. S1 is closed.
+
+NG-C4 round r1: 0 findings in ticket 07's delta. The axis routed one cross-chunk finding to NG-C5 S1.
+
+NG-C5 round r1: 2 findings. Worst issue: S1, a second walk of the reader chain.
+
+- S1 | auto-fix | confidence 7 | `internal/gate/reader_inspect.go:36-60` | `readerLandings` repeats the walk that `readerChain` owns in `internal/gate/reader_plan.go:155-174`. Tickets 07 and 08 were authored at the same time, so neither author saw the other's walk.
+- S2 | ask-user | confidence 6 | `internal/status/status_reader_test.go:196-213` | The reader-record fixture repeats the fixture in `internal/worktree/land_facts_test.go:118-127`.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -2291,6 +2495,12 @@ NG-C3 round r2 (confirming): 0 findings. P1, P2, P3, NG83, NG84, and the N1 orde
 NG-C6 round r1: 1 finding. Worst issue: P1, the same stale sentence as S1. NG68, NG69, and NG70 are met.
 
 - P1 | auto-fix | confidence 7 | `.bench/BENCH-reference.md:346-347` | The sentence contradicts the landed plan in `internal/gate/reader_plan.go`, and story 51 asks that the docs match the gate.
+
+NG-C6 round r2 (confirming): 0 findings. P1 is closed.
+
+NG-C4 round r1: 0 findings. NG61, NG62, NG63, NG64, and NG78 are met.
+
+NG-C5 round r1: 0 findings. NG65, NG66, and NG67 are met.
 
 ## Coverage
 
@@ -2322,6 +2532,14 @@ NG-C3 round r2 (confirming): 0 findings. Each new test is red-capable against th
 NG-C6 round r1: 1 finding. Worst issue: C1, the same stale sentence as S1. The axis also raised C2, and the consultants moved it to a learning.
 
 - C1 | auto-fix | confidence 8 | `.bench/BENCH-reference.md:346-348` | The sentence contradicts `:548` and `:669` of the same file.
+
+NG-C6 round r2 (confirming): 0 findings. C1 is closed.
+
+NG-C4 round r1: 1 finding. Worst issue: C1, an untested carry of the suspect list.
+
+- C1 | auto-fix | confidence 8 | `internal/gate/authorization/authorization.go:191` | No test covers the copy of `Suspects` in `attribute`, so a deleted copy leaves every row green.
+
+NG-C5 round r1: 0 findings.
 
 ## Measurement (NG60)
 
