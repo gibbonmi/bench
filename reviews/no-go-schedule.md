@@ -2334,6 +2334,72 @@
           "supersedes": [
             "c5r1-coverage"
           ]
+        },
+        {
+          "id": "c5r3-standards",
+          "performer": "claude:ngs-c5r3-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r3-standards-20261026",
+            "digest": "sha256:2ea0e32c99c532d3ab59ef51c27c0589cd8501a96c58ba82d67d5300f0757948",
+            "excerpt": "Axis: Standards, NG-C5 round r3 on the re-chained pair, ticket 08, rows NG65-NG67. Session claude:ngs-c5r3-standards-20261026. Frozen pair 134a3fed..531c9bea.\nCount: 0 findings. readerLandings composes readerChain; ReaderLandingBound aliases readerChainBound, and the status row reads it; the IsAncestor guard is the only ancestry check on this path. The comments are timeless, and every changed path sits in ticket 08's Writes. The non-ancestor case has a recorded red.\nAdvice (no ID): appendGateInfo computes the stale detail and then overwrites it on the reader path, and its root parameter is unused (not in this delta).\n"
+          },
+          "axis": "Standards",
+          "base": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r2-standards"
+          ]
+        },
+        {
+          "id": "c5r3-spec",
+          "performer": "claude:ngs-c5r3-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r3-spec-20261026",
+            "digest": "sha256:d898c74c84e03aab92019420bdc0d3058be47e70fd0b7b4971f5987c2e8a242b",
+            "excerpt": "Axis: Spec, NG-C5 round r3 on the re-chained pair, ticket 08, rows NG65-NG67. Session claude:ngs-c5r3-spec-20261026. Frozen pair 134a3fed..531c9bea.\nCount: 0 findings. NG65: reader green (2 of 5) with no command, the bound from readerChainBound. NG66: one row, at the stale row's rank. NG67: both subtests (no record on the tip; a non-ancestor marker) keep the stale row and the bench gate route. readerLandings composes readerChain, so the chain count has one derivation.\nAdvice (no ID): none.\n"
+          },
+          "axis": "Spec",
+          "base": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r2-spec"
+          ]
+        },
+        {
+          "id": "c5r3-coverage",
+          "performer": "claude:ngs-c5r3-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r3-coverage-20261026",
+            "digest": "sha256:2ea544ff15c75ad6e46c7e83d254933b3e7322731361bd448d2a9945a57a5016",
+            "excerpt": "Axis: Coverage, NG-C5 round r3 on the re-chained pair, ticket 08, rows NG65-NG67. Session claude:ngs-c5r3-coverage-20261026. Frozen pair 134a3fed..531c9bea.\nCount: 0 findings. The non-ancestor case pins the ancestry guard; TestGateRowShowsReaderGreen pins the text, the empty command, the rank, and the single row; NG67 case 1 pins the stale route; an absent-marker mutant is equivalent.\nAdvice (no ID): the record's prose, not a planned probe entry, holds the red of the guard; a ReaderRecorded read error, a readerChain error, and an unresolved default branch have no status-level test.\n"
+          },
+          "axis": "Coverage",
+          "base": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r2-coverage"
+          ]
         }
       ]
     },
@@ -2653,6 +2719,72 @@
           "supersedes": [
             "c6r1-coverage"
           ]
+        },
+        {
+          "id": "c6r3-standards",
+          "performer": "claude:ngs-c6r3-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r3-standards-20261026",
+            "digest": "sha256:a2cc42ce50961f856bd81c5cf2117035e5b4df27a6ebf20967f0655fd0e9906d",
+            "excerpt": "Axis: Standards, NG-C6 round r3 on the re-chained pair, ticket 09, rows NG68-NG70. Session claude:ngs-c6r3-standards-20261026. Frozen pair 91ee7be0..531c9bea.\nCount: 0 findings. The reference's nine whole-gate cases match decide in reader_plan.go in order; the bound, the refusal line, and the suspects suffix match the code; CONTEXT.md family semantics match familyOf; the profile defers the case list to the reference; ADR 0017 has no path and no history.\nAdvice (no ID): projects/benchkit.md:402-406 wraps unevenly; the deferred out-of-fence sentences stand as recorded.\n"
+          },
+          "axis": "Standards",
+          "base": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "tip": "531c9beaf7e7e023c8b8c1aa89dff0f26140dd49",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r2-standards"
+          ]
+        },
+        {
+          "id": "c6r3-spec",
+          "performer": "claude:ngs-c6r3-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r3-spec-20261026",
+            "digest": "sha256:cd305d7ec53123ab9cb8c79811ec2d204a0b2664044af1126f6d3e44b5e8bd2f",
+            "excerpt": "Axis: Spec, NG-C6 round r3 on the re-chained pair, ticket 09, rows NG68-NG70. Session claude:ngs-c6r3-spec-20261026. Frozen pair 91ee7be0..531c9bea.\nCount: 0 findings. NG68, NG69, NG70 hold against the code: the nine cases map in order to reader_plan.go, the phases to reader_set.go, the green line to report.go, the suffix to landing_refusal.go, and the hold to the red whole branch.\nAdvice (no ID): the reference's <case> placeholder does not list the printed case strings; the deferred out-of-fence sentences stand as recorded.\n"
+          },
+          "axis": "Spec",
+          "base": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "tip": "531c9beaf7e7e023c8b8c1aa89dff0f26140dd49",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r2-spec"
+          ]
+        },
+        {
+          "id": "c6r3-coverage",
+          "performer": "claude:ngs-c6r3-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6r3-coverage-20261026",
+            "digest": "sha256:34031c9ee13bd42973159a1c0e90a98f9bc9798b3e5495c618e6f6d8c7e6e8f9",
+            "excerpt": "Axis: Coverage, NG-C6 round r3 on the re-chained pair, ticket 09, rows NG68-NG70. Session claude:ngs-c6r3-coverage-20261026. Frozen pair 91ee7be0..531c9bea.\nCount: 0 findings. NG68, NG69, NG70 are met against the tree at the tip; the reference's cases match reader_plan.go in order; t09r2-ticket-9-check-1..3 pass. No stale whole-gate landing sentence remains inside ticket 09's Writes.\nAdvice (no ID): the deferred out-of-fence sentences, the reference without the traced argv, and the ADR's short selection rule stand as recorded.\n"
+          },
+          "axis": "Coverage",
+          "base": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "tip": "531c9beaf7e7e023c8b8c1aa89dff0f26140dd49",
+          "finding_ids": [],
+          "supersedes": [
+            "c6r2-coverage"
+          ]
         }
       ]
     }
@@ -2895,6 +3027,8 @@ NG-C4 consumed repair cycle 1 of 2 for finding C1, with a test-only repair.
 
 NG-C5 consumed repair cycle 1 of 2 for finding S1.
 
+The concurrent chunks NG-C4, NG-C5, and NG-C6 first recorded one shared base, which the serial record refuses. With consultant agreement, the orchestrator put the entries in plan order and chained NG-C5 after NG-C4 and NG-C6 after NG-C5. Round r3 reviewed NG-C5 and NG-C6 on their new pairs, and the ticket 09 checks ran again on the new NG-C6 line.
+
 ## Standards
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -2933,6 +3067,8 @@ NG-C4 round r2 (confirming): 0 findings.
 
 NG-C5 round r2 (confirming): 0 findings. S1 is closed, and `readerChain` is the one walk of the reader chain.
 
+NG-C5 round r3 and NG-C6 round r3 (re-chained pairs): 0 findings.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -2962,6 +3098,8 @@ NG-C5 round r1: 0 findings. NG65, NG66, and NG67 are met.
 NG-C4 round r2 (confirming): 0 findings.
 
 NG-C5 round r2 (confirming): 0 findings. Ticket 08 line 9 still names the old source of the count, and the axis flags this prose for reviewer veto.
+
+NG-C5 round r3 and NG-C6 round r3 (re-chained pairs): 0 findings.
 
 ## Coverage
 
@@ -3005,6 +3143,8 @@ NG-C5 round r1: 0 findings.
 NG-C4 round r2 (confirming): 0 findings. C1 is closed.
 
 NG-C5 round r2 (confirming): 0 findings.
+
+NG-C5 round r3 and NG-C6 round r3 (re-chained pairs): 0 findings.
 
 ## Measurement (NG60)
 
