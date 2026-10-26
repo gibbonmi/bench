@@ -421,8 +421,18 @@ entries refuse with `candidate-not-installed` on any other executable, and the
 refusal names the install:
 
 - the chunk checkpoint
-- the complete checkpoint
 - the gap close of `bench record assignment`
+
+The complete checkpoint does not refuse with `candidate-not-installed`. In a repository
+that declares build inputs, it runs under the installed broker. When the running executable
+differs from the broker, the checkpoint execs the broker with the same arguments and working
+directory. It refuses with `checkpoint-broker-unavailable` and runs no gate in each of these cases:
+
+- the broker manifest does not read
+- the broker digest differs from the manifest digest
+- the running executable does not digest
+
+A repository without build inputs and the chunk checkpoint keep their own process.
 
 While two declared builds are open, each of these entries refuses with
 `declared-builds-overlap`, because one primary executable serves one candidate.
@@ -565,7 +575,7 @@ Each other evidence refusal routes to `bench preflight review <slug>`.
 
 The chunk checkpoint grades the committed tree without the record through prospective execution.
 It keys its verdict to that tree, so a record-only commit reuses its green.
-Each call without `--prepare` still grades the record evidence and the record prose, and the complete checkpoint keeps its purpose in its key.
+Each call without `--prepare` still grades the record evidence and the record prose. The key frames no run purpose, so the complete checkpoint runs its own evidence checks before it reuses a green.
 Ordinary lane checks remain available while implementation, review, or repair is in progress.
 
 `--prepare` with `--chunk <id>` starts the prepared run of the chunk checkpoint.
@@ -637,6 +647,12 @@ collapses to one `phases: N/N green` row.
 A run that reuses a fresh green of its subject prints one
 `gate: green (fresh verdict reused for this tree)` line and runs no phase. So a chunk
 checkpoint after a green prepared run of its subject prints that line alone.
+
+The grade key names each whole green, and ADR 0031 names its members. A green under the
+key answers the gate, a commit, a merge, a landing, and each checkpoint from any checkout
+of the repository. Each of these verbs looks up the key before it selects the delta set or
+the reader set. A reuse records the gate cache of its checkout. `--fresh` and a declared
+lane skip the lookup.
 
 A chunk checkpoint runs the delta set when its change since the reviewed tip is test-only
 and that tip has a whole green. The delta set is a reduced schedule: gofmt, vet, the

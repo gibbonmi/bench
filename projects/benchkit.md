@@ -55,8 +55,10 @@ The pre-push hook guards the default branch. This line only states the binding.)
   accepts the gate evidence and updates the destination ref, and resume stays
   under the same owner.
 
-  Prospective gate evidence keys to the graded tree and to the baseline runner
-  identity, so a retry reuses green evidence only when both are unchanged. A
+  Prospective gate evidence keys to the grade key that ADR 0031 records. A retry
+  reuses green evidence only when each member of that key is unchanged. In the kit,
+  the complete checkpoint runs under the installed broker, so its green answers the
+  landing of the same tree. A
   broker source change becomes active only after `bench repair`, a release
   install, or the install of a declared build publishes the new broker.
 
@@ -485,9 +487,10 @@ current-state advertisement of its non-meta input bindings:
 | `stdlib-reimplementation` | `go-source` |
 | `process-lifetime-closure` | `go-source` |
 
-A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
-current exact green; partial/component records are legacy input classes that fail closed and
-are never authored.
+A whole green records its grade key, and ADR 0031 names the members of that key. A green
+under that key answers each whole-gate verb from any checkout. Each verb looks up the key
+before it selects a reduced schedule. Partial/component records are legacy input classes
+that fail closed and are never authored.
 
 Two reduced record classes exist. The delta class is the green of a delta set, and only a
 later chunk checkpoint of the same base and subject reuses it. The reader record is the green
