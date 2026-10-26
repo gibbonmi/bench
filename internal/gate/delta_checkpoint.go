@@ -142,12 +142,22 @@ func deltaPackages(root string, files []string) ([]string, bool) {
 // green run writes the delta record of gitdir through replacer, and no pending record, no
 // evidence, and no verdict cache. A red delta stays red with no whole run after it.
 func runDelta(ctx, runCtx context.Context, runtimeRoot, storageRoot, gitdir string, declaredPaths []string, delta deltaRun, evaluation executionEvaluation, local []protection.Descriptor, selection *runbinary.Selection, release func() error, replacer durablefile.Replacer, stdout, stderr io.Writer) Result {
-	plan := delta.plan
 	if reusableDelta(gitdir, delta) {
 		logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
 		fmt.Fprintln(stdout, deltaReusedLine)
-		return Result{Inspection: inspectSubjectAt(storageRoot, plan, time.Now().UTC())}
+		return Result{Inspection: inspectSubjectAt(storageRoot, delta.plan, time.Now().UTC()), Schedule: ScheduleDelta}
 	}
+	return runReduced(ctx, runCtx, runtimeRoot, storageRoot, declaredPaths, delta.plan, ScheduleDelta, evaluation, local, selection, release, stdout, stderr, func(runBinary string) error {
+		return writeDeltaGreen(replacer, gitdir, delta, runBinary, time.Now())
+	})
+}
+
+// runReduced runs the oracle over the reduced schedule that plan's environment names. A green
+// run passes the digest of the run binary to record, which writes the one record of the
+// schedule. The run writes no pending record, no evidence, and no verdict cache, and a red
+// run records nothing.
+func runReduced(ctx, runCtx context.Context, runtimeRoot, storageRoot string, declaredPaths []string, plan subject, schedule Schedule, evaluation executionEvaluation, local []protection.Descriptor, selection *runbinary.Selection, release func() error, stdout, stderr io.Writer, record func(runBinary string) error) (result Result) {
+	defer func() { result.Schedule = schedule }()
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
 	run := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr, local...)
 	rc := run.Code
@@ -155,8 +165,8 @@ func runDelta(ctx, runCtx context.Context, runtimeRoot, storageRoot, gitdir stri
 	if code, _, interrupted := interruptedExit(ctx, runCtx, rc, stderr); interrupted {
 		return Result{GateExit: code, ActionExit: code, Inspection: inspectAt(storageRoot, time.Now().UTC())}
 	}
-	// An eligible delta runs the phase table, so the run selected its executable. The release
-	// in settleRun can remove those bytes, so the digest reads first.
+	// An eligible reduced schedule runs the phase table, so the run selected its executable.
+	// The release in settleRun can remove those bytes, so the digest reads first.
 	runBinary, err := fileDigest(selection.Path)
 	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
 	if refused {
@@ -164,10 +174,10 @@ func runDelta(ctx, runCtx context.Context, runtimeRoot, storageRoot, gitdir stri
 	}
 	if rc == 0 {
 		if err == nil {
-			err = writeDeltaGreen(replacer, gitdir, delta, runBinary, time.Now())
+			err = record(runBinary)
 		}
 		if err != nil {
-			return persistenceFailure(storageRoot, rc, stderr, "gate delta persistence failed", err)
+			return persistenceFailure(storageRoot, rc, stderr, "gate "+schedule.String()+" persistence failed", err)
 		}
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
@@ -182,7 +192,7 @@ func reusableDelta(gitdir string, delta deltaRun) bool {
 
 // interruptedExit classifies an oracle run that a cancel of the gate or the gate timeout ended.
 // A cancel answers the child's code. A timeout prints its line and answers 124. A whole run and
-// a delta run both read it, so they end alike. interrupted is false when neither ended the run.
+// a reduced run both read it, so they end alike. interrupted is false when neither ended the run.
 func interruptedExit(ctx, runCtx context.Context, rc int, stderr io.Writer) (code int, timedOut, interrupted bool) {
 	if ctx.Err() != nil {
 		return rc, false, true
@@ -197,9 +207,12 @@ func interruptedExit(ctx, runCtx context.Context, rc int, stderr io.Writer) (cod
 // deltaScheduled reports whether this process runs the delta set.
 func deltaScheduled() bool { return os.Getenv(deltaScheduleEnv) != "" }
 
-// scheduledTable answers the delta set when this process runs it, and the phase table
-// otherwise. A malformed or empty schedule refuses.
+// scheduledTable answers the reader set or the delta set when this process runs it, and the
+// phase table otherwise. A malformed schedule, or an empty delta schedule, refuses.
 func scheduledTable(root, kit string) ([]Phase, error) {
+	if readerScheduled() {
+		return readerScheduledTable(root, kit)
+	}
 	if !deltaScheduled() {
 		return phaseTable(root, kit)
 	}

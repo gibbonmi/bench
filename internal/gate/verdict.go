@@ -73,6 +73,13 @@ type verdictRecord struct {
 	// a test-only change from the base tree, so it has no oracle identity and no status.
 	Delta    string `json:"delta,omitempty"`
 	BaseTree string `json:"base_tree,omitempty"`
+
+	// The reader class carries these three and the run binary. A reader set grades the readers
+	// of a landing's changed families, so it names its schedule, the destination tree, and the
+	// green marker commit, and it has no oracle identity and no status.
+	ReaderSet       string `json:"reader_set,omitempty"`
+	DestinationTree string `json:"destination_tree,omitempty"`
+	GreenMarker     string `json:"green_marker,omitempty"`
 }
 
 type manifest struct {

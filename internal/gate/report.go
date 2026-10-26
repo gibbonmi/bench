@@ -91,10 +91,13 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	return 0
 }
 
-// greenVerdict answers the verdict line of a green run. A run of the delta set names its
-// reduced schedule, so no reader takes that green for a whole green.
+// greenVerdict answers the verdict line of a green run. A run of the reader set or the delta
+// set names its reduced schedule, so no reader takes that green for a whole green.
 func greenVerdict() string {
-	if deltaScheduled() {
+	switch {
+	case readerScheduled():
+		return "gate: green (reader set)"
+	case deltaScheduled():
 		return "gate: green (delta checkpoint)"
 	}
 	return "gate: green"

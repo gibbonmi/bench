@@ -182,6 +182,10 @@ const DeltaCacheFile = "bench-last-delta"
 // common Git directory. It holds one reader table for each graded tree.
 const ReaderTableDir = "bench-reader-tables"
 
+// ReaderRecordDir is the directory of the reader-record store, beside ReaderTableDir under
+// the common Git directory. It holds one reader record for each graded tree.
+const ReaderRecordDir = "bench-reader-records"
+
 // LandedInDefault proves a local branch landed by ancestry, patch containment, or
 // reverse-applying the branch's cumulative diff to def's tree. The reverse-apply proof
 // alone proves a squash-landing, where the branch's commits compose into one commit no

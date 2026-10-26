@@ -62,13 +62,22 @@ var (
 			return writeDeltaGreen(replacer, dir, deltaRun{plan: subject{Tree: "abc123"}, set: `["./."]`, base: "def456"}, "beef", time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC))
 		},
 	}
+	readerWriter = gateWriter{
+		name:  "reader",
+		entry: filepath.Join(benchgit.ReaderRecordDir, "abc123"),
+		want:  `{"schema":1,"tree":"abc123","recorded_at":"2026-10-12T00:00:00Z","run_binary":"beef","reader_set":"{\"packages\":[\"./.\"],\"race\":false}","destination_tree":"def456","green_marker":"fed789"}` + "\n",
+		write: func(replacer durablefile.Replacer, dir string) error {
+			run := newReaderRun(subject{Tree: "abc123"}, readerSchedule{Packages: []string{"./."}}, "def456", "fed789")
+			return writeReaderGreen(replacer, dir, run, "beef", time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC))
+		},
+	}
 )
 
 // D16, D17: each gate record writer returns the injected directory-sync failure of its
 // replacement after the rename, and its entry holds the encoded record.
 func TestGateReplacement(t *testing.T) {
 	t.Parallel()
-	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter, deltaWriter} {
+	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter, deltaWriter, readerWriter} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dir := t.TempDir()
@@ -85,7 +94,7 @@ func TestGateReplacement(t *testing.T) {
 // wraps its cause and leaves no entry.
 func TestGatePreRenameFailure(t *testing.T) {
 	t.Parallel()
-	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter, deltaWriter} {
+	for _, tc := range []gateWriter{verdictWriter, evidenceWriter, laneWriter, deltaWriter, readerWriter} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			dir := t.TempDir()
