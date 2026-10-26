@@ -766,6 +766,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gr-c2-standards-2",
+          "performer": "claude:gr-c2-standards2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d0eb2c5d8d0ca8a2643cc6628bf8fda02e53638e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c2-standards2-20261026",
+            "digest": "sha256:b7ac5f545e1f08b30177b5113db8ed4a28c8361d5fca99ccdd6185bf1f66fe9f",
+            "excerpt": "Standards confirming round, GR-C2, repair deltas 25bd01294..f1fe7d8bc (ticket 02) and 20df42e77..f40e49568 (ticket 03). sonnet/high. Evidence check-current current=true at 9c9c014a5.\nS1 confirmed: validateStoreRecordCommon (internal/gate/verdict.go:409-414) is the one schema-and-tree check; validateRecordBytes (verdict.go:393) and loadEvidence (engine.go:175) call it.\nS2 confirmed: retainGreen (run_durability.go:112-113) builds from readyVerdict.\nS3 confirmed: cacheDescribesFreshGreen (run_durability.go:95-97) answers both the pre-lock and the under-lock question.\nNew findings: none. A pre-existing hard-coded schema outside the delta went to bench learning.\n"
+          },
+          "axis": "Standards",
+          "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+          "tip": "f40e49568deeaff93e72b607d8f94724ff1a5bc0",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c2-standards-1"
+          ]
+        },
+        {
+          "id": "gr-c2-spec-2",
+          "performer": "claude:gr-c2-spec2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d0eb2c5d8d0ca8a2643cc6628bf8fda02e53638e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c2-spec2-20261026",
+            "digest": "sha256:f293b6757d50d5ad5e49db10c1871fdb479915c794cb3847167cd754959ecb8f",
+            "excerpt": "Spec confirming round, GR-C2, repair deltas 25bd01294..f1fe7d8bc and 20df42e77..f40e49568. sonnet/high.\nP3 confirmed: specs/landing-test-efficiency/spec.md:167 reads \"exact tree, run binary member, and freshness window\" with the line's other claims kept; its tickets are untouched; internal/gate/prospective_owner_test.go:1-3 states the grade key.\nNo GR-C2 acceptance row changes behavior. retainGreen writes an equal record (Grade set, Oracle empty).\nNew findings: none.\nThe axis ran check-current from the primary checkout, which refused; the orchestrator ran bench preflight evidence sha256:8544c861 --check-current in FT314-gate-reuse and it returned current=true at 9c9c014a5.\n"
+          },
+          "axis": "Spec",
+          "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+          "tip": "f40e49568deeaff93e72b607d8f94724ff1a5bc0",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c2-spec-1"
+          ]
+        },
+        {
+          "id": "gr-c2-coverage-2",
+          "performer": "claude:gr-c2-coverage2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d0eb2c5d8d0ca8a2643cc6628bf8fda02e53638e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c2-coverage2-20261026",
+            "digest": "sha256:4a82487b2e39e4750d5aa45436d7a72677436015441e81dbd775b4848b93c10d",
+            "excerpt": "Coverage confirming round, GR-C2, repair deltas 25bd01294..f1fe7d8bc and 20df42e77..f40e49568. sonnet/high. The three tests pass under bench test --run at 9c9c014a5.\nC1 confirmed: TestMalformedEvidenceAnswersNoLookup (internal/gate/grade_key_test.go:168, assertion :198) fails when the shared check or the field check is dropped; recorded reds support it.\nC3 confirmed: TestReusedGreenReplacesAStaleGreenCacheOfItsTree (reused_green_test.go:52, assertion :79) fails on both rows under the recorded probe.\nC4 confirmed: TestEvidenceTokenBindsTheGradeKey (authorization_test.go:81, assertion :86-87) fails when Grade leaves the token.\nNew findings: none.\nThe axis ran check-current from the primary checkout, which refused; the orchestrator ran it in FT314-gate-reuse and it returned current=true at 9c9c014a5.\n"
+          },
+          "axis": "Coverage",
+          "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+          "tip": "f40e49568deeaff93e72b607d8f94724ff1a5bc0",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c2-coverage-1"
+          ]
         }
       ]
     }
