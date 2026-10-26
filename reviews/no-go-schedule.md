@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:c1fdf44baaa97d1da4f4a807a86c6b4695dea79dbf46aa5a133c718d9b70b552",
+  "plan_digest": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
   "implementation_session": "",
   "chunks": [
     {
@@ -1625,9 +1625,9 @@
     {
       "id": "NG-C6",
       "base": "7204223529757f414366245ec4f8db01de7a3f65",
-      "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
-      "plan_digest": "sha256:d1077d01a3ec7991d40fabd7a7b56e387cb8b270c52105ccd278f5b050ffea11",
-      "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+      "tip": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+      "plan_digest": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
+      "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
       "acceptance_rows": [
         "NG68",
         "NG69",
@@ -1687,6 +1687,63 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18035,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "requirement": "ticket-9-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-ticket-9-check-1",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:a92791fd09ee5659f0ca3b71dc1c4fcee2e5055971826b707af0d0b871fcf9bc",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,4616,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "requirement": "ticket-9-check-1",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-ticket-9-check-2",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:fcce8b0ae6c3b9770e029893439d93dd897b4f786c1c1e346c02a1cc5a9bf8df",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose-mechanics,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,114,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
+          "requirement": "ticket-9-check-2",
+          "command": "bench test --check prose-mechanics",
+          "exit_code": 0
+        },
+        {
+          "id": "t09r1-ticket-9-check-3",
+          "performer": "claude:ngs-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "24c4c3db4a2acc40b3311164f76960d83b427e7a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t09-repair1-20261026",
+            "digest": "sha256:63498c96103ae6be6e139aea2a98f27bd7138099e37e4ce22fc688635dd1d97a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16975,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2fec08d89da82e73ad8a5585574dc0e397b8301e",
           "requirement": "ticket-9-check-3",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -2131,6 +2188,30 @@
         ],
         "NG-C3": [
           "NG-C3"
+        ],
+        "NG-C5": [
+          "NG-C5"
+        ],
+        "NG-C6": [
+          "NG-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c1fdf44baaa97d1da4f4a807a86c6b4695dea79dbf46aa5a133c718d9b70b552",
+      "to": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ],
+        "NG-C2": [
+          "NG-C2"
+        ],
+        "NG-C3": [
+          "NG-C3"
+        ],
+        "NG-C4": [
+          "NG-C4"
         ],
         "NG-C5": [
           "NG-C5"
