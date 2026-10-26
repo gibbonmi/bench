@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
+  "plan_digest": "sha256:019a9014964f420f187787bc3883b747bebf451a130c08026c709a986548a3df",
   "implementation_session": "",
   "chunks": [
     {
@@ -2053,9 +2053,9 @@
     {
       "id": "NG-C4",
       "base": "7204223529757f414366245ec4f8db01de7a3f65",
-      "tip": "4144def9819a3b4989cb0d6af7b5f6668b5b573f",
-      "plan_digest": "sha256:c1fdf44baaa97d1da4f4a807a86c6b4695dea79dbf46aa5a133c718d9b70b552",
-      "source_digest": "85c92907f4cf8d67fc26c241497c757e45dfe47b",
+      "tip": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+      "plan_digest": "sha256:019a9014964f420f187787bc3883b747bebf451a130c08026c709a986548a3df",
+      "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
       "acceptance_rows": [
         "NG61",
         "NG62",
@@ -2184,6 +2184,131 @@
             "restore": "pass",
             "native_ref": {
               "ref": "claude-agent:bench-writer-high:ngs-t07-author-20261026",
+              "digest": "sha256:fbc5d6b2b70d1d4a62139b55f7fbfab550363d963011c61b53b44e716724fb30",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_plan.go,swap,failed,1,TestReaderPlanRunsWholeUnderAHold,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestReaderPlanRunsWholeUnderAHold,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,346\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderPlanRunsWholeUnderAHold,\"reader_hold_test.go:61: plan = true \\\"\\\"; want the whole gate with the refusal \\\"reader hold\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t07r1-ticket-7-check-1",
+          "performer": "claude:ngs-t07-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
+            "digest": "sha256:eb98b95d8756a7a11fafa0c85fc701e6357d8c069d4d0afd9f6cb56cab58c007",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,100545,667\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "requirement": "ticket-7-check-1",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-ticket-7-check-2",
+          "performer": "claude:ngs-t07-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
+            "digest": "sha256:7c03711fa8d9822ddc1abea933908d45b621354ed3106469e93808a7d184dafa",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,277,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "requirement": "ticket-7-check-2",
+          "command": "bench test --package ./internal/gate/authorization",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-ticket-7-check-3",
+          "performer": "claude:ngs-t07-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
+            "digest": "sha256:68d79ff612c86b3cee0269efc9e25cb670b2ef8debaa88f069bcda7444e425a5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,11891,223\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "requirement": "ticket-7-check-3",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-ticket-7-check-4",
+          "performer": "claude:ngs-t07-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
+            "digest": "sha256:23f62b6dca08faa402948ed78e2589ff24e11676a1fa7fff998a97491e132c5e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1691,180\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "requirement": "ticket-7-check-4",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-ticket-7-check-5",
+          "performer": "claude:ngs-t07-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
+            "digest": "sha256:29afe5def0f81123d2b25126595d6e397ed4863fc0c70835e41b04353fd8e3b2",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16759,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "requirement": "ticket-7-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t07r1-ticket-7-probe",
+          "performer": "claude:ngs-t07-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
+            "digest": "sha256:fbc5d6b2b70d1d4a62139b55f7fbfab550363d963011c61b53b44e716724fb30",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_plan.go,swap,failed,1,TestReaderPlanRunsWholeUnderAHold,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestReaderPlanRunsWholeUnderAHold,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,346\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderPlanRunsWholeUnderAHold,\"reader_hold_test.go:61: plan = true \\\"\\\"; want the whole gate with the refusal \\\"reader hold\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "requirement": "ticket-7-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the reader plan, skip the reader-hold case. TestReaderPlanRunsWholeUnderAHold must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ngs-t07-repair1-20261026",
               "digest": "sha256:fbc5d6b2b70d1d4a62139b55f7fbfab550363d963011c61b53b44e716724fb30",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_plan.go,swap,failed,1,TestReaderPlanRunsWholeUnderAHold,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestReaderPlanRunsWholeUnderAHold,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,346\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,47,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderPlanRunsWholeUnderAHold,\"reader_hold_test.go:61: plan = true \\\"\\\"; want the whole gate with the refusal \\\"reader hold\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
@@ -2413,6 +2538,30 @@
           "NG-C6"
         ]
       }
+    },
+    {
+      "from": "sha256:9708018c56059ce6027bbdb19b04b1169e8634461aa8cc9c63686fe3a377be1b",
+      "to": "sha256:019a9014964f420f187787bc3883b747bebf451a130c08026c709a986548a3df",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ],
+        "NG-C2": [
+          "NG-C2"
+        ],
+        "NG-C3": [
+          "NG-C3"
+        ],
+        "NG-C4": [
+          "NG-C4"
+        ],
+        "NG-C5": [
+          "NG-C5"
+        ],
+        "NG-C6": [
+          "NG-C6"
+        ]
+      }
     }
   ],
   "folds": [
@@ -2441,6 +2590,8 @@ NG-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No revie
 NG-C3 consumed repair cycle 1 of 2 after its initial review (round r1), and cycle 2 of 2 for the round r2 finding S4. One combined repair session on ticket 06 carries every accepted finding, because the findings share files across tickets 03, 05, and 06. No reviewer extension applies.
 
 NG-C6 consumed repair cycle 1 of 2 after round r1. Round r2 closed it.
+
+NG-C4 consumed repair cycle 1 of 2 for finding C1, with a test-only repair.
 
 ## Standards
 
@@ -2562,6 +2713,8 @@ The NG-C1 repair commit `9768ad919` makes `TestOracleIdentityAndOracleShareTheCl
 
 The swap of the `path` frames stayed silent. The orchestrator accepts it as an equivalent mutant, because `manifestIdentity` already frames each declared path name into both digests. The coordinator probe inserted `id.Reset()` before the posture frames, and seven cases failed.
 
+The NG-C4 repair commit `134a3fedd` adds `TestAuthorizeCarriesTheSuspects` in `internal/gate/authorization/reader_kind_test.go`. The witness probe dropped the `Suspects` field from the result that `attribute` builds. The new test failed, and the probe read `bit` with `restored` `yes`.
+
 ## Advice
 
 - The row-ID prefixes in the comments of `internal/gate/oracle_identity_test.go` are provenance; dropping them is cleaner.
@@ -2577,3 +2730,5 @@ The swap of the `path` frames stayed silent. The orchestrator accepts it as an e
 The ticket 03 author asked for three decisions. The consultants (opus / high, sonnet / high) kept the directory claim of `familyOf` and the prune by modification time. They split on the root test package. The tie-breaker (fable / medium) chose to amend: the own-directory rule does not apply to the root package, and row NG82 covers the change.
 
 The NG-C6 Coverage axis listed whole-gate landing sentences outside every `Writes:` line, in `.bench/BENCH.md`, `README.md`, the field guide, two commands, and one skill. Sonnet chose to fix three of them, and opus chose to defer all of them. The tie-breaker chose to defer, because the text stays true for linked repositories and the kit exception has one home. A `bench learning` entry carries the sites to the drain, and `.bench/BENCH.md:52` waits for the reviewer.
+
+The NG-C5 findings took two decisions, and the consultants agreed on both. For S1, the gate row shows `reader green` only when the marker read, the ancestry of the marker, and the chain walk all succeed. Otherwise the stale row stays, and NG67 gains a case for a marker that is not an ancestor. For S2, the fixture copy stays as Advice, because a fix needs a new seam. A `bench learning` entry carries the seam choice to the drain.
