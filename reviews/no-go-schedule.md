@@ -2134,6 +2134,72 @@
           "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "c5r2-standards",
+          "performer": "claude:ngs-c5r2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-standards-20261026",
+            "digest": "sha256:3fe21c7fa4769d723a80936bb1e459ac1b83c0ab10c78b0c78c632c886d4d9e4",
+            "excerpt": "Axis: Standards, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-standards-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed: readerLandings calls readerChain, which has three callers (plan, hold, dashboard) and no copy. The comments match the behavior. All changed paths sit in ticket 08's Writes.\nAdvice (no ID): the ancestry check now precedes readerChain at reader_plan.go:93 and reader_inspect.go:43, and holdWholeGate has none; moving it into readerChain would give one owner but changes the plan's refusal case; the NG67 test name does not name the new case.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r1-standards"
+          ]
+        },
+        {
+          "id": "c5r2-spec",
+          "performer": "claude:ngs-c5r2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-spec-20261026",
+            "digest": "sha256:3e8d587c0a06ffd254c3b0d1a5d02cc7002c24d88ceac3f355417dfea5aa16bb",
+            "excerpt": "Axis: Spec, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-spec-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed: readerLandings composes readerChain, now the one walk for the plan, the hold, and the dashboard. The reader facts are set only when the marker read, IsAncestor(marker, HEAD), and the walk succeed. NG67's test has a non-ancestor-marker case. NG65 and NG66 are unchanged.\nAdvice (no ID): ticket 08 line 9 still names FirstParentsAfter and ReaderRecorded as the count source (prose drift); a marker equal to HEAD with a recorded tree prints (0 of 5).\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r1-spec"
+          ]
+        },
+        {
+          "id": "c5r2-coverage",
+          "performer": "claude:ngs-c5r2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c5r2-coverage-20261026",
+            "digest": "sha256:d96b3aadfa5567d20a96dccc948ace13ee879044f853439cf08f26e4fe33ad59",
+            "excerpt": "Axis: Coverage, NG-C5 confirming round r2, ticket 08, rows NG65-NG67. Session claude:ngs-c5r2-coverage-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. S1 is closed for coverage: the non-ancestor case exercises the guard, and TestGateRowShowsReaderGreen (2 landings in a chain of 3) catches a count of the chain.\nAdvice (no ID): an unresolved default branch, an absent marker, and a readerChain error have no direct test.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "finding_ids": [],
+          "supersedes": [
+            "c5r1-coverage"
+          ]
         }
       ]
     },
@@ -2464,6 +2530,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c4r2-standards",
+          "performer": "claude:ngs-c4r2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c4r2-standards-20261026",
+            "digest": "sha256:28f8217402a38003e99623e223670c599c06d792d43958bc7272643c4644f6b5",
+            "excerpt": "Axis: Standards, NG-C4 confirming round r2, ticket 07, rows NG61-NG64, NG78. Session claude:ngs-c4r2-standards-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. C1 is closed: TestAuthorizeCarriesTheSuspects feeds two ordered suspects through attribute and compares them in order; the refusal side has its own test, so the carry is covered end to end. The repair reuses readerTree and adds only a stdlib import.\nAdvice (no ID): the file header names only reader-set attribution, and the new test uses a whole run; the doc comment says a red whole run, but the empty inspection attributes as Infrastructure.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r1-standards"
+          ]
+        },
+        {
+          "id": "c4r2-spec",
+          "performer": "claude:ngs-c4r2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c4r2-spec-20261026",
+            "digest": "sha256:bd9cd51fb26cdb8b649c751294da126046207adf7cd51e864e977644fcc8a739",
+            "excerpt": "Axis: Spec, NG-C4 confirming round r2, ticket 07, rows NG61-NG64, NG78. Session claude:ngs-c4r2-spec-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. C1 is closed: the repair adds one test in a Writes path and changes no production code; the carry matches spec lines 211 and 221. NG61-NG64 and NG78 stay met with unchanged tests.\nAdvice (no ID): none at or above the threshold.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r1-spec"
+          ]
+        },
+        {
+          "id": "c4r2-coverage",
+          "performer": "claude:ngs-c4r2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8aad1ab6c185492095310eaf7bfb5d57ecbed9e1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c4r2-coverage-20261026",
+            "digest": "sha256:f954e5e8755b5ce3474b2bfb0a60a9a968a13a15b17b76cf013c0e6091476adf",
+            "excerpt": "Axis: Coverage, NG-C4 confirming round r2, ticket 07, rows NG61-NG64, NG78. Session claude:ngs-c4r2-coverage-20261026. Frozen pair 72042235..531c9bea.\nCount: 0 findings. C1 is closed: TestAuthorizeCarriesTheSuspects pins the copy at authorization.go:191 and its order; the producer (NG78) and the refusal consumer keep their tests, and every landing path hands the whole authorization result to the refusal.\nAdvice (no ID): the test's run attributes as Infrastructure, so a copy limited to one kind would pass it.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "134a3fedd399fe92bbef3bc4d39d6a4df47d4211",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r1-coverage"
+          ]
         }
       ]
     }
@@ -2740,6 +2872,10 @@ NG-C5 round r1: 2 findings. Worst issue: S1, a second walk of the reader chain.
 - S1 | auto-fix | confidence 7 | `internal/gate/reader_inspect.go:36-60` | `readerLandings` repeats the walk that `readerChain` owns in `internal/gate/reader_plan.go:155-174`. Tickets 07 and 08 were authored at the same time, so neither author saw the other's walk.
 - S2 | ask-user | confidence 6 | `internal/status/status_reader_test.go:196-213` | The reader-record fixture repeats the fixture in `internal/worktree/land_facts_test.go:118-127`.
 
+NG-C4 round r2 (confirming): 0 findings.
+
+NG-C5 round r2 (confirming): 0 findings. S1 is closed, and `readerChain` is the one walk of the reader chain.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -2765,6 +2901,10 @@ NG-C6 round r2 (confirming): 0 findings. P1 is closed.
 NG-C4 round r1: 0 findings. NG61, NG62, NG63, NG64, and NG78 are met.
 
 NG-C5 round r1: 0 findings. NG65, NG66, and NG67 are met.
+
+NG-C4 round r2 (confirming): 0 findings.
+
+NG-C5 round r2 (confirming): 0 findings. Ticket 08 line 9 still names the old source of the count, and the axis flags this prose for reviewer veto.
 
 ## Coverage
 
@@ -2804,6 +2944,10 @@ NG-C4 round r1: 1 finding. Worst issue: C1, an untested carry of the suspect lis
 - C1 | auto-fix | confidence 8 | `internal/gate/authorization/authorization.go:191` | No test covers the copy of `Suspects` in `attribute`, so a deleted copy leaves every row green.
 
 NG-C5 round r1: 0 findings.
+
+NG-C4 round r2 (confirming): 0 findings. C1 is closed.
+
+NG-C5 round r2 (confirming): 0 findings.
 
 ## Measurement (NG60)
 
