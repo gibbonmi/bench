@@ -2,6 +2,7 @@
 package authorization
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
@@ -31,5 +32,15 @@ func TestAuthorizeAttributesAReaderRedToTheCandidate(t *testing.T) {
 				t.Fatalf("exit %d, inherited green %t: result = %+v, want kind %q", exit, inheritedGreen, got, want)
 			}
 		}
+	}
+}
+
+// TestAuthorizeCarriesTheSuspects proves that the attributed result of a red whole landing
+// run keeps the gate's reader landings in their order, so the landing refusal can name them.
+func TestAuthorizeCarriesTheSuspects(t *testing.T) {
+	suspects := []string{"1111111111111111111111111111111111111111", "2222222222222222222222222222222222222222"}
+	run := gate.Result{GateExit: 1, ActionExit: 1, Schedule: gate.ScheduleWhole, Suspects: suspects}
+	if got := attribute(run, gate.EvidenceInspection{}, false, readerTree).Suspects; !slices.Equal(got, suspects) {
+		t.Fatalf("suspects = %v, want %v", got, suspects)
 	}
 }
