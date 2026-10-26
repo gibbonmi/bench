@@ -191,6 +191,9 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if delta, eligible := deltaPlan(ctx, storageRoot, runtimeRoot, plan, mode); eligible {
 		return runDelta(ctx, runCtx, runtimeRoot, storageRoot, gitdir, declaredPaths, delta, evaluation, local, selection, release, replacer, stdout, stderr)
 	}
+	if reader, eligible := (readerPlanner{shellcheck: shellcheckFiles}).plan(ctx, stdout, runtimeRoot, storageRoot, plan, selection); eligible {
+		return runReader(ctx, runCtx, runtimeRoot, storageRoot, declaredPaths, reader, evaluation, local, selection, release, replacer, stdout, stderr)
+	}
 	trace := beginReaderTrace(runtimeRoot, storageRoot, plan, selection)
 	defer trace.close()
 	plan.Env = trace.env(plan.Env)
