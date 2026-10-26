@@ -72,7 +72,7 @@ The leverage override still wins for orchestration, implementation, and repair, 
 The declared author limit counts concurrently active ticket writers, not retained idle author sessions. The default author limit is 3.
 
 Every delegated review axis uses the invoking harness's configured cheap binding at high effort. That route applies to every author tier, and a run without `--delegate` keeps the conditional review line above.
-The orchestrator decides an advisory finding itself; only a blocking finding or a behavior that the spec leaves open takes a consultation. Each delegated diagnostic consultation goes to the mid binding and the cheap binding, both at high effort. If the two answers disagree, a top-binding consultation at high effort breaks the tie. A `--reviewer`, `--consultant`, or author-limit value in the call replaces the matching default.
+A consultation decides only a blocking finding that would otherwise stop for the reviewer, and the orchestrator decides every other finding itself. Each delegated diagnostic consultation goes to the mid binding and the cheap binding, both at high effort. If the two answers disagree, a top-binding consultation at high effort breaks the tie. A `--reviewer`, `--consultant`, or author-limit value in the call replaces the matching default.
 
 ## Classify reds before the ladder moves
 
