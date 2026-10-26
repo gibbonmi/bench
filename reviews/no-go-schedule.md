@@ -772,6 +772,20 @@
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "NG-C2",
+      "from": "05bd4025a5545c73e22e5171e48823665aa0f473",
+      "commit": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+      "incoming": "f862eafc9f24ab18a6b75d2be37f1da686fb9ed3",
+      "source_digest": "f7dcc62f827f4ec189f3e98de47be2116cfdf2ea",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [],
+      "reviews": []
+    }
   ]
 }
 ```
