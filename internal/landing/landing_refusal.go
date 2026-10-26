@@ -1,6 +1,10 @@
 package landing
 
-import "github.com/gibbonmi/bench/internal/gate/authorization"
+import (
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/gate/authorization"
+)
 
 // refusalMessage renders the one refusal line every authorization caller prints. The
 // literal prefix and the kind stay, because two tests and the operator's own memory read
@@ -16,6 +20,9 @@ func refusalMessage(got authorization.Result) string {
 	}
 	if explanation != "" {
 		line += " (" + explanation + ")"
+	}
+	if len(got.Suspects) != 0 {
+		line += "; reader landings since the green marker: " + strings.Join(got.Suspects, ", ")
 	}
 	return line
 }
