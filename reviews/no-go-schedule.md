@@ -1692,7 +1692,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c6r1-standards",
+          "performer": "claude:ngs-c6-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6-standards-20261026",
+            "digest": "sha256:fa7807963b343a9715467831359cdc904b9cfd1bb8f55650ab1e84a8fc0f682d",
+            "excerpt": "Axis: Standards, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-standards-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding. Worst issue: S1.\nS1 sev 5, conf 8, auto-fix, ticket 09: .bench/BENCH-reference.md:346-347 still says bench worktree land \"composes and runs the one whole-project gate\"; the same file now states the reader set (:37-66, :548-549). One-source violation inside a Writes file.\nAdvice (no ID): the same stale claim outside ticket 09's Writes (README.md, .bench/BENCH.md:52, bench-final-check, craft-synthesis, field-guide); the ADR and profile simplify the reader-set selection to the covered-family test; the ADR's \"every other landing\" sentence precedes more whole-gate cases; the reference does not state the traced test argv; \"So that record\" at reference :46 reads as a purpose conjunction.\n"
+          },
+          "axis": "Standards",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c6r1-spec",
+          "performer": "claude:ngs-c6-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6-spec-20261026",
+            "digest": "sha256:e1e9d8bc4d28247059b8d8347471dccc4b77a10a52b955dc4a89e9c91a45e39d",
+            "excerpt": "Axis: Spec, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-spec-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding. Worst issue: P1. NG68, NG69, NG70 met; the reference matches reader_plan.go cases, the bound of five, and the gate output lines.\nP1 sev 5, conf 7, auto-fix, ticket 09: .bench/BENCH-reference.md:346-347 says the landing runs \"the one whole-project gate\"; reader_plan.go:76-150 runs the reader set for a covered landing. Story 51 asks that the docs match the gate. Same defect as S1.\nAdvice (no ID): the ADR and profile \"every path in a covered family runs the reader set\" is over-broad against the refusal cases; the reference states no traced test argv; the same stale claim stands outside ticket 09's Writes.\n"
+          },
+          "axis": "Spec",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c6r1-coverage",
+          "performer": "claude:ngs-c6-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a66ef5ea86b51abd99ba800a940f49b82a165098",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c6-coverage-20261026",
+            "digest": "sha256:dbbeb0b30cd7563691b0e66f268f48b12b20ea15b478f12902211035153502b4",
+            "excerpt": "Axis: Coverage, NG-C6, ticket 09, rows NG68-NG70. Session claude:ngs-c6-coverage-20261026. Frozen pair 72042235..2baf0b47.\nCount: 1 finding (C2 moved to Advice by consultant decision). Worst issue: C1. NG68, NG69, NG70 met; every site of the spec's landing-rule prose table was amended; t09-ticket-9-check-1..3 pass.\nC1 sev 5, conf 8, auto-fix, ticket 09: .bench/BENCH-reference.md:346-348 still says bench worktree land \"composes and runs the one whole-project gate\", which contradicts :548 and :669 of the same file. Same defect as S1 and P1.\nAdvice (no ID): C2 as raised (sev 5, ask-user): whole-gate landing sentences outside every Writes line (.bench/BENCH.md:52, README.md:86-87 and :93, docs/field-guide.html:854, bench-final-check.md:2 and :53, bench-drain.md:285, craft-synthesis SKILL.md:65). The fable tiebreaker deferred all of them to a bench learning entry; BENCH.md:52 needs the reviewer. Also: the reference states no traced test argv; CHANGELOG.md:743 is history and stays.\n"
+          },
+          "axis": "Coverage",
+          "base": "7204223529757f414366245ec4f8db01de7a3f65",
+          "tip": "a977ad8b7436b68ab74ac76930746ae89280d409",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     },
     {
       "id": "NG-C5",
@@ -2120,6 +2187,10 @@ NG-C3 round r2 (confirming): S1, S2, and S3 are closed. 1 new finding.
 
 NG-C3 round r3 (confirming): all three axes pass with 0 findings. S4 is closed by `PhaseTableRedExit`.
 
+NG-C6 round r1: 1 finding. Worst issue: S1, a stale whole-gate landing sentence in the reference.
+
+- S1 | auto-fix | confidence 8 | `.bench/BENCH-reference.md:346-347` | The landing still "runs the one whole-project gate", while `:548-549` of the same file states the reader set.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -2135,6 +2206,10 @@ NG-C3 round r1: 3 findings. Worst issue: P1, a reader-set timeout that attribute
 - P3 | auto-fix | confidence 6 | `internal/gate/reader_plan.go:93` | The change list omits submodules, so ambient configuration can hide a gitlink change from case 6.
 
 NG-C3 round r2 (confirming): 0 findings. P1, P2, P3, NG83, NG84, and the N1 order hold.
+
+NG-C6 round r1: 1 finding. Worst issue: P1, the same stale sentence as S1. NG68, NG69, and NG70 are met.
+
+- P1 | auto-fix | confidence 7 | `.bench/BENCH-reference.md:346-347` | The sentence contradicts the landed plan in `internal/gate/reader_plan.go`, and story 51 asks that the docs match the gate.
 
 ## Coverage
 
@@ -2162,6 +2237,10 @@ NG-C3 round r1: 7 findings. Worst issue: C5, the resume wiring of the reader fac
 - C7 | auto-fix | confidence 7 | `internal/packagesurface/embed_directives.go:55` | A quoted embed pattern with a space splits into two words. Standards finding S2 holds the shared parser.
 
 NG-C3 round r2 (confirming): 0 findings. Each new test is red-capable against the finding it closes.
+
+NG-C6 round r1: 1 finding. Worst issue: C1, the same stale sentence as S1. The axis also raised C2, and the consultants moved it to a learning.
+
+- C1 | auto-fix | confidence 8 | `.bench/BENCH-reference.md:346-348` | The sentence contradicts `:548` and `:669` of the same file.
 
 ## Measurement (NG60)
 
@@ -2197,3 +2276,5 @@ The swap of the `path` frames stayed silent. The orchestrator accepts it as an e
 ## Consultant decisions
 
 The ticket 03 author asked for three decisions. The consultants (opus / high, sonnet / high) kept the directory claim of `familyOf` and the prune by modification time. They split on the root test package. The tie-breaker (fable / medium) chose to amend: the own-directory rule does not apply to the root package, and row NG82 covers the change.
+
+The NG-C6 Coverage axis listed whole-gate landing sentences outside every `Writes:` line, in `.bench/BENCH.md`, `README.md`, the field guide, two commands, and one skill. Sonnet chose to fix three of them, and opus chose to defer all of them. The tie-breaker chose to defer, because the text stays true for linked repositories and the kit exception has one home. A `bench learning` entry carries the sites to the drain, and `.bench/BENCH.md:52` waits for the reviewer.
