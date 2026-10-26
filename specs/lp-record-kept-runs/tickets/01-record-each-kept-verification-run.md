@@ -1,4 +1,4 @@
-# Record each kept verification run
+# Stage each verification run when it ends
 
 Blocked by: none
 Writes: .agents/commands/bench-implement-spec.md
@@ -6,9 +6,9 @@ Covers: none
 
 ## What to build
 
-`/bench-implement-spec` tells a ticket author to run each verification requirement of its ticket once, at the ticket commit, and to keep the output file of that run. The author passes that file to `bench record verification --excerpt`. Thus a chunk freeze or a record step runs no requirement a second time.
+`/bench-implement-spec` tells a ticket author to commit the ticket on a green lane, and then to run each verification requirement once at that commit. The author stages each run with `bench record excerpt` before its next Bench call, because that verb stages only the last retained response. Thus a chunk freeze or a record step runs no requirement a second time.
 
-The gate-reuse GR-C1 freeze ran the `./internal/gate` package again, because the author did not keep the runs that it made at its ticket commit. One run of that package takes about 70 seconds.
+The gate-reuse GR-C1 freeze ran each requirement again, because the author did not stage the runs that it made at its ticket commit. One run of the `./internal/gate` package takes about 70 seconds.
 
 ## Acceptance
 
