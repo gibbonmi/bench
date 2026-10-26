@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:019a9014964f420f187787bc3883b747bebf451a130c08026c709a986548a3df",
+  "plan_digest": "sha256:e32437706fd694f5d878bbdd576677f22f0897b8e76490d60b388e4f699ae896",
   "implementation_session": "",
   "chunks": [
     {
@@ -1887,9 +1887,9 @@
     {
       "id": "NG-C5",
       "base": "7204223529757f414366245ec4f8db01de7a3f65",
-      "tip": "f6f83ed9e5ac6596654bbc843fc184fe887894ec",
-      "plan_digest": "sha256:26b98edd3b6c695cbba5c95d91ef2ca8e7bc16f0cc4ec1b025572380bc11cb47",
-      "source_digest": "6c256461eb2ee93bf478d7c85f54fd3fc590643f",
+      "tip": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+      "plan_digest": "sha256:e32437706fd694f5d878bbdd576677f22f0897b8e76490d60b388e4f699ae896",
+      "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
       "acceptance_rows": [
         "NG65",
         "NG66",
@@ -1978,6 +1978,93 @@
             "restore": "pass",
             "native_ref": {
               "ref": "claude-agent:bench-writer-high:ngs-t08-author-20261026",
+              "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t08r1-ticket-8-check-1",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:b7e413039a986be25ff390c53cf30296985d60311b7369d83f997141903f92c6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,pass,7636,146\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-check-1",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-ticket-8-check-2",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:463f56cc9633a579134b6163ead40bb871a1d02e018e892893bf37fcebfc1e26",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,101147,667\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-check-2",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-ticket-8-check-3",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:847b18245cbcb42f5c4d8b82f6f9225f313e8b120696f73f32f7a3fa7ab34a8d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18975,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t08r1-ticket-8-probe",
+          "performer": "claude:ngs-t08-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
+            "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "91ee7be0695ccc87bcf00b92010bec6cbfe6d097",
+          "requirement": "ticket-8-probe",
+          "command": "bench test --package ./internal/status",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In appendGateInfo, drop the reader-green branch. TestGateRowShowsReaderGreen must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t08-repair1-20261026",
               "digest": "sha256:239f01bd14b9490659aef22043a125f083c12f7e520cd53d02111a9ddb6f6f75",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/status/status.go,omit,failed,1,TestGateRowShowsReaderGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/status,TestGateRowShowsReaderGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/status,fail,66,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/status,TestGateRowShowsReaderGreen,\"status_reader_test.go:90: row = status.row{sev:7, signal:\\\"gate\\\", detail:\\\"stale (gated tree 3e21a20, work tree 397c27e; gate input manifest absent)\\\", action:status.statusAction{id:0x2, argument:\\\"\\\", advisory:\\\"\\\"}}, want the gate row reader gre… (267 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
@@ -2562,6 +2649,30 @@
           "NG-C6"
         ]
       }
+    },
+    {
+      "from": "sha256:019a9014964f420f187787bc3883b747bebf451a130c08026c709a986548a3df",
+      "to": "sha256:e32437706fd694f5d878bbdd576677f22f0897b8e76490d60b388e4f699ae896",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ],
+        "NG-C2": [
+          "NG-C2"
+        ],
+        "NG-C3": [
+          "NG-C3"
+        ],
+        "NG-C4": [
+          "NG-C4"
+        ],
+        "NG-C5": [
+          "NG-C5"
+        ],
+        "NG-C6": [
+          "NG-C6"
+        ]
+      }
     }
   ],
   "folds": [
@@ -2592,6 +2703,8 @@ NG-C3 consumed repair cycle 1 of 2 after its initial review (round r1), and cycl
 NG-C6 consumed repair cycle 1 of 2 after round r1. Round r2 closed it.
 
 NG-C4 consumed repair cycle 1 of 2 for finding C1, with a test-only repair.
+
+NG-C5 consumed repair cycle 1 of 2 for finding S1.
 
 ## Standards
 
@@ -2714,6 +2827,8 @@ The NG-C1 repair commit `9768ad919` makes `TestOracleIdentityAndOracleShareTheCl
 The swap of the `path` frames stayed silent. The orchestrator accepts it as an equivalent mutant, because `manifestIdentity` already frames each declared path name into both digests. The coordinator probe inserted `id.Reset()` before the posture frames, and seven cases failed.
 
 The NG-C4 repair commit `134a3fedd` adds `TestAuthorizeCarriesTheSuspects` in `internal/gate/authorization/reader_kind_test.go`. The witness probe dropped the `Suspects` field from the result that `attribute` builds. The new test failed, and the probe read `bit` with `restored` `yes`.
+
+The NG-C5 repair commit `91ee7be06` makes `readerLandings` compose `readerChain` behind an ancestry guard. Before the edit, the new case for a marker that is not an ancestor failed with `reader green (2 of 5)` in place of the stale row. After the edit, a probe that omitted the `IsAncestor` guard failed that case and read `bit` with `restored` `yes`.
 
 ## Advice
 
