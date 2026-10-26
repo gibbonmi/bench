@@ -92,10 +92,10 @@ func TestLandReusesTheCompleteCheckpointGreen(t *testing.T) {
 // GR28: the run binary member follows the source root of the run binary, so a source that
 // changes a Bench build input still reuses its own complete checkpoint green. The destination
 // is a Go module that builds its run binary, so each prospective run builds from the graded
-// tree. No kit is selected, so an ordinary run would build from the checkout that runs it.
+// tree. That member reads no kit, so the test keeps the process kit and runs in parallel.
 // The build script fails, so the refresh effect after the publication reports failed.
 func TestLandReusesACheckpointGreenOfAGoChange(t *testing.T) {
-	bindEnv(t, "BENCH_KIT", "")
+	t.Parallel()
 	request := "land-reuse-build-input"
 	f := seededLandingFixture(t, request, "", "", t.TempDir(), true, nil, closureAdmission, runBinaryMain)
 	commitLandingBuildInputs(t, f.root)
