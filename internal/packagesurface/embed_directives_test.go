@@ -32,6 +32,33 @@ func TestScanEmbedDirectivesReadsEveryGoFile(t *testing.T) {
 	}
 }
 
+// TestScanEmbedDirectivesKeepsAQuotedPatternWhole proves that a double-quoted or back-quoted
+// pattern with a space is one pattern, as Go's embed quoting reads it, and that an escape in a
+// double-quoted pattern reads as Go reads it.
+func TestScanEmbedDirectivesKeepsAQuotedPatternWhole(t *testing.T) {
+	root := t.TempDir()
+	body := "package fixture\n\n//go:embed \"a file.txt\" `b file.txt` \"c\\tfile.txt\" plain.txt\nvar files string\n"
+	if err := os.WriteFile(filepath.Join(root, "fixture.go"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := ScanEmbedDirectives(root)
+	if want := []string{"a file.txt", "b file.txt", "c\tfile.txt", "plain.txt"}; err != nil || !slices.Equal(got, want) {
+		t.Fatalf("ScanEmbedDirectives = %q, %v; want %q", got, err, want)
+	}
+}
+
+// TestScanEmbedDirectivesRefusesAnOpenQuote proves that a pattern whose quote never closes
+// refuses the scan, as Go refuses the file.
+func TestScanEmbedDirectivesRefusesAnOpenQuote(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "fixture.go"), []byte("package fixture\n\n//go:embed \"open.txt\nvar files string\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := ScanEmbedDirectives(root); err == nil {
+		t.Fatalf("ScanEmbedDirectives = %q, nil; want a refusal of the open quote", got)
+	}
+}
+
 // TestEmbedDirectivesMatchTheirPaths proves that a directive matches its exact path, a path
 // below it, a glob match, and a path below a glob match, and nothing else.
 func TestEmbedDirectivesMatchTheirPaths(t *testing.T) {

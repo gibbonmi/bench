@@ -32,11 +32,15 @@ const (
 	readerFixtureLogs outcomeWitness = ".gate-fixture-logs"
 	// readerLogDir records the test log directory of the last run.
 	readerLogDir outcomeWitness = ".gate-testlog"
+	// readerLogRoot stands for the graded root in a canned log. The reader gate writes its own
+	// working directory in its place, so a log fits a prospective checkout as well as the root.
+	readerLogRoot = "@ROOT@"
 )
 
 // readerFixture is a fixture kit whose gate routes through the phase table and copies the
-// canned logs into the test log directory of its run. The kit declares the root-conformance
-// entry and tracks the link .claude/commands to ../.agents/commands.
+// canned logs, with its own root for readerLogRoot, into the test log directory of its run.
+// The kit declares the root-conformance entry and tracks the link .claude/commands to
+// ../.agents/commands.
 func readerFixture(t *testing.T) string {
 	t.Helper()
 	t.Setenv(baselinePolicyEnv, "")
@@ -44,7 +48,7 @@ func readerFixture(t *testing.T) string {
 		return body + phaseTableHandoff + `if [ -n "${` + testLogEnv + `:-}" ]; then
   printf '%s\n' "$` + testLogEnv + `" > "$common/` + string(readerLogDir) + `"
   for log in "$common/` + string(readerFixtureLogs) + `"/*; do
-    if [ -e "$log" ]; then ` + f.Command("cp") + ` "$log" "$` + testLogEnv + `/"; fi
+    if [ -e "$log" ]; then ` + f.Command("sed") + ` "s|` + readerLogRoot + `|$(pwd)|g" "$log" > "$` + testLogEnv + `/${log##*/}"; fi
   done
 fi
 `
@@ -73,7 +77,7 @@ func writeWitnessLog(t *testing.T, root string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	log := witnessLog(root, ".agents/") + "open " + root + "/.claude/commands/x.md\n"
+	log := witnessLog(readerLogRoot, ".agents/") + "open " + readerLogRoot + "/.claude/commands/x.md\n"
 	if err := os.WriteFile(file, []byte(log), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -142,6 +146,50 @@ func TestWholeGreenPersistsTheReaderTable(t *testing.T) {
 	}
 	if tables := storedTables(t, root); !slices.Equal(tables, []string{plan.Tree}) {
 		t.Fatalf("stored tables = %q; want the one table of %s", tables, plan.Tree)
+	}
+}
+
+// TestWholeGreenLandingPersistsTheReaderTable is NG84. A landing grades a prospective
+// checkout that the run releases before the verdict persists, so a table that derives after
+// the release reads a removed root and stores nothing.
+func TestWholeGreenLandingPersistsTheReaderTable(t *testing.T) {
+	root := readerFixture(t)
+	writeWitnessLog(t, root)
+	tempRoot := t.TempDir()
+	t.Setenv("TMPDIR", tempRoot)
+	outcomeWrite(t, root, prospectiveGatePath, "#!/bin/sh\nexec \"$1/.bench/gate.sh\"\n", 0o755)
+	outcomeWrite(t, root, "scripts/go-build.sh", "#!/bin/sh\n", 0o755)
+	outcomeCommit(t, root, "prospective gate")
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	// The prospective gate selects its executable from the checkout, so the kit is the checkout.
+	owner := func(_ context.Context, source string) (*runbinary.Selection, error) {
+		return fixtureSelection(source), nil
+	}
+	var stdout, stderr bytes.Buffer
+	if result := executeTreeWithOwner(context.Background(), root, tree, &stdout, &stderr, nil, forceRun, owner); result.ActionExit != 0 {
+		t.Fatalf("landing run = %+v; want green\nstdout:\n%s\nstderr:\n%s", result, stdout.String(), stderr.String())
+	}
+	requireNoProspectiveBundles(t, tempRoot)
+	if tables := storedTables(t, root); !slices.Equal(tables, []string{tree}) {
+		t.Fatalf("stored tables after a released landing run = %q; want the one table of %s", tables, tree)
+	}
+}
+
+// TestOpenWholeGreenPersistsNoReaderTable requires that a green whole run of an open oracle
+// subject, here for want of the input manifest, stores no table.
+func TestOpenWholeGreenPersistsNoReaderTable(t *testing.T) {
+	root := readerFixture(t)
+	writeWitnessLog(t, root)
+	outcomeGit(t, root, "rm", "-q", ".bench/gate-inputs.json")
+	outcomeCommit(t, root, "open the subject")
+	if plan := currentSubject(t, root); plan.Closed {
+		t.Fatalf("subject without its manifest = %+v; want open", plan)
+	}
+	if result := runReaderGate(t, root); result.ActionExit != 0 {
+		t.Fatalf("open whole run = %d; want green", result.ActionExit)
+	}
+	if tables := storedTables(t, root); len(tables) != 0 {
+		t.Fatalf("stored tables after an open whole green = %q; want none", tables)
 	}
 }
 

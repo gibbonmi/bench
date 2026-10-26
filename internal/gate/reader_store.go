@@ -1,8 +1,9 @@
 package gate
 
 // The reader-table store. A whole run of the kit's built-in table owns one test log
-// directory. After its green verdict persists, the run derives the reader table from those
-// logs and stores it in the common Git directory, keyed by the graded tree.
+// directory. A green run derives the reader table from those logs before it releases the
+// graded root. After its green verdict persists, it stores the table in the common Git
+// directory, keyed by the graded tree.
 
 import (
 	"context"
@@ -48,11 +49,17 @@ type readerTrace struct {
 	logs, root, kit string
 }
 
-// beginReaderTrace opens the test log directory of a whole run whose schedule is the kit's
-// built-in table with its traced test phase. It answers nil for every other run, and when
-// the directory cannot be made. A nil trace records no log and stores no table.
+// kitRun reports whether a run of plan under selection is a kit run of the built-in table:
+// the one run whose test phase the trace records and whose landing can run the reader set.
+func kitRun(runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) bool {
+	return selection != nil && narrowsKitTable(runtimeRoot, storageRoot, plan.Resolution) && RootConformanceRuns(runtimeRoot, selection.SourceRoot)
+}
+
+// beginReaderTrace opens the test log directory of a kit run whose oracle subject is closed.
+// It answers nil for every other run, and when the directory cannot be made. A nil trace
+// records no log and stores no table.
 func beginReaderTrace(runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) *readerTrace {
-	if selection == nil || !narrowsKitTable(runtimeRoot, storageRoot, plan.Resolution) || !RootConformanceRuns(runtimeRoot, selection.SourceRoot) {
+	if !plan.Closed || !kitRun(runtimeRoot, storageRoot, plan, selection) {
 		return nil
 	}
 	logs, err := os.MkdirTemp("", "bench-gate-testlog-")
@@ -77,14 +84,34 @@ func (t *readerTrace) close() {
 	}
 }
 
-// persist derives the reader table of a run whose green verdict has persisted, and stores
-// it under storageRoot through replacer. A failure stores no table and leaves the verdict as
-// it is; the run log names the failure.
-func (t *readerTrace) persist(ctx context.Context, replacer durablefile.Replacer, storageRoot string, plan subject) {
+// readerDerivation is the reader table that a green run derived, or the failure of the
+// derivation.
+type readerDerivation struct {
+	record readerTableRecord
+	err    error
+}
+
+// derive derives the reader table of a green run. The derivation lists and reads the graded
+// root, so it runs before the run releases that root, which a landing removes.
+func (t *readerTrace) derive(storageRoot string, plan subject) *readerDerivation {
 	if t == nil {
+		return nil
+	}
+	record, err := t.table(storageRoot, plan)
+	return &readerDerivation{record: record, err: err}
+}
+
+// persist stores the derived table under storageRoot through replacer, after the green
+// verdict of its run has persisted. A failure stores no table and leaves the verdict as it
+// is; the run log names the failure.
+func (d *readerDerivation) persist(ctx context.Context, replacer durablefile.Replacer, storageRoot string) {
+	if d == nil {
 		return
 	}
-	path, err := t.store(replacer, storageRoot, plan)
+	path, err := "", d.err
+	if err == nil {
+		path, err = storeReaderTable(replacer, storageRoot, d.record)
+	}
 	record := gateLogRecord{Event: "reader.table", Root: storageRoot, Path: path}
 	if err != nil {
 		record.Detail = err.Error()
@@ -92,35 +119,35 @@ func (t *readerTrace) persist(ctx context.Context, replacer durablefile.Replacer
 	logGateEvent(ctx, record)
 }
 
-func (t *readerTrace) store(replacer durablefile.Replacer, storageRoot string, plan subject) (string, error) {
+func (t *readerTrace) table(storageRoot string, plan subject) (readerTableRecord, error) {
 	packages, err := testPackages(t.root, t.kit, plan.Env)
 	if err != nil {
-		return "", err
+		return readerTableRecord{}, err
 	}
 	links, err := benchgit.TreeSymlinks(storageRoot, plan.Tree)
 	if err != nil {
-		return "", err
+		return readerTableRecord{}, err
 	}
 	logs := map[string][]byte{}
 	for _, pkg := range packages {
 		file, err := testLogFile(t.logs, t.root, filepath.Join(t.root, filepath.FromSlash(pkg)))
 		if err != nil {
-			return "", err
+			return readerTableRecord{}, err
 		}
 		data, err := os.ReadFile(file)
 		if errors.Is(err, os.ErrNotExist) {
 			continue
 		}
 		if err != nil {
-			return "", err
+			return readerTableRecord{}, err
 		}
 		logs[pkg] = data
 	}
 	table, err := deriveReaderTable(readerSources{Root: t.root, Packages: packages, Logs: logs, Links: links, Families: coveredFamilies, Children: childReaders})
 	if err != nil {
-		return "", err
+		return readerTableRecord{}, err
 	}
-	return storeReaderTable(replacer, storageRoot, readerTableRecord{Schema: readerTableSchema, Tree: plan.Tree, Identity: plan.Identity, Readers: table})
+	return readerTableRecord{Schema: readerTableSchema, Tree: plan.Tree, Identity: plan.Identity, Readers: table}, nil
 }
 
 // testPackages lists the test packages of the traced test phase of root: each package of

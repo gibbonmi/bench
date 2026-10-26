@@ -35,6 +35,9 @@ const (
 	ReaderGreen Kind = "reader green"
 )
 
+// phaseTableRed is the exit of a gate run whose phase table graded red.
+const phaseTableRed = 1
+
 // Result is the gate owner's projection. Evidence is opaque to lifecycle callers, and
 // only a graded green carries any: a lane pass proves nothing a later reader may reuse.
 type Result struct {
@@ -169,10 +172,11 @@ func attribute(execution gate.Result, inspection gate.EvidenceInspection, inheri
 	case execution.Schedule == gate.ScheduleReader:
 		// A reader set writes no verdict, so its attribution reads the run's exits. Each
 		// commit from the green marker to the destination passed its own readers. That chain
-		// stands in for the green baseline, so a red belongs to the diff.
+		// stands in for the green baseline, so a red phase table belongs to the diff. Any
+		// other exit, such as a timeout or a cancel, graded nothing.
 		if execution.GateExit == 0 && execution.ActionExit == 0 {
 			kind = ReaderGreen
-		} else if execution.GateExit != 0 && execution.ActionExit == execution.GateExit {
+		} else if execution.GateExit == phaseTableRed && execution.ActionExit == execution.GateExit {
 			kind = Candidate
 		}
 	case execution.ActionExit == 0 && inspection.ReusableGreen:

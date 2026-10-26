@@ -22,12 +22,14 @@ func TestAuthorizeAttributesAReaderGreen(t *testing.T) {
 
 // TestAuthorizeAttributesAReaderRedToTheCandidate is NG56. A red reader set writes no
 // verdict, so the chain proof stands in for the green baseline, with or without inherited
-// green proof.
+// green proof. A timeout or a cancel graded nothing, so it attributes infrastructure.
 func TestAuthorizeAttributesAReaderRedToTheCandidate(t *testing.T) {
 	for _, inheritedGreen := range []bool{false, true} {
-		red := gate.Result{GateExit: 1, ActionExit: 1, Schedule: gate.ScheduleReader}
-		if got := attribute(red, gate.EvidenceInspection{}, inheritedGreen, readerTree); got.Kind != Candidate {
-			t.Fatalf("inherited green %t: result = %+v, want kind %q", inheritedGreen, got, Candidate)
+		for exit, want := range map[int]Kind{1: Candidate, 124: Infrastructure, 130: Infrastructure} {
+			run := gate.Result{GateExit: exit, ActionExit: exit, Schedule: gate.ScheduleReader}
+			if got := attribute(run, gate.EvidenceInspection{}, inheritedGreen, readerTree); got.Kind != want {
+				t.Fatalf("exit %d, inherited green %t: result = %+v, want kind %q", exit, inheritedGreen, got, want)
+			}
 		}
 	}
 }

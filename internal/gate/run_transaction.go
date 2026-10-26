@@ -220,6 +220,10 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		}
 		return Result{GateExit: code, ActionExit: code, Inspection: inspectAt(storageRoot, time.Now().UTC())}
 	}
+	var derived *readerDerivation
+	if rc == 0 {
+		derived = trace.derive(storageRoot, plan)
+	}
 	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
 	if refused {
 		return refusal
@@ -243,7 +247,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		return persistenceFailure(storageRoot, rc, stderr, "gate final persistence failed", err)
 	}
 	if status == "green" {
-		trace.persist(ctx, replacer, storageRoot, plan)
+		derived.persist(ctx, replacer, storageRoot)
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
 }

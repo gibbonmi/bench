@@ -293,16 +293,25 @@ func SelectLane(checks []Phase, changes []ComposedChange, tree TreeFacts) ([]Pha
 	return kept, classes
 }
 
-// changeClasses answers the classes one composed change carries. A symbolic link's bytes
-// are a path and not the content its name suggests, and a gitlink names a commit in another
-// repository, so neither mode's name tells the lane what a check would grade. Either side's
-// mode is read, so a typechange to or from a link, and a deleted submodule pointer, are
-// unknown rather than classified by a name the tree no longer backs.
-func changeClasses(change ComposedChange, tree TreeFacts) []string {
+// linkChange reports whether either side of change is a symbolic link or a gitlink. A
+// symbolic link's bytes are a path and not the content its name suggests, and a gitlink
+// names a commit in another repository, so neither mode's name tells what a check would
+// grade. Either side's mode is read, so a typechange to or from a link, and a deleted
+// submodule pointer, count.
+func linkChange(change ComposedChange) bool {
 	for _, mode := range []string{change.SrcMode, change.DstMode} {
 		if mode == benchgit.SymlinkMode || mode == benchgit.GitlinkMode {
-			return []string{UnknownClass}
+			return true
 		}
+	}
+	return false
+}
+
+// changeClasses answers the classes one composed change carries. A link change is unknown
+// rather than classified by a name the tree no longer backs.
+func changeClasses(change ComposedChange, tree TreeFacts) []string {
+	if linkChange(change) {
+		return []string{UnknownClass}
 	}
 	var names []string
 	for _, class := range laneClasses {

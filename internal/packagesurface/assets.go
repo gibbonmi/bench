@@ -96,25 +96,11 @@ func EmbedTargets(root string) ([]string, error) {
 	}
 	var targets []string
 	for _, file := range goFiles {
-		data, err := os.ReadFile(file)
+		patterns, err := directivePatterns(root, file)
 		if err != nil {
 			return nil, err
 		}
-		dir := filepath.Dir(file)
-		for _, line := range strings.Split(string(data), "\n") {
-			match := goEmbedDirective.FindStringSubmatch(strings.TrimSpace(line))
-			if match == nil {
-				continue
-			}
-			for _, pattern := range strings.Fields(match[1]) {
-				pattern = strings.Trim(pattern, `"`)
-				rel, err := filepath.Rel(root, filepath.Join(dir, filepath.FromSlash(pattern)))
-				if err != nil {
-					return nil, err
-				}
-				targets = append(targets, filepath.ToSlash(rel))
-			}
-		}
+		targets = append(targets, patterns...)
 	}
 	return targets, nil
 }

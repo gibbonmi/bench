@@ -1,11 +1,14 @@
 package packagesurface
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 // EmbedDirectives are the patterns of the //go:embed directives of a tree, each resolved
@@ -52,9 +55,13 @@ func directivePatterns(root, file string) ([]string, error) {
 		if match == nil {
 			continue
 		}
-		for _, pattern := range strings.Fields(match[1]) {
+		words, err := embedPatterns(match[1])
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", file, err)
+		}
+		for _, pattern := range words {
 			// The all: prefix only admits hidden files; the pattern after it names the paths.
-			pattern = strings.TrimPrefix(strings.Trim(pattern, "\"`"), "all:")
+			pattern = strings.TrimPrefix(pattern, "all:")
 			rel, err := filepath.Rel(root, filepath.Join(dir, filepath.FromSlash(pattern)))
 			if err != nil {
 				return nil, err
@@ -63,6 +70,55 @@ func directivePatterns(root, file string) ([]string, error) {
 		}
 	}
 	return patterns, nil
+}
+
+// embedPatterns splits the arguments of one embed directive as Go reads them. A pattern ends
+// at a space, unless it is a double-quoted or back-quoted Go string, which can hold one.
+func embedPatterns(args string) ([]string, error) {
+	var patterns []string
+	for args = strings.TrimSpace(args); args != ""; args = strings.TrimSpace(args) {
+		var pattern string
+		switch args[0] {
+		case '`':
+			quoted, rest, closed := strings.Cut(args[1:], "`")
+			if !closed {
+				return nil, invalidEmbedQuote(args)
+			}
+			pattern, args = quoted, rest
+		case '"':
+			end := 1
+			for end < len(args) && args[end] != '"' {
+				if args[end] == '\\' {
+					end++
+				}
+				end++
+			}
+			if end >= len(args) {
+				return nil, invalidEmbedQuote(args)
+			}
+			unquoted, err := strconv.Unquote(args[:end+1])
+			if err != nil {
+				return nil, invalidEmbedQuote(args[:end+1])
+			}
+			pattern, args = unquoted, args[end+1:]
+		default:
+			end := strings.IndexFunc(args, unicode.IsSpace)
+			if end < 0 {
+				end = len(args)
+			}
+			pattern, args = args[:end], args[end:]
+		}
+		if args != "" && strings.TrimLeftFunc(args, unicode.IsSpace) == args {
+			return nil, invalidEmbedQuote(args)
+		}
+		patterns = append(patterns, pattern)
+	}
+	return patterns, nil
+}
+
+// invalidEmbedQuote is the refusal of directive text that Go does not read as a pattern.
+func invalidEmbedQuote(text string) error {
+	return fmt.Errorf("invalid quoted string in //go:embed: %s", text)
 }
 
 // Matches reports whether a directive embeds the repo-relative slash path rel: a directive

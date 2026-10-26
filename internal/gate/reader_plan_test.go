@@ -284,9 +284,11 @@ func TestReaderPlanRunsWholeForARemovedSymlink(t *testing.T) {
 }
 
 // TestReaderPlanRunsWholeForAnAddedGitlink proves that adding a gitlink in docs/ runs the
-// whole gate.
+// whole gate, even when the repository's configuration hides submodule changes from a diff.
 func TestReaderPlanRunsWholeForAnAddedGitlink(t *testing.T) {
-	newLandingFixture(t, nil).refuses(func(f *landingFixture) { f.gitlink("docs/module") }, nil, refusedLink)
+	f := newLandingFixture(t, nil)
+	outcomeGit(t, f.root, "config", "diff.ignoreSubmodules", "all")
+	f.refuses(func(f *landingFixture) { f.gitlink("docs/module") }, nil, refusedLink)
 }
 
 // TestReaderPlanRunsWholeForARemovedGitlink proves that removing a gitlink from docs/ runs the
@@ -318,6 +320,14 @@ func TestReaderPlanRunsWholeForANewOracle(t *testing.T) {
 	f.refuses(docsChange, nil, refusedIdentity)
 }
 
+// TestReaderPlanRunsWholeForAnOpenSubject proves that an open oracle subject runs the whole
+// gate under the identity case, even with a table of its own identity.
+func TestReaderPlanRunsWholeForAnOpenSubject(t *testing.T) {
+	f := newLandingFixture(t, nil)
+	f.plan.Closed = false
+	f.refuses(docsChange, nil, refusedIdentity)
+}
+
 // TestReaderPlanRunsWholeAfterFiveReaderLandings proves that five reader-record commits after
 // the marker run the whole gate.
 func TestReaderPlanRunsWholeAfterFiveReaderLandings(t *testing.T) {
@@ -335,20 +345,24 @@ func TestReaderPlanRunsTheReaderSetAfterFourReaderLandings(t *testing.T) {
 }
 
 // TestReaderPlanRunsWholeForAChainGap proves that a commit after the marker with no reader
-// record runs the whole gate.
+// record runs the whole gate, at the first commit and at the last before the destination.
 func TestReaderPlanRunsWholeForAChainGap(t *testing.T) {
-	f := newLandingFixture(t, nil)
-	f.chain(2, 0)
-	f.refuses(docsChange, nil, refusedChainGap)
+	for _, gap := range []int{0, 1} {
+		f := newLandingFixture(t, nil)
+		f.chain(2, gap)
+		f.refuses(docsChange, nil, refusedChainGap)
+	}
 }
 
-// TestReaderPlanRunsWholeWithoutAMarker proves that a landing value with no green marker
-// runs the whole gate.
+// TestReaderPlanRunsWholeWithoutAMarker proves that a landing value with no green marker, or
+// with a marker that is not an ancestor of the destination, runs the whole gate.
 func TestReaderPlanRunsWholeWithoutAMarker(t *testing.T) {
 	f := newLandingFixture(t, nil)
 	if _, eligible, out := f.decide(WithLanding(context.Background(), f.destination, ""), docsChange, nil, f.root); eligible || out != fmt.Sprintf(readerRefusedFormat, refusedNoMarker) {
 		t.Fatalf("plan without a marker = %t %q; want the whole gate with the refusal %q", eligible, out, refusedNoMarker)
 	}
+	f.destination = outcomeGit(t, f.root, "commit-tree", "-m", "unrelated destination", f.marker+"^{tree}")
+	f.refuses(docsChange, nil, refusedNoMarker)
 }
 
 // TestReaderPlanNeedsALandingContext proves that the covered change without a landing value

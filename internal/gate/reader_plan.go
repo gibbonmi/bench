@@ -74,7 +74,7 @@ func (p readerPlanner) plan(ctx context.Context, stdout io.Writer, runtimeRoot, 
 // decide answers the reader run, or the first case of the landing plan that holds. A read
 // that fails refuses under the case that reads it.
 func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) (readerRun, string) {
-	if selection == nil || !narrowsKitTable(runtimeRoot, storageRoot, plan.Resolution) || !RootConformanceRuns(runtimeRoot, selection.SourceRoot) {
+	if !kitRun(runtimeRoot, storageRoot, plan, selection) {
 		return readerRun{}, refusedNotKit
 	}
 	if !landed {
@@ -90,7 +90,8 @@ func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, st
 	if err != nil {
 		return readerRun{}, refusedNoMarker
 	}
-	changes, err := ComposedChanges(storageRoot, landing.destination, plan.Tree)
+	// A gitlink change refuses the reader set, so the list keeps it whatever the configuration.
+	changes, err := benchgit.TreeChangesIncludingSubmodules(storageRoot, landing.destination+"^{tree}", plan.Tree)
 	if err != nil {
 		return readerRun{}, refusedUncovered
 	}
@@ -114,12 +115,8 @@ func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, st
 			return readerRun{}, refusedBuildInput
 		}
 	}
-	for _, change := range changes {
-		for _, mode := range []string{change.SrcMode, change.DstMode} {
-			if mode == benchgit.SymlinkMode || mode == benchgit.GitlinkMode {
-				return readerRun{}, refusedLink
-			}
-		}
+	if slices.ContainsFunc(changes, linkChange) {
+		return readerRun{}, refusedLink
 	}
 	markerTree, err := commitTree(storageRoot, landing.marker)
 	if err != nil {
@@ -129,7 +126,8 @@ func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, st
 	if err != nil {
 		return readerRun{}, refusedNoTable
 	}
-	if table.Identity != plan.Identity {
+	// An open subject has no identity that a table can share.
+	if !plan.Closed || table.Identity != plan.Identity {
 		return readerRun{}, refusedIdentity
 	}
 	chain, err := benchgit.FirstParentsAfter(storageRoot, landing.marker, landing.destination)
