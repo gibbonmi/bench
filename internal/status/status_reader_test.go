@@ -99,13 +99,28 @@ func TestGateRowShowsReaderGreen(t *testing.T) {
 	}
 }
 
-// TestGateRowKeepsTheStaleRowWithoutAReaderRecord proves that a stale tip whose own tree
-// holds no reader record keeps the stale row and its bench gate route, even when an earlier
-// commit after the green marker holds one.
+// TestGateRowKeepsTheStaleRowWithoutAReaderRecord proves that a stale tip keeps the stale row
+// and its bench gate route when its own tree holds no reader record, even when an earlier
+// commit after the green marker holds one. It proves the same when the tip's tree holds a
+// reader record but the green marker is not an ancestor of the tip.
 func TestGateRowKeepsTheStaleRowWithoutAReaderRecord(t *testing.T) {
-	root := readerLandings(t, 0, 1)
-	rows := appendGate(nil, root)
-	if len(rows) != 1 || !strings.HasPrefix(rows[0].detail, "stale (") || rows[0].action.render() != "bench gate" {
-		t.Fatalf("rows = %#v, want the stale row and its bench gate route", rows)
+	for _, tc := range []struct {
+		name string
+		repo func(t *testing.T) string
+	}{
+		{"no reader record on the tip", func(t *testing.T) string { return readerLandings(t, 0, 1) }},
+		{"a green marker that is not an ancestor of the tip", func(t *testing.T) string {
+			root := readerLandings(t, 1, 2)
+			side := gitRun(t, root, "commit-tree", "-p", "HEAD~3", "-m", "side", "HEAD~3^{tree}")
+			gitRun(t, root, "update-ref", greenmarker.Ref("main"), side)
+			return root
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rows := appendGate(nil, tc.repo(t))
+			if len(rows) != 1 || !strings.HasPrefix(rows[0].detail, "stale (") || rows[0].action.render() != "bench gate" {
+				t.Fatalf("rows = %#v, want the stale row and its bench gate route", rows)
+			}
+		})
 	}
 }

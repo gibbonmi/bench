@@ -51,9 +51,9 @@ type Inspection struct {
 	// this tree's red.
 	Drifted bool
 	// Only Inspect fills the two reader facts, so a gate run pays no history read for them.
-	// ReaderRecorded marks a current tree that holds a reader record. ReaderLandings is the
-	// count of reader-record commits after the green marker up to HEAD, and it is counted
-	// only when ReaderRecorded holds.
+	// ReaderRecorded marks a current tree that holds a reader record, on a HEAD that descends
+	// from the green marker. ReaderLandings is the count of reader-record commits after the
+	// green marker up to HEAD, and it is counted only when ReaderRecorded holds.
 	ReaderRecorded bool
 	ReaderLandings int
 }

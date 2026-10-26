@@ -14,41 +14,38 @@ import (
 const ReaderLandingBound = readerChainBound
 
 // withReaderFacts adds the reader facts of root to gi. A store that cannot be read holds no
-// reader record.
+// reader record. Without a reader landing count, gi keeps no reader facts, so its stale row
+// still prints.
 func withReaderFacts(root string, gi Inspection) Inspection {
 	if recorded, err := ReaderRecorded(root, gi.CurrentTree); err != nil || !recorded {
 		return gi
 	}
-	gi.ReaderRecorded = true
-	gi.ReaderLandings = readerLandings(root)
+	landings, counted := readerLandings(root)
+	if !counted {
+		return gi
+	}
+	gi.ReaderRecorded, gi.ReaderLandings = true, landings
 	return gi
 }
 
-// readerLandings counts the first-parent commits after the green marker of root's default
-// branch, up to HEAD, whose tree holds a reader record. A marker or a history that cannot be
-// read counts none.
-func readerLandings(root string) int {
+// readerLandings counts the reader landings of the landing plan's chain from the green marker
+// of root's default branch up to HEAD. It answers false when the marker is absent, when the
+// marker is not an ancestor of HEAD, or when a read fails.
+func readerLandings(root string) (int, bool) {
 	branch, ok := benchgit.ResolvedDefault(root)
 	if !ok {
-		return 0
+		return 0, false
 	}
 	marker, present, err := greenmarker.Read(root, branch)
 	if err != nil || !present {
-		return 0
+		return 0, false
 	}
-	chain, err := benchgit.FirstParentsAfter(root, marker, "HEAD")
+	if ancestor, err := benchgit.IsAncestor(root, marker, "HEAD"); err != nil || !ancestor {
+		return 0, false
+	}
+	_, landings, err := readerChain(root, landingValue{destination: "HEAD", marker: marker})
 	if err != nil {
-		return 0
+		return 0, false
 	}
-	count := 0
-	for _, commit := range chain {
-		tree, err := commitTree(root, commit)
-		if err != nil {
-			continue
-		}
-		if recorded, err := ReaderRecorded(root, tree); err == nil && recorded {
-			count++
-		}
-	}
-	return count
+	return len(landings), true
 }
