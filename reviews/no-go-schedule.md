@@ -1341,6 +1341,74 @@
             "C7"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3r2-standards",
+          "performer": "claude:ngs-c3r2-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "039b78f2b2b4025079aff7990d9bde89be284363",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3r2-standards-20261025",
+            "digest": "sha256:ce9acf2f98c19bd875968700d9afdea4c0dceb906afd955fe524d00244f34f44",
+            "excerpt": "Axis: Standards, NG-C3 confirming round r2. Session claude:ngs-c3r2-standards-20261025. Repair delta ff617775..92c79f1a.\nCount: 1 finding. Worst issue: S4.\nS1, S2, S3 confirmed closed: kitRun (reader_store.go:54-56) is the one kit-run predicate; EmbedTargets calls directivePatterns and keeps its build-source scope; linkChange (lane_select.go:71) serves changeClasses and the reader plan.\nS4 sev 5, conf 6, auto-fix: phaseTableRed = 1 (authorization.go:38-39) restates the gate's red exit (report.go:82). The gate should export one named constant used at both sites.\nAdvice (no ID): the worktree fixture hand-writes the reader-record JSON; reader_plan.go:94 re-derives the destination tree.\n"
+          },
+          "axis": "Standards",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "92c79f1af4edea5a92f895027c16f242a7ffc81c",
+          "finding_ids": [
+            "S4"
+          ],
+          "supersedes": [
+            "c3r1-standards"
+          ]
+        },
+        {
+          "id": "c3r2-spec",
+          "performer": "claude:ngs-c3r2-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "039b78f2b2b4025079aff7990d9bde89be284363",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3r2-spec-20261025",
+            "digest": "sha256:58a91c0f6851037afa6ff8f95eec2a5fe9da9c83b28b8d8649c275770d41b943",
+            "excerpt": "Axis: Spec, NG-C3 confirming round r2. Session claude:ngs-c3r2-spec-20261025. Repair delta ff617775..92c79f1a and plan amendment c9e9e8f5..8175d208.\nCount: 0 findings. Worst issue: none.\nP1, P2, P3, NG83, NG84, and the N1 order (derive before the release, persist after the verdict) are satisfied.\nAdvice (no ID): the resume refusal branch has no verb-level test; an Invalid reader record reads as no record (matches the spec's \"valid\"); the red exit literal is duplicated; NG83's why-cell names only the plan half; the lane's ComposedChanges still uses TreeChanges.\n"
+          },
+          "axis": "Spec",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "92c79f1af4edea5a92f895027c16f242a7ffc81c",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r1-spec"
+          ]
+        },
+        {
+          "id": "c3r2-coverage",
+          "performer": "claude:ngs-c3r2-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "039b78f2b2b4025079aff7990d9bde89be284363",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3r2-coverage-20261025",
+            "digest": "sha256:0e53c610ef23313cb81f84f51b0bb25ca7d852e191f57c0eaf68c712e88cd2ac",
+            "excerpt": "Axis: Coverage, NG-C3 confirming round r2. Session claude:ngs-c3r2-coverage-20261025. Repair delta ff617775..92c79f1a.\nCount: 0 findings. Worst issue: none.\nEach new test is red-capable against its finding: C1/NG83 (plan and store), C3, C4, C5/P2, C6/P3, C7, P1/C2, NG84.\nAdvice (no ID): the verb-level resume refusal is unpinned (severity 4); EmbedTargets now strips all: and backquotes with no direct test.\n"
+          },
+          "axis": "Coverage",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "92c79f1af4edea5a92f895027c16f242a7ffc81c",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r1-coverage"
+          ]
         }
       ]
     }
@@ -1434,7 +1502,7 @@ NG-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No revie
 
 NG-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
 
-NG-C3 consumed repair cycle 1 of 2 after its initial review (round r1). One combined repair session on ticket 06 carries every accepted finding, because the findings share files across tickets 03, 05, and 06. No reviewer extension applies.
+NG-C3 consumed repair cycle 1 of 2 after its initial review (round r1), and cycle 2 of 2 for the round r2 finding S4. One combined repair session on ticket 06 carries every accepted finding, because the findings share files across tickets 03, 05, and 06. No reviewer extension applies.
 
 ## Standards
 
@@ -1451,6 +1519,10 @@ NG-C3 round r1: 3 findings. Worst issue: S2, a duplicated embed parse that alrea
 - S2 | auto-fix | confidence 9 | `internal/packagesurface/embed_directives.go:47-67` | The embed parse repeats `EmbedTargets` and differs on backticks and the `all:` prefix. The axis asked for the user; `EmbedTargets` keeps its file scope.
 - S3 | auto-fix | confidence 9 | `internal/gate/reader_plan.go:117-123` | The link-mode check repeats `changeClasses` in `internal/gate/lane_select.go:302-306`.
 
+NG-C3 round r2 (confirming): S1, S2, and S3 are closed. 1 new finding.
+
+- S4 | auto-fix | confidence 6 | `internal/gate/authorization/authorization.go:38-39` | `phaseTableRed = 1` restates the red exit of `internal/gate/report.go:82`.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -1464,6 +1536,8 @@ NG-C3 round r1: 3 findings. Worst issue: P1, a reader-set timeout that attribute
 - P1 | auto-fix | confidence 6 | `internal/gate/authorization/authorization.go:33-41` | A reader-set timeout or cancel maps to `candidate`. The axis asked for the user; a timeout and a cancel now map to `infrastructure`.
 - P2 | auto-fix | confidence 5 | `internal/worktree/land_resume.go:664-671` | An unreadable reader record at resume reads as no record, so the marker can advance. The axis asked for the user; the resume now refuses.
 - P3 | auto-fix | confidence 6 | `internal/gate/reader_plan.go:93` | The change list omits submodules, so ambient configuration can hide a gitlink change from case 6.
+
+NG-C3 round r2 (confirming): 0 findings. P1, P2, P3, NG83, NG84, and the N1 order hold.
 
 ## Coverage
 
@@ -1489,6 +1563,8 @@ NG-C3 round r1: 7 findings. Worst issue: C5, the resume wiring of the reader fac
 - C5 | auto-fix | confidence 8 | `internal/worktree/land_resume.go:296-314` | No test bites the resume wiring of the reader fact.
 - C6 | auto-fix | confidence 6 | `internal/gate/reader_plan.go:93` | Ambient configuration can hide a gitlink change. Spec finding P3 holds the same repair.
 - C7 | auto-fix | confidence 7 | `internal/packagesurface/embed_directives.go:55` | A quoted embed pattern with a space splits into two words. Standards finding S2 holds the shared parser.
+
+NG-C3 round r2 (confirming): 0 findings. Each new test is red-capable against the finding it closes.
 
 ## Measurement (NG60)
 
