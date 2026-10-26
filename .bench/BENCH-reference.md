@@ -545,7 +545,8 @@ conformance entry point. The conformance registry owns check order,
 subject, and tier. That one ordinary test run executes the complete dev-tier
 check set, meta checks included, and so validates the registry itself. The whole
 phase table has no separate conformance phase, driver, or per-check evidence partition.
-`gate --fresh`, the landing's prospective execution, and ship remain full boundaries.
+`gate --fresh` and ship remain full boundaries. The landing's prospective execution is a full
+boundary unless its landing plan selects the reader set.
 
 `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>` checks the named chunk's
 source-bound author verification and three independent review results before advancement.
@@ -636,7 +637,7 @@ A run that reuses a fresh green of its subject prints one
 checkpoint after a green prepared run of its subject prints that line alone.
 
 A chunk checkpoint runs the delta set when its change since the reviewed tip is test-only
-and that tip has a whole green. The delta set is the one reduced schedule: gofmt, vet, the
+and that tip has a whole green. The delta set is a reduced schedule: gofmt, vet, the
 changed test packages, and root conformance. The checkpoint runs the whole gate instead in each of these cases:
 
 - a changed test file is in the system suite or in a race-table package
@@ -646,13 +647,44 @@ changed test packages, and root conformance. The checkpoint runs the whole gate 
 
 A delta run prints the phase table of those phases and then
 `gate: green (delta checkpoint)`. That green writes no verdict. It writes only a record of the
-delta class, the one reduced record, to `<git-dir>/bench-last-delta`. So no landing, no
+delta class, a reduced record, to `<git-dir>/bench-last-delta`. So no landing, no
 complete checkpoint, and no whole checkpoint accepts it.
 
 A later chunk checkpoint of the same base and subject reuses the delta green when the delta
 is still eligible. It prints one `gate: green (delta green reused for this subject)` line and
 runs no phase. A prepared run at a test-only repair commit takes the delta too, so the
 checkpoint after the record commit reuses its green.
+
+A kit landing through `bench worktree land` reads its landing plan before any phase. The
+reader set is the second reduced schedule. It runs these phases:
+
+- `test` over the readers of the changed families and root conformance
+- `race` with its whole table, only when a race-table package is a reader
+- `system`
+
+A green reader set prints the phase table of those phases and then `gate: green (reader set)`.
+That green writes no verdict. It writes only a reader record of the graded tree. So that
+record authorizes its own landing alone, and the green marker stays at the last whole green.
+
+The landing runs the whole gate instead in each of these cases:
+
+- the green marker is absent, or it is not an ancestor of the destination
+- a changed path sits outside every covered family
+- a changed path is an embed target or a shellcheck-inventory path
+- a changed path has a symbolic-link or gitlink mode
+- no reader table exists for the tree of the green marker
+- the oracle identity differs from the identity of the table, or the oracle subject is open
+- a reader hold names the current green marker
+- a commit after the green marker has no reader record
+- five commits follow the green marker
+
+The gate then prints `gate: whole gate (reader set refused: <case>)` before the phases.
+`<case>` names the first case that held. A linked repository, a merge, a plain `bench gate`,
+and a checkpoint print no such line.
+
+A red whole landing run writes a reader hold that names its green marker. Its refusal ends
+with `; reader landings since the green marker: <commits>` when reader-record commits follow
+that marker. Each named commit is a suspect of the red.
 
 The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
 the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
