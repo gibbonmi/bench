@@ -227,13 +227,20 @@ func runReaderOn(t *testing.T, root string) (Result, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dir := t.TempDir()
-	outcomeWrite(t, dir, "bench", "#!/bin/sh\nexit 0\n", 0o755)
 	run := newReaderRun(plan, readerSchedule{Packages: []string{"./reader"}}, outcomeGit(t, root, "rev-parse", "HEAD^{tree}"), outcomeGit(t, root, "rev-parse", "HEAD"))
 	ctx := context.Background()
 	release := func() error { return nil }
-	result := runReader(ctx, ctx, root, root, nil, run, evaluation, nil, &runbinary.Selection{Path: filepath.Join(dir, "bench")}, release, durablefile.Native(), &bytes.Buffer{}, &bytes.Buffer{})
+	result := runReader(ctx, ctx, root, root, nil, run, evaluation, nil, stubSelection(t, ""), release, durablefile.Native(), &bytes.Buffer{}, &bytes.Buffer{})
 	return result, plan.Tree
+}
+
+// stubSelection answers a run binary selection with kit as its source root, whose executable
+// exits 0 for every step.
+func stubSelection(t *testing.T, kit string) *runbinary.Selection {
+	t.Helper()
+	dir := t.TempDir()
+	outcomeWrite(t, dir, "bench", "#!/bin/sh\nexit 0\n", 0o755)
+	return &runbinary.Selection{Path: filepath.Join(dir, "bench"), SourceRoot: kit}
 }
 
 // readerRecordBytes answers the bytes of a valid reader record of tree, as the reader-record
