@@ -246,6 +246,9 @@ type Result struct {
 	Face string
 	// Schedule names the phase schedule of the run, so a caller can attribute a reduced run.
 	Schedule Schedule
+	// Suspects names the reader landings of a red whole landing run: each first-parent commit
+	// after the green marker, up to the destination, whose tree holds a reader record.
+	Suspects []string
 }
 
 // Schedule names the phase schedule of a gate run: the whole table, the delta set, or the

@@ -234,6 +234,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	}
 	recordedAt := time.Now().UTC()
 	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	var suspects []string
 	if status == "green" {
 		if err := retainGreen(replacer, storageRoot, plan, recordedAt); err != nil {
 			return persistenceFailure(storageRoot, rc, stderr, "gate evidence persistence failed", err)
@@ -242,6 +243,9 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
 			return operational(storageRoot, rc, stderr, "gate evidence invalidation failed")
 		}
+		if suspects, err = holdWholeGate(ctx, replacer, storageRoot); err != nil {
+			return persistenceFailure(storageRoot, rc, stderr, "gate reader hold persistence failed", err)
+		}
 	}
 	if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
 		return persistenceFailure(storageRoot, rc, stderr, "gate final persistence failed", err)
@@ -249,7 +253,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if status == "green" {
 		derived.persist(ctx, replacer, storageRoot)
 	}
-	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
+	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC()), Suspects: suspects}
 }
 
 // takeExecutionLock requests the non-blocking write lock on the gate lock file. Tests

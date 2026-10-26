@@ -47,6 +47,9 @@ type Result struct {
 	// Cause is the refusal face that the gate recorded before its oracle ran, empty when the
 	// oracle ran. A landing routes by this type and never by the reason text.
 	Cause Cause
+	// Suspects is the gate's list of reader landings behind a red whole landing run, empty for
+	// every other run. The refusal line names them.
+	Suspects []string
 }
 
 // Cause is a gate refusal face that a caller outside the gate verb routes by.
@@ -185,7 +188,7 @@ func attribute(execution gate.Result, inspection gate.EvidenceInspection, inheri
 			kind = Candidate
 		}
 	}
-	result := Result{Kind: kind, Cause: Cause(execution.Face)}
+	result := Result{Kind: kind, Cause: Cause(execution.Face), Suspects: execution.Suspects}
 	if kind != ReaderGreen {
 		result.Evidence = evidenceToken(kind, tree, inspection)
 	}

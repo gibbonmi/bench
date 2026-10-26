@@ -32,6 +32,7 @@ const (
 	refusedLink       = "link or gitlink"
 	refusedNoTable    = "no reader table"
 	refusedIdentity   = "new oracle identity"
+	refusedHold       = "reader hold"
 	refusedChainGap   = "chain gap"
 	refusedChainBound = "reader landing bound"
 )
@@ -50,6 +51,12 @@ func WithLanding(ctx context.Context, destination, marker string) context.Contex
 	return context.WithValue(ctx, landingKey{}, landingValue{destination: destination, marker: marker})
 }
 
+// landingOf answers the landing value of ctx, and false when ctx carries none.
+func landingOf(ctx context.Context) (landingValue, bool) {
+	landing, landed := ctx.Value(landingKey{}).(landingValue)
+	return landing, landed
+}
+
 // readerPlanner runs the landing plan. shellcheck answers the shellcheck inventory of a root.
 type readerPlanner struct {
 	shellcheck func(root string) []string
@@ -60,7 +67,7 @@ type readerPlanner struct {
 // a kit run, and a run without a landing value, print no line, so a linked repository and a
 // plain gate run keep their output.
 func (p readerPlanner) plan(ctx context.Context, stdout io.Writer, runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) (readerRun, bool) {
-	landing, landed := ctx.Value(landingKey{}).(landingValue)
+	landing, landed := landingOf(ctx)
 	run, refusal := p.decide(landing, landed, runtimeRoot, storageRoot, plan, selection)
 	if refusal == "" {
 		return run, true
@@ -130,23 +137,40 @@ func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, st
 	if !plan.Closed || table.Identity != plan.Identity {
 		return readerRun{}, refusedIdentity
 	}
-	chain, err := benchgit.FirstParentsAfter(storageRoot, landing.marker, landing.destination)
-	if err != nil {
-		return readerRun{}, refusedChainGap
+	if held, err := readerHeld(storageRoot, landing.marker); err != nil || held {
+		return readerRun{}, refusedHold
 	}
-	for _, commit := range chain {
-		tree, err := commitTree(storageRoot, commit)
-		if err != nil {
-			return readerRun{}, refusedChainGap
-		}
-		if recorded, err := ReaderRecorded(storageRoot, tree); err != nil || !recorded {
-			return readerRun{}, refusedChainGap
-		}
+	chain, landings, err := readerChain(storageRoot, landing)
+	if err != nil || len(landings) != len(chain) {
+		return readerRun{}, refusedChainGap
 	}
 	if len(chain) >= readerChainBound {
 		return readerRun{}, refusedChainBound
 	}
 	return newReaderRun(plan, readerScheduleOf(table.Readers, families), destinationTree, landing.marker), ""
+}
+
+// readerChain answers the first-parent chain after the green marker of landing, up to its
+// destination, and the commits of that chain whose tree holds a reader record.
+func readerChain(root string, landing landingValue) (chain, landings []string, err error) {
+	chain, err = benchgit.FirstParentsAfter(root, landing.marker, landing.destination)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, commit := range chain {
+		tree, err := commitTree(root, commit)
+		if err != nil {
+			return nil, nil, err
+		}
+		recorded, err := ReaderRecorded(root, tree)
+		if err != nil {
+			return nil, nil, err
+		}
+		if recorded {
+			landings = append(landings, commit)
+		}
+	}
+	return chain, landings, nil
 }
 
 // commitTree answers the tree of commit in root.
