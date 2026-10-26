@@ -399,3 +399,20 @@ The ticket 01 repair session reported these reds in its `Witness return:` field 
 - C1: the new expectation of TestGradeIdentityFollowsTheRunBinarySource passes on the code before the repair, so two `bench probe --run` mutants demonstrated its red. The mutant that changes `return kitRoot(storageRoot)` to `return runtimeRoot` in `internal/gate/gate.go` made the test fail. The mutant that changes `sourceKind := res.Kind` to `sourceKind := ProspectiveGateSh` in `internal/gate/subject.go` also made it fail. Both probes restored their subject.
 
 The orchestrator wrote these reds after it prepared the confirming charge. A `bench learning` entry records that slip.
+
+## GR-C2 ticket 02 author witness reds
+
+The ticket 02 author probed `internal/gate` at its ticket work. Each mutant below made its named test fail, and each probe restored its subject.
+
+- The engine mutant `frame(h, plan.Identity)` to `frame(h, plan.Oracle)` restores the old key that the checkout path binds. It failed TestGradeKeyCrossesCheckouts (GR10, GR11) at `grade_key_test.go:68`.
+- The same mutant failed TestProspectiveEvidenceKeysToTheTreeAndRunBinary (GR13) at `prospective_owner_test.go:221`.
+- The same mutant failed TestGradeKeyBindsThePosture (GR14) at `grade_key_test.go:80`.
+- The same mutant failed TestCompleteCheckpointReusesAnUnpurposedGreenOfItsTree (GR16) at `grade_key_test.go:103`.
+- The same mutant failed TestGradeKeyRedRemovesAnotherCheckoutsGreen (GR18) at `grade_key_test.go:138`.
+- An omitted `frame(h, plan.Tree)` failed TestProspectiveEvidenceKeysToTheTreeAndRunBinary (GR12) at `prospective_owner_test.go:216`.
+- An omitted `frameBaselineSchedule(id, identityRoot)` failed TestGradeKeyBindsTheBaselineSchedule (GR15) at `grade_key_test.go:89`.
+- An expiry test changed to `if false {` failed TestGradeKeyKeepsTheSourceWindow (GR17) at `grade_key_test.go:122`.
+- A dropped grade comparison failed TestGradeKeyRefusesAMisnamedRecord (GR20) at `grade_key_test.go:163`.
+- After the journey-test fix at c702eb07d, the mutant `if !evidence.ReusableGreen {` to `if true {` in `engine.go` failed TestLandCommandPublicRealGitJourney/clean at `land_journey_test.go:83`.
+
+The planned reuse probe bit at `grade_key_test.go:68` at c702eb07d.
