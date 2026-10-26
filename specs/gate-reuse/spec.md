@@ -121,7 +121,7 @@ Every other executable keeps its absolute path. Today `identityPath` spells both
 
 The baseline phase schedule is the answer of `readManifest` at the baseline's `.bench/phases.json`, the loader's own read. Present bytes enter as bytes, and a live link enters as the bytes of its target, which the run then uses.
 An absent manifest enters as one distinct value. A defect answer, such as a dangling link, a FIFO, or a directory, enters as one stable defect value with no path in it.
-`readManifest` stats the path before it opens it, so a FIFO never blocks the identity. The run's own loader refuses a defect manifest before any phase, so a defect identity never records a green.
+`readManifest` stats the path before it opens it, so a FIFO never blocks the identity. A defect manifest is never a schedule that a run uses: the loader refuses it before any phase, and a plain gate script never reads it.
 
 The oracle digest keeps its frames and its order, which is FT449's closed rule. It keys the per-checkout gate cache that `bench status` and `bench gate` read. Rows GR1 to GR9 and GR45 grade the identity.
 
@@ -220,7 +220,7 @@ The plan uses version 1. The build records one fresh author for each ticket on t
 A probe names bytes that the chunk keeps or writes. The plan amendment re-cuts a probe whose bytes the author moved.
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"GR-C1","tickets":["01-leave-the-checkout-out-of-the-identity.md","02-key-the-evidence-store.md","03-record-a-reused-green.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"posture-probe","command":"bench probe internal/gate/subject.go --swap 'frame(id, strconv.FormatBool(strict()))' --with 'frame(id, \"false\")' --package ./internal/gate --run TestAuthorizationKeyBindsThePosture --expect TestAuthorizationKeyBindsThePosture","probe":"Drop the posture from the oracle identity. The strict run then reuses the relaxed green, so the posture row fails."},{"id":"reuse-probe","command":"bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/worktree --run TestLandReusesTheMergeGreen --expect TestLandReusesTheMergeGreen","probe":"Make the store answer no green. The landing then cannot reuse the merge green, so the merge-reuse row fails."}]},{"id":"GR-C2","tickets":["04-plan-a-merge-grade.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"usage","command":"bench test --package ./internal/usage"},{"id":"commands","command":"bench test --package ./cmd/bench"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"current-probe","command":"bench probe internal/landing/merge.go --swap 'if contains {' --with 'if false {' --package ./internal/worktree --run TestMergePlanNamesEachGrade --expect TestMergePlanNamesEachGrade","probe":"Skip the current-kind decision. A current target then composes and grades, so the none-grade row fails."}]},{"id":"GR-C3","tickets":["05-record-the-reuse-rule.md"],"verification":[{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"prose","command":"bench test --check prose"}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base cfbd1d360c2d0048bad07d142468c4bb47f8fc20"},{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"}]}
+{"version":1,"chunks":[{"id":"GR-C1","tickets":["01-leave-the-checkout-out-of-the-identity.md","02-key-the-evidence-store.md","03-record-a-reused-green.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"census","command":"bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus"},{"id":"posture-probe","command":"bench probe internal/gate/subject.go --swap 'frame(id, strconv.FormatBool(strict()))' --with 'frame(id, \"false\")' --package ./internal/gate --run TestAuthorizationKeyBindsThePosture --expect TestAuthorizationKeyBindsThePosture","probe":"Drop the posture from the oracle identity. The strict run then reuses the relaxed green, so the posture row fails."},{"id":"reuse-probe","command":"bench probe internal/gate/engine.go --swap 'inspection.ReusableGreen, inspection.Reason = true, \"\"' --with 'inspection.ReusableGreen, inspection.Reason = false, \"probe\"' --package ./internal/worktree --run TestLandReusesTheMergeGreen --expect TestLandReusesTheMergeGreen","probe":"Make the store answer no green. The landing then cannot reuse the merge green, so the merge-reuse row fails."}]},{"id":"GR-C2","tickets":["04-plan-a-merge-grade.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"landing","command":"bench test --package ./internal/landing"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"usage","command":"bench test --package ./internal/usage"},{"id":"commands","command":"bench test --package ./cmd/bench"},{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"current-probe","command":"bench probe internal/landing/merge.go --swap 'if contains {' --with 'if false {' --package ./internal/worktree --run TestMergePlanNamesEachGrade --expect TestMergePlanNamesEachGrade","probe":"Skip the current-kind decision. A current target then composes and grades, so the none-grade row fails."}]},{"id":"GR-C3","tickets":["05-record-the-reuse-rule.md"],"verification":[{"id":"root-conformance","command":"bench test --check root-conformance"},{"id":"prose","command":"bench test --check prose"}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base cfbd1d360c2d0048bad07d142468c4bb47f8fc20"},{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"}]}
 ```
 
 ## Testing decisions
@@ -236,6 +236,8 @@ The landing rows use the landing fixture of `internal/worktree/land_fixtures_tes
 The merge plan rows use the merge sets of `internal/worktree/merge_target_lane_test.go` and `internal/worktree/refusal_route_follow_test.go`, which declare a lane or none and count whole-gate runs.
 
 `internal/gate/reader_plan_test.go` holds 400 lines, so the reader-table row lives in `internal/gate/oracle_identity_test.go` and calls the reader plan's in-package fixture.
+The baseline-schedule rows take a new sibling file, `internal/gate/baseline_schedule_identity_test.go`, so that `oracle_identity_test.go` stays under its 400-line limit.
+Each new gate test builds its linked worktree through an existing in-package helper such as `runGitIn`. The architecture census refuses a direct `exec.Command`, or a `Run` or `Output` call with a `worktree` literal, in a gate test.
 No test crosses a package seam through another package's private helper. The gate seam observes every row through the `test` and `system` phases of the whole gate.
 
 ### Seam diagram
@@ -269,10 +271,10 @@ No test crosses a package seam through another package's private helper. The gat
 |---|---|---|---|---|
 | GR1 | 7, 8 | With an in-root launcher and tool, two identity roots with equal content and a space in one path give one oracle identity | planned TestOracleIdentityLeavesOutTheCheckoutPath in internal/gate/oracle_identity_test.go | An identity that frames the identity root, or spells an in-root path through it, gives two identities |
 | GR2 | 12 | Two identity roots with equal content still give two oracle digests | planned TestOracleIdentityLeavesOutTheCheckoutPath in internal/gate/oracle_identity_test.go | An oracle digest that also drops the path changes the gate cache key that FT449 closed |
-| GR3 | 9 | An absent baseline phase manifest and a present empty one give two oracle identities | planned TestOracleIdentityCarriesTheBaselineSchedule in internal/gate/oracle_identity_test.go | An identity that reads both states as no schedule gives one identity |
-| GR4 | 9 | Two baseline phase manifests with different bytes give two oracle identities | planned TestOracleIdentityCarriesTheBaselineSchedule in internal/gate/oracle_identity_test.go | An identity without the schedule gives one identity |
-| GR5 | 10 | A baseline phase manifest that is a live symbolic link gives two oracle identities for two targets with different bytes | planned TestOracleIdentityFollowsTheLoaderRead in internal/gate/oracle_identity_test.go | An identity that frames the link and not the bytes that `readManifest` returns gives one identity for two schedules |
-| GR6 | 10 | A dangling link and a FIFO at the baseline manifest give one oracle identity, and the subject build returns | planned TestOracleIdentityGivesADefectOneValue in internal/gate/oracle_identity_test.go | An identity that frames the defect text with its path gives two identities, and one that opens the FIFO blocks past the test deadline |
+| GR3 | 9 | An absent baseline phase manifest and a present empty one give two oracle identities | planned TestOracleIdentityCarriesTheBaselineSchedule in internal/gate/baseline_schedule_identity_test.go | An identity that reads both states as no schedule gives one identity |
+| GR4 | 9 | Two baseline phase manifests with different bytes give two oracle identities | planned TestOracleIdentityCarriesTheBaselineSchedule in internal/gate/baseline_schedule_identity_test.go | An identity without the schedule gives one identity |
+| GR5 | 10 | A baseline phase manifest that is a live symbolic link gives two oracle identities for two targets with different bytes | planned TestOracleIdentityFollowsTheLoaderRead in internal/gate/baseline_schedule_identity_test.go | An identity that frames the link and not the bytes that `readManifest` returns gives one identity for two schedules |
+| GR6 | 10 | A dangling link and a FIFO at the baseline manifest give one oracle identity, and the subject build returns | planned TestOracleIdentityGivesADefectOneValue in internal/gate/baseline_schedule_identity_test.go | An identity that frames the defect text with its path gives two identities, and one that opens the FIFO blocks past the test deadline |
 | GR7 | 5 | The capability posture changes the oracle identity | `internal/gate/oracle_identity_test.go` (`TestOracleIdentityCarriesTheCapabilityPosture`) | An identity without the posture stays equal across the two postures |
 | GR8 | 3, 4, 11 | Each of tool bytes, policy, `PATH`, baseline runner, environment value, and declared path bytes changes the oracle identity | `internal/gate/oracle_identity_test.go` (`TestOracleIdentityAndOracleShareTheClosure`) | An identity that drops one of these inputs stays equal across its change |
 | GR9 | 27 | The reader plan admits a stored table whose identity a sibling identity root computed over equal content | planned TestReaderPlanAdmitsATableOfASiblingCheckout in internal/gate/oracle_identity_test.go | A path-bound identity refuses the reader set with `new oracle identity` |
@@ -399,7 +401,7 @@ The readers are `reusableEvidence` at two sites of `executeSubjectOwning`, `insp
 `authorization.AuthorizeWithWriters` reads `InspectTreeContext` after each run, and `inheritedSubjectGreen` reads `ValidateProjectGreen`. Every site reaches the store through `evidencePath`.
 
 The readers of the oracle identity are `readerTrace.table` and the reader plan's identity compare. No other production code reads it.
-The readers of the baseline phase manifest are `phaseTable` and `LaneFor`, both through `readManifest`. The identity becomes a third caller of that one read.
+The readers of the baseline phase manifest are `phaseTable`, `LaneFor`, and `narrowsKitTable`, each through `readManifest`. The identity becomes a fourth caller of that one read.
 The system test `TestProcessLifetimeNestedGate` lists the store names before and after a refusal, so a renamed record keeps it green.
 
 The `.github` workflows set `BENCH_REQUIRE_CAPABILITIES=1` in `native-runtime.yml` and `release.yml`, and they call no merge. A fresh CI checkout holds no green, so the posture binding changes no CI run.
@@ -408,17 +410,19 @@ No anchor of the registry pins a sentence that the docs change: `bench anchors` 
 ### Ticket sizing
 
 Each ticket stays near 150k tokens of author context. The estimate takes the byte total of the ticket's `Writes:` files at about four bytes per token.
-It adds about 50k tokens of fixed context for the agreement, the skills, the spec rows, and the ticket, and the verification runs of its packages.
+It adds about 50k tokens of fixed context for the agreement, the skills, the spec rows, and the ticket. It adds about 20k to 30k tokens for the verification runs of its packages and its probes.
+Each estimate is an upper bound that rounds up.
 
 | ticket | `Writes:` bytes | estimate |
 |---|---|---|
-| 01-leave-the-checkout-out-of-the-identity.md | about 110 KB, with `.bench/commitment.json` | about 100k tokens |
-| 02-key-the-evidence-store.md | about 105 KB | about 105k tokens |
-| 03-record-a-reused-green.md | about 80 KB | about 100k tokens |
-| 04-plan-a-merge-grade.md | about 120 KB | about 115k tokens |
-| 05-record-the-reuse-rule.md | about 245 KB | about 125k tokens |
+| 01-leave-the-checkout-out-of-the-identity.md | about 127 KB, 74 KB of it `.bench/commitment.json` | about 105k tokens |
+| 02-key-the-evidence-store.md | about 120 KB | about 110k tokens |
+| 03-record-a-reused-green.md | about 120 KB | about 110k tokens |
+| 04-plan-a-merge-grade.md | about 155 KB | about 120k tokens |
+| 05-record-the-reuse-rule.md | about 245 KB | about 130k tokens |
 
-`.bench/commitment.json` joins the smallest ticket, because the spec-stage close commits the binding and no author reads that file.
+`.bench/commitment.json` joins ticket 01, because the spec-stage close commits the binding and no author reads that file.
+Ticket 02 keeps the signature of `evidencePath`. Five gate test files call it for the store directory alone, so they stay out of its `Writes:` line.
 
 ### Pre-review proof checklist
 
