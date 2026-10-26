@@ -28,13 +28,16 @@ const gateGoExecStep = "exec"
 // because cmd/go splits the flag's value into the program and its arguments.
 var traceExecOperand = "-exec=" + strings.Join(gatePhaseGoArgv(gateGoExecStep), " ")
 
+// wholeTestPackages is the package pattern of the whole test phase.
+const wholeTestPackages = "./..."
+
 // wholeTestPhase is the test phase over the whole root. Where RootConformanceRuns holds, the
 // root is the kit, and each of its test binaries runs through the trace shim.
 func wholeTestPhase(root, kit string) Phase {
 	if !RootConformanceRuns(root, kit) {
-		return testPhase(root, kit, "./...")
+		return testPhase(root, kit, wholeTestPackages)
 	}
-	return testPhase(root, kit, traceExecOperand, "./...")
+	return testPhase(root, kit, traceExecOperand, wholeTestPackages)
 }
 
 // withTestLog gives the log directory of this process to the traced test phase alone.

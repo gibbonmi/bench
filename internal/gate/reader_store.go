@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -31,11 +32,6 @@ const (
 	// test file, and an empty line for each other package.
 	testPackageTemplate = "{{if or .TestGoFiles .XTestGoFiles}}{{.Dir}}{{end}}"
 )
-
-// testRunFlags are the go test flags that configure the run of the test binaries and not
-// their build, so go list accepts none of them. Any other flag of the traced phase reaches
-// go list. A flag that go list does not know fails the listing, and the run stores no table.
-var testRunFlags = []string{"-count", "-timeout", "-exec"}
 
 // readerTableRecord is one stored reader table: the graded tree, the identity digest of the
 // run that derived it, and the readers of each covered family.
@@ -97,7 +93,7 @@ func (t *readerTrace) persist(ctx context.Context, replacer durablefile.Replacer
 }
 
 func (t *readerTrace) store(replacer durablefile.Replacer, storageRoot string, plan subject) (string, error) {
-	packages, err := testPackages(t.root, t.kit)
+	packages, err := testPackages(t.root, t.kit, plan.Env)
 	if err != nil {
 		return "", err
 	}
@@ -128,27 +124,25 @@ func (t *readerTrace) store(replacer durablefile.Replacer, storageRoot string, p
 }
 
 // testPackages lists the test packages of the traced test phase of root: each package of
-// the phase's operands that holds a test file, under the phase's build flags, as a
-// slash-separated directory relative to root.
-func testPackages(root, kit string) ([]string, error) {
+// the phase's pattern that holds a test file, as a slash-separated directory relative to
+// root. The listing passes the phase's build flags and runs under env, the closed
+// environment of the run, with the phase's own entries, so an ambient Go variable of the
+// operator changes no listed package.
+func testPackages(root, kit string, env []string) ([]string, error) {
 	phase := wholeTestPhase(root, kit)
-	argv := []string{"go", "list", DisableBuildVCS}
-	var operands []string
-	for _, arg := range phase.Argv[slices.Index(phase.Argv, "test")+1:] {
-		name, _, _ := strings.Cut(arg, "=")
-		switch {
-		case !strings.HasPrefix(arg, "-"):
-			operands = append(operands, arg)
-		case !slices.Contains(testRunFlags, name):
-			argv = append(argv, arg)
-		}
-	}
-	listed, combined, err := stepOutput(phase.Dir, append(append(argv, "-f", testPackageTemplate), operands...)...)
+	argv := append(append([]string{"list", DisableBuildVCS}, testBuildFlags...), "-f", testPackageTemplate, wholeTestPackages)
+	cmd := exec.Command("go", argv...)
+	cmd.Dir, cmd.Env = phase.Dir, mergeEnv(env, phase.Env)
+	listed, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("go list failed: %w: %s", err, combined)
+		var exit *exec.ExitError
+		if errors.As(err, &exit) {
+			return nil, fmt.Errorf("go list failed: %w: %s", err, exit.Stderr)
+		}
+		return nil, fmt.Errorf("go list failed: %w", err)
 	}
 	var packages []string
-	for _, dir := range listedFiles(listed) {
+	for _, dir := range listedFiles(string(listed)) {
 		rel, inside := rootRelative(root, dir)
 		if !inside {
 			return nil, fmt.Errorf("test package %s lies outside %s", dir, root)

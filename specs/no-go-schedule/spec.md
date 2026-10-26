@@ -359,7 +359,7 @@ The gate's own whole run grades this build at every chunk checkpoint and at the 
 | NG79 | 39 | `gate.ReaderRecorded` answers true for a tree with a valid reader record and false for a tree without one | planned TestReaderRecordedAnswersForItsTree in internal/gate/reader_set_test.go | A query that reads any record, or none, answers the same for both trees. |
 | NG80 | 34 | A phase child's environment holds no reader schedule that it inherited | planned TestPhaseChildrenDropTheReaderSchedule in internal/gate/reader_set_test.go | Without the strip, a nested gate run inside a reader set runs the reduced schedule. |
 | NG81 | 1 | A phase child's environment holds no `BENCH_GATE_TESTLOG` that it inherited | `internal/gate/testlog_exec_test.go` (`TestPhaseChildrenDropTheTestLogDirectory`) | Without the strip, a nested gate run writes into the outer run's logs. |
-| NG82 | 5 | A read of `docs/x.md` by the root test package `.` makes the root package a reader of `docs/` | planned TestReaderTableCountsTheRootPackageReads in internal/gate/reader_table_test.go | A derivation that applies the own-directory rule to the root package adds no family. |
+| NG82 | 5 | A read of `docs/x.md` by the root test package `.` makes the root package a reader of `docs/` | `internal/gate/reader_table_test.go` (`TestReaderTableCountsTheRootPackageReads`) | A derivation that applies the own-directory rule to the root package adds no family. |
 
 Not covered: story 24 — row NG38 covers the child readers inside the reader-package union, so no separate row exists.
 Not covered: story 25 — row NG29 covers the `system` phase of every reader schedule, so no separate row exists.

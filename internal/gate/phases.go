@@ -217,17 +217,22 @@ func declaresTest(dir, name string) bool {
 	return false
 }
 
+// testBuildFlags are the build flags of every Bench-owned go test command. A package listing
+// of a test command passes the same flags, so it lists the packages that the command builds.
+var testBuildFlags = []string{trimPath}
+
 // BaseTestArgv selects a Bench-owned go test command. It adds -C for a named kit and
-// always adds -trimpath, -count=1, and the go test timeout before the caller's operands.
-// The first two flags prevent checkout paths and cached test results from changing
-// execution evidence. The timeout flag takes precedence over a GOFLAGS value, so the
-// per-binary limit does not depend on the environment.
+// always adds testBuildFlags, -count=1, and the go test timeout before the caller's
+// operands. -trimpath and -count=1 prevent checkout paths and cached test results from
+// changing execution evidence. The timeout flag takes precedence over a GOFLAGS value, so
+// the per-binary limit does not depend on the environment.
 func BaseTestArgv(kit string, args ...string) []string {
 	argv := []string{"go"}
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
-	return append(append(argv, "test", trimPath, "-count=1", "-timeout="+bounds.GoTestTimeout.String()), args...)
+	argv = append(append(argv, "test"), testBuildFlags...)
+	return append(append(argv, "-count=1", "-timeout="+bounds.GoTestTimeout.String()), args...)
 }
 
 // kitRoot resolves the wrapper-selected kit before an exported entry starts its work.

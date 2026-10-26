@@ -86,7 +86,7 @@ func reverseAppliesToDefault(root, branch, def string) bool {
 	}
 	for _, line := range strings.Split(changes, "\n") {
 		fields := strings.Fields(line)
-		if len(fields) < 2 || fields[0] == ":160000" || fields[1] == "160000" {
+		if len(fields) < 2 || fields[0] == ":"+GitlinkMode || fields[1] == GitlinkMode {
 			return false
 		}
 		// The function refuses a mode change on a surviving entry — a chmod, or a
@@ -172,8 +172,11 @@ func ListTree(root string, args ...string) ([]TreeEntry, error) {
 	return entries, nil
 }
 
-// symlinkMode is the tree-entry mode of a symbolic link.
-const symlinkMode = "120000"
+// The tree-entry modes of a symbolic link and of a gitlink.
+const (
+	SymlinkMode = "120000"
+	GitlinkMode = "160000"
+)
 
 // TreeSymlinks answers the tracked symbolic links of tree: the repository-relative path of
 // each link, mapped to the link text that its blob holds.
@@ -184,7 +187,7 @@ func TreeSymlinks(root, tree string) (map[string]string, error) {
 	}
 	links := map[string]string{}
 	for _, entry := range entries {
-		if entry.Mode != symlinkMode {
+		if entry.Mode != SymlinkMode {
 			continue
 		}
 		target, err := ReadControlBlob(root, entry.Object)

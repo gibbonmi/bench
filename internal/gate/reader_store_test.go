@@ -18,6 +18,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
@@ -81,9 +82,16 @@ func writeWitnessLog(t *testing.T, root string) {
 // runReaderGate runs the whole gate of root once under the fixture selection.
 func runReaderGate(t *testing.T, root string) Result {
 	t.Helper()
+	return runReaderGateThrough(t, root, durablefile.Native())
+}
+
+// runReaderGateThrough runs the whole gate of root once under the fixture selection, and
+// persists each record through replacer.
+func runReaderGateThrough(t *testing.T, root string, replacer durablefile.Replacer) Result {
+	t.Helper()
 	var stdout, stderr bytes.Buffer
 	owner := func(context.Context, string) (*runbinary.Selection, error) { return fixtureSelection(root), nil }
-	result := executeSubjectWithRunBinary(context.Background(), root, root, &stdout, &stderr, nil, forceRun, newGateEvaluation(root), owner, "")
+	result := executeSubjectReplacing(context.Background(), root, root, &stdout, &stderr, nil, forceRun, newGateEvaluation(root), owner, "", replacer)
 	t.Logf("gate exit %d\nstdout:\n%s\nstderr:\n%s", result.ActionExit, stdout.String(), stderr.String())
 	return result
 }
@@ -147,6 +155,41 @@ func TestRedWholeRunPersistsNoReaderTable(t *testing.T) {
 	}
 	if tables := storedTables(t, root); len(tables) != 0 {
 		t.Fatalf("stored tables after a red = %q; want none", tables)
+	}
+}
+
+// TestFailedVerdictPersistenceLeavesNoReaderTable requires that a green whole run whose final
+// verdict fails to persist stores no table, because the table persists only after the
+// verdict.
+func TestFailedVerdictPersistenceLeavesNoReaderTable(t *testing.T) {
+	root := readerFixture(t)
+	writeWitnessLog(t, root)
+	faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{
+		{Destination: benchgit.GateCacheFile, Ordinal: 2}: {"rename": errors.New("injected verdict rename failure")},
+	})
+	if result := runReaderGateThrough(t, root, faults.Replacer()); result.ActionExit != 1 {
+		t.Fatalf("whole run = %d; want the failed verdict persistence", result.ActionExit)
+	}
+	if tables := storedTables(t, root); len(tables) != 0 {
+		t.Fatalf("stored tables after a failed verdict persistence = %q; want none", tables)
+	}
+}
+
+// TestReaderTableListsUnderTheClosedEnvironment requires that the package listing of a whole
+// run reads the closed environment of the run, so an ambient GOFLAGS that adds a test package
+// with no log refuses no table.
+func TestReaderTableListsUnderTheClosedEnvironment(t *testing.T) {
+	root := readerFixture(t)
+	writeWitnessLog(t, root)
+	outcomeWrite(t, root, "tagged/tagged.go", "package tagged\n", 0o644)
+	outcomeWrite(t, root, "tagged/tagged_test.go", "//go:build ambient\n\npackage tagged\n", 0o644)
+	outcomeCommit(t, root, "tagged")
+	t.Setenv("GOFLAGS", "-tags=ambient")
+	if result := runReaderGate(t, root); result.ActionExit != 0 {
+		t.Fatalf("whole run = %d; want green", result.ActionExit)
+	}
+	if tables := storedTables(t, root); !slices.Equal(tables, []string{currentSubject(t, root).Tree}) {
+		t.Fatalf("stored tables under an ambient GOFLAGS = %q; want the table of the run's tree", tables)
 	}
 }
 

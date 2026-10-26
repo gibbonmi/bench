@@ -70,7 +70,8 @@ func (t readerTable) add(family, pkg string) {
 // loggedFamilies answers the covered families that the log data of pkg reads. A relative
 // path resolves against the package directory, which each chdir line moves. A path outside
 // the root or inside the package's own directory adds nothing, and a tracked link resolves to
-// its target before the family match.
+// its target before the family match. The root package's directory is the whole root, so the
+// own-directory rule does not apply to it.
 func loggedFamilies(in readerSources, pkg string, data []byte) ([]string, error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty test log")
@@ -97,7 +98,7 @@ func loggedFamilies(in readerSources, pkg string, data []byte) ([]string, error)
 			return nil, fmt.Errorf("unknown test log operation %q", op)
 		}
 		rel, inside := rootRelative(in.Root, logPath(dir, name))
-		if !inside || pkg == "." || rel == pkg || strings.HasPrefix(rel, pkg+"/") {
+		if !inside || rel == pkg || strings.HasPrefix(rel, pkg+"/") {
 			continue
 		}
 		if family, ok := familyOf(in.Families, linkTarget(in.Links, rel)); ok && !slices.Contains(families, family) {

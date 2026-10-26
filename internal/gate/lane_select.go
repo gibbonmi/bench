@@ -103,14 +103,6 @@ type LaneResult struct {
 // Passed reports the one question a caller acts on.
 func (r LaneResult) Passed() bool { return r.Outcome == lanePass }
 
-// The two Git modes that make a change unclassifiable. A symbolic link's bytes are a
-// path and not the content its name suggests, and a gitlink names a commit in another
-// repository. Neither side's name tells the lane what a check would grade.
-const (
-	symlinkMode = "120000"
-	gitlinkMode = "160000"
-)
-
 // UnknownClass is the class of a path no row claims. It selects every declared check,
 // because a path the table does not know is a path the lane cannot narrow safely.
 const UnknownClass = "unknown"
@@ -301,12 +293,14 @@ func SelectLane(checks []Phase, changes []ComposedChange, tree TreeFacts) ([]Pha
 	return kept, classes
 }
 
-// changeClasses answers the classes one composed change carries. Either side's mode is
-// read, so a typechange to or from a link, and a deleted submodule pointer, are unknown
-// rather than classified by a name the tree no longer backs.
+// changeClasses answers the classes one composed change carries. A symbolic link's bytes
+// are a path and not the content its name suggests, and a gitlink names a commit in another
+// repository, so neither mode's name tells the lane what a check would grade. Either side's
+// mode is read, so a typechange to or from a link, and a deleted submodule pointer, are
+// unknown rather than classified by a name the tree no longer backs.
 func changeClasses(change ComposedChange, tree TreeFacts) []string {
 	for _, mode := range []string{change.SrcMode, change.DstMode} {
-		if mode == symlinkMode || mode == gitlinkMode {
+		if mode == benchgit.SymlinkMode || mode == benchgit.GitlinkMode {
 			return []string{UnknownClass}
 		}
 	}

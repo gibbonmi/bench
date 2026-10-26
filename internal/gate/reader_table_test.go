@@ -106,12 +106,25 @@ func TestReaderTableSkipsTheOwnDirectory(t *testing.T) {
 	}
 }
 
-// TestReaderTableFollowsChdir requires that a relative path after a chdir line resolves
-// against the new directory.
+// TestReaderTableCountsTheRootPackageReads requires that a read of docs/x.md by the root test
+// package makes it a reader of docs/, because the own-directory rule does not apply to it.
+func TestReaderTableCountsTheRootPackageReads(t *testing.T) {
+	in := tableSources("")
+	in.Packages = []string{conformancePackagePath, "."}
+	in.Logs["."] = []byte(testLogHeader + "\nopen " + tableRoot + "/docs/x.md\n")
+	if got := readFamilies(deriveTable(t, in), "."); !slices.Equal(got, []string{"docs/"}) {
+		t.Fatalf("families of the root package = %q; want docs/", got)
+	}
+}
+
+// TestReaderTableFollowsChdir requires that a relative path after a relative or an absolute
+// chdir line resolves against the new directory.
 func TestReaderTableFollowsChdir(t *testing.T) {
-	table := deriveTable(t, tableSources(testLogHeader+"\nchdir ../../specs\nopen a/spec.md\n"))
-	if got := readFamilies(table, tableReader); !slices.Equal(got, []string{"specs/"}) {
-		t.Fatalf("families of %s = %q; want specs/", tableReader, got)
+	for _, dir := range []string{"../../specs", tableRoot + "/specs"} {
+		table := deriveTable(t, tableSources(testLogHeader+"\nchdir "+dir+"\nopen a/spec.md\n"))
+		if got := readFamilies(table, tableReader); !slices.Equal(got, []string{"specs/"}) {
+			t.Fatalf("families of %s after chdir %s = %q; want specs/", tableReader, dir, got)
+		}
 	}
 }
 
@@ -133,10 +146,12 @@ func requireReaderRefusal(t *testing.T, in readerSources, pkg string) {
 	}
 }
 
-// TestReaderTableRefusesAMalformedLog requires that a log whose first line is not the header
-// refuses the table and names its package.
+// TestReaderTableRefusesAMalformedLog requires that a log whose first line is not the header,
+// and a log with a line that names no path, each refuse the table and name its package.
 func TestReaderTableRefusesAMalformedLog(t *testing.T) {
-	requireReaderRefusal(t, tableSources("# not a test log\nopen "+tableRoot+"/docs/a.md\n"), tableReader)
+	for _, log := range []string{"# not a test log\nopen " + tableRoot + "/docs/a.md\n", testLogHeader + "\nopen\n"} {
+		requireReaderRefusal(t, tableSources(log), tableReader)
+	}
 }
 
 // TestReaderTableRefusesAnUnknownOperation requires that a line of an unknown operation
