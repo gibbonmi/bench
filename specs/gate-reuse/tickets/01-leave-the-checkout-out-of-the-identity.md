@@ -19,7 +19,7 @@ Today one byte stream feeds both digests. So the collector writes each path fram
 The schedule is the answer of `readManifest` at `manifestPath(identityRoot)`, the loader's own read. Present bytes enter as bytes, and a live link enters as the bytes of its target. An absent manifest enters as one fixed value.
 An error answer, such as a dangling link, a FIFO, or a directory, enters as one fixed defect value with no path and no message. Do not write a second reader of the file.
 
-The `subject` comment in `internal/gate/verdict.go` states the new identity frames.
+The `subject` comment in `internal/gate/verdict.go` states the new identity frames. The `subject.Identity` field keeps its name, because the reader table and ticket 02 read it.
 
 `TestOracleIdentityAndOracleShareTheClosure` drops its identity-root case, because that case now moves only the oracle digest. The new `TestOracleIdentityLeavesOutTheCheckoutPath` grades the identity root. The reviewer approved this change on 2026-10-26.
 

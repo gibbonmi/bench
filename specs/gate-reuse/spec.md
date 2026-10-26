@@ -231,7 +231,8 @@ The prior art is `outcomeFixture` in `internal/gate/run_outcomes_test.go`. Its g
 The identity rows build subjects through `buildSubjectForTree` with two identity roots, as `TestOracleIdentityAndOracleShareTheClosure` does. They compare two computed digests and hold no literal digest.
 The store rows run `Execute` and `ExecuteTree` from a primary checkout and from a linked worktree of one fixture. Each run builds its subject from disk, so no in-memory value crosses the two runs.
 
-The failed cache write uses the replacer seam of `internal/gate/durable_replacement_test.go`. The purpose row reuses `closureSource` and the published-tree derivation of `internal/gate/complete_checkpoint_test.go`.
+The failed cache write uses the replacer seam of `internal/gate/durable_replacement_test.go`. The other gate-cache rows live in `internal/gate/reused_green_test.go`.
+The purpose row lives in `internal/gate/authorization_key_test.go`, because `complete_checkpoint_test.go` holds 357 lines. It calls `closureSource` and the published-tree derivation of that file in the same package.
 The landing rows use the landing fixture of `internal/worktree/land_fixtures_test.go`, whose prospective gate appends to a tally in the common Git directory. The merge-then-land row composes that fixture with the merge set of `mergeSetAt`.
 The merge plan rows use the merge sets of `internal/worktree/merge_target_lane_test.go` and `internal/worktree/refusal_route_follow_test.go`, which declare a lane or none and count whole-gate runs.
 
@@ -285,17 +286,17 @@ No test crosses a package seam through another package's private helper. The gat
 | GR13 | 3 | A changed baseline runner identity names another evidence record | `internal/gate/prospective_owner_test.go` (`TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity`) | A key without the baseline runner names one record |
 | GR14 | 5, 11 | After a green under the relaxed posture, a run with `BENCH_REQUIRE_CAPABILITIES=1` runs the gate, and the run count reads 2 | planned TestAuthorizationKeyBindsThePosture in internal/gate/authorization_key_test.go | A key without the posture reuses the relaxed green, and the count stays 1 |
 | GR15 | 9, 11 | After a green in a linked worktree, a primary run whose baseline phase manifest differs runs the gate | planned TestAuthorizationKeyBindsTheBaselineSchedule in internal/gate/authorization_key_test.go | A key without the schedule reuses the green |
-| GR16 | 6 | After an unpurposed green prospective run of the published tree, the complete checkpoint of that tree runs the gate, and the run count reads 2 | planned TestCompleteCheckpointIgnoresAnUnpurposedGreenOfItsTree in internal/gate/complete_checkpoint_test.go | A key without the purpose frames reuses the unpurposed green of the same tree, and the count stays 1 |
+| GR16 | 6 | After an unpurposed green prospective run of the published tree, the complete checkpoint of that tree runs the gate, and the run count reads 2 | planned TestCompleteCheckpointIgnoresAnUnpurposedGreenOfItsTree in internal/gate/authorization_key_test.go | A key without the purpose frames reuses the unpurposed green of the same tree, and the count stays 1 |
 | GR17 | 14 | A linked-worktree green whose recorded time is older than the freshness window does not answer the primary run | planned TestAuthorizationKeyKeepsTheSourceWindow in internal/gate/authorization_key_test.go | A window measured from the reuse, or no window, reuses the old green |
 | GR18 | 15 | After a linked-worktree green, a red primary run of the same key removes the green, and the next linked-worktree run runs the gate | planned TestAuthorizationKeyRedRemovesAnotherCheckoutsGreen in internal/gate/authorization_key_test.go | A red that removes only its own checkout's record leaves the green, and the count does not grow |
 | GR19 | 15 | A timed-out run removes the green under its key | `internal/gate/timeout_recovery_count_test.go` (`TestGateRunTimeoutInvalidatesOldEvidence`) | A timeout that keeps the record lets the next run reuse it |
 | GR20 | 16 | An evidence record whose `authorization` field differs from its file name does not answer, and the run runs the gate | planned TestAuthorizationKeyRefusesAMisnamedRecord in internal/gate/authorization_key_test.go | A reader that trusts the file name reuses a copied record |
 | GR21 | 22 | A delta checkpoint after an expired whole green of its base still runs the delta set | `internal/gate/delta_checkpoint_test.go` (`TestDeltaCheckpointReadsTheBaseWithoutExpiry`) | A base read under another key finds no green, and the checkpoint runs the whole gate |
-| GR22 | 17 | A primary run with no gate cache that reuses a linked-worktree green writes the cache with the tree, `green`, and the recorded time of the worktree run | planned TestReusedGreenRecordsTheGateCache in internal/gate/authorization_key_test.go | A reuse that writes nothing, or that takes the held lock again and skips the write, leaves the cache absent |
-| GR47 | 17 | A primary run whose gate cache holds a red verdict of the same tree replaces it with the reused green and the worktree run's recorded time | planned TestReusedGreenReplacesARedCacheOfItsTree in internal/gate/authorization_key_test.go | A write rule that compares only the tree leaves the red cache in place |
+| GR22 | 17 | A primary run with no gate cache that reuses a linked-worktree green writes the cache with the tree, `green`, and the recorded time of the worktree run | planned TestReusedGreenRecordsTheGateCache in internal/gate/reused_green_test.go | A reuse that writes nothing, or that takes the held lock again and skips the write, leaves the cache absent |
+| GR47 | 17 | A primary run whose gate cache holds a red verdict of the same tree replaces it with the reused green and the worktree run's recorded time | planned TestReusedGreenReplacesARedCacheOfItsTree in internal/gate/reused_green_test.go | A write rule that compares only the tree leaves the red cache in place |
 | GR23 | 18 | A reuse that the gate cache already describes leaves the cache bytes unchanged | `internal/gate/run_outcomes_test.go` (`TestGateRunGreenReusesRecordedVerdict`) | A reuse that rewrites the record moves its recorded time |
 | GR24 | 19 | A reuse whose gate-cache write fails returns an operational result with no reusable green | planned TestReusedGreenCacheWriteFailureRefuses in internal/gate/durable_replacement_test.go | A reuse that ignores the failed write reports green beside a stale cache |
-| GR44 | 20 | A reuse while another run holds the checkout's gate lock, with a cache of another tree, prints the reuse line and leaves the cache bytes unchanged | planned TestReusedGreenBesideAHeldLockWritesNothing in internal/gate/authorization_key_test.go | A reuse that waits for or refuses on the lock turns a green into a refusal |
+| GR44 | 20 | A reuse while another run holds the checkout's gate lock, with a cache of another tree, prints the reuse line and leaves the cache bytes unchanged | planned TestReusedGreenBesideAHeldLockWritesNothing in internal/gate/reused_green_test.go | A reuse that waits for or refuses on the lock turns a green into a refusal |
 | GR25 | 23 | In a fixture with no lane, after `bench worktree merge --from main` ran the whole gate, a spec-less landing of the merge tip leaves the gate tally at one run | planned TestLandReusesTheMergeGreen in internal/worktree/land_reuse_test.go | A key that frames the checkout path runs the landing gate again, and the tally holds two runs |
 | GR26 | 24 | That landing advances the green marker to its published commit | planned TestLandReusesTheMergeGreen in internal/worktree/land_reuse_test.go | A publication that reads the reuse as another kind leaves the marker at the old commit |
 | GR27 | 25 | After a green `bench gate --checkpoint specs/x/spec.md --complete` in the source worktree, the spec landing leaves the gate tally at one run | planned TestLandReusesTheCompleteCheckpointGreen in internal/worktree/land_reuse_test.go | A key that frames the checkout path runs the landing gate again, and the tally holds two runs |
@@ -340,6 +341,7 @@ The hostile-input walk of the profile checklist gives these dispositions:
 **Won't handle:** the run-binary identity of an installed kit in a linked repository with no declared build inputs — the same-checkout retry there keeps its `unbound` runner value, as today.
 **Won't handle:** a reuse line that names the source run — every reader still matches the line `gate: green (fresh verdict reused for this tree)` exactly.
 **Won't handle:** guidance that tells a coordinator to plan before each fold — each fold still runs as written, and the help row names the plan form.
+**Won't handle:** an edit of the baseline phase manifest while a run is in progress — the settle check still compares the tree and the oracle digest, and the profile forbids a repository change during a gate run.
 
 ## Out of scope
 
@@ -418,7 +420,7 @@ Each estimate is an upper bound that rounds up.
 | 01-leave-the-checkout-out-of-the-identity.md | about 127 KB, 74 KB of it `.bench/commitment.json` | about 105k tokens |
 | 02-key-the-evidence-store.md | about 120 KB | about 110k tokens |
 | 03-record-a-reused-green.md | about 120 KB | about 110k tokens |
-| 04-plan-a-merge-grade.md | about 155 KB | about 120k tokens |
+| 04-plan-a-merge-grade.md | about 160 KB | about 120k tokens |
 | 05-record-the-reuse-rule.md | about 245 KB | about 130k tokens |
 
 `.bench/commitment.json` joins ticket 01, because the spec-stage close commits the binding and no author reads that file.

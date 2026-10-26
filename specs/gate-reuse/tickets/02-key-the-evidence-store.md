@@ -1,12 +1,13 @@
 # Key the prospective evidence store by the authorization key
 
 Blocked by: 01-leave-the-checkout-out-of-the-identity.md
-Writes: internal/gate/engine.go, internal/gate/run_durability.go, internal/gate/run_transaction.go, internal/gate/checkpoint.go, internal/gate/verdict.go, internal/gate/verdict_registry.go, internal/gate/verdict_registry_guard_test.go, internal/gate/prospective_owner_test.go, internal/gate/complete_checkpoint_test.go, internal/gate/authorization_key_test.go (new)
+Writes: internal/gate/subject.go, internal/gate/engine.go, internal/gate/run_durability.go, internal/gate/run_transaction.go, internal/gate/checkpoint.go, internal/gate/verdict.go, internal/gate/verdict_registry.go, internal/gate/verdict_registry_guard_test.go, internal/gate/prospective_owner_test.go, internal/gate/authorization_key_test.go (new)
 Covers: GR10, GR11, GR12, GR13, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21
 
 ## What to build
 
-The subject carries the authorization key beside the oracle digest. The key is the digest of the tree and the oracle identity of ticket 01.
+The subject carries the authorization key beside the oracle digest, in a new field of the `subject` type. The key is the digest of the tree and the oracle identity of ticket 01.
+`buildSubjectForTree` sets the unpurposed key in the same pass that sets `Oracle` and `Identity`, so every subject path has a key: `buildSubject`, `ValidateProjectGreen`, and the prospective owner. Count the headroom of `internal/gate/subject.go` again after ticket 01, against its grant of 513 lines.
 
 `applyCheckpoint` frames a run's purpose over the key as it frames it over the oracle digest today. The purpose is the checkpoint value, the completion folder, and the source tip.
 One function frames the purpose for both digests, so the two framings cannot drift. A chunk checkpoint keeps the unpurposed key, as it keeps the unpurposed oracle digest.
@@ -23,7 +24,7 @@ The capability posture now binds every reuse, because the key frames the oracle 
 The comment of `TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity` says that the subject binds the identity-root path. Correct that comment with no new line, because the file holds 480 lines over its 400-line limit.
 
 The new tests go in `authorization_key_test.go`. They use `outcomeFixture`, whose gate counts runs in the common Git directory, and a linked worktree that `runGitIn` creates.
-GR16 goes in `complete_checkpoint_test.go`, which holds 357 lines. It uses `closureSource` and the published-tree derivation of `publishedEvidence`.
+GR16 goes in the same file, because `complete_checkpoint_test.go` holds 357 lines. It calls `closureSource` and the published-tree derivation of `publishedEvidence`, which the package's test files share.
 
 `run_transaction.go` holds 370 of 400 lines, and `checkpoint.go` holds 389. Put a new helper in `engine.go` or in a new file of `internal/gate`.
 

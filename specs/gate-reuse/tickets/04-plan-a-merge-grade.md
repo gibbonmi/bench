@@ -1,7 +1,7 @@
 # Plan a merge grade before the merge runs
 
 Blocked by: 03-record-a-reused-green.md
-Writes: internal/landing/merge.go, internal/gate/engine.go, internal/worktree/merge.go, internal/worktree/merge_plan.go (new), internal/worktree/merge_refusal.go, internal/worktree/merge_plan_test.go (new), internal/worktree/parallel_census_test.go, internal/usage/worktree.go, cmd/bench/main.go, cmd/bench/help_inventory_test.go
+Writes: internal/landing/merge.go, internal/gate/engine.go, internal/worktree/merge.go, internal/worktree/merge_plan.go (new), internal/worktree/merge_refusal.go, internal/worktree/merge_target_lane_test.go, internal/worktree/merge_plan_test.go (new), internal/worktree/parallel_census_test.go, internal/usage/worktree.go, cmd/bench/main.go, cmd/bench/help_inventory_test.go
 Covers: GR31, GR32, GR33, GR34, GR35, GR36, GR37, GR38, GR39, GR40, GR46, GR41, GR42
 
 ## What to build
@@ -14,6 +14,9 @@ The landing owner's merge separates its kind decision and its composition from i
 The plan reads the kind and the composed tree with no authorization and no ref move.
 
 The gate exports the reuse predicate for a prospective tree. It is the `reusableEvidence` decision over the prospective subject of the tree at a root, with its cache-state refusal. The merge's whole-gate authority and the plan both read that one predicate.
+The plan passes the root that the merge grades from, `MergeRequest.Worktree`, as `Owner.Merge` passes it to its authority.
+
+`mergeRerun` gains the plan form, so its test caller in `merge_target_lane_test.go` changes with it.
 A plan that read `InspectTreeContext` alone would project `reuse` beside a pending cache, and GR46 catches it.
 
 The grade takes this order:

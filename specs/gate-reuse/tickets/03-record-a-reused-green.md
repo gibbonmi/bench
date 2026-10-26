@@ -1,7 +1,7 @@
 # Record a reused green in the gate cache, and land on another run's green
 
 Blocked by: 02-key-the-evidence-store.md
-Writes: internal/gate/run_transaction.go, internal/gate/engine.go, internal/gate/authorization_key_test.go (new), internal/gate/durable_replacement_test.go, internal/worktree/land_reuse_test.go (new), internal/worktree/land_fixtures_test.go, internal/worktree/parallel_census_test.go
+Writes: internal/gate/run_transaction.go, internal/gate/engine.go, internal/gate/reused_green_test.go (new), internal/gate/durable_replacement_test.go, internal/worktree/land_reuse_test.go (new), internal/worktree/land_fixtures_test.go, internal/worktree/parallel_census_test.go
 Covers: GR22, GR23, GR24, GR44, GR47, GR25, GR26, GR27, GR28
 
 ## What to build
@@ -24,6 +24,12 @@ The new landing tests go in `internal/worktree/land_reuse_test.go` and use the l
 - GR28: the same flow over a base that is a minimal Go module with `cmd/bench` and a build-input manifest (`commitLandingBuildInputs`), with no `scripts/go-build.sh`. The source changes a file of `cmd/bench`.
 
 Without a Go module, both checkouts digest the runner to `unreadable`, and GR28 cannot go red. With no `scripts/go-build.sh`, the prospective gate keeps the inherited run binary.
+
+The gate-cache tests GR22, GR47, and GR44 go in the new `internal/gate/reused_green_test.go`, so `authorization_key_test.go` stays under its 400-line limit.
+Ticket 02's key produces the landing behavior, so GR25 to GR28 can be green on arrival. Show each red by a probe and log it:
+
+- GR25, GR26, and GR27 go red under the chunk's `reuse-probe`, which makes the store answer no green.
+- GR28 goes red under a probe that drops the baseline-runner frame from the oracle identity, because the landing then reuses the checkpoint green.
 
 Each new worktree test calls `t.Parallel()`. Raise `worktreeTestCount` in `parallel_census_test.go` by the count of new tests, with no new line, because that file holds 961 lines over its limit.
 `run_transaction.go` holds 370 of 400 lines. Put a new helper in `engine.go` or in a new file of `internal/gate`.
