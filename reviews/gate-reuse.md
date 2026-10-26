@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/gate-reuse/spec.md",
-  "plan_digest": "sha256:b0f6edda9075e930683fb916045172e340e0ada400ebacc98510788749872dce",
+  "plan_digest": "sha256:745dd33a081ad71b9ee0cbd09774d8de2bd19290864dcdce214a7796bf5ccb4d",
   "implementation_session": "",
   "chunks": [
     {
       "id": "GR-C1",
       "base": "21b5918db91ee0badcfd4fc26678f3d180ae9e6a",
-      "tip": "5600fe2cf34166e06e8206026fcedffa21462139",
-      "plan_digest": "sha256:b0f6edda9075e930683fb916045172e340e0ada400ebacc98510788749872dce",
-      "source_digest": "7be3b9eaf7234c5dd70e8c2ec68e6c4162a7ddd8",
+      "tip": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+      "plan_digest": "sha256:745dd33a081ad71b9ee0cbd09774d8de2bd19290864dcdce214a7796bf5ccb4d",
+      "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
       "acceptance_rows": [
         "GR1",
         "GR2",
@@ -114,6 +114,93 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/subject.go,swap,failed,1,TestOracleIdentityCarriesTheCapabilityPosture,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestOracleIdentityCarriesTheCapabilityPosture,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,409\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,310,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityCarriesTheCapabilityPosture,\"oracle_identity_test.go:77: identity = 1f10bbc6c837344b29ca9d4cd6d702980744d24d7b26a56dfa59727516238eb4 under both postures, want two identities\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "gr-t01-r1-gate",
+          "performer": "claude:gr-t01-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t01-repair1-20261026",
+            "digest": "sha256:503ca3bc5a04572da7701a45cb8f9bfe785df376936578b977bd03bc2025ae20",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,268269,678\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t01-r1-authorization",
+          "performer": "claude:gr-t01-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t01-repair1-20261026",
+            "digest": "sha256:1ba70f9d5f990a2adda5906adfa04de81c8a56acb865aed6b855284bed9a3c99",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,2242,17\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "requirement": "authorization",
+          "command": "bench test --package ./internal/gate/authorization",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t01-r1-root-conformance",
+          "performer": "claude:gr-t01-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t01-repair1-20261026",
+            "digest": "sha256:7897c36750190974480d032dae42552a1d5965070050e86ecf6549fded1c68f7",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17069,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t01-r1-posture-probe",
+          "performer": "claude:gr-t01-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b40c63dd81311f1bf4472c3892376209959c4b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t01-repair1-20261026",
+            "digest": "sha256:3dc3383c6f1c893fde53e00f857b3ce04d8501dfaabf278f74685e38c5c1b9c5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/subject.go,swap,failed,1,TestOracleIdentityCarriesTheCapabilityPosture,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestOracleIdentityCarriesTheCapabilityPosture,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,409\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,465,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityCarriesTheCapabilityPosture,\"oracle_identity_test.go:77: identity = 76576f19f866b136d7148f462f57f61e820686efbd024d390b9b83f17ff74819 under both postures, want two identities\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "71fa9105aa396dfa355bf42397ce0d1ae7614e93",
+          "requirement": "posture-probe",
+          "command": "bench probe internal/gate/subject.go --swap 'strconv.FormatBool(strict())' --with 'strconv.FormatBool(false)' --package ./internal/gate --run TestOracleIdentityCarriesTheCapabilityPosture --expect TestOracleIdentityCarriesTheCapabilityPosture",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the posture from the grade identity. The two postures then give one identity, so the posture row fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gr-t01-repair1-20261026",
+              "digest": "sha256:3dc3383c6f1c893fde53e00f857b3ce04d8501dfaabf278f74685e38c5c1b9c5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/subject.go,swap,failed,1,TestOracleIdentityCarriesTheCapabilityPosture,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestOracleIdentityCarriesTheCapabilityPosture,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,409\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,465,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityCarriesTheCapabilityPosture,\"oracle_identity_test.go:77: identity = 76576f19f866b136d7148f462f57f61e820686efbd024d390b9b83f17ff74819 under both postures, want two identities\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -194,7 +281,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:b0f6edda9075e930683fb916045172e340e0ada400ebacc98510788749872dce",
+      "to": "sha256:745dd33a081ad71b9ee0cbd09774d8de2bd19290864dcdce214a7796bf5ccb4d",
+      "chunk_ids": {
+        "GR-C1": [
+          "GR-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
