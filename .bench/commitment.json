@@ -1296,6 +1296,18 @@
               "path": "roadmap/FT450.md",
               "identity": "sha256:e64022ee0abc00a61e024a8f94fb5dcc03514ed9f5178498401b16a9bcb33834"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "landing-stack",
+                "path": "specs/landing-stack/spec.md",
+                "identity": "sha256:8ca86391f7f91b81881324c97f699b1ae7879ea0401e8e4fc4cacf6cfc9a4aeb"
+              },
+              "obligations": [
+                "FT450"
+              ]
+            }
           ]
         },
         {
