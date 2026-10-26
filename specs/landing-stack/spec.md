@@ -260,6 +260,7 @@ Each ticket targets an author context of about 150k tokens, and the Further note
       "verification": [
         {"id": "commitment-repository", "command": "bench test --package ./internal/commitment/repository"},
         {"id": "landing", "command": "bench test --package ./internal/landing"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
@@ -268,8 +269,9 @@ Each ticket targets an author context of about 150k tokens, and the Further note
       "tickets": ["05-move-the-worktree-help-rows.md", "06-read-a-stack-file.md", "07-land-a-green-stack.md"],
       "verification": [
         {"id": "commands", "command": "bench test --package ./cmd/bench"},
+        {"id": "usage", "command": "bench test --package ./internal/usage"},
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
-        {"id": "land-route", "command": "bench test --check system --run TestWorktreeLandRoute"},
+        {"id": "system", "command": "bench test --check system"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
@@ -280,6 +282,7 @@ Each ticket targets an author context of about 150k tokens, and the Further note
         {"id": "landing", "command": "bench test --package ./internal/landing"},
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
         {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },
@@ -289,6 +292,7 @@ Each ticket targets an author context of about 150k tokens, and the Further note
       "verification": [
         {"id": "worktree", "command": "bench test --package ./internal/worktree"},
         {"id": "commands", "command": "bench test --package ./cmd/bench"},
+        {"id": "usage", "command": "bench test --package ./internal/usage"},
         {"id": "root-conformance", "command": "bench test --check root-conformance"}
       ]
     },

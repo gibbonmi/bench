@@ -1,7 +1,7 @@
 # Refuse a stack member before composition
 
 Blocked by: 01-share-the-stack-owner-rule.md, 03-admit-a-stack-publication.md, 09-attribute-a-red-stack.md
-Writes: internal/refusalroute/faces_land.go, internal/worktree/land_refusal.go, internal/worktree/land_stack.go, internal/worktree/land_stack_preflight.go (new), internal/worktree/land_stack_refusal_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_stack_route_test.go
+Writes: internal/refusalroute/faces_land.go, internal/worktree/land_refusal.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_preflight.go (new), internal/worktree/land_stack_refusal_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_stack_route_test.go (new)
 Covers: LS70, LS71, LS72, LS73, LS74, LS75, LS76, LS77, LS88, LS90, LS91, LS92, LS93
 
 ## What to build

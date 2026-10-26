@@ -50,6 +50,8 @@ This ticket adds no refusal face and no registry entry, so its chunk runs no `./
 - [ ] The wrapper forwards `worktree land --stack <file>` to the installed broker with the arguments unchanged (LS66).
 - [ ] `bench help` prints the stack grammar as one row (LS67).
 
+The wrapper row lives in the system-tagged `internal/systemtest/land_route_test.go`, which reads `BENCH_KIT`. Run it through `bench test --check system`, which supplies `BENCH_KIT` and the sealed run binary, and export no ambient `BENCH_KIT`.
+
 The journeys build two or three assignment worktrees from one review base with the landing fixture builders, and they count the tally with `landingGateTally`. The lease row follows `barrierLandingFixture` in `internal/worktree/land_lease_test.go`. Each expected `members` row comes from the same `toon.Table` call that the producer makes.
 
 ## Checkpoint verification

@@ -1,7 +1,7 @@
 # Bisect a red stack in the landing owner
 
 Blocked by: 04-compose-and-publish-a-stack.md
-Writes: internal/landing/stack.go, internal/landing/stack_test.go
+Writes: internal/landing/stack.go (new), internal/landing/stack_test.go (new)
 Covers: LS29, LS30, LS31, LS32, LS33, LS34, LS35, LS37, LS99
 
 ## What to build

@@ -1,7 +1,7 @@
 # Resume a published stack
 
 Blocked by: 10-refuse-a-stack-member.md
-Writes: internal/usage/worktree.go, cmd/bench/worktree_leaves.go, cmd/bench/help_inventory_test.go, internal/worktree/land_stack.go, internal/worktree/land_stack_resume.go (new), internal/worktree/land_stack_resume_test.go (new)
+Writes: internal/usage/worktree.go, cmd/bench/worktree_leaves.go, cmd/bench/help_inventory_test.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_resume.go (new), internal/worktree/land_stack_resume_test.go (new)
 Covers: LS78, LS79, LS80, LS81, LS82, LS100
 
 ## What to build
