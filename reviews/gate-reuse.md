@@ -533,7 +533,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gr-c2-standards-1",
+          "performer": "claude:gr-c2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "54e7b686fd638aa7404aabce8412dbbeb84dda34",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c2-standards-20261026",
+            "digest": "sha256:69ce759f3481950186ffc73388ce8d4140e0754da42362259fff2e147612771d",
+            "excerpt": "Standards axis, GR-C2, pair a5f9c772c..1c7f5ce2f, check-current current=true. sonnet/high.\nS1 advisory: internal/gate/engine.go:149-169 loadEvidence restates the record-class knowledge and the shared schema/tree check that verdict.go:393 validateRecordBytes owns.\nS2 advisory auto-fix: internal/gate/run_durability.go:106 retainGreen hand-builds the ready record that readyVerdict (verdict.go:119-122) now owns.\nS3 advisory: run_durability.go:531-541 and 546-550 reuseWritesNothing and recordReusedGreen ask the same \"cache describes this green\" question.\nS4 advisory no-op: reuseLine literal in grade_key_test.go:25 and land_journey_test.go:82.\nRaw 4 (0 blocking).\nDisposition (orchestrator): S1 accepted, ticket 02 repair (one shared check helper; the evidence store stays its own record class). S2 and S3 accepted, ticket 03 repair. S4 no-op: an independent expectation that a constant cannot share across packages.\n"
+          },
+          "axis": "Standards",
+          "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+          "tip": "d3b24e188662787ff8ab2f1bed5525834c89f0db",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c2-spec-1",
+          "performer": "claude:gr-c2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "54e7b686fd638aa7404aabce8412dbbeb84dda34",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c2-spec-20261026",
+            "digest": "sha256:b8cc9fd0f71902dcb310d205543e55092cba6860494fab632fd4e6118a8388bb",
+            "excerpt": "Spec axis, GR-C2, pair a5f9c772c..1c7f5ce2f, check-current current=true. sonnet/high. Rows GR10-GR24, GR44, GR47, GR53, GR57, GR65 map to a change or a named test.\nP1 advisory: run_durability.go:531-541 GR44 covers a bare lock holder only; a live holder with a Pending cache still refuses.\nP2 advisory: no recorded witness red for GR19, GR21, GR53, GR57, GR65 (existing, unchanged tests).\nP3 advisory: specs/landing-test-efficiency/spec.md:167 and internal/gate/prospective_owner_test.go:3 still say \"baseline runner identity\".\nP4 advisory: the ticket 02 widenings cite --auto-approve.\nP5 advisory: a destination green written by another executable is not inherited; a red is labeled candidate-owned.\nItem (a): LTE40 and the journey test are not weakened.\nRaw 5 (0 blocking).\nDisposition (orchestrator): P3 accepted, ticket 02 repair (the LTE ticket 09 text stays as that ticket's own record). P1 no change, bench learning. P2 no-op: no new independent expectation. P4 no-op: bench spec widen carried --decision under the reviewer's --auto-approve. P5 accepted as a consequence of story 7, recorded in the same learning.\n"
+          },
+          "axis": "Spec",
+          "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+          "tip": "d3b24e188662787ff8ab2f1bed5525834c89f0db",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gr-c2-coverage-1",
+          "performer": "claude:gr-c2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "54e7b686fd638aa7404aabce8412dbbeb84dda34",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c2-coverage-20261026",
+            "digest": "sha256:79240df5102195c4643798ae36e3b59dc8d16b192b788adaa7f20cf85884fe1b",
+            "excerpt": "Coverage axis, GR-C2, pair a5f9c772c..1c7f5ce2f, check-current current=true. sonnet/high. The GR-C2 tests and four neighbours passed under bench test --run.\nC1 advisory: internal/gate/engine.go:167-177 loadEvidence has no malformed-record test (missing grade, legacy oracle, duplicate key, wrong mode, schema or tree).\nC2 advisory: run_transaction.go:94-102 a lock taken after the reuseWritesNothing check still refuses.\nC3 advisory: run_durability.go:86-91 no test has an expired or drifted same-tree green cache beside fresh evidence.\nC4 advisory: authorization.go:228 no test pins Grade in evidenceToken.\nC5 advisory no-op: land_journey_test.go:80-84 no longer exercises Authorize Green on the identical tree.\nC6 advisory: no recorded witness for GR19, GR21, GR53, GR57, GR65.\nRaw 6 (0 blocking).\nDisposition (orchestrator): C1 and C4 accepted, ticket 02 repair. C3 accepted, ticket 03 repair. C2 no change, bench learning (merged with Spec P1). C5 no-op: the GR-C3 landing rows cover the identical-tree authorization. C6 no-op: existing, unchanged tests.\n"
+          },
+          "axis": "Coverage",
+          "base": "a5f9c772c7b5fb4812ab5b42c1c1611e84bbec4f",
+          "tip": "d3b24e188662787ff8ab2f1bed5525834c89f0db",
+          "finding_ids": [
+            "C1",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
