@@ -45,14 +45,19 @@ type ReviewedRequest struct {
 	// empty on every other landing. It never coexists with SpecPath: the landing's
 	// --spec names either a staged spec.md to transition or a tickets-only folder to
 	// close.
-	ClosePath      string
+	ClosePath string
+	// GreenMarker is the destination's green marker commit, empty when the destination has
+	// none. The gate run reads it with the destination base to plan the reader set.
+	GreenMarker    string
 	Message        string
 	Stdout, Stderr io.Writer
 }
 
-// ReviewedResult is the immutable publication receipt needed by the lifecycle owner.
+// ReviewedResult is the immutable publication receipt needed by the lifecycle owner. Kind is
+// the authorization kind that published the tree.
 type ReviewedResult struct {
 	SourceBase, SourceTip, DestinationBase, Commit, Tree string
+	Kind                                                 authorization.Kind
 }
 
 // composedSnapshot is the composed tree and the merge heads that its name-set check read.
@@ -111,12 +116,12 @@ func (k acceptedKinds) permits(kind authorization.Kind) bool {
 
 // New returns the production landing owner. The prospective landing of a worktree commit
 // publishes on a graded green or on a fast-lane pass. The reviewed landing onto main
-// publishes on a graded green alone, so a lane pass never reaches main.
+// publishes on a graded green or on a green reader set, so a lane pass never reaches main.
 func New() Owner {
 	return Owner{
 		authorize:         authorization.AuthorizeWithWriters,
 		publishes:         acceptedKinds{authorization.Green, authorization.LanePass},
-		reviewedPublishes: acceptedKinds{authorization.Green},
+		reviewedPublishes: acceptedKinds{authorization.Green, authorization.ReaderGreen},
 		updateRef:         updateRef,
 		reconcile:         reconcile,
 	}
@@ -269,7 +274,9 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	if deliverable != "" {
 		ctx = gate.WithCompletion(ctx, deliverable, source)
 	}
-	if got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr); !o.reviewedPublishes.permits(got.Kind) {
+	ctx = gate.WithLanding(ctx, destination, r.GreenMarker)
+	got := o.authorize(ctx, r.Root, tree, r.Stdout, r.Stderr)
+	if !o.reviewedPublishes.permits(got.Kind) {
 		return ReviewedResult{}, AuthorizationRefusal{got}
 	}
 	// Recheck the two moving identities after the gate and before creating an
@@ -298,7 +305,7 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	if err != nil {
 		return ReviewedResult{}, err
 	}
-	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree}, nil
+	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree, Kind: got.Kind}, nil
 }
 
 // AuthorizationRefusal is the refusal of a tree the gate did not authorize. It carries the
@@ -307,37 +314,6 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 type AuthorizationRefusal struct{ Result authorization.Result }
 
 func (r AuthorizationRefusal) Error() string { return refusalMessage(r.Result) }
-
-// refusalMessage renders the one refusal line every authorization caller prints. The
-// literal prefix and the kind stay, because two tests and the operator's own memory read
-// them; the sentence after names what the attribution means. It names no action, because
-// the refusal face of the verb that prints it carries the route.
-func refusalMessage(got authorization.Result) string {
-	line := "prospective authorization refused: " + string(got.Kind)
-	explanation := refusalExplanation(got.Kind)
-	// An Infrastructure attribution carries the gate's own reason, which is more exact than
-	// anything this renderer could state about the kind.
-	if got.Reason != "" {
-		explanation = got.Reason
-	}
-	if explanation != "" {
-		line += " (" + explanation + ")"
-	}
-	return line
-}
-
-// refusalExplanation answers what a refused kind means to the operator. The two lane
-// outcomes and an infrastructure outcome answer nothing: a lane states its own outcome
-// line already, and only the gate's own reason explains an infrastructure outcome.
-func refusalExplanation(kind authorization.Kind) string {
-	switch kind {
-	case authorization.Inherited:
-		return "the gate ran red on the composed tree and no green baseline attributes the red to this diff"
-	case authorization.Candidate:
-		return "the gate ran red on the composed tree and the green baseline attributes the red to this diff"
-	}
-	return ""
-}
 
 // CheckoutFingerprint binds the attached branch, commit, index, worktree,
 // untracked set, ignored set, and nested-repository state observed at a checkout.

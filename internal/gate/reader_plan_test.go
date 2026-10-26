@@ -361,11 +361,12 @@ func TestReaderPlanNeedsALandingContext(t *testing.T) {
 }
 
 // TestReaderPlanRunsWholeForALinkedRoot proves that a covered landing of a root that is not
-// the kit of its selection runs the whole gate.
+// the kit of its selection runs the whole gate and prints no line, so a linked repository
+// keeps its landing output.
 func TestReaderPlanRunsWholeForALinkedRoot(t *testing.T) {
 	f := newLandingFixture(t, nil)
-	if _, eligible, out := f.decide(f.landing(), docsChange, nil, t.TempDir()); eligible || out != fmt.Sprintf(readerRefusedFormat, refusedNotKit) {
-		t.Fatalf("plan of a linked root = %t %q; want the whole gate with the refusal %q", eligible, out, refusedNotKit)
+	if _, eligible, out := f.decide(f.landing(), docsChange, nil, t.TempDir()); eligible || out != "" {
+		t.Fatalf("plan of a linked root = %t %q; want the whole gate with no line", eligible, out)
 	}
 }
 

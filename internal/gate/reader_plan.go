@@ -56,15 +56,16 @@ type readerPlanner struct {
 }
 
 // plan answers the reader run of plan and whether the run is the reader set. When a case
-// refuses the reader set of a landing, plan prints the case to stdout. A run without a landing
-// value prints no line, so a plain gate run keeps its output.
+// refuses the reader set of a kit landing, plan prints the case to stdout. A run that is not
+// a kit run, and a run without a landing value, print no line, so a linked repository and a
+// plain gate run keep their output.
 func (p readerPlanner) plan(ctx context.Context, stdout io.Writer, runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) (readerRun, bool) {
 	landing, landed := ctx.Value(landingKey{}).(landingValue)
 	run, refusal := p.decide(landing, landed, runtimeRoot, storageRoot, plan, selection)
 	if refusal == "" {
 		return run, true
 	}
-	if landed {
+	if landed && refusal != refusedNotKit {
 		fmt.Fprintf(stdout, readerRefusedFormat, refusal)
 	}
 	return readerRun{}, false
