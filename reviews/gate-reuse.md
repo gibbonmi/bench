@@ -899,3 +899,10 @@ The ticket 02 repair session reported these reds for repair commit f1fe7d8bc, an
 - C1: an omitted `requireObjectFields(read.data, evidenceFields) != nil ||` failed the same test at `grade_key_test.go:198` for the legacy-oracle and missing-grade rows.
 - C4: an omitted `inspection.Grade` term in `evidenceToken` failed TestEvidenceTokenBindsTheGradeKey at `authorization_test.go:87`.
 - The planned reuse probe bit at `grade_key_test.go:68`.
+
+## GR-C2 ticket 03 repair witness reds
+
+The ticket 03 repair session reported this red for repair commit f40e49568. The probe restored its subject.
+
+- C3: a `cacheDescribesFreshGreen` body that also accepts any same-tree green cache skips the write. It failed both rows of TestReusedGreenReplacesAStaleGreenCacheOfItsTree at `reused_green_test.go:79`, which are the expired row and the drifted-oracle row.
+- S2 and S3 change no behavior, and the whole `internal/gate` package passes at f40e49568.
