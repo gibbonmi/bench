@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/gate-reuse/spec.md",
-  "plan_digest": "sha256:4e73a10e6fba94a23b56ea5e07c1c84597c1d941628077fe37dd81c4631b1a0d",
+  "plan_digest": "sha256:4559fa1a70795eac25068f8380506145dc4708e91ea94f8015e9a5d06dce8311",
   "implementation_session": "",
   "chunks": [
     {
@@ -838,9 +838,9 @@
     {
       "id": "GR-C3",
       "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
-      "tip": "7a88e5d454c71e260bf2ace3eb1408e39a0723db",
-      "plan_digest": "sha256:4e73a10e6fba94a23b56ea5e07c1c84597c1d941628077fe37dd81c4631b1a0d",
-      "source_digest": "d93f59ba912e851e5c0edf4a9ab41783e3b897bd",
+      "tip": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+      "plan_digest": "sha256:4559fa1a70795eac25068f8380506145dc4708e91ea94f8015e9a5d06dce8311",
+      "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
       "acceptance_rows": [
         "GR25",
         "GR26",
@@ -1062,6 +1062,226 @@
           "requirement": "worktree-05",
           "command": "bench test --package ./internal/worktree",
           "exit_code": 0
+        },
+        {
+          "id": "gr-t05-r1-refusalroute",
+          "performer": "claude:gr-t05-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-repair1-20261026",
+            "digest": "sha256:083201dbdeffa4beaddc7caec9539221723505998f67c6ee5a7c07652c31da24",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,4,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "refusalroute",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-r1-commands",
+          "performer": "claude:gr-t05-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-repair1-20261026",
+            "digest": "sha256:8de6e07ff57c4f61544bd4174902cce9fff0d36fbf5630e378e68834dcdd66a9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,25007,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "commands",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-r1-gate-05",
+          "performer": "claude:gr-t05-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-repair1-20261026",
+            "digest": "sha256:b6c39a53a0ff9cd9014b1802521c02ba03984f6642c563797ecb7993f92b9aa5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,212171,715\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "gate-05",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-r1-root-conformance-05",
+          "performer": "claude:gr-t05-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-repair1-20261026",
+            "digest": "sha256:ea7e5e3d21ee9f196a9a48337066166fc0222ac6d1b342c416c95c264e810261",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11688,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "root-conformance-05",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-r1-worktree-05",
+          "performer": "claude:gr-t05-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-repair1-20261026",
+            "digest": "sha256:11a498ba014bf2c384b1182e6bcf451325f4befbfaafd6334a33d464ab72e1a3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,128838,1520\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "worktree-05",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t05-r1-brokermanifest-05",
+          "performer": "claude:gr-t05-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t05-repair1-20261026",
+            "digest": "sha256:a8ae0a8515973657d26dbd7a8f80c05ff01ad65ae10d8183358ad0c79e71228f",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/brokermanifest,pass,2,5\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "brokermanifest-05",
+          "command": "bench test --package ./internal/brokermanifest",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-r1-gate",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:738eb61a3e744c5fa493598838dcd6b0c97cf7842416c612fbac456ec7efc168",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,215514,715\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-r1-worktree",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:72e668ec253bd73b8eb3b2aa5acd877a464ae2fee13740e64c5cf326acfdf340",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,131279,1520\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-r1-commit",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:866e5a15a12d6c36dd0485a8b68cf3a18cf57eb33ee26c346651f9047b8636a9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,pass,8927,119\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "commit",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-r1-root-conformance",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:d8a8a287790ea58c55c47163cc9c2d721dbe6b180b45c2de5799d462b5877084",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12017,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "gr-t04-r1-land-probe",
+          "performer": "claude:gr-t04-cont1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+            "digest": "sha256:94386b77a39a48e114cd4f83e24e1b53925b136d58838dd1680e1cb4cbf63669",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/run_transaction.go,swap+swap,failed,1,TestLandReusesTheCompleteCheckpointGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandReusesTheCompleteCheckpointGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,373\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,1708,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandReusesTheCompleteCheckpointGreen,\"land_reuse_test.go:91: gate tally after the landing of the checkpoint tree = \\\"gg\\\", <nil>; want one run\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "requirement": "land-probe",
+          "command": "bench probe internal/gate/run_transaction.go --swap 'reuse.ReusableGreen && reuseWritesNothing' --with 'reuse.ReusableGreen && false && reuseWritesNothing' --swap 'reuse.ReusableGreen {' --with 'reuse.ReusableGreen && false {' --package ./internal/worktree --run TestLandReusesTheCompleteCheckpointGreen --expect TestLandReusesTheCompleteCheckpointGreen",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Disable the reuse lookup at both run sites. The landing then runs the gate again, so the checkpoint-then-landing tally fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gr-t04-cont1-20261026",
+              "digest": "sha256:94386b77a39a48e114cd4f83e24e1b53925b136d58838dd1680e1cb4cbf63669",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/run_transaction.go,swap+swap,failed,1,TestLandReusesTheCompleteCheckpointGreen,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandReusesTheCompleteCheckpointGreen,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,373\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,1708,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandReusesTheCompleteCheckpointGreen,\"land_reuse_test.go:91: gate tally after the landing of the checkpoint tree = \\\"gg\\\", <nil>; want one run\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -1198,6 +1418,21 @@
         ],
         "GR-C2": [
           "GR-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4e73a10e6fba94a23b56ea5e07c1c84597c1d941628077fe37dd81c4631b1a0d",
+      "to": "sha256:4559fa1a70795eac25068f8380506145dc4708e91ea94f8015e9a5d06dce8311",
+      "chunk_ids": {
+        "GR-C1": [
+          "GR-C1"
+        ],
+        "GR-C2": [
+          "GR-C2"
+        ],
+        "GR-C3": [
+          "GR-C3"
         ]
       }
     }
