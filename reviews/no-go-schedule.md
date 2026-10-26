@@ -1119,7 +1119,84 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3r1-standards",
+          "performer": "claude:ngs-c3-standards-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d55a1dd09e3a53f63ffcf69525cbb542990431a8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3-standards-20261025",
+            "digest": "sha256:a4bed550e5473051b93f15a06d4f6d4ba411a5c7f0db838c409f0c0f7b232ec0",
+            "excerpt": "Axis: Standards, NG-C3, tickets 04, 05, 06. Session claude:ngs-c3-standards-20261025. Frozen pair f9e20cf3..ff617775.\nCount: 3 findings. Worst issue: S2.\nS1 sev 5, conf 9, auto-fix: the kit-run predicate is derived twice (reader_plan.go:77 and reader_store.go:55 beginReaderTrace). Extract one predicate.\nS2 sev 6, conf 9, ask-user: the per-file embed parse is duplicated (embed_directives.go:47-67 directivePatterns and assets.go:98-118 EmbedTargets) and already diverges on backticks and the all: prefix. EmbedTargets should call directivePatterns.\nS3 sev 5, conf 9, auto-fix: the link-mode check on both sides of a change repeats changeClasses (reader_plan.go:117-123 and lane_select.go:302-306). Extract one predicate.\nrunReduced (ticket 04) is a faithful extraction: no finding.\nAdvice (no ID): two mechanisms set Schedule; commitTree repeats an older rev-parse idiom; the refusal relocation is pure.\n"
+          },
+          "axis": "Standards",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "ff617775e2ca93ad218f92d8fad7395a2cacad38",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3r1-spec",
+          "performer": "claude:ngs-c3-spec-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d55a1dd09e3a53f63ffcf69525cbb542990431a8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3-spec-20261025",
+            "digest": "sha256:29a8ad990d11aa28a917488067c79d5aa36d13947e65662a160a4a3d6b6a45b4",
+            "excerpt": "Axis: Spec, NG-C3, tickets 04, 05, 06, rows NG29-NG59, NG73-NG77, NG79, NG80. Session claude:ngs-c3-spec-20261025. Frozen pair f9e20cf3..ff617775.\nCount: 3 findings (axis IDs S1-S3, recorded as P1-P3). Worst issue: P1.\nP1 sev 5, conf 6, ask-user, ticket 06: attribute (authorization.go:33-41) maps a reader-set timeout (124) or cancel (130) to candidate from the exit codes alone; the whole path gives infrastructure. Define red as a failed phase table.\nP2 sev 5, conf 5, ask-user, ticket 06: publishedReaderRecorded (land_resume.go:664-671) treats a read error as no record, so a resumed reader landing can advance the green marker (spec lines 38-39 forbid it). Fail closed.\nP3 sev 5, conf 6, auto-fix, ticket 05: decide reads changes through ComposedChanges/TreeChanges without --ignore-submodules=none (tree.go:285-288); an ambient diff.ignoreSubmodules hides a gitlink change from case 6. Use TreeChangesIncludingSubmodules.\nAdvice (no ID): the duplicated embed parse; a destination-tree read failure is labelled no green marker; the resumeMarkerFacts wiring of the reader fact has no biting test; the reader-record store has no prune.\n"
+          },
+          "axis": "Spec",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "ff617775e2ca93ad218f92d8fad7395a2cacad38",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3r1-coverage",
+          "performer": "claude:ngs-c3-coverage-20261025",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d55a1dd09e3a53f63ffcf69525cbb542990431a8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ngs-c3-coverage-20261025",
+            "digest": "sha256:8edd27df22d12771f2cb19a62c67ed27a8d1393ee556e2a9587af5a8aa42ad2c",
+            "excerpt": "Axis: Coverage, NG-C3, tickets 04, 05, 06. Session claude:ngs-c3-coverage-20261025. Frozen pair f9e20cf3..ff617775.\nCount: 7 findings. Worst issue: C5.\nC5 sev 6, conf 8, auto-fix, ticket 06: the resume wiring of PublishedReaderRecorded (land_resume.go:296-314) has no biting test; NG59 presets the fact.\nC1 sev 5, conf 6, ask-user, tickets 05/06: an open subject can land on reader green; the plan never reads plan.Closed and the table persists on any whole green.\nC2 sev 5, conf 7, auto-fix, ticket 06: a reader timeout or cancel maps to candidate (same as Spec P1).\nC3 sev 5, conf 8, auto-fix, ticket 05: the IsAncestor clause of case 3 (reader_plan.go:86) has no test.\nC4 sev 5, conf 8, auto-fix, ticket 05: the chain-gap test places its only gap at index 0.\nC6 sev 5, conf 6, auto-fix, ticket 05: TreeChanges hides a gitlink under ambient config (same as Spec P3).\nC7 sev 5, conf 7, auto-fix, ticket 05: strings.Fields splits a quoted embed pattern with a space; the loop copies EmbedTargets (same root as Standards S2).\nAdvice (no ID): no test swaps cases 10/11 or 5/6; the plan chain fixture is linear; the reader-record store has no bound.\n"
+          },
+          "axis": "Coverage",
+          "base": "f9e20cf3569b172cb80e40d33f094f1ed50a32ba",
+          "tip": "ff617775e2ca93ad218f92d8fad7395a2cacad38",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1196,6 +1273,8 @@ NG-C1 consumed repair cycle 1 of 2 after its initial review (round r1). No revie
 
 NG-C2 consumed repair cycle 1 of 2 after its initial review (round r1). No reviewer extension applies.
 
+NG-C3 consumed repair cycle 1 of 2 after its initial review (round r1). One combined repair session on ticket 06 carries every accepted finding, because the findings share files across tickets 03, 05, and 06. No reviewer extension applies.
+
 ## Standards
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -1205,6 +1284,12 @@ NG-C2 round r1: 2 findings. Worst issue: S1, a restated list of the run flags of
 - S1 | auto-fix | confidence 7 | `internal/gate/reader_store.go:35-38` | `testRunFlags` restates the run flags that the traced phase builder emits. Ticket 03 line 17 forbids a restated list.
 - S2 | auto-fix | confidence 8 | `internal/git/tree.go:175-176` | The symbolic-link mode gets a second production copy beside `internal/gate/lane_select.go:110`.
 
+NG-C3 round r1: 3 findings. Worst issue: S2, a duplicated embed parse that already diverges.
+
+- S1 | auto-fix | confidence 9 | `internal/gate/reader_plan.go:77` | The kit-run predicate repeats `beginReaderTrace` in `internal/gate/reader_store.go:55`.
+- S2 | auto-fix | confidence 9 | `internal/packagesurface/embed_directives.go:47-67` | The embed parse repeats `EmbedTargets` and differs on backticks and the `all:` prefix. The axis asked for the user; `EmbedTargets` keeps its file scope.
+- S3 | auto-fix | confidence 9 | `internal/gate/reader_plan.go:117-123` | The link-mode check repeats `changeClasses` in `internal/gate/lane_select.go:302-306`.
+
 ## Spec
 
 NG-C1 round r1: 0 findings. Worst issue: none.
@@ -1212,6 +1297,12 @@ NG-C1 round r1: 0 findings. Worst issue: none.
 NG-C2 round r1: 0 findings. Worst issue: none.
 
 NG-C2 round r2 (confirming): all three axes pass with 0 findings. Each repair test is red-capable against the finding it closes.
+
+NG-C3 round r1: 3 findings. Worst issue: P1, a reader-set timeout that attributes as a candidate red.
+
+- P1 | auto-fix | confidence 6 | `internal/gate/authorization/authorization.go:33-41` | A reader-set timeout or cancel maps to `candidate`. The axis asked for the user; a timeout and a cancel now map to `infrastructure`.
+- P2 | auto-fix | confidence 5 | `internal/worktree/land_resume.go:664-671` | An unreadable reader record at resume reads as no record, so the marker can advance. The axis asked for the user; the resume now refuses.
+- P3 | auto-fix | confidence 6 | `internal/gate/reader_plan.go:93` | The change list omits submodules, so ambient configuration can hide a gitlink change from case 6.
 
 ## Coverage
 
@@ -1227,6 +1318,22 @@ NG-C2 round r1: 6 findings. Worst issue: C1, no test pins that the table persist
 - C4 | auto-fix | confidence 8 | `internal/gate/reader_table.go:86-88` | No test feeds a log line with an empty name.
 - C5 | no-op | confidence 5 | `internal/gate/reader_families.go:42` | The consultants kept the claim of a family's own directory, and the spec text now states it.
 - C6 | no-op | confidence 6 | `internal/gate/reader_families.go:10-22` | A test that pins each family duplicates the declaration, which AGENTS.md forbids, and review owns that declaration.
+
+NG-C3 round r1: 7 findings. Worst issue: C5, the resume wiring of the reader fact has no biting test.
+
+- C1 | auto-fix | confidence 6 | `internal/gate/reader_plan.go:76-152` | An open subject can land on `reader green`, and a table persists on an open whole green. The axis asked for the user; the plan now refuses an open subject, and rows NG83 and NG84 cover the change.
+- C2 | auto-fix | confidence 7 | `internal/gate/authorization/authorization.go:39` | A timeout or a cancel maps to `candidate`. Spec finding P1 holds the same repair.
+- C3 | auto-fix | confidence 8 | `internal/gate/reader_plan.go:86` | No test reaches the ancestor clause of case 3.
+- C4 | auto-fix | confidence 8 | `internal/gate/reader_plan_test.go:341` | The chain-gap test places its only gap at the first commit.
+- C5 | auto-fix | confidence 8 | `internal/worktree/land_resume.go:296-314` | No test bites the resume wiring of the reader fact.
+- C6 | auto-fix | confidence 6 | `internal/gate/reader_plan.go:93` | Ambient configuration can hide a gitlink change. Spec finding P3 holds the same repair.
+- C7 | auto-fix | confidence 7 | `internal/packagesurface/embed_directives.go:55` | A quoted embed pattern with a space splits into two words. Standards finding S2 holds the shared parser.
+
+## Measurement (NG60)
+
+The ticket 06 author landed two `ROADMAP.md` changes in a disposable clone of `ff617775e`, with a separate Bench home. The first landing ran the whole gate in 275 seconds, green, with the case-3 refusal. The second landing also ran the whole gate, in 315 seconds, with the refusal `no reader table`. Both runs logged that `go list` failed in a deleted prospective checkout.
+
+The orchestrator files this result as finding N1 on ticket 03's code. `settleRun` releases the prospective checkout before `trace.persist` lists the test packages, so no landing stores a reader table. The NG60 premise stays unproven until the repair lands and the measurement runs again.
 
 ## Repair witnesses
 
