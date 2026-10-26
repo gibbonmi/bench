@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/no-go-schedule/spec.md",
-  "plan_digest": "sha256:11ed1fc05e800de44f46a007e13f3d2a5f224fab1ec958ed43cdcaf5fd8708f8",
+  "plan_digest": "sha256:fe8eec05cb96401f72af5a70e983c0f599e7a6c35d83366b8c15758f6f77e8be",
   "implementation_session": "",
   "chunks": [
     {
@@ -256,6 +256,257 @@
           }
         }
       ]
+    },
+    {
+      "id": "NG-C2",
+      "base": "9768ad919f94d609cd4e32853833d0f0fb31443f",
+      "tip": "5aaad0ad36af9a7ee95845845585a233c6713621",
+      "plan_digest": "sha256:fe8eec05cb96401f72af5a70e983c0f599e7a6c35d83366b8c15758f6f77e8be",
+      "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+      "acceptance_rows": [
+        "NG5",
+        "NG6",
+        "NG7",
+        "NG8",
+        "NG9",
+        "NG10",
+        "NG11",
+        "NG12",
+        "NG72",
+        "NG81",
+        "NG13",
+        "NG14",
+        "NG15",
+        "NG16",
+        "NG17",
+        "NG18",
+        "NG19",
+        "NG20",
+        "NG21",
+        "NG22",
+        "NG23",
+        "NG24",
+        "NG25",
+        "NG26",
+        "NG27",
+        "NG28",
+        "NG71"
+      ],
+      "verification": [
+        {
+          "id": "t03-ticket-3-check-1",
+          "performer": "claude:ngs-t03-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-author-20261025",
+            "digest": "sha256:1a8ec55582141f730ae349ccc344b015da665b1f050fb9b64b492efa86e24689",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,69295,623\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "requirement": "ticket-3-check-1",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-ticket-3-check-2",
+          "performer": "claude:ngs-t03-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-author-20261025",
+            "digest": "sha256:5a6bd5a5bfac80246edf34c70617c090655953a6d9fc2f3d36a031bf8663c8d2",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,pass,1341,179\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "requirement": "ticket-3-check-2",
+          "command": "bench test --package ./internal/git",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-ticket-3-check-3",
+          "performer": "claude:ngs-t03-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-author-20261025",
+            "digest": "sha256:c1de50ff3562ef0c41f78e82ce8e79f84a0ad2d2584195c5aa0c6e2cf16aaea4",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13382,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "requirement": "ticket-3-check-3",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03-ticket-3-probe",
+          "performer": "claude:ngs-t03-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e440572cfc3420f5cb25f2084ba68ef7711bab1a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t03-author-20261025",
+            "digest": "sha256:0235626aa4eef90bbb99d7b19ccc55f96b1ab8f1db9ec21a7a2a0ff052c7bc07",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_table.go,omit,failed,1,TestReaderTableRequiresTheConformanceWitness,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,623\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,523\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,69326,623\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderTableRequiresTheConformanceWitness,\"reader_table_test.go:167: derivation = map[.agents/:[internal/conformance] .bench/BENCH.md:[internal/conformance] .bench/commitment.json:[internal/conformance] CHANGELOG.md:[internal/conformance] ROADMAP.md:[internal/conformance] capture/:[… (454 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5aaad0ad36af9a7ee95845845585a233c6713621",
+          "requirement": "ticket-3-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the reader-table derivation, remove the internal/conformance witness refusal. TestReaderTableRequiresTheConformanceWitness must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t03-author-20261025",
+              "digest": "sha256:0235626aa4eef90bbb99d7b19ccc55f96b1ab8f1db9ec21a7a2a0ff052c7bc07",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/reader_table.go,omit,failed,1,TestReaderTableRequiresTheConformanceWitness,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,623\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,523\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,69326,623\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestReaderTableRequiresTheConformanceWitness,\"reader_table_test.go:167: derivation = map[.agents/:[internal/conformance] .bench/BENCH.md:[internal/conformance] .bench/commitment.json:[internal/conformance] CHANGELOG.md:[internal/conformance] ROADMAP.md:[internal/conformance] capture/:[… (454 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t02-ticket-2-check-1",
+          "performer": "claude:ngs-t02-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2b5ce7e36dfc13afe9c9cf8c97ea445863c9468",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+            "digest": "sha256:5d17c0a3f9c2bd604601317d6fa9c6ab13582b83799d153c23f07ce46291a69c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,68080,606\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2320d7138b93c708ded2bff0a6d85db598cfd19",
+          "requirement": "ticket-2-check-1",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-2",
+          "performer": "claude:ngs-t02-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2b5ce7e36dfc13afe9c9cf8c97ea445863c9468",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+            "digest": "sha256:1b8be29bebd5b2aaba7bd5ab1066f1665bdebbfe81d94603dda9e57214dc3a03",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,4336,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2320d7138b93c708ded2bff0a6d85db598cfd19",
+          "requirement": "ticket-2-check-2",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-3",
+          "performer": "claude:ngs-t02-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2b5ce7e36dfc13afe9c9cf8c97ea445863c9468",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+            "digest": "sha256:daded535e600af67852f854731c0f8e9448cd416757b516a2258acd2cdf92af2",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,379,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2320d7138b93c708ded2bff0a6d85db598cfd19",
+          "requirement": "ticket-2-check-3",
+          "command": "bench test --check ordinary-build-census",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-4",
+          "performer": "claude:ngs-t02-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2b5ce7e36dfc13afe9c9cf8c97ea445863c9468",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+            "digest": "sha256:542656d86d539e1e3a0e080a3d71d4862c9fc34b4137368b35355d17cbca4de6",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,37909,1143\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "e2320d7138b93c708ded2bff0a6d85db598cfd19",
+          "requirement": "ticket-2-check-4",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-check-5",
+          "performer": "claude:ngs-t02-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2b5ce7e36dfc13afe9c9cf8c97ea445863c9468",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+            "digest": "sha256:ebb21f36389050ff9c6e84ac652a29b65522276811fdbb0abe9a5ee3e6d94cc5",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13273,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2320d7138b93c708ded2bff0a6d85db598cfd19",
+          "requirement": "ticket-2-check-5",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t02-ticket-2-probe",
+          "performer": "claude:ngs-t02-author-20261025",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2b5ce7e36dfc13afe9c9cf8c97ea445863c9468",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+            "digest": "sha256:2794932d9f7167f75202834dc8ed3b75194241d020e27238950c34d0c0ea346d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/testlog_exec.go,swap,failed,2,TestGateGoExecAddsTheTestLog,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,606\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,586\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,68453,606\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateGoExecAddsTheTestLog,\"testlog_exec_test.go:47: probe arguments = [\\\"-a\\\" \\\"b c\\\"], want [\\\"-test.testlogfile=/dev/shm/VZFZMN/t/TestGateGoExecAddsTheTestLog424366856/001/pkg%2Fsub.log\\\" \\\"-a\\\" \\\"b c\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestWholeTestPhaseWritesOneLogPerPackage,\"testlog_exec_test.go:132: log of a = \\\"\\\", <nil>; want a Go test log\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2320d7138b93c708ded2bff0a6d85db598cfd19",
+          "requirement": "ticket-2-probe",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "In the gate-go exec shim, drop the -test.testlogfile operand. TestGateGoExecAddsTheTestLog must fail, then pass after the restore.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ngs-t02-author-20261025",
+              "digest": "sha256:2794932d9f7167f75202834dc8ed3b75194241d020e27238950c34d0c0ea346d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/testlog_exec.go,swap,failed,2,TestGateGoExecAddsTheTestLog,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,606\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,586\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,68453,606\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestGateGoExecAddsTheTestLog,\"testlog_exec_test.go:47: probe arguments = [\\\"-a\\\" \\\"b c\\\"], want [\\\"-test.testlogfile=/dev/shm/VZFZMN/t/TestGateGoExecAddsTheTestLog424366856/001/pkg%2Fsub.log\\\" \\\"-a\\\" \\\"b c\\\"]\",1\n  github.com/gibbonmi/bench/internal/gate,TestWholeTestPhaseWritesOneLogPerPackage,\"testlog_exec_test.go:132: log of a = \\\"\\\", <nil>; want a Go test log\",4\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -269,6 +520,15 @@
     {
       "from": "sha256:f7c4b9dfcb60734c5667d0a2306b537d6995e9fb0298efa86eb1c64756040342",
       "to": "sha256:11ed1fc05e800de44f46a007e13f3d2a5f224fab1ec958ed43cdcaf5fd8708f8",
+      "chunk_ids": {
+        "NG-C1": [
+          "NG-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:11ed1fc05e800de44f46a007e13f3d2a5f224fab1ec958ed43cdcaf5fd8708f8",
+      "to": "sha256:fe8eec05cb96401f72af5a70e983c0f599e7a6c35d83366b8c15758f6f77e8be",
       "chunk_ids": {
         "NG-C1": [
           "NG-C1"
