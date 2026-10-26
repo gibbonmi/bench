@@ -840,3 +840,12 @@ The ticket 03 author probed `internal/gate` with `bench probe --run`, and each p
 - Both cache checks changed to `if false` failed TestGateRunGreenReusesRecordedVerdict (GR23) at `run_outcomes_test.go:71`. The two checks mask each other, so this joint probe is the witness for both.
 
 The ticket 02 verification entries carry the ids `gr-t02--<requirement>`, because `bench record ticket` adds its own hyphen to the prefix.
+
+## GR-C2 ticket 02 repair witness reds
+
+The ticket 02 repair session reported these reds for repair commit f1fe7d8bc, and each probe restored its subject.
+
+- C1: an omitted `validateStoreRecordCommon(*record) != nil ||` in `engine.go` failed TestMalformedEvidenceAnswersNoLookup at `grade_key_test.go:198` for the wrong-schema and wrong-tree rows.
+- C1: an omitted `requireObjectFields(read.data, evidenceFields) != nil ||` failed the same test at `grade_key_test.go:198` for the legacy-oracle and missing-grade rows.
+- C4: an omitted `inspection.Grade` term in `evidenceToken` failed TestEvidenceTokenBindsTheGradeKey at `authorization_test.go:87`.
+- The planned reuse probe bit at `grade_key_test.go:68`.
