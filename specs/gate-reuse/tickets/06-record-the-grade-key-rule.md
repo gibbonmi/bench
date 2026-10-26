@@ -14,6 +14,8 @@ The profile and the reference state the reuse rule and the broker checkpoint.
 `CONTEXT.md` adds the **grade key** term with its Avoid list: authorization key, evidence key, reuse key.
 `CHANGELOG.md` records the user-facing changes under one Unreleased heading.
 
+The reference list of entries that refuse with `candidate-not-installed` drops the complete checkpoint, because the complete checkpoint now execs the installed candidate.
+
 ## Acceptance
 
 - [ ] ADR 31 states the key members, reuse across checkouts and verbs, the posture binding, and the broker checkpoint, with no file path and no code.

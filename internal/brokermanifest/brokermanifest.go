@@ -35,8 +35,11 @@ const TemporaryPrefix = "." + Name + "."
 // that Digest computes.
 const DigestField = "sha256"
 
+// PathField is the manifest field that binds the symlink-resolved broker path.
+const PathField = "path"
+
 // boundFields are the four values one manifest carries.
-var boundFields = []string{"path", "version", "platform", DigestField}
+var boundFields = []string{PathField, "version", "platform", DigestField}
 
 // Write publishes the manifest in dir, binding broker as the promotion broker for
 // version. It returns the manifest path and the symlink-resolved broker it bound.
@@ -54,7 +57,7 @@ func write(replacer durablefile.Replacer, dir, broker, version string) (string, 
 		return "", "", fmt.Errorf("digest promotion broker %s: %w", broker, err)
 	}
 	path := filepath.Join(dir, Name)
-	content := "path\t" + broker + "\n" +
+	content := PathField + "\t" + broker + "\n" +
 		"version\t" + version + "\n" +
 		"platform\t" + Platform() + "\n" +
 		DigestField + "\t" + digest + "\n"

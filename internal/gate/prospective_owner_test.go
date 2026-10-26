@@ -1,6 +1,6 @@
 // Stable-owner tests for the prospective gate: the graded tree supplies the gate
-// executable, the landing baseline supplies the phase schedule, and prospective
-// evidence keys to the graded tree together with the baseline runner identity.
+// executable, the landing baseline supplies the phase schedule, and prospective evidence
+// keys to the grade key: the graded tree framed with a grade identity that binds the run binary.
 package gate
 
 import (
@@ -194,46 +194,35 @@ func TestProspectivePhaseScheduleRefusesAnUnusableBaseline(t *testing.T) {
 	}
 }
 
-// TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity is SOL13. Retained
-// prospective evidence is addressed by the graded tree together with the baseline
-// runner identity. A key that binds only one of them reuses evidence after the other
-// half of the subject changes.
-func TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity(t *testing.T) {
-	root := t.TempDir()
-	writeGateFixtureFile(t, root, ".bench/gate.sh", "#!/bin/sh\nexit 0\n", 0o755)
-	writeGateFixtureFile(t, root, ".bench/gate-prospective.sh", "#!/bin/sh\nexit 0\n", 0o755)
-	writeGateFixtureFile(t, root, ".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[],\"paths\":[],\"tools\":[]}\n", 0o644)
-	// One identity root answers for both runners in turn, so only the runner identity
-	// differs between the two keys. Two directories would differ by their own paths,
-	// which the subject already binds, and the assertion would pass without the runner.
-	identityRoot := t.TempDir()
+// TestProspectiveEvidenceKeysToTheTreeAndRunBinary is GR12 and GR13. The grade key names
+// each evidence record, so two trees name two records, and a changed run binary member or
+// running executable digest names another record. Neither member moves the oracle digest,
+// so a key over the oracle digest names one record across each change.
+func TestProspectiveEvidenceKeysToTheTreeAndRunBinary(t *testing.T) {
+	t.Setenv("BENCH_KIT", "")
+	root := oracleIdentityFixture(t)
+	writeRunBinarySource(t, root, "")
+	setRunningExecutable(t, "one")
 	tree := strings.Repeat("a", 40)
-	other := strings.Repeat("b", 40)
-
 	key := func(tree string) string {
 		t.Helper()
-		plan, err := buildSubjectForTree(root, identityRoot, policyVersion, tree)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return evidenceName(plan)
+		return evidenceName(oracleIdentitySubject(t, root, tree))
 	}
-	unbound := key(tree)
-	if unbound != key(tree) {
-		t.Fatal("an unchanged subject did not address the same evidence")
+	first := key(tree)
+	if first != key(tree) {
+		t.Fatal("an unchanged subject did not name the same evidence")
 	}
-	if unbound == key(other) {
-		t.Fatal("evidence key ignored the graded tree")
+	if first == key(strings.Repeat("b", 40)) {
+		t.Fatal("evidence name ignored the graded tree")
 	}
-	if got := baselineRunnerIdentity(identityRoot); got != unboundBaselineRunner {
-		t.Fatalf("undeclared baseline runner identity = %q, want %q", got, unboundBaselineRunner)
+	writeRunBinarySource(t, root, " println() ")
+	member := key(tree)
+	if member == first {
+		t.Fatal("evidence name ignored the run binary member")
 	}
-	writeGateFixtureFile(t, identityRoot, benchfreshness.BuildInputsManifest, benchfreshness.BuildInputLine("build_script", "scripts/go-build.sh"), 0o644)
-	if got := baselineRunnerIdentity(identityRoot); got == unboundBaselineRunner {
-		t.Fatal("a declared build recipe still answered the unbound runner identity")
-	}
-	if unbound == key(tree) {
-		t.Fatal("evidence key ignored the baseline runner identity")
+	setRunningExecutable(t, "two")
+	if key(tree) == member {
+		t.Fatal("evidence name ignored the running executable digest")
 	}
 }
 

@@ -76,7 +76,8 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		return refusal
 	}
 	if mode == reuseFreshGreen {
-		if reuse := reusableEvidence(storageRoot, plan, time.Now().UTC()); reuse.ReusableGreen {
+		now := time.Now().UTC()
+		if reuse := reusableEvidence(storageRoot, plan, now); reuse.ReusableGreen && reuseWritesNothing(storageRoot, plan, now) {
 			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
 			return reusedGreenResult(stdout, reuse)
 		}
@@ -119,12 +120,14 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if err != nil || !sameSubject(plan, underLock) {
 		return operational(storageRoot, 0, stderr, "gate subject changed before execution")
 	}
-	// A reusable green is answered from the record without touching it. Re-recording the
-	// verdict would push RecordedAt forward on every read and make the freshness window
-	// unbounded. The check sits ahead of the pending replace, so a reuse returns with
-	// nothing written: no pending record to leave behind, no verdict to restore.
+	// The check sits ahead of the pending replace, so a reuse writes at most the reused green:
+	// no pending record to leave behind, no verdict to restore.
 	if mode == reuseFreshGreen {
-		if reuse := reusableEvidence(storageRoot, plan, time.Now().UTC()); reuse.ReusableGreen {
+		now := time.Now().UTC()
+		if reuse := reusableEvidence(storageRoot, plan, now); reuse.ReusableGreen {
+			if err := recordReusedGreen(replacer, storageRoot, gitdir, plan, reuse, now); err != nil {
+				return persistenceFailure(storageRoot, 0, stderr, "gate reuse persistence failed", err)
+			}
 			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
 			return reusedGreenResult(stdout, reuse)
 		}
@@ -156,7 +159,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	// The selection lives in the bundle, so the bundle releases only after the selection does.
 	release := func() error { return bundle.CloseAfter(selection.Close) }
 	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
-		source := runBinarySource(runtimeRoot, storageRoot, plan)
+		source := runBinarySource(plan.Resolution.Kind, runtimeRoot, storageRoot)
 		logGateEvent(ctx, gateLogRecord{Event: "binary.select.start", Root: source})
 		selection, err = owner(runCtx, source)
 		if err != nil {
@@ -213,7 +216,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 			if err := invalidateEvidence(storageRoot, plan); err != nil {
 				return operational(storageRoot, code, stderr, "gate evidence invalidation failed")
 			}
-			ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+			ready := readyVerdict(plan, "timeout", time.Now())
 			if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
 				return persistenceFailure(storageRoot, code, stderr, "gate timeout persistence failed", err)
 			}
@@ -233,7 +236,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		status = "green"
 	}
 	recordedAt := time.Now().UTC()
-	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	ready := readyVerdict(plan, status, recordedAt)
 	var suspects []string
 	if status == "green" {
 		if err := retainGreen(replacer, storageRoot, plan, recordedAt); err != nil {

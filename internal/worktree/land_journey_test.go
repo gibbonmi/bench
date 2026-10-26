@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -78,9 +77,10 @@ func TestLandCommandPublicRealGitJourney(t *testing.T) {
 				t.Fatalf("gate tally = %q, %v", got, readErr)
 			}
 			if tc.name == "clean" {
-				tree := gitOutput(t, f.root, "rev-parse", published+"^{tree}")
-				if got := authorization.Authorize(gate.WithCompletion(t.Context(), "specs/x/spec.md", f.tip), f.root, tree); got.Kind != authorization.Green {
-					t.Fatalf("identical-tree authorization = %+v", got)
+				same := descendant(t, binary, "gate") // The grade key holds the executable that landed.
+				same.Dir = f.root
+				if out, err := same.Output(); err != nil || !strings.HasSuffix(string(out), "\ngate: green (fresh verdict reused for this tree)\n") {
+					t.Fatalf("identical-tree gate = %v stdout=%q", err, out)
 				}
 				if got, readErr := os.ReadFile(f.tally); readErr != nil || string(got) != "g" {
 					t.Fatalf("identical tree reran gate: tally=%q error=%v", got, readErr)

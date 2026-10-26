@@ -110,6 +110,15 @@ var gateFaces = []Face{
 		Route:     []Step{Instruction(Text("from the primary checkout, run"), Text(installForm), Fact(FactTarget)), rerun},
 	},
 	{
+		// The complete checkpoint of a repository with Bench build inputs runs only under the
+		// landing broker, so the route repeats the landing's broker repair advice. The printing
+		// verb supplies its own re-run.
+		Verb:      Gate,
+		Name:      "checkpoint-broker-unavailable",
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("run bench doctor --fix (or reinstall redbench) to republish the promotion broker")), rerun},
+	},
+	{
 		// One primary executable serves one installed candidate, so one of the open declared
 		// builds must end. The choice of the build to end is the reviewer's. The printing verb
 		// supplies its own re-run.

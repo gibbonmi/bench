@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Gate reuse under one grade key
+
+- Changed the gate evidence store, which now names each whole green by one grade key. The key holds the tree, the toolchain, the baseline phase schedule, the capability posture, the run binary member, and the running executable digest. It holds no checkout path and no run purpose. A green from one checkout now answers a run of the same key from another checkout. Before, the evidence name framed the checkout path and the baseline runner identity, so a green never crossed checkouts.
+- Changed `bench gate`, `bench commit`, `bench worktree merge`, `bench worktree land`, and the checkpoints, which now look up a green under the grade key before they select the delta set or the reader set. On a hit, each verb still runs its own purpose and evidence checks. A reuse records the gate cache of its checkout with the recorded time of the source run. `--fresh` and a declared lane skip the lookup.
+- Changed the complete checkpoint in a repository that declares build inputs, which now runs under the installed landing broker. When the running executable differs from the broker, the checkpoint execs the broker, so its green answers the landing of the same tree. Before, a spec landing ran a second whole gate on the tree of its complete checkpoint.
+- Added the `checkpoint-broker-unavailable` refusal face. The complete checkpoint refuses with it, and runs no gate, when it cannot authenticate or exec the broker.
+
 ### Lane fixture bite
 
 - Changed the kit commit lane, which now runs the `fixture-bite` check when a commit changes a path that a retained canary fixture pins. The check runs the fixture bite test alone through `bench test --package`. The new `canary-pin` path class selects it, and the lane reads the pins from the canary inventory of the composed checkout. Before, a reflow of a pinned guidance line passed the lane, and the landing gate found the broken fixture anchor.

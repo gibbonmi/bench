@@ -65,6 +65,37 @@ func besideDemotion(message string, err error) string {
 	return message + "; interrupted-green demotion failed: " + err.Error()
 }
 
+// reuseWritesNothing answers whether a reuse before the gate lock answers with no write. The
+// gate cache can already describe this subject's fresh green. Another run can hold the gate
+// lock, and a reuse does not wait for it.
+func reuseWritesNothing(root string, plan subject, now time.Time) bool {
+	if cacheDescribesFreshGreen(root, plan, now) {
+		return true
+	}
+	gitdir, err := benchgit.AdminDir(root)
+	if err != nil {
+		return false
+	}
+	held, err := lockHeld(gitdir)
+	return err == nil && held
+}
+
+// recordReusedGreen installs reuse as the gate cache of gitdir, unless that cache already
+// describes this subject's fresh green. The record keeps the time of the store record, so a
+// reuse does not move the freshness window.
+func recordReusedGreen(replacer durablefile.Replacer, root, gitdir string, plan subject, reuse Inspection, now time.Time) error {
+	if cacheDescribesFreshGreen(root, plan, now) {
+		return nil
+	}
+	return durableReplace(replacer, gitdir, readyVerdict(plan, "green", reuse.RecordedAt))
+}
+
+// cacheDescribesFreshGreen answers whether the gate cache of root already describes the fresh
+// green of plan at now. A reuse writes nothing over such a cache.
+func cacheDescribesFreshGreen(root string, plan subject, now time.Time) bool {
+	return inspectSubjectAt(root, plan, now).ReusableGreen
+}
+
 func interruptedRecord(plan subject, now time.Time) verdictRecord {
 	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
 }
@@ -78,8 +109,9 @@ func retainGreen(replacer durablefile.Replacer, root string, plan subject, recor
 	if err := ensureEvidenceDir(gitdir, dir); err != nil {
 		return err
 	}
-	record := verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	return durableReplaceAt(replacer, dir, evidenceName(plan), record)
+	record := readyVerdict(plan, "green", recordedAt)
+	record.Oracle, record.Grade = "", evidenceName(plan)
+	return durableReplaceAt(replacer, dir, record.Grade, record)
 }
 
 func ensureEvidenceDir(parent, dir string) error {

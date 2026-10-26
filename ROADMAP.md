@@ -200,8 +200,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT302 (MEDIUM) — the deepening batch's residuals: the diff package policy extraction and the Git-reader promotion.**
 
-**FT314 (MEDIUM) — an unchanged landing composition reuses gate evidence only under a complete authorization key.**
-
 **FT351 (LOW) — an offline diff report carries the approved visual prototype into a supported feature.**
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
@@ -339,7 +337,6 @@ recommended table is sequencing advice.
 | FT240 | FT231 | The experiment keeps its approved three-arm comparison. |
 | FT304 | FT172 | The view needs the identity contract. |
 | FT306 | FT305 | Adoption follows durable execution. |
-| FT451 | FT314 | The background grade looks up the FT314 grade key. |
 
 ### Recommended
 
@@ -352,24 +349,22 @@ recommended table is sequencing advice.
 | FT172 | FT106 | Reuse document-claim evidence for roadmap claims. |
 | FT241 | FT231 | Retained acceptance evidence reuses the harness record shape. |
 | FT364 | FT142 | Cut the release machinery after the qualification residuals are revalidated. |
-| FT450 | FT314 | The queue reuses the grade key for each composed stack. |
 | FT451 | FT255 | Background grades share the explicit machine budget. |
 
 ## Recommended sequence
 
-1. FT314-gate-reuse
-2. FT450-landing-queue
-3. FT448-repair-carry
-4. FT360-shared-fixtures
-5. FT411
-6. FT125-exact-readers
-7. FT375-residual
-8. FT344-remedy
-9. FT406-rebuild
-10. FT366-rg-guard
-11. FT380-residual
-12. FT354-strict-json
-13. FT363-member-set
-14. FT358-block-reader
-15. FT365-conformance
-16. FT414-preconditions
+1. FT450-landing-queue
+2. FT448-repair-carry
+3. FT360-shared-fixtures
+4. FT411
+5. FT125-exact-readers
+6. FT375-residual
+7. FT344-remedy
+8. FT406-rebuild
+9. FT366-rg-guard
+10. FT380-residual
+11. FT354-strict-json
+12. FT363-member-set
+13. FT358-block-reader
+14. FT365-conformance
+15. FT414-preconditions

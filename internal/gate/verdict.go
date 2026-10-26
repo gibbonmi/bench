@@ -68,6 +68,10 @@ type verdictRecord struct {
 	StartedAt  string `json:"started_at,omitempty"`
 	OwnerPID   int    `json:"owner_pid,omitempty"`
 
+	// An evidence record carries the grade key in place of the oracle digest, because the
+	// oracle digest frames the checkout path and the grade key does not.
+	Grade string `json:"grade,omitempty"`
+
 	// The lane class carries these three and none of the verdict fields above. A lane
 	// grades a declared check list rather than the oracle, so it has no state, no
 	// status, and no oracle identity to record.
@@ -110,6 +114,11 @@ type subject struct {
 // durableReplace installs rec as the verdict cache of gitdir through replacer.
 func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRecord) error {
 	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
+}
+
+// readyVerdict answers the gate cache record of a terminal status of plan, recorded at at.
+func readyVerdict(plan subject, status string, at time.Time) verdictRecord {
+	return verdictRecord{Schema: verdictSchema, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: at.UTC().Truncate(time.Second).Format(time.RFC3339)}
 }
 
 func Inspect(root string) Inspection {
@@ -381,8 +390,8 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRe
 	if err != nil {
 		return verdictRecordClass{}, err
 	}
-	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) {
-		return verdictRecordClass{}, errors.New("invalid record")
+	if err := validateStoreRecordCommon(r); err != nil {
+		return verdictRecordClass{}, err
 	}
 	if class.isGateVerdict() {
 		if len(r.Oracle) != 64 {
@@ -393,6 +402,15 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) (verdictRe
 		}
 	}
 	return class, class.validate(data, r, now)
+}
+
+// validateStoreRecordCommon grades the fields that every record of the store shares: the
+// schema and the tree. The gate cache classes and the evidence store both read through it.
+func validateStoreRecordCommon(r verdictRecord) error {
+	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) {
+		return errors.New("invalid record")
+	}
+	return nil
 }
 
 func strictRecordTime(value string) (time.Time, error) {

@@ -225,7 +225,7 @@ func inheritedSubjectGreen(root string) bool {
 
 func evidenceToken(kind Kind, tree string, inspection gate.EvidenceInspection) string {
 	fact := "bench-prospective-authorization/v1\x00" + string(kind) + "\x00" + tree + "\x00" +
-		inspection.Oracle + "\x00" + inspection.RecordedAt.UTC().Format(time.RFC3339Nano) + "\x00" +
+		inspection.Grade + "\x00" + inspection.RecordedAt.UTC().Format(time.RFC3339Nano) + "\x00" +
 		strconv.FormatBool(inspection.ReusableGreen)
 	sum := sha256.Sum256([]byte(fact))
 	return "v1:" + hex.EncodeToString(sum[:])

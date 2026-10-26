@@ -15,9 +15,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
@@ -25,8 +27,9 @@ import (
 
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
+// identityCollector feeds a closure to both digests through w, and each path to each digest.
 type identityCollector struct {
-	w                         io.Writer
+	w, oracle, identity       io.Writer
 	entries                   int
 	entryLimit                int
 	bytes                     int64
@@ -70,24 +73,30 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	if reason != "" {
 		s.Closed, s.Reason = false, reason
 	}
-	// h is the oracle digest and id the identity digest. Every frame but the tree goes to
-	// both through w, so the oracle frames keep their order.
+	// h is the oracle digest and id the grade identity. The verdict inputs go to both
+	// through w, so the oracle frames keep their order. The policy, the identity root, and
+	// the tree go to the oracle only.
 	h, id := sha256.New(), sha256.New()
 	w := io.MultiWriter(h, id)
-	frame(w, policy)
-	frame(w, identityRoot)
+	frame(h, policy)
+	frame(h, identityRoot)
 	frame(h, tree)
 	for _, value := range []string{resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
 		frame(w, value)
 	}
-	c := &identityCollector{w: w, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
+	c := &identityCollector{w: w, oracle: h, identity: id, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
 	if res.Kind != None {
 		if err := c.hashResolution(root, res, pathEnv); err != nil {
 			s.open("launcher closure unavailable")
 		}
 	}
-	if err := hashProspectivePreparation(c, w, root, identityRoot, pathEnv); err != nil {
+	// res.Kind still names the ordinary script, so a prospective script sets the source kind.
+	sourceKind := res.Kind
+	prospective, err := hashProspectivePreparation(c, root, identityRoot, pathEnv)
+	if err != nil {
 		s.open("launcher closure unavailable")
+	} else if prospective {
+		sourceKind = ProspectiveGateSh
 	}
 	if m != nil {
 		supplied, missing := suppliedEnvironment(m.Environment)
@@ -128,6 +137,15 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 		return subject{}, err
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
+	frameBaselineSchedule(id, identityRoot)
+	frame(id, "run binary")
+	frame(id, buildInputsIdentity(runBinarySource(sourceKind, root, identityRoot)))
+	executable := runningExecutableDigest()
+	if executable == "" {
+		s.open("running executable unavailable")
+	}
+	frame(id, "running executable")
+	frame(id, executable)
 	frame(id, requireCapabilitiesEnv)
 	frame(id, strconv.FormatBool(strict()))
 	s.Identity = hex.EncodeToString(id.Sum(nil))
@@ -303,8 +321,7 @@ func confinedPath(root, path string) error {
 	if err != nil {
 		return err
 	}
-	rel, err := filepath.Rel(root, resolved)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+	if _, ok := relativeInside(root, resolved); !ok {
 		return errors.New("escaped path")
 	}
 	return nil
@@ -336,7 +353,7 @@ func (c *identityCollector) hashExecutable(root, name, pathEnv string, confined 
 	if err := c.addEntry(); err != nil {
 		return err
 	}
-	frame(c.w, c.identityPath(resolved))
+	c.framePath(resolved)
 	frame(c.w, info.Mode().String())
 	if err := c.copyFile(resolved); err != nil {
 		return err
@@ -382,7 +399,7 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 		if err := c.addEntry(); err != nil {
 			return err
 		}
-		frame(c.w, c.identityPath(absolute))
+		c.framePath(absolute)
 		frame(c.w, info.Mode().String())
 		if info.Mode()&os.ModeSymlink == 0 {
 			return nil
@@ -391,22 +408,61 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 		if err != nil {
 			return err
 		}
-		frame(c.w, target)
+		// The oracle keeps the raw target, and the grade identity spells an absolute target
+		// through gradePath, so it frames no checkout path.
+		frame(c.oracle, target)
 		if filepath.IsAbs(target) {
+			frame(c.identity, c.gradePath(target))
 			path = target
 		} else {
+			frame(c.identity, target)
 			path = filepath.Join(filepath.Dir(absolute), target)
 		}
 	}
 	return errors.New("symlink hop limit")
 }
-func (c *identityCollector) identityPath(path string) string {
-	rel, err := filepath.Rel(c.runtimeRoot, path)
-	if err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return filepath.Join(c.identityRoot, rel)
+
+// framePath frames an executable path in each digest's spelling. The oracle spells a path in
+// the runtime root under the identity root, and gradePath gives the grade identity's spelling.
+func (c *identityCollector) framePath(path string) {
+	oracle := path
+	if rel, ok := relativeInside(c.runtimeRoot, path); ok {
+		oracle = filepath.Join(c.identityRoot, rel)
+	}
+	frame(c.oracle, oracle)
+	frame(c.identity, c.gradePath(path))
+}
+
+// gradePath answers the grade identity's spelling of an absolute path: relative to the
+// runtime root, then relative to the identity root, and otherwise the path itself.
+func (c *identityCollector) gradePath(path string) string {
+	for _, root := range []string{c.runtimeRoot, c.identityRoot} {
+		if rel, ok := relativeInside(root, path); ok {
+			return rel
+		}
 	}
 	return path
 }
+func relativeInside(root, path string) (string, bool) {
+	rel, err := filepath.Rel(root, path)
+	return rel, err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
+}
+
+// runningExecutableDigest answers the running executable's digest once for each process, or
+// an empty value when it does not read. It is a seam, so a test can vary the executable.
+var runningExecutableDigest = sync.OnceValue(func() string {
+	value, err := os.Executable()
+	if err == nil {
+		value, err = filepath.EvalSymlinks(value)
+	}
+	if err == nil {
+		value, err = brokermanifest.Digest(value)
+	}
+	if err != nil {
+		return ""
+	}
+	return value
+})
 
 // canonicalSubjectRoot refuses a root that does not exist. The owner keeps the absolute
 // spelling of an absent path rather than refusing, and a subject keyed to an absent root

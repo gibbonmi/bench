@@ -1,10 +1,11 @@
-// Candidate check tests for the gate checkpoint: a declared build's checkpoint refuses before
-// any ledger read or write when the running executable is not the installed candidate.
+// Candidate check tests for the gate checkpoint: a declared build's chunk checkpoint refuses
+// before any ledger read or write when the running executable is not the installed candidate,
+// and its complete checkpoint execs the installed candidate instead.
 package gate_test
 
 import (
 	"bytes"
-	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -44,16 +45,8 @@ func declaredBuild(t *testing.T, label string, chunks int) (*recordtest.Fixture,
 	return &build, primary
 }
 
-// installRunning binds this test binary in the broker manifest of the primary checkout, as
-// the operator's install binds the running executable.
-func installRunning(t *testing.T, primary string) {
-	t.Helper()
-	running, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	commitmenttest.BindManifest(t, primary, running)
-}
+// installRunning binds this test binary as the installed broker of the primary checkout.
+var installRunning = gate.InstallRunning
 
 // openSecondDeclaredBuild approves a second outcome in parallel with the build of the
 // fixture, with a spec that declares a persisted field, and starts it in the checkout of a
@@ -135,10 +128,30 @@ func refuseUninstalled(t *testing.T, f *recordtest.Fixture, args []string) (stri
 	return stderr.String(), next
 }
 
+// TestDeclaredBuildCheckpointExecsTheInstalledCandidate is GR67. A declared build installs
+// its candidate as the broker, so a complete checkpoint under this test binary execs the
+// installed candidate before the candidate check, prints no refusal, and keeps the ledger.
+func TestDeclaredBuildCheckpointExecsTheInstalledCandidate(t *testing.T) {
+	f, primary := declaredBuild(t, "build", 1)
+	gate.RetainCompletion(f)
+	calls := gate.StubBrokerExec(t)
+	var stdout, stderr bytes.Buffer
+	code := 1
+	commitmenttest.RequireLedgerKept(t, f.Root, func() { code = gate.RunCommand(append([]string{f.Root}, completeArgs...), &stdout, &stderr) })
+	candidate, err := filepath.EvalSymlinks(freshness.PublishedExecutable(primary))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code != 0 || stderr.Len() != 0 || len(*calls) != 1 || (*calls)[0].Broker != candidate {
+		t.Fatalf("checkpoint = (%d, %q) with broker execs %v; want one exec of the installed candidate %s and no refusal", code, stderr.String(), *calls, candidate)
+	}
+}
+
 // TestCheckpointPersistedFields is CB29, CB30, CB32, CB33, CB36, and CB57. The installed
 // candidate is not this test binary, so the binary stands in for a version-cache executable
-// that runs after an install: it knows every field and is still not the installed bytes. A
-// malformed declaration hands back with its own error.
+// that runs after an install: it knows every field and is still not the installed bytes. Only
+// the chunk checkpoint refuses it, because a complete checkpoint execs the installed
+// candidate. A malformed declaration hands back with its own error.
 func TestCheckpointPersistedFields(t *testing.T) {
 	t.Run("chunk", func(t *testing.T) {
 		// The record lacks a review, so a check after the review-record read prints that
@@ -148,11 +161,6 @@ func TestCheckpointPersistedFields(t *testing.T) {
 		f.Save()
 		f.Commit("drop the Coverage review")
 		commitmenttest.RequireLedgerKept(t, f.Root, func() { refuseUninstalled(t, f, chunkArgs) })
-	})
-	t.Run("complete", func(t *testing.T) {
-		f, _ := declaredBuild(t, "build", 1)
-		gate.RetainCompletion(f)
-		commitmenttest.RequireLedgerKept(t, f.Root, func() { refuseUninstalled(t, f, completeArgs) })
 	})
 	t.Run("unreadable ledger", func(t *testing.T) {
 		f, _ := declaredBuild(t, "build", 2)

@@ -1881,6 +1881,14 @@
       "identity": "sha256:7c3eee512e4a1211029af93d100e93a16722b4370432a205a3cb7f1d32865cc5",
       "source": "9224da04545bc39c965c7a48e9136795e9dcfd5b",
       "evidence": "4bd6de41c373602cf50a0c11ad049e8fb83a86cc"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT314-gate-reuse",
+      "binding": "gate-reuse",
+      "identity": "sha256:3bec97d247aa27b7cd9fe1c6509fbd59b9869d5ead8a2ad4ac650b451b282f25",
+      "source": "547a3819a307926ea56d79286c5a69a36ecf8aee",
+      "evidence": "61e1982c9c66c6f5cfed05657977d2c0a12b51ab"
     }
   ]
 }

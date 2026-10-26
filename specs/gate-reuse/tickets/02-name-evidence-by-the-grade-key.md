@@ -1,7 +1,7 @@
 # Name each evidence record by the grade key
 
 Blocked by: 01-compute-the-grade-identity.md
-Writes: internal/gate/engine.go, internal/gate/run_durability.go, internal/gate/run_transaction.go, internal/gate/verdict.go, internal/gate/checkpoint.go, internal/gate/authorization/authorization.go, internal/gate/grade_key_test.go (new), internal/gate/complete_checkpoint_test.go, internal/gate/checkpoint_prepare_test.go, internal/gate/review_checkpoint_test.go, internal/gate/timeout_recovery_count_test.go, internal/gate/prospective_owner_test.go
+Writes: internal/gate/engine.go, internal/gate/run_durability.go, internal/gate/run_transaction.go, internal/gate/verdict.go, internal/gate/checkpoint.go, internal/gate/authorization/authorization.go, internal/gate/grade_key_test.go (new), internal/gate/complete_checkpoint_test.go, internal/gate/checkpoint_prepare_test.go, internal/gate/review_checkpoint_test.go, internal/gate/timeout_recovery_count_test.go, internal/gate/prospective_owner_test.go, specs/landing-test-efficiency/spec.md, internal/worktree/land_journey_test.go, internal/gate/authorization/authorization_test.go
 Covers: GR12, GR13, GR10, GR11, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21, GR65, GR53, GR57
 
 ## What to build

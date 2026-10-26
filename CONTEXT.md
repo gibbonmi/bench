@@ -55,6 +55,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
 - **running executable** — the Bench executable that runs the current verb. It owns
   the check name set that `bench test` validates, and it exists before a run binary
   does. Not "the binary", not "run binary" — running executable.
+- **grade key** — the digest that names one whole-gate green by its verdict inputs
+  only. ADR 0031 names its members. It frames no checkout path and no run purpose, so
+  a green answers each whole-gate verb from any checkout. Not "authorization key", not
+  "evidence key", not "reuse key" — grade key.
 - **canary inventory** — the non-empty set of immutable fixture bindings that
   `bench canary` validates. It proves the inventory shape and one accepted binding
   per fixture, not owner execution or a planted red. Not “canary dispatch”, not

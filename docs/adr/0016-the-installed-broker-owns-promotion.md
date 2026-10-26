@@ -19,8 +19,8 @@ assignment's recorded start or a descendant of it.
 The broker composes the exact prospective tree in private storage and
 builds the gate executable from that tree. That executable is the graded
 subject, never the publication authority, and the baseline schedule selects
-the phases. Green evidence keys to the prospective tree and the baseline
-runner identity. Only the broker validates evidence and performs the
+the phases. Green evidence keys to the grade key of the prospective tree, which
+ADR 0031 records. Only the broker validates evidence and performs the
 destination compare-and-swap; resume stays under the same owner.
 
 One exception applies. A kit build whose reviewer-approved spec declares a

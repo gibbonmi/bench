@@ -288,6 +288,29 @@ func TestGateDemotionDurabilityFailure(t *testing.T) {
 	}
 }
 
+// GR24: a reuse whose gate cache write fails prints its classified cause at ActionExit 1 and
+// reports no reusable green.
+func TestReusedGreenCacheWriteFailureRefuses(t *testing.T) {
+	root := outcomeFixture(t)
+	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
+		t.Fatalf("green result = %#v", result)
+	}
+	if err := os.Remove(outcomeCachePath(t, root)); err != nil {
+		t.Fatal(err)
+	}
+	cause := errors.New("injected reuse rename failure")
+	faults := newFaultPlan(map[durablefiletest.Fault]map[string]error{{Destination: benchgit.GateCacheFile, Ordinal: 1}: {"rename": cause}})
+	var stdout, stderr bytes.Buffer
+
+	result := executeSubjectReplacing(context.Background(), root, root, &stdout, &stderr, nil, reuseFreshGreen, newGateEvaluation(root), nil, "", faults.Replacer())
+
+	requireUnpersisted(t, result, 0, stderr.String())
+	want := "gate reuse persistence failed: " + faults.Failure(benchgit.GateCacheFile, "rename", false, cause)
+	if !strings.Contains(stderr.String(), want) || stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, stderr = %q, want no reuse line and %q", stdout.String(), stderr.String(), want)
+	}
+}
+
 // evidenceDestination names every entry of the evidence store, whose file names are
 // content addresses.
 const evidenceDestination = "bench-gate-evidence"

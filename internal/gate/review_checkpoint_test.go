@@ -127,9 +127,10 @@ func TestReviewCheckpoint(t *testing.T) {
 	}
 }
 
-// TestReviewCheckpointReuse grades reuse across purposes. A whole green of the stripped
-// subject serves the chunk checkpoint, because the evidence pass still runs on the reuse. A
-// chunk green never serves the complete purpose.
+// TestReviewCheckpointReuse grades reuse across verbs. A whole green of the stripped subject
+// serves the chunk checkpoint, because the evidence pass still runs on the reuse. The complete
+// checkpoint grades the published tree, which holds the review record, so a chunk green never
+// serves it.
 func TestReviewCheckpointReuse(t *testing.T) {
 	f := checkpointFixture(t)
 	f.Complete()

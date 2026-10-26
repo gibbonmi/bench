@@ -199,7 +199,13 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	ctx, finishSpan := beginGateSpan(asVerb(WithCheckpoint(context.Background(), checkpoint)), root, mode.String())
+	ctx := asVerb(WithCheckpoint(context.Background(), checkpoint))
+	// The broker comparison precedes the span, the run log, and the candidate check, so a run
+	// that execs the broker leaves no open run record.
+	if result, done := runUnderBroker(ctx, root, checkpoint, stderr, mode); done {
+		return result.ActionExit
+	}
+	ctx, finishSpan := beginGateSpan(ctx, root, mode.String())
 	ctx, finishLog := beginGateRunLog(ctx, root, stderr, mode.String())
 	// The candidate check precedes every execute path, so its refusal comes before the
 	// clean-checkout check, the owner lookup, the review-record read, and the chunk-gap write.
@@ -302,8 +308,11 @@ func (m runMode) String() string {
 	return "ordinary"
 }
 
-func runBinarySource(runtimeRoot, storageRoot string, plan subject) string {
-	if plan.Resolution.Kind == ProspectiveGateSh &&
+// runBinarySource answers the source root of the run binary: the graded tree when a
+// prospective gate grades a tree that builds its own run binary, and the kit otherwise. The
+// run's selection and the grade identity both read it.
+func runBinarySource(kind Kind, runtimeRoot, storageRoot string) string {
+	if kind == ProspectiveGateSh &&
 		isRegularFile(filepath.Join(runtimeRoot, "scripts", "go-build.sh")) &&
 		GoModuleRoot(runtimeRoot) {
 		return runtimeRoot

@@ -231,8 +231,8 @@ func TestGateUsageNamesPrepare(t *testing.T) {
 	}
 }
 
-// TestCompleteCheckpointPurposeOmitsPrepare pins the purpose bytes that the key of a complete
-// checkpoint hashes.
+// TestCompleteCheckpointPurposeOmitsPrepare pins the purpose bytes that the oracle digest of a
+// complete checkpoint frames. The grade key that names its evidence frames no purpose.
 func TestCompleteCheckpointPurposeOmitsPrepare(t *testing.T) {
 	const want = `{"Spec":"specs/example/spec.md","Chunk":"","Complete":true}`
 	if got, err := json.Marshal(Checkpoint{Spec: "specs/example/spec.md", Complete: true}); err != nil || string(got) != want {

@@ -48,16 +48,23 @@ func specLessLandingFixture(t *testing.T, request string) landingFixture {
 func foldedLandingFixture(t *testing.T, request string) foldedLanding {
 	t.Helper()
 	f := specLessLandingFixture(t, request)
-	mustWrite(t, filepath.Join(f.root, "advance.txt"), []byte("destination advance\n"), 0o644)
-	gitRun(t, f.root, "add", "advance.txt")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
-	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	f.base = advanceDestination(t, f.root)
 	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
 		"merge", "-q", "--no-ff", "-m", "fold the destination", f.base)
 	fold := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, f.creation.Path, "owned.txt", "reviewed bytes after the fold\n", "work after the fold")
 	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	return foldedLanding{landingFixture: f, fold: fold}
+}
+
+// advanceDestination commits one destination change at root after the review base, so a
+// source must fold the destination before it lands. It answers the new destination tip.
+func advanceDestination(t *testing.T, root string) string {
+	t.Helper()
+	mustWrite(t, filepath.Join(root, "advance.txt"), []byte("destination advance\n"), 0o644)
+	gitRun(t, root, "add", "advance.txt")
+	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
+	return gitOutput(t, root, "rev-parse", "HEAD")
 }
 
 func landingFixtureAtHome(t *testing.T, request, ignored, declaration, home string, gradeSpec bool) landingFixture {
@@ -229,10 +236,13 @@ func commitLandingBuildInputs(t *testing.T, root string) {
 	t.Helper()
 	manifest := filepath.Join(root, filepath.FromSlash(freshness.BuildInputsManifest))
 	mustMkdirAll(t, filepath.Dir(manifest), 0o755)
-	mustWrite(t, manifest, []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
+	mustWrite(t, manifest, []byte(freshness.BuildInputLine("build_script", landingBuildScript)), 0o644)
 	gitRun(t, root, "add", freshness.BuildInputsManifest)
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare go build inputs")
 }
+
+// landingBuildScript is the build script that commitLandingBuildInputs declares.
+const landingBuildScript = "scripts/go-build.sh"
 
 func landArgs(request, base, tip, path string) []string {
 	return []string{"--request", request, "--base", base, "--source-tip", tip, "--spec", "x", "-m", "land", path}

@@ -18,10 +18,11 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
-// EvidenceInspection reports whether retained gate evidence can authorize one tree.
+// EvidenceInspection reports whether retained gate evidence can authorize one tree. Grade is
+// the grade key that names the evidence record.
 type EvidenceInspection struct {
 	Tree          string
-	Oracle        string
+	Grade         string
 	RecordedAt    time.Time
 	ReusableGreen bool
 	Reason        string
@@ -108,7 +109,7 @@ func inspectEvidence(root string, plan subject, now time.Time) EvidenceInspectio
 }
 
 func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires bool) EvidenceInspection {
-	inspection := EvidenceInspection{Tree: plan.Tree, Oracle: plan.Oracle, Reason: plan.Reason}
+	inspection := EvidenceInspection{Tree: plan.Tree, Grade: evidenceName(plan), Reason: plan.Reason}
 	if !plan.Closed {
 		return inspection
 	}
@@ -117,7 +118,7 @@ func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires b
 		inspection.Reason = "evidence unavailable"
 		return inspection
 	}
-	loaded := loadVerdict(evidencePath(gitdir, plan), now)
+	loaded := loadEvidence(evidencePath(gitdir, plan), now)
 	if loaded.state != Ready || loaded.record.Status != "green" {
 		if loaded.state == Ready {
 			inspection.Reason = "recorded " + loaded.record.Status
@@ -128,7 +129,8 @@ func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires b
 		}
 		return inspection
 	}
-	if loaded.record.Tree != plan.Tree || loaded.record.Oracle != plan.Oracle {
+	// A record answers only under its own name, so a copied or renamed record is changed evidence.
+	if loaded.record.Tree != plan.Tree || loaded.record.Grade != inspection.Grade {
 		inspection.Reason = "evidence changed"
 		return inspection
 	}
@@ -146,11 +148,36 @@ func evidencePath(gitdir string, plan subject) string {
 	return filepath.Join(gitdir, "bench-gate-evidence", evidenceName(plan))
 }
 
+// evidenceName answers the grade key: the tree framed with the grade identity. The key holds
+// no checkout path and no run purpose, so a green of one checkout answers a run of the same
+// key from any checkout, and each verb runs its own purpose checks before the lookup.
 func evidenceName(plan subject) string {
 	h := sha256.New()
 	frame(h, plan.Tree)
-	frame(h, plan.Oracle)
+	frame(h, plan.Identity)
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// evidenceFields is the exact field set of an evidence record. The record names its grade
+// key in place of the per-checkout oracle digest.
+var evidenceFields = []string{"grade", "recorded_at", "schema", "state", "status", "tree"}
+
+// loadEvidence reads one evidence record under the file discipline of every store record. The
+// store holds whole greens only, so the record is a ready verdict.
+func loadEvidence(path string, now time.Time) loadedVerdict {
+	read := readStoreRecord(path)
+	loaded := loadedVerdict{state: read.state, reason: read.reason, bytes: read.bytes}
+	if read.data == nil {
+		return loaded
+	}
+	record := &loaded.record
+	if strictJSON(read.data, record) != nil || requireObjectFields(read.data, evidenceFields) != nil ||
+		validateStoreRecordCommon(*record) != nil || validateReadyRecord(*record, now) != nil {
+		loaded.state, loaded.reason = Invalid, "invalid cache record"
+		return loaded
+	}
+	loaded.state = Ready
+	return loaded
 }
 
 // openProspectiveArtifacts opens one artifact bundle for root and materializes tree in
