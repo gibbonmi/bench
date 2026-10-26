@@ -1,6 +1,6 @@
 # Amend the landing rule docs for the reader set
 
-Blocked by: 07-hold-the-whole-gate-after-a-red.md, 08-show-reader-green-on-the-dashboard.md
+Blocked by: 06-publish-a-reader-landing.md
 Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json
 Covers: NG68, NG69, NG70
 
