@@ -8,7 +8,7 @@ Covers: NG37, NG38, NG39, NG40, NG41, NG42, NG43, NG44, NG45, NG46, NG47, NG48, 
 
 `gate.WithLanding(ctx, destination, marker)` puts the destination commit and the green marker in the gate context, as `gate.WithCompletion` does. This ticket adds no production caller; ticket 06 adds the one in `landReviewed`.
 
-The reader plan reads that value and runs the cases of the spec's "The landing plan" section in order. The first case that holds sends the run to the whole gate. This ticket implements every case except case 9, the reader hold, which ticket 07 adds. When a case holds, the gate prints `gate: whole gate (reader set refused: <case>)` before the phases. Otherwise the plan builds the reader schedule of ticket 04 and runs it.
+The reader plan reads that value and runs the cases of the spec's "The landing plan" section in order. The first case that holds sends the run to the whole gate. This ticket implements every case except case 9, the reader hold, which ticket 07 adds. When a case from 3 to 11 holds, the gate prints `gate: whole gate (reader set refused: <case>)` before the phases. Case 1 and case 2 print no line, so a linked repository and a run without a landing value keep their output. Otherwise the plan builds the reader schedule of ticket 04 and runs it.
 
 The reader packages are the union of the table's readers of each changed family, the child readers of each changed family, and `./internal/conformance`. The race flag holds when a package of the race-test table (`internal/gate/gate_go.go:34-41`) is among them.
 
