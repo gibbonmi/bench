@@ -1799,6 +1799,8 @@ The ticket 06 author landed two `ROADMAP.md` changes in a disposable clone of `f
 
 The orchestrator files this result as finding N1 on ticket 03's code. `settleRun` releases the prospective checkout before `trace.persist` lists the test packages, so no landing stores a reader table. The NG60 premise stays unproven until the repair lands and the measurement runs again.
 
+The orchestrator ran the measurement again in a disposable clone of `e4cd9398d`, which holds both NG-C3 repairs. Each landing added one comment below the title of `ROADMAP.md`. The first landing ran the whole gate in 354 seconds, green. The second landing printed `gate: green (reader set)` in 173 seconds. The reader set took less than half the time of the whole gate, so the premise holds and NG60 is met.
+
 ## Repair witnesses
 
 The NG-C1 repair commit `9768ad919` makes `TestOracleIdentityAndOracleShareTheClosure` a table of seven inputs. Each mutant below swapped the identity writer for the oracle writer in `internal/gate/subject.go`. Each one read `bit` with `restored` `yes`:
