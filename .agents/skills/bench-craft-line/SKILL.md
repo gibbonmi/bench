@@ -68,11 +68,11 @@ The leverage override still wins for orchestration, implementation, and repair, 
 
 ## Delegated author lines
 
-`--delegate` authorizes selection and eligible escalation through every configured tier, including top.
-An unavailable or unbound model stops that dispatch without a substitution.
-The declared author limit counts concurrently active ticket writers, not retained idle author sessions.
-Every delegated review axis uses the invoking harness's configured mid binding at high effort.
-That route applies to cheap, mid, and top authors alike. A no-flag run keeps the conditional review line above.
+`--delegate` authorizes selection and eligible escalation through every configured tier, including top. An unavailable or unbound model stops that dispatch without a substitution.
+The declared author limit counts concurrently active ticket writers, not retained idle author sessions. The default author limit is 3.
+
+Every delegated review axis uses the invoking harness's configured cheap binding at high effort. That route applies to cheap, mid, and top authors alike. A run without `--delegate` keeps the conditional review line above.
+Each delegated diagnostic consultation goes to the mid binding and the cheap binding, both at high effort. If the two answers disagree, a top-binding consultation at high effort breaks the tie. A `--reviewer`, `--consultant`, or author-limit value in the call replaces the matching default.
 
 ## Classify reds before the ladder moves
 

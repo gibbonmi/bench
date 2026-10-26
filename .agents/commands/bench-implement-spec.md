@@ -88,7 +88,7 @@ This command orchestrates the fresh ticket authors, chunk reviews, the final lan
 
 A chunk delta can grow past its approved plan. It touches a path that requires the reviewer's decision under `.bench/BENCH.md`'s plan-expansion policy, or it adds a ticket the plan does not list. Such a delta pauses to ask the reviewer before escalating tier. For each other path outside the fence, widen the `Writes:` line with `bench spec widen` without a pause.
 
-A `--full` run accepts these options:
+A `--full` run accepts these options. It takes `--delegate` and `--auto-approve` by default, and `--no-delegate` or `--no-auto-approve` turns one off. `craft-line`'s "Delegated author lines" owns the default author limit, review line, and consultation line.
 - `--delegate` extends a `--full` run with `.bench/BENCH.md`'s delegated run policy. It refuses without `--full`, an approved spec, or an approved ticket graph. Declare the configured model, effort, iteration cap, and author limit before the first dispatch. Record each assignment in the completion plan with `bench record assignment`. The "Declare the line, validate the tickets, route the venue" section states when to prepare that author's charge. A resumed delegated run keeps the recorded identities, source pins, replacement history, and pending obligations.
 - `--reviewer <model> <effort>` sets the line of every review axis in the run.
 - `--consultant <model> <effort>` sets the line of every read-only diagnostic consultation in the run.

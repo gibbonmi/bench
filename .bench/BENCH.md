@@ -132,7 +132,7 @@ The orchestrator widens the `Writes:` line with `bench spec widen`. A path insid
 
 One enabling plan commit updates the coverage map, ticket `Covers:`/`Writes:` and later-ticket contracts, chunk table, and any required review-record amendment before dispatch.
 
-**Delegate a full run only on my request.** `--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph. Beyond the fresh ticket authors above, `--delegate` adds concurrent authors and the full tier range. `craft-line` owns the delegated tiers, the author limit, and the review route; `craft-delegate` owns the author transfer triggers.
+**Delegate a full run by default.** `--delegate` applies only to an approved `$bench-implement-spec --full <spec>` run with an approved ticket graph, and such a run takes it unless the call names `--no-delegate`. Beyond the fresh ticket authors above, `--delegate` adds concurrent authors and the full tier range. `craft-line` owns the delegated tiers, the author limit, and the review route; `craft-delegate` owns the author transfer triggers.
 
 Chunks author concurrently only when their prerequisites are accepted and their expected writes do not overlap. A ticket in a dependent chunk waits for every prerequisite chunk checkpoint. A same-chunk successor ticket starts after its predecessor ticket commits green. A pending or red predecessor commit stops that successor dispatch. Every ticket contribution reaches the integrated chunk tip before that chunk's review begins.
 
