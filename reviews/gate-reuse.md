@@ -1355,6 +1355,72 @@
             "K4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gr-c3-standards-2",
+          "performer": "claude:gr-c3-standards2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c3-standards2-20261026",
+            "digest": "sha256:e061107f30df8696bee7665458d989af9fec5c98f79fec04bd0cfd6e7107aea6",
+            "excerpt": "Standards confirming round, GR-C3, repair delta 49f6a7208..44d934d41. sonnet/high. Evidence check-current current=true at 743b8b710.\nS1 confirmed: brokermanifest.PathField (internal/brokermanifest/brokermanifest.go:39) is the one production spelling of the \"path\" key, used at :42, :60, and internal/gate/complete_checkpoint.go:84. Test literals are independent format expectations.\nS3 confirmed: complete_checkpoint.go:52 states the return values in order.\nThe move to subprocess.Replace composes the existing seam, and setProcessArgs duplicates nothing.\nNew findings: none.\n"
+          },
+          "axis": "Standards",
+          "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+          "tip": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c3-standards-1"
+          ]
+        },
+        {
+          "id": "gr-c3-spec-2",
+          "performer": "claude:gr-c3-spec2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c3-spec2-20261026",
+            "digest": "sha256:e689d618f634eec75c02920574329973ccafdfd2807a91f386ecf3ccb0a1b390",
+            "excerpt": "Spec confirming round, GR-C3, repair delta 49f6a7208..44d934d41 and plan commit cd22be316. sonnet/high. Evidence check-current current=true at 743b8b710.\nP2 confirmed: checkpoint_persisted_test.go:1-3 and :150-154 say only the chunk checkpoint refuses.\nP3/K5 confirmed: runUnderBroker (complete_checkpoint.go:57-63) runs a repository without build inputs under its own executable when the primary does not resolve.\nP5 confirmed: the GR59 expectation is an independent literal with a recorded red.\nK4 confirmed: complete_checkpoint.go:77-80 refuses an undigested running executable and does not exec.\nThe interpretation (build inputs from the primary when it resolves, else the graded root) is consistent with GR59-GR63, GR67, and decisions #13 and #14. The re-cut land-probe fails at the GR27 tally (land_reuse_test.go:91). The ticket 06 addition matches GR67.\nN1 advisory no-op: a primary without build inputs beside a root with them keeps its own process; pre-existing and undecided by GR59.\nN2 advisory: a stray line break in the runUnderBroker comment (complete_checkpoint.go:51). Disposition (orchestrator): no-op for this build, recorded with bench learning, because a fix costs a repair cycle for a cosmetic change.\n"
+          },
+          "axis": "Spec",
+          "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+          "tip": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c3-spec-1"
+          ]
+        },
+        {
+          "id": "gr-c3-coverage-2",
+          "performer": "claude:gr-c3-coverage2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "23b7e11020ee68df83dc41c65d19d19000f5f086",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gr-c3-coverage2-20261026",
+            "digest": "sha256:da4079259b5d6046ea5447083ad8e5f581bb14807f7ed0b71b602ea9c21abf6e",
+            "excerpt": "Coverage confirming round, GR-C3, repair delta 49f6a7208..44d934d41. sonnet/high. Evidence check-current current=true at 743b8b710. bench test --run of the checkpoint tests passed (55 tests).\nK1 confirmed: gr-t04-r1-land-probe bit at internal/worktree/land_reuse_test.go:91 (tally gg), the GR27 assertion, after a successful landing at :88.\nK3 confirmed: complete_checkpoint.go:83 binds execBroker = subprocess.Replace; internal/subprocess/replace_test.go:32 and :55 exercise a real exec at the seam's owner.\nK4 confirmed: TestCompleteCheckpointRefusesAnUndigestedExecutable (complete_checkpoint_broker_test.go:208) fails if the guard at complete_checkpoint.go:78 is reverted.\nK5 confirmed: TestCompleteCheckpointWithoutBuildInputsNeedsNoPrimary (:197) fails on the old order; the unresolved-primary subtest (:230) still reaches its refusal.\nNew findings: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "1c9f15870f7afca3b123065ebac24b2898c8dfb2",
+          "tip": "44d934d41b6b5de03a2ea9458c9b96e7b641c5fd",
+          "finding_ids": [],
+          "supersedes": [
+            "gr-c3-coverage-1"
+          ]
         }
       ]
     }
