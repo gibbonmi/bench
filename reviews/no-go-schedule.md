@@ -2790,11 +2790,151 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+    "performer": "claude:ngs-orchestrator-20261025",
+    "reconciliation": {
+      "NG1": "covered",
+      "NG10": "covered",
+      "NG11": "covered",
+      "NG12": "covered",
+      "NG13": "covered",
+      "NG14": "covered",
+      "NG15": "covered",
+      "NG16": "covered",
+      "NG17": "covered",
+      "NG18": "covered",
+      "NG19": "covered",
+      "NG2": "covered",
+      "NG20": "covered",
+      "NG21": "covered",
+      "NG22": "covered",
+      "NG23": "covered",
+      "NG24": "covered",
+      "NG25": "covered",
+      "NG26": "covered",
+      "NG27": "covered",
+      "NG28": "covered",
+      "NG29": "covered",
+      "NG3": "covered",
+      "NG30": "covered",
+      "NG31": "covered",
+      "NG32": "covered",
+      "NG33": "covered",
+      "NG34": "covered",
+      "NG35": "covered",
+      "NG36": "covered",
+      "NG37": "covered",
+      "NG38": "covered",
+      "NG39": "covered",
+      "NG4": "covered",
+      "NG40": "covered",
+      "NG41": "covered",
+      "NG42": "covered",
+      "NG43": "covered",
+      "NG44": "covered",
+      "NG45": "covered",
+      "NG46": "covered",
+      "NG47": "covered",
+      "NG48": "covered",
+      "NG49": "covered",
+      "NG5": "covered",
+      "NG50": "covered",
+      "NG51": "covered",
+      "NG52": "covered",
+      "NG53": "covered",
+      "NG54": "covered",
+      "NG55": "covered",
+      "NG56": "covered",
+      "NG57": "covered",
+      "NG58": "covered",
+      "NG59": "covered",
+      "NG6": "covered",
+      "NG60": "covered",
+      "NG61": "covered",
+      "NG62": "covered",
+      "NG63": "covered",
+      "NG64": "covered",
+      "NG65": "covered",
+      "NG66": "covered",
+      "NG67": "covered",
+      "NG68": "covered",
+      "NG69": "covered",
+      "NG7": "covered",
+      "NG70": "covered",
+      "NG71": "covered",
+      "NG72": "covered",
+      "NG73": "covered",
+      "NG74": "covered",
+      "NG75": "covered",
+      "NG76": "covered",
+      "NG77": "covered",
+      "NG78": "covered",
+      "NG79": "covered",
+      "NG8": "covered",
+      "NG80": "covered",
+      "NG81": "covered",
+      "NG82": "covered",
+      "NG83": "covered",
+      "NG84": "covered",
+      "NG9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:ngs-orchestrator-20261025",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ngs-orchestrator-20261025",
+          "digest": "sha256:c21d05d3a33728a7cf537aa2609934b8ea125cb3ce938ebe4dd707b31c07c11b",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT449-no-go-schedule,c95098b5b762f1a6d6241dc19460c24207adf577,false\nok: coverage map valid — 84 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/no-go-schedule/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-census",
+        "performer": "claude:ngs-orchestrator-20261025",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ngs-orchestrator-20261025",
+          "digest": "sha256:bd3221c008f3d078472d7233bad07b0014816c3963acea257038dbe316ec6667",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,443,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "census",
+        "command": "bench test --check ordinary-build-census",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "claude:ngs-orchestrator-20261025",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "2f2e9ee516b2983304cc38f2bbad8c6998f8ba88",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ngs-orchestrator-20261025",
+          "digest": "sha256:4f98d539fcd5a1ee6ceec4099981109cdbd2fec4cc9539282d84c7c5b596c4db",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,279,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,70027,279\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -3153,6 +3293,10 @@ The ticket 06 author landed two `ROADMAP.md` changes in a disposable clone of `f
 The orchestrator files this result as finding N1 on ticket 03's code. `settleRun` releases the prospective checkout before `trace.persist` lists the test packages, so no landing stores a reader table. The NG60 premise stays unproven until the repair lands and the measurement runs again.
 
 The orchestrator ran the measurement again in a disposable clone of `e4cd9398d`, which holds both NG-C3 repairs. Each landing added one comment below the title of `ROADMAP.md`. The first landing ran the whole gate in 354 seconds, green. The second landing printed `gate: green (reader set)` in 173 seconds. The reader set took less than half the time of the whole gate, so the premise holds and NG60 is met.
+
+## Final reconciliation
+
+The orchestrator reconciled all 84 coverage rows at `c95098b5b`. The coverage check, the ordinary-build census, and the system suite (279 tests) all passed. The NG-C5 checkpoint ran green and graded NG-C4 in its walk. NG-C6 is the last chunk, so the landing's complete checkpoint grades it.
 
 ## Repair witnesses
 
