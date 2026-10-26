@@ -6,7 +6,7 @@ Roadmap: FT314
 
 Decision source: specs/gate-reuse/decisions/gate-reuse.md (ready compiled map), decisions #1 to #14, on the map-only route
 
-Verification log: pending
+Verification log: 2 iteration(s) to accept — map-only route; the Fable/medium ticket round took 2 iterations (a GR13 producer in a later ticket, a GR58 seam outside its test package, and absent helper inputs in ticket 01).
 
 ## Problem
 

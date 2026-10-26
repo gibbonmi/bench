@@ -20,6 +20,7 @@ An absent manifest enters as one value. A defect answer, such as a dangling link
 The run binary member is `freshness.Digest` over the run binary's source root, computed before any build. A source root that declares no build inputs frames one stable value.
 Move the source-root rule of `runBinarySource` in `gate.go` into one helper that takes the resolution kind, the runtime root, and the storage root.
 The selection at `run_transaction.go:159` calls that helper. The identity calls it where the prospective script's presence is known, in `hashProspectivePreparation` or after it, with the identity root as the storage root.
+When the prospective script exists, the identity passes the prospective kind, because `res.Kind` still holds `GateSh` at that point.
 
 The running executable digest comes from `brokermanifest.Digest` over the running executable. A package-level seam supplies that executable and computes its digest once for each process, so a test can vary it.
 
