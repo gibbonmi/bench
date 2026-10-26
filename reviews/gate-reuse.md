@@ -1565,3 +1565,14 @@ The ticket 05 author demonstrated these reds at its ticket work. Each probe rest
 - The GR28 fixture without a broker binding failed at `land_reuse_test.go:117` with "the primary broker manifest does not read".
 
 The author removed the complete subtest of TestCheckpointPersistedFields, because GR67 reverses its refusal and TestDeclaredBuildCheckpointExecsTheInstalledCandidate holds the same fixture. That GR67 test lives in `checkpoint_persisted_test.go`, not in the planned `complete_checkpoint_broker_test.go`, because its fixture is in the external test package. The seam cell cites the actual file.
+
+## GR-C3 ticket 05 repair witness reds
+
+The ticket 05 repair session reported these reds for repair commit 44d934d41.
+
+- K4 and P4: TestCompleteCheckpointRefusesAnUndigestedExecutable failed on the old code at `complete_checkpoint_broker_test.go:214`, because the checkpoint did not refuse.
+- P3 and K5: TestCompleteCheckpointWithoutBuildInputsNeedsNoPrimary failed on the old code at `complete_checkpoint_broker_test.go:202`, because the primary refusal came first.
+- P5: a probe that passes `os.Args` instead of `os.Args[1:]` failed TestCompleteCheckpointExecsTheBroker at `complete_checkpoint_broker_test.go:150`, and the probe restored its subject.
+- K1: the re-cut `land-probe` bit at `land_reuse_test.go:91` with tally "gg", which is the GR27 assertion.
+
+The repair reads build inputs from the primary checkout when it resolves, and otherwise from the graded root. The GR67 fixture writes its build-inputs manifest only in the primary checkout.
