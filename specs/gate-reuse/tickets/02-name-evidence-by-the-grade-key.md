@@ -1,8 +1,8 @@
 # Name each evidence record by the grade key
 
 Blocked by: 01-compute-the-grade-identity.md
-Writes: internal/gate/engine.go, internal/gate/run_durability.go, internal/gate/run_transaction.go, internal/gate/verdict.go, internal/gate/checkpoint.go, internal/gate/authorization/authorization.go, internal/gate/grade_key_test.go (new), internal/gate/complete_checkpoint_test.go, internal/gate/checkpoint_prepare_test.go, internal/gate/review_checkpoint_test.go, internal/gate/timeout_recovery_count_test.go
-Covers: GR10, GR11, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21, GR65, GR53, GR57
+Writes: internal/gate/engine.go, internal/gate/run_durability.go, internal/gate/run_transaction.go, internal/gate/verdict.go, internal/gate/checkpoint.go, internal/gate/authorization/authorization.go, internal/gate/grade_key_test.go (new), internal/gate/complete_checkpoint_test.go, internal/gate/checkpoint_prepare_test.go, internal/gate/review_checkpoint_test.go, internal/gate/timeout_recovery_count_test.go, internal/gate/prospective_owner_test.go
+Covers: GR12, GR13, GR10, GR11, GR14, GR15, GR16, GR17, GR18, GR19, GR20, GR21, GR65, GR53, GR57
 
 ## What to build
 
@@ -20,8 +20,13 @@ A store record answers only inside the freshness window of its own recorded time
 The delta base read and the reader record keep their current rules, so neither answers a grade lookup.
 Update the comments of `TestCompleteCheckpointPurposeOmitsPrepare` and `TestReviewCheckpointReuse` that name the purpose as a key member.
 
+`TestProspectiveEvidenceKeysToTheTreeAndBaselineRunnerIdentity` becomes `TestProspectiveEvidenceKeysToTheTreeAndRunBinary`. Two trees name two records, and a changed run binary member or running executable digest names another record.
+`prospective_owner_test.go` is over its line limit, so its edit does not grow the file.
+`checkpoint.go` holds 389 lines and `run_transaction.go` holds 370 lines, and each stays at or under its 400-line limit.
+
 ## Acceptance
 
+- [ ] Two trees name two evidence records, and a changed run binary member or running executable digest names another record.
 - [ ] A run of one tree from the primary checkout after a green in a linked worktree prints `gate: green (fresh verdict reused for this tree)` and runs no phase.
 - [ ] A changed posture or baseline phase manifest runs the gate again.
 - [ ] After an unpurposed green of the published tree, the complete checkpoint of that tree runs no phase, and a completion evidence defect still refuses it.

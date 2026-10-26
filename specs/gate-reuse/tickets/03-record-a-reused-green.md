@@ -16,6 +16,7 @@ The run evaluates the reuse at its two existing sites in `executeSubjectOwning`,
 The written record holds the tree, the checkout's oracle digest, `green`, and the recorded time of the store record.
 So an absent cache, a cache of another tree, and a red, timed-out, or expired cache of the same tree each take the write.
 A failed write returns an operational result, and the run reports no green. `reusedGreenResult` keeps its two callers in `executeSubjectOwning`.
+`run_transaction.go` stays at or under its 400-line limit, so the new branch and the cache write go to a smaller file such as `run_durability.go`.
 
 ## Acceptance
 
@@ -23,4 +24,4 @@ A failed write returns an operational result, and the run reports no green. `reu
 - [ ] A primary run whose cache holds a red verdict of the same tree replaces it with the reused green.
 - [ ] A reuse that the cache already describes leaves the cache bytes unchanged.
 - [ ] A reuse whose cache write fails returns an operational result with no reusable green.
-- [ ] A reuse while another run holds the gate lock prints the reuse line and leaves the cache bytes unchanged.
+- [ ] A reuse while another run holds the gate lock, with a cache of another tree, prints the reuse line and leaves the cache bytes unchanged.
