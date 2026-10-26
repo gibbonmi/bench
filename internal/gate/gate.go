@@ -156,16 +156,17 @@ func (r Resolution) command(root string) *exec.Cmd {
 // no absolute HOME cannot name that directory, so gateEnv refuses rather than let a
 // child fall back to Go's default.
 func gateEnv() ([]string, error) {
-	// The baseline phase-schedule selector and the delta schedule go too. Each addresses the
-	// one gate-phases process the owner launched; a phase child that inherited one would
-	// select its own schedule from the values of a run it is not part of.
+	// The baseline phase-schedule selector, the delta schedule, and the test log directory go
+	// too. Each addresses the one gate-phases process the owner launched; a phase child that
+	// inherited one would select its own schedule from the values of a run it is not part of,
+	// or write its own test logs into the logs of that run.
 	//
 	// The seam record's two entries go too, for the same reason. They address the gate
 	// run that started this process. A phase child that inherited them would attach its
 	// own record lines to a run it is not part of. The parent sets them back on the one
 	// child that runs the phase table.
 	base := env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv), deltaScheduleEnv))
-	for _, name := range otelrecord.HandoffVariables() {
+	for _, name := range append([]string{testLogEnv}, otelrecord.HandoffVariables()...) {
 		base = capability.WithoutEnvironment(base, name)
 	}
 	return gocache.Apply(base)

@@ -103,7 +103,7 @@ func toolchainPhases(root, kit string) []Phase {
 	if !goModule || err != nil {
 		return nil
 	}
-	phases := append(sourcePhases(root), testPhase(root, kit, "./..."))
+	phases := append(sourcePhases(root), wholeTestPhase(root, kit))
 	if sameDirectory(root, kit) && declaresRaceTest(root) {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
 	}
@@ -168,10 +168,7 @@ func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	for i, phase := range phases {
 		selected[i] = phase
 		selected[i].Resources = append(append([]protection.Descriptor(nil), phase.Resources...), selection.Resources()...)
-		selected[i].Argv = append([]string(nil), phase.Argv...)
-		if len(selected[i].Argv) > 0 && selected[i].Argv[0] == runBinaryArgvToken {
-			selected[i].Argv[0] = selection.Path
-		}
+		selected[i].Argv = runBinaryArgv(phase.Argv, selection.Path)
 		selected[i].Env = mergeEnv(phase.Env, []string{
 			runbinary.Env + "=" + selection.Path,
 			"BENCH_KIT=" + selection.SourceRoot,
@@ -292,7 +289,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		fmt.Fprintf(stderr, "gate: phase schedule refused: %s\n", decision.Refusal)
 		return 1
 	}
-	phases = withRunBinary(phases, selection)
+	phases = withRunBinary(withTestLog(phases), selection)
 	if sameDirectory(root, kit) {
 		run, err := env.OpenKitTestRun(os.Environ())
 		if err != nil {

@@ -343,7 +343,7 @@ The kit phase table is exactly:
 |---|---|
 | `gofmt` | `bench gate-go gofmt <root>` |
 | `vet` | `go -C <root> vet -trimpath ./...` |
-| `test` | `go test -trimpath -count=1 -timeout=10m0s ./...` |
+| `test` | `go test -trimpath -count=1 -timeout=10m0s "-exec=<bench-run-binary> gate-go exec" ./...`, where the quoted flag is one argv element |
 | `race` | one `go test -trimpath -count=1 -timeout=10m0s -race -v` invocation derived from the race-test table in `internal/gate` |
 | `system` | `go test -trimpath -count=1 -timeout=10m0s -tags=system ./internal/systemtest` |
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |

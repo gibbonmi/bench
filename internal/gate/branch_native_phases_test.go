@@ -101,7 +101,7 @@ func TestBenchkitPhasesUseBranchNativeDrivers(t *testing.T) {
 		t.Fatalf("phase names = %v, want %v", gotNames, wantNames)
 	}
 	timeout := "-timeout=" + bounds.GoTestTimeout.String()
-	if want := []string{"go", "test", "-trimpath", "-count=1", timeout, "./..."}; !reflect.DeepEqual(byName["test"].Argv, want) {
+	if want := []string{"go", "test", "-trimpath", "-count=1", timeout, traceExecOperand, "./..."}; !reflect.DeepEqual(byName["test"].Argv, want) {
 		t.Fatalf("ordinary test argv = %#v, want %#v", byName["test"].Argv, want)
 	}
 	if want := []string{"go", "test", "-trimpath", "-count=1", timeout, "-tags=system", "./internal/systemtest"}; !reflect.DeepEqual(byName["system"].Argv, want) {
