@@ -6,7 +6,7 @@ Roadmap: FT450
 
 Decision source: reviewer-confirmed current conversation, 2026-10-26, decisions D1 to D6 under Further notes, with the closed decision of 2026-10-26 that FT450 owns several light-path sources landed in order under one gate.
 
-Verification log: pending — the spec review and the ticket review run before sign-off.
+Verification log: 5 iteration(s) to accept — the Opus/high spec round took 3 iterations after the reviewer raised its cap from 2 to 3, and the Opus/high ticket round took 2.
 
 ## Problem
 
