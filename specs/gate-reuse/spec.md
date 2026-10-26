@@ -6,7 +6,7 @@ Roadmap: FT314
 
 Decision source: `roadmap/FT314.md`, a named reviewed artifact (reviewer approval 2026-10-14, recorded by drain d-6c97ed54c629), with two late clarifications closed in the reviewer-confirmed conversation on 2026-10-26.
 
-Verification log: pending — the spec review round is open.
+Verification log: 4 iteration(s) to accept — the Sonnet/high spec round took 2 iterations (F1 a second manifest reader, F2 a store-only plan predicate, F3 an inexact cache-write rule), and the Sonnet/high ticket round took 2 (T1 and T2 fence gaps).
 
 ## Problem
 
