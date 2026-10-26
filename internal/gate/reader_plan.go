@@ -140,7 +140,7 @@ func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, st
 	if held, err := readerHeld(storageRoot, landing.marker); err != nil || held {
 		return readerRun{}, refusedHold
 	}
-	chain, landings, err := readerLandings(storageRoot, landing)
+	chain, landings, err := readerChain(storageRoot, landing)
 	if err != nil || len(landings) != len(chain) {
 		return readerRun{}, refusedChainGap
 	}
@@ -150,9 +150,9 @@ func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, st
 	return newReaderRun(plan, readerScheduleOf(table.Readers, families), destinationTree, landing.marker), ""
 }
 
-// readerLandings answers the first-parent chain after the green marker of landing, up to its
+// readerChain answers the first-parent chain after the green marker of landing, up to its
 // destination, and the commits of that chain whose tree holds a reader record.
-func readerLandings(root string, landing landingValue) (chain, landings []string, err error) {
+func readerChain(root string, landing landingValue) (chain, landings []string, err error) {
 	chain, err = benchgit.FirstParentsAfter(root, landing.marker, landing.destination)
 	if err != nil {
 		return nil, nil, err

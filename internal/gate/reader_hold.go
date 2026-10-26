@@ -33,7 +33,7 @@ func holdWholeGate(ctx context.Context, replacer durablefile.Replacer, storageRo
 	}
 	// The suspects only point the operator at commits to inspect, so a chain that cannot be
 	// read names none and leaves the red as it is.
-	_, suspects, err := readerLandings(storageRoot, landing)
+	_, suspects, err := readerChain(storageRoot, landing)
 	if err != nil {
 		return nil, nil
 	}
