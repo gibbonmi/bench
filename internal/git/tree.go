@@ -172,6 +172,30 @@ func ListTree(root string, args ...string) ([]TreeEntry, error) {
 	return entries, nil
 }
 
+// symlinkMode is the tree-entry mode of a symbolic link.
+const symlinkMode = "120000"
+
+// TreeSymlinks answers the tracked symbolic links of tree: the repository-relative path of
+// each link, mapped to the link text that its blob holds.
+func TreeSymlinks(root, tree string) (map[string]string, error) {
+	entries, err := ListTree(root, "-r", tree)
+	if err != nil {
+		return nil, err
+	}
+	links := map[string]string{}
+	for _, entry := range entries {
+		if entry.Mode != symlinkMode {
+			continue
+		}
+		target, err := ReadControlBlob(root, entry.Object)
+		if err != nil {
+			return nil, err
+		}
+		links[entry.Path] = string(target)
+	}
+	return links, nil
+}
+
 // TreeWithoutFile returns a tree with one exact file removed through a private index.
 func TreeWithoutFile(root, tree, path string) (string, error) {
 	listing, err := ListTree(root, tree, "--", path)

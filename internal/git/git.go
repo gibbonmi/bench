@@ -178,6 +178,10 @@ const GateCacheFile = "bench-last-gate"
 // GateCacheFile under the git directory. Only the chunk checkpoint reads it.
 const DeltaCacheFile = "bench-last-delta"
 
+// ReaderTableDir is the directory of the reader-table store, beside GateCacheFile under the
+// common Git directory. It holds one reader table for each graded tree.
+const ReaderTableDir = "bench-reader-tables"
+
 // LandedInDefault proves a local branch landed by ancestry, patch containment, or
 // reverse-applying the branch's cumulative diff to def's tree. The reverse-apply proof
 // alone proves a squash-landing, where the branch's commits compose into one commit no

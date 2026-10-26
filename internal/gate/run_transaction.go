@@ -191,6 +191,9 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if delta, eligible := deltaPlan(ctx, storageRoot, runtimeRoot, plan, mode); eligible {
 		return runDelta(ctx, runCtx, runtimeRoot, storageRoot, gitdir, declaredPaths, delta, evaluation, local, selection, release, replacer, stdout, stderr)
 	}
+	trace := beginReaderTrace(runtimeRoot, storageRoot, plan, selection)
+	defer trace.close()
+	plan.Env = trace.env(plan.Env)
 	// Persist the interrupted posture before the oracle starts. The branch-native gate
 	// always grades the complete subject; there is no component partition to retain.
 	pending := interruptedRecord(plan, time.Now().UTC())
@@ -236,31 +239,10 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
 		return persistenceFailure(storageRoot, rc, stderr, "gate final persistence failed", err)
 	}
+	if status == "green" {
+		trace.persist(ctx, replacer, storageRoot, plan)
+	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, time.Now().UTC())}
-}
-
-// settleRun checks a finished oracle run before any verdict: the subject after the run is
-// the subject that it graded, a failed run left a safe protection state, and the run's
-// resources release. It answers the subject after the run, or the refusal and true.
-func settleRun(evaluation executionEvaluation, runtimeRoot, storageRoot string, declaredPaths []string, plan subject, run processGroupResult, release func() error, stderr io.Writer) (subject, Result, bool) {
-	rc := run.Code
-	after, err := evaluation.capturePost()
-	if err != nil || !sameSubject(plan, after) {
-		fmt.Fprintln(stderr, subjectChangeDiagnostic(runtimeRoot, declaredPaths, plan, after, err))
-		inspection := inspectAt(storageRoot, time.Now().UTC())
-		if err == nil {
-			inspection = inspectSubjectAt(storageRoot, after, time.Now().UTC())
-		}
-		return after, Result{GateExit: rc, ActionExit: 1, Inspection: inspection}, true
-	}
-	if rc != 0 && run.Outcome.Process.Started && run.Outcome.Protection.State != protection.Safe {
-		return after, unprotectedFailure(storageRoot, plan, rc, stderr, run), true
-	}
-	// A nested user that outlives a zero exit keeps a resource; its release failure is no verdict.
-	if err := release(); err != nil {
-		return after, retainedFailure(storageRoot, plan, rc, stderr, "gate resource release failed: "+err.Error()), true
-	}
-	return after, Result{}, false
 }
 
 // takeExecutionLock requests the non-blocking write lock on the gate lock file. Tests
@@ -337,26 +319,6 @@ func writeOwnerDiagnostic(stderr io.Writer, path string) {
 		liveness = "not alive"
 	}
 	fmt.Fprintf(stderr, "gate owner: pid %d (%s)\n", pid, liveness)
-}
-
-func sameSubject(a, b subject) bool {
-	return a.Tree == b.Tree && a.Oracle == b.Oracle && a.Resolution == b.Resolution && a.Closed == b.Closed && a.Reason == b.Reason
-}
-
-func subjectChangeDiagnostic(root string, declaredPaths []string, before, after subject, err error) string {
-	if err == nil && before.Tree != after.Tree {
-		if changed, ok := benchgit.ChangedPathsBetweenTrees(root, before.Tree, after.Tree); ok {
-			for _, path := range declaredPaths {
-				for _, moved := range changed {
-					if moved == path || strings.HasPrefix(moved, path+"/") {
-						return "gate subject changed during execution: declared input " + path
-					}
-				}
-			}
-		}
-		return "gate subject changed during execution: tree " + after.Tree
-	}
-	return "gate subject changed during execution"
 }
 
 func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer, local ...protection.Descriptor) processGroupResult {
