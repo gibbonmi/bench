@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/brokermanifest"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -112,6 +114,7 @@ func TestLandReusesACheckpointGreenOfAGoChange(t *testing.T) {
 	commitInWorktree(t, f.creation.Path, runBinaryMain, "package main\n\nfunc main() { println() }\n", "change a build input")
 	refreshLandingEvidence(t, f.creation.Path, base)
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
+	bindRunningBroker(t, f.root)
 	completeCheckpointIn(t, f.creation.Path)
 
 	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
@@ -119,6 +122,25 @@ func TestLandReusesACheckpointGreenOfAGoChange(t *testing.T) {
 		t.Fatalf("landing = (%d, %q, %q), want a publication with a failed refresh", r.exit, r.stdout, r.stderr)
 	}
 	requireOneRun(t, f.tally, "after the landing of a build-input change")
+}
+
+// bindRunningBroker binds this test binary in the broker manifest of the primary checkout at
+// root, so a complete checkpoint of a repository with Bench build inputs keeps its own
+// process. The checkout excludes the manifest, so it stays clean.
+func bindRunningBroker(t *testing.T, root string) {
+	t.Helper()
+	running, err := os.Executable()
+	mustNoError(t, err)
+	commitmenttest.BindManifest(t, root, running)
+	exclude := mustAdminPath(t, root, "info/exclude")
+	excluded, err := os.ReadFile(exclude)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	manifest, err := filepath.Rel(root, brokermanifest.Path(root))
+	mustNoError(t, err)
+	mustMkdirAll(t, filepath.Dir(exclude), 0o755)
+	mustWrite(t, exclude, append(excluded, "/"+filepath.ToSlash(manifest)+"\n"...), 0o644)
 }
 
 // runBinaryMain is the command source of the fixture's run binary, a Bench build input.

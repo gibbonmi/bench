@@ -17,7 +17,6 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/preflight"
-	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
@@ -202,10 +201,11 @@ func runGateRouteStep(t *testing.T, set gateSet, step string) int {
 }
 
 // assigned is a checkpoint fixture whose checkout an active assignment of label owns. With
-// complete, the fixture also retains its completion evidence.
-func assigned(t *testing.T, label string, complete bool) gateSet {
+// complete, the fixture also retains its completion evidence. Each prepare step writes into
+// the checkout before its review evidence commits.
+func assigned(t *testing.T, label string, complete bool, prepare ...func(*recordtest.Fixture)) gateSet {
 	t.Helper()
-	f := gate.AttachedCheckpointFixture(t, recordtest.Attach)
+	f := gate.AttachedCheckpointFixture(t, recordtest.Attach, prepare...)
 	if complete {
 		gate.RetainCompletion(f)
 	}
@@ -221,6 +221,7 @@ func gateFaceFixtures() []gateFaceFixture {
 		repairFixture(record),
 		dirtyFixture(record),
 		proseFixture(record),
+		brokerFixture(),
 		candidateFixture(),
 		overlapFixture(),
 		{
@@ -278,58 +279,6 @@ func gateFaceFixtures() []gateFaceFixture {
 				return gate.RunCompletionTree(set.f.Root, recordtest.Spec, set.f.Tip(), set.f.Tree(), stderr)
 			},
 			carry: map[int]func(*testing.T, gateSet){0: func(*testing.T, gateSet) {}},
-		},
-	}
-}
-
-// evidenceFixture is the completion-evidence fixture: a delivery that the preflight read
-// grades green, with its review record removed in a commit. The read reports the gap, and the
-// operator commits the record again. The chunk is the one the conformant plan declares.
-func evidenceFixture(record string) gateFaceFixture {
-	var saved []byte
-	return gateFaceFixture{
-		face:     "checkpoint-completion-evidence",
-		args:     []string{"--checkpoint", recordtest.Spec, "--chunk", "c1"},
-		contains: "bench preflight review ",
-		build: func(t *testing.T) gateSet {
-			t.Setenv("BENCH_GATE", "true")
-			root, _ := preflighttest.SeedConformant(t)
-			recordtest.RetainSingleChunk(t, root, recordtest.Spec, preflighttest.RunGit(t, "rev-parse", "main"))
-			saved = readFile(t, root, record)
-			if err := os.Remove(filepath.Join(root, record)); err != nil {
-				t.Fatal(err)
-			}
-			f := &recordtest.Fixture{T: t, Root: root}
-			f.Commit("remove the review record")
-			return gateSet{f: f}
-		},
-		after: func(_ *testing.T, set gateSet) {
-			set.f.Write(record, string(saved))
-			set.f.Commit("restore the review record")
-		},
-	}
-}
-
-// repairFixture is the record-repair fixture: the chunk lacks its Coverage review, which
-// the review form writes. The route prints that form's grammar, and the operator retains
-// the review.
-func repairFixture(record string) gateFaceFixture {
-	var saved []byte
-	return gateFaceFixture{
-		face:     "checkpoint-record-repair",
-		args:     chunkArgs,
-		contains: "bench record 'review' --help",
-		build: func(t *testing.T) gateSet {
-			set := assigned(t, "gate-record", false)
-			saved = readFile(t, set.f.Root, record)
-			set.f.Record.Chunks[0].Reviews = set.f.Record.Chunks[0].Reviews[:2]
-			set.f.Save()
-			set.f.Commit("drop the Coverage review")
-			return set
-		},
-		after: func(_ *testing.T, set gateSet) {
-			set.f.Write(record, string(saved))
-			set.f.Commit("restore the Coverage review")
 		},
 	}
 }
