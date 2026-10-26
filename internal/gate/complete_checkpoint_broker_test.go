@@ -2,6 +2,7 @@ package gate
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -15,11 +16,11 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
-// BrokerExec is one call of the broker exec seam: the broker, its argument vector, and the
-// working directory at the call.
+// BrokerExec is one call of the broker exec seam: the broker, its arguments after the program
+// name, and the working directory at the call.
 type BrokerExec struct {
 	Broker, Dir string
-	Argv        []string
+	Args        []string
 }
 
 // StubBrokerExec replaces the broker exec seam until t ends with one that records each call
@@ -30,15 +31,23 @@ func StubBrokerExec(t *testing.T) *[]BrokerExec {
 	var calls []BrokerExec
 	previous := execBroker
 	t.Cleanup(func() { execBroker = previous })
-	execBroker = func(broker string, argv []string) error {
+	execBroker = func(broker string, args, _ []string) error {
 		dir, err := os.Getwd()
 		if err != nil {
 			t.Fatal(err)
 		}
-		calls = append(calls, BrokerExec{Broker: broker, Dir: dir, Argv: argv})
+		calls = append(calls, BrokerExec{Broker: broker, Dir: dir, Args: args})
 		return nil
 	}
 	return &calls
+}
+
+// setProcessArgs makes args the process argument vector until t ends.
+func setProcessArgs(t *testing.T, args ...string) {
+	t.Helper()
+	previous := os.Args
+	t.Cleanup(func() { os.Args = previous })
+	os.Args = args
 }
 
 // InstallRunning binds this test binary in the broker manifest of the primary checkout, as the
@@ -132,11 +141,12 @@ func TestCompleteCheckpointExecsTheBroker(t *testing.T) {
 	f := brokerSource(t, true)
 	broker := bindBroker(t, f.Root)
 	calls := StubBrokerExec(t)
+	setProcessArgs(t, "bench", "gate", "--checkpoint", "specs/example/spec.md", "--complete")
 	dir := t.TempDir()
 	t.Chdir(dir)
 	code, out := completeCheckpoint(t, f)
-	want := BrokerExec{Broker: broker, Dir: dir, Argv: append([]string{broker}, os.Args[1:]...)}
-	if code != 0 || len(*calls) != 1 || (*calls)[0].Broker != want.Broker || (*calls)[0].Dir != want.Dir || !slices.Equal((*calls)[0].Argv, want.Argv) {
+	want := BrokerExec{Broker: broker, Dir: dir, Args: []string{"gate", "--checkpoint", "specs/example/spec.md", "--complete"}}
+	if code != 0 || len(*calls) != 1 || (*calls)[0].Broker != want.Broker || (*calls)[0].Dir != want.Dir || !slices.Equal((*calls)[0].Args, want.Args) {
 		t.Fatalf("checkpoint = (%d, %q) with broker execs %v; want one exec %v", code, out, *calls, want)
 	}
 	assertNoOracleRun(t, f)
@@ -182,6 +192,28 @@ func TestCompleteCheckpointKeepsTheExecutableWithoutBuildInputs(t *testing.T) {
 	requireOwnProcess(t, f, calls, code, out)
 }
 
+// GR63: a checkout that declares no build inputs keeps its running executable even when its
+// primary checkout does not resolve.
+func TestCompleteCheckpointWithoutBuildInputsNeedsNoPrimary(t *testing.T) {
+	calls := StubBrokerExec(t)
+	var out bytes.Buffer
+	checkpoint := Checkpoint{Spec: recordtest.Spec, Complete: true}
+	if _, done := runUnderBroker(context.Background(), t.TempDir(), checkpoint, &out, reuseFreshGreen); done || len(*calls) != 0 {
+		t.Fatalf("broker step = (done %t, %q) with broker execs %v; want the run kept in its own process", done, out.String(), *calls)
+	}
+}
+
+// A running executable whose digest does not read refuses the complete checkpoint, so the
+// broker that it would exec cannot exec itself again.
+func TestCompleteCheckpointRefusesAnUndigestedExecutable(t *testing.T) {
+	f := brokerSource(t, true)
+	bindBroker(t, f.Root)
+	setRunningExecutable(t, "")
+	calls := StubBrokerExec(t)
+	code, out := completeCheckpoint(t, f)
+	requireBrokerUnavailable(t, f, calls, code, out)
+}
+
 // GR64: a chunk checkpoint runs under its running executable when the broker differs.
 func TestChunkCheckpointKeepsTheRunningExecutable(t *testing.T) {
 	f := brokerSource(t, true)
@@ -191,16 +223,17 @@ func TestChunkCheckpointKeepsTheRunningExecutable(t *testing.T) {
 	requireOwnProcess(t, f, calls, code, out)
 }
 
-// Each other cause that leaves the broker unusable refuses the complete checkpoint: a primary
-// checkout that does not resolve, whose manifest the run must never look up beside the working
-// directory, and an exec that fails.
+// Each other cause that leaves the broker unusable refuses the complete checkpoint: a checkout
+// that declares build inputs and whose primary checkout does not resolve, whose manifest the
+// run must never look up beside the working directory, and an exec that fails.
 func TestCompleteCheckpointRefusesAnUnusableBroker(t *testing.T) {
 	t.Run("unresolved primary", func(t *testing.T) {
 		dir := t.TempDir()
 		InstallRunning(t, dir)
+		commitmenttest.Write(t, dir, benchfreshness.BuildInputsManifest, "cmd\n")
 		t.Chdir(dir)
 		var out bytes.Buffer
-		code := RunCommand([]string{filepath.Join(dir, "absent"), "--checkpoint", recordtest.Spec, "--complete"}, &out, &out)
+		code := RunCommand([]string{dir, "--checkpoint", recordtest.Spec, "--complete"}, &out, &out)
 		requireBrokerRoute(t, code, out.String())
 	})
 	t.Run("failed exec", func(t *testing.T) {
@@ -208,7 +241,7 @@ func TestCompleteCheckpointRefusesAnUnusableBroker(t *testing.T) {
 		bindBroker(t, f.Root)
 		previous := execBroker
 		t.Cleanup(func() { execBroker = previous })
-		execBroker = func(string, []string) error { return errors.New("exec format error") }
+		execBroker = func(string, []string, []string) error { return errors.New("exec format error") }
 		code, out := completeCheckpoint(t, f)
 		requireBrokerRoute(t, code, out)
 		assertNoOracleRun(t, f)

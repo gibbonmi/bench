@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"syscall"
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing/published"
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 // executeCompleteCheckpoint grades the tree that the landing publishes from HEAD of root.
@@ -34,27 +34,32 @@ func executeCompleteCheckpoint(ctx context.Context, root, spec string, stdout, s
 // authenticate.
 var faceBrokerUnavailable = checkpointFace{name: "checkpoint-broker-unavailable"}
 
-// execBroker replaces this process with broker under argv, in the inherited working
-// directory and environment. It returns only when the replacement fails. It is a seam, so a
-// test observes the call with no process replacement.
-var execBroker = func(broker string, argv []string) error {
-	return syscall.Exec(broker, argv, os.Environ())
-}
+// execBroker replaces this process with the broker, run with args and env, in the inherited
+// working directory. It returns only when the replacement fails. It is a seam, so a test
+// observes the call with no process replacement.
+var execBroker = subprocess.Replace
 
 // runUnderBroker moves a complete checkpoint under the landing broker, so its green answers
-// the landing. In a repository that declares Bench build inputs, it reads the primary
-// checkout's broker manifest. A running executable whose digest the manifest binds keeps the
-// run in this process. Any other executable execs the broker with the same arguments in the
-// same working directory. A manifest that does not read, a broker whose digest differs from
-// its manifest, and a failed exec each refuse, so no gate runs under an unknown executable.
-// A chunk checkpoint and a repository without build inputs keep the running executable. It
-// answers whether the run ended here, and its result.
+// the landing. It decides build inputs from the primary checkout, or from root when the
+// primary checkout does not resolve. In a repository that declares Bench build inputs, it
+// reads the primary checkout's broker manifest. A running executable whose digest the
+// manifest binds keeps the run in this process. Any other executable execs the broker with
+// the same arguments in the same working directory. An unresolved primary checkout, a manifest
+// that does not read, a running executable that does not digest, a broker whose digest differs
+// from its manifest, and a failed exec each refuse, so no gate runs under an unknown
+// executable. A chunk checkpoint and a repository without build inputs keep the running
+// executable, and read no manifest. It
+// answers the result, and whether the run ended here.
 func runUnderBroker(ctx context.Context, root string, checkpoint Checkpoint, stderr io.Writer, mode runMode) (Result, bool) {
 	if !checkpoint.Complete {
 		return Result{}, false
 	}
 	primary, located := git.PrimaryCheckout(root)
-	if located == nil && !benchfreshness.DeclaresBuildInputs(primary) {
+	inputs := primary
+	if located != nil {
+		inputs = root
+	}
+	if !benchfreshness.DeclaresBuildInputs(inputs) {
 		return Result{}, false
 	}
 	unavailable := func(cause string) (Result, bool) {
@@ -69,14 +74,18 @@ func runUnderBroker(ctx context.Context, root string, checkpoint Checkpoint, std
 		return unavailable("the primary broker manifest does not read: " + err.Error())
 	}
 	bound := fields[brokermanifest.DigestField]
-	if runningExecutableDigest() == bound {
+	running := runningExecutableDigest()
+	if running == "" {
+		return unavailable("the running executable does not digest")
+	}
+	if running == bound {
 		return Result{}, false
 	}
-	broker := fields["path"]
+	broker := fields[brokermanifest.PathField]
 	if digest, err := brokermanifest.Digest(broker); err != nil || digest != bound {
 		return unavailable(fmt.Sprintf("the broker %q does not match the digest %s that the primary broker manifest %s binds", broker, bound, manifest))
 	}
-	if err := execBroker(broker, append([]string{broker}, os.Args[1:]...)); err != nil {
+	if err := execBroker(broker, os.Args[1:], os.Environ()); err != nil {
 		return unavailable(fmt.Sprintf("exec the broker %q: %v", broker, err))
 	}
 	return Result{}, true

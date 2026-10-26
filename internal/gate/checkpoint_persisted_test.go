@@ -1,5 +1,6 @@
-// Candidate check tests for the gate checkpoint: a declared build's checkpoint refuses before
-// any ledger read or write when the running executable is not the installed candidate.
+// Candidate check tests for the gate checkpoint: a declared build's chunk checkpoint refuses
+// before any ledger read or write when the running executable is not the installed candidate,
+// and its complete checkpoint execs the installed candidate instead.
 package gate_test
 
 import (
@@ -148,8 +149,9 @@ func TestDeclaredBuildCheckpointExecsTheInstalledCandidate(t *testing.T) {
 
 // TestCheckpointPersistedFields is CB29, CB30, CB32, CB33, CB36, and CB57. The installed
 // candidate is not this test binary, so the binary stands in for a version-cache executable
-// that runs after an install: it knows every field and is still not the installed bytes. A
-// malformed declaration hands back with its own error.
+// that runs after an install: it knows every field and is still not the installed bytes. Only
+// the chunk checkpoint refuses it, because a complete checkpoint execs the installed
+// candidate. A malformed declaration hands back with its own error.
 func TestCheckpointPersistedFields(t *testing.T) {
 	t.Run("chunk", func(t *testing.T) {
 		// The record lacks a review, so a check after the review-record read prints that
