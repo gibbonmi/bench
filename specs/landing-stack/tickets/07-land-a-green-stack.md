@@ -12,7 +12,7 @@ The usage owner declares the grammar as `WorktreeLandStack` beside `WorktreeLand
 
 ### The dispatch
 
-`landAttributed` dispatches to the stack flow when `--stack` is a flag, and it checks this before `--resume`. `usage.FlagPresent` matches only the flags that its grammar declares (`internal/usage/parse.go:230`). So `land_stack.go` declares one dispatch grammar that holds every flag of `landGrammar` and `resumeLandGrammar`, `--stack`, and the repeatable `--source-tip` of the stack form. Then a `-m` value of `--stack` stays a single landing. `internal/worktree/land.go` has 3 lines of headroom, so the dispatch takes at most three lines there. The flow runs inside the landing span of `landWith`, and the span names the assignment of the first member.
+`landAttributed` dispatches to the stack flow when `--stack` is a flag, and it checks this before `--resume`. `usage.FlagPresent` matches only the flags that its grammar declares (`internal/usage/parse.go:230`). So `land_stack.go` declares one dispatch grammar that holds every flag of `landGrammar` and `resumeLandGrammar`, `--stack`, and the repeatable `--source-tip` of the stack form. Build its flag list from the `Flags` slices of those two grammars, so the dispatch keeps no second copy of the single-landing flags. Then a `-m` value of `--stack` stays a single landing. `internal/worktree/land.go` has 3 lines of headroom, so the dispatch takes at most three lines there. The flow runs inside the landing span of `landWith`, and the span names the assignment of the first member.
 
 ### The flow
 

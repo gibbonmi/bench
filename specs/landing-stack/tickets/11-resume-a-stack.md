@@ -1,7 +1,7 @@
 # Resume a published stack and list both stack forms
 
 Blocked by: 05-move-the-worktree-help-rows.md, 10-refuse-a-stack-member.md
-Writes: internal/usage/worktree.go, cmd/bench/worktree_leaves.go, cmd/bench/help_inventory_test.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_resume.go (new), internal/worktree/land_stack_resume_test.go (new), internal/worktree/verb_runner_check_test.go, internal/systemtest/land_route_test.go
+Writes: internal/usage/worktree.go, cmd/bench/worktree_leaves.go, cmd/bench/help_inventory_test.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_resume.go (new), internal/worktree/land_stack_resume_test.go (new), internal/worktree/verb_runner_check_test.go, internal/systemtest/land_route_test.go
 Covers: LS66, LS67, LS78, LS79, LS80, LS81, LS82, LS100
 
 ## What to build
