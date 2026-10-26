@@ -1,7 +1,7 @@
 # Reuse another run's green in every whole-gate verb
 
 Blocked by: 02-name-evidence-by-the-grade-key.md, 03-record-a-reused-green.md
-Writes: internal/worktree/land_reuse_test.go (new), internal/worktree/land_fixtures_test.go, internal/gate/verb_reuse_test.go (new), internal/gate/reader_set_test.go, internal/commit/commit_reuse_test.go (new)
+Writes: internal/worktree/land_reuse_test.go (new), internal/worktree/land_fixtures_test.go, internal/gate/verb_reuse_test.go (new), internal/gate/reader_set_test.go, internal/commit/commit_reuse_test.go (new), internal/worktree/parallel_census_test.go
 Covers: GR25, GR26, GR27, GR28, GR66, GR58, GR48, GR49, GR50, GR51, GR52
 
 ## What to build
