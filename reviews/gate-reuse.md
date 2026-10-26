@@ -1243,3 +1243,18 @@ The ticket 04 author probed each row at its ticket work with `bench probe`. Each
 The ticket 04 continuation session made GR28 parallel at 4432fb125 and raised the census count pin to 834. Its build-input mutant, which computes the member over the identity root, failed TestLandReusesACheckpointGreenOfAGoChange at `land_reuse_test.go:121` with tally "gg".
 
 The orchestrator ran and staged the planned `land-probe` at 4432fb125. The probe bit, but the failure is the landing's infrastructure refusal at `land_reuse_test.go:87`, not the tally assertion at line 89. The GR-C3 Coverage axis judges whether that refusal hides the tally assertion.
+
+## GR-C3 ticket 05 author witness reds
+
+The ticket 05 author demonstrated these reds at its ticket work. Each probe restored its subject.
+
+- GR59, GR61, and GR62 failed against an inert broker stub at `complete_checkpoint_broker_test.go:119`, `:142`, and `:155`.
+- GR60 failed at `:144` under a probe that always execs the broker.
+- GR63 failed at `:175` under a probe that disables the build-inputs test.
+- GR64 failed at `:184` under a probe that disables the complete-checkpoint test.
+- GR67 failed at `checkpoint_persisted_test.go:154` under `done && false` in `gate.go`, with "candidate-not-installed".
+- The unresolved-primary branch failed at `:201`, and the failed-exec branch failed at `:210`.
+- A wrong refusal face failed at `refusal_route_test.go:138`, after the author tightened the route-text match.
+- The GR28 fixture without a broker binding failed at `land_reuse_test.go:117` with "the primary broker manifest does not read".
+
+The author removed the complete subtest of TestCheckpointPersistedFields, because GR67 reverses its refusal and TestDeclaredBuildCheckpointExecsTheInstalledCandidate holds the same fixture. That GR67 test lives in `checkpoint_persisted_test.go`, not in the planned `complete_checkpoint_broker_test.go`, because its fixture is in the external test package. The seam cell cites the actual file.
