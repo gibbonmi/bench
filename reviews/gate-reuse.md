@@ -620,3 +620,15 @@ The ticket 02 author probed `internal/gate` at its ticket work. Each mutant belo
 - After the journey-test fix at c702eb07d, the mutant `if !evidence.ReusableGreen {` to `if true {` in `engine.go` failed TestLandCommandPublicRealGitJourney/clean at `land_journey_test.go:83`.
 
 The planned reuse probe bit at `grade_key_test.go:68` at c702eb07d.
+
+## GR-C2 ticket 03 author witness reds
+
+The ticket 03 author probed `internal/gate` with `bench probe --run`, and each probe restored its subject.
+
+- A cache write changed to `return nil` failed TestReusedGreenRecordsTheGateCache (GR22) at `reused_green_test.go:24`. It also failed TestReusedGreenReplacesARedCacheOfItsTree (GR47) at `reused_green_test.go:44`.
+- A write rule that compares only `CachedTree` failed TestReusedGreenReplacesARedCacheOfItsTree (GR47) at `reused_green_test.go:44`.
+- An ignored write error failed TestReusedGreenCacheWriteFailureRefuses (GR24) at `durable_replacement_test.go:307`.
+- A `lockHeld` result forced to false failed TestReusedGreenBesideAHeldLockWritesNothing (GR44) at `reused_green_test.go:56`.
+- Both cache checks changed to `if false` failed TestGateRunGreenReusesRecordedVerdict (GR23) at `run_outcomes_test.go:71`. The two checks mask each other, so this joint probe is the witness for both.
+
+The ticket 02 verification entries carry the ids `gr-t02--<requirement>`, because `bench record ticket` adds its own hyphen to the prefix.
