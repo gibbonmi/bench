@@ -36,6 +36,11 @@ func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
 			fields:  []string{"base_tree", "delta", "recorded_at", "run_binary", "schema", "tree"},
 			refused: true,
 		},
+		{
+			name:    "reader record",
+			fields:  []string{"destination_tree", "green_marker", "reader_set", "recorded_at", "run_binary", "schema", "tree"},
+			refused: true,
+		},
 	}
 
 	if len(verdictRecordClasses) != len(want) {

@@ -195,7 +195,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
 		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
 		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
-		Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
+		GreenMarker: priorMarker, Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
 	}
 	publication := commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable(), Destination: request.Destination}
 	// The window decides before the lease, so a landing never waits for a lease and then for a gap.
@@ -217,7 +217,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	measures.subject = result.Commit
-	if err := authorization.AdvanceMarker(context.Background(), root, branch, result.Commit, priorMarker); err != nil {
+	if err := advanceLandedMarker(root, branch, result, priorMarker); err != nil {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
 	}
 	if err := j.reconcileCommitment(root); err != nil {

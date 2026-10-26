@@ -1,8 +1,8 @@
 # Publish a reader landing and keep the green marker
 
 Blocked by: 05-plan-the-reader-set-at-a-landing.md
-Writes: internal/gate/authorization/authorization.go, internal/gate/authorization/reader_kind_test.go (new), internal/landing/landing.go, internal/landing/landing_refusal.go (new), internal/landing/reader_publish_test.go (new), internal/worktree/land.go, internal/worktree/land_marker.go (new), internal/worktree/land_reader_test.go (new), internal/worktree/land_resume.go, internal/worktree/landingpolicy/landingpolicy.go, internal/worktree/landingpolicy/reader_marker_test.go (new)
-Covers: NG55, NG56, NG57, NG58, NG59, NG60
+Writes: internal/gate/authorization/authorization.go, internal/gate/authorization/reader_kind_test.go (new), internal/landing/landing.go, internal/landing/landing_refusal.go (new), internal/landing/reader_publish_test.go (new), internal/worktree/land.go, internal/worktree/land_marker.go (new), internal/worktree/land_reader_test.go (new), internal/worktree/land_resume.go, internal/worktree/landingpolicy/landingpolicy.go, internal/worktree/landingpolicy/reader_marker_test.go (new), internal/gate/reader_plan.go, internal/gate/reader_plan_test.go, internal/worktree/parallel_census_test.go, internal/gate/reader_store.go, internal/gate/reader_store_test.go, internal/gate/run_transaction.go, internal/gate/run_settle.go, internal/gate/lane_select.go, internal/packagesurface/assets.go, internal/packagesurface/embed_directives.go, internal/packagesurface/embed_directives_test.go, internal/worktree/land_facts_test.go, internal/gate/report.go
+Covers: NG55, NG56, NG57, NG58, NG59, NG60, NG83, NG84
 
 ## What to build
 

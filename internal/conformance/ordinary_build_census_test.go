@@ -36,8 +36,8 @@ func checkOrdinaryBuildCensus(root string) []string {
 		gotNames = append(gotNames, phase.Name)
 		switch phase.Name {
 		case "test":
-			if !slices.Equal(phase.Argv, []string{"go", "test", "-trimpath", "-count=1", timeout, "./..."}) {
-				diags = append(diags, fmt.Sprintf("ordinary test argv = %q", phase.Argv))
+			if diag := tracedTestArgvDiagnostic(phase.Argv); diag != "" {
+				diags = append(diags, diag)
 			}
 		case "race":
 			joined := strings.Join(phase.Argv, " ")
@@ -120,6 +120,16 @@ func checkOrdinaryBuildCensus(root string) []string {
 		}
 	}
 	return diags
+}
+
+// tracedTestArgvDiagnostic grades the kit's whole test argv element by element. The trace
+// flag is one element, because cmd/go splits its value into the shim and the shim's operands.
+func tracedTestArgvDiagnostic(argv []string) string {
+	want := []string{"go", "test", "-trimpath", "-count=1", "-timeout=" + bounds.GoTestTimeout.String(), "-exec=<bench-run-binary> gate-go exec", "./..."}
+	if slices.Equal(argv, want) {
+		return ""
+	}
+	return fmt.Sprintf("ordinary test argv = %q, want %q", argv, want)
 }
 
 // hasGoFile reports whether path is a directory containing at least one .go
@@ -298,6 +308,37 @@ func isRepositoryCall(name string, literals []string) bool {
 		return containsSequence(literals, "init") || containsSequence(literals, "clone") || containsSequence(literals, "worktree")
 	default:
 		return false
+	}
+}
+
+// TestOrdinaryBuildCensusRequiresTheTracedTestArgv requires that the census accepts the
+// traced test argv of a kit and refuses both the argv without the trace flag and the argv
+// that splits the flag into words. The fixture kit declares the root-conformance entry,
+// which is what traces its test phase.
+func TestOrdinaryBuildCensusRequiresTheTracedTestArgv(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.21\n")
+	writeFixtureFile(t, filepath.Join(root, "internal", "conformance", "entry_test.go"), "package conformance\n\nimport \"testing\"\n\nfunc "+registry.RootConformanceTest+"(t *testing.T) {}\n")
+	var traced []string
+	for _, phase := range gate.BenchkitPhases(root, root) {
+		if phase.Name == "test" {
+			traced = phase.Argv
+		}
+	}
+	at := slices.IndexFunc(traced, func(arg string) bool { return strings.HasPrefix(arg, "-exec=") })
+	if at < 0 {
+		t.Fatalf("kit test argv = %q, want one -exec= element", traced)
+	}
+	if diag := tracedTestArgvDiagnostic(traced); diag != "" {
+		t.Fatalf("census refuses the kit's traced test argv: %s", diag)
+	}
+	for name, argv := range map[string][]string{
+		"untraced": slices.Delete(slices.Clone(traced), at, at+1),
+		"split":    slices.Concat(traced[:at], strings.Fields(traced[at]), traced[at+1:]),
+	} {
+		if tracedTestArgvDiagnostic(argv) == "" {
+			t.Errorf("census accepts the %s test argv %q", name, argv)
+		}
 	}
 }
 

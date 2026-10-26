@@ -1861,6 +1861,14 @@
       "identity": "sha256:a5c35bc4efdffc271047b0370c3fce2efe68c4323ec06627715442333ec10b74",
       "source": "6889a3de4f3d3bec6c45fbc9b6de16483dfa58c6",
       "evidence": "cb918c5cba16501ee2a98e0fa51dd42a8c5b4d58"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT449-no-go-schedule",
+      "binding": "no-go-schedule",
+      "identity": "sha256:7c3eee512e4a1211029af93d100e93a16722b4370432a205a3cb7f1d32865cc5",
+      "source": "9224da04545bc39c965c7a48e9136795e9dcfd5b",
+      "evidence": "4bd6de41c373602cf50a0c11ad049e8fb83a86cc"
     }
   ]
 }

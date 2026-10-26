@@ -69,8 +69,8 @@ func TestBenchkitLaneDocumentRowsFollowTheRegistry(t *testing.T) {
 	}
 }
 
-// OG32: the kit root's gate phase table keeps the whole-project test argv. The lane is
-// a second table beside it, never a narrowing of this one.
+// OG32: the gate phase table of a root that declares no root-conformance entry keeps the
+// whole-project test argv. The lane is a second table beside it, never a narrowing of this one.
 func TestBenchkitPhasesKeepWholeProjectTestArgv(t *testing.T) {
 	root := t.TempDir()
 	writeLaneFile(t, filepath.Join(root, "go.mod"), "module example.com/x\n\ngo 1.24\n")

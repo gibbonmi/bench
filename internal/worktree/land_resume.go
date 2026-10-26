@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -77,7 +78,11 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
 		return landRefusalError(stdout, landingFaceRefusal(faceResumeDestinationResidue, refusal{detail: err.Error()}, rerun, ""))
 	}
-	switch landingpolicy.ResumeMarker(resumeMarkerFacts(root, destination, published, marker)) {
+	markerFacts, err := resumeMarkerFacts(root, destination, published, marker)
+	if err != nil {
+		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, refusal{detail: "reader record unreadable: " + err.Error()}, rerun, ""))
+	}
+	switch landingpolicy.ResumeMarker(markerFacts) {
 	case landingpolicy.MarkerAdvance:
 		if err := authorization.AdvanceMarker(context.Background(), root, branch, published, marker); err != nil {
 			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker", records)
@@ -290,11 +295,25 @@ func specTransitionFacts(root, published, source, slug string) landingpolicy.Spe
 }
 
 // resumeMarkerFacts translates the destination, published commit, and recorded
-// green marker into the typed resume-marker facts once at the boundary.
-func resumeMarkerFacts(root, destination, published, marker string) landingpolicy.MarkerFacts {
+// green marker into the typed resume-marker facts once at the boundary. An unreadable
+// published tree or reader record store answers its error, because reading it as no
+// reader record would advance the marker over a reader landing.
+func resumeMarkerFacts(root, destination, published, marker string) (landingpolicy.MarkerFacts, error) {
+	recorded, err := publishedReaderRecorded(root, published)
 	return landingpolicy.MarkerFacts{
-		DestinationAtPublished: destination == published,
-		MarkerPresent:          marker != "",
-		MarkerReachesPublished: func() bool { return git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) },
+		DestinationAtPublished:  destination == published,
+		MarkerPresent:           marker != "",
+		MarkerReachesPublished:  func() bool { return git.OK("-C", root, "merge-base", "--is-ancestor", published, marker) },
+		PublishedReaderRecorded: recorded,
+	}, err
+}
+
+// publishedReaderRecorded reports whether the tree of the published commit holds a reader
+// record.
+func publishedReaderRecorded(root, published string) (bool, error) {
+	tree, err := git.Output("-C", root, "rev-parse", published+"^{tree}")
+	if err != nil {
+		return false, err
 	}
+	return gate.ReaderRecorded(root, tree)
 }

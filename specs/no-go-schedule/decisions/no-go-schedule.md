@@ -68,9 +68,9 @@ specs/no-go-schedule/decisions/no-go-schedule/assets/.
 
 ## Sources
 
-- Path: `roadmap/FT449.md`
-  Supports: the destination and the three named decisions of the row.
-  Drift: a change to the row.
+- Path: `specs/no-go-schedule/spec.md`
+  Supports: the destination and the three named decisions of the row, which the spec's stories and decisions carry.
+  Drift: a change to the user stories or to the implementation decisions.
 - Path: `internal/conformance/registry/checks.go`
   Supports: the count of 44 ordinary checks and 22 catch-all inputs.
   Drift: a change to a registry row or its input source.

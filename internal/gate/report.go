@@ -34,6 +34,9 @@ const capabilityPhase = "capability"
 // legal gate, and only its projection changes.
 const phaseTableCap = 7
 
+// PhaseTableRedExit is the exit of a settled run whose phase table graded red.
+const PhaseTableRedExit = 1
+
 // aggregateAndReport is the one verdict tail every settled schedule reports through.
 // It carries the failure table, any extra red-reporting checks (capability skips, the
 // stripped-subject skip posture), and the `gate: red` / `gate: green` line. This is the
@@ -79,7 +82,7 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	if red {
 		printFailures(results, capabilityRows, streams, stdout)
 		fmt.Fprintln(stdout, "gate: red")
-		return 1
+		return PhaseTableRedExit
 	}
 	// Green leads with the phase table: it is the run's whole answer, and the skip counts
 	// read after it as a footnote about the host rather than as a preamble to it.
@@ -91,10 +94,13 @@ func aggregateAndReport(results []phaseResult, cancelled bool, streams *phaseStr
 	return 0
 }
 
-// greenVerdict answers the verdict line of a green run. A run of the delta set names its
-// reduced schedule, so no reader takes that green for a whole green.
+// greenVerdict answers the verdict line of a green run. A run of the reader set or the delta
+// set names its reduced schedule, so no reader takes that green for a whole green.
 func greenVerdict() string {
-	if deltaScheduled() {
+	switch {
+	case readerScheduled():
+		return "gate: green (reader set)"
+	case deltaScheduled():
 		return "gate: green (delta checkpoint)"
 	}
 	return "gate: green"

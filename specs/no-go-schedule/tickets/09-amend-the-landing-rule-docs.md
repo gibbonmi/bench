@@ -1,7 +1,7 @@
 # Amend the landing rule docs for the reader set
 
-Blocked by: 07-hold-the-whole-gate-after-a-red.md, 08-show-reader-green-on-the-dashboard.md
-Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json, decisions/no-go-schedule.md (deleted), decisions/no-go-schedule/assets/research.md (deleted), decisions/no-go-schedule/tickets/1.md (deleted), decisions/no-go-schedule/tickets/2.md (deleted), decisions/no-go-schedule/tickets/3.md (deleted), decisions/no-go-schedule/tickets/4.md (deleted), decisions/no-go-schedule/tickets/5.md (deleted), decisions/no-go-schedule/tickets/6.md (deleted), decisions/no-go-schedule/tickets/7.md (deleted), decisions/no-go-schedule/tickets/8.md (deleted), decisions/no-go-schedule/tickets/9.md (deleted), decisions/no-go-schedule/tickets/10.md (deleted), decisions/no-go-schedule/tickets/11.md (deleted), decisions/no-go-schedule/tickets/12.md (deleted), decisions/no-go-schedule/tickets/13.md (deleted), decisions/no-go-schedule/tickets/14.md (deleted)
+Blocked by: 06-publish-a-reader-landing.md
+Writes: docs/adr/0017-the-worktree-commit-runs-the-fast-lane.md, projects/benchkit.md, .bench/BENCH-reference.md, CONTEXT.md, .bench/commitment.json
 Covers: NG68, NG69, NG70
 
 ## What to build
@@ -10,7 +10,7 @@ ADR 0017 states the current decided rule. A kit landing whose every changed path
 
 `projects/benchkit.md` states the reader set as the second reduced schedule. Amend `:351-353`, `:393-397`, and `:476-479`. Name the reader record as the second reduced record class, and keep the rule that a partial or component record is a legacy class.
 
-`.bench/BENCH-reference.md` amends `:548`, which calls the landing's prospective execution a full boundary. Its "Gate output" section (`:624-655`) gains the reader-set lines:
+`.bench/BENCH-reference.md` amends `:548`, which calls the landing's prospective execution a full boundary. Its "Gate output" section (`:624-658`) gains the reader-set lines:
 
 - `gate: green (reader set)`
 - `gate: whole gate (reader set refused: <case>)`

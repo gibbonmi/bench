@@ -218,8 +218,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT444 (LOW) — each retro improvement item names its fix lever.**
 
-**FT449 (HIGH) — a landing that changes no Go file runs a reduced schedule that one reader census bounds.**
-
 **FT450 (MEDIUM) — a landing queue composes ready sources in order, grades the stack once, and bisects a red.**
 
 **FT451 (MEDIUM) — the gate grades each lane-passed tip in the background, so a checkpoint or a landing looks up its verdict.**
@@ -359,20 +357,19 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT449-no-go-schedule
-2. FT314-gate-reuse
-3. FT450-landing-queue
-4. FT448-repair-carry
-5. FT360-shared-fixtures
-6. FT411
-7. FT125-exact-readers
-8. FT375-residual
-9. FT344-remedy
-10. FT406-rebuild
-11. FT366-rg-guard
-12. FT380-residual
-13. FT354-strict-json
-14. FT363-member-set
-15. FT358-block-reader
-16. FT365-conformance
-17. FT414-preconditions
+1. FT314-gate-reuse
+2. FT450-landing-queue
+3. FT448-repair-carry
+4. FT360-shared-fixtures
+5. FT411
+6. FT125-exact-readers
+7. FT375-residual
+8. FT344-remedy
+9. FT406-rebuild
+10. FT366-rg-guard
+11. FT380-residual
+12. FT354-strict-json
+13. FT363-member-set
+14. FT358-block-reader
+15. FT365-conformance
+16. FT414-preconditions

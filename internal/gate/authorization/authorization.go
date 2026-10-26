@@ -30,6 +30,9 @@ const (
 	// nothing the landing's whole-project gate decides.
 	LanePass Kind = "lane pass"
 	LaneFail Kind = "lane fail"
+	// ReaderGreen is a green reader set. It graded the readers of the changed families
+	// alone, so it carries no evidence token and never makes the tree reusable green.
+	ReaderGreen Kind = "reader green"
 )
 
 // Result is the gate owner's projection. Evidence is opaque to lifecycle callers, and
@@ -44,6 +47,9 @@ type Result struct {
 	// Cause is the refusal face that the gate recorded before its oracle ran, empty when the
 	// oracle ran. A landing routes by this type and never by the reason text.
 	Cause Cause
+	// Suspects is the gate's list of reader landings behind a red whole landing run, empty for
+	// every other run. The refusal line names them.
+	Suspects []string
 }
 
 // Cause is a gate refusal face that a caller outside the gate verb routes by.
@@ -150,20 +156,44 @@ func AuthorizeWithWriters(ctx context.Context, root, tree string, stdout, stderr
 	inheritedGreen := inheritedSubjectGreen(root)
 	execution := gate.ExecuteTree(ctx, root, tree, stdout, stderr)
 	inspection := gate.InspectTreeContext(ctx, root, tree)
+	result := attribute(execution, inspection, inheritedGreen, tree)
+	if result.Kind == Infrastructure {
+		fmt.Fprint(stderr, infrastructureDiagnostic(execution, inspection))
+	}
+	return result
+}
+
+// attribute maps one gate run of tree to its attributed result. inspection is the exact-tree
+// evidence after the run, and inheritedGreen reports whether the subject's branch held green
+// proof before it.
+func attribute(execution gate.Result, inspection gate.EvidenceInspection, inheritedGreen bool, tree string) Result {
 	kind := Infrastructure
-	if execution.ActionExit == 0 && inspection.ReusableGreen {
+	switch {
+	case execution.Schedule == gate.ScheduleReader:
+		// A reader set writes no verdict, so its attribution reads the run's exits. Each
+		// commit from the green marker to the destination passed its own readers. That chain
+		// stands in for the green baseline, so a red phase table belongs to the diff. Any
+		// other exit, such as a timeout or a cancel, graded nothing.
+		if execution.GateExit == 0 && execution.ActionExit == 0 {
+			kind = ReaderGreen
+		} else if execution.GateExit == gate.PhaseTableRedExit && execution.ActionExit == execution.GateExit {
+			kind = Candidate
+		}
+	case execution.ActionExit == 0 && inspection.ReusableGreen:
 		kind = Green
-	} else if execution.GateExit != 0 && execution.ActionExit == execution.GateExit &&
-		execution.Inspection.State == gate.Ready && execution.Inspection.Status == "red" {
+	case execution.GateExit != 0 && execution.ActionExit == execution.GateExit &&
+		execution.Inspection.State == gate.Ready && execution.Inspection.Status == "red":
 		kind = Inherited
 		if inheritedGreen {
 			kind = Candidate
 		}
 	}
-	result := Result{Kind: kind, Evidence: evidenceToken(kind, tree, inspection), Cause: Cause(execution.Face)}
+	result := Result{Kind: kind, Cause: Cause(execution.Face), Suspects: execution.Suspects}
+	if kind != ReaderGreen {
+		result.Evidence = evidenceToken(kind, tree, inspection)
+	}
 	if kind == Infrastructure {
 		result.Reason = execution.Inspection.Reason
-		fmt.Fprint(stderr, infrastructureDiagnostic(execution, inspection))
 	}
 	return result
 }

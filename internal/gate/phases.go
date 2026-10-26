@@ -103,7 +103,7 @@ func toolchainPhases(root, kit string) []Phase {
 	if !goModule || err != nil {
 		return nil
 	}
-	phases := append(sourcePhases(root), testPhase(root, kit, "./..."))
+	phases := append(sourcePhases(root), wholeTestPhase(root, kit))
 	if sameDirectory(root, kit) && declaresRaceTest(root) {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: raceDriverArgv(), Dir: root, ExpectedRuns: raceTestNames()})
 	}
@@ -168,10 +168,7 @@ func withRunBinary(phases []Phase, selection *runbinary.Selection) []Phase {
 	for i, phase := range phases {
 		selected[i] = phase
 		selected[i].Resources = append(append([]protection.Descriptor(nil), phase.Resources...), selection.Resources()...)
-		selected[i].Argv = append([]string(nil), phase.Argv...)
-		if len(selected[i].Argv) > 0 && selected[i].Argv[0] == runBinaryArgvToken {
-			selected[i].Argv[0] = selection.Path
-		}
+		selected[i].Argv = runBinaryArgv(phase.Argv, selection.Path)
 		selected[i].Env = mergeEnv(phase.Env, []string{
 			runbinary.Env + "=" + selection.Path,
 			"BENCH_KIT=" + selection.SourceRoot,
@@ -220,17 +217,22 @@ func declaresTest(dir, name string) bool {
 	return false
 }
 
+// testBuildFlags are the build flags of every Bench-owned go test command. A package listing
+// of a test command passes the same flags, so it lists the packages that the command builds.
+var testBuildFlags = []string{trimPath}
+
 // BaseTestArgv selects a Bench-owned go test command. It adds -C for a named kit and
-// always adds -trimpath, -count=1, and the go test timeout before the caller's operands.
-// The first two flags prevent checkout paths and cached test results from changing
-// execution evidence. The timeout flag takes precedence over a GOFLAGS value, so the
-// per-binary limit does not depend on the environment.
+// always adds testBuildFlags, -count=1, and the go test timeout before the caller's
+// operands. -trimpath and -count=1 prevent checkout paths and cached test results from
+// changing execution evidence. The timeout flag takes precedence over a GOFLAGS value, so
+// the per-binary limit does not depend on the environment.
 func BaseTestArgv(kit string, args ...string) []string {
 	argv := []string{"go"}
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
-	return append(append(argv, "test", trimPath, "-count=1", "-timeout="+bounds.GoTestTimeout.String()), args...)
+	argv = append(append(argv, "test"), testBuildFlags...)
+	return append(append(argv, "-count=1", "-timeout="+bounds.GoTestTimeout.String()), args...)
 }
 
 // kitRoot resolves the wrapper-selected kit before an exported entry starts its work.
@@ -292,7 +294,7 @@ func phasesCommandAtKitWithSelection(base context.Context, root, kit string, sel
 		fmt.Fprintf(stderr, "gate: phase schedule refused: %s\n", decision.Refusal)
 		return 1
 	}
-	phases = withRunBinary(phases, selection)
+	phases = withRunBinary(withTestLog(phases), selection)
 	if sameDirectory(root, kit) {
 		run, err := env.OpenKitTestRun(os.Environ())
 		if err != nil {

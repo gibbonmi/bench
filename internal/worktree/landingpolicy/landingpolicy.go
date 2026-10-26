@@ -136,8 +136,9 @@ const (
 	// MarkerAdvance means the destination is at the published landing, so the
 	// resume advances the marker to it.
 	MarkerAdvance MarkerAction = iota
-	// MarkerAccept means the destination moved on and the existing marker
-	// already covers the published landing; the resume leaves it alone.
+	// MarkerAccept means the existing marker stands for the published landing; the
+	// resume leaves it alone. Either the destination moved on and the marker already
+	// covers the landing, or a green reader set published it.
 	MarkerAccept
 	// MarkerRefuse means no marker covers the published landing.
 	MarkerRefuse
@@ -156,10 +157,16 @@ type MarkerFacts struct {
 	// MarkerReachesPublished reports whether the published landing is an
 	// ancestor of the marker. Lazily supplied; consulted at most once.
 	MarkerReachesPublished func() bool
+	// PublishedReaderRecorded is true when the published tree holds a reader record, so
+	// a green reader set published it and the marker stays at the last whole green.
+	PublishedReaderRecorded bool
 }
 
 // ResumeMarker decides what a resumed landing does with the green marker.
 func ResumeMarker(f MarkerFacts) MarkerAction {
+	if f.PublishedReaderRecorded {
+		return MarkerAccept
+	}
 	if f.DestinationAtPublished {
 		return MarkerAdvance
 	}

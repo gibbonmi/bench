@@ -41,7 +41,7 @@ var raceTests = []raceTest{
 	{PackagePath: "./internal/responsebound", Name: "TestOwnerSerializesConcurrentWrites"},
 }
 
-const gateGoUsage = "usage: bench gate-go <gofmt|test> [root]"
+const gateGoUsage = "usage: bench gate-go <gofmt|test> [root]\n       bench gate-go exec <binary> [args...]"
 
 // DisableBuildVCS is the one owner of the VCS-stamping defense for every Bench-owned Go
 // argv that reads or builds a package. Go's VCS discovery treats a linked worktree's
@@ -64,8 +64,12 @@ const runBinaryArgvToken = "<bench-run-binary>"
 // GateGoCommand is the `bench gate-go <step> [root]` plumbing command. Exit 0 is a
 // green step, 1 a red one, 2 a usage error, and 3 an omitted root that no git worktree
 // resolves. An unrecognized step is never a silent success, because a typo in a phase
-// manifest would otherwise grade nothing while reporting green.
+// manifest would otherwise grade nothing while reporting green. The exec step takes a
+// binary and its arguments instead of a root, and its exit is the binary's own.
 func GateGoCommand(args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == gateGoExecStep {
+		return gateGoExec(args[1:], stderr)
+	}
 	if len(args) == 0 || len(args) > 2 {
 		fmt.Fprintln(stderr, gateGoUsage)
 		return 2
@@ -103,8 +107,8 @@ func GateGoArgv(kit, step, root string) []string {
 	return append(argv, "run", DisableBuildVCS, "./cmd/bench", "gate-go", step, root)
 }
 
-func gatePhaseGoArgv(step, root string) []string {
-	return []string{runBinaryArgvToken, "gate-go", step, root}
+func gatePhaseGoArgv(step string, operands ...string) []string {
+	return append([]string{runBinaryArgvToken, "gate-go", step}, operands...)
 }
 
 // sourcePhases are the gofmt and vet phases over the whole root.

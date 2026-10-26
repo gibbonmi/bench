@@ -156,16 +156,17 @@ func (r Resolution) command(root string) *exec.Cmd {
 // no absolute HOME cannot name that directory, so gateEnv refuses rather than let a
 // child fall back to Go's default.
 func gateEnv() ([]string, error) {
-	// The baseline phase-schedule selector and the delta schedule go too. Each addresses the
-	// one gate-phases process the owner launched; a phase child that inherited one would
-	// select its own schedule from the values of a run it is not part of.
+	// The baseline phase-schedule selector, the delta schedule, the reader schedule, and the
+	// test log directory go too. Each addresses the one gate-phases process the owner launched;
+	// a phase child that inherited one would select its own schedule from the values of a run
+	// it is not part of, or write its own test logs into the logs of that run.
 	//
 	// The seam record's two entries go too, for the same reason. They address the gate
 	// run that started this process. A phase child that inherited them would attach its
 	// own record lines to a run it is not part of. The parent sets them back on the one
 	// child that runs the phase table.
 	base := env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv), deltaScheduleEnv))
-	for _, name := range otelrecord.HandoffVariables() {
+	for _, name := range append([]string{readerScheduleEnv, testLogEnv}, otelrecord.HandoffVariables()...) {
 		base = capability.WithoutEnvironment(base, name)
 	}
 	return gocache.Apply(base)
@@ -243,7 +244,26 @@ type Result struct {
 	// Face names the refusal face of a run outside the gate verb that refused before its
 	// oracle ran. Such a caller prints its own route, so it reads the face here.
 	Face string
+	// Schedule names the phase schedule of the run, so a caller can attribute a reduced run.
+	Schedule Schedule
+	// Suspects names the reader landings of a red whole landing run: each first-parent commit
+	// after the green marker, up to the destination, whose tree holds a reader record.
+	Suspects []string
 }
+
+// Schedule names the phase schedule of a gate run: the whole table, the delta set, or the
+// reader set. The zero value is the whole schedule, so a run that names no reduced schedule
+// reads as whole.
+type Schedule int
+
+const (
+	ScheduleWhole Schedule = iota
+	ScheduleDelta
+	ScheduleReader
+)
+
+// String answers the name of the schedule.
+func (s Schedule) String() string { return [...]string{"whole", "delta", "reader"}[s] }
 
 // Execute selects, executes, and records root's gate with the ordinary reuse policy.
 // It returns the action exit and the resulting evidence inspection. If ctx ends, the

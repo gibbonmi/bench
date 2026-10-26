@@ -1,12 +1,16 @@
 package worktree
 
 import (
+	"encoding/json"
 	"io"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
@@ -71,21 +75,65 @@ func TestLandingMarkerFactAdapterTranslatesGreenMarker(t *testing.T) {
 	commitInWorktree(t, root, "later.txt", "later\n", "destination moves on")
 	destination := gitOutput(t, root, "rev-parse", "HEAD")
 
-	same := resumeMarkerFacts(root, published, published, "")
+	same := readMarkerFacts(t, root, published, published, "")
 	if !same.DestinationAtPublished {
 		t.Fatalf("unmoved destination facts = %+v, want DestinationAtPublished", same)
 	}
-	moved := resumeMarkerFacts(root, destination, published, destination)
+	moved := readMarkerFacts(t, root, destination, published, destination)
 	if moved.DestinationAtPublished || !moved.MarkerPresent || !moved.MarkerReachesPublished() {
 		t.Fatalf("covering marker facts = %+v, want present and reaching", moved)
 	}
-	absent := resumeMarkerFacts(root, destination, published, "")
+	absent := readMarkerFacts(t, root, destination, published, "")
 	if absent.MarkerPresent {
 		t.Fatalf("absent marker facts = %+v, want MarkerPresent=false", absent)
 	}
-	divergent := resumeMarkerFacts(root, destination, destination, published)
+	divergent := readMarkerFacts(t, root, destination, destination, published)
 	if !divergent.MarkerPresent || divergent.MarkerReachesPublished() {
 		t.Fatalf("behind marker facts = %+v, want present and not reaching", divergent)
+	}
+}
+
+// readMarkerFacts answers the resume marker facts of a readable store.
+func readMarkerFacts(t *testing.T, root, destination, published, marker string) landingpolicy.MarkerFacts {
+	t.Helper()
+	facts, err := resumeMarkerFacts(root, destination, published, marker)
+	if err != nil {
+		t.Fatalf("resume marker facts: %v", err)
+	}
+	return facts
+}
+
+// TestLandingMarkerFactAdapterReadsTheReaderRecord is the resume group's reader fact. The
+// adapter must read the reader record of the published tree from the real store, and must
+// refuse a store that it cannot read rather than read it as no record.
+func TestLandingMarkerFactAdapterReadsTheReaderRecord(t *testing.T) {
+	t.Parallel()
+	root := newWorktreeRepo(t)
+	published := gitOutput(t, root, "rev-parse", "HEAD")
+	tree := gitOutput(t, root, "rev-parse", "HEAD^{tree}")
+	store := filepath.Join(gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), git.ReaderRecordDir)
+	if facts := readMarkerFacts(t, root, published, published, ""); facts.PublishedReaderRecorded {
+		t.Fatalf("facts without a reader record = %+v, want PublishedReaderRecorded=false", facts)
+	}
+	record, err := json.Marshal(map[string]any{
+		"schema": 1, "tree": tree, "recorded_at": time.Now().UTC().Format(time.RFC3339),
+		"run_binary": strings.Repeat("d", 64), "reader_set": `{"packages":["./internal/conformance"],"race":false}`,
+		"destination_tree": tree, "green_marker": published,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mustMkdirAll(t, store, 0o700)
+	mustWrite(t, filepath.Join(store, tree), append(record, '\n'), 0o600)
+	if facts := readMarkerFacts(t, root, published, published, ""); !facts.PublishedReaderRecorded {
+		t.Fatalf("facts with a reader record = %+v, want PublishedReaderRecorded", facts)
+	}
+	if err := os.RemoveAll(store); err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, store, []byte("not a store\n"), 0o600)
+	if facts, err := resumeMarkerFacts(root, published, published, ""); err == nil {
+		t.Fatalf("facts over an unreadable store = %+v, nil; want a refusal", facts)
 	}
 }
 

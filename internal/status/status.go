@@ -225,16 +225,18 @@ func (s Signal) invocable() bool {
 // Status/CachedTree/WorkTree/Timestamp carry the raw fields for a human view; the board
 // reduces them to its severity rows.
 type GateInfo struct {
-	Present       bool
-	State         string
-	PendingStatus string
-	Status        string
-	CachedTree    string
-	WorkTree      string
-	Stale         bool
-	Timestamp     string
-	Reason        string
-	CacheBytes    int
+	Present        bool
+	State          string
+	PendingStatus  string
+	Status         string
+	CachedTree     string
+	WorkTree       string
+	Stale          bool
+	Timestamp      string
+	Reason         string
+	CacheBytes     int
+	ReaderRecorded bool
+	ReaderLandings int
 }
 
 // Query controls a status read without changing the board's shared signal ordering.
@@ -423,6 +425,11 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	// rows below.
 	if gv.Stale {
 		detail, command := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree, gv.Reason)
+		// A reader landing leaves the verdict cache on an older tree, so its tip reads stale.
+		// The tip's own reader record stands behind it, so the row names no gate run.
+		if gv.ReaderRecorded {
+			detail, command = fmt.Sprintf("reader green (%d of %d)", gv.ReaderLandings, gate.ReaderLandingBound), advisoryAction("")
+		}
 		return append(rows, row{7, "gate", detail, command})
 	}
 	if gv.Status == "timeout" {
@@ -441,7 +448,7 @@ func GateVerdict(root string) GateInfo {
 	if in.State == gate.Absent {
 		return GateInfo{}
 	}
-	gi := GateInfo{Present: true, State: string(in.State), PendingStatus: in.PendingStatus, Status: in.Status, CachedTree: in.CachedTree, WorkTree: in.CurrentTree, Reason: in.Reason, CacheBytes: in.CacheBytes}
+	gi := GateInfo{Present: true, State: string(in.State), PendingStatus: in.PendingStatus, Status: in.Status, CachedTree: in.CachedTree, WorkTree: in.CurrentTree, Reason: in.Reason, CacheBytes: in.CacheBytes, ReaderRecorded: in.ReaderRecorded, ReaderLandings: in.ReaderLandings}
 	if !in.RecordedAt.IsZero() {
 		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}

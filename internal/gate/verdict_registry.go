@@ -48,6 +48,12 @@ var verdictRecordClasses = []verdictRecordClass{
 		reuseRefusal: "delta record",
 		validate:     validateDeltaRecord,
 	},
+	{
+		name:         "reader record",
+		fields:       []string{"destination_tree", "green_marker", "reader_set", "recorded_at", "run_binary", "schema", "tree"},
+		reuseRefusal: "reader record",
+		validate:     validateReaderRecord,
+	},
 }
 
 // validateDeltaRecord grades one delta green. A delta grades the delta set from a base tree
@@ -58,6 +64,19 @@ func validateDeltaRecord(_ []byte, r verdictRecord, now time.Time) error {
 	}
 	if _, err := recordTimeAt(r.RecordedAt, now); err != nil {
 		return errors.New("invalid delta record time")
+	}
+	return nil
+}
+
+// validateReaderRecord grades one reader green. A reader set grades the readers of a landing
+// and not the whole oracle, so the record names its schedule, the destination tree, and the
+// green marker commit rather than an oracle.
+func validateReaderRecord(_ []byte, r verdictRecord, now time.Time) error {
+	if _, err := parseReaderSchedule(r.ReaderSet); err != nil || !treeHashRE.MatchString(r.DestinationTree) || !treeHashRE.MatchString(r.GreenMarker) || !isContentAddress(r.RunBinary) {
+		return errors.New("invalid reader record")
+	}
+	if _, err := recordTimeAt(r.RecordedAt, now); err != nil {
+		return errors.New("invalid reader record time")
 	}
 	return nil
 }

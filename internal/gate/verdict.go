@@ -50,6 +50,12 @@ type Inspection struct {
 	// whether a record describes the tree its reader is on. A red graded elsewhere is not
 	// this tree's red.
 	Drifted bool
+	// Only Inspect fills the two reader facts, so a gate run pays no history read for them.
+	// ReaderRecorded marks a current tree that holds a reader record, on a HEAD that descends
+	// from the green marker. ReaderLandings is the count of reader-record commits after the
+	// green marker up to HEAD, and it is counted only when ReaderRecorded holds.
+	ReaderRecorded bool
+	ReaderLandings int
 }
 
 type verdictRecord struct {
@@ -73,6 +79,13 @@ type verdictRecord struct {
 	// a test-only change from the base tree, so it has no oracle identity and no status.
 	Delta    string `json:"delta,omitempty"`
 	BaseTree string `json:"base_tree,omitempty"`
+
+	// The reader class carries these three and the run binary. A reader set grades the readers
+	// of a landing's changed families, so it names its schedule, the destination tree, and the
+	// green marker commit, and it has no oracle identity and no status.
+	ReaderSet       string `json:"reader_set,omitempty"`
+	DestinationTree string `json:"destination_tree,omitempty"`
+	GreenMarker     string `json:"green_marker,omitempty"`
 }
 
 type manifest struct {
@@ -85,10 +98,13 @@ type manifest struct {
 
 type subject struct {
 	Tree, Oracle string
-	Closed       bool
-	Reason       string
-	Resolution   Resolution
-	Env          []string
+	// Identity is the tree-free oracle identity: every oracle frame but the tree, and then
+	// the capability posture. A landing compares it across trees.
+	Identity   string
+	Closed     bool
+	Reason     string
+	Resolution Resolution
+	Env        []string
 }
 
 // durableReplace installs rec as the verdict cache of gitdir through replacer.
@@ -96,7 +112,9 @@ func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRec
 	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
 }
 
-func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }
+func Inspect(root string) Inspection {
+	return withReaderFacts(root, inspectAt(root, time.Now().UTC()))
+}
 
 func inspectAt(root string, now time.Time) Inspection {
 	s, err := buildSubject(root)

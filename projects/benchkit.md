@@ -343,14 +343,15 @@ The kit phase table is exactly:
 |---|---|
 | `gofmt` | `bench gate-go gofmt <root>` |
 | `vet` | `go -C <root> vet -trimpath ./...` |
-| `test` | `go test -trimpath -count=1 -timeout=10m0s ./...` |
+| `test` | `go test -trimpath -count=1 -timeout=10m0s "-exec=<bench-run-binary> gate-go exec" ./...`, where the quoted flag is one argv element |
 | `race` | one `go test -trimpath -count=1 -timeout=10m0s -race -v` invocation derived from the race-test table in `internal/gate` |
 | `system` | `go test -trimpath -count=1 -timeout=10m0s -tags=system ./internal/systemtest` |
 | `shellcheck` | the stable shell-file inventory, optional when shellcheck is absent |
 
-A worktree commit runs the fast lane, which is the short check list below. The
+A worktree commit runs the fast lane, which is the short check list below. A
 landing runs the phase table above, and that whole-project gate stays the one
-full grade.
+full grade. A kit landing whose every changed path sits in a covered family
+runs the reader set instead, as the reduced schedules below state.
 
 The commit does not run every check in the list. It compares the composed tree
 against its base, and it gives each changed path one or more path classes. The
@@ -391,9 +392,20 @@ broker names in `BENCH_GATE_BASELINE`. A named baseline the run cannot read refu
 it never falls back to the tree under grade. Phase children do not inherit that name.
 
 There is no separate contract or conformance dev driver, per-package loop, nested Go test, fixture-executing
-canary phase, or component partition. The one reduced schedule is the delta set of a chunk
-checkpoint, which grades a test-only change after a whole green at the reviewed tip. An
-environment-class skip observed by the oracle is red and names the test that emitted it.
+canary phase, or component partition. Two reduced schedules exist:
+
+- the delta set of a chunk checkpoint, which grades a test-only change after a whole green
+  at the reviewed tip
+- the reader set of a kit landing, which grades a change whose every path sits in a covered
+  family
+
+A whole kit run traces its `test` phase through the argv above and writes one Go test log for
+each test package. A green whole run derives the reader table from those logs, keyed by the
+graded tree. The
+reference's gate output account owns the phases of the reader set and each case that sends
+a kit landing to the whole gate.
+
+An environment-class skip observed by the oracle is red and names the test that emitted it.
 A check the gate failed to stage has no verdict, so it cannot count as green.
 
 The race runner verifies that every sentinel in the race-test table executed. The tagged system package has one
@@ -475,8 +487,13 @@ current-state advertisement of its non-meta input bindings:
 
 A green verdict records the exact whole subject and oracle. Reuse is allowed only for a
 current exact green; partial/component records are legacy input classes that fail closed and
-are never authored. The one reduced record is the delta class, the green of a delta set. Only
-a later chunk checkpoint of the same base and subject reuses it.
+are never authored.
+
+Two reduced record classes exist. The delta class is the green of a delta set, and only a
+later chunk checkpoint of the same base and subject reuses it. The reader record is the green
+of a reader set. It authorizes its own landing only, it is never reusable green, and the green
+marker stays at the last whole green. A red whole landing run writes a reader hold that names
+the green marker, so each landing runs the whole gate until that marker moves.
 
 Prospective execution uses the same complete phase architecture. A stale exact verdict stays stale rather than being
 softened by path classification. A chunk checkpoint keys its green to the committed tree

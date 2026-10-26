@@ -43,7 +43,9 @@ func TestDeltaCheckpointRunsTheDeltaSet(t *testing.T) {
 	} {
 		outcomeWrite(t, root, path, body, 0o644)
 	}
-	outcomeWrite(t, root, "bench", "#!/bin/sh\nexit 0\n", 0o755)
+	// The stub run binary passes the trace shim's operands on to the test binary and exits 0
+	// for every other step.
+	outcomeWrite(t, root, "bench", "#!/bin/sh\nif [ \"$2\" = "+gateGoExecStep+" ]; then shift 2; exec \"$@\"; fi\nexit 0\n", 0o755)
 	planted := func(row string) bool { return strings.Contains(row, "TestPlanted") }
 	if code, out, diagnostic := runSchedule(t, root, root, ""); code == 0 || !slices.ContainsFunc(rowsForPhase(t, out, canary.PhaseTest), planted) {
 		t.Fatalf("whole schedule = %d %s %s; want the planted red", code, out, diagnostic)

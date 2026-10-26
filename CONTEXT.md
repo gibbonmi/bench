@@ -33,11 +33,20 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   "reader census", not "input map" — reader table.
 - **reader set** — the reduced schedule a kit landing runs when the reader table
   covers every changed path. It runs the complete root-conformance entry, the
-  readers of each changed family, and the `system` phase. Not "reduced gate",
+  readers of each changed family, and the `system` phase. It adds the `race`
+  phase only when a race-table package is a reader. Not "reduced gate",
   not "partial gate", not "component partition" — reader set.
 - **reader record** — the record class that a green reader set writes. It
   authorizes its own landing and nothing else, and it advances no green marker.
   Not "reader verdict", not "partial green" — reader record.
+- **covered family** — one path family of the kit's reader-family declaration,
+  such as `docs/` or `ROADMAP.md`. A family that ends with `/` claims its
+  directory and every path below it. Each other family claims its exact path.
+  Not "path class", not "covered path", not "census family" — covered family.
+- **reader hold** — the record that a red whole landing run writes. It names the
+  green marker of that run. While the marker stays at that commit, each landing
+  runs the whole gate. Not "reader lock", not "reader block", not "quarantine" —
+  reader hold.
 - **oracle** — the authority that decides done-ness. The gate is this repo's oracle.
   The model is never the oracle; the model does not grade its own work.
 - **run binary** — the exact source-bound executable the gate authorizes and runs;
@@ -422,8 +431,9 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   override.
 - **prospective landing tree** — the exact Git tree produced by composing a
   landing source onto an expected landing destination, including any authorized
-  final transition. It is the whole-project gate subject. Not the source diff,
-  not the ambient working tree.
+  final transition. It is the subject of the landing's gate run: the
+  whole-project gate, or the reader set when the landing plan selects it. Not the
+  source diff, not the ambient working tree.
 - **settle verdict** — the settle policy's answer for one conflicted path: a
   side, a union, a removal, or a refusal with a reason. The composition applies
   each verdict to the prospective landing tree, and a refusal names its reason
