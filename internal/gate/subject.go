@@ -15,9 +15,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
@@ -25,8 +27,9 @@ import (
 
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
+// identityCollector feeds a closure to both digests through w, and each path to each digest.
 type identityCollector struct {
-	w                         io.Writer
+	w, oracle, identity       io.Writer
 	entries                   int
 	entryLimit                int
 	bytes                     int64
@@ -70,24 +73,30 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 	if reason != "" {
 		s.Closed, s.Reason = false, reason
 	}
-	// h is the oracle digest and id the identity digest. Every frame but the tree goes to
-	// both through w, so the oracle frames keep their order.
+	// h is the oracle digest and id the grade identity. The verdict inputs go to both
+	// through w, so the oracle frames keep their order. The policy, the identity root, and
+	// the tree go to the oracle only.
 	h, id := sha256.New(), sha256.New()
 	w := io.MultiWriter(h, id)
-	frame(w, policy)
-	frame(w, identityRoot)
+	frame(h, policy)
+	frame(h, identityRoot)
 	frame(h, tree)
 	for _, value := range []string{resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
 		frame(w, value)
 	}
-	c := &identityCollector{w: w, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
+	c := &identityCollector{w: w, oracle: h, identity: id, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
 	if res.Kind != None {
 		if err := c.hashResolution(root, res, pathEnv); err != nil {
 			s.open("launcher closure unavailable")
 		}
 	}
-	if err := hashProspectivePreparation(c, w, root, identityRoot, pathEnv); err != nil {
+	// res.Kind still names the ordinary script, so a prospective script sets the source kind.
+	sourceKind := res.Kind
+	prospective, err := hashProspectivePreparation(c, root, identityRoot, pathEnv)
+	if err != nil {
 		s.open("launcher closure unavailable")
+	} else if prospective {
+		sourceKind = ProspectiveGateSh
 	}
 	if m != nil {
 		supplied, missing := suppliedEnvironment(m.Environment)
@@ -128,6 +137,11 @@ func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, erro
 		return subject{}, err
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
+	frameBaselineSchedule(id, identityRoot)
+	frame(id, "run binary")
+	frame(id, buildInputsIdentity(runBinarySource(sourceKind, root, identityRoot)))
+	frame(id, "running executable")
+	frame(id, runningExecutableDigest())
 	frame(id, requireCapabilitiesEnv)
 	frame(id, strconv.FormatBool(strict()))
 	s.Identity = hex.EncodeToString(id.Sum(nil))
@@ -336,7 +350,7 @@ func (c *identityCollector) hashExecutable(root, name, pathEnv string, confined 
 	if err := c.addEntry(); err != nil {
 		return err
 	}
-	frame(c.w, c.identityPath(resolved))
+	c.framePath(resolved)
 	frame(c.w, info.Mode().String())
 	if err := c.copyFile(resolved); err != nil {
 		return err
@@ -382,7 +396,7 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 		if err := c.addEntry(); err != nil {
 			return err
 		}
-		frame(c.w, c.identityPath(absolute))
+		c.framePath(absolute)
 		frame(c.w, info.Mode().String())
 		if info.Mode()&os.ModeSymlink == 0 {
 			return nil
@@ -400,13 +414,55 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 	}
 	return errors.New("symlink hop limit")
 }
-func (c *identityCollector) identityPath(path string) string {
-	rel, err := filepath.Rel(c.runtimeRoot, path)
-	if err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-		return filepath.Join(c.identityRoot, rel)
+
+// framePath frames an executable path in each digest's spelling. The oracle spells a path in
+// the runtime root under the identity root. The grade identity spells a path in the runtime
+// root, then one in the identity root, relative to that root, so it frames no checkout path.
+func (c *identityCollector) framePath(path string) {
+	oracle, grade := path, path
+	if rel, ok := relativeInside(c.runtimeRoot, path); ok {
+		oracle, grade = filepath.Join(c.identityRoot, rel), rel
+	} else if rel, ok := relativeInside(c.identityRoot, path); ok {
+		grade = rel
 	}
-	return path
+	frame(c.oracle, oracle)
+	frame(c.identity, grade)
 }
+func relativeInside(root, path string) (string, bool) {
+	rel, err := filepath.Rel(root, path)
+	return rel, err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
+}
+
+// frameBaselineSchedule frames the phase-table loader's answer at the identity root: present
+// bytes as bytes, an absence as one value, and a defect as one value with no path.
+func frameBaselineSchedule(w io.Writer, identityRoot string) {
+	data, present, err := readManifest(manifestPath(identityRoot))
+	switch {
+	case err != nil:
+		frame(w, "schedule defect")
+	case !present:
+		frame(w, "schedule absent")
+	default:
+		frame(w, "schedule")
+		frame(w, string(data))
+	}
+}
+
+// runningExecutableDigest answers the running executable's digest once for each process, or a
+// stable value when it does not read. It is a seam, so a test can vary the executable.
+var runningExecutableDigest = sync.OnceValue(func() string {
+	value, err := os.Executable()
+	if err == nil {
+		value, err = filepath.EvalSymlinks(value)
+	}
+	if err == nil {
+		value, err = brokermanifest.Digest(value)
+	}
+	if err != nil {
+		return "unreadable"
+	}
+	return value
+})
 
 // canonicalSubjectRoot refuses a root that does not exist. The owner keeps the absolute
 // spelling of an absent path rather than refusing, and a subject keyed to an absent root

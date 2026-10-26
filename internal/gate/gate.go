@@ -302,8 +302,11 @@ func (m runMode) String() string {
 	return "ordinary"
 }
 
-func runBinarySource(runtimeRoot, storageRoot string, plan subject) string {
-	if plan.Resolution.Kind == ProspectiveGateSh &&
+// runBinarySource answers the source root of the run binary: the graded tree when a
+// prospective gate grades a tree that builds its own run binary, and the kit otherwise. The
+// run's selection and the grade identity both read it.
+func runBinarySource(kind Kind, runtimeRoot, storageRoot string) string {
+	if kind == ProspectiveGateSh &&
 		isRegularFile(filepath.Join(runtimeRoot, "scripts", "go-build.sh")) &&
 		GoModuleRoot(runtimeRoot) {
 		return runtimeRoot

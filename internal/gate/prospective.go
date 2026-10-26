@@ -3,7 +3,6 @@ package gate
 import (
 	"context"
 	"errors"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -53,12 +52,19 @@ const unreadableBaselineRunner = "unreadable"
 // baselineRunnerIdentity names the runner the landing baseline supplies: the digest of
 // the build recipe it declares and the sources that recipe compiles. Prospective
 // evidence keys to it beside the graded tree, so a retry reuses green evidence only
-// when both halves of the subject are the ones the owner already accepted.
+// when both halves of the subject are the ones the owner already accepted. It is an
+// oracle frame only.
 func baselineRunnerIdentity(identityRoot string) string {
-	if !benchfreshness.DeclaresBuildInputs(identityRoot) {
+	return buildInputsIdentity(identityRoot)
+}
+
+// buildInputsIdentity answers the digest of the build inputs that root declares, or a
+// stable value when root declares none or its inputs do not read.
+func buildInputsIdentity(root string) string {
+	if !benchfreshness.DeclaresBuildInputs(root) {
 		return unboundBaselineRunner
 	}
-	digest, err := benchfreshness.Digest(identityRoot)
+	digest, err := benchfreshness.Digest(root)
 	if err != nil {
 		return unreadableBaselineRunner
 	}
@@ -78,15 +84,17 @@ func buildProspectiveSubjectForGeneration(root, identityRoot string, generation 
 	return s, nil
 }
 
-func hashProspectivePreparation(c *identityCollector, identity io.Writer, root, identityRoot, pathEnv string) error {
+// hashProspectivePreparation hashes the prospective script of root when it exists, and
+// reports whether it exists. The baseline runner enters the oracle digest only.
+func hashProspectivePreparation(c *identityCollector, root, identityRoot, pathEnv string) (bool, error) {
 	path := filepath.Join(root, prospectiveGatePath)
 	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
-		return nil
+		return false, nil
 	} else if err != nil {
-		return err
+		return false, err
 	}
-	frame(identity, "prospective preparation")
-	frame(identity, "baseline runner")
-	frame(identity, baselineRunnerIdentity(identityRoot))
-	return c.hashExecutable(root, path, pathEnv, true, 0)
+	frame(c.w, "prospective preparation")
+	frame(c.oracle, "baseline runner")
+	frame(c.oracle, baselineRunnerIdentity(identityRoot))
+	return true, c.hashExecutable(root, path, pathEnv, true, 0)
 }

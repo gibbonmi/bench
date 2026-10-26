@@ -156,7 +156,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	// The selection lives in the bundle, so the bundle releases only after the selection does.
 	release := func() error { return bundle.CloseAfter(selection.Close) }
 	if owner != nil && phaseTableGate(runtimeRoot, plan.Resolution) {
-		source := runBinarySource(runtimeRoot, storageRoot, plan)
+		source := runBinarySource(plan.Resolution.Kind, runtimeRoot, storageRoot)
 		logGateEvent(ctx, gateLogRecord{Event: "binary.select.start", Root: source})
 		selection, err = owner(runCtx, source)
 		if err != nil {
