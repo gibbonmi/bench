@@ -1,7 +1,7 @@
 # Hold the whole gate after a red whole landing run and name the suspects
 
 Blocked by: 06-publish-a-reader-landing.md
-Writes: internal/gate/reader_hold.go (new), internal/gate/reader_hold_test.go (new), internal/gate/reader_plan.go (new), internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/authorization/authorization.go, internal/landing/landing_refusal.go (new), internal/landing/reader_refusal_test.go (new), internal/git/git.go
+Writes: internal/gate/reader_hold.go (new), internal/gate/reader_hold_test.go (new), internal/gate/reader_plan.go (new), internal/gate/run_transaction.go, internal/gate/gate.go, internal/gate/authorization/authorization.go, internal/landing/landing_refusal.go (new), internal/landing/reader_refusal_test.go (new), internal/git/git.go, internal/gate/authorization/reader_kind_test.go
 Covers: NG61, NG62, NG63, NG64, NG78
 
 ## What to build
