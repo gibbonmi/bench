@@ -221,23 +221,9 @@ func (o Owner) LandReviewed(ctx context.Context, r ReviewedRequest) (ReviewedRes
 }
 
 func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Admission) (ReviewedResult, error) {
-	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || strings.TrimSpace(r.Message) == "" {
-		return ReviewedResult{}, errors.New("reviewed landing request is incomplete")
-	}
-	destination, err := compositionCommit(r.Root, r.DestinationBase, "destination")
-	if err != nil || destination != r.DestinationBase {
-		return ReviewedResult{}, errors.New("destination base is not an exact commit")
-	}
-	source, err := compositionCommit(r.Root, r.SourceTip, "source")
-	if err != nil || source != r.SourceTip {
-		return ReviewedResult{}, errors.New("source tip is not an exact commit")
-	}
-	branchTip, err := benchgit.ResolveCommit(r.Root, r.Source)
-	if err != nil || branchTip != source {
-		return ReviewedResult{}, errors.New("reviewed source tip moved")
-	}
-	if _, kind, _ := diff.ResolveSourceRange(r.Root, r.ReviewBase, source); kind != "" {
-		return ReviewedResult{}, errors.New("reviewed source base is invalid")
+	destination, source, err := reviewedSource(r)
+	if err != nil {
+		return ReviewedResult{}, err
 	}
 	// An empty SpecPath is the spec-less landing: it has no staged spec to prove, to
 	// neutralize, or to transition, so it composes against the destination itself and
@@ -251,27 +237,14 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 			return ReviewedResult{}, err
 		}
 	}
-	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: composed, Source: source, ReviewBase: r.ReviewBase})
+	tree, err := o.landingTree(r, composed, source)
 	if err != nil {
 		return ReviewedResult{}, err
-	}
-	if composition.Conflict.Kind != "" {
-		return ReviewedResult{}, ConflictError{composition.Conflict}
-	}
-	if len(composition.Resolved) > 0 && r.Stderr != nil {
-		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
-	}
-	tree := composition.Tree
-	deliverable := r.Deliverable()
-	if deliverable != "" {
-		if tree, err = published.Tree(r.Root, tree, deliverable, source); err != nil {
-			return ReviewedResult{}, err
-		}
 	}
 	if err := admission.Check(tree); err != nil {
 		return ReviewedResult{}, err
 	}
-	if deliverable != "" {
+	if deliverable := r.Deliverable(); deliverable != "" {
 		ctx = gate.WithCompletion(ctx, deliverable, source)
 	}
 	ctx = gate.WithLanding(ctx, destination, r.GreenMarker)
@@ -279,25 +252,20 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 	if !o.reviewedPublishes.permits(got.Kind) {
 		return ReviewedResult{}, AuthorizationRefusal{got}
 	}
-	// Recheck the two moving identities after the gate and before creating an
-	// otherwise unreachable object. Tree equality is insufficient: review binds a commit.
-	if branchTip, err = benchgit.ResolveCommit(r.Root, r.Source); err != nil || branchTip != source {
-		return ReviewedResult{}, errors.New("reviewed source tip moved")
-	}
-	if fingerprint, fingerprintErr := CheckoutFingerprint(r.SourceWorktree); fingerprintErr != nil || fingerprint != r.SourceFingerprint {
-		return ReviewedResult{}, errors.New("reviewed source checkout changed")
+	if err := sourceUnchanged(r, source); err != nil {
+		return ReviewedResult{}, err
 	}
 	if err := destinationUnchanged(r.Root, r.Destination, destination, r.DestinationFingerprint); err != nil {
 		return ReviewedResult{}, err
 	}
 	var commit string
 	err = admission.Publish(tree, func() error {
-		created, err := output(r.Root, "commit-tree", tree, "-p", destination, "-p", source, "-m", r.Message)
+		created, err := landingMerge(r.Root, tree, destination, source, r.Message)
 		if err != nil {
-			return fmt.Errorf("create landing commit: %w", err)
+			return err
 		}
-		if err := o.updateRef(r.Root, r.Destination, created, destination); err != nil {
-			return destinationUpdateFailure(r.Root, r.Destination, destination, err)
+		if err := o.publishMerge(r.Root, r.Destination, created, destination); err != nil {
+			return err
 		}
 		commit = created
 		return nil
@@ -306,6 +274,50 @@ func (o Owner) landReviewed(ctx context.Context, r ReviewedRequest, admission Ad
 		return ReviewedResult{}, err
 	}
 	return ReviewedResult{SourceBase: r.ReviewBase, SourceTip: source, DestinationBase: destination, Commit: commit, Tree: tree, Kind: got.Kind}, nil
+}
+
+// reviewedSource proves a reviewed request complete, its destination base and source tip
+// exact commits, its branch at the reviewed tip, and its review base valid. It answers the
+// destination and the source commits.
+func reviewedSource(r ReviewedRequest) (string, string, error) {
+	if r.Root == "" || r.Destination == "" || r.DestinationBase == "" || r.Source == "" || r.SourceTip == "" || r.ReviewBase == "" || r.SourceWorktree == "" || r.SourceFingerprint == "" || r.DestinationFingerprint == "" || strings.TrimSpace(r.Message) == "" {
+		return "", "", errors.New("reviewed landing request is incomplete")
+	}
+	destination, err := compositionCommit(r.Root, r.DestinationBase, "destination")
+	if err != nil || destination != r.DestinationBase {
+		return "", "", errors.New("destination base is not an exact commit")
+	}
+	source, err := compositionCommit(r.Root, r.SourceTip, "source")
+	if err != nil || source != r.SourceTip {
+		return "", "", errors.New("source tip is not an exact commit")
+	}
+	branchTip, err := benchgit.ResolveCommit(r.Root, r.Source)
+	if err != nil || branchTip != source {
+		return "", "", errors.New("reviewed source tip moved")
+	}
+	if _, kind, _ := diff.ResolveSourceRange(r.Root, r.ReviewBase, source); kind != "" {
+		return "", "", errors.New("reviewed source base is invalid")
+	}
+	return destination, source, nil
+}
+
+// landingTree composes source onto the commit onto and applies the verified delivery of
+// r, so it answers the tree that the landing of r publishes there.
+func (o Owner) landingTree(r ReviewedRequest, onto, source string) (string, error) {
+	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: onto, Source: source, ReviewBase: r.ReviewBase})
+	if err != nil {
+		return "", err
+	}
+	if composition.Conflict.Kind != "" {
+		return "", ConflictError{composition.Conflict}
+	}
+	if len(composition.Resolved) > 0 && r.Stderr != nil {
+		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
+	}
+	if deliverable := r.Deliverable(); deliverable != "" {
+		return published.Tree(r.Root, composition.Tree, deliverable, source)
+	}
+	return composition.Tree, nil
 }
 
 // AuthorizationRefusal is the refusal of a tree the gate did not authorize. It carries the
