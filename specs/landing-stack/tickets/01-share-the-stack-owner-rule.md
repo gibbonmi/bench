@@ -1,7 +1,7 @@
 # Share the stack owner rule
 
 Blocked by: none
-Writes: internal/landing/stackpolicy/stackpolicy.go (new), internal/landing/stackpolicy/stackpolicy_test.go (new), .bench/commitment.json
+Writes: internal/landing/stackpolicy/stackpolicy.go (new), internal/landing/stackpolicy/stackpolicy_test.go (new), .bench/commitment.json, internal/landing/stackpolicy/purity_census_test.go (new)
 Covers: LS1, LS2, LS3, LS4, LS5, LS6
 
 ## What to build
