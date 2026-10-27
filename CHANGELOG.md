@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background width input
+
+- Added the `BENCH_GATE_WIDTH` gate input. When the gate-phases process has a non-empty value, each Go test phase of the gate runs with `-p=2` and `-parallel=2`. These phases are the test, race, and system phases, the test phases of the delta and reader sets, and the core test step. The input is not a member of the grade key, so a green at this width answers a run of the same subject at another width. No phase child inherits the input. A run without the input keeps its argv.
+
 ### One run-binary source for the grade key
 
 - Changed the grade key of a gate run, which now frames the build inputs of the source root that the run selects for its run binary. One derivation answers that root for the run and for the key. An ordinary run whose `BENCH_KIT` names another checkout now frames the build inputs of that checkout. Before, the key picked the graded tree when the tree held `.bench/gate-prospective.sh`, while the run built from the kit.
