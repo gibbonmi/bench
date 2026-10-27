@@ -286,8 +286,8 @@ func sourceUnavailable(ctx context.Context, root string, stderr io.Writer, mode 
 // executeChunkCheckpoint grades the HEAD tree of root without the review record of spec,
 // once committedSource accepts the checkout. That tree runs through the prospective owner in
 // a private checkout, with root as the storage and identity root, so a record-only commit
-// keeps the subject of an earlier chunk green. The evidence pass and the record grade read
-// the record from the HEAD tree of the source that the call accepts.
+// keeps the subject of an earlier chunk green. That checkout is also the baseline root. The
+// evidence pass and the record grade read the record from the HEAD tree of the accepted source.
 func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stderr io.Writer, arm postAcquireContextArm, mode runMode) Result {
 	tip, tree, refusal, refused := committedSource(ctx, root, stderr, mode)
 	if refused {
@@ -298,7 +298,7 @@ func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stde
 		return sourceUnavailable(ctx, root, stderr, mode, err)
 	}
 	source := chunkSource{tip: tip, tree: tree}
-	ctx = context.WithValue(ctx, deltaSourceKey{}, source)
+	ctx = withCheckoutBaseline(context.WithValue(ctx, deltaSourceKey{}, source))
 	if checkpoint, _ := ctx.Value(checkpointKey{}).(Checkpoint); !checkpoint.gradesSubjectAlone() {
 		ctx = context.WithValue(ctx, chunkSourceKey{}, source)
 	}

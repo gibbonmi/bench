@@ -55,8 +55,8 @@ const unreadableBaselineRunner = "unreadable"
 // evidence keys to it beside the graded tree, so a retry reuses green evidence only
 // when both halves of the subject are the ones the owner already accepted. It is an
 // oracle frame only.
-func baselineRunnerIdentity(identityRoot string) string {
-	return buildInputsIdentity(identityRoot)
+func baselineRunnerIdentity(baseline string) string {
+	return buildInputsIdentity(baseline)
 }
 
 // buildInputsIdentity answers the digest of the build inputs that root declares, or a
@@ -72,10 +72,10 @@ func buildInputsIdentity(root string) string {
 	return digest
 }
 
-// frameBaselineSchedule frames the phase-table loader's answer at the identity root: present
+// frameBaselineSchedule frames the phase-table loader's answer at the baseline root: present
 // bytes as bytes, an absence as one value, and a defect as one value with no path.
-func frameBaselineSchedule(w io.Writer, identityRoot string) {
-	data, present, err := readManifest(manifestPath(identityRoot))
+func frameBaselineSchedule(w io.Writer, baseline string) {
+	data, present, err := readManifest(manifestPath(baseline))
 	switch {
 	case err != nil:
 		frame(w, "schedule defect")
@@ -85,10 +85,6 @@ func frameBaselineSchedule(w io.Writer, identityRoot string) {
 		frame(w, "schedule")
 		frame(w, string(data))
 	}
-}
-
-func buildProspectiveSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
-	return buildSubjectInMode(root, identityRoot, policyVersion, generation.tree, true)
 }
 
 // prospectiveResolution answers the resolution that a prospective run of root executes: the
@@ -103,8 +99,8 @@ func prospectiveResolution(root string, res Resolution) (Resolution, error) {
 }
 
 // hashProspectivePreparation hashes the prospective script of root when it exists. The
-// baseline runner enters the oracle digest only.
-func hashProspectivePreparation(c *identityCollector, root, identityRoot, pathEnv string) error {
+// baseline runner of the baseline root enters the oracle digest only.
+func hashProspectivePreparation(c *identityCollector, root, baseline, pathEnv string) error {
 	path := filepath.Join(root, prospectiveGatePath)
 	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -113,6 +109,6 @@ func hashProspectivePreparation(c *identityCollector, root, identityRoot, pathEn
 	}
 	frame(c.w, "prospective preparation")
 	frame(c.oracle, "baseline runner")
-	frame(c.oracle, baselineRunnerIdentity(identityRoot))
+	frame(c.oracle, baselineRunnerIdentity(baseline))
 	return c.hashExecutable(root, path, pathEnv, true, 0)
 }

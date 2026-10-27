@@ -62,8 +62,9 @@ func executeTreeWithOwner(ctx context.Context, root, tree string, stdout, stderr
 	if owner == nil {
 		owner = prospectiveRunBinaryOwnerAt(checkout, artifacts.Root())
 	}
-	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(checkout, root, tree))
-	return executeSubjectOwning(ctx, checkout, root, stdout, stderr, arm, mode, evaluation, owner, root, durablefile.Native(), artifacts)
+	baseline := baselineRoot(ctx, checkout, root)
+	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(checkout, root, baseline, tree))
+	return executeSubjectOwning(ctx, checkout, root, stdout, stderr, arm, mode, evaluation, owner, baseline, durablefile.Native(), artifacts)
 }
 
 // ValidateProjectGreen reports whether branch's current tip and marker have retained
@@ -96,7 +97,7 @@ func inspectProspective(ctx context.Context, root, tree string, now time.Time, e
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}
 	defer artifacts.Close()
-	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(artifacts.Checkout(), root, tree))
+	evaluation := checkpointEvaluation(ctx, newProspectiveTreeEvaluation(artifacts.Checkout(), root, root, tree))
 	plan, err := evaluation.acceptPre()
 	if err != nil || plan.Tree != tree {
 		return EvidenceInspection{Reason: "subject unavailable"}

@@ -42,10 +42,6 @@ func buildSubjectFor(root, identityRoot string) (subject, error) {
 	return buildSubjectForPolicy(root, identityRoot, policyVersion)
 }
 
-func buildSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
-	return buildSubjectForTree(root, identityRoot, policyVersion, generation.tree)
-}
-
 func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
 	return buildSubjectOverTree(root, identityRoot, policy, benchgit.TreeHash)
 }
@@ -55,15 +51,19 @@ func buildSubjectOverTree(root, identityRoot, policy string, treeHash func(strin
 }
 
 func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, error) {
-	return buildSubjectInMode(root, identityRoot, policy, tree, false)
+	return buildSubjectInMode(root, identityRoot, identityRoot, policy, tree, false)
 }
 
-func buildSubjectInMode(root, identityRoot, policy, tree string, prospective bool) (subject, error) {
+func buildSubjectInMode(root, identityRoot, baseline, policy, tree string, prospective bool) (subject, error) {
 	root, err := canonicalSubjectRoot(root)
 	if err != nil {
 		return subject{}, err
 	}
 	identityRoot, err = canonicalSubjectRoot(identityRoot)
+	if err != nil {
+		return subject{}, err
+	}
+	baseline, err = canonicalSubjectRoot(baseline)
 	if err != nil {
 		return subject{}, err
 	}
@@ -94,7 +94,7 @@ func buildSubjectInMode(root, identityRoot, policy, tree string, prospective boo
 			s.open("launcher closure unavailable")
 		}
 	}
-	if err := hashProspectivePreparation(c, root, identityRoot, pathEnv); err != nil {
+	if err := hashProspectivePreparation(c, root, baseline, pathEnv); err != nil {
 		s.open("launcher closure unavailable")
 	}
 	if m != nil {
@@ -136,7 +136,7 @@ func buildSubjectInMode(root, identityRoot, policy, tree string, prospective boo
 		return subject{}, err
 	}
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
-	frameBaselineSchedule(id, identityRoot)
+	frameBaselineSchedule(id, baseline)
 	if err := s.frameRunBinary(id, root, identityRoot, prospective); err != nil {
 		return subject{}, err
 	}

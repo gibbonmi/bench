@@ -10,6 +10,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Changed the grade key of a gate run, which now frames the build inputs of the source root that the run selects for its run binary. One derivation answers that root for the run and for the key. An ordinary run whose `BENCH_KIT` names another checkout now frames the build inputs of that checkout. Before, the key picked the graded tree when the tree held `.bench/gate-prospective.sh`, while the run built from the kit.
 - Changed the grade key of a run that selects no run binary, because it has no owner or its gate does not route through the phase table. That key now frames one stable value. Before, it framed the build inputs of a source that the run never built. The key of a clean kit worktree does not change.
+- Changed the chunk checkpoint and its subject-alone run, which now read the baseline schedule and the baseline runner from the private checkout of the graded commit. That checkout also names the baseline schedule that the run executes. An edit or a commit of a Go build input in the worktree during the run now keeps the subject, so the run records its green. Before, the run read both members from the worktree and refused with a changed subject. The key of a clean checkout does not change.
 
 ### Repair carry
 
