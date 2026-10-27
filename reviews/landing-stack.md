@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
+  "plan_digest": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
   "implementation_session": "",
   "chunks": [
     {
@@ -472,9 +472,9 @@
     {
       "id": "LS-C3",
       "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
-      "tip": "d966b20288a8a026882d87a6acb38c9e85c18baf",
-      "plan_digest": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
-      "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+      "tip": "140b4d683e1711bc5602fd07d48a13ab57dd12a2",
+      "plan_digest": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
+      "source_digest": "97e12340cc6c408630155fd230bab107c824d49a",
       "acceptance_rows": [
         "LS18",
         "LS19",
@@ -585,6 +585,63 @@
           "source_commit": "d966b20288a8a026882d87a6acb38c9e85c18baf",
           "requirement": "root-conformance-04",
           "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t03-r1-commitment-repository",
+          "performer": "claude:ls-t03-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97e12340cc6c408630155fd230bab107c824d49a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t03-repair1-20261026",
+            "digest": "sha256:eac8cb9f97e185f6ebe57943a6d6c53fe65c3b34d222699d59c5e71ff454c153",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,7131,190\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "140b4d683e1711bc5602fd07d48a13ab57dd12a2",
+          "requirement": "commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t03-r1-root-conformance",
+          "performer": "claude:ls-t03-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97e12340cc6c408630155fd230bab107c824d49a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t03-repair1-20261026",
+            "digest": "sha256:0428b005626eb025458c3fec3edd5e6a8aec6a44863b78c5053478f99f0a39df",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12894,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "140b4d683e1711bc5602fd07d48a13ab57dd12a2",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t03-r1-commitmenttest",
+          "performer": "claude:ls-t03-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97e12340cc6c408630155fd230bab107c824d49a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t03-repair1-20261026",
+            "digest": "sha256:a6bd8772a7701bb2c44799879209bac9ed4990f39d308bf4f8adc700372e3ab1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "140b4d683e1711bc5602fd07d48a13ab57dd12a2",
+          "requirement": "commitmenttest",
+          "command": "bench test --package ./internal/commitment/commitmenttest",
           "exit_code": 0
         }
       ],
@@ -705,6 +762,21 @@
         ],
         "LS-C2": [
           "LS-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
+      "to": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ],
+        "LS-C3": [
+          "LS-C3"
         ]
       }
     }
