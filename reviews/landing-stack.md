@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:1eb1b08b87d7db5b00f89ba51e3a06acd891a389c23c29e5a16534eea0857cf9",
+  "plan_digest": "sha256:5ef5e6e7da7ce8f58f8ad526fab9c2e183b1c5786cae82a7675af53a37e091b2",
   "implementation_session": "",
   "chunks": [
     {
@@ -2669,6 +2669,78 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LS-C10",
+      "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+      "tip": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+      "plan_digest": "sha256:5ef5e6e7da7ce8f58f8ad526fab9c2e183b1c5786cae82a7675af53a37e091b2",
+      "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+      "acceptance_rows": [
+        "LS83",
+        "LS84",
+        "LS85"
+      ],
+      "verification": [
+        {
+          "id": "ls-c10-t12-prose",
+          "performer": "claude:ls-t12-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ls-t12-author-20261027",
+            "digest": "sha256:645caee8dfc325704ba102a87173ca0976772847f6451c1701c73538590509d9",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,169\n"
+          },
+          "source_commit": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c10-t12-conformance-package",
+          "performer": "claude:ls-t12-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ls-t12-author-20261027",
+            "digest": "sha256:0cdfa3789781c91f1494c45481a5eab84a86d9a86b5ebaff76344cc2d00e03f1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,39969,1143\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c10-t12-root-conformance",
+          "performer": "claude:ls-t12-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ls-t12-author-20261027",
+            "digest": "sha256:9a9b5992dad42ed3908a0923e4857fb762517b49414f5529b6996582d3a6155d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14028,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -3009,6 +3081,39 @@
     {
       "from": "sha256:efde464eced0a217a1d499e3c3e630feaf6b73e15a044b61a8230f2f96ef0282",
       "to": "sha256:1eb1b08b87d7db5b00f89ba51e3a06acd891a389c23c29e5a16534eea0857cf9",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ],
+        "LS-C3": [
+          "LS-C3"
+        ],
+        "LS-C4": [
+          "LS-C4"
+        ],
+        "LS-C5": [
+          "LS-C5"
+        ],
+        "LS-C6": [
+          "LS-C6"
+        ],
+        "LS-C7": [
+          "LS-C7"
+        ],
+        "LS-C8": [
+          "LS-C8"
+        ],
+        "LS-C9": [
+          "LS-C9"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1eb1b08b87d7db5b00f89ba51e3a06acd891a389c23c29e5a16534eea0857cf9",
+      "to": "sha256:5ef5e6e7da7ce8f58f8ad526fab9c2e183b1c5786cae82a7675af53a37e091b2",
       "chunk_ids": {
         "LS-C1": [
           "LS-C1"
