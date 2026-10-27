@@ -8,7 +8,7 @@ Decision source: specs/background-grade/decisions/background-grade.md (ready com
 
 Audience: this repository only, because a linked repo starts no background grade.
 
-Verification log: pending — map-only route; the ticket review has not run.
+Verification log: 2 iteration(s) to accept — map-only route, ticket round only. Iteration 1 found a stop signal outside the lifetime owner, a landing wait that contradicted map decisions 6 and 13, too few Forbid rows, an oversized ticket, and bundled seam chunks. The coordinator then moved the census record out of the git-ignored build-log folder.
 
 ## Problem
 
@@ -146,7 +146,7 @@ Harder chunks: BG-C2, BG-C3.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BG-C0 / 01-measure-the-background-census.md | The census measures the foreground cost of one background gate at `-p=2` before any code change, and a failed bound stops the build | BG93, BG94, BG95 | review of the build log | no |
+| BG-C0 / 01-measure-the-background-census.md | The census measures the foreground cost of one background gate at `-p=2` before any code change, and a failed bound stops the build | BG93, BG94, BG95 | review of the census record | no |
 | BG-C1 / 02-derive-the-run-binary-source-once.md, 03-read-the-baseline-members-from-commits.md | The grade identity frames the run's own run-binary source, and it reads its baseline members from commits | BG12-BG18, BG109 | the `internal/gate` package tests | no |
 | BG-C2 / 04-add-the-background-width-input.md | A Bench-owned width input sets `-p=2 -parallel=2` outside the grade key | BG19-BG22 | the `internal/gate` package tests | no |
 | BG-C3 / 05-record-background-claims-and-outcomes.md | The leaf store records claims, outcomes, and the queue, and it stops a grade through the lifetime owner | BG32-BG35, BG112, BG113 | the `internal/gate/backgroundstate` and `internal/subprocess` package tests, and the `process-lifetime-closure` check | no |
@@ -284,9 +284,9 @@ BG-C1 to BG-C4 each hold a seam that a later chunk consumes, so each review clos
 | BG90 | 48 | The Land section holds no sentence that waits on the PID of a prepared run | planned Forbid anchor in internal/anchors/registry_chunk_chain.go, `docs-currency-workflow` check | A surviving sentence names a process that never starts |
 | BG91 | 48 | The bounded repair policy holds no sentence that says a prepared chunk run excludes the review record | planned Forbid anchor in internal/anchors/registry_chunk_chain.go, `docs-currency-workflow` check | A surviving sentence describes a run that no longer exists |
 | BG92 | 49 | The Land section states that a chunk checkpoint waits for the background grade of its key | review-owned: the Spec axis reads the Land section | A silent pause looks like a stuck checkpoint |
-| BG93 | 50 | The build log holds five alone and five beside wall times of the foreground workload on four pinned cores | review-owned: the reviewer reads capture/build-log/background-grade.log | A census with fewer runs cannot show the spread |
-| BG94 | 50 | The build log shows nice 19 and the idle I/O class for the proxy | review-owned: the reviewer reads capture/build-log/background-grade.log | A proxy at the default priority measures another bound |
-| BG95 | 50 | The verdict line says pass only when the beside median is at most 1.2 times the alone median and no run is red | review-owned: the reviewer recomputes the medians from the log | A pass on a failed bound adopts the overlap without its census |
+| BG93 | 50 | The census record holds five alone and five beside wall times of the foreground workload on four pinned cores | review-owned: the reviewer reads specs/background-grade/census.md | A census with fewer runs cannot show the spread |
+| BG94 | 50 | The census record shows nice 19 and the idle I/O class for the proxy | review-owned: the reviewer reads specs/background-grade/census.md | A proxy at the default priority measures another bound |
+| BG95 | 50 | The verdict line says pass only when the beside median is at most 1.2 times the alone median and no run is red | review-owned: the reviewer recomputes the medians from specs/background-grade/census.md | A pass on a failed bound adopts the overlap without its census |
 | BG96 | 63 | An ADR states the background grade and amends ADR 0002 posture 5, ADR 0017, ADR 0024, and ADR 0031 | review-owned: the Spec axis reads the ADRs | A stale posture says that the gate serializes every run on one checkout lock |
 | BG97 | 63 | `.bench/BENCH-reference.md` states the claim, the wait, the background record, and the queue | review-owned: the Spec axis reads the reference | A cold session cannot find why a checkpoint paused |
 | BG98 | 63 | The profile's note on a running gate names a foreground gate | review-owned: the Spec axis reads `projects/benchkit.md` | A stale note forbids every commit while a background grade runs |
