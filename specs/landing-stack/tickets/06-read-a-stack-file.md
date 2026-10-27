@@ -1,7 +1,7 @@
 # Read a stack file and its overrides
 
 Blocked by: none
-Writes: internal/worktree/land_stack_input.go (new), internal/worktree/land_stack_input_test.go (new)
+Writes: internal/worktree/land_stack_input.go (new), internal/worktree/land_stack_input_test.go (new), internal/worktree/parallel_census_test.go
 Covers: LS54, LS55, LS56, LS57, LS58, LS59, LS60, LS61, LS62, LS64, LS65, LS96, LS97, LS98
 
 ## What to build
