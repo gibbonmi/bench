@@ -3,12 +3,16 @@
 package worktree
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -64,14 +68,6 @@ func turnMemberRed(t *testing.T, f *stackFixture, i int) {
 	m.tip = gitOutput(t, m.creation.Path, "rev-parse", "HEAD")
 }
 
-// requireTally fails t unless the gate tally of f reads want.
-func requireTally(t *testing.T, f stackFixture, want string) {
-	t.Helper()
-	if tally, err := os.ReadFile(f.tally); err != nil || string(tally) != want {
-		t.Fatalf("gate tally = %q, %v; want %q", tally, err, want)
-	}
-}
-
 // TestLandStackRedJourney is LS46, LS47, LS48, and LS49. With three members and member 2
 // red, the bisect grades 1 + ⌈log2 3⌉ = 3 trees, publishes member 1, leaves member 3
 // active, and refuses member 2 with stack-red at its own label.
@@ -87,7 +83,7 @@ func TestLandStackRedJourney(t *testing.T) {
 	if first, parent := gitOutput(t, f.root, "rev-parse", "main^1"), gitOutput(t, f.root, "rev-parse", "main^2"); first != f.base || parent != f.members[0].tip {
 		t.Fatalf("destination %s has parents %s and %s, want the merge of member 1 onto %s", top, first, parent, f.base)
 	}
-	requireTally(t, f, "ggg")
+	requireTally(t, f.tally, "ggg", "after the red stack")
 	if assignmentActive(t, f.root, f.members[0].creation.Assignment.ID) || !assignmentActive(t, f.root, f.members[2].creation.Assignment.ID) {
 		t.Fatalf("stack = %q, want member 1 released and member 3 active", r.stdout)
 	}
@@ -125,9 +121,29 @@ func TestLandStackInheritedRedHandsBack(t *testing.T) {
 	if next, printed := landingFaceNext(r.stdout, ""); r.exit != 1 || !printed || next != want {
 		t.Fatalf("inherited stack = (%d, %q, %q), want exit 1 and next %q", r.exit, r.stdout, r.stderr, want)
 	}
-	requireTally(t, f, "g")
+	requireOneRun(t, f.tally, "after the inherited stack")
 	if top := gitOutput(t, f.root, "rev-parse", "main"); top != f.base {
 		t.Fatalf("destination = %s, want the unpublished base %s", top, f.base)
 	}
 	requireNoLease(t, f.root)
+}
+
+// TestStackAttributedReadsOnlyACandidateRed: a refusal after the bisect leaves the
+// attribution set, so only a candidate red names the attributed member.
+func TestStackAttributedReadsOnlyACandidateRed(t *testing.T) {
+	t.Parallel()
+	result := landing.StackResult{Attributed: 2}
+	for _, c := range []struct {
+		name string
+		err  error
+		want int
+	}{
+		{"candidate red", fmt.Errorf("grade: %w", landing.AuthorizationRefusal{Result: authorization.Result{Kind: authorization.Candidate}}), 1},
+		{"inherited red", landing.AuthorizationRefusal{Result: authorization.Result{Kind: authorization.Inherited}}, -1},
+		{"admission refusal", errors.New("the broker refused the admission"), -1},
+	} {
+		if got := stackAttributed(c.err, result); got != c.want {
+			t.Errorf("%s: stackAttributed = %d, want %d", c.name, got, c.want)
+		}
+	}
 }

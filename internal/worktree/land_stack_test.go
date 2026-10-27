@@ -15,28 +15,39 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 )
 
+// stackFile is the test shape of a stack file, which the tests write and rewrite.
+type stackFile struct {
+	Members []stackFileMember `json:"members"`
+}
+
+// stackFileMember is one member entry of a stackFile.
+type stackFileMember struct {
+	Path      string `json:"path"`
+	Request   string `json:"request"`
+	Base      string `json:"base"`
+	SourceTip string `json:"source_tip"`
+	Spec      string `json:"spec"`
+	Message   string `json:"message"`
+}
+
+// write writes doc to the file at path.
+func (doc stackFile) write(t *testing.T, path string) {
+	t.Helper()
+	data, err := json.Marshal(doc)
+	mustNoError(t, err)
+	mustWrite(t, path, data, 0o644)
+}
+
 // writeStack writes the stack file of members at the base of f, with tips as each
 // member's source_tip, and answers its path.
 func (f stackFixture) writeStack(t *testing.T, members []stackFixtureMember, tips ...string) string {
 	t.Helper()
-	type entry struct {
-		Path      string `json:"path"`
-		Request   string `json:"request"`
-		Base      string `json:"base"`
-		SourceTip string `json:"source_tip"`
-		Spec      string `json:"spec"`
-		Message   string `json:"message"`
-	}
-	var doc struct {
-		Members []entry `json:"members"`
-	}
+	var doc stackFile
 	for i, m := range members {
-		doc.Members = append(doc.Members, entry{Path: m.creation.Path, Request: m.request, Base: f.base, SourceTip: tips[i], Spec: m.slug, Message: "land " + m.request})
+		doc.Members = append(doc.Members, stackFileMember{Path: m.creation.Path, Request: m.request, Base: f.base, SourceTip: tips[i], Spec: m.slug, Message: "land " + m.request})
 	}
-	data, err := json.Marshal(doc)
-	mustNoError(t, err)
 	path := filepath.Join(t.TempDir(), "stack.json")
-	mustWrite(t, path, data, 0o644)
+	doc.write(t, path)
 	return path
 }
 
@@ -97,9 +108,7 @@ func TestLandStackJourney(t *testing.T) {
 	}
 	top := gitOutput(t, f.root, "rev-parse", "main")
 	first := gitOutput(t, f.root, "rev-parse", "main^1")
-	if tally, err := os.ReadFile(f.tally); err != nil || string(tally) != "g" {
-		t.Fatalf("gate tally = %q, %v; want one run", tally, err)
-	}
+	requireOneRun(t, f.tally, "after the stack")
 	var wantSources []string
 	for _, m := range f.members {
 		// The landed-sibling cleanup also retires a landed member, so the release proof

@@ -12,7 +12,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
-	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // stackRouteFixture produces one stack face for the route walk. cause keys the fixture apart
@@ -47,14 +46,21 @@ func stackRouteFixtures() []stackRouteFixture {
 			return redStackFixture(t, prefix, n, member), nil, member
 		}
 	}
+	// overridden is three members with member 2 red, called with an override on the 0-based
+	// member.
+	overridden := func(member int) func(t *testing.T, prefix string) (stackFixture, []string, int) {
+		return func(t *testing.T, prefix string) (stackFixture, []string, int) {
+			f := redStackFixture(t, prefix, 3, 1)
+			return f, []string{f.members[member].request + "=" + advanceMember(t, f.members[member])}, 1
+		}
+	}
 	return []stackRouteFixture{
 		{face: faceStackRed, cause: "red-middle-of-three", spacedDir: true, build: red(3, 1), carry: stackRedCarry},
 		{face: faceStackRed, cause: "red-last-of-two", build: red(2, 1), carry: stackRedCarry},
 		{face: faceStackRed, cause: "red-first-of-two", build: red(2, 0), carry: stackRedCarry},
-		{face: faceStackRed, cause: "red-after-an-override", carry: stackRedCarry, build: func(t *testing.T, prefix string) (stackFixture, []string, int) {
-			f := redStackFixture(t, prefix, 3, 1)
-			return f, []string{f.members[0].request + "=" + advanceMember(t, f.members[0])}, 1
-		}},
+		{face: faceStackRed, cause: "red-after-an-override", build: overridden(0), carry: stackRedCarry},
+		// The fold moves the tip of member 3, so the rerun drops its override.
+		{face: faceStackRed, cause: "red-before-an-override", build: overridden(2), carry: stackRedCarry},
 	}
 }
 
@@ -85,18 +91,14 @@ func foldLandedStack(t *testing.T, w stackWalk) {
 	}
 	data, err := os.ReadFile(w.file)
 	mustNoError(t, err)
-	var doc struct {
-		Members []map[string]string `json:"members"`
-	}
+	var doc stackFile
 	mustNoError(t, json.Unmarshal(data, &doc))
 	doc.Members = doc.Members[k:]
-	for _, m := range doc.Members {
-		gitRun(t, m["path"], "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "fold the destination", "main")
-		m["source_tip"] = gitOutput(t, m["path"], "rev-parse", "HEAD")
+	for i, m := range doc.Members {
+		gitRun(t, m.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "fold the destination", "main")
+		doc.Members[i].SourceTip = gitOutput(t, m.Path, "rev-parse", "HEAD")
 	}
-	data, err = json.Marshal(doc)
-	mustNoError(t, err)
-	mustWrite(t, w.file, data, 0o644)
+	doc.write(t, w.file)
 }
 
 // stackRouteKeys are the face and cause of each stack fixture, for routetest.Fixtures.
@@ -136,12 +138,7 @@ func followStackRoute(t *testing.T, wrapper string, face refusalroute.Face, fixt
 	next := stackRefusalNext(t, w.first.stdout, strconv.Itoa(refused+1), m)
 	steps := routetest.Steps(t, face, next, "", []string{m.creation.Assignment.Label})
 	fill := func(step string) string {
-		tip := sanitize.ShellQuote(gitOutput(t, m.creation.Path, "rev-parse", "HEAD"))
-		return strings.NewReplacer(append(commitSlots(t, m.creation.Path),
-			"<message>", "'land the followed route'",
-			stackRepairedTip, tip,
-			repairedTipArg, tip,
-		)...).Replace(step)
+		return strings.NewReplacer(operatorSlots(t, m.creation.Path, stackRepairedTip, repairedTipArg)...).Replace(step)
 	}
 	carry := func(index int) (func(), bool) {
 		step, carried := fixture.carry[index]
