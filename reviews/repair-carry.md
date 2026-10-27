@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-carry/spec.md",
-  "plan_digest": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
+  "plan_digest": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
   "implementation_session": "",
   "chunks": [
     {
@@ -509,9 +509,9 @@
     {
       "id": "CF-C3",
       "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
-      "tip": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
-      "plan_digest": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
-      "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+      "tip": "5fe3dd68327d023a54a98e448e87024e1917ca8c",
+      "plan_digest": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
+      "source_digest": "088ed3edeeaa09a8ff08a85c8cd5f57e294a2060",
       "acceptance_rows": [
         "CF33",
         "CF34",
@@ -665,6 +665,82 @@
           "requirement": "conformance-05",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t04r1-recordcmd",
+          "performer": "claude:rc-t04-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "088ed3edeeaa09a8ff08a85c8cd5f57e294a2060",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261027",
+            "digest": "sha256:3a448f12dfb625de9265b454ca4e1233468566a79f27e3c556cdbea2baa24923",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,23669,291\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5fe3dd68327d023a54a98e448e87024e1917ca8c",
+          "requirement": "recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-fixtures",
+          "performer": "claude:rc-t04-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "088ed3edeeaa09a8ff08a85c8cd5f57e294a2060",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261027",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5fe3dd68327d023a54a98e448e87024e1917ca8c",
+          "requirement": "fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-help",
+          "performer": "claude:rc-t04-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "088ed3edeeaa09a8ff08a85c8cd5f57e294a2060",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261027",
+            "digest": "sha256:f9b05027678f5b87ee5978736e8d71198ef2622f25e0dbba0dcfacd15b2f9038",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23756,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5fe3dd68327d023a54a98e448e87024e1917ca8c",
+          "requirement": "help",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04r1-conformance",
+          "performer": "claude:rc-t04-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "088ed3edeeaa09a8ff08a85c8cd5f57e294a2060",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-repair1-20261027",
+            "digest": "sha256:81586fc0d0e1e9bc722283f34de3fe7ca2b020d3b46c892b13036ec8ca775e96",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12720,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5fe3dd68327d023a54a98e448e87024e1917ca8c",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -802,6 +878,21 @@
           "CF-C3"
         ]
       }
+    },
+    {
+      "from": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
+      "to": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
+      "chunk_ids": {
+        "CF-C1": [
+          "CF-C1"
+        ],
+        "CF-C2": [
+          "CF-C2"
+        ],
+        "CF-C3": [
+          "CF-C3"
+        ]
+      }
     }
   ]
 }
@@ -882,3 +973,7 @@ The axis reported 3 findings. The worst finding is that a call with no stage at 
 ### Advice
 
 A second carry call with the same evidence prefix has no test. This check goes beyond the approved rows.
+
+### Ticket 04 repair 1
+
+The repair session committed `5fe3dd683`, and it changed no production file. Its witness swapped a `break` into the reason loop of `ticket.go`, and `TestTicketNamesTheChecksToRun/two_reasons` failed with `restored` `yes`. The coordinator probe inserted a truncation of the refusal list to its first requirement. The same case failed with `restored` `yes`. The fixture file `recordtest/stage.go` is not a Go test file, so the repair takes a confirming round of the three axes.
