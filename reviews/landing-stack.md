@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:0eaa652fec433610c8bf3ae4ffc793034bebc2f0da551d8fe45d73084d3a1722",
+  "plan_digest": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
   "implementation_session": "",
   "chunks": [
     {
@@ -233,6 +233,67 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LS-C2",
+      "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+      "tip": "a663e75135c53473df75b4da34c3328773d47e11",
+      "plan_digest": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
+      "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+      "acceptance_rows": [
+        "LS7",
+        "LS8",
+        "LS9",
+        "LS10",
+        "LS11",
+        "LS12",
+        "LS13",
+        "LS14",
+        "LS15",
+        "LS16",
+        "LS17"
+      ],
+      "verification": [
+        {
+          "id": "ls-c2-t02-gate",
+          "performer": "claude:ls-t02-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t02-author-20261026",
+            "digest": "sha256:1461ee5f42a80f5eb5afd61b62e659c47501a6c9729ecb2e3d64736e083be87c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,237667,726\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a663e75135c53473df75b4da34c3328773d47e11",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c2-t02-root-conformance",
+          "performer": "claude:ls-t02-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t02-author-20261026",
+            "digest": "sha256:ee37cb9e9c66b6825d9907fb0e5abb82cba5def0c2438486087b40a5fbf9f277",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14405,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a663e75135c53473df75b4da34c3328773d47e11",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -246,6 +307,15 @@
     {
       "from": "sha256:3a488226f798d4b679e90398c8906526574cada61446e16eb27202fe49e3d6e0",
       "to": "sha256:0eaa652fec433610c8bf3ae4ffc793034bebc2f0da551d8fe45d73084d3a1722",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0eaa652fec433610c8bf3ae4ffc793034bebc2f0da551d8fe45d73084d3a1722",
+      "to": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
       "chunk_ids": {
         "LS-C1": [
           "LS-C1"
