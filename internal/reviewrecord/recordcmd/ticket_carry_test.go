@@ -72,8 +72,7 @@ func carriedCell(t *testing.T, out string) any {
 	return rows[0].(map[string]any)["carried"]
 }
 
-// CF33, CF34, CF35, CF36, CF37, CF40: a call that stages only the reached requirement carries
-// the others in owed order. Each carried entry keeps the run of its candidate, names the repair
+// A call that stages only the reached requirement carries the others in owed order. Each carried entry keeps the run of its candidate, names the repair
 // session, and references the candidate.
 func TestTicketCarriesTheUnreachedRequirement(t *testing.T) {
 	f, home, frozen, repair := carriedRepair(t)
@@ -105,7 +104,7 @@ func TestTicketCarriesTheUnreachedRequirement(t *testing.T) {
 	}
 }
 
-// CF38, CF39: a stage wins over a carry, so a staged requirement that the delta does not reach
+// A stage wins over a carry, so a staged requirement that the delta does not reach
 // records from its stage at the repair commit, and the carried cell is none.
 func TestTicketCarriesNothingWhenEachRequirementIsStaged(t *testing.T) {
 	f, home, _, repair := carriedRepair(t)
@@ -119,26 +118,51 @@ func TestTicketCarriesNothingWhenEachRequirementIsStaged(t *testing.T) {
 	}
 }
 
-// CF41, CF42, CF43: the refusal names only the unstaged requirement that cannot carry, with its
-// reason, and leaves the record bytes and every stage unchanged.
+// The refusal names only the unstaged requirements that cannot carry, each with its reason in
+// owed order, and leaves the record bytes and every stage unchanged.
 func TestTicketNamesTheChecksToRun(t *testing.T) {
-	f, home, _, _ := carriedRepair(t)
-	f.Stage(home, "1", "other", f.Run(0, "ok\n"))
-	before, stages := recordBytes(t, f), responseboundtest.StoreFiles(t, home)
-	out, code := recordcmd.Command(f.Root, repairArgs(t, f))
-	// The excerpt-form repair route follows the cause.
-	if want := "these owed requirements have no staged excerpt: pkg; carry: pkg (the delta reaches the command); write it with "; code != 1 || !strings.Contains(out, want) {
-		t.Fatalf("ticket = exit %d, output %q; want exit 1 naming %q", code, out, want)
+	cases := []struct {
+		name  string
+		setup func(t *testing.T, f *recordtest.Fixture, home string)
+		want  string
+	}{
+		{"one reason", func(t *testing.T, f *recordtest.Fixture, home string) {
+			f.Stage(home, "1", "other", f.Run(0, "ok\n"))
+		}, "these owed requirements have no staged excerpt: pkg; carry: pkg (the delta reaches the command); write it with "},
+		// The repair session records a passing pkg run and a failing other run, then commits a
+		// second test-only repair in ./internal/a. The system entry carries again, pkg is reached
+		// again, and other has a failing last entry.
+		{"two reasons", func(t *testing.T, f *recordtest.Fixture, home string) {
+			f.Stage(home, "1", "pkg", f.Run(0, "ok\n"))
+			f.Stage(home, "1", "other", f.Run(1, "FAIL\n"))
+			args := repairArgs(t, f)
+			args[slices.Index(args, "--id-prefix")+1] = "failed"
+			succeed(t, f, args)
+			f.Write("internal/a/second_test.go", "package a\n")
+			f.Commit("second repair of 1.md")
+		}, "these owed requirements have no staged excerpt: pkg, other; carry: pkg (the delta reaches the command); carry: other (no current passing entry); write it with "},
 	}
-	if after := recordBytes(t, f); !bytes.Equal(before, after) {
-		t.Errorf("the refusal changed the record bytes:\n%s", after)
-	}
-	if after := responseboundtest.StoreFiles(t, home); !slices.Equal(stages, after) {
-		t.Errorf("store files after the refusal = %q, want %q", after, stages)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			f, home, _, _ := carriedRepair(t)
+			c.setup(t, f, home)
+			before, stages := recordBytes(t, f), responseboundtest.StoreFiles(t, home)
+			out, code := recordcmd.Command(f.Root, repairArgs(t, f))
+			// The excerpt-form repair route follows the cause.
+			if code != 1 || !strings.Contains(out, c.want) {
+				t.Fatalf("ticket = exit %d, output %q; want exit 1 naming %q", code, out, c.want)
+			}
+			if after := recordBytes(t, f); !bytes.Equal(before, after) {
+				t.Errorf("the refusal changed the record bytes:\n%s", after)
+			}
+			if after := responseboundtest.StoreFiles(t, home); !slices.Equal(stages, after) {
+				t.Errorf("store files after the refusal = %q, want %q", after, stages)
+			}
+		})
 	}
 }
 
-// CF48: after the carry call and a record commit, the chunk grade passes the verification step
+// After the carry call and a record commit, the chunk grade passes the verification step
 // of the chunk and refuses at its review step, because no review is recorded.
 func TestCarriedEntryPassesTheChunkGrade(t *testing.T) {
 	f, home, _, _ := carriedRepair(t)

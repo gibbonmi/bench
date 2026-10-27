@@ -21,9 +21,7 @@ var stagePlan = []rr.Requirement{
 // its chunk plan, through Pooled. It answers the fixture and the home.
 func Staging(t *testing.T) (*Fixture, string) {
 	t.Helper()
-	return Pooled(t, 1, func(plan *rr.Plan) {
-		plan.Chunks[0].Verification = append([]rr.Requirement{}, stagePlan...)
-	}, Delegate)
+	return Pooled(t, 1, Owing(stagePlan), Delegate)
 }
 
 // Pooled prepares a fixture with count planned chunks in an assignment worktree of the pool
