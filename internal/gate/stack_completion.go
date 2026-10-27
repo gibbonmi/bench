@@ -23,6 +23,15 @@ func WithStack(ctx context.Context, members []StackMember) context.Context {
 	return context.WithValue(ctx, stackKey{}, slices.Clone(members))
 }
 
+// StackMembers answers the members of the landing stack that ctx binds, in stack order, or
+// nil when ctx binds no stack.
+func StackMembers(ctx context.Context) []StackMember {
+	if stack := stackGradeOf(ctx); stack != nil {
+		return slices.Clone(stack.members)
+	}
+	return nil
+}
+
 // stackGrade is the stack context of an evaluation: the landing destination and the members.
 type stackGrade struct {
 	destination string

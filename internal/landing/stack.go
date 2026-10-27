@@ -25,7 +25,8 @@ type StackRequest struct {
 // StackAdmission is the publication decision of a landing stack. CheckMember decides
 // member i, an index into StackRequest.Members, over that member's own landing tree before
 // the grade. PublishStack decides the first k members again over their own landing trees
-// and runs publish while that decision still holds.
+// and runs publish while that decision still holds. trees holds exactly k trees: the own
+// landing tree of each published member, in file order.
 type StackAdmission interface {
 	CheckMember(i int, tree string) error
 	PublishStack(k int, trees []string, publish func() error) error

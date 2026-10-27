@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 )
 
@@ -76,9 +77,11 @@ func (f stackLanding) request(t *testing.T) StackRequest {
 	}
 }
 
-// stackRecord is what a stack owner observed: each graded tree and each ref update.
+// stackRecord is what a stack owner observed: each graded tree, the stack members of the
+// last grade, and each ref update.
 type stackRecord struct {
 	graded, updates []string
+	members         []gate.StackMember
 	// duringGrade runs inside the grade, so a row can move a source while the gate runs.
 	duringGrade func()
 }
@@ -88,8 +91,9 @@ type stackRecord struct {
 func stackOwner(kind authorization.Kind) (Owner, *stackRecord) {
 	record := &stackRecord{}
 	o := greenOwner()
-	o.authorize = func(_ context.Context, _, tree string, _, _ io.Writer) authorization.Result {
+	o.authorize = func(ctx context.Context, _, tree string, _, _ io.Writer) authorization.Result {
 		record.graded = append(record.graded, tree)
+		record.members = gate.StackMembers(ctx)
 		if record.duringGrade != nil {
 			record.duringGrade()
 		}
@@ -102,11 +106,17 @@ func stackOwner(kind authorization.Kind) (Owner, *stackRecord) {
 	return o, record
 }
 
-// stackAdmissionRecord admits every member and records what each decision received.
+// errAdmissionRefused is the refusal of a refusing stackAdmissionRecord.
+var errAdmissionRefused = errors.New("admission refused")
+
+// stackAdmissionRecord records what each decision received. It admits every member unless
+// refuseMember names the 1-based member that CheckMember refuses or refusePublish is set.
 type stackAdmissionRecord struct {
-	checked   []string
-	published int
-	trees     []string
+	checked       []string
+	published     int
+	trees         []string
+	refuseMember  int
+	refusePublish bool
 }
 
 func (a *stackAdmissionRecord) CheckMember(i int, tree string) error {
@@ -114,10 +124,16 @@ func (a *stackAdmissionRecord) CheckMember(i int, tree string) error {
 		return fmt.Errorf("member %d checked out of order", i)
 	}
 	a.checked = append(a.checked, tree)
+	if i+1 == a.refuseMember {
+		return errAdmissionRefused
+	}
 	return nil
 }
 
 func (a *stackAdmissionRecord) PublishStack(k int, trees []string, publish func() error) error {
+	if a.refusePublish {
+		return errAdmissionRefused
+	}
 	a.published, a.trees = k, slices.Clone(trees)
 	return publish()
 }
@@ -153,6 +169,19 @@ func TestLandStackGradesOnce(t *testing.T) {
 	if !slices.Equal(record.graded, []string{top}) {
 		t.Fatalf("graded trees = %q, want the top tree %s once", record.graded, top)
 	}
+	t.Run("the grade carries each member in file order", func(t *testing.T) {
+		f := newStackLanding(t, 3, nil)
+		o, record := stackOwner(authorization.Green)
+		request := f.request(t)
+		request.Members[2].ClosePath = ""
+		if _, err := o.LandStack(context.Background(), request, &stackAdmissionRecord{}); err != nil {
+			t.Fatal(err)
+		}
+		want := []gate.StackMember{{Source: f.members[0].tip, Folder: f.members[0].folder}, {Source: f.members[1].tip, Folder: f.members[1].folder}, {Source: f.members[2].tip}}
+		if !slices.Equal(record.members, want) {
+			t.Fatalf("graded stack members = %+v, want %+v", record.members, want)
+		}
+	})
 }
 
 func TestLandStackChainsMemberMerges(t *testing.T) {
@@ -217,6 +246,20 @@ func TestLandStackAdmitsEachMemberTree(t *testing.T) {
 	if got.Published() != admission.published || !slices.Equal(admission.trees, admission.checked) {
 		t.Fatalf("publication decided %d members over %q, want %d over %q", admission.published, admission.trees, got.Published(), admission.checked)
 	}
+	t.Run("a refused member stops the stack before the grade", func(t *testing.T) {
+		f := newStackLanding(t, 3, nil)
+		o, record := stackOwner(authorization.Green)
+		admission := &stackAdmissionRecord{refuseMember: 2}
+		got, err := o.LandStack(context.Background(), f.request(t), admission)
+		var member StackMemberError
+		if !errors.As(err, &member) || member.Member != 2 || !errors.Is(err, errAdmissionRefused) {
+			t.Fatalf("refused member = %v, want the admission refusal of member 2", err)
+		}
+		if len(record.graded) != 0 || got.Published() != 0 || admission.published != 0 {
+			t.Fatalf("a refused member graded %d trees and published %d", len(record.graded), got.Published())
+		}
+		assertStackUnpublished(t, f, record)
+	})
 }
 
 func TestLandStackStopsOnInfrastructure(t *testing.T) {
@@ -259,6 +302,26 @@ func TestLandStackRechecksEachMember(t *testing.T) {
 		t.Fatalf("moved member = %v, want a refusal of member 2", err)
 	}
 	assertStackUnpublished(t, f, record)
+	t.Run("a changed destination checkout refuses the publication", func(t *testing.T) {
+		f := newStackLanding(t, 3, nil)
+		o, record := stackOwner(authorization.Green)
+		record.duringGrade = func() { write(t, f.root, "changed-during-the-grade", "bytes\n") }
+		got, err := o.LandStack(context.Background(), f.request(t), &stackAdmissionRecord{})
+		var member StackMemberError
+		if err == nil || errors.As(err, &member) || got.Published() != 0 {
+			t.Fatalf("changed destination = %+v, %v, want a destination refusal", got, err)
+		}
+		assertStackUnpublished(t, f, record)
+	})
+	t.Run("a refused publication publishes nothing", func(t *testing.T) {
+		f := newStackLanding(t, 3, nil)
+		o, record := stackOwner(authorization.Green)
+		got, err := o.LandStack(context.Background(), f.request(t), &stackAdmissionRecord{refusePublish: true})
+		if !errors.Is(err, errAdmissionRefused) || got.Published() != 0 || len(got.Merges) != 0 {
+			t.Fatalf("refused publication = %+v, %v, want the admission refusal and no merges", got, err)
+		}
+		assertStackUnpublished(t, f, record)
+	})
 }
 
 func TestLandStackRefusesAStagedSpecRequest(t *testing.T) {
