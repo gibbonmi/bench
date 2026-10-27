@@ -191,14 +191,9 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The release removes the source worktree, so the broker check reads it now and the
 	// notice prints after the effects report the refresh.
 	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
-	request := landing.ReviewedRequest{
-		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
-		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
-		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
-		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
-		GreenMarker: priorMarker, Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
-	}
-	publication := commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable(), Destination: request.Destination}
+	request, publication := sourceRequest(assignment, source, parsed.Flags["--request"], parsed.Flags["-m"], "refs/heads/"+branch)
+	request.Root, request.Destination, request.DestinationBase, request.DestinationFingerprint = root, publication.Destination, destination, destinationFingerprint
+	request.GreenMarker, request.Stdout, request.Stderr = priorMarker, stdout, stderr
 	// The window decides before the lease, so a landing never waits for a lease and then for a gap.
 	if err := (commitrepo.Store{Root: root}).AdmitWindow(publication); err != nil {
 		return landRefusalError(stdout, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
@@ -234,14 +229,8 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 // reviewer. A face whose repair commits in the source re-runs at the repaired tip, and the
 // source assignment's label addresses that commit.
 func landingCompositionRoute(err error, request, base, tip, specArg, path string, a intent.Assignment) error {
-	var refused landing.AuthorizationRefusal
-	if errors.As(err, &refused) {
-		switch {
-		case refused.Result.Kind == authorization.Infrastructure:
-			err = refusalError{refusal{detail: err.Error(), face: faceLandInfrastructure}}
-		case landing.RedKind(refused.Result.Kind):
-			err = refusalError{refusal{detail: err.Error(), face: faceLandRed}}
-		}
+	if face := authorizationFace(err); face != "" {
+		err = refusalError{refusal{detail: err.Error(), face: face}}
 	}
 	tipFlag := landingSourceTipFlag(tip)
 	if repairsSource(landingFaceName(err)) {
@@ -249,6 +238,21 @@ func landingCompositionRoute(err error, request, base, tip, specArg, path string
 	}
 	values := map[string]string{refusalroute.FactRerun: landingRerunAt(request, base, tipFlag, specArg, path, a.ID), refusalroute.FactLabel: a.Label}
 	return landingFaceRouteWith(err, values, false)
+}
+
+// authorizationFace names the face of an authorization refusal by the kind that the gate
+// attributed: the infrastructure face or the red face. Any other error has no face here.
+func authorizationFace(err error) string {
+	var refused landing.AuthorizationRefusal
+	switch {
+	case !errors.As(err, &refused):
+		return ""
+	case refused.Result.Kind == authorization.Infrastructure:
+		return faceLandInfrastructure
+	case landing.RedKind(refused.Result.Kind):
+		return faceLandRed
+	}
+	return ""
 }
 
 // landingSourceProofs runs the first run's source proofs over a resolved assignment: the

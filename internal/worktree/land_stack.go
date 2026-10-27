@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
-	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -100,14 +99,9 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 		records[i] = censusCount(a.home, root, l.assignment.ID)
 		brokerChanged = brokerChanged || brokerSourceChanged(l.assignment.Worktree, l.source.base, l.source.tip)
 		printLandingSource(stderr, l.source.base, l.assignment.Start)
-		member := landing.ReviewedRequest{
-			Source: l.assignment.Branch, SourceTip: l.source.tip, ReviewBase: l.source.base,
-			SourceWorktree: l.assignment.Worktree, SourceFingerprint: l.source.fingerprint,
-			SpecPath: l.source.specPath, SpecBytes: l.source.specBytes, SpecMode: l.source.specMode, ClosePath: l.source.closePath,
-			Message: l.member.Message,
-		}
+		var member landing.ReviewedRequest
+		member, publications[i] = sourceRequest(l.assignment, l.source, l.member.Request, l.member.Message, request.Destination)
 		request.Members = append(request.Members, member)
-		publications[i] = commitrepo.Publication{Assignment: l.assignment.ID, Request: intent.RequestDigest(l.member.Request), Worktree: l.assignment.Worktree, Source: l.source.tip, Deliverable: member.Deliverable(), Destination: request.Destination}
 	}
 	publications[0].Lease = lease
 	result, err := j.landStack(ctx, request, stackAdmission{store: commitrepo.Store{Root: root}, members: publications, gap: j.publicationGap})
@@ -134,6 +128,19 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	}
 	fmt.Fprintf(stdout, "stack{destination_base=%s,published_commit=%s,landed=%d,worktree=%s}\n", end.destinationBase, end.published, end.landed, end.worktree)
 	return end.exit
+}
+
+// sourceRequest maps a resolved assignment and its source fact onto the source fields of
+// one reviewed request, with message as its merge message. It also answers the publication
+// that admits that source at destination for the request requestArg.
+func sourceRequest(assignment intent.Assignment, source landingSourceFact, requestArg, message, destination string) (landing.ReviewedRequest, commitrepo.Publication) {
+	r := landing.ReviewedRequest{
+		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
+		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint,
+		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
+		Message: message,
+	}
+	return r, commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(requestArg), Worktree: assignment.Worktree, Source: source.tip, Deliverable: r.Deliverable(), Destination: destination}
 }
 
 // stackEnd is the terminal record of a stack and its exit code. step names the step after
@@ -166,7 +173,13 @@ func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (
 		base, tip := expandIdentity(root, m.Base), expandIdentity(root, m.EffectiveTip)
 		assignment, err := landingAssignment(j, root, route.paths[i], m.Request, base, tip)
 		if err != nil {
-			refusals = append(refusals, stackMemberRefusal(i, "", landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), true)))
+			// A later assignment proof can refuse a request that resolved, and the refusal
+			// then names the label of that assignment.
+			label := ""
+			if resolved, found, _ := intent.FindAssignmentForRequest(root, m.Request); found {
+				label = resolved.Label
+			}
+			refusals = append(refusals, stackMemberRefusal(i, label, landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), true)))
 			continue
 		}
 		route.assignments[i] = assignment.ID
@@ -211,10 +224,9 @@ func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLand
 		}
 		return stackMemberRefusal(i, l.assignment.Label, landingFaceRoute(member.Err, route.rerun(stackRefusedBy(i, member.Err)), false))
 	}
-	face := faceLandHandback
-	var refused landing.AuthorizationRefusal
-	if errors.As(err, &refused) && refused.Result.Kind == authorization.Infrastructure {
-		face = faceLandInfrastructure
+	face := authorizationFace(err)
+	if face != faceLandInfrastructure {
+		face = faceLandHandback
 	}
 	return landingFaceRoute(refusalError{refusal{detail: err.Error(), face: face}}, route.rerun(stackUnattributed), false)
 }

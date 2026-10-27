@@ -8,11 +8,17 @@ import (
 	"testing"
 )
 
+// stackMemberDetail is the opening of the refusal of stack member member, whose label the
+// refusal names.
+func stackMemberDetail(member string, m stackFixtureMember) string {
+	return "stack member " + member + " (" + m.creation.Assignment.Label + "): "
+}
+
 // stackRefusalNext reads the next= value of the refusal of stack member member, whose
 // label the refusal names.
 func stackRefusalNext(t *testing.T, stdout, member string, m stackFixtureMember) string {
 	t.Helper()
-	next, printed := landingFaceNext(stdout, "stack member "+member+" ("+m.creation.Assignment.Label+"): ")
+	next, printed := landingFaceNext(stdout, stackMemberDetail(member, m))
 	if !printed {
 		t.Fatalf("stack stdout = %q, want the refusal of member %s", stdout, member)
 	}
@@ -76,6 +82,44 @@ func TestLandStackRerunKeepsEachOverride(t *testing.T) {
 	}
 	if strings.Count(r.stdout, "refused{") != 1 {
 		t.Fatalf("stack stdout = %q, want member 2's refusal alone", r.stdout)
+	}
+}
+
+// TestStackRerunRules composes the re-run of one three-member stack whose call pinned
+// members 2 and 3. A refused member that holds an override gets its new tip in that
+// override's place. A removed or a reset member loses its override, and a route that leaves
+// one member re-runs that member's single landing.
+func TestStackRerunRules(t *testing.T) {
+	t.Parallel()
+	route := stackRoute{
+		file: "/stack.json",
+		input: StackInput{
+			Members: []StackMember{
+				{Request: "r1", Base: "b1", SourceTip: "t1", Spec: "s1"},
+				{Request: "r2", Base: "b2", SourceTip: "t2", Spec: "s2"},
+				{Request: "r3", Base: "b3", SourceTip: "t3", Spec: "s3"},
+			},
+			Overrides: []StackOverride{{Request: "r2", Commit: "c2"}, {Request: "r3", Commit: "c3"}},
+		},
+		paths:       []string{"/w1", "/w2", "/w3"},
+		assignments: []string{"a1", "a2", "a3"},
+	}
+	stack := "bench worktree land --stack '/stack.json'"
+	for _, row := range []struct {
+		name string
+		fact stackRerun
+		want string
+	}{
+		{"repair-replaces", stackRerun{refused: 1, repairs: true}, stack + " --source-tip 'r2'=<repaired-tip> --source-tip 'r3'='c3'"},
+		{"read-replaces", stackRerun{refused: 1, read: "t9"}, stack + " --source-tip 'r2'='t9' --source-tip 'r3'='c3'"},
+		{"removed", stackRerun{refused: -1, removed: []int{2}}, stack + " --source-tip 'r2'='c2'"},
+		{"reset", stackRerun{refused: -1, reset: []int{1}}, stack + " --source-tip 'r3'='c3'"},
+		{"one-repaired", stackRerun{refused: 0, repairs: true, removed: []int{1, 2}}, landingRerunAt("r1", "b1", repairedSourceTipFlag, "s1", "/w1", "a1")},
+		{"one-pinned", stackRerun{refused: -1, removed: []int{0, 1}}, landingRerunAt("r3", "b3", landingSourceTipFlag("c3"), "s3", "/w3", "a3")},
+	} {
+		if got := route.rerun(row.fact); got != row.want {
+			t.Errorf("%s: rerun = %q, want %q", row.name, got, row.want)
+		}
 	}
 }
 

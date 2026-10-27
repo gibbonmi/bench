@@ -342,8 +342,8 @@ func stackLandingFixture(t *testing.T, prefix string, n int, step func(*testrepo
 // the landing fixture's own file.
 func stackMemberFile(i int) string { return fmt.Sprintf("member-%d.txt", i) }
 
-// gateBarrier is a pair of FIFOs that a fixture gate line signals and then waits on, as
-// barrierLandingFixture builds them, and the gate line itself.
+// gateBarrier is a pair of FIFOs that a fixture gate line signals and then waits on, and
+// the gate line itself.
 func gateBarrier(t *testing.T) (started, release string, step func(*testrepo.GateFixture, string) string) {
 	t.Helper()
 	barrier := t.TempDir()

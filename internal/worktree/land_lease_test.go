@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
@@ -46,14 +45,8 @@ type barrierLanding struct {
 
 func barrierLandingFixture(t *testing.T, request string) barrierLanding {
 	t.Helper()
-	barrier := t.TempDir()
-	started, release := filepath.Join(barrier, "started"), filepath.Join(barrier, "release")
-	for _, fifo := range []string{started, release} {
-		mustNoError(t, syscall.Mkfifo(fifo, 0o600))
-	}
-	f := landingFixtureWithGateStep(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), true, func(*testrepo.GateFixture, string) string {
-		return ": > " + sanitize.ShellQuote(started) + "\nIFS= read -r _ < " + sanitize.ShellQuote(release) + "\n"
-	})
+	started, release, step := gateBarrier(t)
+	f := landingFixtureWithGateStep(t, request, "", "", filepath.Join(t.TempDir(), "bench-home"), true, step)
 	return barrierLanding{landingFixture: f, started: started, release: release}
 }
 
