@@ -1228,7 +1228,80 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c5-standards-r1",
+          "performer": "claude:ls-c5-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e4c1021a4769024c3102df9a349b673c83ac2bd2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c5-standards-20261026",
+            "digest": "sha256:2619e60c1aeb513a8c0d8cb8942798ca83280816399b33c06dbebf5482f6f58f",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 4\nworst: S1 (severity 5)\n\nBind: preflight reports current=true, dirty=false; the worktree HEAD is 553d911, above the frozen tip 5eb51e6. Diff read at the frozen pair.\n\nS1 | 5 | auto-fix | 8 | internal/worktree/land_fixtures_test.go:347-357 (vs internal/worktree/land_lease_test.go:47-58) | The new gateBarrier is a second copy of the FIFO pair and the gate line in barrierLandingFixture, and its own comment says \"as barrierLandingFixture builds them\". The delta does not make barrierLandingFixture call it. AGENTS.md \"one source per fact\" names a pasted fixture harness. land_lease_test.go sits in a directory a Writes entry covers.\nS2 | 4 | auto-fix | 7 | internal/worktree/land_stack.go:103-110 (vs internal/worktree/land.go:194-201) | The stack maps landingSourceFact and the assignment onto ReviewedRequest and builds commitrepo.Publication field by field, as landAttributed does. A new source fact must change both; a shared member-request helper would hold the mapping once.\nS3 | 3 | auto-fix | 6 | internal/worktree/land_stack.go:214-218 (vs internal/worktree/land.go:239-241) | The rule \"an authorization refusal of kind Infrastructure takes faceLandInfrastructure\" has two derivations.\nS4 | 4 | ask-user | 5 | internal/worktree/land_stack.go:206-210, 214-218; internal/worktree/land_refusal.go:104-111 | Ticket 07 has no acceptance row for the conflict branch, the landingConflictRefusalAt split, or the infrastructure face, and no test exercises them. The post-publication handback branch (land_stack.go:131-136) and the unresolved-path refusal (land_stack.go:163) also have no test.\n\nAdvice:\n- landStack (about 87 lines) and stackAfterPublication (10 parameters) are long.\n- stackPreflight writes route.assignments[i] through a by-value copy of stackRoute; the package var stackUnattributed is a struct with slice fields.\n- The interim land-handback sites carry timeless why-comments and no ticket marker.\n- The journey test expects census 0 for both members and cannot tell a real count from a hard-coded zero.\n- landStack skips measures.censusRawCalls, measures.pathCount, and printCensusHeads, which landAttributed sets.\n- Checked and clean: the 3-line dispatch in land.go, the 397 to 390 line count, the helper extractions, the 839 to 850 pin, the six-test limit, the comment register.\n\nCommand: no command change is necessary.\nRead: ticket 07, the craft-review and craft-comments skills, the internal/ diff of the frozen pair, land.go 120-310, land_lease_test.go 1-75, rg sweeps for barrier, FIFO, \"landing source\", and RenderError, ticket 09 and 11 handback lines, spec lines on conflict and infrastructure.\n"
+          },
+          "axis": "Standards",
+          "base": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "tip": "5eb51e6cf66e0b7ed4d142f9888f7b0e13eabfd1",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c5-spec-r1",
+          "performer": "claude:ls-c5-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e4c1021a4769024c3102df9a349b673c83ac2bd2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c5-spec-20261026",
+            "digest": "sha256:6b823311919826871cdebb76a891365b4b6928e766fadff6829784361005e76c",
+            "excerpt": "axis: Spec\nverdict: findings\nfindings: 3\nworst: P1 (severity 4): the LS44 expectation cannot tell a wired census count from a constant 0.\n\nBind: current=true, dirty_record=false, base 140811b; the head 553d911 differs from the frozen tip only in reviews/landing-stack.md. bench coverage reports state mapped, and all 18 LS-C5 rows name real tests.\n\nP1 | 4 | auto-fix | 7 | internal/worktree/land_stack_test.go:107-110 | LS44 and story 10 say each row carries each member's census count, but TestLandStackJourney expects census 0 for both members. A producer that prints a constant 0, or the other member's count, stays green. census.Record (land_census_test.go:23) could seed distinct counts. The wiring is land_stack.go:98 and :166.\nP2 | 3 | auto-fix | 4 | internal/worktree/land_stack.go:168-169 | \"The preflight\" says each refusal names its member index and label. A landingAssignment fault passes label \"\", so the detail reads \"stack member 2: ...\" with no label, although identityBundleRefusal fails after the assignment resolved.\nP3 | 3 | no-op | 4 | internal/worktree/land_stack.go:214-219 | A TipMovedError after the grade (landing/stack.go:120) goes to land-handback in the stack, where the single landing gives land-destination-moved. This fits the ticket's interim \"unattributed stop\" rule but diverges visibly from \"Every other refusal keeps its single-landing face\".\n\nChecked and clean: the interim rules; no refusal face added and no cmd/bench or refusalroute file changed; the dispatch runs before --resume and -m --stack stays single (LS105); the rerun composer follows rules 1-7 in order and reuses repairsSource and sourceTips; the three undecided outputs conform; the census is read before release and the effects run once; a repeated request exits 2 or fails the assignment proof; the pin moves 839 to 850 for 11 new tests.\n\nAdvice:\n- No test covers the stopped post-publication step (land_stack.go:130-133); ticket 11 should cover it.\n- The code calls AcquireLease directly where the ticket says leaseLanding, because leaseLanding routes to a single rerun; record the deviation.\n- The spec is silent on whether a pre-lease refusal ends with a stack{...} record; the author prints none.\n\nCommand: no command change is necessary.\nRead: the ticket, spec lines 1-245, the review SKILL Spec section, the code diff, land.go, land_refusal.go, land_identity.go (partial), landing/stack.go, landingpolicy Terminal, usage/parse.go FlagPresent, land_marker.go.\n"
+          },
+          "axis": "Spec",
+          "base": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "tip": "5eb51e6cf66e0b7ed4d142f9888f7b0e13eabfd1",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c5-coverage-r1",
+          "performer": "claude:ls-c5-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e4c1021a4769024c3102df9a349b673c83ac2bd2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c5-coverage-20261026",
+            "digest": "sha256:3987bca8245a52dacf3b6627d17ca71c9afb1d8fe1bfa4b73986bd99d374e95b",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 2\nworst: C1 (severity 4), LS44 census cells are 0 in every row\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false; the only diff between the frozen tip 5eb51e6 and the head 553d911 is reviews/landing-stack.md.\n\nC1 | 4 | auto-fix | 7 | internal/worktree/land_stack_test.go:106-110, internal/worktree/land_stack.go:498,667 | LS44 expects census 0 for both rows. A stack that hardcodes census 0, reads the count after the release step drops the records, or swaps the counts between members still passes, because the fixture seeds no census record. A fix seeds a nonzero census for member 2 only and asserts it.\nC2 | 3 | ask-user | 6 | internal/worktree/land_stack_rerun.go:782-786, land_stack_rerun_test.go:869-919 | Rules 4 and 5 say \"adds or replaces\", but the tests pin only the add branch. No row gives the refused member its own stale override, so turning `overrides[at] = set` into a no-op or a duplicate append stays green, and the rerun would repeat the stale tip.\n\nRows judged red-capable for their named failures: LS40, LS41/LS42 (the stderr check kills the sibling-cleanup masking), LS43, LS45, LS101, LS50/LS51, LS52, LS53 (fails by hang when no lease is taken), LS63, LS104, LS86, LS87, LS94, LS95 (pins main^2 for the top merge only), LS105.\n\nRerun rules: rule 6 pinned by LS86 and LS94; rule 5 add branch by LS87; rules 2, 3 and 7 are unreachable in this ticket, and the plan defers them to LS89-LS93, LS102 and LS103 in tickets 09 and 10.\n\nEffects split: landedAfterEffects keeps its signature and order; judged behavior-preserving (sampled land_effects_test.go:188).\n\nAdvice:\n- The expected rerun strings and the landing source line are hand-written literals with no demonstrated mutation red; record one mutation for LS94 or derive them from the shared helper.\n- The LS53 hang failure is acceptable but noisy.\n\nCommand: no command change is necessary.\nRead: the frozen diff, land_stack_test.go, land_stack_input.go, land_lease_test.go, land_effects.go, usage/parse.go, the spec coverage rows, \"The refusal faces\" and the edge inventory, ticket 07, the hostile-input checklist, the craft-review Coverage section.\n"
+          },
+          "axis": "Coverage",
+          "base": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "tip": "5eb51e6cf66e0b7ed4d142f9888f7b0e13eabfd1",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1515,3 +1588,36 @@ Every ticket 06 repair is test-only, so a coordinator confirmation closes it.
 The ticket 06 repair `140811b14c03cfe16e114e46ca3e6f09faf4985a` changes tests only, and the evidence-only comment correction `2d6d6dd49900fddca5d0d2e49a446ef3a790bf66` closes S1. Repair cycles used: 1 of 2.
 
 The coordinator probe raised the member floor from two to three. It reported `bit` in the two-member case of `TestStackReaderAcceptsSixteenMembers` with `restored` yes. The confirmation closes S1, S2, C1, C2, and C3, and it keeps S3 as `no-op`.
+
+## LS-C5 review, round 1
+
+Frozen pair: `140811b14c03cfe16e114e46ca3e6f09faf4985a..5eb51e6cf66e0b7ed4d142f9888f7b0e13eabfd1`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes for the review-mode comparison, and its return is outside this record.
+
+## Standards
+
+Findings: 4. Worst: S1, severity 5.
+
+- S1 (confidence 8), `auto-fix`: `gateBarrier` pastes the FIFO pair and gate line of `barrierLandingFixture`. The repair makes the lease fixture call it, under a widening of ticket 07.
+- S2 (confidence 7), `auto-fix`: the stack and the single landing each map the source facts onto the landing request. The repair moves the mapping into one helper.
+- S3 (confidence 6), `auto-fix`: the infrastructure face rule has two derivations. The repair moves it into one helper.
+- S4 (confidence 5), `auto-fix`: no verb-level test reaches the unresolved-path, member-conflict, or infrastructure branches. The repair pins them. Ticket 11 pins the stopped post-publication step through LS78.
+
+## Spec
+
+Findings: 3. Worst: P1, severity 4.
+
+- P1 (confidence 7), `auto-fix`: the same defect as C1.
+- P2 (confidence 4), `auto-fix`: an assignment-group refusal names no member label. The repair names the label when the assignment resolved.
+- P3 (confidence 4), `no-op`: a destination move after the grade takes `land-handback`, as the ticket's interim rule allows. Ticket 10 now states the stack-raised `land-destination-moved` face for it.
+
+## Coverage
+
+Findings: 2. Worst: C1, severity 4.
+
+- C1 (confidence 7), `auto-fix`: both census cells expect zero. The repair seeds distinct counts for the members.
+- C2 (confidence 6), `auto-fix`: no test reaches the replace branch of rules 4 and 5, or rules 2, 3, and 7. The repair adds a table test on the rerun composer.
+
+## Decisions
+
+- A stack that publishes nothing prints `worktree=active` in its `stack{}` record, because each member stays active.
+- A refusal before the lease prints its refusals and no `stack{}` record, because the spec places the record after the lease.
