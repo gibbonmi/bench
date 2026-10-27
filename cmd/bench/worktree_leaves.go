@@ -68,6 +68,26 @@ var worktreeLeaves = []commandLeaf{
 // row and the grammar the verb refuses with have one source.
 func worktreeSuffix(grammar string) string { return strings.TrimPrefix(grammar, "bench worktree") }
 
+// worktreeHelpRows declares the root help rows of the `bench worktree` family beside its
+// leaves, so the registry row carries no per-leaf help text.
+func worktreeHelpRows() []helpRow {
+	return []helpRow{
+		{Order: 31, Suffix: " shell [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
+		{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
+		{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path for the file tools"},
+		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
+		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeShow), Description: "print one blob from a revision of an active owned worktree"},
+		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeBuild), Description: "build an active owned worktree's tree into its own dist/bench"},
+		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExecGate), Description: "run one active owned worktree's gate"},
+		{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
+		{Order: 36, Suffix: " merge --from <commit|target> <target>", Description: "merge a default-branch commit or a sibling's tip into an owned worktree"},
+		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeReset), Description: "plan or apply a recoverable reset or restore"},
+		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLand), Description: "compose, gate, and publish one owned worktree"},
+		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandResume), Description: "resume incomplete post-publication landing work"},
+		{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar"},
+	}
+}
+
 // poolCommand supplies the resolved Bench home to the argv-only handler.
 func poolCommand(args []string) (string, int) {
 	return worktree.PoolCommand(worktree.Home(), args)
