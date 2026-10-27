@@ -135,4 +135,13 @@ The foreground runs of `internal/gate` did not go red.
 The disk scheduler `none` does not apply I/O priority classes.
 So the idle I/O class of the proxy gave the foreground no I/O priority on this host.
 
+## Reviewer waiver
+
+On 2026-10-27, the reviewer accepted a beside-to-alone ratio of 1.258 and directed the build to continue.
+The reason comes from the debug loop of the orchestrator.
+In that loop, the foreground slowdown stayed the same under nice 19, under SCHED_IDLE, and with one thread pinned to each physical core.
+So the cost comes from shared resources other than CPU time, and no unprivileged priority controls these resources on this host.
+Only `-p=1 -parallel=1` decreased the slowdown, and it decreased the slowdown only in part.
+In that loop, a rerun with a sealed proxy binary showed the same slowdown pattern.
+
 Verdict: stop
