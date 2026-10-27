@@ -26,8 +26,8 @@ At most one background grade runs on the machine, at `-p=2 -parallel=2` and at t
 ## User stories
 
 Line: opus / high.
-Implementation-line reason: BG-C3 is the hardest material chunk, because it adds a detached process chain, a machine queue, and a consumer wait across process boundaries. The map fixes every predicate, but the claim and lifetime seams are new, and timing-sensitive tests are weaker than pure fixtures. So the mid tier at high effort is sufficient, with the harder chunks marked.
-Harder chunks: BG-C2, BG-C3.
+Implementation-line reason: BG-C6 is the hardest material chunk, because it adds a detached process chain, a machine queue, and a consumer wait across process boundaries. The map fixes every predicate, but the claim and lifetime seams are new, and timing-sensitive tests are weaker than pure fixtures. So the mid tier at high effort is sufficient, with the harder chunks marked.
+Harder chunks: BG-C4, BG-C6.
 
 ### The consumers find the background green (map decision 3)
 
@@ -164,7 +164,156 @@ BG-C1 to BG-C4 each hold a seam that a later chunk consumes, so each review clos
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"BG-C0","tickets":["01-measure-the-background-census.md"],"verification":[{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C1","tickets":["02-derive-the-run-binary-source-once.md","03-read-the-baseline-members-from-commits.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C2","tickets":["04-add-the-background-width-input.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C3","tickets":["05-record-background-claims-and-outcomes.md"],"verification":[{"id":"state","command":"bench test --package ./internal/gate/backgroundstate"},{"id":"subprocess","command":"bench test --package ./internal/subprocess/..."},{"id":"lifetime","command":"bench test --check process-lifetime-closure"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C4","tickets":["06-grade-a-chunk-subject-in-the-background.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate/..."},{"id":"command","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"routes","command":"bench test --check bench-sh-routes"},{"id":"routing","command":"bench test --check subcommand-routing"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C5","tickets":["07-complete-the-background-run-outputs.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate/..."},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C6","tickets":["08-start-a-background-grade-after-a-lane-pass.md","09-queue-and-supersede-background-grades.md","10-let-a-chunk-checkpoint-wait-on-a-background-grade.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate/..."},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"subprocess","command":"bench test --package ./internal/subprocess/..."},{"id":"command","command":"bench test --package ./cmd/bench"},{"id":"conformance-package","command":"bench test --package ./internal/conformance"},{"id":"lifetime","command":"bench test --check process-lifetime-closure"},{"id":"system","command":"bench test --check system"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C7","tickets":["11-grade-a-landing-subject-in-the-background.md","12-let-a-landing-wait-on-a-background-grade.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate/..."},{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"published","command":"bench test --package ./internal/landing/published"},{"id":"command","command":"bench test --package ./cmd/bench"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C8","tickets":["13-stop-background-grades-when-work-goes-away.md","14-show-background-outcomes.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree"},{"id":"gocache","command":"bench test --package ./internal/gocache"},{"id":"status","command":"bench test --package ./internal/status"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"command","command":"bench test --package ./cmd/bench"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"BG-C9","tickets":["15-retire-the-prepared-run.md","16-record-the-background-grade-rules.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"command","command":"bench test --package ./cmd/bench"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"prose","command":"bench test --check prose"},{"id":"conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/background-grade/spec.md"}]}
+{
+  "version": 2,
+  "chunks": [
+    {
+      "id": "BG-C0",
+      "tickets": ["01-measure-the-background-census.md"],
+      "verification": [
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "01-measure-the-background-census.md"}
+      ]
+    },
+    {
+      "id": "BG-C1",
+      "tickets": ["02-derive-the-run-binary-source-once.md", "03-read-the-baseline-members-from-commits.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "02-derive-the-run-binary-source-once.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "02-derive-the-run-binary-source-once.md"},
+        {"id": "gate-03", "command": "bench test --package ./internal/gate", "ticket": "03-read-the-baseline-members-from-commits.md"},
+        {"id": "conformance-03", "command": "bench test --check root-conformance", "ticket": "03-read-the-baseline-members-from-commits.md"}
+      ]
+    },
+    {
+      "id": "BG-C2",
+      "tickets": ["04-add-the-background-width-input.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "04-add-the-background-width-input.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "04-add-the-background-width-input.md"}
+      ]
+    },
+    {
+      "id": "BG-C3",
+      "tickets": ["05-record-background-claims-and-outcomes.md"],
+      "verification": [
+        {"id": "state", "command": "bench test --package ./internal/gate/backgroundstate", "ticket": "05-record-background-claims-and-outcomes.md"},
+        {"id": "subprocess", "command": "bench test --package ./internal/subprocess/...", "ticket": "05-record-background-claims-and-outcomes.md"},
+        {"id": "lifetime", "command": "bench test --check process-lifetime-closure", "ticket": "05-record-background-claims-and-outcomes.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "05-record-background-claims-and-outcomes.md"}
+      ]
+    },
+    {
+      "id": "BG-C4",
+      "tickets": ["06-grade-a-chunk-subject-in-the-background.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate/...", "ticket": "06-grade-a-chunk-subject-in-the-background.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "06-grade-a-chunk-subject-in-the-background.md"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance", "ticket": "06-grade-a-chunk-subject-in-the-background.md"},
+        {"id": "routes", "command": "bench test --check bench-sh-routes", "ticket": "06-grade-a-chunk-subject-in-the-background.md"},
+        {"id": "routing", "command": "bench test --check subcommand-routing", "ticket": "06-grade-a-chunk-subject-in-the-background.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "06-grade-a-chunk-subject-in-the-background.md"}
+      ]
+    },
+    {
+      "id": "BG-C5",
+      "tickets": ["07-complete-the-background-run-outputs.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate/...", "ticket": "07-complete-the-background-run-outputs.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "07-complete-the-background-run-outputs.md"}
+      ]
+    },
+    {
+      "id": "BG-C6",
+      "tickets": ["08-start-a-background-grade-after-a-lane-pass.md", "09-queue-and-supersede-background-grades.md", "10-let-a-chunk-checkpoint-wait-on-a-background-grade.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate/...", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "commit", "command": "bench test --package ./internal/commit", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "subprocess", "command": "bench test --package ./internal/subprocess/...", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "lifetime", "command": "bench test --check process-lifetime-closure", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "08-start-a-background-grade-after-a-lane-pass.md"},
+        {"id": "gate-09", "command": "bench test --package ./internal/gate/...", "ticket": "09-queue-and-supersede-background-grades.md"},
+        {"id": "subprocess-09", "command": "bench test --package ./internal/subprocess/...", "ticket": "09-queue-and-supersede-background-grades.md"},
+        {"id": "conformance-09", "command": "bench test --check root-conformance", "ticket": "09-queue-and-supersede-background-grades.md"},
+        {"id": "gate-10", "command": "bench test --package ./internal/gate/...", "ticket": "10-let-a-chunk-checkpoint-wait-on-a-background-grade.md"},
+        {"id": "conformance-10", "command": "bench test --check root-conformance", "ticket": "10-let-a-chunk-checkpoint-wait-on-a-background-grade.md"}
+      ]
+    },
+    {
+      "id": "BG-C7",
+      "tickets": ["11-grade-a-landing-subject-in-the-background.md", "12-let-a-landing-wait-on-a-background-grade.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate/...", "ticket": "11-grade-a-landing-subject-in-the-background.md"},
+        {"id": "published", "command": "bench test --package ./internal/landing/published", "ticket": "11-grade-a-landing-subject-in-the-background.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "11-grade-a-landing-subject-in-the-background.md"},
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "12-let-a-landing-wait-on-a-background-grade.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "12-let-a-landing-wait-on-a-background-grade.md"},
+        {"id": "gate-12", "command": "bench test --package ./internal/gate/...", "ticket": "12-let-a-landing-wait-on-a-background-grade.md"},
+        {"id": "conformance-12", "command": "bench test --check root-conformance", "ticket": "12-let-a-landing-wait-on-a-background-grade.md"}
+      ]
+    },
+    {
+      "id": "BG-C8",
+      "tickets": ["13-stop-background-grades-when-work-goes-away.md", "14-show-background-outcomes.md"],
+      "verification": [
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "13-stop-background-grades-when-work-goes-away.md"},
+        {"id": "gocache", "command": "bench test --package ./internal/gocache", "ticket": "13-stop-background-grades-when-work-goes-away.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "13-stop-background-grades-when-work-goes-away.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "13-stop-background-grades-when-work-goes-away.md"},
+        {"id": "status", "command": "bench test --package ./internal/status", "ticket": "14-show-background-outcomes.md"},
+        {"id": "commit", "command": "bench test --package ./internal/commit", "ticket": "14-show-background-outcomes.md"},
+        {"id": "conformance-14", "command": "bench test --check root-conformance", "ticket": "14-show-background-outcomes.md"}
+      ]
+    },
+    {
+      "id": "BG-C9",
+      "tickets": ["15-retire-the-prepared-run.md", "16-record-the-background-grade-rules.md"],
+      "verification": [
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "15-retire-the-prepared-run.md"},
+        {"id": "command", "command": "bench test --package ./cmd/bench", "ticket": "15-retire-the-prepared-run.md"},
+        {"id": "anchors", "command": "bench test --package ./internal/anchors", "ticket": "15-retire-the-prepared-run.md"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow", "ticket": "15-retire-the-prepared-run.md"},
+        {"id": "prose", "command": "bench test --check prose", "ticket": "15-retire-the-prepared-run.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "15-retire-the-prepared-run.md"},
+        {"id": "anchors-16", "command": "bench test --package ./internal/anchors", "ticket": "16-record-the-background-grade-rules.md"},
+        {"id": "guidance-16", "command": "bench test --check docs-currency-workflow", "ticket": "16-record-the-background-grade-rules.md"},
+        {"id": "prose-16", "command": "bench test --check prose", "ticket": "16-record-the-background-grade-rules.md"},
+        {"id": "conformance-16", "command": "bench test --check root-conformance", "ticket": "16-record-the-background-grade-rules.md"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "whole-project", "command": "bench gate"},
+    {"id": "coverage", "command": "bench coverage --check specs/background-grade/spec.md"}
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft451-background-grade-full-20261027",
+    "orchestrator_session": "claude:bg-orchestrator-20261027",
+    "author_limit": 3,
+    "assignments": {
+      "01-measure-the-background-census.md": [],
+      "02-derive-the-run-binary-source-once.md": [],
+      "03-read-the-baseline-members-from-commits.md": [],
+      "04-add-the-background-width-input.md": [],
+      "05-record-background-claims-and-outcomes.md": [],
+      "06-grade-a-chunk-subject-in-the-background.md": [],
+      "07-complete-the-background-run-outputs.md": [],
+      "08-start-a-background-grade-after-a-lane-pass.md": [],
+      "09-queue-and-supersede-background-grades.md": [],
+      "10-let-a-chunk-checkpoint-wait-on-a-background-grade.md": [],
+      "11-grade-a-landing-subject-in-the-background.md": [],
+      "12-let-a-landing-wait-on-a-background-grade.md": [],
+      "13-stop-background-grades-when-work-goes-away.md": [],
+      "14-show-background-outcomes.md": [],
+      "15-retire-the-prepared-run.md": [],
+      "16-record-the-background-grade-rules.md": []
+    }
+  }
+}
 ```
 
 ## Testing decisions
