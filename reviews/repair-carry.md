@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-carry/spec.md",
-  "plan_digest": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
+  "plan_digest": "sha256:938b5aa4bce270f10d5c4d53c68f7479d3aecd95073556f5f8ce23368afaa575",
   "implementation_session": "",
   "chunks": [
     {
@@ -509,9 +509,9 @@
     {
       "id": "CF-C3",
       "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
-      "tip": "5fe3dd68327d023a54a98e448e87024e1917ca8c",
-      "plan_digest": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
-      "source_digest": "088ed3edeeaa09a8ff08a85c8cd5f57e294a2060",
+      "tip": "5f1995f9bf131549c823901752c5abafd589f5c2",
+      "plan_digest": "sha256:938b5aa4bce270f10d5c4d53c68f7479d3aecd95073556f5f8ce23368afaa575",
+      "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
       "acceptance_rows": [
         "CF33",
         "CF34",
@@ -741,6 +741,63 @@
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t05r1-anchors",
+          "performer": "claude:rc-t05-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-repair1-20261027",
+            "digest": "sha256:2006eab22a0b20a51c5baa1b29da40ccfec58f5ffb625cf1e18835735fad665b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,104,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5f1995f9bf131549c823901752c5abafd589f5c2",
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r1-prose",
+          "performer": "claude:rc-t05-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-repair1-20261027",
+            "digest": "sha256:9ad27b71561a4beb04ed89eab9303b96f0ec93af5f13c75f5a5adc4881968e17",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,187\n"
+          },
+          "source_commit": "5f1995f9bf131549c823901752c5abafd589f5c2",
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t05r1-conformance-05",
+          "performer": "claude:rc-t05-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-repair1-20261027",
+            "digest": "sha256:dd9c4ec44bb7d0000cc1a203a6d7424f3f6cf523a7dc852f955f196e93cd898a",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12623,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5f1995f9bf131549c823901752c5abafd589f5c2",
+          "requirement": "conformance-05",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -882,6 +939,21 @@
     {
       "from": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
       "to": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
+      "chunk_ids": {
+        "CF-C1": [
+          "CF-C1"
+        ],
+        "CF-C2": [
+          "CF-C2"
+        ],
+        "CF-C3": [
+          "CF-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8f9b565265a41e4ead25e6a083e6b8cd3920316ab9105a78a06de4997c109b42",
+      "to": "sha256:938b5aa4bce270f10d5c4d53c68f7479d3aecd95073556f5f8ce23368afaa575",
       "chunk_ids": {
         "CF-C1": [
           "CF-C1"
