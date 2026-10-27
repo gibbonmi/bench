@@ -5,9 +5,12 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"strconv"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
@@ -15,14 +18,40 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 )
 
-// owner starts a grade owner that publishes its pid once its SIGTERM handler is set. On
-// SIGTERM it waits, writes the exited marker, and exits, so a stop that returns at the signal
-// finds no marker. The test reaps the owner, so its exit removes its pid.
+const (
+	readyEnv  = "BACKGROUNDSTATE_OWNER_READY"
+	exitedEnv = "BACKGROUNDSTATE_OWNER_EXITED"
+)
+
+func TestMain(m *testing.M) {
+	processtest.Main(m, map[string]func() int{"owner": ownerHelper})
+}
+
+// ownerHelper is a grade owner with no child. It publishes its pid once its SIGTERM handler is
+// set. On SIGTERM it waits, writes the exited marker, and exits, so a stop that returns at the
+// signal finds no marker.
+func ownerHelper() int {
+	terms := make(chan os.Signal, 1)
+	signal.Notify(terms, syscall.SIGTERM)
+	ready := os.Getenv(readyEnv)
+	if os.WriteFile(ready+".partial", []byte(strconv.Itoa(os.Getpid())), 0o600) != nil || os.Rename(ready+".partial", ready) != nil {
+		return 3
+	}
+	<-terms
+	time.Sleep(300 * time.Millisecond)
+	if os.WriteFile(os.Getenv(exitedEnv), nil, 0o600) != nil {
+		return 3
+	}
+	return 0
+}
+
+// owner starts one owner helper and answers its pid and its exited marker. The test reaps the
+// owner, so its exit removes its pid.
 func owner(t *testing.T) (pid int, exited string) {
 	t.Helper()
 	dir := t.TempDir()
 	ready, exited := filepath.Join(dir, "ready"), filepath.Join(dir, "exited")
-	cmd := exec.Command("sh", "-c", `trap 'sleep 0.3; : > "$2"; exit 0' TERM; echo $$ > "$1.partial" && mv "$1.partial" "$1"; while :; do sleep 0.05; done`, "sh", ready, exited)
+	cmd := processtest.Helper(t, "owner", readyEnv+"="+ready, exitedEnv+"="+exited)
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
