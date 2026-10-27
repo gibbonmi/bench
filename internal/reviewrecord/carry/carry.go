@@ -3,12 +3,12 @@
 package carry
 
 import (
-	"path"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/testreport"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // The reasons that a requirement cannot carry, in the order of the decision steps.
@@ -82,8 +82,9 @@ func reaches(root, command string, reach []string) bool {
 }
 
 // canonical reports whether expression is `./...`, `./.`, `./<path>`, or `./<path>/...`,
-// where <path> is clean, relative, and not `.`. A second spelling of a package could hide
-// it from the cover test.
+// where <path> is a repository path that holds no `...`. The cover test reads only these
+// forms: it does not match a second spelling of a package, and Go matches an inner `...`, as
+// in `./internal/a...`, against `internal/ab`.
 func canonical(expression string) bool {
 	if expression == "./..." || expression == "./." {
 		return true
@@ -93,5 +94,5 @@ func canonical(expression string) bool {
 		return false
 	}
 	rest = strings.TrimSuffix(rest, "/...")
-	return rest != "." && !path.IsAbs(rest) && path.Clean(rest) == rest
+	return tickets.RepositoryPath(rest) && !strings.Contains(rest, "...")
 }

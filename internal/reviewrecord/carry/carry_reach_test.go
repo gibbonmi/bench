@@ -18,6 +18,7 @@ func TestCarryReach(t *testing.T) {
 		systemPkg  = "internal/systemtest"
 		racePkg    = "internal/worktree"
 		conformPkg = "internal/conformance"
+		prefixPkg  = pkgA + "b"
 	)
 	each := func(reason string) []carryCase {
 		return []carryCase{{command: systemRun, reason: reason}, {command: packageRun(pkgA), reason: reason}, {command: conformanceRun, reason: reason}}
@@ -26,6 +27,7 @@ func TestCarryReach(t *testing.T) {
 		{name: "a test change in the run package", delta: testOnlyIn(pkgA), cases: []carryCase{
 			{command: packageRun(pkgA), reason: reached},
 			{command: "bench test --package ./" + path.Dir(pkgA) + "/...", reason: reached},
+			{command: packageRun(pkgB) + " --package ./" + path.Dir(pkgA) + "/...", reason: reached},
 		}},
 		{name: "a doc change", delta: func(f *recordtest.Fixture) { f.CommitDelta("README.md") }, cases: each(notTest)},
 		{name: "a ticket change", delta: func(f *recordtest.Fixture) { f.CommitDelta(f.TicketPath("1.md")) }, cases: each(notTest)},
@@ -39,6 +41,10 @@ func TestCarryReach(t *testing.T) {
 			{command: packageRun(pkgA) + " && true", reason: reached},
 			{command: systemRun + " --fixtures", reason: reached},
 			{command: packageRun(pkgA) + "/", reason: reached},
+			{command: packageRun(pkgA) + " --package ./" + pkgA + "/", reason: reached},
+		}},
+		{name: "a test-only delta in a package that extends the run name", delta: testOnlyIn(prefixPkg), cases: []carryCase{
+			{command: packageRun(pkgA) + "...", reason: reached},
 		}},
 		{name: "an assignment-only plan commit", delta: func(f *recordtest.Fixture) {
 			f.Reassign("1.md")
