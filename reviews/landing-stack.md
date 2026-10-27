@@ -165,6 +165,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c1-standards-r2",
+          "performer": "claude:ls-c1-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5aef2d6c5bd947657e4781f9a7f2a43a46522039",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c1-standards-r2-20261026",
+            "digest": "sha256:aecea370c9f39c9bc08da0cc92b183501a41b46197c117c8ef4116409ef6d6c2",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\n\nS1: closed. internal/landing/stackpolicy/stackpolicy.go:41 calls settlepolicy.CaptureSide, which owns the rule (internal/landing/settlepolicy/settlepolicy.go:101-112). The captureDir const and the strings import are gone, and the package's non-test files hold no capture/ literal. The package doc (stackpolicy.go:1-5) states the import set. purity_census_test.go:13 runs puritycensus.Scan with PolicyPackage() and MustHold(\"stackpolicy.go\"), mirroring settlepolicy/purity_census_test.go:13-15. The policyImport pattern (internal/puritycensus/census.go:35) matches only the exact quoted \".../internal/landing\", so the settlepolicy import passes.\n\nBehavior: CaptureSide returns ok for exactly the capture/ prefix paths, so Overlaps keeps its meaning.\n\nNew findings: none. The changed comments follow bench-craft-comments. The d866a58 prose edits to spec.md:469 and ticket 01 match the code.\n\nAdvice:\n- stackpolicy.go:3-5 says the census \"enforces that boundary\", but PolicyPackage() bans a listed set of parents and does not allow-list, so the sentence slightly overstates what the census grades. Severity under 5.\n\nCommand: no command change is necessary.\nRead: the preflight bind, the repair delta d2263af..95b0a0d, the d866a58 diff, settlepolicy.go:90-130, settlepolicy/purity_census_test.go, puritycensus/census.go:20-90, an rg census of the package, bench-craft-comments/SKILL.md.\n"
+          },
+          "axis": "Standards",
+          "base": "064889b693de71257f22b97e8e49bccbf83c95c8",
+          "tip": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c1-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c1-spec-r2",
+          "performer": "claude:ls-c1-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5aef2d6c5bd947657e4781f9a7f2a43a46522039",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c1-spec-r2-20261026",
+            "digest": "sha256:3a508ccdaf24a92be19c239de7b7046d6dbdc916ef54789cf402bb8e09537b0a",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip b0854b9c.\nChecks:\n- LS1-LS6 stay satisfied. The delta adds tests to LS1 (deleted and delete-versus-modify paths), LS2 (internal/capture/x.go and capture-notes.md stay overlaps), and LS3 (a three-member path). The LS4-LS6 tests are untouched.\n- The overlap set is unchanged. settlepolicy.CaptureSide (settlepolicy.go:101-112) returns ok for the three exact capture paths and for any path with the \"capture/\" prefix, the same set the old HasPrefix test matched. Spec lines 137 and 143 hold.\n- The new census test grades the package under PolicyPackage. The census import regex (puritycensus/census.go:35) does not match \".../landing/settlepolicy\", so the import is allowed.\n- Commit d866a58 changes only the spec import-edges line (spec.md:469) and the ticket 01 sentence. It states the decided import set and adds no behavior.\nAdvice:\n- The source-sentence table (spec.md:~456) still describes the settle policy only as a precedent; it does not conflict with line 469.\nNo command change is necessary.\nRead: the repair diff d2263af..95b0a0d, commit d866a58, settlepolicy.go:1-115, spec.md:136-150, the LS1-LS6 rows and import-edge lines, internal/puritycensus/census.go.\n"
+          },
+          "axis": "Spec",
+          "base": "064889b693de71257f22b97e8e49bccbf83c95c8",
+          "tip": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c1-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c1-coverage-r2",
+          "performer": "claude:ls-c1-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "5aef2d6c5bd947657e4781f9a7f2a43a46522039",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c1-coverage-r2-20261026",
+            "digest": "sha256:3000846b9971f2240824ca5281d2dd75453be98677a9856275164fa4fadef6e3",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\n\nC1: closed. stackpolicy_test.go:28-40 adds gone.go (both members delete) and mixed.go (member 1 deletes, member 2 modifies), each expecting {1, 2}. An overwrite in the deletion branch (stackpolicy.go:26-30) gives {2}, so it reds.\nC2: closed. stackpolicy_test.go:125-137 adds three.go, which all three members change, expecting {1, 2, 3}. `== 2` in place of `>= 2` (stackpolicy.go:41) drops it.\nC3: closed. stackpolicy_test.go:103-117 adds internal/capture/x.go and capture-notes.md, both expected to stay overlaps. The boundary is settlepolicy.CaptureSide (stackpolicy.go:41), a root-anchored HasPrefix(path, \"capture/\") (settlepolicy.go:101-111). An unrun HasPrefix(path, \"capture\") mutant drops capture-notes.md, so the expectation reds; the Contains mutant is killed by internal/capture/x.go.\n\nNew findings: none.\n\nAdvice:\n- purity_census_test.go uses MustHold(\"stackpolicy.go\"); the policyImport regex (census.go:35) permits the settlepolicy import. Judged from the code, not run.\n\nCommand: no command change is necessary.\nRead: preflight evidence, the delta d2263afdb..95b0a0d01, stackpolicy.go, stackpolicy_test.go:1-40, settlepolicy.go:85-124, internal/puritycensus/census.go:1-140.\n"
+          },
+          "axis": "Coverage",
+          "base": "064889b693de71257f22b97e8e49bccbf83c95c8",
+          "tip": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c1-coverage-r1"
+          ]
         }
       ]
     }
@@ -217,3 +283,11 @@ Findings: 3. Worst: C1, severity 5.
 - Add a purity census to the new package, as `settlepolicy` has. The repair adds it, because the S1 repair changes the import set that the census grades.
 - Ticket 02 derives its shared-capture rule from `Overlaps`, and it writes no second capture test.
 - Ticket 10 sorts the paths before it prints the refusals, and it expands a path with three owners into pairs.
+
+## LS-C1 review, round 2
+
+Confirming round over the repair delta `d2263afdb52f6d7f213cb54f774673794b123cd8..95b0a0d014b9314ef61f294ed80426ec3b442872`, with the prose correction `d866a582578bcdc1b68909f9488ecfe872b2adb9`. Repair cycles used: 1 of 2. Standards: 0 findings, and S1 is closed. Spec: 0 findings. Coverage: 0 findings, and C1, C2, and C3 are closed.
+
+The coordinator probe inserted a filter before `return overlaps` that drops each path with more than two owners. It reported `bit` in `TestStackOverlapsKeepAnOutsidePath` with `restored` yes. An earlier omission probe did not compile, so it read `invalid` and proves nothing.
+
+Advice: the package doc says that the census enforces the import boundary. The policy census bans only a listed set of parents.
