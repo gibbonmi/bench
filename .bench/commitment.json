@@ -1356,6 +1356,18 @@
               "path": "roadmap/FT451.md",
               "identity": "sha256:9a863c76151db6b42fa0b065033cbfb227743c8cff4de69ca57a67e5d34f835b"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "background-grade",
+                "path": "specs/background-grade/spec.md",
+                "identity": "sha256:37e94cfa6f0d19ccb66e33fd84a022a4db8d6cad33a118ee7b38eefbcb642092"
+              },
+              "obligations": [
+                "FT451"
+              ]
+            }
           ]
         },
         {
