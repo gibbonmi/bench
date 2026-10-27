@@ -110,6 +110,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT425 (LOW) — a Bench write verb prints the tree state after it runs.**
 
+**FT462 (LOW) — `bench worktree merge --plan` discloses the merge kind and the projected grade.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -162,7 +164,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
 
-**FT420 (HIGH) — a spec-backed build authors independent chunks concurrently by default.**
+**FT420 (HIGH) — the review record and the author charge support the concurrent chunks of a delegated full run.**
 
 **FT433 (LOW, decision required) — every kept anchor row has a red route that a test shows, or the admission rule says that review owns it.**
 
@@ -178,9 +180,21 @@ and the small cuts. The rows below hold the rest.
 
 **FT448 (MEDIUM) — a repair record reruns the requirements that its delta reaches and carries the rest forward.**
 
-**FT452 (MEDIUM) — the planned-cell refusal of `bench record ticket` reads only the ticket's own `Covers:` rows.**
-
 **FT453 (LOW) — the Claude line binding names Haiku as a reviewer-allowed model, and the agent-line guard accepts it.**
+
+**FT454 (MEDIUM) — a delegated full run reviews in unified mode by default, and a plan can change its review mode between chunks.**
+
+**FT455 (MEDIUM, decision required) — a plan-only or sibling commit keeps the test-only confirmation route, and a fence-only widening keeps the author's charge.**
+
+**FT456 (MEDIUM) — until the record holds sibling chunks, a delegated run freezes chunks in plan order and names the owner of each shared helper.**
+
+**FT457 (MEDIUM) — a ticket continuation goes to a fresh narrow session, not a resume of the full author context.**
+
+**FT458 (LOW) — the review record holds each author witness red before the initial review charge.**
+
+**FT459 (LOW) — a build's docs ticket receives each spec-versus-code divergence that the build settled.**
+
+**FT461 (MEDIUM, decision required) — an outcome's phase-close commits fold into its build landing, so one outcome pays one landing gate.**
 
 ## Evidence, diagnostics, and maintenance
 
@@ -217,6 +231,8 @@ and the small cuts. The rows below hold the rest.
 **FT444 (LOW) — each retro improvement item names its fix lever.**
 
 **FT451 (MEDIUM) — the gate grades each lane-passed tip in the background, so a checkpoint or a landing looks up its verdict.**
+
+**FT460 (LOW) — the retro scaffold reports the gate-stage times of the run whose green a landing reuses.**
 
 ## Release qualification
 
