@@ -2,7 +2,7 @@
 
 Blocked by: 01-share-the-plan-command-parser.md, 02-share-the-pass-predicate.md
 Writes: internal/reviewrecord/carry/carry.go (new), internal/reviewrecord/carry/carry_test.go (new), internal/reviewrecord/carry/carry_reach_test.go (new), internal/reviewrecord/recordtest/carry.go (new), internal/gate/delta_checkpoint.go
-Covers: CF4, CF5, CF6, CF7, CF8, CF9, CF10, CF11, CF12, CF13, CF14, CF15, CF16, CF17, CF18, CF19, CF20, CF21, CF22, CF23, CF24, CF25, CF26, CF27, CF28, CF29, CF31, CF32
+Covers: CF4, CF5, CF6, CF7, CF8, CF9, CF10, CF11, CF12, CF13, CF14, CF15, CF16, CF17, CF18, CF19, CF20, CF21, CF22, CF23, CF24, CF25, CF26, CF27, CF28, CF29, CF31, CF32, CF51
 
 ## What to build
 

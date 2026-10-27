@@ -178,8 +178,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT447 (MEDIUM) — the bounded repair policy states the three repair-cost rules of the FT445 build.**
 
-**FT448 (MEDIUM) — a repair record reruns the requirements that its delta reaches and carries the rest forward.**
-
 **FT453 (LOW) — the Claude line binding names Haiku as a reviewer-allowed model, and the agent-line guard accepts it.**
 
 **FT454 (MEDIUM) — a delegated full run reviews in unified mode by default, and a plan can change its review mode between chunks.**
@@ -367,19 +365,18 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT448-repair-carry
-2. FT451-background-grade
-3. FT402-git-cache
-4. FT360-shared-fixtures
-5. FT411
-6. FT125-exact-readers
-7. FT375-residual
-8. FT344-remedy
-9. FT406-rebuild
-10. FT366-rg-guard
-11. FT380-residual
-12. FT354-strict-json
-13. FT363-member-set
-14. FT358-block-reader
-15. FT365-conformance
-16. FT414-preconditions
+1. FT451-background-grade
+2. FT402-git-cache
+3. FT360-shared-fixtures
+4. FT411
+5. FT125-exact-readers
+6. FT375-residual
+7. FT344-remedy
+8. FT406-rebuild
+9. FT366-rg-guard
+10. FT380-residual
+11. FT354-strict-json
+12. FT363-member-set
+13. FT358-block-reader
+14. FT365-conformance
+15. FT414-preconditions

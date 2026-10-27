@@ -75,8 +75,8 @@ func deltaPlan(ctx context.Context, root, runtimeRoot string, plan subject, mode
 	if err != nil {
 		return deltaRun{}, false
 	}
-	packages, eligible := deltaPackages(root, files)
-	if !eligible || !inspectProspective(context.Background(), root, base, time.Now(), false).ReusableGreen {
+	packages, wholeOnly := deltaPackages(root, files)
+	if wholeOnly || len(packages) == 0 || !inspectProspective(context.Background(), root, base, time.Now(), false).ReusableGreen {
 		return deltaRun{}, false
 	}
 	// A list of strings always encodes.
@@ -109,31 +109,45 @@ func deltaBase(root string, checkpoint Checkpoint, source chunkSource) (string, 
 }
 
 // deltaPackages answers the package operands of the delta set: the directory of each changed
-// test file, once, in file order. A test file builds with the package of its directory. It
-// answers false for a test file in the system suite or in a race-table package, whose tests
-// run only in the whole schedule, and for a delta with no test file.
-func deltaPackages(root string, files []string) ([]string, bool) {
-	wholeOnly := map[string]bool{}
+// test file, once, in file order. A test file builds with the package of its directory.
+// wholeOnly is true for a test file in the system suite or in a race-table package, whose
+// tests run only in the whole schedule.
+func deltaPackages(root string, files []string) (packages []string, wholeOnly bool) {
+	wholeOnlyDirs := map[string]bool{}
 	operands, _ := SystemSuite(root)
 	for _, operand := range operands {
 		if dir, ok := strings.CutPrefix(operand, "./"); ok {
-			wholeOnly[dir] = true
+			wholeOnlyDirs[dir] = true
 		}
 	}
 	for _, test := range raceTests {
-		wholeOnly[strings.TrimPrefix(test.PackagePath, "./")] = true
+		wholeOnlyDirs[strings.TrimPrefix(test.PackagePath, "./")] = true
 	}
-	var packages []string
 	for _, file := range files {
 		dir := path.Dir(file)
-		if wholeOnly[dir] {
-			return nil, false
+		if wholeOnlyDirs[dir] {
+			return nil, true
 		}
 		if operand := "./" + dir; !slices.Contains(packages, operand) {
 			packages = append(packages, operand)
 		}
 	}
-	return packages, len(packages) != 0
+	return packages, false
+}
+
+// DeltaReach answers the reach of a test-only delta whose changed paths are files: the package
+// operands of the delta set, then the conformance package operand, because the conformance
+// checks read the whole tree. An empty list reaches only the conformance operand. wholeOnly is
+// true, with no reach, when a changed test file needs a whole-only phase.
+func DeltaReach(root string, files []string) (reach []string, wholeOnly bool) {
+	reach, wholeOnly = deltaPackages(root, files)
+	if wholeOnly {
+		return nil, true
+	}
+	if conformance := "./" + conformancePackagePath; !slices.Contains(reach, conformance) {
+		reach = append(reach, conformance)
+	}
+	return reach, false
 }
 
 // runDelta answers steps 2 and 3 of the run decision for an eligible delta. It reuses a delta

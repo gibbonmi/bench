@@ -43,12 +43,7 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 			repair.Form, repair.Requirement, repair.Err = FormVerification, requirement.ID, fmt.Errorf("%s: "+format, append([]any{scope}, args...)...)
 			return repair
 		}
-		var current *Verification
-		for i := range items {
-			if items[i].Requirement == requirement.ID {
-				current = &items[i]
-			}
-		}
+		current := lastEntry(items, requirement.ID)
 		if current == nil {
 			return refused("missing verification %s; execute and retain %s", requirement.ID, requirement.Command)
 		}
@@ -56,23 +51,85 @@ func checkVerification(items []Verification, requirements []Requirement, plan Pl
 		if err != nil {
 			return fmt.Errorf("%s: verification %s: %w", scope, requirement.ID, err)
 		}
-		if !ok || current.Role != role || current.Performer != performer || current.Command != requirement.Command || current.State != "completed" || current.Outcome != "pass" || current.ExitCode == nil || *current.ExitCode != 0 {
+		fault := gradeEntry(*current, requirement)
+		if !ok || current.Role != role || current.Performer != performer || fault == entryIncomplete {
 			return refused("verification %s is incomplete, failed, or stale; execute and retain %s", requirement.ID, requirement.Command)
 		}
-		if requirement.Probe != "" {
-			bit, restored := false, false
-			if probe := current.Probe; probe != nil && probe.Mutation == requirement.Probe {
-				bit, restored = ProbeBites(*probe)
-			}
-			if !bit {
-				return refused("verification %s requires a successful diagnostic probe %s; run and retain it", requirement.ID, requirement.Probe)
-			}
-			if !restored {
-				return refused("verification %s probe restore failed; restore and verify the source", requirement.ID)
-			}
+		switch fault {
+		case probeSilent:
+			return refused("verification %s requires a successful diagnostic probe %s; run and retain it", requirement.ID, requirement.Probe)
+		case probeUnrestored:
+			return refused("verification %s probe restore failed; restore and verify the source", requirement.ID)
 		}
 	}
 	return nil
+}
+
+// lastEntry is the last entry of requirement id in items, or nil when items hold none.
+// A later entry supersedes an earlier one, so each grade reads only this entry.
+func lastEntry(items []Verification, id string) *Verification {
+	var last *Verification
+	for i := range items {
+		if items[i].Requirement == id {
+			last = &items[i]
+		}
+	}
+	return last
+}
+
+// entryFault names the first condition under which an entry fails its requirement. The
+// order is the refusal order of checkVerification.
+type entryFault int
+
+const (
+	entryPasses     entryFault = iota
+	entryIncomplete            // the command, state, outcome, or exit code fails
+	probeSilent                // the planned probe did not bite
+	probeUnrestored            // the restore of the planned probe failed
+)
+
+// gradeEntry answers entryPasses, or the first fault of entry against requirement in the
+// order above.
+func gradeEntry(entry Verification, requirement Requirement) entryFault {
+	if entry.Command != requirement.Command || entry.State != "completed" || entry.Outcome != "pass" || entry.ExitCode == nil || *entry.ExitCode != 0 {
+		return entryIncomplete
+	}
+	if requirement.Probe == "" {
+		return entryPasses
+	}
+	bit, restored := false, false
+	if probe := entry.Probe; probe != nil && probe.Mutation == requirement.Probe {
+		bit, restored = ProbeBites(*probe)
+	}
+	if !bit {
+		return probeSilent
+	}
+	if !restored {
+		return probeUnrestored
+	}
+	return entryPasses
+}
+
+// EntryPasses is the one pass predicate of a verification entry against its requirement.
+// It reads no performer and no role; checkVerification adds the owner of the plan.
+func EntryPasses(entry Verification, requirement Requirement) bool {
+	return gradeEntry(entry, requirement) == entryPasses
+}
+
+// CarryCandidate answers the last entry of requirement in chunk when that entry passes
+// EntryPasses, holds a source commit, and is current for chunk under EntryCurrent; spec
+// names the record that the source digest excludes. The flag is false for any other
+// entry, and the error reports a failed query.
+func CarryCandidate(root, spec string, chunk Chunk, requirement Requirement) (Verification, bool, error) {
+	entry := lastEntry(chunk.Verification, requirement.ID)
+	if entry == nil || !EntryPasses(*entry, requirement) || entry.SourceCommit == "" {
+		return Verification{}, false, nil
+	}
+	current, err := EntryCurrent(root, spec, chunk, *entry)
+	if err != nil || !current {
+		return Verification{}, false, err
+	}
+	return *entry, true, nil
 }
 
 // EntryCurrent is the one predicate of whether a chunk verification entry is current

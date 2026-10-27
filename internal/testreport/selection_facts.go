@@ -5,6 +5,9 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/shellcommand"
+	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 // CheckForm and PackageForm are the two selection forms a prepared request carries. A
@@ -77,6 +80,37 @@ func (r Request) Filtered() bool {
 // GradesProse answers whether the request names the prose check.
 func (r Request) GradesProse() bool {
 	return r.focused.check == ProseCheckName
+}
+
+// PlanSelection prepares one plan command. Only a lexed stream of one simple command
+// whose words start with `bench test` reaches the grammar, so a compound line, a foreign
+// executable, or an assignment prefix answers false.
+func PlanSelection(root, command string) (Request, bool) {
+	stream := shellcommand.Parse(command)
+	if stream.Unlexed || len(stream.Commands) != 1 {
+		return Request{}, false
+	}
+	span := stream.Commands[0]
+	words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
+	if len(words) < 2 || strings.Join(words[:2], " ") != reviewrecord.TestCommand {
+		return Request{}, false
+	}
+	request, line, _ := Prepare(root, words[2:])
+	return request, line == ""
+}
+
+// PackageCovers answers whether one package expression equals element or covers it at a
+// segment boundary. The parent `.` of `./...` covers every `./` element, the root element
+// `./.` included.
+func PackageCovers(target, element string) bool {
+	parent, recursive := strings.CutSuffix(target, "/...")
+	switch {
+	case target == element:
+		return true
+	case !recursive:
+		return false
+	}
+	return tickets.Covers(parent, element)
 }
 
 // CheckTakesRun answers whether the named check takes a --run pattern. Only the system
