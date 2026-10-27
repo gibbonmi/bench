@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:3a488226f798d4b679e90398c8906526574cada61446e16eb27202fe49e3d6e0",
+  "plan_digest": "sha256:0eaa652fec433610c8bf3ae4ffc793034bebc2f0da551d8fe45d73084d3a1722",
   "implementation_session": "",
   "chunks": [
     {
       "id": "LS-C1",
       "base": "064889b693de71257f22b97e8e49bccbf83c95c8",
-      "tip": "d172cd9967dcd2b4dff64de7732b5c959f388336",
-      "plan_digest": "sha256:3a488226f798d4b679e90398c8906526574cada61446e16eb27202fe49e3d6e0",
-      "source_digest": "7d04e4680b5236884008f6227e82a4e7453b43a5",
+      "tip": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+      "plan_digest": "sha256:0eaa652fec433610c8bf3ae4ffc793034bebc2f0da551d8fe45d73084d3a1722",
+      "source_digest": "5aef2d6c5bd947657e4781f9a7f2a43a46522039",
       "acceptance_rows": [
         "LS1",
         "LS2",
@@ -56,6 +56,44 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15104,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "d172cd9967dcd2b4dff64de7732b5c959f388336",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c1-t01-r1-stackpolicy",
+          "performer": "claude:ls-t01-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5aef2d6c5bd947657e4781f9a7f2a43a46522039",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t01-repair1-20261026",
+            "digest": "sha256:ab5334965d0f7a095a7203ad1ebfe0265c6d7d3962507a1324ff6f2cec22c31c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing/stackpolicy,pass,2,7\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "requirement": "stackpolicy",
+          "command": "bench test --package ./internal/landing/stackpolicy",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c1-t01-r1-root-conformance",
+          "performer": "claude:ls-t01-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5aef2d6c5bd947657e4781f9a7f2a43a46522039",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t01-repair1-20261026",
+            "digest": "sha256:f8f91ce4399a6be10a59869e3902b4e3a0378ee97fe5bdbcf5b1f7849dd95371",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14442,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "95b0a0d014b9314ef61f294ed80426ec3b442872",
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -137,7 +175,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:3a488226f798d4b679e90398c8906526574cada61446e16eb27202fe49e3d6e0",
+      "to": "sha256:0eaa652fec433610c8bf3ae4ffc793034bebc2f0da551d8fe45d73084d3a1722",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
