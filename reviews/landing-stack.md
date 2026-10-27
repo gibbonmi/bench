@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:a910f7cc2a005964abc1eac29998f4f35f630d753afad8bf807992cf33338c7b",
+  "plan_digest": "sha256:162a37dac09990004f89a3886a6b3973d14d9bb163ca99c8370cabc2d03e859d",
   "implementation_session": "",
   "chunks": [
     {
@@ -859,9 +859,9 @@
     {
       "id": "LS-C4",
       "base": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
-      "tip": "f2b81fc002c18b450b3c7a32b8a4505506ff21d4",
-      "plan_digest": "sha256:a910f7cc2a005964abc1eac29998f4f35f630d753afad8bf807992cf33338c7b",
-      "source_digest": "58a1094e71124b28b08ad0cd4e384143d8852a66",
+      "tip": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+      "plan_digest": "sha256:162a37dac09990004f89a3886a6b3973d14d9bb163ca99c8370cabc2d03e859d",
+      "source_digest": "f0e57db007e9c8836843c0145eecea2e8a792196",
       "acceptance_rows": [
         "LS54",
         "LS55",
@@ -970,6 +970,44 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14351,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "f2b81fc002c18b450b3c7a32b8a4505506ff21d4",
+          "requirement": "root-conformance-06",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c4-t06-r1-worktree",
+          "performer": "claude:ls-t06-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f0e57db007e9c8836843c0145eecea2e8a792196",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t06-repair1-20261026",
+            "digest": "sha256:f918b15d5824141cfe631c6745e849387e4fabffae087fcffa97cc99e7a95c12",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,140926,1544\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c4-t06-r1-root-conformance-06",
+          "performer": "claude:ls-t06-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f0e57db007e9c8836843c0145eecea2e8a792196",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t06-repair1-20261026",
+            "digest": "sha256:70b114f705c0a0e3e5e68592a02cf1c2ed1c96a96d707c5c1916f30a4a67bf6f",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14620,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
           "requirement": "root-conformance-06",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -1139,6 +1177,24 @@
         ],
         "LS-C3": [
           "LS-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a910f7cc2a005964abc1eac29998f4f35f630d753afad8bf807992cf33338c7b",
+      "to": "sha256:162a37dac09990004f89a3886a6b3973d14d9bb163ca99c8370cabc2d03e859d",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ],
+        "LS-C3": [
+          "LS-C3"
+        ],
+        "LS-C4": [
+          "LS-C4"
         ]
       }
     }
