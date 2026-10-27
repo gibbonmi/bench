@@ -85,23 +85,23 @@ func TestLandStackIncompleteNamesTheResume(t *testing.T) {
 
 // TestLandStackResumeProvesEachMember is LS79. A published commit whose second parent is
 // not the tip of a listed member refuses before any step, at the top merge and at a walked
-// merge below it. The walked merge holds a commit on the review base in place of member 1,
-// so only the second-parent proof refuses it.
+// merge below it. The walked merge holds a commit with member 1's tree on the review base in
+// place of member 1's tip, so only the second-parent proof refuses it.
 func TestLandStackResumeProvesEachMember(t *testing.T) {
 	t.Parallel()
 	for _, row := range []struct {
-		name string
+		name, detail string
 		// forge publishes a merge that the stack did not publish over the published top,
 		// and answers it.
 		forge func(t *testing.T, f stackFixture, top string) string
 	}{
-		{"top", func(t *testing.T, f stackFixture, top string) string {
+		{"top", "the second parent of the published commit is not the tip of exactly one stack member", func(t *testing.T, f stackFixture, top string) string {
 			forged := gitOutput(t, f.root, "commit-tree", top+"^{tree}", "-p", top+"^1", "-p", f.base, "-m", "forged top")
 			gitRun(t, f.root, "update-ref", "refs/heads/main", forged)
 			return forged
 		}},
-		{"walked", func(t *testing.T, f stackFixture, top string) string {
-			stranger := gitOutput(t, f.root, "commit-tree", f.base+"^{tree}", "-p", f.base, "-m", "not a member")
+		{"walked", "stack member 1: published commit does not authenticate the reviewed source parent", func(t *testing.T, f stackFixture, top string) string {
+			stranger := gitOutput(t, f.root, "commit-tree", f.members[0].tip+"^{tree}", "-p", f.base, "-m", "not a member")
 			lower := gitOutput(t, f.root, "commit-tree", top+"^1^{tree}", "-p", f.base, "-p", stranger, "-m", "forged member 1")
 			forged := gitOutput(t, f.root, "commit-tree", top+"^{tree}", "-p", lower, "-p", f.members[1].tip, "-m", "forged member 2")
 			gitRun(t, f.root, "update-ref", "refs/heads/main", forged)
@@ -113,10 +113,13 @@ func TestLandStackResumeProvesEachMember(t *testing.T) {
 			f := stackLandingFixture(t, "stack-resume-proof-"+row.name, 2, nil)
 			file, top, _ := interruptedStack(t, f, 1)
 			forged := row.forge(t, f, top)
+			// The green marker follows the forged destination, so the destination proofs
+			// hold and the member proofs decide.
+			gitRun(t, f.root, "update-ref", "refs/bench/green/main", forged)
 			before := stackResumeSnapshot(t, f.root)
 			r := runVerb(t, verbLand, f.call(stackResumeArgs(forged, file)...))
-			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail=") || strings.Contains(r.stdout, "stack{") {
-				t.Fatalf("resume of a forged merge = (%d, %q, %q), want exit 1 and a refusal", r.exit, r.stdout, r.stderr)
+			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail="+row.detail) || strings.Contains(r.stdout, "stack{") {
+				t.Fatalf("resume of a forged merge = (%d, %q, %q), want exit 1 and the refusal %q", r.exit, r.stdout, r.stderr, row.detail)
 			}
 			if after := stackResumeSnapshot(t, f.root); after != before {
 				t.Fatalf("resume of a forged merge changed state:\n%s\nwant\n%s", after, before)
