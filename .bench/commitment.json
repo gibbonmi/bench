@@ -1961,6 +1961,14 @@
       "identity": "sha256:8ca86391f7f91b81881324c97f699b1ae7879ea0401e8e4fc4cacf6cfc9a4aeb",
       "source": "4d950d968df0c5bad969b38a8543b65d11314828",
       "evidence": "44e8f5fe711c94b580b1fa0abe90f1fbcbaa8c44"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT448-repair-carry",
+      "binding": "repair-carry",
+      "identity": "sha256:894c64ff1c3dba29c2e665476abded0cf35a1ed9d78f79b90260d237a51daa44",
+      "source": "2d0842cfb227e50445ae7317d80f419466660c7d",
+      "evidence": "ffe82d9afd92559a9854365751b87f538edd1bba"
     }
   ]
 }

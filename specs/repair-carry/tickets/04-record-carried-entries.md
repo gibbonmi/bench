@@ -1,7 +1,7 @@
 # Record carried entries in the ticket form
 
 Blocked by: 03-decide-the-carry.md
-Writes: internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/ticket_carry_test.go (new), internal/reviewrecord/recordtest/carry.go (new), cmd/bench/help_inventory_test.go
+Writes: internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/ticket_carry_test.go (new), internal/reviewrecord/recordtest/carry.go (new), cmd/bench/help_inventory_test.go, internal/reviewrecord/recordtest/stage.go
 Covers: CF33, CF34, CF35, CF36, CF37, CF38, CF39, CF40, CF41, CF42, CF43, CF44, CF48
 
 ## What to build

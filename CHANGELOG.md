@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Repair carry
+
+- Changed `bench record ticket`, which now writes a carried entry for each unstaged owed requirement that the repair delta cannot reach. The carried entry keeps the source commit, the exit code, and the excerpt of the last entry of that requirement, and that entry must pass. Its native reference is `carried:` followed by the evidence ID of that entry. The ticket output row adds the `carried` cell, which lists the carried requirement IDs or `none`. Before, the verb refused the call when one owed requirement had no staged excerpt, so a test-only repair reran the whole system suite.
+- Added the test-only bound of the carry. Only a test-only repair delta carries, and an assignment-only plan commit keeps that delta test-only. A doc-only, production, `bench spec widen`, or fold delta reruns every owed requirement. A changed test file of the system suite or of a race-table package also reruns every owed requirement.
+- Changed the missing-stage refusal of `bench record ticket`, which now lists only the requirements that cannot carry and adds `; carry: <id> (<reason>)` for each of them. A repair session can call the verb before it runs a check, and the refusal names each check to run.
+- Changed `/bench-implement-spec` and the operating guide, which now state that a repair session runs each check that its repair delta reaches. Before, a repair session ran each check that its ticket owed.
+
 ### Probe narrowing to the expect test
 
 - Changed `bench probe`, which now narrows a `--package` selection with no `--run` to the test that `--expect` names and its subtests. A single probe narrows its baseline run and its mutated run. In a `--mutants` set, each entry with an `--expect` test runs its mutant over that test only, and the baseline runs the union of the entry tests. When a matched entry names no test, the baseline and that entry run the whole selection. An explicit `--run` and each `--check` selection do not change. Before, each run without `--run` ran the whole package.

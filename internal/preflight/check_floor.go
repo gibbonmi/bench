@@ -7,15 +7,13 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
-	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
 const checkFloorName = "check-floor"
 
-// testCommand is the command whose plan requirements can satisfy a floor element, and the
-// command that each red names.
+// testCommand is the command that each red names.
 const testCommand = reviewrecord.TestCommand
 
 // commandPackageElement is the floor element of the command tests. A ticket owes it when
@@ -52,7 +50,7 @@ func gatherCheckFloor(ctx context.Context, root string, parsed []tickets.Ticket,
 	}
 	for _, chunk := range plan.Chunks {
 		for _, requirement := range chunk.Verification {
-			if selection, ok := planSelection(root, requirement.Command); ok {
+			if selection, ok := testreport.PlanSelection(root, requirement.Command); ok {
 				facts.Selections[requirement.Command] = selection
 			}
 		}
@@ -85,23 +83,6 @@ func floorElements(ctx context.Context, root string, writes []string, conformanc
 		elements = append(elements, commandPackageElement)
 	}
 	return elements, nil
-}
-
-// planSelection prepares one plan command. Only a lexed stream of one simple command
-// whose words start with `bench test` reaches the grammar, so a compound line, a foreign
-// executable, or an assignment prefix satisfies nothing.
-func planSelection(root, command string) (testreport.Request, bool) {
-	stream := shellcommand.Parse(command)
-	if stream.Unlexed || len(stream.Commands) != 1 {
-		return testreport.Request{}, false
-	}
-	span := stream.Commands[0]
-	words := shellcommand.ProjectCommandWords(stream.Tokens[span.Start:span.End])
-	if len(words) < 2 || strings.Join(words[:2], " ") != testCommand {
-		return testreport.Request{}, false
-	}
-	request, line, _ := testreport.Prepare(root, words[2:])
-	return request, line == ""
 }
 
 // checkFloorCheck grades each chunk once: the union of its tickets' floors against the
@@ -189,22 +170,8 @@ func satisfies(selection testreport.Request, element string) bool {
 		return false
 	}
 	return slices.ContainsFunc(selection.Packages(), func(target string) bool {
-		return packageCovers(target, element)
+		return testreport.PackageCovers(target, element)
 	})
-}
-
-// packageCovers answers whether one package expression equals element or covers it at a
-// segment boundary. The parent `.` of `./...` covers every `./` element, the root element
-// `./.` included.
-func packageCovers(target, element string) bool {
-	parent, recursive := strings.CutSuffix(target, "/...")
-	switch {
-	case target == element:
-		return true
-	case !recursive:
-		return false
-	}
-	return tickets.Covers(parent, element)
 }
 
 // floorCommand is the exact command that satisfies one element.
