@@ -2866,6 +2866,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c10-standards-r2",
+          "performer": "claude:ls-c10-standards-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "89ab48538c29d1e1dda996bf62606009c3b0133e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c10-standards-r2-20261027",
+            "digest": "sha256:c7b3c837c77ccfe5f467cb660fd57d94678f11588a285bea4b033f58fa2848b1",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\n\nS1: closed. CHANGELOG.md:13-24 uses vertical lists for the preflight members (14-17) and the stack surfaces (19-22); every remaining sentence in that span is 20 words or fewer.\nS2: closed. bench-drain.md:228-229 is split into a 13-word and a 15-word sentence.\nC1/P2: closed. bench-drain.md:305 points to the landing that section 5 states (224-231), so the rule keeps one source; the sentence is 21 words, descriptive.\nShadow find 4: closed. BENCH-reference.md:500 cites ADR 0032, which exists and states the same decision.\nS3 stays no-op.\n\nThe reference delta (the list at 509-513, the land-handback sentence at 542, the exit-1 line at 558) holds six sentences or fewer per paragraph, and each sentence is within the limits. No new binding-rule break.\n\nAdvice:\n- BENCH-reference.md:500 joins the landing stack and its ADR in one sentence.\n- BENCH-reference.md:558 is a terse field-style line, acceptable in the list.\n\nCommand: no command change is necessary.\nRead: the bind (current=true, dirty=false), the repair delta 9eca3a48..b85f8f12, ste-prose.md, bench-drain.md 196-240 and line 305, BENCH-reference.md 498-567, an ADR and CHANGELOG search.\n"
+          },
+          "axis": "Standards",
+          "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "tip": "b85f8f121e6aae19969ebe5588266e4fd0a8c0c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c10-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c10-spec-r2",
+          "performer": "claude:ls-c10-spec-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "89ab48538c29d1e1dda996bf62606009c3b0133e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c10-spec-r2-20261027",
+            "digest": "sha256:0ac1c1b5b9c0b88dd61c626ebc676a6e711b2a93a245be41f8f077479a57df79",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\n- P1: closed. specs/landing-stack/spec.md:194-195 matches land_stack.go:70-75 and :91-96 (a refusal before the lease returns 1 with no table and no record), :119-125 (exit 3 beats a refused member), and land_stack_resume.go:114-120; the reference at .bench/BENCH-reference.md:552-553 agrees.\n- P2/C1: closed. .agents/commands/bench-drain.md:305 points to the section 5 landing (:228-229).\n- Shadow find 1: closed. BENCH-reference.md:509-513 matches land_stack_input.go:143-145.\n- Shadow find 2: closed. BENCH-reference.md:558 matches land_stack.go:70-124.\n- Shadow find 3: closed. BENCH-reference.md:542 matches land_stack.go:268-289.\n- Shadow find 4: closed. BENCH-reference.md:500 cites ADR 0032, which exists.\n- LS83 is untouched; LS84 and LS85 stay met.\n\nNew findings: none.\n\nAdvice: spec.md:195 says exit 1 means the stack \"refused at least one member\", but the code also exits 1 on stack-level refusals that name no member (land_stack.go:99, :285-289); \"the stack refused\" would match the reference.\n\nCommand: no command change is necessary.\nRead: the repair delta, the spec correction diff, land_stack.go (:50-310), land_stack_input.go (:100-163), land_stack_resume.go (:94-137), BENCH-reference.md (:490-567), reviews/landing-stack.md (:3657-3690), bench-drain.md, spec rows LS83-85 and stories 41-42, the docs/adr listing.\n"
+          },
+          "axis": "Spec",
+          "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "tip": "b85f8f121e6aae19969ebe5588266e4fd0a8c0c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c10-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c10-coverage-r2",
+          "performer": "claude:ls-c10-coverage-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "89ab48538c29d1e1dda996bf62606009c3b0133e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c10-coverage-r2-20261027",
+            "digest": "sha256:1089dc389cf0784f516bed5dd8cbcad7fa74291e47b3202f1878557d62b983ca",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\n\nBind: current=true, dirty_record=false, base df1930ce, source_tip 6e3df0f2.\n\nC1: closed. .agents/commands/bench-drain.md:305-306 now says each item completed through \"implement now\" lands green before the drain's batch commit, in the landing that section 5 states.\n\nLS85: consistent across the drain file. Lines 228-231 land two or more verified light-path tickets as one landing stack, each member keeps its tickets-only folder, and one ticket lands as the light-path row states; lines 16-18, 76, 78, and 126 name no landing count; line 305 defers to section 5.\nLS83: ADR 0032 is untouched and still states the members, the proof, the schedule, the attribution, the window rule, and the absent persistent queue.\nLS84: CONTEXT.md:420-431 holds the glossary terms; BENCH-reference.md:500 cites ADR 0032; line 761 keeps the landing stack whole-gate case; the changelog keeps the same facts in lists.\n\nNeedles: the drain edits touch no anchored text (recurrence_maintenance_contract_test.go, the row_next_grammar test, docs_workflow_checks_test.go).\n\nAdvice: none.\nCommand: no command change is necessary.\nRead: the bind, the repair diff 9eca3a48..b85f8f12, bench-drain.md hits, spec rows LS83-85, ADR 0032, BENCH-reference.md:500 and :745-770, CONTEXT.md hits, conformance needle searches.\n"
+          },
+          "axis": "Coverage",
+          "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "tip": "b85f8f121e6aae19969ebe5588266e4fd0a8c0c0",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c10-coverage-r1"
+          ]
         }
       ]
     }
@@ -3687,3 +3753,7 @@ The orchestrator accepts four shadow finds for the repair:
 - The reference exit-1 line says that the members table shows what landed, but a refusal before the lease prints no table.
 - The reference omits the `land-handback` refusal for a moved destination that no member lacks.
 - The reference does not cite ADR 0032, as sibling notes cite their ADRs.
+
+## LS-C10 review, round 2
+
+The repair `b85f8f121e6aae19969ebe5588266e4fd0a8c0c0` closed S1, S2, C1, P2, and the four shadow finds. The orchestrator's spec prose correction closed P1. S3 stays `no-op`. The confirming round passed on all three axes. The ticket has no test expectation, so the repair owed no witness red.
