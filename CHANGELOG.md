@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade records
+
+- Added the records of the background grade. A claim holds a grade key for a running grade, and it names the key, the worktree, the owner pid, and the boot id. A claim is live only while its owner process exists and its boot id is the current boot id. The claims are in the git common directory beside the evidence store. The background record of a worktree names the latest outcome (`green`, `red`, `aborted`, or `stopped`), the grade key, the tip, and the log path, and it is in the git directory of that worktree. The machine queue and its slot are under the Bench home. An absent record reads as empty, and a present record that does not read is an error. Every record is written through the durable replacement.
+- Added the stop of a background grade. The stop sends SIGTERM to the owner of a live claim through the process lifetime owner, and it returns only after that owner has exited. The stop of a claim that is not live sends no signal.
+
 ### Background width input
 
 - Added the `BENCH_GATE_WIDTH` gate input. When the gate-phases process has a non-empty value, each Go test phase of the gate runs with `-p=2` and `-parallel=2`. These phases are the test, race, and system phases, the test phases of the delta and reader sets, and the core test step. The input is not a member of the grade key, so a green at this width answers a run of the same subject at another width. No phase child inherits the input. A run without the input keeps its argv.

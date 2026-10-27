@@ -23,7 +23,7 @@ var storeBase = systemBase
 // same root. Each root directory must be a real directory with mode 0700 that the effective
 // user owns.
 func storeRoot() (string, error) {
-	boot, err := bootID()
+	boot, err := BootID()
 	if err != nil {
 		return "", err
 	}
