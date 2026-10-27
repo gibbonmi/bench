@@ -32,7 +32,7 @@ const (
 	refusedBuildInput = "embed or shellcheck path"
 	refusedLink       = "link or gitlink"
 	refusedNoTable    = "no reader table"
-	refusedIdentity   = "new oracle identity"
+	refusedIdentity   = "new grade identity"
 	refusedHold       = "reader hold"
 	refusedChainGap   = "chain gap"
 	refusedChainBound = "reader landing bound"

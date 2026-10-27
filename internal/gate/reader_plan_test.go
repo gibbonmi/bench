@@ -312,12 +312,12 @@ func TestReaderPlanRunsWholeWithoutATable(t *testing.T) {
 	f.refuses(docsChange, nil, refusedNoTable)
 }
 
-// TestReaderPlanRunsWholeForANewOracle proves that a table of another identity runs the whole
-// gate.
-func TestReaderPlanRunsWholeForANewOracle(t *testing.T) {
+// TestReaderPlanRunsWholeForANewGradeIdentity proves that a table of another grade identity
+// runs the whole gate under a case that names the grade identity.
+func TestReaderPlanRunsWholeForANewGradeIdentity(t *testing.T) {
 	f := newLandingFixture(t, nil)
 	f.storeTable(strings.Repeat("a", 64))
-	f.refuses(docsChange, nil, refusedIdentity)
+	f.refuses(docsChange, nil, "new grade identity")
 }
 
 // TestReaderPlanRunsWholeForAnOpenSubject proves that an open oracle subject runs the whole

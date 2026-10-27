@@ -29,6 +29,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Changed `bench gate`, `bench commit`, `bench worktree merge`, `bench worktree land`, and the checkpoints, which now look up a green under the grade key before they select the delta set or the reader set. On a hit, each verb still runs its own purpose and evidence checks. A reuse records the gate cache of its checkout with the recorded time of the source run. `--fresh` and a declared lane skip the lookup.
 - Changed the complete checkpoint in a repository that declares build inputs, which now runs under the installed landing broker. When the running executable differs from the broker, the checkpoint execs the broker, so its green answers the landing of the same tree. Before, a spec landing ran a second whole gate on the tree of its complete checkpoint.
 - Added the `checkpoint-broker-unavailable` refusal face. The complete checkpoint refuses with it, and runs no gate, when it cannot authenticate or exec the broker.
+- Changed the reader set refusal line, which now names the case `new grade identity` when the grade identity differs from the identity of the reader table. Before, the case named the oracle identity, although the plan compares the grade identity.
 
 ### Lane fixture bite
 
