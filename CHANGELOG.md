@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### One run-binary source for the grade key
+
+- Changed the grade key of a gate run, which now frames the build inputs of the source root that the run selects for its run binary. One derivation answers that root for the run and for the key. An ordinary run whose `BENCH_KIT` names another checkout now frames the build inputs of that checkout. Before, the key picked the graded tree when the tree held `.bench/gate-prospective.sh`, while the run built from the kit.
+- Changed the grade key of a run that selects no run binary, because it has no owner or its gate does not route through the phase table. That key now frames one stable value. Before, it framed the build inputs of a source that the run never built. The key of a clean kit worktree does not change.
+
 ### Repair carry
 
 - Changed `bench record ticket`, which now writes a carried entry for each unstaged owed requirement that the repair delta cannot reach. The carried entry keeps the source commit, the exit code, and the excerpt of the last entry of that requirement, and that entry must pass. Its native reference is `carried:` followed by the evidence ID of that entry. The ticket output row adds the `carried` cell, which lists the carried requirement IDs or `none`. Before, the verb refused the call when one owed requirement had no staged excerpt, so a test-only repair reran the whole system suite.

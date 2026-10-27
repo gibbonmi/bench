@@ -308,18 +308,6 @@ func (m runMode) String() string {
 	return "ordinary"
 }
 
-// runBinarySource answers the source root of the run binary: the graded tree when a
-// prospective gate grades a tree that builds its own run binary, and the kit otherwise. The
-// run's selection and the grade identity both read it.
-func runBinarySource(kind Kind, runtimeRoot, storageRoot string) string {
-	if kind == ProspectiveGateSh &&
-		isRegularFile(filepath.Join(runtimeRoot, "scripts", "go-build.sh")) &&
-		GoModuleRoot(runtimeRoot) {
-		return runtimeRoot
-	}
-	return kitRoot(storageRoot)
-}
-
 // sameDirectory reports whether two paths name the same directory, by file identity
 // rather than by string equality. This way a symlinked or differently-spelled path to
 // one tree still matches. Either stat failing answers no, which is the fail-closed

@@ -141,7 +141,7 @@ func TestOracleIdentityAndOracleShareTheClosure(t *testing.T) {
 			return build(t, root, root, policyVersion), build(t, root, t.TempDir(), policyVersion)
 		}},
 		{"run binary member", true, false, func(t *testing.T) (subject, subject) {
-			root := oracleIdentityFixture(t)
+			root := ownedPhaseTableFixture(t)
 			writeRunBinarySource(t, root, "")
 			before := build(t, root, root, policyVersion)
 			writeRunBinarySource(t, root, " println() ")

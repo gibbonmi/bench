@@ -88,29 +88,31 @@ func frameBaselineSchedule(w io.Writer, identityRoot string) {
 }
 
 func buildProspectiveSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
-	s, err := buildSubjectForGeneration(root, identityRoot, generation)
-	if err != nil {
-		return subject{}, err
-	}
-	if _, err := os.Lstat(filepath.Join(root, prospectiveGatePath)); err == nil {
-		s.Resolution = Resolution{Kind: ProspectiveGateSh}
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return subject{}, err
-	}
-	return s, nil
+	return buildSubjectInMode(root, identityRoot, policyVersion, generation.tree, true)
 }
 
-// hashProspectivePreparation hashes the prospective script of root when it exists, and
-// reports whether it exists. The baseline runner enters the oracle digest only.
-func hashProspectivePreparation(c *identityCollector, root, identityRoot, pathEnv string) (bool, error) {
+// prospectiveResolution answers the resolution that a prospective run of root executes: the
+// prospective script when root holds one, and res otherwise.
+func prospectiveResolution(root string, res Resolution) (Resolution, error) {
+	if _, err := os.Lstat(filepath.Join(root, prospectiveGatePath)); err == nil {
+		return Resolution{Kind: ProspectiveGateSh}, nil
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return Resolution{}, err
+	}
+	return res, nil
+}
+
+// hashProspectivePreparation hashes the prospective script of root when it exists. The
+// baseline runner enters the oracle digest only.
+func hashProspectivePreparation(c *identityCollector, root, identityRoot, pathEnv string) error {
 	path := filepath.Join(root, prospectiveGatePath)
 	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
-		return false, nil
+		return nil
 	} else if err != nil {
-		return false, err
+		return err
 	}
 	frame(c.w, "prospective preparation")
 	frame(c.oracle, "baseline runner")
 	frame(c.oracle, baselineRunnerIdentity(identityRoot))
-	return true, c.hashExecutable(root, path, pathEnv, true, 0)
+	return c.hashExecutable(root, path, pathEnv, true, 0)
 }

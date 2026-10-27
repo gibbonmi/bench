@@ -200,7 +200,7 @@ func TestProspectivePhaseScheduleRefusesAnUnusableBaseline(t *testing.T) {
 // so a key over the oracle digest names one record across each change.
 func TestProspectiveEvidenceKeysToTheTreeAndRunBinary(t *testing.T) {
 	t.Setenv("BENCH_KIT", "")
-	root := oracleIdentityFixture(t)
+	root := ownedPhaseTableFixture(t)
 	writeRunBinarySource(t, root, "")
 	setRunningExecutable(t, "one")
 	tree := strings.Repeat("a", 40)
