@@ -30,5 +30,7 @@ func TestChunkChainAnchors(t *testing.T) {
 		{file: ".agents/commands/bench-review-implementation.md", needle: "Preflight supplies the source and plan digests.", want: "chunk chain: the review phase restored the preflight digest sentence", forbidden: true},
 		{file: ".agents/commands/bench-review-implementation.md", needle: "Record the performer, role, model, effort, frozen base and tip, source, state, and native result.", want: "chunk chain: the review phase restored the hand-recording field sentence", forbidden: true},
 		{file: ".agents/commands/bench-review-implementation.md", needle: "Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.", want: "chunk chain: the review phase restored the hand-embedded excerpt sentence", forbidden: true},
+		{file: implement, needle: "A repair session runs each check that its ticket owes once at its repair commit, and its `bench record ticket` call refreezes the chunk at that commit.", want: "chunk chain: the implement phase restored the full rerun of a repair session", forbidden: true},
+		{file: ".bench/BENCH.md", needle: "A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage.", want: "chunk chain: the operating guide restored the full rerun of a repair session", forbidden: true},
 	}}.check(t)
 }
