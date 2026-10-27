@@ -2436,7 +2436,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c9-standards-r1",
+          "performer": "claude:ls-c9-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "15fbae907f0610e99a738e91ea86ba2bfbe07e8a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c9-standards-20261026",
+            "digest": "sha256:94f196e080119dad97f5f2c587afe907f3b4f18145663176696e3afe4459684d",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 2\nworst: S1, severity 4 (a second home for the post-publication step order)\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, base bbe9c277; the HEAD 344c12f differs from the tip 3ed09a71 only in reviews/landing-stack.md.\n\nS1 | 4 | auto-fix | 6 | internal/worktree/land_resume.go:119-127 (with internal/worktree/land_effects.go:99-108) | resumePublishedSteps spells the order commitment reconcile, destination reconcile, prune that publishedSteps already spells. The marker and residue steps differ, but the shared tail has two homes. AGENTS.md one source per fact; craft-review hunts duplication at fence boundaries. The single resume's behavior is unchanged.\nS2 | 3 | auto-fix | 5 | internal/worktree/land_stack_resume_test.go:98 (production sentence at land_stack_resume.go:134) | The \"top\" row repeats the production refusal sentence as a literal with no recorded mutation red; the ticket's probe targets the \"walked\" row.\n\nAdvice:\n- landStack (land_stack.go:49-52) routes --resume with an inline usage.FlagPresent beside the hasStackFlag and hasResumeFlag wrappers; its doc comment should say it also dispatches the resume.\n- resumeStack is about 70 lines, and resumePublishedSteps takes 8 parameters.\n- land_stack_resume.go:431-435 keeps looping after the first release failure, guarded by step == \"\"; a break states the intent.\n- The expandIdentity derivation (land_stack_resume.go:391) repeats land_stack.go:189, and the resumeAssignment-then-terminalResumeReceipt pairing repeats land_resume.go:56-67.\n- plantMemberResidue repeats the private/output journey fixture idiom.\n\nChecked and clean: the 859 to 863 pin matches four new tests; the comments are timeless; stackEnd and printStackEnd placement matches the file header; stackRoute.resume reuses command and callOverrides; no edit falls outside the acceptance's reach.\n\nCommand: no command change is necessary.\nRead: the frozen diff, ticket 11, land_stack.go, land_resume.go, land_effects.go, land_stack_resume.go, land.go:20-160, usage/parse.go FlagPresent, the craft-review and craft-comments skills, land_route_test.go:1-110.\n"
+          },
+          "axis": "Standards",
+          "base": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "tip": "3ed09a7196ce70e96f305cae6b80d6adc90965d8",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c9-spec-r1",
+          "performer": "claude:ls-c9-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "15fbae907f0610e99a738e91ea86ba2bfbe07e8a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c9-spec-20261026",
+            "digest": "sha256:da33d566338f164e13ac11579a323ffde155b285f6d646653312558f7d694e7d",
+            "excerpt": "axis: Spec\nverdict: findings\nfindings: 1\nworst: P1, severity 2 (refusal-order drift, no write or accept effect)\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false. Delta read: bbe9c277..3ed09a71.\n\nP1 | 2 | no-op | 7 | internal/worktree/land_stack_resume.go:51 (stackPublishedCount at :125-:140) | The stack resume reads <published>^2 before the exact-resolution and reachability proof, where \"The resume\" and ticket 11 put the proof first. The reorder opens no accept path and no early write: the top-merge resumePublished call in the walk (:55-:63) still refuses a non-exact value, an unreachable commit, and an unauthenticated range before any step. Only the refusal sentence for an unresolvable --resume value changes, and no LS row pins it.\n\nAudited and held:\n- Both grammars are declared in usage/worktree.go, and the derived help lines equal help_inventory_test.go:9-10 (LS67, LS100); worktreeCommands lists both.\n- --stack selects landStack (land.go:126), and --resume inside it selects resumeStack; the LS66 wrapper test follows the existing pattern.\n- Every proof (destination, k, the walk with publicationFacts per merge, the per-member assignment, the terminal receipt) runs before resumePublishedSteps (LS79).\n- Release covers only members below k, in file order, and stops at the first failure; later members stay active (LS82); effects run once.\n- The land-incomplete route uses route.resume(published) with callOverrides (LS78).\n- Exit 3 survives a red prefix with a stopped step (land_stack.go:116-118).\n- The single resume keeps its step order, faces, and release tail (land_resume.go:76-91, :100-129).\n- The second resume (LS81) is idempotent, and its snapshot covers refs, worktrees, the ledger, and the checkout status.\n- The pin rises 859 to 863 for four new tests.\n\nAdvice:\n- Move the exact-resolution proof ahead of stackPublishedCount, or record the order in ticket 11.\n- No test pins an unresolvable or unreachable --resume value on the stack form.\n- The (new) marks on land_stack.go and land_stack_rerun.go in Writes: are stale.\n\nCommand: no command change is necessary.\nRead: craft-review SKILL.md, the diff, spec lines 1-250 and the LS rows, bench coverage output, ticket 11, land_resume.go, land_effects.go, land_stack.go, land_stack_rerun.go 55-135, land.go 85-165 and 325-348, land_refusal.go 22-68 and 195-245, land_identity.go expandIdentity.\n"
+          },
+          "axis": "Spec",
+          "base": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "tip": "3ed09a7196ce70e96f305cae6b80d6adc90965d8",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c9-coverage-r1",
+          "performer": "claude:ls-c9-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "15fbae907f0610e99a738e91ea86ba2bfbe07e8a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c9-coverage-20261026",
+            "digest": "sha256:ab7d956802a4ea3c620f194a8fc79e118991eb1c6bef69e98c0dda75aaa7b1c9",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 4\nworst: C1 (severity 5)\n\nC1 | 5 | auto-fix | 7 | internal/worktree/land_stack_resume_test.go:612-623 | LS79 \"refuses before any step\" is not red-capable for ordering. The interruptedStack repair func is discarded, so member 2 keeps its residue and a premature release would refuse and write nothing; the forged destination equals the published merge with the marker moved to it, so the marker, reconcile and prune steps are no-ops. Moving resumePublishedSteps or the release loop (land_stack_resume.go:427-435) ahead of the member walk (405-411) leaves the snapshot identical.\nC2 | 5 | auto-fix | 7 | land_stack_resume_test.go:629-657 vs land_stack_resume.go:416-418 | Only positive receipt paths exist. Deleting the terminalResumeReceipt call keeps every test green, so a released member with no valid receipt, or a receipt whose tip differs, is accepted as landed.\nC3 | 4 | auto-fix | 6 | land_stack_resume_test.go:588-627 | Every stack resume runs with the destination equal to the published commit, so starting the walk from the destination tip, or passing a wrong base to resumePublishedSteps when main is ahead, stays green.\nC4 | 3 | no-op | 6 | land_stack_resume_test.go:571,635 | Both overrides equal the file tips, so no resume applies an override that differs from the file tip; LS78's dropped-override failure is killed only as route text.\n\nVerified red-capable: LS66 (wrapper route with a repository-read marker), LS67 and LS100 (literal help rows), the usage rows, LS78 (route text pins the override and commit), LS79 (the walked forgery is killed by the per-merge second-parent proof), LS80-LS82 (member activity, destination_base, and a snapshot of refs, worktree list, ledger, and status), and the shared step block (single-resume tests in land_resume_test.go and land_resume_refusal_test.go).\n\nAdvice:\n- Call repair() before the forged resume and add a pending-step variant.\n- Add a stack resume where main is ahead of the published commit.\n- Add a missing-receipt case.\n- The LS78 route string is hand-assembled quoting; record a route-mutation red or derive it.\n- LS66 covers only the --stack form.\n\nCommand: no command change is necessary.\nRead: the bind result, the frozen delta, land_resume.go, land_effects.go, land_fixtures_test.go, land_stack_test.go, land_stack_red_test.go, verb_runner_check_test.go, the hostile-input checklist.\n"
+          },
+          "axis": "Coverage",
+          "base": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "tip": "3ed09a7196ce70e96f305cae6b80d6adc90965d8",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3079,3 +3150,33 @@ Standards: 0 findings, and S1, S2, and S3 are closed. Spec: 0 findings, and P1 i
 A destination move with no behind member falls through to `land-handback`, because no member can carry a fold. The axes judged that fall-through sound.
 
 Advice: no test pins that fall-through, and no test pins a read failure of `gate.TreeEntries` in the overlap proof.
+
+## LS-C9 review, round 1
+
+Frozen pair: `bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd..3ed09a7196ce70e96f305cae6b80d6adc90965d8`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes for the review-mode comparison, and its return is outside this record.
+
+## Standards
+
+Findings: 2. Worst: S1, severity 4.
+
+- S1 (confidence 6), `auto-fix`: `resumePublishedSteps` and `publishedSteps` each spell the order of the commitment reconcile, the destination reconcile, and the prune. The repair moves that shared tail into one helper that both call.
+- S2 (confidence 5), `auto-fix`: the `top` row of the resume proof test repeats a production refusal sentence with no recorded red. The repair records a red for it or derives it from the producer.
+
+## Spec
+
+Findings: 1. Worst: P1, severity 2.
+
+- P1 (confidence 7), `no-op`: the stack resume reads the second parent before it proves the exact resolution. Every proof still runs before any write, and only one refusal sentence changes.
+
+## Coverage
+
+Findings: 4. Worst: C1 and C2, severity 5.
+
+- C1 (confidence 7), `auto-fix`: LS79 cannot see a write before the proofs, because its residue stays and its destination equals the published commit. The repair clears the residue and moves the destination ahead in that row.
+- C2 (confidence 7), `auto-fix`: no case reaches a missing release receipt. The repair adds one.
+- C3 (confidence 6), `auto-fix`: every resume runs with the destination at the published commit. The repair adds a resume with `main` ahead.
+- C4 (confidence 6), `no-op`: every override equals its file tip.
+
+## Shadow finds
+
+The shadow reviewer rated C4 severity 5, so the orchestrator accepts it: the repair adds a resume whose override differs from the file tip. The shadow also found two spellings of the resume-flag test. The repair keeps one helper for it.
