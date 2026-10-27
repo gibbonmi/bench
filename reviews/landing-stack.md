@@ -1082,6 +1082,46 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "ls-c4-confirm-r1",
+          "performer": "claude:ls-orchestrator-20261026",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f0e57db007e9c8836843c0145eecea2e8a792196",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ls-orchestrator-20261026",
+            "digest": "sha256:a465bd9c28b80141bd2b9c2260bc54cbcb85c62a93fae9fb636442e4836c8204",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/land_stack_input.go,swap,failed,1,\"TestStackReaderAcceptsSixteenMembers/two_members,_the_floor\",yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestStackReader,passed,24\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,464\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5,24\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,\"TestStackReaderAcceptsSixteenMembers/two_members,_the_floor\",\"land_stack_input_test.go:130: stack file \\\"/dev/shm/KZISJY/t/TestStackReaderAcceptsSixteenMemberstwo_members,_the_floor2506007770/001/stack.json\\\" holds 2 members, want 3 to 16\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "reviewed_tip": "f2b81fc002c18b450b3c7a32b8a4505506ff21d4",
+          "repaired_tip": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "raise stackMemberFloor from 2 to 3 in internal/worktree/land_stack_input.go",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ls-orchestrator-20261026",
+              "digest": "sha256:a465bd9c28b80141bd2b9c2260bc54cbcb85c62a93fae9fb636442e4836c8204",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/land_stack_input.go,swap,failed,1,\"TestStackReaderAcceptsSixteenMembers/two_members,_the_floor\",yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestStackReader,passed,24\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,464\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5,24\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,\"TestStackReaderAcceptsSixteenMembers/two_members,_the_floor\",\"land_stack_input_test.go:130: stack file \\\"/dev/shm/KZISJY/t/TestStackReaderAcceptsSixteenMemberstwo_members,_the_floor2506007770/001/stack.json\\\" holds 2 members, want 3 to 16\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -1345,3 +1385,9 @@ Every ticket 06 repair is test-only, so a coordinator confirmation closes it.
 ## Advice
 
 - Two members with one `request` are not refused by the reader. Ticket 07 must refuse them, or LS63 must cover them.
+
+## LS-C4 confirmation
+
+The ticket 06 repair `140811b14c03cfe16e114e46ca3e6f09faf4985a` changes tests only, and the evidence-only comment correction `2d6d6dd49900fddca5d0d2e49a446ef3a790bf66` closes S1. Repair cycles used: 1 of 2.
+
+The coordinator probe raised the member floor from two to three. It reported `bit` in the two-member case of `TestStackReaderAcceptsSixteenMembers` with `restored` yes. The confirmation closes S1, S2, C1, C2, and C3, and it keeps S3 as `no-op`.
