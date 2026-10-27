@@ -2601,6 +2601,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c9-standards-r2",
+          "performer": "claude:ls-c9-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8662cd90c78b72953d069cb68bcfd86ccf1e73d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c9-standards-r2-20261026",
+            "digest": "sha256:ad2ffc1dfdc815b14c3376d993cf77278c0426295d1a7a4f6c7d0e65e2fe9c39",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current reports current=true, dirty=false, head 192bdbf7.\n\nS1: closed. internal/worktree/land_effects.go:107 stepsAfterMarker is the only home of the commitment, destination-reconcile, and prune order, called from land_effects.go:99 (publishedSteps) and land_resume.go:119 (resumePublishedSteps). The doc comments at land_effects.go:91-95 and land_resume.go:94-99 point at the shared function.\nS2: closed. land_stack_resume.go:134 and :140 define and use errStackPublishedCount, and the tests read .Error() at land_stack_resume_test.go:99 and :178; no literal copy remains in internal/.\nShadow find 2: closed. land_stack.go:40-42 defines hasResumeFlag beside hasStackFlag (:36), both over landDispatchGrammar; the old copy in land.go is gone; the comment at land_stack.go:31-33 names both flags.\n\nNew findings: none.\n\nAdvice: land.go now tests --resume through landDispatchGrammar, the grammar of all three forms; the hasResumeFlag comment could say why it skips the values of every declared flag.\n\nCommand: no command change is necessary.\nRead: the preflight bind, the repair delta aeb756157..df1930ce, an rg of internal/ for the flag helpers, stepsAfterMarker, and the refusal sentence.\n"
+          },
+          "axis": "Standards",
+          "base": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "tip": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c9-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c9-spec-r2",
+          "performer": "claude:ls-c9-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8662cd90c78b72953d069cb68bcfd86ccf1e73d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c9-spec-r2-20261026",
+            "digest": "sha256:1b04357efba0673612e761cde053c98720eb3bd56c6d20bb66b46a7ddb0595e0",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: the evidence is current for assignment 1cc76f5a; source_tip 192bdbf7, dirty false.\n\nRows and clauses confirmed:\n- LS66, LS67, LS100: the delta changes no help row and no wrapper route; hasResumeFlag on landDispatchGrammar (land_stack.go:32-39) only widens the flag-value skip.\n- LS78: the first run reaches stepsAfterMarker through publishedSteps with the destination equal to the published commit (land_effects.go:36), in the same order.\n- LS79: land_stack_resume.go:51-79 runs the published count, the walk, the assignment proofs, and the terminal-receipt proof before resumePublishedSteps (line 81), the first writer; the receipt row and the repair-first ordering cover it.\n- LS80, LS81, \"The resume\": the walk starts at the published commit and passes the current destination separately (lines 58-60, 81); the ahead row asserts main stays put; the override row proves the resume reads the call's overrides.\n- LS82: untouched.\n- stepsAfterMarker (land_effects.go:44) takes destination and published separately; the resume passes the current tip (land_resume.go:119), the first run the published commit twice. Both behave as before.\n\nFindings: none.\nAdvice: none.\nCommand: no command change is necessary.\nRead: the repair delta aeb75615..df1930ce, land_stack_resume.go, land_resume.go:20-150, spec.md \"The resume\" (214-221) and the LS rows, the flag helper call sites.\n"
+          },
+          "axis": "Spec",
+          "base": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "tip": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c9-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c9-coverage-r2",
+          "performer": "claude:ls-c9-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8662cd90c78b72953d069cb68bcfd86ccf1e73d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c9-coverage-r2-20261026",
+            "digest": "sha256:268a58acbf54110f8ef5c45a1c37bee10362d66170b1b50877483b7cb70351c4",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\n\nC1: closed. internal/worktree/land_stack_resume_test.go:127-129 runs repair() before the forge, and lines 132-135 reset refs/bench/green/main to f.base, so a marker or release write before the proofs changes the snapshot. The early-call probe rests on the author's report (2 failed rows).\nC2: closed. land_stack_resume_test.go:111-122 is the receipt row; a BranchOID that is not the tip refuses at land_resume.go:131-133 before resumePublishedSteps (land_stack_resume.go:81). The row asserts exit 1, no stack{, and an unchanged snapshot.\nC3: closed. land_stack_resume_test.go:249-251 (ahead) adds a commit on main, and lines 289-291 require main unchanged; passing published as the destination would move main back.\nC4: closed. land_stack_resume_test.go:255-268 (override): the file-tip resume must refuse and the override resume must exit 0. The reasoned red holds.\n\nWeakening: none; every earlier assertion is kept.\nNew findings: none.\nAdvice: land.go:129 calls hasResumeFlag over landDispatchGrammar, so a --resume value of a single-landing flag is skipped; no test covers that (below severity 5).\n\nCommand: no command change is necessary.\nRead: the evidence bind, the repair delta, land_stack_resume.go, land_resume.go:90-160, land_stack_resume_test.go:1-90, land_stack.go:215-245, an rg of the flag helpers.\n"
+          },
+          "axis": "Coverage",
+          "base": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "tip": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c9-coverage-r1"
+          ]
         }
       ]
     }
@@ -3308,3 +3374,14 @@ Findings: 4. Worst: C1 and C2, severity 5.
 ## Shadow finds
 
 The shadow reviewer rated C4 severity 5, so the orchestrator accepts it: the repair adds a resume whose override differs from the file tip. The shadow also found two spellings of the resume-flag test. The repair keeps one helper for it.
+
+## LS-C9 review, round 2
+
+The repair `df1930ce5b7afad5ed9a567b5df7a4c41183edaf` closed S1, S2, C1, C2, C3, and both shadow finds. P1 stays `no-op`. The confirming round passed on all three axes, and the shadow reviewer also passed.
+
+Witness return of the repair:
+
+- C1: an early `resumePublishedSteps` call, run as a `bench probe`, bit with two failed rows (`receipt` and `walked`), and the restore was exact.
+- C2: a dropped `terminalResumeReceipt` check turned the `receipt` row red, because the resume exited 0.
+- C3: the published commit as the destination turned the `ahead` row red, because the resume moved `main`.
+- C4: `SourceTip` in place of `EffectiveTip` turned the `override` row red. The file-tip refusal is reasoned and was not run.
