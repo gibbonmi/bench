@@ -59,6 +59,17 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   only. ADR 0031 names its members. It frames no checkout path and no run purpose, so
   a green answers each whole-gate verb from any checkout. Not "authorization key", not
   "evidence key", not "reuse key" — grade key.
+- **background grade** — a gate run that a lane pass starts in a kit worktree and that
+  runs detached from that verb. It grades the exact subject of the next chunk checkpoint
+  or landing. It reads commits and machine inputs, never the live worktree. It never
+  writes a gate cache. Not "prepared run", not "daemon", not "precompute" — background
+  grade.
+- **grade claim** — the record that a running background grade holds on its grade key.
+  A chunk checkpoint or a landing of that key waits while the claim lives. Not "lease",
+  not "gate lock" — grade claim.
+- **background record** — the record of the latest background grade outcome of one
+  worktree: green, red, aborted, or stopped. It is never a gate verdict. Not
+  "background verdict", not "background cache" — background record.
 - **canary inventory** — the non-empty set of immutable fixture bindings that
   `bench canary` validates. It proves the inventory shape and one accepted binding
   per fixture, not owner execution or a planted red. Not “canary dispatch”, not
