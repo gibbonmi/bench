@@ -938,10 +938,62 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
+    "state": "completed",
+    "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+    "performer": "claude:rc-orchestrator-20261027",
+    "reconciliation": {
+      "CF1": "covered",
+      "CF10": "covered",
+      "CF11": "covered",
+      "CF12": "covered",
+      "CF13": "covered",
+      "CF14": "covered",
+      "CF15": "covered",
+      "CF16": "covered",
+      "CF17": "covered",
+      "CF18": "covered",
+      "CF19": "covered",
+      "CF2": "covered",
+      "CF20": "covered",
+      "CF21": "covered",
+      "CF22": "covered",
+      "CF23": "covered",
+      "CF24": "covered",
+      "CF25": "covered",
+      "CF26": "covered",
+      "CF27": "covered",
+      "CF28": "covered",
+      "CF29": "covered",
+      "CF3": "covered",
+      "CF30": "covered",
+      "CF31": "covered",
+      "CF32": "covered",
+      "CF33": "covered",
+      "CF34": "covered",
+      "CF35": "covered",
+      "CF36": "covered",
+      "CF37": "covered",
+      "CF38": "covered",
+      "CF39": "covered",
+      "CF4": "covered",
+      "CF40": "covered",
+      "CF41": "covered",
+      "CF42": "covered",
+      "CF43": "covered",
+      "CF44": "covered",
+      "CF45": "covered",
+      "CF46": "covered",
+      "CF47": "covered",
+      "CF48": "covered",
+      "CF49": "covered",
+      "CF5": "covered",
+      "CF50": "covered",
+      "CF51": "covered",
+      "CF6": "covered",
+      "CF7": "covered",
+      "CF8": "covered",
+      "CF9": "covered"
+    },
     "verification": [
       {
         "id": "final-coverage",
@@ -959,6 +1011,24 @@
         },
         "requirement": "coverage",
         "command": "bench coverage --check specs/repair-carry/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "final-whole-project",
+        "performer": "claude:rc-orchestrator-20261027",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:rc-orchestrator-20261027:final-gate",
+          "digest": "sha256:24eb30464a4d44806297a181f25a0ebcff6cfb946a0b3e831c4d57550439ec45",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT448-repair-carry-build,5da794406c9fcca311567403545a4a797e47c0a3,false\ngate: progress log /home/mgibs/.bench/worktrees/bench-2826441890/716106c0291838ce04c9e1ab034ac975-a2a41b7c586b6bd6d96de31844ff5b7b/.logs/gate-20261027T182028.964096197Z-3515449.jsonl\ngate: stream /home/mgibs/.bench/worktrees/bench-2826441890/716106c0291838ce04c9e1ab034ac975-a2a41b7c586b6bd6d96de31844ff5b7b/.logs/gate-20261027T182028.964096197Z-3515449.out\nphases[6]{phase,verdict,elapsed_ms}:\n  gofmt,green,180\nspilled{lines=12,bytes=729,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/a2a41b7c586b6bd6d96de31844ff5b7b/1793125692151354440-a24aa70b08a2241c.out}\n  system,green,54170\n  shellcheck,green,521\ncapability-skips: 6 (capability=6 environment=0; privilege=6)\ngo-build-cache: 52640893088 bytes in 813924 files at /home/mgibs/.cache/bench/go-build (over bound 10737418240 bytes, next: bench cache clean)\ngate: green\n"
+        },
+        "requirement": "whole-project",
+        "command": "bench gate",
         "exit_code": 0
       }
     ]
@@ -1158,3 +1228,7 @@ The axis reported 0 findings.
 ### Advice
 
 One test comment in `ticket_carry_test.go` has a long first line after the row IDs went out. This is a layout preference, so it stays optional advice.
+
+## Final reconciliation
+
+Each of the 51 coverage rows is closed. A named test closes each planned or cited row, and a review axis graded each review-owned row: CF3, CF32, CF45, CF47, and CF50. The final coverage check and the whole-project gate passed at `5da794406`. The integrated source holds no open finding.
