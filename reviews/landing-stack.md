@@ -1376,6 +1376,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c5-standards-r2",
+          "performer": "claude:ls-c5-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c10307281c3618ae4dfca2a1947b4198f37bf00",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c5-standards-r2-20261026",
+            "digest": "sha256:ecfaf428a2640c733d66ec8485bd2d546d57d0850d5bee3c7fb6dc3760c3baef",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\n\nBind: current=true, dirty=false, tree head d56b9a8d.\n\nS1: closed. barrierLandingFixture calls gateBarrier at land_lease_test.go:48; gateBarrier is defined once at land_fixtures_test.go:347; the unused syscall import is gone.\nS2: closed. sourceRequest is defined once at land_stack.go:136, and both landings call it (land.go:194, land_stack.go:103). No other ReviewedRequest or Publication literal exists in non-test code.\nS3: closed. authorizationFace is defined at land.go:245, called at land.go:232 and land_stack.go:227. merge_refusal.go:62-68 maps different merge faces.\nS4: closed. TestLandStackPrintsEveryMemberRefusal (land_stack_test.go:181) has rows unresolved-path (:199) and assignment (:202); TestLandStackRefusesAHeldLease (:236) has rows member-conflict (:254) and infrastructure (:267). The pin moved 850 to 851 for the one new top-level test.\n\nNew findings: none.\n\nAdvice:\n- sourceRequest maps landingSourceFact (land_identity.go:30) and serves both landings, so land_identity.go is a sounder home than land_stack.go. Placement only.\n- land_stack.go:179 calls FindAssignmentForRequest a second time to recover the label after landingAssignment refuses.\n\nCommand: no command change is necessary.\nRead: the preflight output, the repair delta 58a8ea00..e0685f0d, craft-comments SKILL.md, merge_refusal.go 50-84, rg over internal/worktree for the helper definitions and callers.\n"
+          },
+          "axis": "Standards",
+          "base": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "tip": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c5-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c5-spec-r2",
+          "performer": "claude:ls-c5-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c10307281c3618ae4dfca2a1947b4198f37bf00",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c5-spec-r2-20261026",
+            "digest": "sha256:81c0b913986e21fc451874e4a70dec6936999806301ce25618906141c90e3f88",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false.\n\nP1: closed. internal/worktree/land_stack_test.go:85-96 records 2 and 3 raw calls per member, and lines 128-129 check each row's own count, which satisfies LS44. The census is read before release.\nP2: closed. internal/worktree/land_stack.go:176-182 looks the label up with intent.FindAssignmentForRequest, and the \"assignment\" row of TestLandStackPrintsEveryMemberRefusal pins it.\nP3: stays no-op. Ticket 10 line 14 states the post-grade TipMovedError face as land-destination-moved.\n\nRows LS40-LS45, LS50-LS53, LS63, LS86, LS87, LS94, LS95, LS101, LS104, LS105: no clause is weakened.\nRefactors: sourceRequest (land.go:194-196, land_stack.go:132-144) sets the same fields as before; Deliverable() reads only SpecPath and ClosePath (internal/landing/closure.go:5-10). authorizationFace (land.go:243-256) returns the same infrastructure and red faces. The single landing's behavior is unchanged.\n\nNew findings: none.\n\nAdvice:\n- land_stack.go:170 and the \"unresolved-path\" row print a member refusal with no label even when the request resolves; spec line 132 asks for the label. Severity about 3.\n\nCommand: no command change is necessary.\nRead: reviews/landing-stack.md round 1, spec.md line 132 and lines 292-365, ticket 10, the repair diff 58a8ea0..e0685f0, land_stack.go, land_census_test.go, stackFixture, ReviewedRequest.Deliverable.\n"
+          },
+          "axis": "Spec",
+          "base": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "tip": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c5-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c5-coverage-r2",
+          "performer": "claude:ls-c5-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c10307281c3618ae4dfca2a1947b4198f37bf00",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c5-coverage-r2-20261026",
+            "digest": "sha256:16ad413e2f44facd600dde7269aa06706464d82082a9b1587279f9df37030381",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence reports current=true, dirty_record=false, source_tip d56b9a8d.\n\nC1: closed. internal/worktree/land_stack_test.go:88-92 seeds 2 and 3 raw calls per member, and :128-129 expects census[i] per row. Reading records[0] for every row (land_stack.go:99, :281) fails on row 2; reading after the release step gives 0 and fails both rows.\nC2: closed. TestStackRerunRules (land_stack_rerun_test.go:215-247), traced against land_stack_rerun.go:71-115: repair-replaces and read-replaces pin the replace branch (:81-82); removed and reset pin rules 2 and 3 (:76-78); one-repaired and one-pinned pin singleRerun (:108-111); the remaining==1 split pins rule 7 (:93).\n\nS4 rows: all reds hold. unresolved-path (land_stack_test.go:369) reaches land_stack.go:169-171; assignment (:372) pins the label lookup at land_stack.go:178-181; member-conflict pins the conflict branch and its repaired slot (land_stack.go:219-223) and the lease release (:108-110); infrastructure pins authorizationFace (land.go:246-257) with land_stack.go:227-230.\n\nNew findings: none.\n\nAdvice:\n- The one-member rows (land_stack_rerun_test.go:240-241) build their expectation with the production landingRerunAt, so they test the branch choice, not the command text. Low severity.\n- No test was run; the reasoned reds rest on code reading.\n\nCommand: no command change is necessary.\nRead: the diff 58a8ea00..e0685f0d, land_stack.go:60-250, land_stack_rerun.go, land_census_test.go, and the canonicalPathIn, ReadStack and census.Record sites.\n"
+          },
+          "axis": "Coverage",
+          "base": "140811b14c03cfe16e114e46ca3e6f09faf4985a",
+          "tip": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c5-coverage-r1"
+          ]
         }
       ]
     }
@@ -1718,3 +1784,13 @@ Findings: 2. Worst: C1, severity 4.
 
 - A stack that publishes nothing prints `worktree=active` in its `stack{}` record, because each member stays active.
 - A refusal before the lease prints its refusals and no `stack{}` record, because the spec places the record after the lease.
+
+## LS-C5 review, round 2
+
+Confirming round over the repair delta `58a8ea00205942c33858a0f9af1ee54f91db90a7..e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6`. Repair cycles used: 1 of 2.
+
+Standards: 0 findings, and S1, S2, S3, and S4 are closed. Spec: 0 findings, and P1 and P2 are closed. P3 stays `no-op`. Coverage: 0 findings, and C1 and C2 are closed.
+
+The repair's one probe gave every row the census count of member 1. It reported `bit` in `TestLandStackJourney` with `restored` yes. A shadow unified reviewer confirmed the same closures outside this record.
+
+Advice: an unresolved-path refusal names no label, and the stack resolves the assignment a second time to name a label.
