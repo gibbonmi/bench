@@ -10,9 +10,9 @@ The `no-go-schedule` build (FT449) ran nine tickets in six chunks on Claude Code
 
 Provider usage and charges remain unknown. The landing census counted 113 raw calls: rg 74, python3 25, cat 5, sed 5, cd 3, wc 1. Three concurrent authors collided on one symbol, the serial review record refused the concurrent chunks, and the landing gate found a decision-map source that the landing deletes.
 
-The `no-go-schedule` shaping and spec stages ran on Claude Code for FT449. By reviewer direction, one Opus coordinator did the research, the spec, and the slicing of nine tickets inline, with no reader pair and no fork. Its own traced test pass and permission-denial probe replaced the research readers. A Fable/medium map review found two soundness holes and a ticket contradiction before readiness.
+The `repair-carry` spec stage ran on Claude Code for FT448. By reviewer direction, one Opus/high coordinator did the research, the spec, and the slicing of five tickets inline, with no reader pair and no fork. One late question closed the test-only bound of the carry.
 
-Opus/medium accepted the spec at iteration 2, after iteration 1 found misplaced chunk rows, a dropped refusal, and unquoted `-exec` operands. Opus/medium accepted the tickets at iteration 2, after iteration 1 found two tests that pin the old argv and a record query with no producer. Provider usage and charges remain unknown.
+Opus/medium accepted the spec at iteration 2, after iteration 1 found a carried entry with no route through the one writer, an undefined assignment-only delta, and an unswept operating-guide clause. Opus/medium accepted the tickets at iteration 1 with only accounting findings. Provider usage and charges remain unknown.
 
 The `gate-reuse` build (FT314) ran six tickets in four chunks on Claude Code as a `--full --delegate --auto-approve` run. An Opus/medium orchestrator dispatched Opus/medium authors, continuations, and repairs, and Sonnet/high ran every review axis. Opus/high and Sonnet/high consulted once, and Fable/high broke their split; after GR-C1 the reviewer limited consultations to blocking findings. Each chunk used one repair cycle.
 
