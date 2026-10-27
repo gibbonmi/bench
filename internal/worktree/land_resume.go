@@ -92,11 +92,11 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 }
 
 // resumePublishedSteps finishes the steps after the publication of published for a resume,
-// in order: the residue guard, the marker, the commitment reconcile, the destination checkout
-// reconcile, and the branch prune. destination is the destination tip now, which can be past
-// published. A refusal before any write answers its routed record with rerun as its re-run.
-// A step that fails answers its name. Both are empty when every step finished. The single
-// resume and the stack resume both run these steps once.
+// in order: the residue guard, the marker, and the steps after the marker. destination is
+// the destination tip now, which can be past published. A refusal before any write answers
+// its routed record with rerun as its re-run. A step that fails answers its name. Both are
+// empty when every step finished. The single resume and the stack resume both run these
+// steps once.
 func resumePublishedSteps(j joins, root, destination, branch, marker, published, destinationBase, rerun string) (refused error, step string) {
 	// The residue policy owns the sentence, and the same guard runs inside the
 	// reconcile step, where no operator reads it. So the face is put on here.
@@ -116,16 +116,7 @@ func resumePublishedSteps(j joins, root, destination, branch, marker, published,
 		// The landing policy owns the marker sentence, so the face carries the policy's own.
 		return landingFaceRefusal(faceResumeMarker, refusal{detail: landingpolicy.MarkerRefusalDetail}, rerun, ""), ""
 	}
-	if err := j.reconcileCommitment(root); err != nil {
-		return nil, "commitment"
-	}
-	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
-		return nil, "reconcile"
-	}
-	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
-		return nil, "prune"
-	}
-	return nil, ""
+	return nil, stepsAfterMarker(j, root, destination, published, destinationBase)
 }
 
 func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {

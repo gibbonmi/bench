@@ -29,11 +29,16 @@ var stackLandGrammar = usage.Grammar{
 }
 
 // landDispatchGrammar declares every flag of each land form. The dispatch skips the value
-// of each declared flag, so a flag value that reads `--stack` never selects the stack form.
+// of each declared flag, so a flag value that reads `--stack` or `--resume` never selects a
+// form.
 var landDispatchGrammar = usage.Grammar{Flags: slices.Concat(landGrammar.Flags, resumeLandGrammar.Flags, stackLandGrammar.Flags)}
 
 func hasStackFlag(args []string) bool {
 	return usage.FlagPresent(landDispatchGrammar, args, "--stack")
+}
+
+func hasResumeFlag(args []string) bool {
+	return usage.FlagPresent(landDispatchGrammar, args, "--resume")
 }
 
 // stackMemberLanding is one stack member after its proofs: its 0-based index in the stack
@@ -49,7 +54,7 @@ type stackMemberLanding struct {
 // landStack is the stack form of the land leaf. It runs inside the landing span of
 // landWith, and the span names the assignment of the first member.
 func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
-	if usage.FlagPresent(landDispatchGrammar, args, "--resume") {
+	if hasResumeFlag(args) {
 		return resumeStack(j, a, root, args, stdout, stderr)
 	}
 	parsed, line, code := usage.Parse(stackLandGrammar, args)

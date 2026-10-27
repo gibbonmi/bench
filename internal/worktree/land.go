@@ -343,10 +343,6 @@ func printCensusHeads(stderr io.Writer, home, root, assignment string) {
 	}
 }
 
-func hasResumeFlag(args []string) bool {
-	return usage.FlagPresent(landGrammar, args, "--resume")
-}
-
 // brokerSourceChanged reports whether the reviewed diff in worktree changes the promotion
 // broker's own build inputs. An unresolvable input set reports false; the landing itself
 // stays under the installed owner either way.

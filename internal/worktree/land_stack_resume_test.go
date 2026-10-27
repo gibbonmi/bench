@@ -86,16 +86,17 @@ func TestLandStackIncompleteNamesTheResume(t *testing.T) {
 // TestLandStackResumeProvesEachMember is LS79. A published commit whose second parent is
 // not the tip of a listed member refuses before any step, at the top merge and at a walked
 // merge below it. The walked merge holds a commit with member 1's tree on the review base in
-// place of member 1's tip, so only the second-parent proof refuses it.
+// place of member 1's tip, so only the second-parent proof refuses it. A released member
+// whose terminal receipt names another source tip also refuses before any step.
 func TestLandStackResumeProvesEachMember(t *testing.T) {
 	t.Parallel()
 	for _, row := range []struct {
 		name, detail string
-		// forge publishes a merge that the stack did not publish over the published top,
-		// and answers it.
+		// forge breaks one proof of the published stack top and answers the commit to
+		// resume.
 		forge func(t *testing.T, f stackFixture, top string) string
 	}{
-		{"top", "the second parent of the published commit is not the tip of exactly one stack member", func(t *testing.T, f stackFixture, top string) string {
+		{"top", errStackPublishedCount.Error(), func(t *testing.T, f stackFixture, top string) string {
 			forged := gitOutput(t, f.root, "commit-tree", top+"^{tree}", "-p", top+"^1", "-p", f.base, "-m", "forged top")
 			gitRun(t, f.root, "update-ref", "refs/heads/main", forged)
 			return forged
@@ -107,15 +108,30 @@ func TestLandStackResumeProvesEachMember(t *testing.T) {
 			gitRun(t, f.root, "update-ref", "refs/heads/main", forged)
 			return forged
 		}},
+		{"receipt", "stack member 1: ", func(t *testing.T, f stackFixture, top string) string {
+			m := f.members[0]
+			repo, _, err := cleanupIdentity(f.root, m.creation.Path)
+			mustNoError(t, err)
+			receipt, found, err := intent.CleanupReceiptFor(f.root, repo, releaseOperation, m.creation.Path, intent.RequestDigest(m.request))
+			if err != nil || !found {
+				t.Fatalf("terminal receipt of member 1: found=%t error=%v", found, err)
+			}
+			receipt.BranchOID = f.base
+			mustNoError(t, intent.PutCleanupReceipt(f.root, receipt))
+			return top
+		}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			t.Parallel()
 			f := stackLandingFixture(t, "stack-resume-proof-"+row.name, 2, nil)
-			file, top, _ := interruptedStack(t, f, 1)
+			file, top, repair := interruptedStack(t, f, 1)
+			// Without the residue, a release before the proofs would write.
+			repair()
 			forged := row.forge(t, f, top)
-			// The green marker follows the forged destination, so the destination proofs
-			// hold and the member proofs decide.
-			gitRun(t, f.root, "update-ref", "refs/bench/green/main", forged)
+			// The green marker goes back to the review base, which each destination reaches.
+			// So the destination proofs hold, the member proofs decide, and a marker step
+			// before them would write.
+			gitRun(t, f.root, "update-ref", "refs/bench/green/main", f.base)
 			before := stackResumeSnapshot(t, f.root)
 			r := runVerb(t, verbLand, f.call(stackResumeArgs(forged, file)...))
 			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail="+row.detail) || strings.Contains(r.stdout, "stack{") {
@@ -130,31 +146,79 @@ func TestLandStackResumeProvesEachMember(t *testing.T) {
 
 // TestLandStackResumeFinishes is LS80 and LS81. After the repair, the stack resume releases
 // the active published member and exits 0. A second resume exits 0 and changes no ref, no
-// ledger record, and no checkout.
+// ledger record, and no checkout. The resume walks from the published commit when the
+// destination is past it, and it leaves the destination where it is. An override that
+// differs from the file tip of its member is the effective tip of that member.
 func TestLandStackResumeFinishes(t *testing.T) {
 	t.Parallel()
-	f := stackLandingFixture(t, "stack-resume-finish", 2, nil)
-	override := f.members[1].request + "=" + f.members[1].tip
-	file, top, repair := interruptedStack(t, f, 1, override)
-	repair()
-	args := stackResumeArgs(top, file, override)
-	r := runVerb(t, verbLand, f.call(args...))
-	want := "stack{destination_base=" + f.base + ",published_commit=" + top + ",landed=2,worktree=released}\n"
-	if r.exit != 0 || !strings.HasSuffix(r.stdout, want) {
-		t.Fatalf("resume = (%d, %q, %q), want exit 0 and the last line %q", r.exit, r.stdout, r.stderr, want)
-	}
-	for _, m := range f.members {
-		if assignmentActive(t, f.root, m.creation.Assignment.ID) {
-			t.Fatalf("member %s is active after the resume", m.request)
-		}
-	}
-	before := stackResumeSnapshot(t, f.root)
-	again := runVerb(t, verbLand, f.call(args...))
-	if again.exit != 0 || !strings.HasSuffix(again.stdout, want) {
-		t.Fatalf("second resume = (%d, %q, %q), want exit 0 and the last line %q", again.exit, again.stdout, again.stderr, want)
-	}
-	if after := stackResumeSnapshot(t, f.root); after != before {
-		t.Fatalf("second resume changed state:\n%s\nwant\n%s", after, before)
+	for _, row := range []struct {
+		name string
+		// overrides prepares the members of f and answers the overrides of the stack and of
+		// its resume.
+		overrides func(t *testing.T, f stackFixture) []string
+		// before runs after the repair and before the resume of top over file.
+		before func(t *testing.T, f stackFixture, file, top string)
+	}{
+		{"published", func(t *testing.T, f stackFixture) []string {
+			return []string{f.members[1].request + "=" + f.members[1].tip}
+		}, nil},
+		{"ahead", nil, func(t *testing.T, f stackFixture, _, _ string) {
+			gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "--allow-empty", "-qm", "after the stack")
+		}},
+		// Member 2 commits after the file tip, and the override names that commit. So the
+		// published second parent is the override, and the resume without it refuses before
+		// any write.
+		{"override", func(t *testing.T, f stackFixture) []string {
+			path := f.members[1].creation.Path
+			commitInWorktree(t, path, stackMemberFile(2), "member bytes after the file\n", "member source after the file")
+			return []string{f.members[1].request + "=" + gitOutput(t, path, "rev-parse", "HEAD")}
+		}, func(t *testing.T, f stackFixture, file, top string) {
+			before := stackResumeSnapshot(t, f.root)
+			r := runVerb(t, verbLand, f.call(stackResumeArgs(top, file)...))
+			if r.exit != 1 || !strings.Contains(r.stdout, "refused{detail="+errStackPublishedCount.Error()) {
+				t.Fatalf("resume at the file tip = (%d, %q, %q), want exit 1 and the refusal %q", r.exit, r.stdout, r.stderr, errStackPublishedCount)
+			}
+			if after := stackResumeSnapshot(t, f.root); after != before {
+				t.Fatalf("resume at the file tip changed state:\n%s\nwant\n%s", after, before)
+			}
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			f := stackLandingFixture(t, "stack-resume-finish-"+row.name, 2, nil)
+			var overrides []string
+			if row.overrides != nil {
+				overrides = row.overrides(t, f)
+			}
+			file, top, repair := interruptedStack(t, f, 1, overrides...)
+			repair()
+			if row.before != nil {
+				row.before(t, f, file, top)
+			}
+			destination := gitOutput(t, f.root, "rev-parse", "main")
+			args := stackResumeArgs(top, file, overrides...)
+			r := runVerb(t, verbLand, f.call(args...))
+			want := "stack{destination_base=" + f.base + ",published_commit=" + top + ",landed=2,worktree=released}\n"
+			if r.exit != 0 || !strings.HasSuffix(r.stdout, want) {
+				t.Fatalf("resume = (%d, %q, %q), want exit 0 and the last line %q", r.exit, r.stdout, r.stderr, want)
+			}
+			if got := gitOutput(t, f.root, "rev-parse", "main"); got != destination {
+				t.Fatalf("resume moved the destination to %s, want %s", got, destination)
+			}
+			for _, m := range f.members {
+				if assignmentActive(t, f.root, m.creation.Assignment.ID) {
+					t.Fatalf("member %s is active after the resume", m.request)
+				}
+			}
+			before := stackResumeSnapshot(t, f.root)
+			again := runVerb(t, verbLand, f.call(args...))
+			if again.exit != 0 || !strings.HasSuffix(again.stdout, want) {
+				t.Fatalf("second resume = (%d, %q, %q), want exit 0 and the last line %q", again.exit, again.stdout, again.stderr, want)
+			}
+			if after := stackResumeSnapshot(t, f.root); after != before {
+				t.Fatalf("second resume changed state:\n%s\nwant\n%s", after, before)
+			}
+		})
 	}
 }
 

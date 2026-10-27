@@ -88,18 +88,27 @@ func runLandedEffects(j joins, a ambient, root, destinationBase string, brokerCh
 	return ""
 }
 
-// publishedSteps runs the steps that follow a publication at root, in order: the green
-// marker advance, the commitment reconcile, the destination checkout reconcile, and the
-// branch prune. It answers the name of the step that failed, or the empty name. A first
-// run and a stack both run these steps once for the commit that they published.
+// publishedSteps runs the steps that follow a publication at root: the green marker
+// advance, then the steps after the marker. It answers the name of the step that failed,
+// or the empty name. A first run and a stack both run these steps once for the commit that
+// they published.
 func publishedSteps(j joins, root, branch string, result landing.ReviewedResult, priorMarker string) string {
 	if err := advanceLandedMarker(root, branch, result, priorMarker); err != nil {
 		return "marker"
 	}
+	return stepsAfterMarker(j, root, result.Commit, result.Commit, result.DestinationBase)
+}
+
+// stepsAfterMarker runs the steps that follow the marker step for the publication of
+// published at root, in order: the commitment reconcile, the destination checkout reconcile
+// to destination, and the branch prune. destination is the destination tip now. It answers
+// the name of the step that failed, or the empty name. Every landing and every resume runs
+// these steps through it.
+func stepsAfterMarker(j joins, root, destination, published, destinationBase string) string {
 	if err := j.reconcileCommitment(root); err != nil {
 		return "commitment"
 	}
-	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
+	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
 		return "reconcile"
 	}
 	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {

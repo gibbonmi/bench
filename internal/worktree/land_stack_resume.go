@@ -131,10 +131,13 @@ func stackPublishedCount(root, published string, tips []string) (int, error) {
 		}
 	}
 	if len(matches) != 1 {
-		return 0, errors.New("the second parent of the published commit is not the tip of exactly one stack member")
+		return 0, errStackPublishedCount
 	}
 	return matches[0], nil
 }
+
+// errStackPublishedCount refuses a published commit that gives no single published count.
+var errStackPublishedCount = errors.New("the second parent of the published commit is not the tip of exactly one stack member")
 
 // secondParent is the second parent of commit, or the empty identity when it has none.
 func secondParent(root, commit string) string {
