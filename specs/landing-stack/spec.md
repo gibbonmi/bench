@@ -247,241 +247,130 @@ Each ticket targets an author context of about 150k tokens, and the Further note
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "LS-C1",
-      "tickets": [
-        "01-share-the-stack-owner-rule.md"
-      ],
+      "tickets": ["01-share-the-stack-owner-rule.md"],
       "verification": [
-        {
-          "id": "stackpolicy",
-          "command": "bench test --package ./internal/landing/stackpolicy"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "stackpolicy", "command": "bench test --package ./internal/landing/stackpolicy", "ticket": "01-share-the-stack-owner-rule.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "01-share-the-stack-owner-rule.md"}
       ]
     },
     {
       "id": "LS-C2",
-      "tickets": [
-        "02-prove-a-stack-in-the-gate.md"
-      ],
+      "tickets": ["02-prove-a-stack-in-the-gate.md"],
       "verification": [
-        {
-          "id": "gate",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "02-prove-a-stack-in-the-gate.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "02-prove-a-stack-in-the-gate.md"}
       ]
     },
     {
       "id": "LS-C3",
-      "tickets": [
-        "03-admit-a-stack-publication.md",
-        "04-compose-and-publish-a-stack.md"
-      ],
+      "tickets": ["03-admit-a-stack-publication.md", "04-compose-and-publish-a-stack.md"],
       "verification": [
-        {
-          "id": "commitment-repository",
-          "command": "bench test --package ./internal/commitment/repository"
-        },
-        {
-          "id": "landing",
-          "command": "bench test --package ./internal/landing"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "commitment-repository", "command": "bench test --package ./internal/commitment/repository", "ticket": "03-admit-a-stack-publication.md"},
+        {"id": "landing", "command": "bench test --package ./internal/landing", "ticket": "04-compose-and-publish-a-stack.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "04-compose-and-publish-a-stack.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "03-admit-a-stack-publication.md"},
+        {"id": "root-conformance-04", "command": "bench test --check root-conformance", "ticket": "04-compose-and-publish-a-stack.md"}
       ]
     },
     {
       "id": "LS-C4",
-      "tickets": [
-        "05-move-the-worktree-help-rows.md",
-        "06-read-a-stack-file.md"
-      ],
+      "tickets": ["05-move-the-worktree-help-rows.md", "06-read-a-stack-file.md"],
       "verification": [
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "05-move-the-worktree-help-rows.md"},
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "06-read-a-stack-file.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "05-move-the-worktree-help-rows.md"},
+        {"id": "root-conformance-06", "command": "bench test --check root-conformance", "ticket": "06-read-a-stack-file.md"}
       ]
     },
     {
       "id": "LS-C5",
-      "tickets": [
-        "07-land-a-green-stack.md"
-      ],
+      "tickets": ["07-land-a-green-stack.md"],
       "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "usage",
-          "command": "bench test --package ./internal/usage"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "07-land-a-green-stack.md"},
+        {"id": "usage", "command": "bench test --package ./internal/usage", "ticket": "07-land-a-green-stack.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "07-land-a-green-stack.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "07-land-a-green-stack.md"}
       ]
     },
     {
       "id": "LS-C6",
-      "tickets": [
-        "08-bisect-a-red-stack.md"
-      ],
+      "tickets": ["08-bisect-a-red-stack.md"],
       "verification": [
-        {
-          "id": "landing",
-          "command": "bench test --package ./internal/landing"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "landing", "command": "bench test --package ./internal/landing", "ticket": "08-bisect-a-red-stack.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "08-bisect-a-red-stack.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "08-bisect-a-red-stack.md"}
       ]
     },
     {
       "id": "LS-C7",
-      "tickets": [
-        "09-attribute-a-red-stack.md"
-      ],
+      "tickets": ["09-attribute-a-red-stack.md"],
       "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "refusalroute",
-          "command": "bench test --package ./internal/refusalroute"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "09-attribute-a-red-stack.md"},
+        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute", "ticket": "09-attribute-a-red-stack.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "09-attribute-a-red-stack.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "09-attribute-a-red-stack.md"}
       ]
     },
     {
       "id": "LS-C8",
-      "tickets": [
-        "10-refuse-a-stack-member.md"
-      ],
+      "tickets": ["10-refuse-a-stack-member.md"],
       "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "refusalroute",
-          "command": "bench test --package ./internal/refusalroute"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "10-refuse-a-stack-member.md"},
+        {"id": "refusalroute", "command": "bench test --package ./internal/refusalroute", "ticket": "10-refuse-a-stack-member.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "10-refuse-a-stack-member.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "10-refuse-a-stack-member.md"}
       ]
     },
     {
       "id": "LS-C9",
-      "tickets": [
-        "11-resume-a-stack.md"
-      ],
+      "tickets": ["11-resume-a-stack.md"],
       "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "usage",
-          "command": "bench test --package ./internal/usage"
-        },
-        {
-          "id": "system",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "worktree", "command": "bench test --package ./internal/worktree", "ticket": "11-resume-a-stack.md"},
+        {"id": "commands", "command": "bench test --package ./cmd/bench", "ticket": "11-resume-a-stack.md"},
+        {"id": "usage", "command": "bench test --package ./internal/usage", "ticket": "11-resume-a-stack.md"},
+        {"id": "system", "command": "bench test --check system", "ticket": "11-resume-a-stack.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "11-resume-a-stack.md"}
       ]
     },
     {
       "id": "LS-C10",
-      "tickets": [
-        "12-record-the-landing-stack.md"
-      ],
+      "tickets": ["12-record-the-landing-stack.md"],
       "verification": [
-        {
-          "id": "prose",
-          "command": "bench test --check prose"
-        },
-        {
-          "id": "conformance-package",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
+        {"id": "prose", "command": "bench test --check prose", "ticket": "12-record-the-landing-stack.md"},
+        {"id": "conformance-package", "command": "bench test --package ./internal/conformance", "ticket": "12-record-the-landing-stack.md"},
+        {"id": "root-conformance", "command": "bench test --check root-conformance", "ticket": "12-record-the-landing-stack.md"}
       ]
     }
   ],
   "final_verification": [
-    {
-      "id": "integration",
-      "command": "bench test --changed --base 34ac699156f965752a13fc3c2f1c703c842348fc"
-    },
-    {
-      "id": "system",
-      "command": "bench test --check system"
-    },
-    {
-      "id": "whole-project",
-      "command": "bench gate"
+    {"id": "integration", "command": "bench test --changed --base 34ac699156f965752a13fc3c2f1c703c842348fc"},
+    {"id": "system", "command": "bench test --check system"},
+    {"id": "whole-project", "command": "bench gate"}
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft450-landing-stack-full-20261026",
+    "orchestrator_session": "claude:ls-orchestrator-20261026",
+    "author_limit": 3,
+    "assignments": {
+      "01-share-the-stack-owner-rule.md": [],
+      "02-prove-a-stack-in-the-gate.md": [],
+      "03-admit-a-stack-publication.md": [],
+      "04-compose-and-publish-a-stack.md": [],
+      "05-move-the-worktree-help-rows.md": [],
+      "06-read-a-stack-file.md": [],
+      "07-land-a-green-stack.md": [],
+      "08-bisect-a-red-stack.md": [],
+      "09-attribute-a-red-stack.md": [],
+      "10-refuse-a-stack-member.md": [],
+      "11-resume-a-stack.md": [],
+      "12-record-the-landing-stack.md": []
     }
-  ]
+  }
 }
 ```
 
@@ -697,7 +586,7 @@ The walk covers each canonical edge class and the profile's hostile-input checkl
 - The bisect kinds: the landing routes a red by the kinds `inherited`, `candidate`, and `lane fail` (`internal/landing/merge.go:127`), and `inherited` means that the subject held no green before the run (`internal/gate/authorization/authorization.go:184`).
 - The stack resume: the single resume proves a published merge by its two parents and its reach from the destination (`internal/worktree/land_resume.go:256`).
 - The refusal faces: the route walk reds a walked face with no producing fixture (`internal/refusalroute/routetest/routetest.go:64`).
-- The tip override: the single landing points its rerun at the repaired tip for each face that `repairsSource` names (`internal/worktree/land_refusal.go:269`), and the route walk fills that slot (`internal/worktree/refusal_route_follow_test.go:77`). A preface cannot carry the file edit, because `routetest.Steps` strips the preface before the walk (`internal/refusalroute/routetest/routetest.go:134`).
+- The tip override: the single landing points its rerun at the repaired tip for each face that `repairsSource` names (`internal/worktree/land_refusal.go:269`), and the route walk fills that slot in `operatorFill` (`internal/worktree/refusal_route_follow_test.go:82`). A preface cannot carry the file edit, because `routetest.Steps` strips the preface before the walk (`internal/refusalroute/routetest/routetest.go:134`).
 
 ### Pre-review proof checklist
 
