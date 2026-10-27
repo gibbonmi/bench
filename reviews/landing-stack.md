@@ -2254,6 +2254,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c8-standards-r2",
+          "performer": "claude:ls-c8-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c8-standards-r2-20261026",
+            "digest": "sha256:9c39f3004ba0cc0eba0ca7d6de5d925119ca1343dbcf1a17dddc2d65bd8f827e",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip 8b2dbf00.\n\nS1: closed. internal/gate/tree_snapshot.go:161-169 adds gate.TreeEntries over capturedCommit and parseTreeSnapshot, and internal/worktree/land_stack_preflight.go:72 and :78 call it. The second parser is gone. The stackpolicy import in tree_snapshot.go adds no new package edge, because stack_completion.go already imports stackpolicy; there is no cycle.\nS2: closed. internal/worktree/land_stack_test.go:260 clashes a file with a directory (x against x/y) and expects faceCompositionConflict; it no longer repeats LS71.\nS3: closed. stackRaisedRefusal (land_stack_preflight.go:54) serves land_stack.go:206, :258 and :295 and land_stack_preflight.go:104.\n\nNew findings: none. requireNoRun (land_stack_refusal_test.go:34) replaces the repeated tally check at four sites. The new comments use the timeless register.\n\nAdvice: stackMemberRefusal(i, label, landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), false)) appears four times (land_stack_preflight.go:79 and :115; land_stack.go:201 and :275); below severity 5 and outside this delta.\n\nCommand: no command change is necessary.\nRead: the repair delta a7851d62..bbe9c277, commits 2d261e89 and f6b3039a, gate/tree_snapshot.go, completion.go:79-87, stack_completion.go:50-90, the stackpolicy import lines, craft-comments, rg hits in land_stack*.go.\n"
+          },
+          "axis": "Standards",
+          "base": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "tip": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c8-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c8-spec-r2",
+          "performer": "claude:ls-c8-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c8-spec-r2-20261026",
+            "digest": "sha256:d8d65257db4b319dcbd1402c195674c6f9645d41b0357b37fa3914d1ff2177b3",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip 8b2dbf00.\n\nP1: closed. internal/worktree/land_stack.go:260-263 and :117-129 (stackMovedRefusals) run stackBehind (land_stack_preflight.go:159-167, the same function stackMemberProofs calls at :36) over the moved tip for every member. Each member that lacks the tip gets a stack-raised land-destination-moved refusal, so one run lists every fold (story 31, ticket 10). TestLandStackRefusesABehindMember asserts one refusal per member. The publication is one compare-and-swap (internal/landing/stack.go:154-156), so a TipMovedError means nothing published.\n\nEdge: no member behind, or the moved tip unreadable, falls through to land-handback (land_stack.go:106-111). Acceptable: ticket 10 requires a refusal only for each member that lacks the new tip, and the fall-through matches the defensive-stop rule of the gap log.\n\nRows LS70-LS77, LS88, LS90-LS93 stay satisfied. The member-conflict row passes the owner rule and takes composition-conflict, which \"The composition and the grade\" keeps. TreeEntries reuses the gate's one listing parser.\n\nAdvice:\n- No test pins the no-member-behind edge; optionally record it in ticket 10.\n\nCommand: no command change is necessary.\nRead: the bind output, the repair diff a7851d62..bbe9c277, commit 2d261e89, ticket 10, spec.md lines 120-170 and 455-465 and the LS rows, internal/landing/gitexec.go, internal/landing/stack.go 100-193, land_stack.go 95-164.\n"
+          },
+          "axis": "Spec",
+          "base": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "tip": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c8-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c8-coverage-r2",
+          "performer": "claude:ls-c8-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c8-coverage-r2-20261026",
+            "digest": "sha256:ff0988be47d6de896c178a32b0de3061a6006a610fa7b6479573f9807ceb4e24",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\nBind: preflight evidence is current (source_tip 8b2dbf00, dirty false).\n\nC1: closed. The three-owners row at internal/worktree/land_stack_refusal_test.go:335-365 pins pairs (1,2), (1,3), (2,3) in order with the \"shared name.txt\" path; table() at :359 checks each pair's paths exactly. Pairing only adjacent owners (land_stack_preflight.go:84-91) drops (1,3).\nC2: closed. The shared-capture-path row at land_stack_refusal_test.go:366-378 expects exit 0 and no refusal; CaptureSide (settlepolicy.go:108) exempts capture/notes.md, so a raw two-owner filter turns it red.\nC3: closed. requireNoRun (:254) is used at :250, :364, :395 and land_stack_test.go:258. Its strength equals a tally of 0, because the fixture gate creates the tally file only when it runs (land_fixtures_test.go:178).\nC4: closed. The member-conflict row at land_stack_test.go:260-272 uses x against x/y, which the owner rule does not see, and expects faceCompositionConflict with conflictFacts and requireNoLease; disabling the conflict mapping at land_stack.go:270-273 turns it red.\nP1: closed. The after-the-grade row at land_stack_refusal_test.go:89-97 pins each member's refusal and a count of 2.\n\nNew findings: none.\n\nAdvice:\n- The path where stackMovedRefusals (land_stack.go:117-129) returns no refusal and falls through to the handback has no test. Below severity 5.\n- Nothing pins a TreeEntries read failure in stackOverlaps (land_stack_preflight.go:72-80). Below severity 5.\n\nCommand: no command change is necessary.\nRead: the preflight output, the repair diff, land_stack_preflight.go:60-119, stackpolicy.go, settlepolicy.go:60-123, land_stack_test.go:20-90 and :236-325, land_stack_refusal_test.go:60-100, land_refusal.go table(), rg hits for the tally and the fixture.\n"
+          },
+          "axis": "Coverage",
+          "base": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "tip": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c8-coverage-r1"
+          ]
         }
       ]
     }
@@ -2858,3 +2924,13 @@ Findings: 4. Worst: C2, severity 5.
 - C2 (confidence 8), `auto-fix`: no test passes a shared `capture/` path through the preflight. The repair adds that case.
 - C3 (confidence 5), `auto-fix`: the window test pins no tally. The repair pins it.
 - C4 (confidence 6), `auto-fix`: no verb-level test reaches the conflict route. The S2 repair closes it.
+
+## LS-C8 review, round 2
+
+Confirming round over the repair delta `a7851d626afdde66ec19ce294f1b3a2256094d2a..bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd`, with the ticket 10 prose amendment and widening. Repair cycles used: 1 of 2.
+
+Standards: 0 findings, and S1, S2, and S3 are closed. Spec: 0 findings, and P1 is closed. Coverage: 0 findings, and C1, C2, C3, and C4 are closed. A shadow unified reviewer confirmed the same closures outside this record.
+
+A destination move with no behind member falls through to `land-handback`, because no member can carry a fold. The axes judged that fall-through sound.
+
+Advice: no test pins that fall-through, and no test pins a read failure of `gate.TreeEntries` in the overlap proof.
