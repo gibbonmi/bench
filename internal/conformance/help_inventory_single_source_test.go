@@ -92,6 +92,7 @@ var helpRowProjections = map[string]string{
 	"commitment": "commitmentHelpRows",
 	"preflight":  "preflightHelpRows",
 	"record":     "recordHelpRows",
+	"worktree":   "worktreeHelpRows",
 }
 
 // isHelpRowProjection reports whether a publicInventory call spreads exactly one call of
