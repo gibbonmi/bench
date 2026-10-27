@@ -1,7 +1,7 @@
 # Grade a landing subject in the background
 
-Blocked by: 08-queue-and-supersede-background-grades.md
-Writes: internal/gate/background_grade.go (new), internal/gate/background_landing.go (new), internal/gate/background_landing_test.go (new), internal/gate/complete_checkpoint.go, internal/gate/reader_plan.go, internal/gate/backgroundstate (new), internal/landing/published, CHANGELOG.md
+Blocked by: 09-queue-and-supersede-background-grades.md
+Writes: internal/gate/background_grade.go (new), internal/gate/background_launch.go (new), internal/gate/background_landing.go (new), internal/gate/background_landing_test.go (new), internal/gate/complete_checkpoint.go, internal/gate/reader_plan.go, internal/gate/backgroundstate (new), internal/landing/published, CHANGELOG.md
 Covers: BG67, BG68, BG69, BG70, BG71, BG72, BG73, BG74
 
 ## What to build
@@ -15,9 +15,10 @@ A kit worktree without an open build of a staged spec gets a landing grade.
 - A broker whose digest differs from its manifest makes the grade record `aborted` and run no oracle.
 - The grade takes the phase schedule of the destination commit.
 
-A lane pass queues no landing grade when the landing plan of the tip selects the reader set.
-The lane pass evaluates that plan against the destination at the time of the lane pass.
+The launch of ticket 08 queues no landing grade when the landing plan of the tip selects the reader set.
+The launch evaluates that plan against the destination at the time of the lane pass.
 The plan reads the green marker, the reader hold, and the reader count, as a landing does.
+The launch also deduplicates a landing key, as ticket 09 deduplicates a chunk key.
 
 The rule that derives the landing deliverable is the author's choice. A wrong deliverable only costs a lookup miss.
 
@@ -28,5 +29,6 @@ The rule that derives the landing deliverable is the author's choice. A wrong de
 - [ ] The grade key of a landing grade frames the digest of the installed broker.
 - [ ] A broker whose digest differs from its manifest makes the grade record `aborted` and run no oracle.
 - [ ] A landing grade frames the phase schedule of the destination commit.
-- [ ] A tip whose landing plan selects the reader set queues no grade, and a tip whose plan selects the whole gate queues one.
+- [ ] A tip whose landing plan selects the reader set queues no grade.
+- [ ] A tip whose landing plan selects the whole gate queues one landing grade.
 - [ ] A landing grade with a wrong deliverable writes its green only under the key that it ran.

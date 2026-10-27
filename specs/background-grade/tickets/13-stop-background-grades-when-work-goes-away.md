@@ -1,7 +1,7 @@
 # Stop background grades when work goes away
 
-Blocked by: 08-queue-and-supersede-background-grades.md
-Writes: internal/worktree/worktree.go, internal/worktree/clean.go, internal/worktree/pool_reclaim.go, internal/worktree/land_stack.go, internal/worktree/land_effects.go, internal/worktree/background_stop.go (new), internal/worktree/background_stop_test.go (new), internal/worktree/parallel_census_test.go, internal/gocache/clean.go, internal/gocache/background_clean_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/gate/backgroundstate (new), CHANGELOG.md
+Blocked by: 09-queue-and-supersede-background-grades.md
+Writes: internal/worktree/worktree.go, internal/worktree/ownership.go, internal/worktree/resume.go, internal/worktree/clean.go, internal/worktree/clean_set.go, internal/worktree/pool_reclaim.go, internal/worktree/land_stack.go, internal/worktree/land_effects.go, internal/worktree/background_stop.go (new), internal/worktree/background_stop_test.go (new), internal/worktree/parallel_census_test.go, internal/gocache/clean.go, internal/gocache/background_clean_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/gate/backgroundstate (new), CHANGELOG.md
 Covers: BG78, BG79, BG80, BG81, BG82
 
 ## What to build
@@ -14,8 +14,10 @@ Each stop goes through the stop operation of ticket 05, so the verb waits until 
 - A landing stack does the same for each member worktree before it grades.
 - `bench cache clean` stops every grade and drops every queued grade, then takes its lock as it does today.
 
-`worktree.go` has 589 lines, which is over its budget, so the stop code goes in `background_stop.go`.
+Release dispatches through `worktree.go:424` to `ownership.go:216`, removal runs through `resume.go:104`, and clean selects its set in `clean_set.go:359`.
+The author picks the one hook site that covers each verb.
 The cache clean help row ends with "refuses under a live run". Keep or change it, and keep its pin in `TestHelpInventoryIsComplete` true.
+`cmd/bench/main.go` has 415 lines, which is over its budget, so it keeps its line count.
 Each new test in `internal/worktree` runs in parallel, or it raises `worktreeSerialCeiling` in this ticket.
 
 ## Acceptance
@@ -25,4 +27,4 @@ Each new test in `internal/worktree` runs in parallel, or it raises `worktreeSer
 - [ ] `bench worktree reclaim` stops the grade of each worktree that it removes.
 - [ ] A landing stack stops the grade of each member worktree before it grades.
 - [ ] `bench cache clean` stops every grade and drops every queued grade, then cleans.
-- [ ] `bench structure --growth` reports no growth of `internal/worktree/worktree.go`.
+- [ ] `bench structure --growth` reports no growth of `cmd/bench/main.go`.

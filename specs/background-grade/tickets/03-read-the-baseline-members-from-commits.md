@@ -19,7 +19,7 @@ A clean checkout then gives the same key as before, so a current green keeps ans
 First reproduce the GR-C2 refusal: a chunk-subject run across a plan commit in its worktree refuses today.
 Record which member moved in the commit message of this ticket.
 
-`subject.go` and `checkpoint.go` are at or over their line budget. Keep each line count, or move code into `baseline_commit.go`.
+`subject.go` has 1 line of headroom under its grant, and `checkpoint.go` has 2. Keep each line count, or move code into `baseline_commit.go`.
 
 ## Acceptance
 
