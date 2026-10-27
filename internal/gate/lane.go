@@ -341,14 +341,9 @@ func fileDigest(path string) (string, error) {
 // The verdict cache and the evidence store stay untouched, because a lane grades a check
 // list and not the oracle.
 func writeLaneRecord(replacer durablefile.Replacer, gitdir string, result LaneResult) error {
-	data, err := json.Marshal(verdictRecord{
-		Schema:     verdictSchema,
-		Tree:       result.Tree,
-		Lane:       result.Lane,
-		Outcome:    result.Outcome,
-		RunBinary:  result.RunBinary,
-		RecordedAt: result.RecordedAt.UTC().Truncate(time.Second).Format(time.RFC3339),
-	})
+	rec := storeRecord(result.Tree)
+	rec.Lane, rec.Outcome, rec.RunBinary, rec.RecordedAt = result.Lane, result.Outcome, result.RunBinary, recordTime(result.RecordedAt)
+	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
