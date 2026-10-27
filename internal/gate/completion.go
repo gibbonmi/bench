@@ -36,11 +36,7 @@ func WithCompletion(ctx context.Context, path, sourceTip string) context.Context
 // Only a failed proof is a proof fault; a fault that captures or reads a tree, or that
 // derives the closure, returns as it is.
 func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) {
-	sourceTree, err := benchgit.Output("-C", e.identityRoot, "rev-parse", "--verify", e.completionSource+"^{tree}")
-	if err != nil {
-		return "", err
-	}
-	source, err := captureProspectiveTree(e.identityRoot, sourceTree)
+	sourceTree, source, err := capturedCommit(e.identityRoot, e.completionSource)
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +50,7 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	closed, err := e.completionClosure(graded, sourceTree, path)
+	closed, err := e.completionClosure(graded, sourceTree, path, e.completionSource)
 	if err != nil {
 		return "", err
 	}
@@ -72,6 +68,16 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 		}
 	}
 	return sourceTree, nil
+}
+
+// capturedCommit answers the tree of commit in root and its captured generation.
+func capturedCommit(root, commit string) (string, *treeGeneration, error) {
+	tree, err := commitTree(root, commit)
+	if err != nil {
+		return "", nil, err
+	}
+	generation, err := captureProspectiveTree(root, tree)
+	return tree, generation, err
 }
 
 // completedSpec proves that graded carries the exact implemented status of the source spec
@@ -103,25 +109,27 @@ func (e *gateEvaluation) completedSpec(source, graded *treeGeneration, path stri
 // closedFolder proves that graded keeps no entry beneath the closed tickets-only folder,
 // and marks each entry that the source folder holds proven.
 func closedFolder(source, graded *treeGeneration, folder string, proven map[string]bool) error {
-	under := func(path string) bool { return strings.HasPrefix(path, folder+"/") }
 	for _, kept := range graded.snapshot.entries {
-		if under(kept.Path) {
+		if underFolder(kept.Path, folder) {
 			return proofFault("completion keeps closed %s; review the delivery closure", kept.Path)
 		}
 	}
 	for _, entry := range source.snapshot.entries {
-		if under(entry.Path) {
+		if underFolder(entry.Path, folder) {
 			proven[entry.Path] = true
 		}
 	}
 	return nil
 }
 
+// underFolder reports whether path lies beneath folder.
+func underFolder(path, folder string) bool { return strings.HasPrefix(path, folder+"/") }
+
 // completionClosure proves that graded carries exactly the verified closure that the
-// commitment owner derives from the reviewed source tree, and returns each proven path.
-// A path list cannot catch a kept sequence entry or an extra row removal.
-func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, path string) (map[string]bool, error) {
-	edits, err := commitrepo.Store{Root: e.identityRoot}.Closure(sourceTree, commitrepo.Delivery{Spec: path, Source: e.completionSource})
+// commitment owner derives from the reviewed source tree at the source tip, and returns
+// each proven path. A path list cannot catch a kept sequence entry or an extra row removal.
+func (e *gateEvaluation) completionClosure(graded *treeGeneration, sourceTree, path, source string) (map[string]bool, error) {
+	edits, err := commitrepo.Store{Root: e.identityRoot}.Closure(sourceTree, commitrepo.Delivery{Spec: path, Source: source})
 	if err != nil {
 		return nil, fmt.Errorf("completion closure: %w", err)
 	}

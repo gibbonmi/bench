@@ -54,6 +54,7 @@ func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gate
 	evaluation.checkpoint, _ = ctx.Value(checkpointKey{}).(Checkpoint)
 	evaluation.completionSource, _ = ctx.Value(completionSourceKey{}).(string)
 	evaluation.completionFolder, _ = ctx.Value(completionFolderKey{}).(string)
+	evaluation.stack = stackGradeOf(ctx)
 	// The accepted tip starts the tip-moved guard, so a tip that moves before the first
 	// capture refuses too.
 	source, _ := ctx.Value(chunkSourceKey{}).(chunkSource)
@@ -331,6 +332,11 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	}
 	if err := e.checkpoint.validate(); err != nil {
 		return subject{}, err
+	}
+	// The stack proof precedes the return for a run with no deliverable, which a stack of
+	// spec-less members is.
+	if e.stack != nil {
+		return plan, e.stackProof(generation)
 	}
 	if e.checkpoint.Spec == "" && e.completionFolder == "" {
 		return plan, nil
