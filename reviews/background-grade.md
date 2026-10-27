@@ -484,7 +484,68 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c2-review-standards",
+          "performer": "claude:bg-c2-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "671989cece1d4fbcd9f97e8d503f0139d14e4f12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c2-review-20261027",
+            "digest": "sha256:e69613394d10b745c628a8ce8b2dfe29ba8b83fedc523c81eff3560e44702801",
+            "excerpt": "Unified BG-C2 review (ef7bee35a..14eed7eca), Standards: 2 findings. Literal -p=2/-parallel=2 at width_test.go:182,213 needs a recorded red (closed: the author's BG19 first-run red is recorded in the review prose); BENCH_GATE_WIDTH naming at width.go:103 (no-op).\n"
+          },
+          "axis": "Standards",
+          "base": "ef7bee35ae936bc3430690a8bbfe015a38d09b71",
+          "tip": "14eed7eca23c445e642ba609a4e27b432787c26b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c2-review-spec",
+          "performer": "claude:bg-c2-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "671989cece1d4fbcd9f97e8d503f0139d14e4f12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c2-review-20261027",
+            "digest": "sha256:5e9d49822cbea23192c7b976d0167d0f811683b4ecb35fc38bbe2c30b83c9d1e",
+            "excerpt": "Unified BG-C2 review (ef7bee35a..14eed7eca), Spec: 1 finding. Coordinator record and plan edits in the delta (no-op). Rulings: the fixed width 2 is acceptable; the width on every testPhase phase is within stories 22 and 24.\n"
+          },
+          "axis": "Spec",
+          "base": "ef7bee35ae936bc3430690a8bbfe015a38d09b71",
+          "tip": "14eed7eca23c445e642ba609a4e27b432787c26b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c2-review-coverage",
+          "performer": "claude:bg-c2-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "671989cece1d4fbcd9f97e8d503f0139d14e4f12",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c2-review-20261027",
+            "digest": "sha256:0548fb69e7089fd4747a13a8f030541ca472aa8b8378c8f650002491688b0303",
+            "excerpt": "Unified BG-C2 review (ef7bee35a..14eed7eca), Coverage: 1 finding. readerPhases not walked at width_test.go:153 (no-op: reader phases reuse testPhase). BG20 and BG22 map one to one.\n"
+          },
+          "axis": "Coverage",
+          "base": "ef7bee35ae936bc3430690a8bbfe015a38d09b71",
+          "tip": "14eed7eca23c445e642ba609a4e27b432787c26b",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -620,3 +681,27 @@ Count: 2. Worst issue: BG109 compares the member, not the key.
 
 - No-op, confidence 6: `internal/gate/run_binary_source_test.go:127` compares the run-binary member with the base value. Ticket 02 changed only that member, so an equal member gives an equal key.
 - No-op, confidence 5: the review record seemed to bind the ticket 03 verifications to the ticket 02 commit. The record binds them to `9eb53b695`, so the record refutes the concern.
+
+## BG-C2 review
+
+One unified session reviewed the frozen pair `ef7bee35a..14eed7eca`. It found 4 raw findings and no repair target. The reviewer accepted the fixed width of 2, and it accepted the width on each phase that `testPhase` builds.
+
+The literals `-p=2` and `-parallel=2` in `internal/gate/width_test.go` are an independent expectation. The author demonstrated their red with the first run of BG19, `TestWidthInputSetsTheTestWidths`, against a stub that held only the constant. That run failed with `whole/system argv = [... "-tags=system" "./internal/systemtest"], want -p=2 and -parallel=2`. BG21 and BG22 went red as first failing runs. BG20 went red through one probe that framed the input into the identity.
+
+## Standards
+
+Count: 2. Worst issue: the literal width expectation needed a recorded red, and the paragraph above records it.
+
+- No-op, confidence 6: `internal/gate/width.go:103` names a numeric-looking input that any non-empty value selects. The comment and the changelog state that rule.
+
+## Spec
+
+Count: 1. Worst issue: plan and record edits sit in the delta.
+
+- No-op, confidence 6: the plan and record commits of the orchestrator are not author edits.
+
+## Coverage
+
+Count: 1. Worst issue: the test does not walk the reader phases.
+
+- No-op, confidence 4: `internal/gate/width_test.go:153` does not walk the reader phases. Those phases reuse `testPhase`, and the delta table covers it.
