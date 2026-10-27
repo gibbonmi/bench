@@ -225,7 +225,8 @@ A drained light-path item needs no commitment: the drain dispatches it under the
 A light-path change that the run finds from any other source follows the same rule.
 The delegate writes the one ticket file, implements it, and commits it. The coordinator verifies the done-claim against the ticket's acceptance rows and the gate.
 
-When the run holds two or more verified light-path tickets at one time, the coordinator lands them as one landing stack with `bench worktree land --stack <file>`.
+The run can hold two or more verified light-path tickets at one time.
+Then the coordinator lands them as one landing stack with `bench worktree land --stack <file>`.
 Each stack member keeps its tickets-only folder in its `spec` field, as one landing keeps it in its `--spec`.
 One verified ticket still lands as the light-path row states.
 
@@ -301,8 +302,8 @@ On approval, commit the pass once on a lane pass, and land it through the gate.
 Never commit the drain without that approval. `.bench/BENCH.md` owns the batch approval rule.
 
 Three constraints shape the drain's commits.
-An item completed through "implement now" lands green through its own landing before the drain's batch commit.
-This is the second exception to the one-batch-commit rule.
+Each item completed through "implement now" lands green before the drain's batch commit, in the landing that section 5 states.
+These landings are the second exception to the one-batch-commit rule.
 The other exception is the extra per-spec commits required when one pass retires two or more specs.
 
 When the

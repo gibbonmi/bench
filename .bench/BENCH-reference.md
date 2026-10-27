@@ -497,7 +497,7 @@ Its exit meanings follow the publication boundary:
   release, or a landing effect remains incomplete; the exit-3 record carries the
   `bench worktree land --resume` invocation you need
 
-A landing stack lands two to sixteen reviewed sources in one landing.
+A landing stack lands two to sixteen reviewed sources in one landing, and ADR 0032 records its decision.
 `bench help` prints the stack form and the stack resume form, and executable help owns their grammar.
 The stack file is one strict JSON object whose `members` list holds the members in landing order.
 Each member holds the `path`, `request`, `base`, `source_tip`, and `message` fields of one landing, and an optional `spec`.
@@ -506,7 +506,11 @@ Each member passes the grammar of one landing, and a relative stack path resolve
 The stack file refuses at exit 2 before the lease when it is absent, is not a regular file, or does not decode exactly.
 It also refuses with fewer than two members or more than sixteen, and when two members name one worktree.
 A `--source-tip <request>=<commit>` override replaces the `source_tip` of the member whose `request` matches.
-An override that names no member, a second override for one request, and a value with an empty side exit 2.
+These overrides exit 2:
+
+- an override that names no member
+- a second override for one request
+- a value with no `=` or with an empty side
 
 The stack preflight runs the destination proofs once.
 Each member then runs the assignment proofs and the source proofs of one landing, and then these stack proofs:
@@ -532,8 +536,10 @@ A red top tree bisects the ordered prefixes, and each grade is a whole gate.
 The stack attributes the red to the first member whose prefix is red on top of a green prefix.
 It publishes that green prefix and refuses the attributed member with `stack-red`, whose route repairs that member.
 Each later member stays active, and sixteen members cost at most five whole gates.
+
 An infrastructure outcome refuses with `land-infrastructure`, and a red over a destination with no green refuses with `land-handback`.
 When the destination moves after the grade, each member that lacks the moved tip refuses with `land-destination-moved`, and nothing publishes.
+When no member lacks the moved tip, the stack refuses with `land-handback`.
 
 Each refusal route that commits in a member ends with a rerun that pins the repaired tip as that member's override.
 A rerun keeps each override of the refused call, except for each member that the route removes or whose tip it sets.
@@ -549,7 +555,7 @@ A refusal before the lease prints no members table and no `stack{...}` record.
 The stack exits follow the same publication boundary:
 
 - `0` — every member landed and every step finished
-- `1` — the stack refused at least one member, and the members table shows what landed
+- `1` — a refusal and no stopped step; after the lease, the members table shows what landed
 - `2` — invalid command usage, which includes each stack file refusal
 - `3` — a step after the publication stopped, and the record carries the stack resume with each override of the call
 
