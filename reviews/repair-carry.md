@@ -437,6 +437,72 @@
             "c2-r1-multipkg"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-r2",
+          "performer": "claude:rc-c2-standards-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-standards-r2-20261027",
+            "digest": "sha256:66b1757222acb5bc4f33e891e65c1344852a4d0d86ae5450ea9fc3d0f84bcd7d",
+            "excerpt": "Standards: 0 findings; worst: none\nc2-r1-canonical (Standards part): closed. carry.go:97 returns tickets.RepositoryPath(rest) && !strings.Contains(rest, \"...\"); the clean-path rule has one source, internal/tickets/writes.go:72-74, which rejects ./../x. No second derivation in internal/testreport or internal/gate.\n"
+          },
+          "axis": "Standards",
+          "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
+          "tip": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r1"
+          ]
+        },
+        {
+          "id": "c2-spec-r2",
+          "performer": "claude:rc-c2-spec-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-spec-r2-20261027",
+            "digest": "sha256:2b6496eca3f83a493941fed03fdfb78ef1959ffeeb49fb79a10c459c5fa7ae3c",
+            "excerpt": "Spec: 0 findings; worst: none\nc2-r1-canonical: closed. carry.go:97 matches spec line 119, and reaches (carry.go:71-74) answers reached for a non-canonical expression. Traced ./internal/a..., ./internal/.../b, ./internal/..., ./..., ./., ./../x, ./internal/a. CF51 cites carry_reach_test.go:46-48 TestCarryReach, which drives bench test --package ./internal/a... over a delta in internal/ab and expects reached.\n"
+          },
+          "axis": "Spec",
+          "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
+          "tip": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r1"
+          ]
+        },
+        {
+          "id": "c2-coverage-r2",
+          "performer": "claude:rc-c2-coverage-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-coverage-r2-20261027",
+            "digest": "sha256:b3fb407cb4e3bc84e7c017916830d77c182283d394e6c1626957964c35b7ab22",
+            "excerpt": "Coverage: 1 finding; worst: a mid-string ... form has no case (advisory).\nclosed | c2-r1-canonical | carry_reach_test.go:46-48 expects reached for ./internal/a... over a delta in internal/ab.\nclosed | c2-r1-multipkg | carry_reach_test.go:30 (covering expression second) and :44 (non-canonical expression second); each expectation follows from the fixture delta.\nAdvice: a ./internal/.../a case would kill a HasSuffix mutant of the ... clause; ./../x fails safe. Coordinator: optional advice under the hardening rule, no finding ID.\n"
+          },
+          "axis": "Coverage",
+          "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
+          "tip": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r1"
+          ]
         }
       ]
     }
@@ -516,3 +582,23 @@ The axis reported 1 finding. The worst finding is that the canonical rule accept
 ### Coverage
 
 The axis reported 3 findings. The worst finding is the mid-path `...` case, which joins `c2-r1-canonical`, confidence 7. The second finding is `c2-r1-multipkg`, `auto-fix`, confidence 6: no case holds several `--package` values, so the mutant `Packages()[:1]` stays green. The third finding is `no-op`, because `deltaPackages` answers whole-only for a file in any position.
+
+## CF-C2 confirming round
+
+The repair session committed `95044e7ca`. The coordinator probe omitted the non-canonical check in `reaches`, and it bit the CF51 case and the `./internal/a/` case with `restored` `yes`. The three axes closed `c2-r1-canonical` and `c2-r1-multipkg` on the repair delta `22dfdadc0..95044e7ca`. The chunk used 1 of its 2 repair cycles.
+
+### Standards
+
+The axis reported 0 findings.
+
+### Spec
+
+The axis reported 0 findings.
+
+### Coverage
+
+The axis reported 0 blocking findings.
+
+### Advice
+
+A case with a mid-path `...`, such as `./internal/.../a`, would kill a `HasSuffix` mutant of the `...` clause. This check goes beyond the approved rows, so it stays optional advice.
