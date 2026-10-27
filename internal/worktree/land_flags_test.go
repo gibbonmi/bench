@@ -94,6 +94,17 @@ func TestLandCommandDoesNotTreatMessageValueAsResumeFlag(t *testing.T) {
 	}
 }
 
+// TestLandCommandDoesNotTreatMessageValueAsStackFlag is LS105. A `-m` value of `--stack`
+// stays a single landing, so the stack grammar never reads the single landing's flags.
+func TestLandCommandDoesNotTreatMessageValueAsStackFlag(t *testing.T) {
+	t.Parallel()
+	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "--stack", "path"}
+	r := runVerb(t, verbLand, verbCall{home: Home(), args: args})
+	if r.exit == 2 {
+		t.Fatalf("land(%q) selected the stack grammar: stdout=%q stderr=%q", args, r.stdout, r.stderr)
+	}
+}
+
 func TestLandCommandAcceptsDashPathOnlyAfterTerminator(t *testing.T) {
 	t.Parallel()
 	args := []string{"--request", "r", "--base", "b", "--source-tip", "s", "--spec", "x", "-m", "m", "--", "-path"}

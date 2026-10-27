@@ -6,6 +6,23 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Landing stack
+
+- Added `bench worktree land --stack <file>`, which lands two to sixteen reviewed spec-less or tickets-only sources under one landing lease. Each member keeps its own landing merge commit and its own folder close. The whole gate grades the top tree once, and one destination update publishes each green member. Before, each source paid its own whole gate and its own fold of `main`.
+- Added the red bisect of a stack. A red top tree grades its ordered prefixes with whole gates and names the first member that is red on top of a green prefix. The stack publishes that green prefix, refuses the member with the new `stack-red` face, and leaves each later member unlanded.
+- Added the `stack-member-alone` and `stack-members-overlap` faces. Each refusal of the stack preflight stops the stack before the lease. The preflight refuses these members:
+  - a staged-spec member
+  - a member that holds a delivery binding
+  - a member behind the destination
+  - the later of two members that change one path outside `capture/`
+- Added these stack surfaces:
+  - the `--source-tip <request>=<commit>` override
+  - the `members[N]{...}` table
+  - the `stack{...}` record
+  - the stack resume `bench worktree land --resume <published-commit> --stack <file>`
+- Changed the reader set, which now refuses a stack with the case `landing stack`.
+- Changed `/bench-drain`, which now lands two or more verified light-path tickets as one landing stack.
+
 ### Gate reuse under one grade key
 
 - Changed the gate evidence store, which now names each whole green by one grade key. The key holds the tree, the toolchain, the baseline phase schedule, the capability posture, the run binary member, and the running executable digest. It holds no checkout path and no run purpose. A green from one checkout now answers a run of the same key from another checkout. Before, the evidence name framed the checkout path and the baseline runner identity, so a green never crossed checkouts.

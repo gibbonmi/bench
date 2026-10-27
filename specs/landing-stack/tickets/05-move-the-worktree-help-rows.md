@@ -1,7 +1,7 @@
 # Move the worktree help rows beside the worktree leaves
 
 Blocked by: none
-Writes: cmd/bench/main.go, cmd/bench/worktree_leaves.go
+Writes: cmd/bench/main.go, cmd/bench/worktree_leaves.go, internal/conformance/help_inventory_single_source_test.go
 Covers: none
 
 ## What to build

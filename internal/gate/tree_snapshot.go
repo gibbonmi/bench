@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/landing/stackpolicy"
 )
 
 // treeEntryMetadataRE is the complete set of shapes a recursive listing records. It
@@ -155,6 +156,16 @@ func parseTreeSnapshot(listing string) (treeSnapshot, error) {
 		snapshot.byPath[path] = metadata
 	}
 	return snapshot, nil
+}
+
+// TreeEntries reads the tree of commit in root through the one listing parser. It maps
+// each path to the metadata that git recorded for it: the mode, the type, and the object id.
+func TreeEntries(root, commit string) (stackpolicy.Entries, error) {
+	_, generation, err := capturedCommit(root, commit)
+	if err != nil {
+		return nil, fmt.Errorf("tree of %s is unreadable: %w", commit, err)
+	}
+	return generation.snapshot.byPath, nil
 }
 
 // entry returns what git recorded for path, and whether the snapshot tracks it at all.

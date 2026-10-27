@@ -29,7 +29,7 @@ import (
 // landing completes, so the route finishes the recovery rather than trading the face for
 // another refusal. A reviewer face's route opens with the reviewer marker and an agent
 // face's does not. The landing walk also proves each publication face, which a light-path
-// landing prints.
+// landing prints, and each stack face, which a stack fixture prints.
 func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 	t.Parallel()
 	wrapper := installedWrapper(t, testRunBinary(t))
@@ -40,7 +40,8 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 	for _, fixture := range lightPathLandingFixtures() {
 		keys = append(keys, [2]string{fixture.face, ""})
 	}
-	faces := routetest.Fixtures(t, refusalroute.Land, keys)
+	faces := routetest.Fixtures(t, refusalroute.Land, append(keys, stackRouteKeys()...))
+	followStackRoutes(t, wrapper, faces)
 	for _, fixture := range lightPathLandingFixtures() {
 		t.Run(fixture.face, func(t *testing.T) {
 			t.Parallel()
@@ -82,14 +83,22 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 func operatorFill(produced producedFace) func(t *testing.T, step string) string {
 	return func(t *testing.T, step string) string {
 		t.Helper()
-		source := produced.f.creation.Path
-		tip := gitOutput(t, source, "rev-parse", "HEAD")
-		return strings.NewReplacer(append(commitSlots(t, source),
-			"<message>", "'land the followed route'",
-			"<request>", sanitize.ShellQuote(produced.request),
-			repairedTipArg, sanitize.ShellQuote(tip),
-		)...).Replace(step)
+		slots := operatorSlots(t, produced.f.creation.Path, repairedTipArg)
+		return strings.NewReplacer(append(slots, "<request>", sanitize.ShellQuote(produced.request))...).Replace(step)
 	}
+}
+
+// operatorSlots are the replacement pairs for the operator slots of a printed route that
+// repairs the source in checkout: its commit slots, its message, and each of tipSlots
+// filled with the source tip after the repair.
+func operatorSlots(t *testing.T, checkout string, tipSlots ...string) []string {
+	t.Helper()
+	tip := sanitize.ShellQuote(gitOutput(t, checkout, "rev-parse", "HEAD"))
+	slots := append(commitSlots(t, checkout), "<message>", "'land the followed route'")
+	for _, slot := range tipSlots {
+		slots = append(slots, slot, tip)
+	}
+	return slots
 }
 
 // commitSlots are the replacement pairs for the operator slots of a printed commit step:

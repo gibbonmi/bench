@@ -17,6 +17,10 @@ var destinationClean = Instruction(Text("commit the destination's uncommitted wo
 // review is a phase the agent runs, not a shell command, so the step is an instruction.
 var review = Instruction(Text("/bench-review-implementation"))
 
+// repairRed sends the repair of a red grade to the source that the label fact addresses. A
+// single landing and a stack both name it.
+var repairRed = Instruction(Text("repair each failure that the gate reports in"), Fact(FactLabel))
+
 // landFaces are the landing's refusal faces, in registry order.
 var landFaces = []Face{
 	{
@@ -143,9 +147,49 @@ var landFaces = []Face{
 		Name:      "land-red",
 		Authority: Agent,
 		Route: []Step{
-			Instruction(Text("repair each failure that the gate reports in"), Fact(FactLabel)),
+			repairRed,
 			commitAt(FactLabel),
 			review,
+			rerun,
+		},
+	},
+	{
+		// A stack's bisect attributed the red to one member. The authorization policy owns
+		// the sentence. The repair commits in that member, so it goes back through review.
+		// A published prefix moves the destination, so the fold follows the review, and the
+		// raising site points the re-run at the member's tip after the fold.
+		Verb:      Land,
+		Name:      "stack-red",
+		Authority: Agent,
+		Route: []Step{
+			repairRed,
+			commitAt(FactLabel),
+			review,
+			Instruction(Text("when the members table shows a landed member, remove each landed member from the stack file, fold the destination into each remaining member, and set the new source_tip of each folded member in the stack file")),
+			rerun,
+		},
+	},
+	{
+		// The member's landing closes its deliverable or transitions its staged spec, which a
+		// stack does not do, so the member leaves the stack and takes its own landing.
+		Verb:      Land,
+		Name:      "stack-member-alone",
+		Sentence:  "stack member must land alone",
+		Authority: Agent,
+		Route: []Step{
+			Instruction(Text("remove the member"), Fact(FactLabel), Text("from the stack file, and land it with its own landing")),
+			rerun,
+		},
+	},
+	{
+		// Two members change one path outside capture/, so the later member of the pair leaves
+		// the stack and lands later on its own route.
+		Verb:      Land,
+		Name:      "stack-members-overlap",
+		Sentence:  "stack members change one path",
+		Authority: Agent,
+		Route: []Step{
+			Instruction(Text("remove the member"), Fact(FactLabel), Text("from the stack file; it lands later on its own route")),
 			rerun,
 		},
 	},

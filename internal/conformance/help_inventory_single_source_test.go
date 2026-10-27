@@ -85,13 +85,14 @@ func checkHelpInventoryTitleOccurrences(root, title string) []string {
 	return diags
 }
 
-// helpRowProjections names each command whose help rows derive from its own form
-// registry, and the projection call that must supply them. Every other public command keeps
-// literal helpRow metadata.
+// helpRowProjections names each command whose help rows come from one function beside
+// its leaves, and the call that must supply them. The function projects a form registry
+// or holds the literal rows. Every other public command keeps literal helpRow metadata.
 var helpRowProjections = map[string]string{
 	"commitment": "commitmentHelpRows",
 	"preflight":  "preflightHelpRows",
 	"record":     "recordHelpRows",
+	"worktree":   "worktreeHelpRows",
 }
 
 // isHelpRowProjection reports whether a publicInventory call spreads exactly one call of

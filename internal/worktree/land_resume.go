@@ -73,32 +73,12 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	// Every refusal past this point names the caller's own resume, so the route survives
 	// the interruption the operator repairs.
 	rerun := landingResumeNext(result, parsed.Flags["--spec"], path, assignmentID)
-	// The residue policy owns the sentence, and the same guard runs inside the
-	// reconcile step, where no operator reads it. So the face is put on here.
-	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
-		return landRefusalError(stdout, landingFaceRefusal(faceResumeDestinationResidue, refusal{detail: err.Error()}, rerun, ""))
+	refused, step := resumePublishedSteps(j, root, destination, branch, marker, published, destinationBase, rerun)
+	if refused != nil {
+		return landRefusalError(stdout, refused)
 	}
-	markerFacts, err := resumeMarkerFacts(root, destination, published, marker)
-	if err != nil {
-		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, refusal{detail: "reader record unreadable: " + err.Error()}, rerun, ""))
-	}
-	switch landingpolicy.ResumeMarker(markerFacts) {
-	case landingpolicy.MarkerAdvance:
-		if err := authorization.AdvanceMarker(context.Background(), root, branch, published, marker); err != nil {
-			return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "marker", records)
-		}
-	case landingpolicy.MarkerRefuse:
-		// The landing policy owns the marker sentence, so the face carries the policy's own.
-		return landRefusalError(stdout, landingFaceRefusal(faceResumeMarker, refusal{detail: landingpolicy.MarkerRefusalDetail}, rerun, ""))
-	}
-	if err := j.reconcileCommitment(root); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "commitment", records)
-	}
-	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "reconcile", records)
-	}
-	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "prune", records)
+	if step != "" {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, step, records)
 	}
 	// A released assignment still owns its effects, so the terminal path runs them rather
 	// than returning a complete landing over an unfinished tree.
@@ -109,6 +89,34 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignmentID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignmentID, true, false, records, stdout, stderr)
+}
+
+// resumePublishedSteps finishes the steps after the publication of published for a resume,
+// in order: the residue guard, the marker, and the steps after the marker. destination is
+// the destination tip now, which can be past published. A refusal before any write answers
+// its routed record with rerun as its re-run. A step that fails answers its name. Both are
+// empty when every step finished. The single resume and the stack resume both run these
+// steps once.
+func resumePublishedSteps(j joins, root, destination, branch, marker, published, destinationBase, rerun string) (refused error, step string) {
+	// The residue policy owns the sentence, and the same guard runs inside the
+	// reconcile step, where no operator reads it. So the face is put on here.
+	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
+		return landingFaceRefusal(faceResumeDestinationResidue, refusal{detail: err.Error()}, rerun, ""), ""
+	}
+	markerFacts, err := resumeMarkerFacts(root, destination, published, marker)
+	if err != nil {
+		return landingFaceRefusal(faceResumeMarker, refusal{detail: "reader record unreadable: " + err.Error()}, rerun, ""), ""
+	}
+	switch landingpolicy.ResumeMarker(markerFacts) {
+	case landingpolicy.MarkerAdvance:
+		if err := authorization.AdvanceMarker(context.Background(), root, branch, published, marker); err != nil {
+			return nil, "marker"
+		}
+	case landingpolicy.MarkerRefuse:
+		// The landing policy owns the marker sentence, so the face carries the policy's own.
+		return landingFaceRefusal(faceResumeMarker, refusal{detail: landingpolicy.MarkerRefusalDetail}, rerun, ""), ""
+	}
+	return nil, stepsAfterMarker(j, root, destination, published, destinationBase)
 }
 
 func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {

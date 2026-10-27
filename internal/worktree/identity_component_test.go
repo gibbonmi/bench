@@ -223,6 +223,10 @@ func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
 		}
 		produced[fixture.face] = true
 	}
+	// A stack face has its producing fixtures in the stack route walk.
+	for _, fixture := range stackRouteFixtures() {
+		produced[fixture.face] = true
+	}
 	for _, face := range refusalroute.Faces(refusalroute.Land) {
 		if !produced[face.Name] {
 			t.Errorf("registry face %q has no producing fixture", face.Name)

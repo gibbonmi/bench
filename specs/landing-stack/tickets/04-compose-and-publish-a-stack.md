@@ -1,7 +1,7 @@
 # Compose, grade once, and publish a green stack
 
 Blocked by: 02-prove-a-stack-in-the-gate.md
-Writes: internal/landing/stack.go (new), internal/landing/stack_test.go (new)
+Writes: internal/landing/stack.go (new), internal/landing/stack_test.go (new), internal/landing/landing.go, internal/gate/stack_completion.go
 Covers: LS24, LS25, LS26, LS27, LS28, LS36, LS38, LS39
 
 ## What to build

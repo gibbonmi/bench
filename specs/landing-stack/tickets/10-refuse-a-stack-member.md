@@ -1,7 +1,7 @@
 # Refuse a stack member before composition
 
 Blocked by: 01-share-the-stack-owner-rule.md, 03-admit-a-stack-publication.md, 09-attribute-a-red-stack.md
-Writes: internal/refusalroute/faces_land.go, internal/worktree/land_refusal.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_preflight.go (new), internal/worktree/land_stack_refusal_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_stack_route_test.go (new)
+Writes: internal/refusalroute/faces_land.go, internal/worktree/land_refusal.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_preflight.go (new), internal/worktree/land_stack_refusal_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_stack_route_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/identity_component_test.go, internal/worktree/land_fixtures_test.go, internal/worktree/land_stack_test.go, internal/gate/tree_snapshot.go
 Covers: LS70, LS71, LS72, LS73, LS74, LS75, LS76, LS77, LS88, LS90, LS91, LS92, LS93
 
 ## What to build
@@ -11,6 +11,7 @@ Add the stack proofs of the spec section "The preflight" in the new file `land_s
 - A member whose `spec` names a staged spec refuses with `stack-member-alone`.
 - A member whose assignment holds a delivery binding refuses with `stack-member-alone`. The proof calls `HoldsDeliveryBinding` of ticket 03, so a started tickets-only deliverable counts.
 - A member whose tip does not contain the destination tip refuses with `land-destination-moved` and its fold route.
+- A destination that moves after the grade (`landing.TipMovedError`) also refuses with the stack-raised `land-destination-moved`, as one landing does, and not with `land-handback`. It refuses each member that lacks the new destination tip, as the behind proof of the preflight does, so one run lists every fold.
 - After the member proofs, the proof calls `stackpolicy.Owners` and `stackpolicy.Overlaps` of ticket 01 over the destination tree and each member tree. It reads each tree with one `git ls-tree` entry format. Each overlap refuses with `stack-members-overlap`, which names both labels and the paths.
 - The build window then decides each member with `AdmitWindow` before the lease, as one landing does. A member that the window refuses refuses with `land-build-window` and its index.
 

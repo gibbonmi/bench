@@ -32,6 +32,8 @@ type gateEvaluation struct {
 	// completionFolder is the tickets-only folder whose prospective close completes a
 	// delivery with no checkpoint spec; it is empty on every other evaluation.
 	completionFolder string
+	// stack is the stack context of a landing stack grade; it is nil on every other evaluation.
+	stack *stackGrade
 }
 
 func newGateEvaluation(root string) *gateEvaluation {

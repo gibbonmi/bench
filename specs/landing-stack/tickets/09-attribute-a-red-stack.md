@@ -1,7 +1,7 @@
 # Attribute a red stack to one member with stack-red
 
 Blocked by: 07-land-a-green-stack.md, 08-bisect-a-red-stack.md
-Writes: internal/refusalroute/faces_land.go, internal/worktree/land_refusal.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_red_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_stack_route_test.go (new)
+Writes: internal/refusalroute/faces_land.go, internal/worktree/land_refusal.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_red_test.go (new), internal/worktree/refusal_route_follow_test.go, internal/worktree/land_stack_route_test.go (new), internal/worktree/parallel_census_test.go, internal/worktree/identity_component_test.go, internal/worktree/land_stack_test.go, internal/worktree/land_reuse_test.go
 Covers: LS46, LS47, LS48, LS49, LS68, LS69, LS89, LS102, LS103, LS106
 
 ## What to build

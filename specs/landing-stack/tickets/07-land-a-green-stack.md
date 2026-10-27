@@ -1,7 +1,7 @@
 # Land a green stack with bench worktree land --stack
 
 Blocked by: 03-admit-a-stack-publication.md, 04-compose-and-publish-a-stack.md, 06-read-a-stack-file.md
-Writes: internal/usage/worktree.go, internal/worktree/land.go, internal/worktree/joins.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_test.go (new), internal/worktree/land_stack_rerun_test.go (new), internal/worktree/land_fixtures_test.go, internal/worktree/land_flags_test.go, internal/worktree/land_refusal.go, internal/worktree/land_effects.go
+Writes: internal/usage/worktree.go, internal/worktree/land.go, internal/worktree/joins.go, internal/worktree/land_stack.go (new), internal/worktree/land_stack_rerun.go (new), internal/worktree/land_stack_test.go (new), internal/worktree/land_stack_rerun_test.go (new), internal/worktree/land_fixtures_test.go, internal/worktree/land_flags_test.go, internal/worktree/land_refusal.go, internal/worktree/land_effects.go, internal/worktree/parallel_census_test.go, internal/worktree/land_lease_test.go
 Covers: LS40, LS41, LS42, LS43, LS44, LS45, LS50, LS51, LS52, LS53, LS63, LS86, LS87, LS94, LS95, LS101, LS104, LS105
 
 ## What to build

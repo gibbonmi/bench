@@ -3,11 +3,13 @@ package worktree
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
@@ -106,6 +108,14 @@ const reviewedSource = "reviewed bytes\n"
 // ticket writes, so the source may change that path.
 func seededLandingFixture(t *testing.T, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
 	t.Helper()
+	return seededLandingSource(t, true, request, ignored, declaration, home, gradeSpec, step, seed, fence...)
+}
+
+// seededLandingSource is seededLandingFixture whose source assignment starts the delivery
+// outcome and records its spec evidence only when bind holds. An unbound source is a
+// light-path source, so it changes owned.txt alone.
+func seededLandingSource(t *testing.T, bind bool, request, ignored, declaration, home string, gradeSpec bool, step func(*testrepo.GateFixture, string) string, seed func(testing.TB, string), fence ...string) landingFixture {
+	t.Helper()
 	gateSpec, prospectiveSpec := "", ""
 	f := landingGateFixture(t)
 	if gradeSpec {
@@ -142,9 +152,13 @@ func seededLandingFixture(t *testing.T, request, ignored, declaration, home stri
 	prepared.Commit("approve fixture delivery")
 	base := prepared.Tip()
 	creation := mustCreate(t, root, home, request, "public landing")
-	commitmenttest.Admit(t, creation.Path, request, closureSpec)
+	if bind {
+		commitmenttest.Admit(t, creation.Path, request, closureSpec)
+	}
 	commitInWorktree(t, creation.Path, "owned.txt", reviewedSource, "reviewed source")
-	refreshLandingEvidence(t, creation.Path, base)
+	if bind {
+		refreshLandingEvidence(t, creation.Path, base)
+	}
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	if ignored != "" {
 		mustMkdirAll(t, filepath.Dir(filepath.Join(creation.Path, filepath.FromSlash(ignored))), 0o755)
@@ -286,6 +300,70 @@ func ticketsOnlyFolderFixture(t *testing.T, f landingFixture) landingFixture {
 
 func ticketsOnlyLandArgs(request, base, tip, slug, path string) []string {
 	return append([]string{"--spec", slug}, specLessLandArgs(request, base, tip, path)...)
+}
+
+// stackFixture is a landing fixture with more members from the same review base. The
+// embedded fixture is member 1. Each member is an unbound light-path source: it commits its
+// own file, and its own tickets folder holds the one ticket that writes that file, so no two
+// members change one path. A separate assignment holds the open build, whose chunk gap is
+// open.
+type stackFixture struct {
+	landingFixture
+	members []stackFixtureMember
+}
+
+// stackFixtureMember is one member of a stack fixture and its value in the stack file.
+type stackFixtureMember struct {
+	creation                 Creation
+	request, file, slug, tip string
+}
+
+// stackLandingFixture builds n tickets-only members whose requests are prefix-1 to
+// prefix-n. step is the extra gate line that landingFixtureWithGateStep takes.
+func stackLandingFixture(t *testing.T, prefix string, n int, step func(*testrepo.GateFixture, string) string) stackFixture {
+	t.Helper()
+	first := seededLandingSource(t, false, prefix+"-1", "", "", filepath.Join(t.TempDir(), "bench-home"), false, step, closureAdmission)
+	f := stackFixture{landingFixture: first, members: []stackFixtureMember{{creation: first.creation, request: prefix + "-1", file: "owned.txt"}}}
+	for i := 2; i <= n; i++ {
+		request := fmt.Sprintf("%s-%d", prefix, i)
+		creation := mustCreate(t, f.root, f.home, request, fmt.Sprintf("member %d", i))
+		commitInWorktree(t, creation.Path, stackMemberFile(i), "member bytes\n", "member source")
+		f.members = append(f.members, stackFixtureMember{creation: creation, request: request, file: stackMemberFile(i)})
+	}
+	commitmenttest.BindBuild(t, f.root, prefix+"-build", closureSpec)
+	openChunkGaps(t, f.root)
+	for i := range f.members {
+		f.members[i].slug = fmt.Sprintf("s%d", i+1)
+		commitmenttest.Write(t, f.root, "specs/"+f.members[i].slug+"/tickets/one.md", commitmenttest.TicketBody("Stack member", []string{f.members[i].file + " (new)"}, "LP1"))
+		gitRun(t, f.root, "add", "specs/"+f.members[i].slug)
+	}
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folders")
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	gitRun(t, f.root, "update-ref", "refs/bench/green/main", f.base)
+	for i := range f.members {
+		gitRun(t, f.members[i].creation.Path, "rebase", "main")
+		f.members[i].tip = gitOutput(t, f.members[i].creation.Path, "rev-parse", "HEAD")
+	}
+	f.tip = f.members[0].tip
+	return f
+}
+
+// stackMemberFile is the file that member i of a stack fixture commits. Member 1 commits
+// the landing fixture's own file.
+func stackMemberFile(i int) string { return fmt.Sprintf("member-%d.txt", i) }
+
+// gateBarrier is a pair of FIFOs that a fixture gate line signals and then waits on, and
+// the gate line itself.
+func gateBarrier(t *testing.T) (started, release string, step func(*testrepo.GateFixture, string) string) {
+	t.Helper()
+	barrier := t.TempDir()
+	started, release = filepath.Join(barrier, "started"), filepath.Join(barrier, "release")
+	for _, fifo := range []string{started, release} {
+		mustNoError(t, syscall.Mkfifo(fifo, 0o600))
+	}
+	return started, release, func(*testrepo.GateFixture, string) string {
+		return ": > " + sanitize.ShellQuote(started) + "\nIFS= read -r _ < " + sanitize.ShellQuote(release) + "\n"
+	}
 }
 
 // landingTicket is the one ticket that the landing fixture prepared.

@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,7 +20,6 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/refusalroute"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -125,6 +123,9 @@ func beginLandingSpan(home, root string) (context.Context, func(int, landingMeas
 // landAttributed is the first-run landing itself, with the span's measures written to
 // measures as each becomes known.
 func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+	if hasStackFlag(args) {
+		return landStack(ctx, measures, j, a, root, args, stdout, stderr)
+	}
 	if hasResumeFlag(args) {
 		return resumeLandWith(j, a, root, args, stdout, stderr)
 	}
@@ -185,19 +186,14 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		measures.pathCount = len(reviewed.CommittedPaths)
 		measures.counted = true
 	}
-	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
+	printLandingSource(stderr, source.base, assignment.Start)
 	printCensusHeads(stderr, a.home, root, assignment.ID)
 	// The release removes the source worktree, so the broker check reads it now and the
 	// notice prints after the effects report the refresh.
 	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
-	request := landing.ReviewedRequest{
-		Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination,
-		Source: assignment.Branch, SourceTip: source.tip, ReviewBase: source.base,
-		SourceWorktree: assignment.Worktree, SourceFingerprint: source.fingerprint, DestinationFingerprint: destinationFingerprint,
-		SpecPath: source.specPath, SpecBytes: source.specBytes, SpecMode: source.specMode, ClosePath: source.closePath,
-		GreenMarker: priorMarker, Message: parsed.Flags["-m"], Stdout: stdout, Stderr: stderr,
-	}
-	publication := commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(parsed.Flags["--request"]), Worktree: assignment.Worktree, Source: source.tip, Deliverable: request.Deliverable(), Destination: request.Destination}
+	request, publication := sourceRequest(assignment, source, parsed.Flags["--request"], parsed.Flags["-m"], "refs/heads/"+branch)
+	request.Root, request.Destination, request.DestinationBase, request.DestinationFingerprint = root, publication.Destination, destination, destinationFingerprint
+	request.GreenMarker, request.Stdout, request.Stderr = priorMarker, stdout, stderr
 	// The window decides before the lease, so a landing never waits for a lease and then for a gap.
 	if err := (commitrepo.Store{Root: root}).AdmitWindow(publication); err != nil {
 		return landRefusalError(stdout, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
@@ -217,23 +213,10 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	measures.subject = result.Commit
-	if err := advanceLandedMarker(root, branch, result, priorMarker); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
+	if step := publishedSteps(j, root, branch, result, priorMarker); step != "" {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, step, records)
 	}
-	if err := j.reconcileCommitment(root); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "commitment", records)
-	}
-	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
-	}
-	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)
-	}
-	var releaseDiagnostic bytes.Buffer
-	if release := j.releaseLandingAssignment(j, a, root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
-		if releaseDiagnostic.Len() > 0 {
-			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
-		}
+	if !releaseLanded(j, a, root, parsed.Flags["--request"], path, stderr) {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
@@ -246,14 +229,8 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 // reviewer. A face whose repair commits in the source re-runs at the repaired tip, and the
 // source assignment's label addresses that commit.
 func landingCompositionRoute(err error, request, base, tip, specArg, path string, a intent.Assignment) error {
-	var refused landing.AuthorizationRefusal
-	if errors.As(err, &refused) {
-		switch {
-		case refused.Result.Kind == authorization.Infrastructure:
-			err = refusalError{refusal{detail: err.Error(), face: faceLandInfrastructure}}
-		case landing.RedKind(refused.Result.Kind):
-			err = refusalError{refusal{detail: err.Error(), face: faceLandRed}}
-		}
+	if face := authorizationFace(err); face != "" {
+		err = refusalError{refusal{detail: err.Error(), face: face}}
 	}
 	tipFlag := landingSourceTipFlag(tip)
 	if repairsSource(landingFaceName(err)) {
@@ -261,6 +238,21 @@ func landingCompositionRoute(err error, request, base, tip, specArg, path string
 	}
 	values := map[string]string{refusalroute.FactRerun: landingRerunAt(request, base, tipFlag, specArg, path, a.ID), refusalroute.FactLabel: a.Label}
 	return landingFaceRouteWith(err, values, false)
+}
+
+// authorizationFace names the face of an authorization refusal by the kind that the gate
+// attributed: the infrastructure face or the red face. Any other error has no face here.
+func authorizationFace(err error) string {
+	var refused landing.AuthorizationRefusal
+	switch {
+	case !errors.As(err, &refused):
+		return ""
+	case refused.Result.Kind == authorization.Infrastructure:
+		return faceLandInfrastructure
+	case landing.RedKind(refused.Result.Kind):
+		return faceLandRed
+	}
+	return ""
 }
 
 // landingSourceProofs runs the first run's source proofs over a resolved assignment: the
@@ -306,13 +298,20 @@ func (a commitmentAdmission) Check(tree string) error {
 	return nil
 }
 
-// Publish leaves a publication failure unwrapped, so compare-and-swap and recovery
-// refusals keep their own text. Only an admission refusal carries the commitment prefix. The
-// window refusal keeps the sentence that it prints before the lease.
 func (a commitmentAdmission) Publish(tree string, publish func() error) error {
+	return publishAdmitted(a.store.Root, a.gap, publish, func(gapped func() error) error {
+		return a.store.PublishAdmitted(a.source, tree, gapped)
+	})
+}
+
+// publishAdmitted runs decide with publish behind the gap at root. It leaves a publication
+// failure unwrapped, so compare-and-swap and recovery refusals keep their own text. Only
+// an admission refusal carries the commitment prefix. The window refusal keeps the sentence
+// that it prints before the lease.
+func publishAdmitted(root string, gap func(string), publish func() error, decide func(func() error) error) error {
 	ran := false
-	err := a.store.PublishAdmitted(a.source, tree, func() error {
-		a.gap(a.store.Root)
+	err := decide(func() error {
+		gap(root)
 		ran = true
 		return publish()
 	})
@@ -342,10 +341,6 @@ func printCensusHeads(stderr io.Writer, home, root, assignment string) {
 	if breakdown := census.OutputBreakdown(home, root, assignment); breakdown != "" {
 		fmt.Fprintf(stderr, "census output{%s}\n", breakdown)
 	}
-}
-
-func hasResumeFlag(args []string) bool {
-	return usage.FlagPresent(landGrammar, args, "--resume")
 }
 
 // brokerSourceChanged reports whether the reviewed diff in worktree changes the promotion

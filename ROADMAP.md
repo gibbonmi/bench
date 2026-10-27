@@ -216,8 +216,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT444 (LOW) — each retro improvement item names its fix lever.**
 
-**FT450 (MEDIUM) — a landing queue composes ready sources in order, grades the stack once, and bisects a red.**
-
 **FT451 (MEDIUM) — the gate grades each lane-passed tip in the background, so a checkpoint or a landing looks up its verdict.**
 
 ## Release qualification
@@ -353,18 +351,17 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT450-landing-queue
-2. FT448-repair-carry
-3. FT360-shared-fixtures
-4. FT411
-5. FT125-exact-readers
-6. FT375-residual
-7. FT344-remedy
-8. FT406-rebuild
-9. FT366-rg-guard
-10. FT380-residual
-11. FT354-strict-json
-12. FT363-member-set
-13. FT358-block-reader
-14. FT365-conformance
-15. FT414-preconditions
+1. FT448-repair-carry
+2. FT360-shared-fixtures
+3. FT411
+4. FT125-exact-readers
+5. FT375-residual
+6. FT344-remedy
+7. FT406-rebuild
+8. FT366-rg-guard
+9. FT380-residual
+10. FT354-strict-json
+11. FT363-member-set
+12. FT358-block-reader
+13. FT365-conformance
+14. FT414-preconditions

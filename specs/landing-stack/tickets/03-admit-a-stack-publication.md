@@ -1,7 +1,7 @@
 # Admit a stack publication in one commitment decision
 
 Blocked by: none
-Writes: internal/commitment/repository/publication.go, internal/commitment/repository/stack_publication_test.go (new), internal/commitment/repository/export_test.go
+Writes: internal/commitment/repository/publication.go, internal/commitment/repository/stack_publication_test.go (new), internal/commitment/repository/export_test.go, internal/commitment/commitmenttest/light.go, internal/commitment/repository/window_test.go
 Covers: LS18, LS19, LS20, LS21, LS22, LS23
 
 ## What to build

@@ -3,13 +3,16 @@
 package worktree
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -48,13 +51,24 @@ type effectRow struct {
 // The broker notice prints after the effects row, so it reads the refresh result. A resume
 // has no source worktree to read, so it passes false.
 func landedAfterEffects(j joins, a ambient, root string, result landing.ReviewedResult, specArg, path, assignment string, active, brokerChanged bool, records int, stdout, stderr io.Writer) int {
+	if failed := runLandedEffects(j, a, root, result.DestinationBase, brokerChanged, stdout, stderr); failed != "" {
+		return landedIncomplete(stdout, result, specArg, path, assignment, failed, records)
+	}
+	return landedComplete(stdout, result, active, records)
+}
+
+// runLandedEffects runs the two landing effects once at root for a publication over
+// destinationBase, prints their table and the broker notice, and answers the failed effect.
+// It answers the empty name when no effect failed. A first run, a resume, and a stack all
+// run the effects through it.
+func runLandedEffects(j joins, a ambient, root, destinationBase string, brokerChanged bool, stdout, stderr io.Writer) string {
 	refresh := refreshBroker(j, root, stderr)
 	// A failed effect stops every later effect, so the cleanup never starts and never
 	// touches a checkout. It reports pending, which is the word for an effect that has
 	// not run rather than one that ran and did nothing.
 	cleanup := effectPending
 	if refresh != effectFailed {
-		cleanup = cleanLandedSiblings(j, a, root, result.DestinationBase, stderr)
+		cleanup = cleanLandedSiblings(j, a, root, destinationBase, stderr)
 	}
 	rows := []effectRow{{effect: refreshEffect, result: refresh}, {effect: cleanupEffect, result: cleanup}}
 	fmt.Fprintf(stdout, "effects[%d]{effect,result}:\n", len(rows))
@@ -68,10 +82,52 @@ func landedAfterEffects(j joins, a ambient, root string, result landing.Reviewed
 	}
 	for _, row := range rows {
 		if row.result == effectFailed {
-			return landedIncomplete(stdout, result, specArg, path, assignment, row.effect, records)
+			return row.effect
 		}
 	}
-	return landedComplete(stdout, result, active, records)
+	return ""
+}
+
+// publishedSteps runs the steps that follow a publication at root: the green marker
+// advance, then the steps after the marker. It answers the name of the step that failed,
+// or the empty name. A first run and a stack both run these steps once for the commit that
+// they published.
+func publishedSteps(j joins, root, branch string, result landing.ReviewedResult, priorMarker string) string {
+	if err := advanceLandedMarker(root, branch, result, priorMarker); err != nil {
+		return "marker"
+	}
+	return stepsAfterMarker(j, root, result.Commit, result.Commit, result.DestinationBase)
+}
+
+// stepsAfterMarker runs the steps that follow the marker step for the publication of
+// published at root, in order: the commitment reconcile, the destination checkout reconcile
+// to destination, and the branch prune. destination is the destination tip now. It answers
+// the name of the step that failed, or the empty name. Every landing and every resume runs
+// these steps through it.
+func stepsAfterMarker(j joins, root, destination, published, destinationBase string) string {
+	if err := j.reconcileCommitment(root); err != nil {
+		return "commitment"
+	}
+	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
+		return "reconcile"
+	}
+	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
+		return "prune"
+	}
+	return ""
+}
+
+// releaseLanded releases the landed assignment that request and path name. A refused
+// release states its diagnostic on stderr and answers false.
+func releaseLanded(j joins, a ambient, root, request, path string, stderr io.Writer) bool {
+	var diagnostic bytes.Buffer
+	if j.releaseLandingAssignment(j, a, root, []string{"--request", request, path}, io.Discard, &diagnostic) == 0 {
+		return true
+	}
+	if diagnostic.Len() > 0 {
+		fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(diagnostic.String(), "\n")))
+	}
+	return false
 }
 
 // refreshBroker republishes root's own Bench executable after the landing published the

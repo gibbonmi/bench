@@ -1,6 +1,6 @@
 # A landing stack grades several reviewed sources once and bisects a red
 
-Status: staged
+Status: implemented
 
 Roadmap: FT450
 
@@ -191,8 +191,8 @@ Harder chunks: LS-C2, LS-C3, LS-C6.
 - Each member prints its `landing source{...}` line on stderr before composition.
 - After the lease, stdout prints one `members[N]{member,label,source_tip,published_commit,outcome,census}` table in file order. The `outcome` cell reads `landed`, `red`, or `unlanded`. The `published_commit` cell reads `none` for a member that did not land.
 - After a publication, stdout prints the effects table of one landing. A refusal after the lease prints its record next.
-- The last stdout line is `stack{destination_base=…,published_commit=…,landed=<k>,worktree=…}`. Its `published_commit` field reads `none` when nothing published.
-- Exit 0 means that every member landed and every step finished. Exit 1 means that the stack refused at least one member, and the members table shows what landed. Exit 2 means invalid usage. Exit 3 means that a step after publication stopped, and the record carries the stack resume.
+- After the lease, the last stdout line is `stack{destination_base=…,published_commit=…,landed=<k>,worktree=…}`. Its `published_commit` field reads `none` when nothing published. A refusal before the lease prints no members table and no `stack{...}` record.
+- Exit 0 means that every member landed and every step finished. Exit 1 means that the stack refused at least one member and no step after publication stopped. Exit 2 means invalid usage. Exit 3 means that a step after publication stopped, and the record carries the stack resume.
 
 ### The refusal faces
 
@@ -246,243 +246,7 @@ Each ticket targets an author context of about 150k tokens, and the Further note
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "LS-C1",
-      "tickets": [
-        "01-share-the-stack-owner-rule.md"
-      ],
-      "verification": [
-        {
-          "id": "stackpolicy",
-          "command": "bench test --package ./internal/landing/stackpolicy"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C2",
-      "tickets": [
-        "02-prove-a-stack-in-the-gate.md"
-      ],
-      "verification": [
-        {
-          "id": "gate",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C3",
-      "tickets": [
-        "03-admit-a-stack-publication.md",
-        "04-compose-and-publish-a-stack.md"
-      ],
-      "verification": [
-        {
-          "id": "commitment-repository",
-          "command": "bench test --package ./internal/commitment/repository"
-        },
-        {
-          "id": "landing",
-          "command": "bench test --package ./internal/landing"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C4",
-      "tickets": [
-        "05-move-the-worktree-help-rows.md",
-        "06-read-a-stack-file.md"
-      ],
-      "verification": [
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C5",
-      "tickets": [
-        "07-land-a-green-stack.md"
-      ],
-      "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "usage",
-          "command": "bench test --package ./internal/usage"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C6",
-      "tickets": [
-        "08-bisect-a-red-stack.md"
-      ],
-      "verification": [
-        {
-          "id": "landing",
-          "command": "bench test --package ./internal/landing"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C7",
-      "tickets": [
-        "09-attribute-a-red-stack.md"
-      ],
-      "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "refusalroute",
-          "command": "bench test --package ./internal/refusalroute"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C8",
-      "tickets": [
-        "10-refuse-a-stack-member.md"
-      ],
-      "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "refusalroute",
-          "command": "bench test --package ./internal/refusalroute"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C9",
-      "tickets": [
-        "11-resume-a-stack.md"
-      ],
-      "verification": [
-        {
-          "id": "worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "commands",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "usage",
-          "command": "bench test --package ./internal/usage"
-        },
-        {
-          "id": "system",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    },
-    {
-      "id": "LS-C10",
-      "tickets": [
-        "12-record-the-landing-stack.md"
-      ],
-      "verification": [
-        {
-          "id": "prose",
-          "command": "bench test --check prose"
-        },
-        {
-          "id": "conformance-package",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "root-conformance",
-          "command": "bench test --check root-conformance"
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "integration",
-      "command": "bench test --changed --base 34ac699156f965752a13fc3c2f1c703c842348fc"
-    },
-    {
-      "id": "system",
-      "command": "bench test --check system"
-    },
-    {
-      "id": "whole-project",
-      "command": "bench gate"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft450-landing-stack-full-20261026","orchestrator_session":"claude:ls-orchestrator-20261026","author_limit":3,"assignments":{"01-share-the-stack-owner-rule.md":[{"session":"claude:ls-t01-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"4b03797988ac14cf6e30d6a51a5afb36eaac6649","native_ref":"claude-agent:bench-writer-medium:ls-t01-author-20261026"},{"session":"claude:ls-t01-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"d866a582578bcdc1b68909f9488ecfe872b2adb9","native_ref":"claude-agent:bench-writer-medium:ls-t01-repair1-20261026","predecessor":"claude:ls-t01-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t01-author-20261026","preserved":"d172cd9967dcd2b4dff64de7732b5c959f388336"}],"02-prove-a-stack-in-the-gate.md":[{"session":"claude:ls-t02-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"554fa8647e60183b7fb8621a47a08b80561a339f","native_ref":"claude-agent:bench-writer-medium:ls-t02-author-20261026"},{"session":"claude:ls-t02-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"1d2ad57d872a71989b5af63f3af5da94c220e398","native_ref":"claude-agent:bench-writer-medium:ls-t02-repair1-20261026","predecessor":"claude:ls-t02-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t02-author-20261026","preserved":"a663e75135c53473df75b4da34c3328773d47e11"}],"03-admit-a-stack-publication.md":[{"session":"claude:ls-t03-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"c84e7c35c0003d04a1edb76c6bc997c392c03c23","native_ref":"claude-agent:bench-writer-medium:ls-t03-author-20261026"},{"session":"claude:ls-t03-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"548df27601399dd2ee9e28bcd94895fd417ccb07","native_ref":"claude-agent:bench-writer-medium:ls-t03-repair1-20261026","predecessor":"claude:ls-t03-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t03-author-20261026","preserved":"9648f3cce4ac8a6a9e39d75c61ca2bbcf310e66e"}],"04-compose-and-publish-a-stack.md":[{"session":"claude:ls-t04-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"9648f3cce4ac8a6a9e39d75c61ca2bbcf310e66e","native_ref":"claude-agent:bench-writer-medium:ls-t04-author-20261026"},{"session":"claude:ls-t04-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"c4a007e7b87478a342b96a8f031e050b305edf25","native_ref":"claude-agent:bench-writer-medium:ls-t04-repair1-20261026","predecessor":"claude:ls-t04-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t04-author-20261026","preserved":"d966b20288a8a026882d87a6acb38c9e85c18baf"}],"05-move-the-worktree-help-rows.md":[{"session":"claude:ls-t05-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"5d027145cfc46cda3286284b1fc867440846ddbb","native_ref":"claude-agent:bench-writer-medium:ls-t05-author-20261026"}],"06-read-a-stack-file.md":[{"session":"claude:ls-t06-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"fde72e0423d8e8ad9ebf841e3cb4cfac7308db77","native_ref":"claude-agent:bench-writer-medium:ls-t06-author-20261026"},{"session":"claude:ls-t06-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"2d6d6dd49900fddca5d0d2e49a446ef3a790bf66","native_ref":"claude-agent:bench-writer-medium:ls-t06-repair1-20261026","predecessor":"claude:ls-t06-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t06-author-20261026","preserved":"f2b81fc002c18b450b3c7a32b8a4505506ff21d4"}],"07-land-a-green-stack.md":[{"session":"claude:ls-t07-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"b0d6723440ce076a50867606934ad1f44ad55786","native_ref":"claude-agent:bench-writer-medium:ls-t07-author-20261026"},{"session":"claude:ls-t07-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"5501ecb815316974f6c9464ed201aa65b55477da","native_ref":"claude-agent:bench-writer-medium:ls-t07-repair1-20261026","predecessor":"claude:ls-t07-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t07-author-20261026","preserved":"5eb51e6cf66e0b7ed4d142f9888f7b0e13eabfd1"}],"08-bisect-a-red-stack.md":[{"session":"claude:ls-t08-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"b850660b2da2c037d71c2da74a16447e3f0da220","native_ref":"claude-agent:bench-writer-medium:ls-t08-author-20261026"},{"session":"claude:ls-t08-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"d7e895e8d431632bc0833fa0d1a3ddd22806fc35","native_ref":"claude-agent:bench-writer-medium:ls-t08-repair1-20261026","predecessor":"claude:ls-t08-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t08-author-20261026","preserved":"f9ea6a781c5bc02387879512e7df7f0efb2e40c1"}],"09-attribute-a-red-stack.md":[{"session":"claude:ls-t09-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"40cb573292fdb2ae8e62de46939bd471c8a1bbfa","native_ref":"claude-agent:bench-writer-medium:ls-t09-author-20261026"},{"session":"claude:ls-t09-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"8c4704bdef9295356cf47a06aa706ed9ab55f3fc","native_ref":"claude-agent:bench-writer-medium:ls-t09-repair1-20261026","predecessor":"claude:ls-t09-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t09-author-20261026","preserved":"a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9"}],"10-refuse-a-stack-member.md":[{"session":"claude:ls-t10-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"e6e5f6c226826320c3e933fd59db97ea65a82793","native_ref":"claude-agent:bench-writer-medium:ls-t10-author-20261026"},{"session":"claude:ls-t10-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"f6b3039a76bf9bc65680dcf2bcb77872ea8ca394","native_ref":"claude-agent:bench-writer-medium:ls-t10-repair1-20261026","predecessor":"claude:ls-t10-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t10-author-20261026","preserved":"7aad4fd4297c90e316dc03b4500d4155c46d1f9a"}],"11-resume-a-stack.md":[{"session":"claude:ls-t11-author-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"3d8605b9b34c179d824f6ec68114a3e29bf9c3d9","native_ref":"claude-agent:bench-writer-medium:ls-t11-author-20261026"},{"session":"claude:ls-t11-repair1-20261026","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"medium","source":"7df4689348b9485aeaf3dd155ed5af601d941687","native_ref":"claude-agent:bench-writer-medium:ls-t11-repair1-20261026","predecessor":"claude:ls-t11-author-20261026","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ls-t11-author-20261026","preserved":"3ed09a7196ce70e96f305cae6b80d6adc90965d8"}],"12-record-the-landing-stack.md":[{"session":"claude:ls-t12-author-20261027","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"high","source":"c7087287f38556230468153df3bfe60d73bfdf16","native_ref":"claude-agent:bench-writer-high:ls-t12-author-20261027"},{"session":"claude:ls-t12-repair1-20261027","assignment":"1cc76f5a694166ff98662b56b893ac23","model":"opus","effort":"high","source":"30ddb6312f681e4eb199ea6c929045509c042ab9","native_ref":"claude-agent:bench-writer-high:ls-t12-repair1-20261027","predecessor":"claude:ls-t12-author-20261027","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ls-t12-author-20261027","preserved":"c06c7ec58b64da0b96a316a9beb1224432d0ba76"}]}},"chunks":[{"id":"LS-C1","tickets":["01-share-the-stack-owner-rule.md"],"verification":[{"id":"stackpolicy","command":"bench test --package ./internal/landing/stackpolicy","ticket":"01-share-the-stack-owner-rule.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"01-share-the-stack-owner-rule.md"}]},{"id":"LS-C2","tickets":["02-prove-a-stack-in-the-gate.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate","ticket":"02-prove-a-stack-in-the-gate.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"02-prove-a-stack-in-the-gate.md"}]},{"id":"LS-C3","tickets":["03-admit-a-stack-publication.md","04-compose-and-publish-a-stack.md"],"verification":[{"id":"commitment-repository","command":"bench test --package ./internal/commitment/repository","ticket":"03-admit-a-stack-publication.md"},{"id":"landing","command":"bench test --package ./internal/landing","ticket":"04-compose-and-publish-a-stack.md"},{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"04-compose-and-publish-a-stack.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"03-admit-a-stack-publication.md"},{"id":"root-conformance-04","command":"bench test --check root-conformance","ticket":"04-compose-and-publish-a-stack.md"},{"id":"commitmenttest","command":"bench test --package ./internal/commitment/commitmenttest","ticket":"03-admit-a-stack-publication.md"},{"id":"gate-04","command":"bench test --package ./internal/gate","ticket":"04-compose-and-publish-a-stack.md"}]},{"id":"LS-C4","tickets":["05-move-the-worktree-help-rows.md","06-read-a-stack-file.md"],"verification":[{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"05-move-the-worktree-help-rows.md"},{"id":"worktree","command":"bench test --package ./internal/worktree","ticket":"06-read-a-stack-file.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"05-move-the-worktree-help-rows.md"},{"id":"root-conformance-06","command":"bench test --check root-conformance","ticket":"06-read-a-stack-file.md"},{"id":"conformance-05","command":"bench test --package ./internal/conformance","ticket":"05-move-the-worktree-help-rows.md"}]},{"id":"LS-C5","tickets":["07-land-a-green-stack.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree","ticket":"07-land-a-green-stack.md"},{"id":"usage","command":"bench test --package ./internal/usage","ticket":"07-land-a-green-stack.md"},{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"07-land-a-green-stack.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"07-land-a-green-stack.md"}]},{"id":"LS-C6","tickets":["08-bisect-a-red-stack.md"],"verification":[{"id":"landing","command":"bench test --package ./internal/landing","ticket":"08-bisect-a-red-stack.md"},{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"08-bisect-a-red-stack.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"08-bisect-a-red-stack.md"}]},{"id":"LS-C7","tickets":["09-attribute-a-red-stack.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree","ticket":"09-attribute-a-red-stack.md"},{"id":"refusalroute","command":"bench test --package ./internal/refusalroute","ticket":"09-attribute-a-red-stack.md"},{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"09-attribute-a-red-stack.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"09-attribute-a-red-stack.md"}]},{"id":"LS-C8","tickets":["10-refuse-a-stack-member.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree","ticket":"10-refuse-a-stack-member.md"},{"id":"refusalroute","command":"bench test --package ./internal/refusalroute","ticket":"10-refuse-a-stack-member.md"},{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"10-refuse-a-stack-member.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"10-refuse-a-stack-member.md"},{"id":"gate-10","command":"bench test --package ./internal/gate","ticket":"10-refuse-a-stack-member.md"}]},{"id":"LS-C9","tickets":["11-resume-a-stack.md"],"verification":[{"id":"worktree","command":"bench test --package ./internal/worktree","ticket":"11-resume-a-stack.md"},{"id":"commands","command":"bench test --package ./cmd/bench","ticket":"11-resume-a-stack.md"},{"id":"usage","command":"bench test --package ./internal/usage","ticket":"11-resume-a-stack.md"},{"id":"system","command":"bench test --check system","ticket":"11-resume-a-stack.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"11-resume-a-stack.md"}]},{"id":"LS-C10","tickets":["12-record-the-landing-stack.md"],"verification":[{"id":"prose","command":"bench test --check prose","ticket":"12-record-the-landing-stack.md"},{"id":"conformance-package","command":"bench test --package ./internal/conformance","ticket":"12-record-the-landing-stack.md"},{"id":"root-conformance","command":"bench test --check root-conformance","ticket":"12-record-the-landing-stack.md"}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base 34ac699156f965752a13fc3c2f1c703c842348fc"},{"id":"system","command":"bench test --check system"},{"id":"whole-project","command":"bench gate"}]}
 ```
 
 ## Testing decisions
@@ -516,94 +280,94 @@ Each ticket targets an author context of about 150k tokens, and the Further note
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| LS1 | 20 | The owner rule maps a path that two members change to both member indexes, and a path that one member changes to that member alone | planned TestStackOwnersNamesEachChangingMember in internal/landing/stackpolicy/stackpolicy_test.go | A rule that keeps only the last owner hides the overlap |
-| LS2 | 15 | The overlap set leaves out a `capture/` path that two members change | planned TestStackOverlapsLeaveOutCapture in internal/landing/stackpolicy/stackpolicy_test.go | A rule with no exemption refuses every stack that touches one inbox file |
-| LS3 | 17 | The overlap set keeps a path outside `capture/` that two members change | planned TestStackOverlapsKeepAnOutsidePath in internal/landing/stackpolicy/stackpolicy_test.go | A rule that exempts every path accepts an overlap |
-| LS4 | 20 | A member that changes only the mode of one path owns that path | planned TestStackOwnersCountsAModeChange in internal/landing/stackpolicy/stackpolicy_test.go | A rule that compares only object ids misses an attribute change |
-| LS5 | 20 | A member that renames one path owns the old path and the new path | planned TestStackOwnersCountsBothRenamePaths in internal/landing/stackpolicy/stackpolicy_test.go | A rule with rename detection hides the old path from an overlap |
-| LS6 | 20 | A changed path that holds a space and a `*` maps to its exact spelling | planned TestStackOwnersKeepsExactPaths in internal/landing/stackpolicy/stackpolicy_test.go | A rule that splits or globs a path names the wrong path |
-| LS7 | 11 | The stack proof accepts the exact tree of a two-member stack | planned TestStackProofAcceptsTheExactStack in internal/gate/stack_completion_test.go | A proof that refuses the exact tree refuses every stack |
-| LS8 | 12 | A tree of a stack of two spec-less members whose bytes at a member's changed path differ from that member's bytes refuses with a message that names the path | planned TestStackProofRefusesAChangedMemberPath in internal/gate/stack_completion_test.go | A proof that reads only the path set accepts rewritten bytes, and a proof placed beside the tickets-only branch never runs for spec-less members |
-| LS9 | 13 | A tree of a stack of two spec-less members that changes a path that no member changes refuses with `stack composition changes <path>; review the destination delta` | planned TestStackProofRefusesAnUnreviewedDelta in internal/gate/stack_completion_test.go | A proof that skips the unowned paths, or that skips a context with no tickets folder, lands an unreviewed change |
-| LS10 | 14 | A stack tree that keeps an entry under the tickets folder of a member refuses with `completion keeps closed <path>` | planned TestStackProofRefusesAKeptFolder in internal/gate/stack_completion_test.go | A proof that skips the folder close lands the open tickets |
-| LS11 | 15 | A stack tree whose bytes at a `capture/` path that two members change match neither member passes the proof | planned TestStackProofLeavesASharedCapturePathToTheSettlePolicy in internal/gate/stack_completion_test.go | A proof that demands one member's bytes refuses the union that the settle policy writes |
-| LS12 | 11 | A stack tree with a path outside `capture/` that two members change refuses with a message that names both member indexes | planned TestStackProofRefusesAnOverlap in internal/gate/stack_completion_test.go | A proof that takes the bytes of the last owner accepts a silent overwrite |
-| LS13 | 11 | A stack tree passes only when it lacks a destination path that one member deletes | planned TestStackProofHonorsAMemberDeletion in internal/gate/stack_completion_test.go | A proof that reads only the present entries keeps a deleted path |
-| LS14 | 11, 22 | A one-member stack context over a member that holds the destination accepts the exact prefix tree | planned TestStackProofAcceptsAOneMemberPrefix in internal/gate/stack_completion_test.go | A proof that demands two members refuses every bisect prefix of one member |
-| LS15 | 11 | After a green of the top tree under no stack context, a grade of that tree under a stack context whose proof fails refuses | planned TestStackProofRunsOnAReusedGreen in internal/gate/stack_completion_test.go | A reuse that skips the proof lands a tree that the proof refuses |
-| LS16 | 7 | A landing with a stack context prints exactly `gate: whole gate (reader set refused: landing stack)` and runs the whole gate | planned TestReaderPlanRunsWholeForALandingStack in internal/gate/stack_completion_test.go | A plan that ignores the stack context runs the reader set |
-| LS17 | 7 | A stack landing over an uncovered path prints the `landing stack` case and not the `uncovered path` case | planned TestReaderPlanNamesTheStackCaseFirst in internal/gate/stack_completion_test.go | A case placed after the change cases names the wrong cause |
-| LS18 | 30 | The stack publication refuses, and runs no publish, when the build window refuses one member | planned TestStackPublicationRefusesARefusedMember in internal/commitment/repository/stack_publication_test.go | A decision that reads only the first member lands through an open build |
-| LS19 | 32 | A stack publication consumes the override of each published member | planned TestStackPublicationConsumesEachOverride in internal/commitment/repository/stack_publication_test.go | A stack that consumes no override admits the member a second time |
-| LS20 | 32 | A stack publication keeps the override of a member that it does not publish | planned TestStackPublicationKeepsAnUnpublishedOverride in internal/commitment/repository/stack_publication_test.go | A stack that consumes every listed override strands the rerun of an unlanded member |
-| LS21 | 9 | The stack publication drops the one landing lease in its own decision | planned TestStackPublicationDropsTheLease in internal/commitment/repository/stack_publication_test.go | A lease that survives the publication refuses the next landing |
-| LS22 | 19 | The binding query answers true for an assignment that holds the delivery binding of a started tickets-only deliverable | planned TestBindingQueryNamesATicketsOnlyAssignment in internal/commitment/repository/stack_publication_test.go | A query over the open builds alone misses this assignment, because a tickets-only deliverable opens no build |
-| LS23 | 19 | The binding query answers false for an unbound light-path assignment during an open build | planned TestBindingQueryLeavesALightPathAssignment in internal/commitment/repository/stack_publication_test.go | A query that answers true for every assignment during a build refuses every stack in a chunk gap |
-| LS24 | 1, 5 | A green three-member stack calls the authorization once, with the top tree | planned TestLandStackGradesOnce in internal/landing/stack_test.go | A stack that grades each member pays one gate for each member |
-| LS25 | 2, 3 | A green stack publishes a chain whose first parents run from the destination base through each member merge in file order, with each member tip as second parent and each member's message | planned TestLandStackChainsMemberMerges in internal/landing/stack_test.go | A composition that reorders or squashes the members loses the reviewed history |
-| LS26 | 6 | A green stack moves the destination ref once, from the destination base to the top merge | planned TestLandStackPublishesWithOneUpdate in internal/landing/stack_test.go | A publication of one ref update for each member exposes half of a stack |
-| LS27 | 4 | The tree of the first merge lacks the tickets folder of the first member, and the tree of the second merge lacks both folders | planned TestLandStackClosesEachFolderInItsMerge in internal/landing/stack_test.go | A close applied only to the top tree leaves the folder in the first merge |
-| LS28 | 21 | The admission receives the own landing tree of each member and never the top tree | planned TestLandStackAdmitsEachMemberTree in internal/landing/stack_test.go | An admission over the top tree refuses a light-path member for the path of another member |
-| LS29 | 11, 22 | Each grade carries a stack context that names exactly the members of its prefix | planned TestLandStackGradesEachPrefixWithItsMembers in internal/landing/stack_bisect_test.go | A prefix grade with the full member list fails the proof for each member above the prefix |
-| LS30 | 22, 26 | With four members and member 3 red, the stack grades the trees of prefixes 4, 2, and 3 in that order, which is 1 + ⌈log2 4⌉ = 3 grades | planned TestLandStackBisectsToTheRedMember in internal/landing/stack_bisect_test.go | A linear search or a wrong midpoint grades another sequence |
-| LS31 | 23 | With four members and member 3 red, the stack attributes the red to member 3 | planned TestLandStackBisectsToTheRedMember in internal/landing/stack_bisect_test.go | An attribution to the last graded red prefix names member 4 or member 2 |
-| LS32 | 24 | With four members and member 3 red, the stack publishes the merge of member 2 and no later merge | planned TestLandStackBisectsToTheRedMember in internal/landing/stack_bisect_test.go | A stack that publishes nothing on a red discards the green prefix |
-| LS33 | 27 | With four members and member 1 red, the stack grades prefixes 4, 2, and 1, attributes member 1, and moves no ref | planned TestLandStackPublishesNothingForAFirstMemberRed in internal/landing/stack_bisect_test.go | A stack that publishes prefix 0 writes an empty merge or moves the ref |
-| LS34 | 23 | When prefixes 1 to 4 grade green, red, green, and red, the stack grades prefixes 4, 2, and 1, attributes member 2, and publishes the merge of member 1 | planned TestLandStackAttributesARedTransition in internal/landing/stack_bisect_test.go | An attribution that assumes a monotone red names member 4 |
-| LS35 | 26 | With sixteen members and member 16 red, the stack grades prefixes 16, 8, 12, 14, and 15, which is 1 + ⌈log2 16⌉ = 5 grades | planned TestLandStackBoundsTheBisect in internal/landing/stack_bisect_test.go | A search past the bound costs more gates than serial landings save |
-| LS36 | 28 | An infrastructure result on the top tree stops the stack after one grade with no ref update | planned TestLandStackStopsOnInfrastructure in internal/landing/stack_test.go | A stack that bisects an infrastructure result attributes a host fault to a member |
-| LS37 | 28 | An infrastructure result on a bisect prefix stops the stack with no further grade and no ref update | planned TestLandStackStopsOnInfrastructureInTheBisect in internal/landing/stack_bisect_test.go | A stack that publishes the last green prefix after a host fault lands on an unknown verdict |
-| LS99 | 28 | An `inherited` red on the top tree stops the stack after one grade, moves no ref, and attributes no member | planned TestLandStackStopsOnAnInheritedRed in internal/landing/stack_bisect_test.go | A stack that bisects an inherited red counts a red destination as green and attributes the red to member 1 |
-| LS38 | 31 | A conflict of member 2 with member 1 refuses with a conflict error that names member 2, and the stack makes no grade | planned TestLandStackRefusesAMemberConflict in internal/landing/stack_test.go | A stack that grades a conflicted tree runs a gate for nothing |
-| LS39 | 6 | A member whose branch tip moves during the grade refuses the publication with no ref update | planned TestLandStackRechecksEachMember in internal/landing/stack_test.go | A stack that rechecks only the top member publishes a moved source |
-| LS40 | 1, 5 | Two tickets-only members from one destination land with one stack command, and the fixture gate tally reads one run | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A stack that grades each member leaves a tally of two |
-| LS41 | 10 | After a green two-member stack, both member assignments are released | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A stack that releases only the lease owner leaves the second worktree active |
-| LS42 | 4 | After a green two-member stack, the destination holds neither tickets folder | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A stack that closes only the first folder keeps the second |
-| LS43 | 7 | After a green two-member stack, the green marker names the stack tip | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A stack that advances the marker to the first merge leaves the marker behind |
-| LS44 | 10 | A green two-member stack prints one `members[2]{member,label,source_tip,published_commit,outcome,census}` table whose rows read `landed` and carry each member's census count | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A stack that prints one landing record hides the second member |
-| LS45 | 10 | The last stdout line of a green two-member stack is the `stack{...}` record whose `published_commit` is the stack tip and whose `landed` is 2 | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A record of the first merge names the wrong tip |
-| LS101 | 10 | A green two-member stack prints one `landing source{review_base=…,assignment_start=…}` line on stderr for each member, in file order | planned TestLandStackJourney in internal/worktree/land_stack_test.go | A stack that prints the disclosure of the first member alone hides the reviewed range of the second |
-| LS46 | 24 | With three members and member 2 red, the stack publishes member 1 and exits 1 | planned TestLandStackRedJourney in internal/worktree/land_stack_red_test.go | A stack that stops at the first red publishes nothing |
-| LS47 | 26 | With three members and member 2 red, the gate tally reads 3, which is 1 + ⌈log2 3⌉ | planned TestLandStackRedJourney in internal/worktree/land_stack_red_test.go | A verb that grades the published prefix again before its publication leaves a tally of 4 |
-| LS48 | 25 | With three members and member 2 red, member 3 stays active and its `outcome` reads `unlanded` | planned TestLandStackRedJourney in internal/worktree/land_stack_red_test.go | A stack that releases every member drops the unlanded work |
-| LS49 | 29 | The `next=` route of the `stack-red` refusal names the label of member 2 in its repair step | planned TestLandStackRedJourney in internal/worktree/land_stack_red_test.go | A route that names the first member sends the repair to the wrong worktree |
-| LS50 | 31 | A stack whose members 1 and 2 both fail a source proof prints two refusals, each with its member index | planned TestLandStackPrintsEveryMemberRefusal in internal/worktree/land_stack_test.go | A preflight that stops at the first member hides the second repair |
-| LS51 | 31 | After a refusal of two members, the intent ledger holds no landing lease | planned TestLandStackPrintsEveryMemberRefusal in internal/worktree/land_stack_test.go | A preflight that takes the lease first strands the destination |
-| LS52 | 9 | While another landing holds the lease, the stack refuses with `land-lease-held`, and the tally reads 0 | planned TestLandStackRefusesAHeldLease in internal/worktree/land_stack_test.go | A stack that composes under a held lease races the publication of the owner |
-| LS53 | 9 | A single landing that starts during the grade of a stack refuses with `land-lease-held` and names the assignment of member 1 | planned TestLandStackHoldsTheLease in internal/worktree/land_stack_test.go | A stack that takes no lease lets a second landing publish under it |
-| LS54 | 33 | The stack reader refuses an absent stack file | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A reader that reads absence as an empty stack reaches the lease |
-| LS55 | 33 | The stack reader refuses an empty stack file | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A reader that decodes empty bytes as zero members reaches the lease |
-| LS56 | 33 | The stack reader refuses a stack file with a duplicate key | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A lenient decoder keeps the last value and lands the wrong member |
-| LS57 | 33 | The stack reader refuses a stack file with an unknown field | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A lenient decoder drops a misspelled field and lands without it |
-| LS58 | 33 | The stack reader refuses a stack file with content after the object | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A decoder that stops at the first value ignores a second stack |
-| LS59 | 33 | The stack reader refuses a stack file with one member | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A stack of one pays the stack proof for a plain landing |
-| LS60 | 33 | The stack reader refuses a stack file with seventeen members | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | An unbounded stack holds the lease past the bisect bound |
-| LS61 | 33 | The stack reader refuses a member that has no `message` field and names the member index | planned TestStackReaderRefusesAMalformedFile in internal/worktree/land_stack_input_test.go | A reader that defaults an absent field writes a merge with no message |
-| LS62 | 33 | The stack reader accepts a file with sixteen members and no final newline | planned TestStackReaderAcceptsSixteenMembers in internal/worktree/land_stack_input_test.go | A bound of fifteen or a demand for a final newline refuses a valid stack |
-| LS63 | 34 | Two members that name one worktree exit 2 and name both indexes, and the ledger holds no lease | planned TestLandStackRefusesARepeatedMember in internal/worktree/land_stack_test.go | A stack that lands one source twice publishes two merges of one tip |
-| LS64 | 35 | The stack reader refuses a member with an empty `message` with its index and the grammar line of the single landing | planned TestStackReaderParsesEachMemberWithTheLandingGrammar in internal/worktree/land_stack_input_test.go | A reader that parses members with its own rules accepts a value that a landing refuses |
-| LS65 | 36 | The stack reader refuses a FIFO at the stack path as not a regular file, and the call returns with no writer on the FIFO | planned TestStackReaderRefusesASpecialFile in internal/worktree/land_stack_input_test.go | A reader that opens the path first blocks the landing |
-| LS105 | 35 | A single landing whose `-m` value is `--stack` stays a single landing and never selects the stack form | planned TestLandCommandDoesNotTreatMessageValueAsStackFlag in internal/worktree/land_flags_test.go | A dispatch that scans the arguments for the bare token reads a flag value as the stack flag |
-| LS104 | 33 | A stack file that the stack reader refuses exits 2, and the ledger holds no lease | planned TestLandStackRefusesAnUnreadableStack in internal/worktree/land_stack_test.go | A verb that maps a reader refusal to exit 1 or takes the lease first strands the destination |
-| LS66 | 8 | The wrapper forwards `worktree land --stack <file>` to the installed broker with the arguments unchanged | planned TestWorktreeLandRouteForwardsTheStackForm in internal/systemtest/land_route_test.go | A later wrapper change that matches only the single grammar routes the stack form to a repository executable |
+| LS1 | 20 | The owner rule maps a path that two members change to both member indexes, and a path that one member changes to that member alone | `internal/landing/stackpolicy/stackpolicy_test.go` (`TestStackOwnersNamesEachChangingMember`) | A rule that keeps only the last owner hides the overlap |
+| LS2 | 15 | The overlap set leaves out a `capture/` path that two members change | `internal/landing/stackpolicy/stackpolicy_test.go` (`TestStackOverlapsLeaveOutCapture`) | A rule with no exemption refuses every stack that touches one inbox file |
+| LS3 | 17 | The overlap set keeps a path outside `capture/` that two members change | `internal/landing/stackpolicy/stackpolicy_test.go` (`TestStackOverlapsKeepAnOutsidePath`) | A rule that exempts every path accepts an overlap |
+| LS4 | 20 | A member that changes only the mode of one path owns that path | `internal/landing/stackpolicy/stackpolicy_test.go` (`TestStackOwnersCountsAModeChange`) | A rule that compares only object ids misses an attribute change |
+| LS5 | 20 | A member that renames one path owns the old path and the new path | `internal/landing/stackpolicy/stackpolicy_test.go` (`TestStackOwnersCountsBothRenamePaths`) | A rule with rename detection hides the old path from an overlap |
+| LS6 | 20 | A changed path that holds a space and a `*` maps to its exact spelling | `internal/landing/stackpolicy/stackpolicy_test.go` (`TestStackOwnersKeepsExactPaths`) | A rule that splits or globs a path names the wrong path |
+| LS7 | 11 | The stack proof accepts the exact tree of a two-member stack | `internal/gate/stack_completion_test.go` (`TestStackProofAcceptsTheExactStack`) | A proof that refuses the exact tree refuses every stack |
+| LS8 | 12 | A tree of a stack of two spec-less members whose bytes at a member's changed path differ from that member's bytes refuses with a message that names the path | `internal/gate/stack_completion_test.go` (`TestStackProofRefusesAChangedMemberPath`) | A proof that reads only the path set accepts rewritten bytes, and a proof placed beside the tickets-only branch never runs for spec-less members |
+| LS9 | 13 | A tree of a stack of two spec-less members that changes a path that no member changes refuses with `stack composition changes <path>; review the destination delta` | `internal/gate/stack_completion_test.go` (`TestStackProofRefusesAnUnreviewedDelta`) | A proof that skips the unowned paths, or that skips a context with no tickets folder, lands an unreviewed change |
+| LS10 | 14 | A stack tree that keeps an entry under the tickets folder of a member refuses with `completion keeps closed <path>` | `internal/gate/stack_completion_test.go` (`TestStackProofRefusesAKeptFolder`) | A proof that skips the folder close lands the open tickets |
+| LS11 | 15 | A stack tree whose bytes at a `capture/` path that two members change match neither member passes the proof | `internal/gate/stack_completion_test.go` (`TestStackProofLeavesASharedCapturePathToTheSettlePolicy`) | A proof that demands one member's bytes refuses the union that the settle policy writes |
+| LS12 | 11 | A stack tree with a path outside `capture/` that two members change refuses with a message that names both member indexes | `internal/gate/stack_completion_test.go` (`TestStackProofRefusesAnOverlap`) | A proof that takes the bytes of the last owner accepts a silent overwrite |
+| LS13 | 11 | A stack tree passes only when it lacks a destination path that one member deletes | `internal/gate/stack_completion_test.go` (`TestStackProofHonorsAMemberDeletion`) | A proof that reads only the present entries keeps a deleted path |
+| LS14 | 11, 22 | A one-member stack context over a member that holds the destination accepts the exact prefix tree | `internal/gate/stack_completion_test.go` (`TestStackProofAcceptsAOneMemberPrefix`) | A proof that demands two members refuses every bisect prefix of one member |
+| LS15 | 11 | After a green of the top tree under no stack context, a grade of that tree under a stack context whose proof fails refuses | `internal/gate/stack_completion_test.go` (`TestStackProofRunsOnAReusedGreen`) | A reuse that skips the proof lands a tree that the proof refuses |
+| LS16 | 7 | A landing with a stack context prints exactly `gate: whole gate (reader set refused: landing stack)` and runs the whole gate | `internal/gate/stack_completion_test.go` (`TestReaderPlanRunsWholeForALandingStack`) | A plan that ignores the stack context runs the reader set |
+| LS17 | 7 | A stack landing over an uncovered path prints the `landing stack` case and not the `uncovered path` case | `internal/gate/stack_completion_test.go` (`TestReaderPlanNamesTheStackCaseFirst`) | A case placed after the change cases names the wrong cause |
+| LS18 | 30 | The stack publication refuses, and runs no publish, when the build window refuses one member | `internal/commitment/repository/stack_publication_test.go` (`TestStackPublicationRefusesARefusedMember`) | A decision that reads only the first member lands through an open build |
+| LS19 | 32 | A stack publication consumes the override of each published member | `internal/commitment/repository/stack_publication_test.go` (`TestStackPublicationConsumesEachOverride`) | A stack that consumes no override admits the member a second time |
+| LS20 | 32 | A stack publication keeps the override of a member that it does not publish | `internal/commitment/repository/stack_publication_test.go` (`TestStackPublicationKeepsAnUnpublishedOverride`) | A stack that consumes every listed override strands the rerun of an unlanded member |
+| LS21 | 9 | The stack publication drops the one landing lease in its own decision | `internal/commitment/repository/stack_publication_test.go` (`TestStackPublicationDropsTheLease`) | A lease that survives the publication refuses the next landing |
+| LS22 | 19 | The binding query answers true for an assignment that holds the delivery binding of a started tickets-only deliverable | `internal/commitment/repository/stack_publication_test.go` (`TestBindingQueryNamesATicketsOnlyAssignment`) | A query over the open builds alone misses this assignment, because a tickets-only deliverable opens no build |
+| LS23 | 19 | The binding query answers false for an unbound light-path assignment during an open build | `internal/commitment/repository/stack_publication_test.go` (`TestBindingQueryLeavesALightPathAssignment`) | A query that answers true for every assignment during a build refuses every stack in a chunk gap |
+| LS24 | 1, 5 | A green three-member stack calls the authorization once, with the top tree | `internal/landing/stack_test.go` (`TestLandStackGradesOnce`) | A stack that grades each member pays one gate for each member |
+| LS25 | 2, 3 | A green stack publishes a chain whose first parents run from the destination base through each member merge in file order, with each member tip as second parent and each member's message | `internal/landing/stack_test.go` (`TestLandStackChainsMemberMerges`) | A composition that reorders or squashes the members loses the reviewed history |
+| LS26 | 6 | A green stack moves the destination ref once, from the destination base to the top merge | `internal/landing/stack_test.go` (`TestLandStackPublishesWithOneUpdate`) | A publication of one ref update for each member exposes half of a stack |
+| LS27 | 4 | The tree of the first merge lacks the tickets folder of the first member, and the tree of the second merge lacks both folders | `internal/landing/stack_test.go` (`TestLandStackClosesEachFolderInItsMerge`) | A close applied only to the top tree leaves the folder in the first merge |
+| LS28 | 21 | The admission receives the own landing tree of each member and never the top tree | `internal/landing/stack_test.go` (`TestLandStackAdmitsEachMemberTree`) | An admission over the top tree refuses a light-path member for the path of another member |
+| LS29 | 11, 22 | Each grade carries a stack context that names exactly the members of its prefix | `internal/landing/stack_bisect_test.go` (`TestLandStackGradesEachPrefixWithItsMembers`) | A prefix grade with the full member list fails the proof for each member above the prefix |
+| LS30 | 22, 26 | With four members and member 3 red, the stack grades the trees of prefixes 4, 2, and 3 in that order, which is 1 + ⌈log2 4⌉ = 3 grades | `internal/landing/stack_bisect_test.go` (`TestLandStackBisectsToTheRedMember`) | A linear search or a wrong midpoint grades another sequence |
+| LS31 | 23 | With four members and member 3 red, the stack attributes the red to member 3 | `internal/landing/stack_bisect_test.go` (`TestLandStackBisectsToTheRedMember`) | An attribution to the last graded red prefix names member 4 or member 2 |
+| LS32 | 24 | With four members and member 3 red, the stack publishes the merge of member 2 and no later merge | `internal/landing/stack_bisect_test.go` (`TestLandStackBisectsToTheRedMember`) | A stack that publishes nothing on a red discards the green prefix |
+| LS33 | 27 | With four members and member 1 red, the stack grades prefixes 4, 2, and 1, attributes member 1, and moves no ref | `internal/landing/stack_bisect_test.go` (`TestLandStackPublishesNothingForAFirstMemberRed`) | A stack that publishes prefix 0 writes an empty merge or moves the ref |
+| LS34 | 23 | When prefixes 1 to 4 grade green, red, green, and red, the stack grades prefixes 4, 2, and 1, attributes member 2, and publishes the merge of member 1 | `internal/landing/stack_bisect_test.go` (`TestLandStackAttributesARedTransition`) | An attribution that assumes a monotone red names member 4 |
+| LS35 | 26 | With sixteen members and member 16 red, the stack grades prefixes 16, 8, 12, 14, and 15, which is 1 + ⌈log2 16⌉ = 5 grades | `internal/landing/stack_bisect_test.go` (`TestLandStackBoundsTheBisect`) | A search past the bound costs more gates than serial landings save |
+| LS36 | 28 | An infrastructure result on the top tree stops the stack after one grade with no ref update | `internal/landing/stack_test.go` (`TestLandStackStopsOnInfrastructure`) | A stack that bisects an infrastructure result attributes a host fault to a member |
+| LS37 | 28 | An infrastructure result on a bisect prefix stops the stack with no further grade and no ref update | `internal/landing/stack_bisect_test.go` (`TestLandStackStopsOnInfrastructureInTheBisect`) | A stack that publishes the last green prefix after a host fault lands on an unknown verdict |
+| LS99 | 28 | An `inherited` red on the top tree stops the stack after one grade, moves no ref, and attributes no member | `internal/landing/stack_bisect_test.go` (`TestLandStackStopsOnAnInheritedRed`) | A stack that bisects an inherited red counts a red destination as green and attributes the red to member 1 |
+| LS38 | 31 | A conflict of member 2 with member 1 refuses with a conflict error that names member 2, and the stack makes no grade | `internal/landing/stack_test.go` (`TestLandStackRefusesAMemberConflict`) | A stack that grades a conflicted tree runs a gate for nothing |
+| LS39 | 6 | A member whose branch tip moves during the grade refuses the publication with no ref update | `internal/landing/stack_test.go` (`TestLandStackRechecksEachMember`) | A stack that rechecks only the top member publishes a moved source |
+| LS40 | 1, 5 | Two tickets-only members from one destination land with one stack command, and the fixture gate tally reads one run | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A stack that grades each member leaves a tally of two |
+| LS41 | 10 | After a green two-member stack, both member assignments are released | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A stack that releases only the lease owner leaves the second worktree active |
+| LS42 | 4 | After a green two-member stack, the destination holds neither tickets folder | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A stack that closes only the first folder keeps the second |
+| LS43 | 7 | After a green two-member stack, the green marker names the stack tip | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A stack that advances the marker to the first merge leaves the marker behind |
+| LS44 | 10 | A green two-member stack prints one `members[2]{member,label,source_tip,published_commit,outcome,census}` table whose rows read `landed` and carry each member's census count | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A stack that prints one landing record hides the second member |
+| LS45 | 10 | The last stdout line of a green two-member stack is the `stack{...}` record whose `published_commit` is the stack tip and whose `landed` is 2 | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A record of the first merge names the wrong tip |
+| LS101 | 10 | A green two-member stack prints one `landing source{review_base=…,assignment_start=…}` line on stderr for each member, in file order | `internal/worktree/land_stack_test.go` (`TestLandStackJourney`) | A stack that prints the disclosure of the first member alone hides the reviewed range of the second |
+| LS46 | 24 | With three members and member 2 red, the stack publishes member 1 and exits 1 | `internal/worktree/land_stack_red_test.go` (`TestLandStackRedJourney`) | A stack that stops at the first red publishes nothing |
+| LS47 | 26 | With three members and member 2 red, the gate tally reads 3, which is 1 + ⌈log2 3⌉ | `internal/worktree/land_stack_red_test.go` (`TestLandStackRedJourney`) | A verb that grades the published prefix again before its publication leaves a tally of 4 |
+| LS48 | 25 | With three members and member 2 red, member 3 stays active and its `outcome` reads `unlanded` | `internal/worktree/land_stack_red_test.go` (`TestLandStackRedJourney`) | A stack that releases every member drops the unlanded work |
+| LS49 | 29 | The `next=` route of the `stack-red` refusal names the label of member 2 in its repair step | `internal/worktree/land_stack_red_test.go` (`TestLandStackRedJourney`) | A route that names the first member sends the repair to the wrong worktree |
+| LS50 | 31 | A stack whose members 1 and 2 both fail a source proof prints two refusals, each with its member index | `internal/worktree/land_stack_test.go` (`TestLandStackPrintsEveryMemberRefusal`) | A preflight that stops at the first member hides the second repair |
+| LS51 | 31 | After a refusal of two members, the intent ledger holds no landing lease | `internal/worktree/land_stack_test.go` (`TestLandStackPrintsEveryMemberRefusal`) | A preflight that takes the lease first strands the destination |
+| LS52 | 9 | While another landing holds the lease, the stack refuses with `land-lease-held`, and the tally reads 0 | `internal/worktree/land_stack_test.go` (`TestLandStackRefusesAHeldLease`) | A stack that composes under a held lease races the publication of the owner |
+| LS53 | 9 | A single landing that starts during the grade of a stack refuses with `land-lease-held` and names the assignment of member 1 | `internal/worktree/land_stack_test.go` (`TestLandStackHoldsTheLease`) | A stack that takes no lease lets a second landing publish under it |
+| LS54 | 33 | The stack reader refuses an absent stack file | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A reader that reads absence as an empty stack reaches the lease |
+| LS55 | 33 | The stack reader refuses an empty stack file | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A reader that decodes empty bytes as zero members reaches the lease |
+| LS56 | 33 | The stack reader refuses a stack file with a duplicate key | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A lenient decoder keeps the last value and lands the wrong member |
+| LS57 | 33 | The stack reader refuses a stack file with an unknown field | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A lenient decoder drops a misspelled field and lands without it |
+| LS58 | 33 | The stack reader refuses a stack file with content after the object | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A decoder that stops at the first value ignores a second stack |
+| LS59 | 33 | The stack reader refuses a stack file with one member | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A stack of one pays the stack proof for a plain landing |
+| LS60 | 33 | The stack reader refuses a stack file with seventeen members | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | An unbounded stack holds the lease past the bisect bound |
+| LS61 | 33 | The stack reader refuses a member that has no `message` field and names the member index | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesAMalformedFile`) | A reader that defaults an absent field writes a merge with no message |
+| LS62 | 33 | The stack reader accepts a file with sixteen members and no final newline | `internal/worktree/land_stack_input_test.go` (`TestStackReaderAcceptsSixteenMembers`) | A bound of fifteen or a demand for a final newline refuses a valid stack |
+| LS63 | 34 | Two members that name one worktree exit 2 and name both indexes, and the ledger holds no lease | `internal/worktree/land_stack_test.go` (`TestLandStackRefusesARepeatedMember`) | A stack that lands one source twice publishes two merges of one tip |
+| LS64 | 35 | The stack reader refuses a member with an empty `message` with its index and the grammar line of the single landing | `internal/worktree/land_stack_input_test.go` (`TestStackReaderParsesEachMemberWithTheLandingGrammar`) | A reader that parses members with its own rules accepts a value that a landing refuses |
+| LS65 | 36 | The stack reader refuses a FIFO at the stack path as not a regular file, and the call returns with no writer on the FIFO | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesASpecialFile`) | A reader that opens the path first blocks the landing |
+| LS105 | 35 | A single landing whose `-m` value is `--stack` stays a single landing and never selects the stack form | `internal/worktree/land_flags_test.go` (`TestLandCommandDoesNotTreatMessageValueAsStackFlag`) | A dispatch that scans the arguments for the bare token reads a flag value as the stack flag |
+| LS104 | 33 | A stack file that the stack reader refuses exits 2, and the ledger holds no lease | `internal/worktree/land_stack_test.go` (`TestLandStackRefusesAnUnreadableStack`) | A verb that maps a reader refusal to exit 1 or takes the lease first strands the destination |
+| LS66 | 8 | The wrapper forwards `worktree land --stack <file>` to the installed broker with the arguments unchanged | `internal/systemtest/land_route_test.go` (`TestWorktreeLandRouteForwardsTheStackForm`) | A later wrapper change that matches only the single grammar routes the stack form to a repository executable |
 | LS67 | 43 | `bench help` prints the stack grammar `bench worktree land --stack <file> [--source-tip <request>=<commit>]...` as one row | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | A help that omits the form leaves an agent to find it by trial |
 | LS68 | 29 | In a three-member stack with member 2 red, the printed route of `stack-red`, carried out step by step, ends in a stack landing that exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A route that does not remove the landed member or fold the remaining members repeats a refusal |
 | LS89 | 47 | In a two-member stack with member 2 red, the rerun of the `stack-red` route is the single landing of member 2, and the carried-out route exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A stack rerun over one remaining member exits 2 at the floor of two members |
 | LS69 | 31 | A stack file whose path holds a space reruns from the printed `next=` route | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A route that prints the path unquoted splits it into two arguments |
-| LS86 | 46 | In a three-member stack, the last step of a `source-not-clean` route for member 2 is `bench worktree land --stack <file> --source-tip <request>=<repaired-tip>` with the request of member 2 | planned TestLandStackRoutesEndWithTheStackRerun in internal/worktree/land_stack_rerun_test.go | A rerun with no override for the repaired member meets `source-tip-mismatch` |
-| LS87 | 35 | A member whose branch tip differs from its `source_tip` refuses with `source-tip-mismatch`, which names the observed tip | planned TestLandStackRefusesAStaleMemberTip in internal/worktree/land_stack_rerun_test.go | A stack that lands the branch tip publishes a commit that nobody reviewed |
-| LS94 | 48 | A call with an override for member 1 that refuses member 2 prints a rerun that keeps the member 1 override and adds the slot of member 2 | planned TestLandStackRerunKeepsEachOverride in internal/worktree/land_stack_rerun_test.go | A rerun that drops the earlier override loops between the two members |
-| LS95 | 46 | An override replaces the file `source_tip` of its member, and the stack publishes that member's merge with the override tip as second parent | planned TestLandStackOverrideReplacesTheFileTip in internal/worktree/land_stack_rerun_test.go | A stack that reads the file tip alone refuses the repaired member or lands its old tip |
-| LS96 | 33 | The stack reader refuses an override whose request names no member | planned TestStackReaderRefusesABadOverride in internal/worktree/land_stack_input_test.go | A stack that ignores an unknown override lands a tip that the operator did not pin |
-| LS97 | 33 | The stack reader refuses two overrides for one request | planned TestStackReaderRefusesABadOverride in internal/worktree/land_stack_input_test.go | A stack that keeps the last override lands a tip that the operator did not choose |
-| LS98 | 33 | The stack reader refuses an override with no `=`, an empty request, or an empty commit | planned TestStackReaderRefusesABadOverride in internal/worktree/land_stack_input_test.go | A lenient split pins a member to an empty tip |
-| LS70 | 16 | A member whose tip lacks the destination tip refuses with `land-destination-moved` and the label of that member, and the tally reads 0 | planned TestLandStackRefusesABehindMember in internal/worktree/land_stack_refusal_test.go | A stack that leaves the missing fold to the gate pays a whole gate for a handback |
-| LS71 | 17 | Two members that change one path outside `capture/` refuse with `stack-members-overlap`, which names both labels and the path, and the tally reads 0 | planned TestLandStackRefusesAnOverlap in internal/worktree/land_stack_refusal_test.go | A stack that leaves the overlap to the gate proof pays a whole gate for a handback |
-| LS72 | 18 | A member whose `spec` names a staged spec refuses with `stack-member-alone`, and the tally reads 0 | planned TestLandStackRefusesAStagedSpecMember in internal/worktree/land_stack_refusal_test.go | A stack that admits a staged spec grades a completion with no completion record proof |
-| LS73 | 19 | A member whose assignment holds the delivery binding of a started tickets-only deliverable refuses with `stack-member-alone`, and the tally reads 0 | planned TestLandStackRefusesABoundMember in internal/worktree/land_stack_refusal_test.go | A stack that admits the member writes a deliverable closure that no member reviewed |
-| LS88 | 19 | A spec-less member whose assignment an open build binds refuses with `stack-member-alone`, and the tally reads 0 | planned TestLandStackRefusesABoundMember in internal/worktree/land_stack_refusal_test.go | A stack that tests only the `spec` field lands the chunk-gap work of a build outside FT424 |
-| LS74 | 30 | With an open build and no chunk gap, a light-path member refuses with `land-build-window` and its index, and the ledger holds no lease | planned TestLandStackAdmitsEachMemberThroughTheWindow in internal/worktree/land_stack_refusal_test.go | A window decision for the first member alone lands the second through the build |
-| LS75 | 32 | With an open build and an override for member 1 alone, the stack refuses member 2 with `land-build-window` | planned TestLandStackAdmitsEachMemberThroughTheWindow in internal/worktree/land_stack_refusal_test.go | An override applied to the whole stack admits a member that the reviewer did not name |
+| LS86 | 46 | In a three-member stack, the last step of a `source-not-clean` route for member 2 is `bench worktree land --stack <file> --source-tip <request>=<repaired-tip>` with the request of member 2 | `internal/worktree/land_stack_rerun_test.go` (`TestLandStackRoutesEndWithTheStackRerun`) | A rerun with no override for the repaired member meets `source-tip-mismatch` |
+| LS87 | 35 | A member whose branch tip differs from its `source_tip` refuses with `source-tip-mismatch`, which names the observed tip | `internal/worktree/land_stack_rerun_test.go` (`TestLandStackRefusesAStaleMemberTip`) | A stack that lands the branch tip publishes a commit that nobody reviewed |
+| LS94 | 48 | A call with an override for member 1 that refuses member 2 prints a rerun that keeps the member 1 override and adds the slot of member 2 | `internal/worktree/land_stack_rerun_test.go` (`TestLandStackRerunKeepsEachOverride`) | A rerun that drops the earlier override loops between the two members |
+| LS95 | 46 | An override replaces the file `source_tip` of its member, and the stack publishes that member's merge with the override tip as second parent | `internal/worktree/land_stack_rerun_test.go` (`TestLandStackOverrideReplacesTheFileTip`) | A stack that reads the file tip alone refuses the repaired member or lands its old tip |
+| LS96 | 33 | The stack reader refuses an override whose request names no member | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesABadOverride`) | A stack that ignores an unknown override lands a tip that the operator did not pin |
+| LS97 | 33 | The stack reader refuses two overrides for one request | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesABadOverride`) | A stack that keeps the last override lands a tip that the operator did not choose |
+| LS98 | 33 | The stack reader refuses an override with no `=`, an empty request, or an empty commit | `internal/worktree/land_stack_input_test.go` (`TestStackReaderRefusesABadOverride`) | A lenient split pins a member to an empty tip |
+| LS70 | 16 | A member whose tip lacks the destination tip refuses with `land-destination-moved` and the label of that member, and the tally reads 0 | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackRefusesABehindMember`) | A stack that leaves the missing fold to the gate pays a whole gate for a handback |
+| LS71 | 17 | Two members that change one path outside `capture/` refuse with `stack-members-overlap`, which names both labels and the path, and the tally reads 0 | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackRefusesAnOverlap`) | A stack that leaves the overlap to the gate proof pays a whole gate for a handback |
+| LS72 | 18 | A member whose `spec` names a staged spec refuses with `stack-member-alone`, and the tally reads 0 | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackRefusesAStagedSpecMember`) | A stack that admits a staged spec grades a completion with no completion record proof |
+| LS73 | 19 | A member whose assignment holds the delivery binding of a started tickets-only deliverable refuses with `stack-member-alone`, and the tally reads 0 | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackRefusesABoundMember`) | A stack that admits the member writes a deliverable closure that no member reviewed |
+| LS88 | 19 | A spec-less member whose assignment an open build binds refuses with `stack-member-alone`, and the tally reads 0 | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackRefusesABoundMember`) | A stack that tests only the `spec` field lands the chunk-gap work of a build outside FT424 |
+| LS74 | 30 | With an open build and no chunk gap, a light-path member refuses with `land-build-window` and its index, and the ledger holds no lease | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackAdmitsEachMemberThroughTheWindow`) | A window decision for the first member alone lands the second through the build |
+| LS75 | 32 | With an open build and an override for member 1 alone, the stack refuses member 2 with `land-build-window` | `internal/worktree/land_stack_refusal_test.go` (`TestLandStackAdmitsEachMemberThroughTheWindow`) | An override applied to the whole stack admits a member that the reviewer did not name |
 | LS76 | 18, 19 | In a three-member stack, the printed route of `stack-member-alone`, carried out step by step, ends in a stack landing that exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A route that does not take the member out of the stack repeats the refusal |
 | LS90 | 47 | In a two-member stack, the rerun of the `stack-member-alone` route is the single landing of the other member, and the carried-out route exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A stack rerun over one remaining member exits 2 at the floor of two members |
 | LS77 | 17 | In a three-member stack, the printed route of `stack-members-overlap`, carried out step by step, ends in a stack landing that exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A route that keeps both members repeats the refusal |
@@ -612,13 +376,13 @@ Each ticket targets an author context of about 150k tokens, and the Further note
 | LS93 | 46 | A `source-tip-mismatch` refusal that a stack raises, carried out step by step, ends in a stack landing that exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A rerun that keeps the file tip loops on the same refusal |
 | LS102 | 46 | In a two-member stack with member 1 red, the rerun of the `stack-red` route adds `--source-tip <request>=<repaired-tip>` for member 1, and the carried-out route exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A `stack-red` rerun with no slot for the attributed member meets `source-tip-mismatch`, because nothing published and no step wrote its tip |
 | LS103 | 48 | A three-member stack called with an override for member 1, with member 2 red, publishes member 1, and its carried-out `stack-red` route exits 0 | `internal/worktree/refusal_route_follow_test.go` (`TestLandingFacesFollowTheirRoutes`) | A rerun that keeps the override of the removed member 1 exits 2, and one that keeps an override over a folded tip meets `source-tip-mismatch` |
-| LS106 | 28 | A stack whose top tree reads `inherited` refuses with `land-handback` after one grade, and the gate tally reads 1 | planned TestLandStackInheritedRedHandsBack in internal/worktree/land_stack_red_test.go | A verb that maps an unattributed stop to `stack-red` sends the repair to a member that did not cause the red |
-| LS78 | 37 | A stack called with one override whose release of member 2 fails exits 3, and its `next=` names `bench worktree land --resume <tip> --stack <file>` with that override | planned TestLandStackIncompleteNamesTheResume in internal/worktree/land_stack_resume_test.go | A route that names a single resume reconciles from the wrong base, and one that drops the override fails the member proof |
+| LS106 | 28 | A stack whose top tree reads `inherited` refuses with `land-handback` after one grade, and the gate tally reads 1 | `internal/worktree/land_stack_red_test.go` (`TestLandStackInheritedRedHandsBack`) | A verb that maps an unattributed stop to `stack-red` sends the repair to a member that did not cause the red |
+| LS78 | 37 | A stack called with one override whose release of member 2 fails exits 3, and its `next=` names `bench worktree land --resume <tip> --stack <file>` with that override | `internal/worktree/land_stack_resume_test.go` (`TestLandStackIncompleteNamesTheResume`) | A route that names a single resume reconciles from the wrong base, and one that drops the override fails the member proof |
 | LS100 | 43 | `bench help` prints the stack resume grammar `bench worktree land --resume <published-commit> --stack <file> [--source-tip <request>=<commit>]...` as one row | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | A help that omits the form leaves an agent to find it by trial |
-| LS79 | 38 | The stack resume refuses a published commit whose second parent is not the tip of the listed member, before any step | planned TestLandStackResumeProvesEachMember in internal/worktree/land_stack_resume_test.go | A resume that trusts the file finishes a stack that it did not publish |
-| LS80 | 39 | The stack resume releases the active published member and exits 0 | planned TestLandStackResumeFinishes in internal/worktree/land_stack_resume_test.go | A resume that skips the release leaves the member worktree active |
-| LS81 | 39 | A second stack resume of the same stack exits 0 and changes no ref, no ledger record, and no checkout | planned TestLandStackResumeFinishes in internal/worktree/land_stack_resume_test.go | A resume that repeats a release refuses or writes twice |
-| LS82 | 40 | The resume of a stack that published members 1 and 2 of four leaves members 3 and 4 active | planned TestLandStackResumeKeepsUnlandedMembers in internal/worktree/land_stack_resume_test.go | A resume that releases every listed member drops unlanded work |
+| LS79 | 38 | The stack resume refuses a published commit whose second parent is not the tip of the listed member, before any step | `internal/worktree/land_stack_resume_test.go` (`TestLandStackResumeProvesEachMember`) | A resume that trusts the file finishes a stack that it did not publish |
+| LS80 | 39 | The stack resume releases the active published member and exits 0 | `internal/worktree/land_stack_resume_test.go` (`TestLandStackResumeFinishes`) | A resume that skips the release leaves the member worktree active |
+| LS81 | 39 | A second stack resume of the same stack exits 0 and changes no ref, no ledger record, and no checkout | `internal/worktree/land_stack_resume_test.go` (`TestLandStackResumeFinishes`) | A resume that repeats a release refuses or writes twice |
+| LS82 | 40 | The resume of a stack that published members 1 and 2 of four leaves members 3 and 4 active | `internal/worktree/land_stack_resume_test.go` (`TestLandStackResumeKeepsUnlandedMembers`) | A resume that releases every listed member drops unlanded work |
 | LS83 | 41 | An ADR states the members of a stack, its proof, its schedule, its attribution, its window rule, and the absent persistent queue | review-owned at the LS-C10 checkpoint | A missing ADR leaves the decision only in this spec |
 | LS84 | 41 | The glossary, the reference, and the changelog state the landing stack, and the reference lists the `landing stack` reader-set case | review-owned at the LS-C10 checkpoint | A stale reference tells a teammate that each landing grades alone |
 | LS85 | 42 | `/bench-drain` lands two or more verified implement-now light-path tickets as one landing stack | review-owned at the LS-C10 checkpoint | A drain that keeps serial landings pays one gate for each fix |
@@ -697,12 +461,12 @@ The walk covers each canonical edge class and the profile's hostile-input checkl
 - The bisect kinds: the landing routes a red by the kinds `inherited`, `candidate`, and `lane fail` (`internal/landing/merge.go:127`), and `inherited` means that the subject held no green before the run (`internal/gate/authorization/authorization.go:184`).
 - The stack resume: the single resume proves a published merge by its two parents and its reach from the destination (`internal/worktree/land_resume.go:256`).
 - The refusal faces: the route walk reds a walked face with no producing fixture (`internal/refusalroute/routetest/routetest.go:64`).
-- The tip override: the single landing points its rerun at the repaired tip for each face that `repairsSource` names (`internal/worktree/land_refusal.go:269`), and the route walk fills that slot (`internal/worktree/refusal_route_follow_test.go:77`). A preface cannot carry the file edit, because `routetest.Steps` strips the preface before the walk (`internal/refusalroute/routetest/routetest.go:134`).
+- The tip override: the single landing points its rerun at the repaired tip for each face that `repairsSource` names (`internal/worktree/land_refusal.go:269`), and the route walk fills that slot in `operatorFill` (`internal/worktree/refusal_route_follow_test.go:82`). A preface cannot carry the file edit, because `routetest.Steps` strips the preface before the walk (`internal/refusalroute/routetest/routetest.go:134`).
 
 ### Pre-review proof checklist
 
 - `Cited symbols`: `landWith`, `landAttributed`, `landingAssignment`, `landingSourceProofs`, `landingSource`, `Owner.landReviewed`, `Owner.Compose`, `published.Tree`, `gateEvaluation.completionTree`, `closedFolder`, `gateEvaluation.completionClosure`, `gateEvaluation.applyCheckpoint`, `checkpointEvaluation`, `readerPlanner.decide`, `WithLanding`, `WithCompletion`, `holdWholeGate`, `Store.AdmitWindow`, `Store.PublishAdmitted`, `Store.AcquireLease`, `Store.refusingBuilds`, `Store.authorizeCandidate`, `jsonfile.DecodeExactDocument`, `publicationFacts`, `landingpolicy.ResumeMarker`, `advanceLandedMarker`, `reconcileLandingDestination`, `landedAfterEffects`, `routetest.Fixtures`, `routetest.Steps`, `repairsSource`, `retargetSourceTip`, `landing.RedKind`, `authorization.attribute`, `Store.openBuilds`, `Store.validateDeliverableAt`, and `usage.WorktreeUsage`. This session read each definition.
-- `Import edges`: the new owner rule package imports only the standard library. The gate, the landing package, and the worktree package import it. `go list` shows that the gate imports neither the landing package nor the worktree package, so the new edges make no cycle.
+- `Import edges`: the new owner rule package imports only the standard library and the settle policy, which owns the `capture/` rule. The gate, the landing package, and the worktree package import it. `go list` shows that the gate imports neither the landing package nor the worktree package, so the new edges make no cycle.
 - `Source-row clauses and occurrences`: the source-sentence table below quotes each clause of the two criteria and of D1 to D6.
 - `Promised field labels`: the stack file fields `members`, `path`, `request`, `base`, `source_tip`, `spec`, and `message`. The override `--source-tip <request>=<commit>`. The table `members[N]{member,label,source_tip,published_commit,outcome,census}`. The record `stack{destination_base,published_commit,landed,worktree}`. The faces `stack-member-alone`, `stack-members-overlap`, and `stack-red`. The reader-plan case `landing stack`.
 - `Changed-function callers`: `bench consumers --production` at `34ac699` names these callers. `gateEvaluation.applyCheckpoint` has one caller, `gateEvaluation.build`. `readerPlanner.decide` has one caller, `readerPlanner.plan`. `checkpointEvaluation` has four callers: `executeTreeWithOwner`, `inspectProspective`, `execute`, and `executeAfterAcquire`. `landAttributed` has one caller, `landWith`. `usage.WorktreeUsage` has one reference, `commandRegistry`.

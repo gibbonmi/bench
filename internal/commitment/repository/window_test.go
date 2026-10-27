@@ -95,11 +95,7 @@ func TestOpenBuildsDeriveFromActiveOwners(t *testing.T) {
 	})
 	t.Run("tickets-only", func(t *testing.T) {
 		root := commitmenttest.Staged(t, "A")
-		identity := commitmenttest.WriteTickets(t, root)
-		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
-			delivery := &policy.Milestones[0].Outcomes[0]
-			delivery.Deliverables = append(delivery.Deliverables, commitmenttest.TicketsBinding(identity))
-		})
+		commitmenttest.ApproveTickets(t, root)
 		commitmenttest.Commit(t, root, "approve the tickets-only folder")
 		startBuild(t, root, "light", "A", commitmenttest.TicketsFolder)
 		unbound := windowSource(t, root, commitmenttest.Assignment(t, root, "unbound"))

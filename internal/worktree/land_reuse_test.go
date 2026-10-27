@@ -19,8 +19,14 @@ import (
 // requireOneRun requires that the fixture gate behind tally ran exactly once.
 func requireOneRun(t *testing.T, tally, when string) {
 	t.Helper()
-	if got, err := os.ReadFile(tally); err != nil || string(got) != "g" {
-		t.Fatalf("gate tally %s = %q, %v; want one run", when, got, err)
+	requireTally(t, tally, "g", when)
+}
+
+// requireTally requires that the fixture gate tally reads want, one g for each run.
+func requireTally(t *testing.T, tally, want, when string) {
+	t.Helper()
+	if got, err := os.ReadFile(tally); err != nil || string(got) != want {
+		t.Fatalf("gate tally %s = %q, %v; want %q", when, got, err, want)
 	}
 }
 

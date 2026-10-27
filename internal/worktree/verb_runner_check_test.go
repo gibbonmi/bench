@@ -95,6 +95,8 @@ func TestVerbRunnerKeyReachesItsOwnVerb(t *testing.T) {
 		{verbReset, []string{"t"}, "usage: " + usage.WorktreeReset},
 		{verbLand, []string{"p"}, "usage: " + usage.WorktreeLand},
 		{verbLandResume, []string{"p"}, "usage: " + usage.WorktreeLandResume},
+		{verbLand, []string{"--stack", "/absent/stack.json"}, "usage: " + usage.WorktreeLandStack},
+		{verbLand, []string{"--resume", "p", "--stack", "/absent/stack.json"}, "usage: " + usage.WorktreeLandStackResume},
 		{verbList, []string{"x"}, toon.Usage(usage.WorktreeList, "x")},
 		{verbPath, nil, "usage: " + usage.WorktreePath},
 		{verbShow, []string{"a", "b", "c"}, toon.Usage(worktreeShowGrammar.Cmd, "c")},

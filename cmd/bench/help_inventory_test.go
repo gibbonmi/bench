@@ -141,6 +141,8 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree reset (--to <commit> | --restore <ref>) <target> [--apply <fingerprint>]  plan or apply a recoverable reset or restore
   bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] -m <message> <path>  compose, gate, and publish one owned worktree
   bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
+  bench worktree land --stack <file> [--source-tip <request>=<commit>]...  compose, gate once, and publish two or more owned worktrees in order
+  bench worktree land --resume <published-commit> --stack <file> [--source-tip <request>=<commit>]...  resume incomplete post-publication stack work
   bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] --outcome <id> "<objective>" gated loop in a pooled worktree; commit on green
   bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass

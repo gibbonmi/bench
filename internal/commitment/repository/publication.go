@@ -26,38 +26,65 @@ func (store Store) AdmitPublication(source Publication, tree string) error {
 	return store.admitPublication(ledger, source, tree)
 }
 
-// PublishAdmitted decides the build window and tree again under the intent lock and runs
-// publish before that lock releases. No competing claim, blocker, receipt, or gap change can
-// alter the decision between that final check and the ref update that publish performs. The
-// same decision drops the publication's lease, so the next landing can take it once this
-// lock releases. It also consumes the override of the publication's assignment, so that
-// override admits one publication. A landing that refuses before publish keeps it.
+// PublishAdmitted decides the landing of source over tree as a stack of that one member.
 func (store Store) PublishAdmitted(source Publication, tree string, publish func() error) error {
+	return store.PublishStackAdmitted([]Publication{source}, []string{tree}, publish)
+}
+
+// PublishStackAdmitted decides the build window and the tree of each member again under the
+// intent lock, and runs publish once before that lock releases. The tree of members[i] is
+// trees[i]. No competing claim, blocker, receipt, or gap change can alter the decision between
+// that final check and the ref update that publish performs. The first refused member stops
+// the decision before publish with its own refusal. The same decision consumes the override
+// of each member, so an override admits one publication, and an assignment that the stack
+// does not publish keeps its override. It also drops the lease that the first member holds,
+// so the next landing can take it once this lock releases.
+func (store Store) PublishStackAdmitted(members []Publication, trees []string, publish func() error) error {
+	if len(members) == 0 || len(trees) != len(members) {
+		return fmt.Errorf("stack publication has %d members and %d trees; want one tree for each member of a non-empty stack", len(members), len(trees))
+	}
 	published := false
 	err := intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
-		if err := store.window(ledger, source); err != nil {
-			return ledger, false, err
-		}
-		if err := store.admitPublication(ledger, source, tree); err != nil {
-			return ledger, false, err
+		for i, member := range members {
+			if err := store.window(ledger, member); err != nil {
+				return ledger, false, err
+			}
+			if err := store.admitPublication(ledger, member, trees[i]); err != nil {
+				return ledger, false, err
+			}
 		}
 		if err := publish(); err != nil {
 			return ledger, false, err
 		}
 		published = true
 		state := storedState(ledger)
-		state.Overrides = withoutOverride(state.Overrides, source.Assignment)
+		for _, member := range members {
+			state.Overrides = withoutOverride(state.Overrides, member.Assignment)
+		}
 		consumed, overridden, _ := withRuntime(ledger, state)
-		next, released, err := source.Lease.drop(consumed)
+		next, released, err := members[0].Lease.drop(consumed)
 		return next, overridden || released, err
 	}, nil)
 	// The ref update is the commit point. A write that fails after it leaves the lease
 	// record with no lock holder, and the next acquire takes that record over. It also
-	// leaves the override record, which admits one more landing of the same assignment.
+	// leaves each override record, which admits one more landing of its assignment.
 	if published {
 		return nil
 	}
 	return err
+}
+
+// HoldsDeliveryBinding reports whether the ledger holds a delivery binding for assignment,
+// whatever deliverable it binds. It reads the bindings and not the open builds, because a
+// started tickets-only deliverable binds its assignment but opens no build.
+func (store Store) HoldsDeliveryBinding(assignment string) (bool, error) {
+	ledger, err := intent.Read(store.Root)
+	if err != nil {
+		return false, err
+	}
+	return slices.ContainsFunc(storedState(ledger).Bindings, func(binding intent.DeliveryBinding) bool {
+		return binding.Assignment == assignment
+	}), nil
 }
 
 func (store Store) admitPublication(ledger intent.Ledger, source Publication, tree string) error {

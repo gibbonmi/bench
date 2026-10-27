@@ -416,8 +416,24 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   landing source. To move it, compose the tree again and get a new gate verdict; a
   new source review alone is not enough. Not the source's frozen base.
 - **landing lease** — the intent-ledger record that names the one assignment whose
-  landing holds a landing destination, from composition through publish. Avoid
+  landing holds a landing destination, from composition through publish. The lease of
+  a **landing stack** names the assignment of its first **stack member**. Avoid
   "landing lock", "gate lock", "queue slot" — landing lease.
+- **landing stack** — one `bench worktree land --stack` run that lands two to sixteen
+  reviewed sources in file order under one **landing lease**. The whole gate grades its
+  top tree once, and one destination update publishes each green member. It keeps no
+  state across runs. Avoid "landing queue", "batch landing", "merge train" — landing
+  stack.
+- **stack member** — one reviewed source of a **landing stack**, with the fields of one
+  landing. Each member keeps its own landing merge commit and its own folder close.
+  A staged-spec member and a member whose assignment holds a delivery binding land
+  alone. Avoid "stack entry", "stack item" — stack member.
+- **stack prefix** — the first k members of a **landing stack** in file order, composed
+  onto the destination. Prefix 0 is the destination. The bisect grades prefixes, and a
+  stack publishes only a green prefix. Avoid "partial stack", "sub-stack" — stack prefix.
+- **attributed member** — the first **stack member** whose **stack prefix** is red on top
+  of a green prefix. The stack refuses it with `stack-red` and leaves each later member
+  unlanded. Avoid "red member", "culprit", "failing member" — attributed member.
 - **open build** — a claimed outcome with a bound staged-spec deliverable and at
   least one active bound assignment. Bench derives it from the ledger; it is never a
   stored state. It holds the landing window of the default branch.

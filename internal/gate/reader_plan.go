@@ -26,6 +26,7 @@ const readerRefusedFormat = "gate: whole gate (reader set refused: %s)\n"
 const (
 	refusedNotKit     = "not a kit run of the built-in table"
 	refusedNoLanding  = "no landing value"
+	refusedStack      = "landing stack"
 	refusedNoMarker   = "no green marker of the destination"
 	refusedUncovered  = "uncovered path"
 	refusedBuildInput = "embed or shellcheck path"
@@ -68,7 +69,7 @@ type readerPlanner struct {
 // plain gate run keep their output.
 func (p readerPlanner) plan(ctx context.Context, stdout io.Writer, runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) (readerRun, bool) {
 	landing, landed := landingOf(ctx)
-	run, refusal := p.decide(landing, landed, runtimeRoot, storageRoot, plan, selection)
+	run, refusal := p.decide(landing, landed, stackGradeOf(ctx) != nil, runtimeRoot, storageRoot, plan, selection)
 	if refusal == "" {
 		return run, true
 	}
@@ -80,12 +81,15 @@ func (p readerPlanner) plan(ctx context.Context, stdout io.Writer, runtimeRoot, 
 
 // decide answers the reader run, or the first case of the landing plan that holds. A read
 // that fails refuses under the case that reads it.
-func (p readerPlanner) decide(landing landingValue, landed bool, runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) (readerRun, string) {
+func (p readerPlanner) decide(landing landingValue, landed, stacked bool, runtimeRoot, storageRoot string, plan subject, selection *runbinary.Selection) (readerRun, string) {
 	if !kitRun(runtimeRoot, storageRoot, plan, selection) {
 		return readerRun{}, refusedNotKit
 	}
 	if !landed {
 		return readerRun{}, refusedNoLanding
+	}
+	if stacked {
+		return readerRun{}, refusedStack
 	}
 	if landing.marker == "" {
 		return readerRun{}, refusedNoMarker
