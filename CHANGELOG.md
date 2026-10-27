@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Record ticket scope and prefix
+
+- Changed `bench record ticket`, which now refuses a planned seam cell only in a row that the `Covers:` line of the recording ticket names. An earlier ticket of a chunk now records at its own commit while a later ticket of the chunk still plans its rows. Before, the verb read every row of the chunk, so an earlier ticket waited until the last ticket cited its rows. `--id-prefix` now removes each trailing hyphen of the prefix, so `--id-prefix GR-` writes the same evidence IDs as `--id-prefix GR`. Before, `GR-` wrote the evidence ID `GR--tests`.
+
 ### Landing stack
 
 - Added `bench worktree land --stack <file>`, which lands two to sixteen reviewed spec-less or tickets-only sources under one landing lease. Each member keeps its own landing merge commit and its own folder close. The whole gate grades the top tree once, and one destination update publishes each green member. Before, each source paid its own whole gate and its own fold of `main`.
