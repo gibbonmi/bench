@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
+  "plan_digest": "sha256:74eab82c822158a3ace2797cca2b2f7c56879df82c3415ce7d8d816fe4ed038b",
   "implementation_session": "",
   "chunks": [
     {
@@ -472,9 +472,9 @@
     {
       "id": "LS-C3",
       "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
-      "tip": "140b4d683e1711bc5602fd07d48a13ab57dd12a2",
-      "plan_digest": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
-      "source_digest": "97e12340cc6c408630155fd230bab107c824d49a",
+      "tip": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+      "plan_digest": "sha256:74eab82c822158a3ace2797cca2b2f7c56879df82c3415ce7d8d816fe4ed038b",
+      "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
       "acceptance_rows": [
         "LS18",
         "LS19",
@@ -643,6 +643,82 @@
           "requirement": "commitmenttest",
           "command": "bench test --package ./internal/commitment/commitmenttest",
           "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-r1-landing",
+          "performer": "claude:ls-t04-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-repair1-20261026",
+            "digest": "sha256:cd231f17b15de54f53b86f15805b05e615a7a638c3c4f0f37b2686aa39a85e58",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,22953,236\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-r1-commands",
+          "performer": "claude:ls-t04-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-repair1-20261026",
+            "digest": "sha256:bdf4a79e7bf27fbed2b6a73b41bebe19a216f145530599a8e74ffada40b01ae9",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26492,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "requirement": "commands",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-r1-root-conformance-04",
+          "performer": "claude:ls-t04-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-repair1-20261026",
+            "digest": "sha256:21fa2406405245767e9125290ebbbb3f0f4c8477bcc0d1084cf2ae4fe4b4278c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13066,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "requirement": "root-conformance-04",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-r1-gate-04",
+          "performer": "claude:ls-t04-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-repair1-20261026",
+            "digest": "sha256:7b6681c23fabece632fb23f9d289b4cfa74b22e34fbb28ee9318574b47b8262d",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,234619,726\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "requirement": "gate-04",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
         }
       ],
       "reviews": [
@@ -768,6 +844,21 @@
     {
       "from": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
       "to": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ],
+        "LS-C3": [
+          "LS-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:66d983528c79b7ff90ffc21f6ce4dc06ebb3baeb952635d37df56f266944de2d",
+      "to": "sha256:74eab82c822158a3ace2797cca2b2f7c56879df82c3415ce7d8d816fe4ed038b",
       "chunk_ids": {
         "LS-C1": [
           "LS-C1"
