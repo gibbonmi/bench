@@ -2740,7 +2740,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c10-standards-r1",
+          "performer": "claude:ls-c10-standards-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c10-standards-20261027",
+            "digest": "sha256:91fe1dcd2ddf87cad7883ed5ab275605d5e803a1ea483898d1fa67d8684ac64e",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 3\nworst: S1 (severity 3, a CHANGELOG sentence over the STE length limit)\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, base df1930ce5, source_tip 1d13be46. The record and plan commits inside the pair are bookkeeping and carry no finding.\n\nS1 | 3 | auto-fix | 5 | CHANGELOG.md:110 (also :111) | The sentence at :110 runs about 28 words with four parallel items inline, and :111 lists four parallel items inline. ste-prose.md: 25 words for a descriptive sentence, and a vertical list for three or more parallel items.\nS2 | 2 | auto-fix | 5 | .agents/commands/bench-drain.md:228 | The procedural sentence runs 27 words, over the 20-word procedural limit of ste-prose.md.\nS3 | 3 | no-op | 4 | CHANGELOG.md:111; CONTEXT.md:427-430; .bench/BENCH-reference.md:59 vs docs/adr/0032:188 | One source per fact: the changelog re-spells the stack resume form without its override tail, the stack member entry repeats the land-alone rule, and the member bound and gate count repeat across four docs. This is the same tolerable overlap that ADR 0031 has with the reference.\n\nAdvice:\n- BENCH-reference.md:59 says \"Each later member stays active\", while the ADR, CONTEXT, and the members table say \"unlanded\".\n- ADR 0032:168 \"Two members change one path only when that path is in the capture directory\" reads ambiguously; state it as a rule.\n- The reference whole-gate bullet (:755) does not name the printed case string `landing stack`.\n\nClean: the ADR has no file path and no code snippet and states the decided state; the four glossary terms each have an Avoid list, with \"landing queue\" on the stack's list; the lease entry names the first member; the bench-drain.md edit has no conformance needle and no \"commit on green\"; no edit falls outside the acceptance's reach.\n\nCommand: no command change is necessary.\nRead: the diff of the pair, ticket 12, craft-review, craft-adr, craft-domain, ste-prose.md, ADR 0031, internal/usage/worktree.go, internal/conformance greps, BENCH-reference.md:738-777, bench-drain.md:205-240.\n"
+          },
+          "axis": "Standards",
+          "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "tip": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c10-spec-r1",
+          "performer": "claude:ls-c10-spec-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c10-spec-20261027",
+            "digest": "sha256:b26d8a380d0315c779ece083c3a0527c1a5160f69372b2ca5df3d60a109f18ed",
+            "excerpt": "axis: Spec\nverdict: findings\nfindings: 2\nworst: P1, severity 3 (spec prose, not behavior)\n\nP1 | 3 | auto-fix | 8 | specs/landing-stack/spec.md:194 (also :195) | The spec says \"The last stdout line is stack{...}\" with no condition, but the code prints no record and no members table on a refusal before the lease (internal/worktree/land_stack.go:70-75, :91-96, :97-100); line 192 already says \"After the lease\". Line 195 says exit 1 means a refused member, but a stopped post-publication step with a refused member exits 3 (land_stack.go:119-124). The reference follows the code; the spec prose needs the correction.\nP2 | 3 | auto-fix | 6 | .agents/commands/bench-drain.md:304 | The line still says an implement-now item \"lands green through its own landing\", while :227-230 land two or more such tickets as one stack (LS85).\n\nVerified true of the code:\n- The four disclosed points: BENCH-reference.md:547 (no record before the lease), :81 (exit 3), :61 (stackMovedRefusals, land_stack.go:268-271, :295-307; the reference omits the land-handback branch at :273-289), :557 (the resume takes no lease and prints no table).\n- Stack-file refusals exit 2 before the lease, with a floor of 2 and a ceiling of 16 (land_stack_input.go:90-108, land_stack.go:133-158); override refusals (land_stack_input.go:143-152); the three stack proofs (land_stack_preflight.go:22-50); the overlap refuses the later member (:65-107); the bisect, the 5-gate bound, the stops, and one CAS (internal/landing/stack.go:116-160); the usage grammars (internal/usage/worktree.go:25-27, :51-52).\n- The whole-gate list adds \"the landing is a landing stack\" at :755, matching refusedStack in internal/gate/reader_plan.go:29 and :91.\n- CONTEXT.md has the four terms with Avoid lists; the lease entry names the first member; the ADR covers LS83 with no path or snippet; the changelog entry is under [Unreleased]; the drain replacement is present.\n\nAdvice:\n- Reference :47 says every preflight refusal names a member index and label, but the destination-proof refusal (land_stack.go:185-188) names no member.\n- Reference :61 could add the land-handback branch; reference :79 could say the resume prints no members table.\n\nCommand: no command change is necessary.\nRead: the bind, the frozen diff, spec.md 1-245 and LS83-LS85, ticket 12, the craft-review Spec section, land_stack.go, land_stack_input.go, land_stack_resume.go, land_stack_preflight.go, landing/stack.go, usage/worktree.go, gate/reader_plan.go:15-94, drain and reference excerpts.\n"
+          },
+          "axis": "Spec",
+          "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "tip": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c10-coverage-r1",
+          "performer": "claude:ls-c10-coverage-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3f448434839ee250d2175f81ec525918b4b28071",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c10-coverage-20261027",
+            "digest": "sha256:6b9474f375b90e3dfc5bc6bf66dbaa549adbe97d5ae1c23d751698cb8a72888d",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 1\nworst: C1 (severity 3)\n\nC1 | 3 | auto-fix | 6 | .agents/commands/bench-drain.md:304 | The line still says an implement-now item \"lands green through its own landing before the drain's batch commit\", while lines 228-230 land two or more verified light-path tickets as one landing stack (LS85). The two lines read as serial landings against a stack landing.\n\nRow judgments:\n- LS83 meets every element in ADR 0032: the members (spec-less or tickets-only, the alone rules, the preflight order), the proof (the owner rule and the path-bytes proof), the schedule (the bisect, five gates at sixteen members), the attribution (the first member red on top of a green prefix), the window rule, and no persistent queue.\n- LS84 meets every element: the four glossary terms (CONTEXT.md:419-436), the reference stack section (BENCH-reference.md:500-560), the `landing stack` reader-set case first in the whole-gate list (line 755, matching refusedStack in internal/gate/reader_plan.go:29), and the changelog section (CHANGELOG.md:9-15).\n- LS85 is met at bench-drain.md:228-230, except for the stale line 304 (C1).\n\nGate pin: internal/conformance pins only the generic docs-workflow checks, so no new needle is needed or broken; docs/adr has no index or link check; internal/gate/stack_completion_test.go:278 pins the case output in code, and no check ties the reference list to the code list.\n\nAdvice:\n- No check ties the reference case list to the code case list.\n- The drain text does not say what the coordinator does after a stack-red or land-destination-moved refusal; a pointer to the reference stack section would help.\n- \"At one time\" in drain line 228 is loose.\n\nCommand: no command change is necessary.\nRead: the delta, bench-drain.md 70-84 and 205-310, BENCH-reference.md 738-777, internal/gate/reader_plan.go, searches of internal/conformance, internal/gate, BENCH.md, docs/adr.\n"
+          },
+          "axis": "Coverage",
+          "base": "df1930ce5b7afad5ed9a567b5df7a4c41183edaf",
+          "tip": "c06c7ec58b64da0b96a316a9beb1224432d0ba76",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3490,3 +3560,37 @@ Witness return of the repair:
 - C2: a dropped `terminalResumeReceipt` check turned the `receipt` row red, because the resume exited 0.
 - C3: the published commit as the destination turned the `ahead` row red, because the resume moved `main`.
 - C4: `SourceTip` in place of `EffectiveTip` turned the `override` row red. The file-tip refusal is reasoned and was not run.
+
+## LS-C10 review, round 1
+
+Frozen pair: `df1930ce5b7afad5ed9a567b5df7a4c41183edaf..c06c7ec58b64da0b96a316a9beb1224432d0ba76`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes, and its return is outside this record.
+
+## Standards
+
+Findings: 3. Worst: S1, severity 3.
+
+- S1 (confidence 5), `auto-fix`: two changelog sentences break the STE limits. The repair splits them and moves the parallel items into a vertical list.
+- S2 (confidence 5), `auto-fix`: the new drain sentence runs 27 words. The repair splits it.
+- S3 (confidence 4), `no-op`: the member bound and the gate count repeat across four docs, as ADR 0031 does with the reference.
+
+## Spec
+
+Findings: 2. Worst: P1, severity 3.
+
+- P1 (confidence 8), `auto-fix`: two spec sentences contradicted the shipped output. The record before the lease and exit 3 with a refused member were wrong. This is a non-behavioral contradiction, so the orchestrator followed the code. This commit corrects the spec prose, and the correction is flagged for reviewer veto.
+- P2 (confidence 6), `auto-fix`: this finding is the same defect as C1.
+
+## Coverage
+
+Findings: 1. Worst: C1, severity 3.
+
+- C1 (confidence 6), `auto-fix`: a later drain line still says that each implement-now item lands through its own landing. The repair aligns it with the stack paragraph.
+
+## Shadow finds
+
+The orchestrator accepts four shadow finds for the repair:
+
+- The reference override rule omits a value with no `=`.
+- The reference exit-1 line says that the members table shows what landed, but a refusal before the lease prints no table.
+- The reference omits the `land-handback` refusal for a moved destination that no member lacks.
+- The reference does not cite ADR 0032, as sibling notes cite their ADRs.

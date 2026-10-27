@@ -191,8 +191,8 @@ Harder chunks: LS-C2, LS-C3, LS-C6.
 - Each member prints its `landing source{...}` line on stderr before composition.
 - After the lease, stdout prints one `members[N]{member,label,source_tip,published_commit,outcome,census}` table in file order. The `outcome` cell reads `landed`, `red`, or `unlanded`. The `published_commit` cell reads `none` for a member that did not land.
 - After a publication, stdout prints the effects table of one landing. A refusal after the lease prints its record next.
-- The last stdout line is `stack{destination_base=…,published_commit=…,landed=<k>,worktree=…}`. Its `published_commit` field reads `none` when nothing published.
-- Exit 0 means that every member landed and every step finished. Exit 1 means that the stack refused at least one member, and the members table shows what landed. Exit 2 means invalid usage. Exit 3 means that a step after publication stopped, and the record carries the stack resume.
+- After the lease, the last stdout line is `stack{destination_base=…,published_commit=…,landed=<k>,worktree=…}`. Its `published_commit` field reads `none` when nothing published. A refusal before the lease prints no members table and no `stack{...}` record.
+- Exit 0 means that every member landed and every step finished. Exit 1 means that the stack refused at least one member and no step after publication stopped. Exit 2 means invalid usage. Exit 3 means that a step after publication stopped, and the record carries the stack resume.
 
 ### The refusal faces
 
