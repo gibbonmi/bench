@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:5bc6e3c7dc412f0cd192c1642649284e9fc046f783d25cf877095d01ab999b01",
+  "plan_digest": "sha256:848b9ec7db1698a69a2aaeae87f17ae1c9ed18fe7fe711d2b19f9f88e6194262",
   "implementation_session": "",
   "chunks": [
     {
@@ -1992,9 +1992,9 @@
     {
       "id": "LS-C8",
       "base": "f3409275c55a0ff165fab8ff808fd343de397929",
-      "tip": "7aad4fd4297c90e316dc03b4500d4155c46d1f9a",
-      "plan_digest": "sha256:5bc6e3c7dc412f0cd192c1642649284e9fc046f783d25cf877095d01ab999b01",
-      "source_digest": "99c3febcc8250f8a2cfcf50e69aaab2c9e962d0b",
+      "tip": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+      "plan_digest": "sha256:848b9ec7db1698a69a2aaeae87f17ae1c9ed18fe7fe711d2b19f9f88e6194262",
+      "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
       "acceptance_rows": [
         "LS70",
         "LS71",
@@ -2085,6 +2085,101 @@
           "source_commit": "7aad4fd4297c90e316dc03b4500d4155c46d1f9a",
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c8-t10-r1-worktree",
+          "performer": "claude:ls-t10-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t10-repair1-20261026",
+            "digest": "sha256:cc5738e39133e90024e6351798fdcef8d17cfc7ee6deeb449cb681d7a82dfd64",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,156833,1592\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c8-t10-r1-refusalroute",
+          "performer": "claude:ls-t10-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t10-repair1-20261026",
+            "digest": "sha256:dfc1f80e92253a521ca1579e11429f1c67360e7423b85e70e953e27a91619ee5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "requirement": "refusalroute",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c8-t10-r1-commands",
+          "performer": "claude:ls-t10-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t10-repair1-20261026",
+            "digest": "sha256:363c6564dbe9b47fb1839971a6682dc66bf349b69ba08f5eee16fcf97083c435",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22946,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "requirement": "commands",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c8-t10-r1-root-conformance",
+          "performer": "claude:ls-t10-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t10-repair1-20261026",
+            "digest": "sha256:12186f9afde03a92b9e095da29bfb2d8d93d69c61b5abc3cdeafb875a2f58205",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14492,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c8-t10-r1-gate-10",
+          "performer": "claude:ls-t10-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0611fe15db729b5a265c9d542781d79724df3fca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t10-repair1-20261026",
+            "digest": "sha256:bab4122f72fef01b2a87d26575ddcc4c50a1fb608d121735f2c5e0a503b9c44c",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,233256,726\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "bbe9c277156c5f7f78e8a97cce9fb8ba7a606afd",
+          "requirement": "gate-10",
+          "command": "bench test --package ./internal/gate",
           "exit_code": 0
         }
       ],
@@ -2435,6 +2530,36 @@
         ],
         "LS-C7": [
           "LS-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5bc6e3c7dc412f0cd192c1642649284e9fc046f783d25cf877095d01ab999b01",
+      "to": "sha256:848b9ec7db1698a69a2aaeae87f17ae1c9ed18fe7fe711d2b19f9f88e6194262",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ],
+        "LS-C3": [
+          "LS-C3"
+        ],
+        "LS-C4": [
+          "LS-C4"
+        ],
+        "LS-C5": [
+          "LS-C5"
+        ],
+        "LS-C6": [
+          "LS-C6"
+        ],
+        "LS-C7": [
+          "LS-C7"
+        ],
+        "LS-C8": [
+          "LS-C8"
         ]
       }
     }
