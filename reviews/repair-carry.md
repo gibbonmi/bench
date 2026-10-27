@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-carry/spec.md",
-  "plan_digest": "sha256:2654ef811586ab2cf6686a670b913aab7ce29e61ebb2e1de176400adb808aa6e",
+  "plan_digest": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
   "implementation_session": "",
   "chunks": [
     {
@@ -509,9 +509,9 @@
     {
       "id": "CF-C3",
       "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
-      "tip": "6a2c50a3209f6bb675a2a0e5cb9ec94074e2b2b7",
-      "plan_digest": "sha256:2654ef811586ab2cf6686a670b913aab7ce29e61ebb2e1de176400adb808aa6e",
-      "source_digest": "4a0b55dc93afcf7f12a60de3dd1a3055fd68bdc8",
+      "tip": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+      "plan_digest": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
+      "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
       "acceptance_rows": [
         "CF33",
         "CF34",
@@ -608,6 +608,63 @@
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "t05-anchors",
+          "performer": "claude:rc-t05-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-author-20261027",
+            "digest": "sha256:87e3ed0085cedfbe08518008f388b05d62c87ec20bcafb3ed30b1d729b8bc928",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,106,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "t05-prose",
+          "performer": "claude:rc-t05-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-author-20261027",
+            "digest": "sha256:9ad27b71561a4beb04ed89eab9303b96f0ec93af5f13c75f5a5adc4881968e17",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,187\n"
+          },
+          "source_commit": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "t05-conformance-05",
+          "performer": "claude:rc-t05-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t05-author-20261027",
+            "digest": "sha256:9aa2dd695e52c7be3a4ac45b32f468007fd4cc5cbedbb13ee01c8b55515cde15",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12653,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+          "requirement": "conformance-05",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": []
@@ -660,6 +717,21 @@
         ],
         "CF-C2": [
           "CF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2654ef811586ab2cf6686a670b913aab7ce29e61ebb2e1de176400adb808aa6e",
+      "to": "sha256:f170fcfc8cc7bf3b5f06169e804d43f957d3004168ac559863ec18378f517649",
+      "chunk_ids": {
+        "CF-C1": [
+          "CF-C1"
+        ],
+        "CF-C2": [
+          "CF-C2"
+        ],
+        "CF-C3": [
+          "CF-C3"
         ]
       }
     }
