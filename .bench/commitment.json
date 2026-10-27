@@ -1327,6 +1327,46 @@
           ]
         },
         {
+          "id": "FT451-background-grade",
+          "criteria": [
+            {
+              "id": "FT451-background-grade.lookup",
+              "text": "A chunk checkpoint or a landing of a lane-passed tip finds the background verdict of that tip under its grade key and runs no second gate for it."
+            },
+            {
+              "id": "FT451-background-grade.bound",
+              "text": "Background grades run inside a decided machine bound measured at -p=2, and the grade of a superseded tip takes no new test slot."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT451",
+              "path": "roadmap/FT451.md",
+              "identity": "sha256:9a863c76151db6b42fa0b065033cbfb227743c8cff4de69ca57a67e5d34f835b"
+            }
+          ]
+        },
+        {
+          "id": "FT402-git-cache",
+          "criteria": [
+            {
+              "id": "FT402-git-cache.measure",
+              "text": "Before any code change, a measurement on the tmpfs base at -p=2 compares the internal/worktree package time with a per-command cache of pure git queries against the recorded run-to-run spread."
+            },
+            {
+              "id": "FT402-git-cache.gain",
+              "text": "When the measured gain falls outside the spread, a command run caches its pure git queries; otherwise the outcome closes with the recorded measurement and no code change."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT402",
+              "path": "roadmap/FT402.md",
+              "identity": "sha256:f16e8d6a4bbf1597652651dd71bd50419a88de7eb9b9b20ca47825c75d0a9d21"
+            }
+          ]
+        },
+        {
           "id": "FT360-shared-fixtures",
           "criteria": [
             {
