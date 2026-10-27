@@ -33,11 +33,14 @@ type StackAdmission interface {
 }
 
 // StackResult is the receipt of a landing stack. Merges holds the published merge of each
-// published member, in file order, and Kind is the authorization kind of the top tree.
+// published member, in file order. Kind is the authorization kind of the top tree, or the
+// kind that stopped the bisect. Attributed is the 1-based member that the bisect names for
+// the red, or 0 when no member carries it.
 type StackResult struct {
 	DestinationBase string
 	Merges          []string
 	Kind            authorization.Kind
+	Attributed      int
 }
 
 // Published is the count of published members.
@@ -54,10 +57,12 @@ func (e StackMemberError) Error() string { return fmt.Sprintf("stack member %d: 
 func (e StackMemberError) Unwrap() error { return e.Err }
 
 // LandStack composes each member onto the merge of the member before it, writes one landing
-// merge for each member, and grades the top tree once. Each member's admission decides its
-// own landing tree: the destination with that member alone. A green publishes every member
-// by one compare-and-swap of the destination to the top merge. Any other kind publishes
-// nothing and returns the authorization refusal.
+// merge for each member, and grades the top tree. Each member's admission decides its own
+// landing tree: the destination with that member alone. A green publishes every member by
+// one compare-and-swap of the destination to the top merge. A candidate red bisects the
+// prefixes, attributes the red to the first red prefix above a green one, publishes that
+// green prefix, and returns the red refusal. Any other kind on any grade publishes nothing
+// and returns the authorization refusal.
 func (o Owner) LandStack(ctx context.Context, r StackRequest, admission StackAdmission) (StackResult, error) {
 	if admission == nil {
 		return StackResult{}, errors.New("landing stack requires a publication admission")
@@ -82,8 +87,9 @@ func (o Owner) LandStack(ctx context.Context, r StackRequest, admission StackAdm
 			return StackResult{}, StackMemberError{i + 1, err}
 		}
 	}
-	merges := make([]string, len(members))
-	previous, top := destination, ""
+	// prefixTrees[i] and merges[i] are the tree and the merge of the first i+1 members.
+	merges, prefixTrees := make([]string, len(members)), make([]string, len(members))
+	previous := destination
 	for i, m := range members {
 		tree, err := o.landingTree(m, previous, sources[i])
 		if err != nil {
@@ -92,7 +98,7 @@ func (o Owner) LandStack(ctx context.Context, r StackRequest, admission StackAdm
 		if merges[i], err = landingMerge(r.Root, tree, previous, sources[i], m.Message); err != nil {
 			return StackResult{}, err
 		}
-		previous, top = merges[i], tree
+		previous, prefixTrees[i] = merges[i], tree
 	}
 	trees := make([]string, len(members))
 	stack := make([]gate.StackMember, len(members))
@@ -106,13 +112,38 @@ func (o Owner) LandStack(ctx context.Context, r StackRequest, admission StackAdm
 		}
 		trees[i], stack[i] = tree, gate.StackMember{Source: sources[i], Folder: m.ClosePath}
 	}
-	ctx = gate.WithStack(gate.WithLanding(ctx, destination, r.GreenMarker), stack)
-	got := o.authorize(ctx, r.Root, top, r.Stdout, r.Stderr)
-	result := StackResult{DestinationBase: destination, Kind: got.Kind}
-	if !o.reviewedPublishes.permits(got.Kind) {
-		return result, AuthorizationRefusal{got}
+	ctx = gate.WithLanding(ctx, destination, r.GreenMarker)
+	grade := func(k int) authorization.Result {
+		return o.authorize(gate.WithStack(ctx, stack[:k]), r.Root, prefixTrees[k-1], r.Stdout, r.Stderr)
 	}
-	for i, m := range members {
+	got := grade(len(members))
+	result := StackResult{DestinationBase: destination, Kind: got.Kind}
+	lo, refusal := len(members), error(nil)
+	if !o.reviewedPublishes.permits(got.Kind) {
+		if got.Kind != authorization.Candidate {
+			return result, AuthorizationRefusal{got}
+		}
+		// A candidate red means that the destination held a green, so prefix 0 is green.
+		hi := lo
+		lo = 0
+		for hi-lo > 1 {
+			mid := (lo + hi) / 2
+			switch prefix := grade(mid); {
+			case o.reviewedPublishes.permits(prefix.Kind):
+				lo = mid
+			case prefix.Kind == authorization.Candidate:
+				hi, got = mid, prefix
+			default:
+				result.Kind = prefix.Kind
+				return result, AuthorizationRefusal{prefix}
+			}
+		}
+		result.Attributed, refusal = hi, AuthorizationRefusal{got}
+		if lo == 0 {
+			return result, refusal
+		}
+	}
+	for i, m := range members[:lo] {
 		if err := sourceUnchanged(m, sources[i]); err != nil {
 			return result, StackMemberError{i + 1, err}
 		}
@@ -120,13 +151,13 @@ func (o Owner) LandStack(ctx context.Context, r StackRequest, admission StackAdm
 	if err := destinationUnchanged(r.Root, r.Destination, destination, r.DestinationFingerprint); err != nil {
 		return result, err
 	}
-	if err := admission.PublishStack(len(members), trees, func() error {
-		return o.publishMerge(r.Root, r.Destination, previous, destination)
+	if err := admission.PublishStack(lo, trees[:lo], func() error {
+		return o.publishMerge(r.Root, r.Destination, merges[lo-1], destination)
 	}); err != nil {
 		return result, err
 	}
-	result.Merges = merges
-	return result, nil
+	result.Merges = merges[:lo]
+	return result, refusal
 }
 
 // sourceUnchanged rechecks the two moving identities of a reviewed source after the gate and
