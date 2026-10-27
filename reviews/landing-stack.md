@@ -787,6 +787,72 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c3-standards-r2",
+          "performer": "claude:ls-c3-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c3-standards-r2-20261026",
+            "digest": "sha256:5ecf90fd4e804d3039456b18130391d005cade8ee80a051b8d86616944581fad",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip f6d7afb0.\n\nS1: closed. commitmenttest.ApproveTickets (internal/commitment/commitmenttest/light.go:120-129) is the one source of the tickets-only binding steps, called from light.go:117 (SeedRowlessPair), window_test.go:98, and stack_publication_test.go:145. No paste of the WriteTickets + EditPolicy + TicketsBinding sequence remains. The other TicketsBinding callers (light.go:83, milestone.go:38-40, head_binding_test.go:102-104) bind a different fact, because they carry an obligation or a row ID.\n\nNew findings: none.\n\nAdvice:\n- internal/gate/stack_completion.go:26-33: StackMembers has no production caller; only internal/landing/stack_test.go:94 calls it. It reuses stackGradeOf, clones the slice, and its comment is accurate. Below severity 5.\n- The new subtests in stack_test.go are driven by the shared stackOwner and stackAdmissionRecord fakes and do not repeat the harness.\n\nCommand: no command change is necessary.\nRead: both repair diffs, light.go:95-130, stack_completion.go:1-60, rg sweeps for TicketsBinding, WriteTickets, ApproveTickets, StackMembers and stackGradeOf.\n"
+          },
+          "axis": "Standards",
+          "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "tip": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c3-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c3-spec-r2",
+          "performer": "claude:ls-c3-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c3-spec-r2-20261026",
+            "digest": "sha256:f814b2999270a65c1d43f5975109818d70bf0e3867fcd2e14f8db197915006d2",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip f6d7afb0.\nTicket 03 (140b4d68): ApproveTickets in commitmenttest/light.go (lines 120-129) holds the same three steps that the tickets-only blocks held inline: WriteTickets, EditPolicy, then append TicketsBinding to outcome 0. SeedRowlessPair (line 117), window_test.go:98 and stack_publication_test.go:145 call it. TestOpenBuildsDeriveFromActiveOwners/tickets-only and TestBindingQueryNamesATicketsOnlyAssignment (LS22) keep the same setup and assertions. LS18-LS23 are unchanged.\nTicket 04 (fd1ccaa0): StackMembers(ctx) in internal/gate/stack_completion.go:28 is read-only and returns a clone of the members from stackGradeOf, or nil. No gate path calls it, so stackProof, the reader plan and the grade are unchanged. The rest of the diff adds tests: LS24 members in file order, LS28 refused member before the grade, LS39 destination checkout change, and a refused publication that publishes nothing. No existing assertion changed.\nPublishStack doc (landing/stack.go:30): \"trees holds exactly k trees\" agrees with LandStack (stack.go:123), with PublishStackAdmitted (publication.go:43), and with spec \"The publication\" (line 185). It fits \"The bisect\" (lines 174-178), because a k-member green prefix passes k trees.\nAdvice: none.\nCommand: no command change is necessary.\nRead: both repair diffs, internal/landing/stack.go, publication.go, commitmenttest/light.go:100-130, stack_completion.go:15-60, spec.md lines 146-190 and the coverage rows, the Writes lines of tickets 03 and 04.\n"
+          },
+          "axis": "Spec",
+          "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "tip": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c3-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c3-coverage-r2",
+          "performer": "claude:ls-c3-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "373bd52f17b8d25da27b97794f9ee5dfc224040b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c3-coverage-r2-20261026",
+            "digest": "sha256:47feeacf692c3a9804b349ddbe7f6fa0b664cb4da7236c4fee2a43edcd3e77f9",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\n\nC1: closed. internal/landing/stack_test.go:134-147 (LS28, member 2 refused) and :166-174 (LS39, PublishStack refused). Dropping the CheckMember check at internal/landing/stack.go:102, or returning its error unwrapped, turns the LS28 subtest red; it asserts errors.As StackMemberError, Member==2, the errAdmissionRefused chain, no grade, no ref update, and no publication. The PublishStack refusal is pinned by the shown probe.\nC2: closed. internal/landing/stack_test.go:155-165. The untracked file is written during the grade. CheckoutFingerprint (internal/landing/landing.go:341-345, fingerprintStatus:359-379) keeps \"??\" entries, and the request fingerprint is taken before the write (stack_test.go:75), so destinationUnchanged (internal/landing/gitexec.go:44) refuses. Dropping the call at stack.go:120 lets the publication through, so the test goes red.\nC3: closed. The accessor is internal/gate/stack_completion.go:26-31 and the subtest is internal/landing/stack_test.go:114-126; it pins Source and Folder per member in file order, with the empty folder on member 3. Red is shown by the stub accessor; dropping WithStack at stack.go:109 also turns it red.\nTicket 03 repair: ApproveTickets (commitmenttest/light.go:117-130) is single-sourced and used at stack_publication_test.go:145 and window_test.go:98.\n\nNew findings: none.\n\nAdvice:\n- gate.StackMembers is an exported accessor that only a test calls; acceptable as an observation seam.\n- The C2 test accepts any non-member error and relies on assertStackUnpublished for the no-publication claim, which is sufficient.\n\nCommand: no command change is necessary.\nRead: the two repair diffs, internal/landing/stack.go, stack_test.go:14-90, landing.go:290-380, gitexec.go:34-60, an rg of the call sites.\n"
+          },
+          "axis": "Coverage",
+          "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "tip": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c3-coverage-r1"
+          ]
         }
       ]
     }
@@ -978,3 +1044,13 @@ Findings: 3. Worst: C1, severity 6.
 - The `PublishStack` contract does not state whether its trees hold every member or only the published prefix. The ticket 04 repair states it.
 - `LandStack` composes member 1 twice, so a resolved composition prints its disclosure line twice.
 - `landing.go` has about 20 lines of headroom left for ticket 08.
+
+## LS-C3 review, round 2
+
+Confirming round over two repair deltas. Ticket 03: `5ad0418dd4126f62fcfbb009fdc0c479974c63fe..140b4d683e1711bc5602fd07d48a13ab57dd12a2`. Ticket 04: `a3d8129beb3a9724586f85d3d0aaed0118184bbf..fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2`.
+
+Repair cycles used: 1 of 2. Standards: 0 findings, and S1 is closed. Spec: 0 findings. Coverage: 0 findings, and C1, C2, and C3 are closed.
+
+The ticket 03 probe removed the binding append from the shared helper, and it reported `bit` with `restored` yes. The ticket 04 probe disabled the `PublishStack` error check, and it reported `bit` with `restored` yes. By reviewer direction, the coordinator ran no independent probe.
+
+Advice: only a test calls the exported accessor `gate.StackMembers`. Ticket 08 reuses it for LS29.
