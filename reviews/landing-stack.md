@@ -293,7 +293,77 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c2-standards-r1",
+          "performer": "claude:ls-c2-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c2-standards-20261026",
+            "digest": "sha256:2f5672f07a5f626da33b948a9fd561b71e4ff42acf9b031a84a24092c031be0a",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 3\nworst: S1 (severity 3), exact-text test pins that the ticket does not dictate\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, base 95b0a0d0, source_tip 278d3278.\n\nS1 | 3 | auto-fix | 6 | internal/gate/stack_completion_test.go:157 (also :104 and the requireFault helper at :68-72) | Tests pin the full production text of messages the ticket does not dictate. LS12 requires only \"names both member indexes\", but the test asserts \"stack members 1 and 2 change docs/one.md; land them apart\", a copy of the format at stack_completion.go:95. The LS10 row pins the suffix \"; review the delivery closure\" beyond the ticket's \"completion keeps closed <path>\". AGENTS.md treats an independently authored expectation as duplicated implementation knowledge unless its independence is necessary and a red is recorded. The LS9, LS16 and LS17 literals are spec-dictated and are fine.\nS2 | 2 | auto-fix | 6 | internal/gate/checkpoint.go:338-340 | applyCheckpoint returns `plan, e.stackProof(generation)`, a non-zero subject beside an error; every other error return in this function and in `build` returns `subject{}`.\nS3 | 2 | auto-fix | 5 | internal/gate/stack_completion.go:62-66 vs internal/gate/completion.go:64-65 | `sameEntry` is a second derivation of \"entry is the same in both generations\"; `completionTree` still carries the inline form. `completionTree` can call `sameEntry`.\n\nAdvice:\n- stackGradeOf copies landing.destination without checking the landing value; a stack context with no landing fails inside capturedCommit with an opaque git error.\n- decide now takes seven parameters; the landing, landed, stacked group is a data clump.\n- stackProof is about 50 lines and mixes the per-member closure with the ownership walk.\n- Not defects: the capturedCommit and underFolder extractions collapse existing duplicates; the comments follow craft-comments; file sizes are within limits.\n\nCommand: no command change is necessary.\nRead: ticket 02, the frozen diff, completion.go, checkpoint.go (329-395), evaluation.go (95-132), stackpolicy.go, craft-review SKILL.md and finding-discipline.md, craft-comments SKILL.md, projects/benchkit.md, spec rows LS7-LS17, the 278d32785 record diff.\n"
+          },
+          "axis": "Standards",
+          "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "tip": "a663e75135c53473df75b4da34c3328773d47e11",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c2-spec-r1",
+          "performer": "claude:ls-c2-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c2-spec-20261026",
+            "digest": "sha256:2fd0f54820cac16553086ea45ce117d7e24f619702fd23c896dbf39e5f67c37a",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: current=true, dirty_record=false, source_tip 278d3278, base 95b0a0d0. The ticket commit a663e7513 covers the six Writes files and spec.md (LS7-LS17 cell conversions), all inside the acceptance's reach.\n\nChecks (re-derived from the code):\n- Rule order: stack_completion.go:44-48 and :80-100 give folder absent, unowned keeps the destination entry with the exact LS9 text, one owner keeps that member's entry, an Overlaps path faults, else a capture path passes. Rules 4 and 5 come from stackpolicy.Owners and Overlaps, so story 20 holds.\n- The proof runs for spec-less stacks: checkpoint.go:338 puts the stack branch before the no-spec return; a spec-less member skips the closure (stack_completion.go:67-69).\n- The proof runs on every grade, a reused green included: inspectProspective (engine.go:99) calls acceptPre before the evidence lookup; LS15 asserts the run count stays at 1.\n- A proof fault is a completionProofError; land_refusal.go:287 maps that cause to land-handback.\n- Reader plan: refusedStack sits right after refusedNoLanding (reader_plan.go:91); LS16 and LS17 assert the exact line.\n- Exported shape: StackMember{Source, Folder} and WithStack(ctx, members) serve ticket 04 and ticket 08 (members[:mid] per prefix); WithStack clones the slice.\n- Coverage map: LS7-LS17 each map to an existing test whose assertions match the row.\n- The completion.go refactors match the ticket and change no single-proof behavior.\n\nAdvice:\n- WithStack without WithLanding gives an empty destination and a non-proof error; tickets 04 and 08 must set both.\n- The stack branch returns plan with Oracle unchanged; harmless because the proof runs before the lookup.\n- stackProof recaptures every tree on each of three builds per run; a cost, not a defect.\n\nCommand: no command change is necessary.\nRead: the preflight bind, the frozen diff, spec.md lines 1-250, bench coverage output, tickets 02, 04 and 08, craft-review SKILL.md, checkpoint.go, completion.go, evaluation.go, engine.go:40-160, reader_plan.go:20-207, stackpolicy.go, verdict.go:195-245, tree_snapshot.go:95-165, composed_green.go.\n"
+          },
+          "axis": "Spec",
+          "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "tip": "a663e75135c53473df75b4da34c3328773d47e11",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c2-coverage-r1",
+          "performer": "claude:ls-c2-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c2-coverage-20261026",
+            "digest": "sha256:90409dd4d28084c92cd5662c3d1b469c42dda6cf2b395815acff2f8c0b5a925f",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 4\nworst: C1/C2, severity 6\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false. Frozen pair 95b0a0d..a663e75 only.\n\nC1 | 6 | auto-fix | 7 | internal/gate/stack_completion_test.go:114-118 (LS9), stack_completion.go:77-90 | No test adds or removes a path that no member owns; LS9 only modifies the existing docs/kept.md. A mutant that builds `paths` without the graded keys passes, and an unreviewed new file lands. A mutant that fails only when both sides have the entry also passes. Rule 2 needs a new path and a dropped destination path.\nC2 | 6 | auto-fix | 7 | stack_completion_test.go:122-134 (LS10), stack_completion.go:63-70 | The per-member closure is not pinned. Every folder test has one folder member, and the closure has nothing to remove. Deleting the completionClosure call and maps.Copy, or passing the wrong tip as source, leaves every test green. The spec-less skip at line 63 is pinned.\nC3 | 4 | auto-fix | 6 | stack_completion.go:80, stack_completion_test.go:122-134 | The rule-1-wins ordering is masked: closedFolder already puts each source path under the folder into `proven`, so the explicit folder clause at line 80 is never needed, and removing it leaves every test green. The sibling-prefix boundary (tickets-x/ against tickets/) is untested in the stack path.\nC4 | 3 | auto-fix | 7 | stack_completion_test.go:157 | LS12 asserts the exact text `...; land them apart`. The spec requires only that the message names both indexes, and \"land them apart\" is in no spec text. The literal copies the format string at stack_completion.go:95 with no recorded red.\n\nRows judged red-capable from the code: LS7, LS8, LS9, LS11, LS12, LS13, LS14, LS16, LS17, LS10 (kept-folder fault), LS15 (the proof runs in acceptPre, before the reuse lookup at run_transaction.go:80).\n\nAdvice:\n- Add an LS9 variant with a new unowned path and one with a deleted unowned path.\n- Add a stack test with a folder member at index 2 whose tree carries a roadmap row or sequence entry that the closure removes.\n- Record the reuse-after-proof mutant as a red.\n\nCommand: no command change is necessary.\nRead: the preflight bind, the frozen diff, the ticket, craft-review SKILL.md Coverage section, projects/benchkit.md:180-217, stackpolicy.go, run_transaction.go:60-150, engine.go:54-105, the landing fixture helpers.\n"
+          },
+          "axis": "Coverage",
+          "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "tip": "a663e75135c53473df75b4da34c3328773d47e11",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -361,3 +431,33 @@ Confirming round over the repair delta `d2263afdb52f6d7f213cb54f774673794b123cd8
 The coordinator probe inserted a filter before `return overlaps` that drops each path with more than two owners. It reported `bit` in `TestStackOverlapsKeepAnOutsidePath` with `restored` yes. An earlier omission probe did not compile, so it read `invalid` and proves nothing.
 
 Advice: the package doc says that the census enforces the import boundary. The policy census bans only a listed set of parents.
+
+## LS-C2 review, round 1
+
+Frozen pair: `95b0a0d014b9314ef61f294ed80426ec3b442872..a663e75135c53473df75b4da34c3328773d47e11`. Repair cycles used: 0 of 2. Every accepted finding falls on ticket 02, so one combined repair charge carries them.
+
+## Standards
+
+Findings: 3. Worst: S1, severity 3.
+
+- S1 (confidence 6), `auto-fix`: the LS10 and LS12 tests pin full message text that the spec does not dictate. The repair asserts only the dictated parts: the path, both member indexes, and the `completion keeps closed <path>` prefix.
+- S2 (confidence 6), `auto-fix`: `applyCheckpoint` returns a non-zero plan beside the stack proof error. The repair returns the zero subject, as the other error returns do.
+- S3 (confidence 5), `auto-fix`: `sameEntry` is a second derivation of the entry comparison in `completionTree`. The repair makes `completionTree` call `sameEntry`.
+
+## Spec
+
+Findings: 0. Worst: none.
+
+## Coverage
+
+Findings: 4. Worst: C1 and C2, severity 6.
+
+- C1 (confidence 7), `auto-fix`: no test adds or removes a path that no member owns. The repair adds both cases to rule 2.
+- C2 (confidence 7), `auto-fix`: no test pins the closure of each member at its own tip. The repair adds a folder member at index 2 whose closure removes an entry.
+- C3 (confidence 6), `auto-fix`: no test pins the rule-1 clause of the walk, and no test pins the sibling-prefix boundary of a folder. The repair pins the clause or removes it as dead code, and it adds the boundary case.
+- C4 (confidence 7), `auto-fix`: the same defect as S1 at the LS12 test. The S1 repair closes it.
+
+## Advice
+
+- Tickets 04 and 08 set both `WithLanding` and `WithStack`, because a stack context without a landing value fails as a non-proof error.
+- `decide` takes seven parameters, and `stackProof` mixes the closure loop with the ownership walk.
