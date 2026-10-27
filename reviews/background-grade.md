@@ -131,6 +131,72 @@
             "BG-C0-C6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bg-c0-confirm1-standards",
+          "performer": "claude:bg-c0-confirm1-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d1bc0f6d850ed1a654f9ef579c4b01d937668eb2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c0-confirm1-20261027",
+            "digest": "sha256:af2e58b6b88fd3ca09773fd02f711ff17e8dbc38b6849afdebccd5230e289ff9",
+            "excerpt": "Unified confirming round BG-C0, repair delta 7bdc95c72..2bb0564d3, Standards axis: T1-T5 closed; last line Verdict: stop at census.md:207; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "84e9b1d372f0931e75db1072013e63cd4f94ed00",
+          "tip": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c0-review-standards"
+          ]
+        },
+        {
+          "id": "bg-c0-confirm1-spec",
+          "performer": "claude:bg-c0-confirm1-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d1bc0f6d850ed1a654f9ef579c4b01d937668eb2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c0-confirm1-20261027",
+            "digest": "sha256:2bc56b9a29895c067616f10334f6040aa64d003cb1324be80ba1c952d8d87b7b",
+            "excerpt": "Unified confirming round BG-C0, repair delta 7bdc95c72..2bb0564d3, Spec axis: T1-T5 closed; last line Verdict: stop at census.md:207; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "84e9b1d372f0931e75db1072013e63cd4f94ed00",
+          "tip": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c0-review-spec"
+          ]
+        },
+        {
+          "id": "bg-c0-confirm1-coverage",
+          "performer": "claude:bg-c0-confirm1-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "d1bc0f6d850ed1a654f9ef579c4b01d937668eb2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c0-confirm1-20261027",
+            "digest": "sha256:ba2acc777a09957ef45f026b9dd3e3c41ec5bba08ed040626e4a20b9e81158d6",
+            "excerpt": "Unified confirming round BG-C0, repair delta 7bdc95c72..2bb0564d3, Coverage axis: T1-T5 closed; last line Verdict: stop at census.md:207; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "84e9b1d372f0931e75db1072013e63cd4f94ed00",
+          "tip": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c0-review-coverage"
+          ]
         }
       ]
     }
