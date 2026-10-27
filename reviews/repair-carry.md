@@ -293,7 +293,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-r1",
+          "performer": "claude:rc-c2-standards-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4f8fc23af8a07fb3325e7e2941edfb633b9f4a0a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-standards-20261027",
+            "digest": "sha256:986798453272125b198c198a73dc4f1a1d623c29810286163c0c502c49c8cdca",
+            "excerpt": "Standards: 2 findings; worst: the canonical-expression rule in carry.go restates the clean-path rule that tickets.RepositoryPath already owns.\nF1 | auto-fix | confidence 6 | AGENTS.md \"Two derivations of the same fact must collapse into one source.\" internal/reviewrecord/carry/carry.go:87-97 canonical restates internal/tickets/writes.go:72-74 RepositoryPath, and diverges: canonical accepts ./../x.\nF2 | ask-user | confidence 5 | AGENTS.md exception requires that \"someone must record and demonstrate that red\". carry_reach_test.go:10-20 hard-codes internal/systemtest, internal/worktree, internal/conformance; the CF-C2 record holds no probe record.\nCF32: rg -n \"SystemSuite\\(|raceTests\" internal/reviewrecord gave no hit.\nCoordinator disposition: F1 joins repair target c2-r1-canonical; F2 is evidence-only (c2-r1-witness-record): the author's gate mutant \"whole-only rule off\" bit two carry reach rows, recorded in the review prose.\n"
+          },
+          "axis": "Standards",
+          "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
+          "tip": "22dfdadc07c0f973b0e19b9737ce238f565cdbd6",
+          "finding_ids": [
+            "c2-r1-canonical"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-r1",
+          "performer": "claude:rc-c2-spec-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4f8fc23af8a07fb3325e7e2941edfb633b9f4a0a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-spec-20261027",
+            "digest": "sha256:ad92b864916715615a2d7191772c794b6f665e700452fcfd25e161e815120d5e",
+            "excerpt": "Spec: 1 finding; worst: ./<path> is canonical in spec and code for a mid-path Go ... wildcard, so a wildcard package run can carry across a delta that reaches it.\nS1 | ask-user | confidence 6 | Spec \"A canonical package expression is ./..., ./., ./<path>, or ./<path>/... Here <path> is clean, relative, and not .\" and story 25. Trace: bench test --package ./internal/a... with a test file in internal/ab: canonical (carry.go:87-96) accepts internal/a..., PackageCovers (selection_facts.go:105-114) answers false, Decide carries.\nCoordinator disposition: auto-fix under --auto-approve (c2-r1-canonical); the spec rule tightens, which only adds reruns.\n"
+          },
+          "axis": "Spec",
+          "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
+          "tip": "22dfdadc07c0f973b0e19b9737ce238f565cdbd6",
+          "finding_ids": [
+            "c2-r1-canonical"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-r1",
+          "performer": "claude:rc-c2-coverage-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4f8fc23af8a07fb3325e7e2941edfb633b9f4a0a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c2-coverage-20261027",
+            "digest": "sha256:494f1093e2e349e1d851a3464d9b357761765609f476de4d98550b3dd3569c59",
+            "excerpt": "Coverage: 3 findings; worst: a package expression with a mid-pattern ... passes canonical but the cover predicate only matches by equality, so a reached requirement carries.\nC1 | auto-fix | confidence 7 | bench test --package ./internal/a... with a test-only delta in internal/abc carries; a TestCarryReach row should expect the delta reaches the command.\nC2 | auto-fix | confidence 6 | several --package values; the mutant Packages()[:1] stays green; TestCarryReach needs a multi-package case with the covering or non-canonical expression second.\nC3 | no-op | confidence 4 | two test files or a later whole-only file; deltaPackages answers whole-only regardless of order.\nCoordinator disposition: C1 joins c2-r1-canonical; C2 is c2-r1-multipkg; C3 no-op.\n"
+          },
+          "axis": "Coverage",
+          "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
+          "tip": "22dfdadc07c0f973b0e19b9737ce238f565cdbd6",
+          "finding_ids": [
+            "c2-r1-canonical",
+            "c2-r1-multipkg"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -341,3 +409,21 @@ The axis reported 1 finding. The worst finding is that the CF30 test does not is
 ### Coverage
 
 The axis reported 5 findings. The worst finding is that the agreement test grades only a probe requirement on the chunk line. The coordinator marks each finding `no-op`. CF23 and CF27 of CF-C2 grade the absent entry and the off-line entry, and the author's `lastEntry` mutant bit the agreement test.
+
+## CF-C2 review round 1
+
+The frozen pair is `108ce50cd..22dfdadc0`. The round has two repair targets on ticket 03, so one combined repair charge carries them. The chunk starts its first of 2 repair cycles.
+
+### Standards
+
+The axis reported 2 findings. The worst finding is that `canonical` in `carry.go` restates the clean-path rule of `tickets.RepositoryPath` and accepts `./../x`. That finding is `auto-fix` and joins `c2-r1-canonical`, confidence 6.
+
+The second finding asks for a recorded red of the whole-only path expectations in `carry_reach_test.go`. The correction is evidence-only. The author ran one `bench probe --mutants` set at `22dfdadc0`, and the gate mutant "whole-only rule off" bit `TestDeltaCheckpointRunsWholeForTheSystemSuite`, its race-package sibling, and two `TestCarryReach` rows. Its `restored` cell read `yes`. So each independent whole-only expectation has a demonstrated red.
+
+### Spec
+
+The axis reported 1 finding. The worst finding is that the canonical rule accepts a mid-path `...`, such as `./internal/a...`, which Go matches against `internal/ab`. The requirement then carries across a delta that reaches it. That finding is `auto-fix` under `--auto-approve` and is `c2-r1-canonical`, confidence 6.
+
+### Coverage
+
+The axis reported 3 findings. The worst finding is the mid-path `...` case, which joins `c2-r1-canonical`, confidence 7. The second finding is `c2-r1-multipkg`, `auto-fix`, confidence 6: no case holds several `--package` values, so the mutant `Packages()[:1]` stays green. The third finding is `no-op`, because `deltaPackages` answers whole-only for a file in any position.
