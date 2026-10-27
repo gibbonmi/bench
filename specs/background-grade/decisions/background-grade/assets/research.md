@@ -1,8 +1,8 @@
 # FT451 background grade: research
 
-Consumed by: the `decisions/background-grade.md` map, its decision tickets, and then `/bench-write-spec`.
+Consumed by: the compiled map `specs/background-grade/decisions/background-grade.md`, its decision tickets, and the `background-grade` spec.
 Drift: a change to the grade key, the evidence store, the gate lock, a checkpoint subject, or the host limits.
-Retire when: `/bench-write-spec` compiles the map into a spec.
+Retire when: `bench spec retire background-grade` removes the compiled map with the spec.
 
 ## Recommendation, scope, and evidence status
 
