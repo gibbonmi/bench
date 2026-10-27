@@ -497,6 +497,68 @@ Its exit meanings follow the publication boundary:
   release, or a landing effect remains incomplete; the exit-3 record carries the
   `bench worktree land --resume` invocation you need
 
+A landing stack lands two to sixteen reviewed sources in one landing.
+`bench help` prints the stack form and the stack resume form, and executable help owns their grammar.
+The stack file is one strict JSON object whose `members` list holds the members in landing order.
+Each member holds the `path`, `request`, `base`, `source_tip`, and `message` fields of one landing, and an optional `spec`.
+Each member passes the grammar of one landing, and a relative stack path resolves against the caller's working directory.
+
+The stack file refuses at exit 2 before the lease when it is absent, is not a regular file, or does not decode exactly.
+It also refuses with fewer than two members or more than sixteen, and when two members name one worktree.
+A `--source-tip <request>=<commit>` override replaces the `source_tip` of the member whose `request` matches.
+An override that names no member, a second override for one request, and a value with an empty side exit 2.
+
+The stack preflight runs the destination proofs once.
+Each member then runs the assignment proofs and the source proofs of one landing, and then these stack proofs:
+
+- a member that names a staged spec refuses with `stack-member-alone`
+- a member whose assignment holds a delivery binding refuses with `stack-member-alone`
+- a member whose tip lacks the destination tip refuses with `land-destination-moved` and its fold route
+
+The owner rule then finds each path outside `capture/` that two members change.
+Each such pair refuses the later member with `stack-members-overlap`, which names both labels and the paths.
+A `capture/` path that several members change composes by the `capture/` rule table above.
+The build window then decides each member on its own.
+Each refusal of the preflight or the window names its member index and label, and the stack stops before the lease.
+
+The stack takes one landing lease, which names the assignment of the first member.
+It composes each member onto the merge of the member before it, so each member keeps its own merge commit and message.
+Each tickets-only member closes its folder in its own merge.
+The commitment admission of each member grades the destination composed with that member alone.
+Every grade runs the whole gate, and the gate proves that each path holds the destination's bytes or the bytes of its one member.
+A green publishes every member with one compare-and-swap of the destination.
+
+A red top tree bisects the ordered prefixes, and each grade is a whole gate.
+The stack attributes the red to the first member whose prefix is red on top of a green prefix.
+It publishes that green prefix and refuses the attributed member with `stack-red`, whose route repairs that member.
+Each later member stays active, and sixteen members cost at most five whole gates.
+An infrastructure outcome refuses with `land-infrastructure`, and a red over a destination with no green refuses with `land-handback`.
+When the destination moves after the grade, each member that lacks the moved tip refuses with `land-destination-moved`, and nothing publishes.
+
+Each refusal route that commits in a member ends with a rerun that pins the repaired tip as that member's override.
+A rerun keeps each override of the refused call, except for each member that the route removes or whose tip it sets.
+When the route leaves one member, the rerun is the single landing of that member.
+
+Each member prints its `landing source{...}` line on stderr after the preflight.
+When the stack holds the lease, stdout prints one `members[N]{member,label,source_tip,published_commit,outcome,census}` table in file order.
+The `outcome` cell reads `landed`, `red`, or `unlanded`, and `published_commit` reads `none` for a member that did not land.
+A publication then prints the effects table of one landing, and each refusal prints its record next.
+The last stdout line is `stack{destination_base=…,published_commit=…,landed=<k>,worktree=…}`, and its `published_commit` reads `none` when nothing published.
+A refusal before the lease prints no members table and no `stack{...}` record.
+
+The stack exits follow the same publication boundary:
+
+- `0` — every member landed and every step finished
+- `1` — the stack refused at least one member, and the members table shows what landed
+- `2` — invalid command usage, which includes each stack file refusal
+- `3` — a step after the publication stopped, and the record carries the stack resume with each override of the call
+
+A stopped step keeps exit 3 when the stack also refused a member.
+The stack resume takes no lease, and it proves each published member merge against the stack file before any step.
+The second parent of the published commit names the published count, and the first parents walk back to the destination base.
+The resume then finishes the steps after publication once, and it releases each published member that is still active.
+It leaves each later member active, and a second resume changes nothing.
+
 `bench worktree reset` plans a checkpoint reset or a restore, and a second call
 applies either plan by its fingerprint.
 Before a destructive move, the verb verifies a reset envelope under
@@ -690,6 +752,7 @@ record authorizes its own landing alone, and the green marker stays at the last 
 
 The landing runs the whole gate instead in each of these cases:
 
+- the landing is a landing stack
 - the green marker is absent, or it is not an ancestor of the destination
 - a changed path sits outside every covered family
 - a changed path is an embed target or a shellcheck-inventory path
