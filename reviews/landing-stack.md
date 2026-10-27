@@ -1644,6 +1644,43 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "ls-c6-confirm-r1",
+          "performer": "claude:ls-orchestrator-20261026",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ccda7416e4dd16988ee0a5818e239f825a41876f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ls-orchestrator-20261026",
+            "digest": "sha256:83baae57260b1079e4f8c42d54a4a50616ed671477fd9cb1af26acb4d1234fb7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/landing/stack.go,swap,failed,1,TestLandStackBisectsToTheRedMember/an_odd_member_count_rounds_the_midpoint_down,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLandStackBisectsToTheRedMember,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,366\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,571,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandStackBisectsToTheRedMember/an_odd_member_count_rounds_the_midpoint_down,\"stack_bisect_test.go:130: graded prefixes [3 2], want [3 1 2]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "reviewed_tip": "f9ea6a781c5bc02387879512e7df7f0efb2e40c1",
+          "repaired_tip": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "finding_ids": [
+            "S1",
+            "C1",
+            "C2"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "round the bisect midpoint up in internal/landing/stack.go",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ls-orchestrator-20261026",
+              "digest": "sha256:83baae57260b1079e4f8c42d54a4a50616ed671477fd9cb1af26acb4d1234fb7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/landing/stack.go,swap,failed,1,TestLandStackBisectsToTheRedMember/an_odd_member_count_rounds_the_midpoint_down,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,TestLandStackBisectsToTheRedMember,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,366\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,571,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandStackBisectsToTheRedMember/an_odd_member_count_rounds_the_midpoint_down,\"stack_bisect_test.go:130: graded prefixes [3 2], want [3 1 2]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -2067,3 +2104,9 @@ Findings: 2. Worst: C1 and C2, severity 6.
 The shadow reviewer found that no bisect row moves a published member during the grade. A recheck that skips member `lo` or that rechecks every member stays green. The three-axis arm reported this as advice. The orchestrator accepts it under "The publication" and adds it to the repair.
 
 Every repair is test-only, so a coordinator confirmation closes it.
+
+## LS-C6 confirmation
+
+The ticket 08 repair `b76b88848e65464364c7e0302359e3a0916fc812` changes tests only. Repair cycles used: 1 of 2.
+
+The coordinator probe rounded the bisect midpoint up. It reported `bit` in the odd-member case of `TestLandStackBisectsToTheRedMember` with `restored` yes. The confirmation closes S1, C1, and C2. The repair also closes the shadow find with two recheck cases.
