@@ -171,7 +171,7 @@ func canonicalBroker(path string, content []byte, stage string) bool {
 		return false
 	}
 	defer os.RemoveAll(dir)
-	canonical, _, err := brokermanifest.Write(dir, fields["path"], fields["version"])
+	canonical, _, err := brokermanifest.Write(dir, fields[brokermanifest.PathField], fields[brokermanifest.VersionField])
 	if err != nil {
 		return false
 	}

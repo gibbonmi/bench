@@ -283,13 +283,13 @@ func evalBrokerManifestRow(string) (bool, string) {
 	if err != nil {
 		return false, fmt.Sprintf("promotion-broker manifest at %s is incomplete%s", path, remedy)
 	}
-	install := filepath.Dir(bindir)
+	install, version := filepath.Dir(bindir), fields[brokermanifest.VersionField]
 	// The route compares only when it can read the installed package version, so an
 	// install root without a package.json leaves this predicate silent rather than red.
-	if installed, err := releaseevidence.ReadPackageVersion(install); err == nil && installed != fields["version"] {
-		return false, fmt.Sprintf("promotion broker version %s does not match installed package %s%s", fields["version"], installed, remedy)
+	if installed, err := releaseevidence.ReadPackageVersion(install); err == nil && installed != version {
+		return false, fmt.Sprintf("promotion broker version %s does not match installed package %s%s", version, installed, remedy)
 	}
-	broker := fields["path"]
+	broker := fields[brokermanifest.PathField]
 	if !filepath.IsAbs(broker) {
 		broker = filepath.Join(install, broker)
 	}
@@ -298,7 +298,7 @@ func evalBrokerManifestRow(string) (bool, string) {
 		return false, fmt.Sprintf("promotion broker at %s is not a regular executable%s", broker, remedy)
 	}
 	digest, err := brokermanifest.Digest(broker)
-	if err != nil || digest != fields["sha256"] {
+	if err != nil || digest != fields[brokermanifest.DigestField] {
 		return false, fmt.Sprintf("promotion broker at %s does not match its manifest digest%s", broker, remedy)
 	}
 	return true, "promotion broker authenticated at " + broker

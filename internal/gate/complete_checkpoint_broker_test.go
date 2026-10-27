@@ -50,16 +50,9 @@ func setProcessArgs(t *testing.T, args ...string) {
 	os.Args = args
 }
 
-// InstallRunning binds this test binary in the broker manifest of the primary checkout, as the
-// operator's install binds the running executable.
-func InstallRunning(t *testing.T, primary string) {
-	t.Helper()
-	running, err := os.Executable()
-	if err != nil {
-		t.Fatal(err)
-	}
-	commitmenttest.BindManifest(t, primary, running)
-}
+// InstallRunning is commitmenttest.BindRunning under the name that the external gate test
+// package reads.
+var InstallRunning = commitmenttest.BindRunning
 
 // DeclareBuildInputs prepares a checkpoint fixture whose repository declares Bench build
 // inputs. The fixture ignores the wrapper directory, so a broker manifest there leaves the
@@ -155,7 +148,7 @@ func TestCompleteCheckpointExecsTheBroker(t *testing.T) {
 // GR60: a complete checkpoint whose running executable is the broker runs in its own process.
 func TestCompleteCheckpointRunsUnderTheBroker(t *testing.T) {
 	f := brokerSource(t, true)
-	InstallRunning(t, f.Root)
+	commitmenttest.BindRunning(t, f.Root)
 	calls := StubBrokerExec(t)
 	code, out := completeCheckpoint(t, f)
 	requireOwnProcess(t, f, calls, code, out)
@@ -229,7 +222,7 @@ func TestChunkCheckpointKeepsTheRunningExecutable(t *testing.T) {
 func TestCompleteCheckpointRefusesAnUnusableBroker(t *testing.T) {
 	t.Run("unresolved primary", func(t *testing.T) {
 		dir := t.TempDir()
-		InstallRunning(t, dir)
+		commitmenttest.BindRunning(t, dir)
 		commitmenttest.Write(t, dir, benchfreshness.BuildInputsManifest, "cmd\n")
 		t.Chdir(dir)
 		var out bytes.Buffer
