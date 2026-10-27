@@ -1,7 +1,7 @@
 # State the repair carry in the guidance
 
 Blocked by: 04-record-carried-entries.md
-Writes: .agents/commands/bench-implement-spec.md, .bench/BENCH.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, CHANGELOG.md, .bench/commitment.json
+Writes: .agents/commands/bench-implement-spec.md, .bench/BENCH.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, CHANGELOG.md, .bench/commitment.json, docs/adr/0023-each-ticket-gets-a-fresh-author.md
 Covers: CF45, CF46, CF47, CF49, CF50
 
 ## What to build
