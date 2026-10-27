@@ -61,7 +61,7 @@ The conditional review line uses high effort and ~1 iteration. A Codex mid imple
 
 These are starting defaults, not a flat rule. Every ticket author runs on the model of the spec's declared `Line:`. A ticket author of a chunk that the spec does not mark as harder runs that model at medium effort. A ticket author of a harder chunk keeps the declared effort. A different implementation model, or a session beyond the planned ticket authors, requires user direction. The ticket author can adjust effort in its own session and reports the change.
 
-A post-review repair keeps the declared model and the declared effort of its ticket.
+A post-review repair keeps the model and the effort of its ticket author.
 
 The leverage override still wins for orchestration, implementation, and repair, so a repair of guidance runs at high effort. The conditional review line owns implementation review.
 `craft-delegate` owns the author venue; this skill routes the author.
