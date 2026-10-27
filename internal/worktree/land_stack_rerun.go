@@ -72,10 +72,7 @@ func (o stackOverride) arg() string {
 // repairs, or the read tip of a refused member whose tip mismatched. Two or more remaining
 // members re-run the stack, and one remaining member re-runs its single landing.
 func (s stackRoute) rerun(fact stackRerun) string {
-	overrides := make([]stackOverride, 0, len(s.input.Overrides)+1)
-	for _, o := range s.input.Overrides {
-		overrides = append(overrides, stackOverride{request: o.Request, commit: o.Commit})
-	}
+	overrides := s.callOverrides()
 	for _, i := range slices.Concat(fact.removed, fact.reset) {
 		overrides = slices.DeleteFunc(overrides, func(o stackOverride) bool { return o.request == s.input.Members[i].Request })
 	}
@@ -96,7 +93,26 @@ func (s stackRoute) rerun(fact stackRerun) string {
 	if len(remaining) == 1 {
 		return s.singleRerun(remaining[0], overrides)
 	}
-	command := "bench worktree land --stack " + refusalroute.Arg("file", s.file)
+	return s.command("bench worktree land", overrides)
+}
+
+// resume is the stack resume of the published merge with each override of the call.
+func (s stackRoute) resume(published string) string {
+	return s.command("bench worktree land --resume "+refusalroute.Arg("commit", published), s.callOverrides())
+}
+
+// callOverrides is each override of the call, in call order.
+func (s stackRoute) callOverrides() []stackOverride {
+	overrides := make([]stackOverride, 0, len(s.input.Overrides)+1)
+	for _, o := range s.input.Overrides {
+		overrides = append(overrides, stackOverride{request: o.Request, commit: o.Commit})
+	}
+	return overrides
+}
+
+// command is head with the stack file and each of overrides as a `--source-tip` value.
+func (s stackRoute) command(head string, overrides []stackOverride) string {
+	command := head + " --stack " + refusalroute.Arg("file", s.file)
 	for _, o := range overrides {
 		command += " --source-tip " + o.arg()
 	}

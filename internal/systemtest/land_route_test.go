@@ -54,6 +54,24 @@ func TestWorktreeLandRouteSelectsOneOwnerFromEveryDirectory(t *testing.T) {
 	}
 }
 
+// TestWorktreeLandRouteForwardsTheStackForm is LS66. The wrapper forwards the stack form of
+// the land verb to the installed broker with its arguments unchanged.
+func TestWorktreeLandRouteForwardsTheStackForm(t *testing.T) {
+	t.Parallel()
+	install := newLandRouteInstall(t)
+	primary := journeyRepo(t, "land-route [stack]-")
+	plantRepositoryDecoys(t, primary)
+	shimDir, marker := landRouteGitShim(t)
+	result := owner.runAt(primary, landRouteEnv(shimDir, marker), "bash", install.wrapper,
+		"worktree", "land", "--stack", "stack.json", "--source-tip", "r=c")
+	if want := "broker=" + install.broker + "\nargv=worktree land --stack stack.json --source-tip r=c\n"; result.code != 0 || result.stdout != want {
+		t.Fatalf("stack land route = (%d, %q, %q), want exit 0 and %q", result.code, result.stdout, result.stderr, want)
+	}
+	if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("stack land route read the repository before selecting its owner: %v", err)
+	}
+}
+
 func TestWorktreeLandRouteGivesRecoveredGoPathToBroker(t *testing.T) {
 	t.Parallel()
 	install := newLandRouteInstall(t)

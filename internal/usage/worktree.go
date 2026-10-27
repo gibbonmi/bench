@@ -23,6 +23,8 @@ const (
 	WorktreeLand        = "bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] -m <message> <path>"
 	WorktreeLandResume  = "bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>"
 	WorktreeLandStack   = "bench worktree land --stack <file> [--source-tip <request>=<commit>]..."
+	// WorktreeLandStackResume is the stack form of WorktreeLandResume.
+	WorktreeLandStackResume = "bench worktree land --resume <published-commit> --stack <file> [--source-tip <request>=<commit>]..."
 )
 
 // WorktreeExecGate is the one gate form a worktree reader gets. It is an exec composition
@@ -46,6 +48,8 @@ var worktreeCommands = []string{
 	WorktreeReset,
 	WorktreeLand,
 	WorktreeLandResume,
+	WorktreeLandStack,
+	WorktreeLandStackResume,
 }
 
 func WorktreeUsage() string {

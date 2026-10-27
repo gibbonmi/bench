@@ -84,6 +84,8 @@ func worktreeHelpRows() []helpRow {
 		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeReset), Description: "plan or apply a recoverable reset or restore"},
 		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLand), Description: "compose, gate, and publish one owned worktree"},
 		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandResume), Description: "resume incomplete post-publication landing work"},
+		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandStack), Description: "compose, gate once, and publish two or more owned worktrees in order"},
+		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandStackResume), Description: "resume incomplete post-publication stack work"},
 		{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar"},
 	}
 }

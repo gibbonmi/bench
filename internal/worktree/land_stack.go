@@ -17,7 +17,6 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
-	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
 )
 
 var stackLandGrammar = usage.Grammar{
@@ -50,35 +49,17 @@ type stackMemberLanding struct {
 // landStack is the stack form of the land leaf. It runs inside the landing span of
 // landWith, and the span names the assignment of the first member.
 func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+	if usage.FlagPresent(landDispatchGrammar, args, "--resume") {
+		return resumeStack(j, a, root, args, stdout, stderr)
+	}
 	parsed, line, code := usage.Parse(stackLandGrammar, args)
 	if line != "" {
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	file, err := callPath(a, parsed.Flags["--stack"])
+	route, unresolved, err := readStackRoute(a, root, parsed)
 	if err != nil {
-		return stackUsageRefusal(stderr, err)
-	}
-	input, err := ReadStack(file, a.dir, parsed.Repeated["--source-tip"])
-	if err != nil {
-		return stackUsageRefusal(stderr, err)
-	}
-	route := stackRoute{file: file, input: input, paths: make([]string, len(input.Members)), assignments: make([]string, len(input.Members))}
-	// Each member path resolves the way a single landing resolves its operand, so two
-	// spellings of one worktree meet as one canonical path.
-	unresolved := make([]bool, len(input.Members))
-	named := map[string]int{}
-	for i, m := range input.Members {
-		operand := resolveVerbOperand(root, m.Path)
-		path, err := canonicalPathIn(a, operand)
-		if err != nil {
-			route.paths[i], unresolved[i] = operand, true
-			continue
-		}
-		if first, ok := named[path]; ok {
-			return stackUsageRefusal(stderr, fmt.Errorf("stack members %d and %d name one worktree %s", first+1, i+1, path))
-		}
-		named[path], route.paths[i] = i, path
+		return stackUsageRefusal(stderr, stackLandGrammar, err)
 	}
 	destination, branch, priorMarker, destinationFingerprint, landings, refusals := stackPreflight(j, root, route, unresolved)
 	if len(refusals) > 0 {
@@ -124,22 +105,51 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 		top := result.Merges[k-1]
 		measures.subject = top
 		end = stackEnd{destinationBase: result.DestinationBase, published: top, landed: k}
-		end.step = stackAfterPublication(j, a, root, branch, landing.ReviewedResult{DestinationBase: result.DestinationBase, Commit: top, Kind: result.Kind}, priorMarker, landings[:k], brokerChanged, stdout, stderr)
-		outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: end.step, Active: true})
-		end.worktree, end.exit = outcome.WorktreeState, outcome.ExitCode
+		end = end.after(stackAfterPublication(j, a, root, branch, landing.ReviewedResult{DestinationBase: result.DestinationBase, Commit: top, Kind: result.Kind}, priorMarker, landings[:k], brokerChanged, stdout, stderr))
 	}
-	switch {
-	case err != nil:
+	if err != nil {
 		for _, refused := range stackLandingRefusal(err, root, route, landings, destination, branch, red, result.Published()) {
-			end.exit = landRefusalError(stdout, refused)
+			landRefusalError(stdout, refused)
 		}
-	case end.step != "":
-		// The stack has no resume form, so a stopped step after the publication hands back.
-		stopped := refusalError{refusal{detail: "landing stack stopped after publication at the " + end.step + " step", face: faceLandHandback}}
-		landRefusalError(stdout, landingFaceRoute(stopped, route.rerun(stackUnattributed), false))
+		// A stopped step after the publication keeps its exit, because its resume is the
+		// next action whatever the refusal beside it.
+		if end.step == "" {
+			end.exit = 1
+		}
 	}
-	fmt.Fprintf(stdout, "stack{destination_base=%s,published_commit=%s,landed=%d,worktree=%s}\n", end.destinationBase, end.published, end.landed, end.worktree)
-	return end.exit
+	return printStackEnd(stdout, route, end)
+}
+
+// readStackRoute reads the stack file that the `--stack` flag of parsed names, with the
+// overrides of the call, and resolves each member path the way a single landing resolves
+// its operand, so two spellings of one worktree meet as one canonical path. A member whose
+// path does not resolve keeps its operand and reads as unresolved. Two members that resolve
+// to one path refuse.
+func readStackRoute(a ambient, root string, parsed usage.Result) (route stackRoute, unresolved []bool, err error) {
+	file, err := callPath(a, parsed.Flags["--stack"])
+	if err != nil {
+		return stackRoute{}, nil, err
+	}
+	input, err := ReadStack(file, a.dir, parsed.Repeated["--source-tip"])
+	if err != nil {
+		return stackRoute{}, nil, err
+	}
+	route = stackRoute{file: file, input: input, paths: make([]string, len(input.Members)), assignments: make([]string, len(input.Members))}
+	unresolved = make([]bool, len(input.Members))
+	named := map[string]int{}
+	for i, m := range input.Members {
+		operand := resolveVerbOperand(root, m.Path)
+		path, err := canonicalPathIn(a, operand)
+		if err != nil {
+			route.paths[i], unresolved[i] = operand, true
+			continue
+		}
+		if first, ok := named[path]; ok {
+			return stackRoute{}, nil, fmt.Errorf("stack members %d and %d name one worktree %s", first+1, i+1, path)
+		}
+		named[path], route.paths[i] = i, path
+	}
+	return route, unresolved, nil
 }
 
 // sourceRequest maps a resolved assignment and its source fact onto the source fields of
@@ -155,17 +165,10 @@ func sourceRequest(assignment intent.Assignment, source landingSourceFact, reque
 	return r, commitrepo.Publication{Assignment: assignment.ID, Request: intent.RequestDigest(requestArg), Worktree: assignment.Worktree, Source: source.tip, Deliverable: r.Deliverable(), Destination: destination}
 }
 
-// stackEnd is the terminal record of a stack and its exit code. step names the step after
-// the publication that stopped, empty when none stopped.
-type stackEnd struct {
-	destinationBase, published, worktree, step string
-	landed, exit                               int
-}
-
-// stackUsageRefusal prints a stack input refusal beside the stack grammar and answers the
-// usage exit. It runs before any ledger read, so the refusal takes no lease.
-func stackUsageRefusal(stderr io.Writer, err error) int {
-	fmt.Fprintln(stderr, stackLandGrammar.Help+" ("+sanitize.Controls(err.Error())+")")
+// stackUsageRefusal prints a stack input refusal beside the help of the stack form g and
+// answers the usage exit. It runs before any ledger read, so the refusal takes no lease.
+func stackUsageRefusal(stderr io.Writer, g usage.Grammar, err error) int {
+	fmt.Fprintln(stderr, g.Help+" ("+sanitize.Controls(err.Error())+")")
 	return 2
 }
 
