@@ -942,7 +942,26 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-coverage",
+        "performer": "claude:rc-orchestrator-20261027",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:rc-orchestrator-20261027:final-coverage",
+          "digest": "sha256:ad5bd7c270246b75a8e1e046dc6f7bb029c8e6143a5289e4ac522a77cdc47aeb",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT448-repair-carry-build,529711b331937262324c54a79da0d63f53d237d1,false\nok: coverage map valid — 51 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/repair-carry/spec.md",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
