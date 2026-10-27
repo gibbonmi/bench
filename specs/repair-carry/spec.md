@@ -116,7 +116,7 @@ The decision applies these steps in order. The first step that fails gives the r
    - The shared parser reads one simple `bench test` call in the check form, with the target `system`, that runs a test. A `--run` filter keeps this form.
    - The shared parser reads one simple `bench test` call in the package form that runs a test and is not `--changed`. Each package expression has canonical form, and no expression covers a reach operand.
 
-A canonical package expression is `./...`, `./.`, `./<path>`, or `./<path>/...`. Here `<path>` is clean, relative, and not `.`.
+A canonical package expression is `./...`, `./.`, `./<path>`, or `./<path>/...`. Here `<path>` is a repository path under the rule of the ticket `Writes:` paths, and it holds no `...`.
 
 The carry adds the conformance package operand to every changed source. The conformance checks read the tree, and the delta set of the gate runs root conformance wherever the kit runs it. The carry rule is thus at least as strict as the gate. This rule also makes each named check other than `system` a reached check.
 
@@ -164,7 +164,7 @@ Two Forbid anchors refuse the return of the retired bytes. The changelog states 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | CF-C1 / 01-share-the-plan-command-parser.md, 02-share-the-pass-predicate.md | The check floor parses plan commands through one shared parser and cover predicate, and the chunk grade and the carry candidate read one pass predicate | CF1, CF2, CF3, CF30 | check floor tests in `internal/preflight` and the pass-predicate agreement test | no |
-| CF-C2 / 03-decide-the-carry.md | One deep module decides whether an owed requirement carries and gives the reason when it cannot | CF4, CF5, CF6, CF7, CF8, CF9, CF10, CF11, CF12, CF13, CF14, CF15, CF16, CF17, CF18, CF19, CF20, CF21, CF22, CF23, CF24, CF25, CF26, CF27, CF28, CF29, CF31, CF32 | carry decision tests, carry reach tests, and the delta checkpoint tests | yes |
+| CF-C2 / 03-decide-the-carry.md | One deep module decides whether an owed requirement carries and gives the reason when it cannot | CF4, CF5, CF6, CF7, CF8, CF9, CF10, CF11, CF12, CF13, CF14, CF15, CF16, CF17, CF18, CF19, CF20, CF21, CF22, CF23, CF24, CF25, CF26, CF27, CF28, CF29, CF31, CF32, CF51 | carry decision tests, carry reach tests, and the delta checkpoint tests | yes |
 | CF-C3 / 04-record-carried-entries.md, 05-state-the-repair-carry.md | The ticket form writes carried entries that the checkpoint accepts, reports them, and names each check to run, and the guidance states the rule | CF33, CF34, CF35, CF36, CF37, CF38, CF39, CF40, CF41, CF42, CF43, CF44, CF45, CF46, CF47, CF48, CF49, CF50 | ticket form carry tests, the help inventory test, and the chunk chain anchor test | no |
 
 ### Completion plan
@@ -248,6 +248,7 @@ Two Forbid anchors refuse the return of the retired bytes. The changelog states 
 | CF48 | 43 | On a one-chunk fixture, after the carry call under a repair dispatch and a record commit, `rr.Check` of the chunk refuses only through a review-form repair of that chunk | planned TestCarriedEntryPassesTheChunkGrade in internal/reviewrecord/recordcmd/ticket_carry_test.go | A carried entry with an empty state, outcome, or exit code, or with the prior performer, fails the chunk grade |
 | CF49 | 41 | A Forbid anchor refuses the operating-guide needle `reruns the ticket's verification with current repair coverage` | planned TestChunkChainAnchors in internal/anchors/registry_chunk_chain_test.go | Without the anchor, the retired operating-guide clause can return |
 | CF50 | 45 | The operating guide states that a repair session reruns each ticket check that its repair delta reaches | review-owned: Spec axis reads the repair sentence of the operating guide | A session that loads the old clause demands a full rerun |
+| CF51 | 25 | A test-only delta in `./internal/ab` refuses the requirement `bench test --package ./internal/a...` with the reason `the delta reaches the command` | planned TestCarryReach in internal/reviewrecord/carry/carry_reach_test.go | A canonical rule that accepts a mid-path wildcard carries a package that `go test` runs |
 
 Not covered: story 26 — a correct parse and a word-splitting parse both refuse the quoted expression, because the split expression is not canonical; the `shellcommand` lexer tests pin a single-quoted word that holds a space, and the shared parser reads that lexer.
 
@@ -297,7 +298,7 @@ FT455 records a reviewer decision of 2026-10-27: the test-only predicate is to c
 | A repair session reruns every plan requirement of its ticket at the repair commit. | problem statement; CF45, CF46, CF49, CF50 |
 | The record verb refuses a repair record that lacks an owed requirement. | CF41, CF42, CF43 |
 | The record verb accepts a repair entry that carries forward each requirement whose packages the repair delta cannot reach. | CF4, CF5, CF6, CF7, CF22, CF33 to CF40, CF48 |
-| The changed-package selector of the delta checkpoint decides the reach. | CF8 to CF21, CF31, CF32 |
+| The changed-package selector of the delta checkpoint decides the reach. | CF8 to CF21, CF31, CF32, CF51 |
 | The repair reruns the rest. | CF8 to CF21, CF23 to CF28, CF41 |
 
 ### Pre-review proof checklist
