@@ -1521,7 +1521,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c6-standards-r1",
+          "performer": "claude:ls-c6-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ac5bde599983a51a2e96e3f8dc0b8cf0b2187ea",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c6-standards-20261026",
+            "digest": "sha256:8f72d00d96522d718907fc4608972f8ac7ac901b888f2a85654af8838968afaa",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 1\nworst: S1, severity 2, comment prose in the new test file\n\nBind: preflight evidence --check-current returned current=true, dirty=false, tree head e4625e97, base e0685f0d; graded the frozen pair e0685f0d..f9ea6a78.\n\nS1 | 2 | auto-fix | 5 | internal/landing/stack_bisect_test.go:116-118, 127-128, 140-142, 154-155 | The doc comments of TestLandStackBisectsToTheRedMember, TestLandStackPublishesNothingForAFirstMemberRed, TestLandStackAttributesARedTransition, and TestLandStackBoundsTheBisect restate the lo/hi trace and the 1 + ceil(log2 n) count, which the want list and the spec already own. This breaks craft-comments \"One source owns a fact\".\n\nChecked and clean: Attributed is the only new result field, documented and 1-based; both the top grade (stack.go:122) and the prefix grade (stack.go:132) call reviewedPublishes.permits; the stub wraps stackOwner and reuses the fixtures; the expected prefix lists are the spec's literals; the spec.md edit changes only the nine acceptance rows.\n\nAdvice:\n- LandStack is about 95 lines with the bisect loop inline; a bisect helper would keep tickets 09 and 10 from growing it.\n- lo serves as both the published count and the green bound.\n- The \"stop on any other kind\" refusal is spelled twice (stack.go:123-125 and 136-138).\n- The stub indexes verdicts[p-1], so a tree with no member files would panic.\n- The package-level green and red constants in a landing test file risk a collision.\n- Ticket 08 line 4 marks stack.go as new, but ticket 04 created it.\n\nCommand: no command change is necessary.\nRead: the preflight output, the delta, ticket 08, the craft-review and craft-comments skills, stack.go 60-161, stack_test.go 1-190, the git stat and log of spec.md and the ticket commits, rg over landing.go.\n"
+          },
+          "axis": "Standards",
+          "base": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "tip": "f9ea6a781c5bc02387879512e7df7f0efb2e40c1",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c6-spec-r1",
+          "performer": "claude:ls-c6-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ac5bde599983a51a2e96e3f8dc0b8cf0b2187ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c6-spec-20261026",
+            "digest": "sha256:7ae4dd205d293739dc24f3b88c7c6fb338512d2f3fa967ced4143eaf231d523c",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false; frozen pair e0685f0d..f9ea6a78.\n\nAudit of LS29-LS35, LS37, LS99, each prefix list derived from \"The bisect\":\n- LS29: stack_bisect_test.go:225-239 compares the members of every grade with that grade's prefix; stack.go:116-118 passes stack[:k].\n- LS30/31/32: g,g,r,r gives [4,2,3], member 3, prefix 2 (test :244-250).\n- LS33: [4,2,1] (test :254-263); with lo=0 the code returns at stack.go:142-144 with nothing published, and prefix 0 is never graded.\n- LS34: g,r,g,r gives [4,2,1], member 2, prefix 1 (:268-274).\n- LS35: [16,8,12,14,15] (:278-286).\n- LS37: [4,2] with Infrastructure (:290-293); stack.go:136-138 sets result.Kind and returns with Attributed 0.\n- LS99: [4] with Kind inherited and Attributed 0 (stack.go:123-125; :297-300).\n\nChecks: a candidate red counts the destination as green (stack.go:126-128); the stop kind is carried (:120, :137); the publication of prefix lo rechecks members[:lo] (:146) and passes lo and trees[:lo] (:154); StackResult{DestinationBase, Merges, Kind, Attributed} serves ticket 09; no verb file changed.\n\nAdvice:\n- No test moves a member above lo during a bisect publish.\n- LS33 (stack_bisect_test.go:259) asserts neither the red refusal type nor the kind.\n- Ticket 09 must read Attributed only on a red AuthorizationRefusal, because a recheck or admission error after the bisect also leaves it set (stack.go:148,153,157).\n- land_stack.go:108-110 calls lease.Release after a partial publication consumed the lease; ticket 09 owns LS46.\n- Ticket 08 line 4 marks stack.go as new, but ticket 04 created it.\n\nCommand: no command change is necessary.\nRead: the preflight output, the diff, the coverage output (partial), spec.md lines 1-245, tickets 08 and 09, stack.go, stack_test.go 1-190, land_stack.go 85-215, the landing.go permits site.\n"
+          },
+          "axis": "Spec",
+          "base": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "tip": "f9ea6a781c5bc02387879512e7df7f0efb2e40c1",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c6-coverage-r1",
+          "performer": "claude:ls-c6-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9ac5bde599983a51a2e96e3f8dc0b8cf0b2187ea",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c6-coverage-20261026",
+            "digest": "sha256:1029e94b32101707e846a75edf9539f31e50da62636d4f6a6dbc3fbe1cf4f038",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 2\nworst: C1 (severity 6)\n\nBind: preflight reported current=true, dirty_record=false; source tip e4625e97, frozen delta e0685f0d..f9ea6a78.\n\nC1 | 6 | auto-fix | 9 | internal/landing/stack_bisect_test.go:244-286 (against stack.go:81) | Every row uses a power-of-two member count (4 or 16), so lo+hi is even at every grade, and a midpoint rounded up grades the same prefixes as one rounded down. LS30 names \"a wrong midpoint\" as its failure and does not kill this one. No row has an odd n.\nC2 | 6 | auto-fix | 8 | internal/landing/stack_bisect_test.go:288-293 | LS37 puts the infrastructure result at the first bisect grade (lo = 0), so a mutant that leaves the loop on infrastructure and publishes lo publishes nothing and passes assertStopped. The failure LS37 names needs lo > 0 when the fault hits; a case such as four members graded green, green, infrastructure, red would kill it.\n\nKilled by reasoning: a linear search (LS30, LS35, LS33); hi-lo>2 (LS30 ends [4,2]); hi-lo>0 (panic or hang); attribution to lo (LS31, LS33, LS34); publishing hi's prefix (assertPublishedPrefix); a full member list on a prefix grade (LS29); inherited admitted into the bisect (LS99); a top-only recheck (TestLandStackRechecksEachMember, stack_test.go:295, through the shared loop at stack.go:145).\n\nDuplication: none. The stub reads each prefix from the graded tree's contents, and the expected sequences are literals.\n\nAdvice:\n- Add one odd-n row so the \"rounded down\" clause is pinned.\n- No bisect row pins members[:lo] in the recheck loop (stack.go:145); optional.\n\nCommand: no command change is necessary.\nRead: the preflight output, the frozen diff, ticket 08, spec rows LS29-LS37 and LS99, stack_test.go lines 1-180 and the LS39 test.\n"
+          },
+          "axis": "Coverage",
+          "base": "e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6",
+          "tip": "f9ea6a781c5bc02387879512e7df7f0efb2e40c1",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1893,3 +1959,30 @@ Standards: 0 findings, and S1, S2, S3, and S4 are closed. Spec: 0 findings, and 
 The repair's one probe gave every row the census count of member 1. It reported `bit` in `TestLandStackJourney` with `restored` yes. A shadow unified reviewer confirmed the same closures outside this record.
 
 Advice: an unresolved-path refusal names no label, and the stack resolves the assignment a second time to name a label.
+
+## LS-C6 review, round 1
+
+Frozen pair: `e0685f0d7a009bcaf5738153d0fd8f4e9a844cf6..f9ea6a781c5bc02387879512e7df7f0efb2e40c1`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes for the review-mode comparison, and its return is outside this record.
+
+## Standards
+
+Findings: 1. Worst: S1, severity 2.
+
+- S1 (confidence 5), `auto-fix`: four bisect test comments restate the bisect trace and the grade count. The expectations and the spec own both. The repair keeps only the reason in each comment.
+
+## Spec
+
+Findings: 0. Worst: none.
+
+## Coverage
+
+Findings: 2. Worst: C1 and C2, severity 6.
+
+- C1 (confidence 9), `auto-fix`: every row has four or sixteen members, so a midpoint rounded up grades the same prefixes. The repair adds a row with an odd member count.
+- C2 (confidence 8), `auto-fix`: LS37's fault hits while `lo` is zero, so a stack that publishes the last green prefix after a fault passes. The repair adds a case where the fault hits above a green prefix.
+
+## Shadow find
+
+The shadow reviewer found that no bisect row moves a published member during the grade. A recheck that skips member `lo` or that rechecks every member stays green. The three-axis arm reported this as advice. The orchestrator accepts it under "The publication" and adds it to the repair.
+
+Every repair is test-only, so a coordinator confirmation closes it.
