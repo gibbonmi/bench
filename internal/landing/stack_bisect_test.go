@@ -32,14 +32,13 @@ type bisectRun struct {
 
 // landBisectStack lands a stack of len(verdicts) members. The stub reads the prefix of each
 // graded tree from the member files that the tree holds, so the table does not depend on
-// the trees the owner writes.
-func landBisectStack(t *testing.T, verdicts ...authorization.Kind) bisectRun {
+// the trees the owner writes. A non-nil during runs inside the grade of each prefix p.
+func landBisectStack(t *testing.T, during func(f stackLanding, p int), verdicts ...authorization.Kind) bisectRun {
 	t.Helper()
 	run := bisectRun{f: newStackLanding(t, len(verdicts), nil), admission: &stackAdmissionRecord{}}
 	o, record := stackOwner(green)
 	recorded := o.authorize
 	o.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
-		recorded(ctx, root, tree, stdout, stderr)
 		names := treeNames(t, run.f.root, tree)
 		p := 0
 		for _, name := range names {
@@ -54,6 +53,10 @@ func landBisectStack(t *testing.T, verdicts ...authorization.Kind) bisectRun {
 		}
 		run.prefixes = append(run.prefixes, p)
 		run.members = append(run.members, gate.StackMembers(ctx))
+		if during != nil {
+			record.duringGrade = func() { during(run.f, p) }
+		}
+		recorded(ctx, root, tree, stdout, stderr)
 		return authorization.Result{Kind: verdicts[p-1]}
 	}
 	run.record = record
@@ -98,7 +101,7 @@ func (run bisectRun) assertStopped(t *testing.T, kind authorization.Kind, prefix
 // TestLandStackGradesEachPrefixWithItsMembers is LS29. Member 3 of four is red, so the
 // grades are prefixes 4, 2, and 3, and each grade names the members of its prefix alone.
 func TestLandStackGradesEachPrefixWithItsMembers(t *testing.T) {
-	run := landBisectStack(t, green, green, red, red)
+	run := landBisectStack(t, nil, green, green, red, red)
 	if len(run.prefixes) < 2 {
 		t.Fatalf("graded prefixes %v, want a bisect", run.prefixes)
 	}
@@ -113,21 +116,46 @@ func TestLandStackGradesEachPrefixWithItsMembers(t *testing.T) {
 	}
 }
 
-// TestLandStackBisectsToTheRedMember is LS30, LS31, and LS32. Member 3 of four is red. lo = 0
-// and hi = 4 grade 4 red; mid 2 grades green, so lo = 2; mid 3 grades red, so hi = 3. That
-// is 1 + ⌈log2 4⌉ = 3 grades, member 3 carries the red, and prefix 2 publishes.
+// TestLandStackBisectsToTheRedMember is LS30, LS31, and LS32. A red member above a green
+// prefix must carry the red, and that green prefix alone publishes.
 func TestLandStackBisectsToTheRedMember(t *testing.T) {
-	run := landBisectStack(t, green, green, red, red)
+	run := landBisectStack(t, nil, green, green, red, red)
 	if want := []int{4, 2, 3}; !slices.Equal(run.prefixes, want) {
 		t.Fatalf("graded prefixes %v, want %v", run.prefixes, want)
 	}
 	run.assertPublishedPrefix(t, 3, 2)
+	t.Run("an odd member count rounds the midpoint down", func(t *testing.T) {
+		run := landBisectStack(t, nil, green, green, red)
+		if want := []int{3, 1, 2}; !slices.Equal(run.prefixes, want) {
+			t.Fatalf("graded prefixes %v, want %v", run.prefixes, want)
+		}
+		run.assertPublishedPrefix(t, 3, 2)
+	})
+	moveDuringPrefix3 := func(member int) func(stackLanding, int) {
+		return func(f stackLanding, p int) {
+			if p == 3 {
+				git(t, f.members[member-1].worktree, "commit", "--allow-empty", "-qm", "moved during the grade")
+			}
+		}
+	}
+	t.Run("a moved top published member refuses the publication", func(t *testing.T) {
+		run := landBisectStack(t, moveDuringPrefix3(2), green, green, red, red)
+		var member StackMemberError
+		if !errors.As(run.err, &member) || member.Member != 2 || run.got.Published() != 0 || run.admission.published != 0 {
+			t.Fatalf("moved member 2 = %+v, %v, want a refusal of member 2 and nothing published", run.got, run.err)
+		}
+		assertStackUnpublished(t, run.f, run.record)
+	})
+	t.Run("a moved unpublished member keeps the green prefix", func(t *testing.T) {
+		run := landBisectStack(t, moveDuringPrefix3(3), green, green, red, red)
+		run.assertPublishedPrefix(t, 3, 2)
+	})
 }
 
-// TestLandStackPublishesNothingForAFirstMemberRed is LS33. Every prefix of four is red: 4
-// red; mid 2 red, so hi = 2; mid 1 red, so hi = 1. lo stays 0, so nothing publishes.
+// TestLandStackPublishesNothingForAFirstMemberRed is LS33. With no green prefix above the
+// destination, no member can publish.
 func TestLandStackPublishesNothingForAFirstMemberRed(t *testing.T) {
-	run := landBisectStack(t, red, red, red, red)
+	run := landBisectStack(t, nil, red, red, red, red)
 	if want := []int{4, 2, 1}; !slices.Equal(run.prefixes, want) {
 		t.Fatalf("graded prefixes %v, want %v", run.prefixes, want)
 	}
@@ -137,39 +165,42 @@ func TestLandStackPublishesNothingForAFirstMemberRed(t *testing.T) {
 	assertStackUnpublished(t, run.f, run.record)
 }
 
-// TestLandStackAttributesARedTransition is LS34. Prefixes 1 to 4 grade green, red, green,
-// red: 4 red; mid 2 red, so hi = 2; mid 1 green, so lo = 1. Member 2 carries the red, and
-// prefix 1 publishes although prefix 3 is green.
+// TestLandStackAttributesARedTransition is LS34. A green prefix above a red one does not
+// publish, because the bisect never grades it.
 func TestLandStackAttributesARedTransition(t *testing.T) {
-	run := landBisectStack(t, green, red, green, red)
+	run := landBisectStack(t, nil, green, red, green, red)
 	if want := []int{4, 2, 1}; !slices.Equal(run.prefixes, want) {
 		t.Fatalf("graded prefixes %v, want %v", run.prefixes, want)
 	}
 	run.assertPublishedPrefix(t, 2, 1)
 }
 
-// TestLandStackBoundsTheBisect is LS35. Member 16 of sixteen is red: 16 red, then mids 8, 12,
-// 14, and 15 grade green and move lo to 15. That is 1 + ⌈log2 16⌉ = 5 grades.
+// TestLandStackBoundsTheBisect is LS35. Each grade is a whole gate, so a long stack must
+// not grade each prefix.
 func TestLandStackBoundsTheBisect(t *testing.T) {
 	verdicts := slices.Repeat([]authorization.Kind{green}, 16)
 	verdicts[15] = red
-	run := landBisectStack(t, verdicts...)
+	run := landBisectStack(t, nil, verdicts...)
 	if want := []int{16, 8, 12, 14, 15}; !slices.Equal(run.prefixes, want) {
 		t.Fatalf("graded prefixes %v, want %v", run.prefixes, want)
 	}
 	run.assertPublishedPrefix(t, 16, 15)
 }
 
-// TestLandStackStopsOnInfrastructureInTheBisect is LS37. The top of four is red and mid 2
-// grades infrastructure, so the stack stops after prefixes 4 and 2.
+// TestLandStackStopsOnInfrastructureInTheBisect is LS37. An infrastructure grade proves no
+// prefix, so the stack stops at it and publishes nothing, not even a green prefix.
 func TestLandStackStopsOnInfrastructureInTheBisect(t *testing.T) {
-	run := landBisectStack(t, green, authorization.Infrastructure, red, red)
+	run := landBisectStack(t, nil, green, authorization.Infrastructure, red, red)
 	run.assertStopped(t, authorization.Infrastructure, []int{4, 2})
+	t.Run("a fault above a green prefix publishes nothing", func(t *testing.T) {
+		run := landBisectStack(t, nil, green, green, authorization.Infrastructure, red)
+		run.assertStopped(t, authorization.Infrastructure, []int{4, 2, 3})
+	})
 }
 
 // TestLandStackStopsOnAnInheritedRed is LS99. An inherited top tree means the destination
 // held no green, so no prefix counts as green and the stack stops after one grade.
 func TestLandStackStopsOnAnInheritedRed(t *testing.T) {
-	run := landBisectStack(t, green, green, green, authorization.Inherited)
+	run := landBisectStack(t, nil, green, green, green, authorization.Inherited)
 	run.assertStopped(t, authorization.Inherited, []int{4})
 }
