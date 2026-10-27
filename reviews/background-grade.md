@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:b4a2344dfd68af6535b28d63451857b2045ac3d53de755aa665f8ab08e68ba5a",
+  "plan_digest": "sha256:143f753bd2b8510ff891b8076aa2e2f1bc7d8ddafaf78f72760bf7da7abc0076",
   "implementation_session": "",
   "chunks": [
     {
       "id": "BG-C0",
       "base": "84e9b1d372f0931e75db1072013e63cd4f94ed00",
-      "tip": "7bdc95c72c6ef570407a4105cfd8d3597b69e989",
-      "plan_digest": "sha256:b4a2344dfd68af6535b28d63451857b2045ac3d53de755aa665f8ab08e68ba5a",
-      "source_digest": "3d4db9dbba5bcfcfee48a3710cd1382dad2b240b",
+      "tip": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+      "plan_digest": "sha256:143f753bd2b8510ff891b8076aa2e2f1bc7d8ddafaf78f72760bf7da7abc0076",
+      "source_digest": "d1bc0f6d850ed1a654f9ef579c4b01d937668eb2",
       "acceptance_rows": [
         "BG93",
         "BG94",
@@ -34,6 +34,25 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14733,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "7bdc95c72c6ef570407a4105cfd8d3597b69e989",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c0-t01-r1-conformance",
+          "performer": "claude:bg-t01-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "d1bc0f6d850ed1a654f9ef579c4b01d937668eb2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t01-repair1-20261027",
+            "digest": "sha256:e5ce57c0166dc636a56848eefa1bf03cd0ad399c17ad71fd0675eeb88c459385",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15241,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -122,7 +141,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:b4a2344dfd68af6535b28d63451857b2045ac3d53de755aa665f8ab08e68ba5a",
+      "to": "sha256:143f753bd2b8510ff891b8076aa2e2f1bc7d8ddafaf78f72760bf7da7abc0076",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ]
+      }
+    }
+  ]
 }
 ```
 
