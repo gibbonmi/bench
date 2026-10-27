@@ -2088,7 +2088,79 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c8-standards-r1",
+          "performer": "claude:ls-c8-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "99c3febcc8250f8a2cfcf50e69aaab2c9e962d0b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c8-standards-20261026",
+            "digest": "sha256:017096a25dc6fd3938bb931407416deeadb4ca19ac7c65afcfcfb9a8e1f4046f",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 3\nworst: S1 (severity 4): a second parser of the git ls-tree -r -z listing\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false; the HEAD 3c28770 differs from the frozen tip 7aad4fd only by reviews/landing-stack.md.\n\nS1 | 4 | ask-user | 6 | internal/worktree/land_stack_preflight.go:101-120 (treeEntries) | treeEntries is a second parser of the git ls-tree -r -z listing. internal/gate/tree_snapshot.go:3-9 and 138-158 (parseTreeSnapshot) is the first, says \"the listing is parsed in exactly one place\", and checks treeEntryMetadataRE, which the new parser omits. The gate stack proof and the preflight feed stackpolicy.Owners from two readers. AGENTS.md one source per fact.\nS2 | 4 | ask-user | 7 | internal/worktree/land_stack_test.go:263-276 (doc comment 240-244) | The member-conflict row of TestLandStackRefusesAHeldLease now repeats the setup and assertion of TestLandStackRefusesAnOverlap (land_stack_refusal_test.go:486-500). It no longer covers a composition conflict or a post-lease refusal, so its name is stale, and the same fact is authored twice.\nS3 | 3 | auto-fix | 6 | land_stack.go:205-206, 258-259, 262-264; land_stack_preflight.go:351-352 | The sequence that builds values{FactRerun, FactLabel} and calls stackMemberRefusal(i, label, landingFaceRouteWith(raised, values, false)) appears four times; a helper would hold it once.\n\nAdvice:\n- foldMember (land_stack_refusal_test.go:44-48) is a fourth copy of the fold-the-destination idiom.\n- The refusal-print loop has a third copy at land_stack.go:106-111.\n- The ConflictError branch at land_stack.go:270-275 has no stack-level test now, because the overlap preflight pre-empts the only shared-path case.\n- faceStackMemberAlone and faceStackMembersOverlap in land_refusal.go:150-153 repeat the registered face names, following the faceStackRed precedent.\n\nCommand: no command change is necessary.\nRead: the delta, the craft-review and craft-comments skills, ticket 10, stackpolicy.go, gate/tree_snapshot.go, gate/stack_completion.go:30-120, land.go:150-310, land_refusal.go:295-330, land_stack.go:50-310, land_fixtures_test.go:40-70.\n"
+          },
+          "axis": "Standards",
+          "base": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "tip": "7aad4fd4297c90e316dc03b4500d4155c46d1f9a",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c8-spec-r1",
+          "performer": "claude:ls-c8-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "99c3febcc8250f8a2cfcf50e69aaab2c9e962d0b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c8-spec-20261026",
+            "digest": "sha256:e7909235fd0f8d30e64011cec84502bee64443e44a952dcfe88d3750a958aeca",
+            "excerpt": "axis: Spec\nverdict: findings\nfindings: 1\nworst: P1 (severity 3; the post-grade destination-moved route names member 1 only)\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, base f3409275.\n\nP1 | 3 | ask-user | 5 | internal/worktree/land_stack.go:261-265 (spec.md:375 LS92; spec.md:211 rerun rules 4 and 7; stories 16 and 31) | The post-grade raise (TipMovedError) refuses member 1 only, although the destination moves for every member. For a two-member stack: fold member 1, rerun with member 1's repaired tip, and the preflight then refuses member 2 as behind (land_stack_preflight.go:48-51), so exit 1. The walk fixture stack-member-behind drives only the preflight raise. The choice follows ticket 10 and the single-landing face rule (spec.md:203) and converges in two reruns, but LS92's clause is false for this raise site and no row covers it.\n\nAudit of the rest:\n- The stack proofs run staged spec, then HoldsDeliveryBinding, then ancestry (land_stack_preflight.go:25-51); specPath is set only for a staged spec (land_identity.go:212-231).\n- HoldsDeliveryBinding reads ledger bindings, not open builds (publication.go:80-88), so LS73 and LS88 hold.\n- The overlap runs the owner rule over the destination and member trees (preflight.go:87-98), refuses the later member, and names both labels and the paths.\n- stackWindow runs per member before AcquireLease (land_stack.go:105-112), with index and label (LS74, LS75).\n- stackRefusedBy removes the member for both new faces (rerun.go:46-48); rules 2 and 7 hold at rerun.go:79-97.\n- Every refusal goes through stackMemberRefusal, which names the member index and label.\n- The ticket 10 widenings are exercised by the diff.\n\nAdvice:\n- Refuse every member that a moved destination leaves behind, so one run lists every repair (story 31).\n- The member-conflict row name is stale, and the verb-level composition-conflict route (land_stack.go:270-275) has no driver; a file/directory collision still conflicts without a shared path.\n- Window refusals print only when the proofs and the owner rule pass (land_stack.go:84-90).\n\nCommand: no command change is necessary.\nRead: the delta, spec.md 1-260 and 360-500, ticket 10, craft-review SKILL.md, bench coverage output, land_stack.go, land_stack_rerun.go, land_refusal.go 196-330, land.go 245-315, land_identity.go 195-275, landing/gitexec.go, publication.go 70-110, land_stack_test.go 236-320, the LS-C8 record block.\n"
+          },
+          "axis": "Spec",
+          "base": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "tip": "7aad4fd4297c90e316dc03b4500d4155c46d1f9a",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c8-coverage-r1",
+          "performer": "claude:ls-c8-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "99c3febcc8250f8a2cfcf50e69aaab2c9e962d0b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c8-coverage-20261026",
+            "digest": "sha256:9c73e7e76addddd0272726da54565c7d3ecb5d95df4553a810459c06ddc81db8",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 4\nworst: C2, severity 5, the preflight's capture/ exemption is never exercised at the verb seam\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false; read the frozen pair only.\n\nC1 | 4 | auto-fix | 8 | internal/worktree/land_stack_preflight.go:330-348 vs land_stack_refusal_test.go:89-100 and land_stack_route_test.go | Every overlap fixture has two owners and one path. The pair code is correct by reading, but no test pins it: dropping the third pair of a three-owner path, pairing only owners[0] with owners[1], or deleting slices.Sort(paths) all stay green.\nC2 | 5 | auto-fix | 8 | land_stack_preflight.go:331 (stackpolicy.Overlaps) | No test passes a capture/ path shared by two members through the preflight. A raw len(owners)>=2 filter in place of Overlaps stays green, and every stack that touches one inbox file would then refuse.\nC3 | 3 | no-op | 5 | land_stack.go:105-112 vs the window test | LS74 and LS75 kill a member-1-only window and a whole-stack override, but requireNoLease reads only the final state, so a window moved after AcquireLease with a release on refusal would pass.\nC4 | 3 | no-op | 6 | land_stack_test.go:263-276 | The member-conflict row change is sound but duplicates LS71, and no verb-level test reaches the StackMemberError conflict route (land_stack.go:266) for a conflict the owner rule misses, such as a directory/file clash.\n\nChecked and sound: LS70 (both cases), LS72, LS73, LS88, LS76, LS77, LS90, LS91, LS92, LS93 are red-capable; the fixture change weakened no earlier stack assertion.\n\nAdvice:\n- Add one overlap fixture with three owners, two paths, and a capture/ path.\n- Add one held-lease case with a closed gap.\n\nCommand: no command change is necessary.\nRead: the frozen delta, stackpolicy.go, land_stack.go, land_stack_preflight.go, land_refusal.go:355-400, land_identity.go:170-238, ticket 10, spec rows LS2, LS3, LS11, LS12, LS70-77, LS88, LS90-93, the craft-review Coverage section, the hostile-input checklist, requireNoLease, TipMovedError.\n"
+          },
+          "axis": "Coverage",
+          "base": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "tip": "7aad4fd4297c90e316dc03b4500d4155c46d1f9a",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2634,3 +2706,30 @@ Standards: 0 findings, and S1 and both shadow finds are closed. Spec: 0 findings
 The coordinator probe accepted every refusal kind except infrastructure in `stackAttributed`. It reported `bit` in `TestStackAttributedReadsOnlyACandidateRed` with `restored` yes. A shadow unified reviewer confirmed the same closures outside this record.
 
 Advice: older tests still read the gate tally inline in place of `requireOneRun`.
+
+## LS-C8 review, round 1
+
+Frozen pair: `f3409275c55a0ff165fab8ff808fd343de397929..7aad4fd4297c90e316dc03b4500d4155c46d1f9a`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes for the review-mode comparison, and its return is outside this record.
+
+## Standards
+
+Findings: 3. Worst: S1, severity 4.
+
+- S1 (confidence 6), `auto-fix`: `treeEntries` is a second parser of the `git ls-tree -r -z` listing beside `parseTreeSnapshot` in the gate. The orchestrator decides that the gate exports one tree-entry reader over its parser, and the preflight calls it.
+- S2 (confidence 7), `auto-fix`: the `member-conflict` row repeats LS71 and no longer pins its named purpose. The repair moves its input to a file and directory collision, which still conflicts after the owner rule.
+- S3 (confidence 6), `auto-fix`: the stack-raised refusal sequence appears four times. The repair moves it into one helper.
+
+## Spec
+
+Findings: 1. Worst: P1, severity 3.
+
+- P1 (confidence 5), `auto-fix`: a destination move after the grade refuses member 1 only, so the stack needs a second rerun before LS92 holds. The orchestrator decides that the move refuses each member that lacks the new destination tip, as the preflight's behind proof does. Ticket 10's prose takes that sentence.
+
+## Coverage
+
+Findings: 4. Worst: C2, severity 5.
+
+- C1 (confidence 8), `auto-fix`: no overlap fixture has three owners or two paths. The repair adds one, with a path that holds a space.
+- C2 (confidence 8), `auto-fix`: no test passes a shared `capture/` path through the preflight. The repair adds that case.
+- C3 (confidence 5), `auto-fix`: the window test pins no tally. The repair pins it.
+- C4 (confidence 6), `auto-fix`: no verb-level test reaches the conflict route. The S2 repair closes it.
