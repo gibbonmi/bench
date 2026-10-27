@@ -18,11 +18,9 @@ The `gate-reuse` build (FT314) ran six tickets in four chunks on Claude Code as 
 
 Provider usage and charges remain unknown. The landing census counted 16 raw calls: cat 7, rg 7, wc 2. Four author contexts ran past the 150k-token target, and two planned probes could not witness their rows until the orchestrator re-cut them.
 
-The `landing-stack` spec stage ran on Claude Code for FT450. By reviewer direction, one Opus coordinator did the research, the spec, and the slicing of twelve tickets inline, with no reader pair and no fork. It measured the saving from the landing spans and Git.
+The `background-grade` shaping and spec stages ran on Claude Code for FT451. By reviewer direction, one Opus coordinator did the research and four grill rounds in one session with no delegated reads, and it sliced 16 tickets inline on the map-only route. An Opus/high map review found six blocking gaps at the edges between decisions, and the fourth grill round closed them. One late question closed the CPU promotion, because a probe showed that Linux refuses an unprivileged lower nice value.
 
-Opus/high accepted the spec at iteration 3, after the reviewer raised the cap. Iteration 1 found six defects in the member rule, the rerun routes, the proof, and the chunk table. Iteration 2 found three defects in the repaired rerun rules and the plan.
-
-Opus/high accepted the tickets at iteration 2. Iteration 1 found a closure fence gap, a reader contract that dropped the overrides, and seam tickets that shared a chunk with their consumers. The reviewer set a 150k-token target for each author, and the first sizing used the old model. Provider usage and charges remain unknown.
+Opus/medium accepted the tickets at iteration 2. Iteration 1 found a stop signal outside the lifetime owner, a landing wait that contradicted the map, too few Forbid rows, an oversized ticket, and seam tickets that shared a chunk with their consumers. After the accept, the coordinator moved the census record out of a git-ignored folder. Provider usage and charges remain unknown.
 
 The `landing-stack` build (FT450) ran 12 tickets in 10 chunks as a `--full --delegate --auto-approve` run under minimal probing. An Opus orchestrator dispatched Opus/medium authors and repairs, and Opus/high for the docs ticket. Sonnet/high ran every axis, and from LS-C4 a Sonnet/high unified shadow reviewer ran beside the three axes. Each chunk used one repair cycle, and the landing census counted 46 raw calls: rg 21, sed 8, cp 5, cd 4, and 8 others.
 
