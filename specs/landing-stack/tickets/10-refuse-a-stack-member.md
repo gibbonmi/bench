@@ -11,6 +11,7 @@ Add the stack proofs of the spec section "The preflight" in the new file `land_s
 - A member whose `spec` names a staged spec refuses with `stack-member-alone`.
 - A member whose assignment holds a delivery binding refuses with `stack-member-alone`. The proof calls `HoldsDeliveryBinding` of ticket 03, so a started tickets-only deliverable counts.
 - A member whose tip does not contain the destination tip refuses with `land-destination-moved` and its fold route.
+- A destination that moves after the grade (`landing.TipMovedError`) also refuses with the stack-raised `land-destination-moved`, as one landing does, and not with `land-handback`.
 - After the member proofs, the proof calls `stackpolicy.Owners` and `stackpolicy.Overlaps` of ticket 01 over the destination tree and each member tree. It reads each tree with one `git ls-tree` entry format. Each overlap refuses with `stack-members-overlap`, which names both labels and the paths.
 - The build window then decides each member with `AdmitWindow` before the lease, as one landing does. A member that the window refuses refuses with `land-build-window` and its index.
 
