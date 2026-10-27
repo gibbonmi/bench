@@ -294,7 +294,70 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c1-review-standards",
+          "performer": "claude:bg-c1-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "04e36a315ce7a6307ca29b2a6b05a35c44e2f5f8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c1-review-20261027",
+            "digest": "sha256:5c56cc8cde2bf598386976dbd051ab8509a50deb231864bed2ed1745e46f2f35",
+            "excerpt": "Unified BG-C1 review (2bb0564d3..9eb53b695), Standards: 3 findings. Worst: oracle_identity_test.go:164-166 stale comment and vacuous baseline-runner case (auto-fix, conf 8). Test-only twin placement at baseline_commit_test.go:18-22 (no-op); baselineRoot shadowing at evaluation.go:61 (no-op). BG13 passes.\n"
+          },
+          "axis": "Standards",
+          "base": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "tip": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+          "finding_ids": [
+            "BG-C1-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c1-review-spec",
+          "performer": "claude:bg-c1-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "04e36a315ce7a6307ca29b2a6b05a35c44e2f5f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c1-review-20261027",
+            "digest": "sha256:b9c43d7313443ccca4ed471833fbf13c677827674e8291a4ed646a6d93ce158e",
+            "excerpt": "Unified BG-C1 review (2bb0564d3..9eb53b695), Spec: 1 finding. Inspection keeps the live root at engine.go:100 while the chunk run uses the checkout at engine.go:65; matches the amended spec (no-op, conf 5). No edit outside the acceptance's reach.\n"
+          },
+          "axis": "Spec",
+          "base": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "tip": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c1-review-coverage",
+          "performer": "claude:bg-c1-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "04e36a315ce7a6307ca29b2a6b05a35c44e2f5f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c1-review-20261027",
+            "digest": "sha256:4a45fe1c1886d246b00d415afad6a3d1486d09968c9f832cb039edc34962bae0",
+            "excerpt": "Unified BG-C1 review (2bb0564d3..9eb53b695), Coverage: 2 findings. BG109 test compares the member, not the key (run_binary_source_test.go:127-152; orchestrator no-op: only the run-binary member changed). Verification source commits (refuted: t03 entries bind 9eb53b695). Ruling: BG15 and BG109 need no recorded red.\n"
+          },
+          "axis": "Coverage",
+          "base": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "tip": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -374,3 +437,35 @@ Count: 6. Worst issue: the waiver and the contention claim rest on runs that the
 - BG-C0-C6, auto-fix, confidence 4: `specs/background-grade/census.md:51` does not state that the foreground and the proxy shared one worktree and one Go cache. Target T5.
 
 The implementation command contributed to no finding.
+
+## BG-C1 review
+
+One unified session reviewed the frozen pair `2bb0564d3..9eb53b695`. It found 6 raw findings. One finding is a repair target on ticket 02, and the orchestrator decided the other 5 as no-op. The reviewer ruled that BG15 and BG109 need no recorded red, because each asserts a relation and no independently authored value.
+
+The author witness reds were these first failing runs before each fix:
+
+- BG12, `TestIdentityFramesTheRunSelection`, failed because the identity was one value under two kits.
+- BG14, `TestNoSelectionFramesAStableValue`, failed in both subcases.
+- BG16 and BG17, `TestBaselineReadsSurviveAWorktreeEdit` and `TestBaselineReadsSurviveABuildInputCommit`, failed with `gate subject changed before execution`.
+- BG18, `TestBaselineScheduleReadsTheCommit`, failed because the green was keyed to the working manifest.
+
+## Standards
+
+Count: 3. Worst issue: a stale comment over a case that passes trivially.
+
+- BG-C1-S1, auto-fix, confidence 8: `internal/gate/oracle_identity_test.go:164` says that the graded tree builds its own run binary. The case sets no owner and no phase-table gate, so its run-binary member is the stable value on both sides. Restore the guard with an owned phase-table fixture, and make the comment state that guard.
+- No-op, confidence 4: `internal/gate/baseline_commit_test.go:18` holds a test-only builder that a ticket 02 test also calls. The placement is inside the fence.
+- No-op, confidence 3: `internal/gate/evaluation.go:61` uses a parameter name that shadows a function. The scope is local.
+
+## Spec
+
+Count: 1. Worst issue: inspection keeps the live root.
+
+- No-op, confidence 5: `internal/gate/engine.go:100` keeps the live root, while the chunk run uses its checkout. The amended ticket 03 states this rule, and BG18 asserts it.
+
+## Coverage
+
+Count: 2. Worst issue: BG109 compares the member, not the key.
+
+- No-op, confidence 6: `internal/gate/run_binary_source_test.go:127` compares the run-binary member with the base value. Ticket 02 changed only that member, so an equal member gives an equal key.
+- No-op, confidence 5: the review record seemed to bind the ticket 03 verifications to the ticket 02 commit. The record binds them to `9eb53b695`, so the record refutes the concern.
