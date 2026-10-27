@@ -38,11 +38,14 @@ type stackRerun struct {
 var stackUnattributed = stackRerun{refused: -1}
 
 // stackRefusedBy is the re-run fact of the refusal err that member i raised. The face of err
-// decides whether the route repairs the source, and a source-tip mismatch carries the tip
-// that the tree holds.
+// decides whether the route repairs the source or removes the member from the stack file,
+// and a source-tip mismatch carries the tip that the tree holds.
 func stackRefusedBy(i int, err error) stackRerun {
 	face := landingFaceName(err)
 	fact := stackRerun{refused: i, repairs: repairsSource(face)}
+	if face == faceStackMemberAlone || face == faceStackMembersOverlap {
+		fact.removed = []int{i}
+	}
 	if _, read, ok := sourceTips(raisedRefusal(err)); ok && face == faceSourceTipMismatch {
 		fact.read = read
 	}

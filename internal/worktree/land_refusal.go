@@ -150,6 +150,10 @@ const (
 	faceLandInfrastructure = refusalroute.LandInfrastructure
 	// A stack raises this face for the member that its bisect attributes a red to.
 	faceStackRed = "stack-red"
+	// The stack preflight raises these two: for a member that must land alone, and for the
+	// later member of a pair that changes one path.
+	faceStackMemberAlone    = "stack-member-alone"
+	faceStackMembersOverlap = "stack-members-overlap"
 )
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read
@@ -312,7 +316,13 @@ func movedDestination(err error, r landing.ReviewedRequest, branch string) error
 	default:
 		return err
 	}
-	detail := refusalroute.Sentence(faceLandDestinationMoved) + causeJoiner + err.Error()
+	return destinationMovedRefusal(err, branch)
+}
+
+// destinationMovedRefusal raises the moved-destination face over cause. The face's sentence
+// leads, and the cause follows it. Its fold merges from branch.
+func destinationMovedRefusal(cause error, branch string) refusalError {
+	detail := refusalroute.Sentence(faceLandDestinationMoved) + causeJoiner + cause.Error()
 	return refusalError{refusal{detail: detail, face: faceLandDestinationMoved, values: map[string]string{refusalroute.FactFrom: branch}}}
 }
 

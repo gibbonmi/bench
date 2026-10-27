@@ -238,10 +238,10 @@ func TestLandStackPrintsEveryMemberRefusal(t *testing.T) {
 }
 
 // TestLandStackRefusesAHeldLease is LS52. Under another landing's lease the stack refuses
-// before it composes, so the gate never runs. A stack that takes the lease and then refuses
-// publishes nothing and releases its lease: a conflict of member 2 with member 1 takes the
-// conflict face of member 2, and a grade that the gate cannot run takes the infrastructure
-// face.
+// before it composes, so the gate never runs. A member 2 that changes the file of member 1
+// refuses with the overlap face before the lease. A stack that takes the lease and then
+// refuses publishes nothing and releases its lease: a grade that the gate cannot run takes
+// the infrastructure face.
 func TestLandStackRefusesAHeldLease(t *testing.T) {
 	t.Parallel()
 	for _, row := range []struct {
@@ -264,10 +264,11 @@ func TestLandStackRefusesAHeldLease(t *testing.T) {
 			m := f.members[1]
 			commitInWorktree(t, m.creation.Path, f.members[0].file, "member 2 bytes\n", "member 2 changes the file of member 1")
 			moved := gitOutput(t, m.creation.Path, "rev-parse", "HEAD")
-			file, args := f.stack(t, m.request+"="+moved)
+			_, args := f.stack(t, m.request+"="+moved)
 			r := runVerb(t, verbLand, f.call(args...))
-			rerun := "bench worktree land --stack '" + file + "' --source-tip '" + m.request + "'=<repaired-tip>"
-			want := landingRoute(faceCompositionConflict, rerun, conflictFacts(f.base, m.creation.Assignment.ID, m.creation.Path))
+			// The owner rule refuses the shared path before composition, and the route removes
+			// member 2, so the re-run is member 1's single landing.
+			want := landingRoute(faceStackMembersOverlap, singleStackRerun(f, f.members[0]), labelOf(m.creation))
 			if next := stackRefusalNext(t, r.stdout, "2", m); r.exit != 1 || next != want {
 				t.Fatalf("stack = (%d, next %q), want exit 1 and next %q", r.exit, next, want)
 			}

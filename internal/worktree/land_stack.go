@@ -38,9 +38,10 @@ func hasStackFlag(args []string) bool {
 	return usage.FlagPresent(landDispatchGrammar, args, "--stack")
 }
 
-// stackMemberLanding is one stack member after its proofs: the read member, its worktree
-// path, its assignment, and its source fact.
+// stackMemberLanding is one stack member after its proofs: its 0-based index in the stack
+// file, the read member, its worktree path, its assignment, and its source fact.
 type stackMemberLanding struct {
+	index      int
 	member     StackMember
 	path       string
 	assignment intent.Assignment
@@ -89,10 +90,6 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	}
 	measures.assignment = landings[0].assignment.ID
 	request := landing.StackRequest{Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination, DestinationFingerprint: destinationFingerprint, GreenMarker: priorMarker, Stdout: stdout, Stderr: stderr}
-	lease, err := commitrepo.Store{Root: root}.AcquireLease(request.Destination, landings[0].assignment.ID)
-	if err != nil {
-		return landRefusalError(stdout, landingFaceRoute(err, route.rerun(stackUnattributed), false))
-	}
 	publications := make([]commitrepo.Publication, len(landings))
 	records := make([]int, len(landings))
 	brokerChanged := false
@@ -104,6 +101,17 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 		var member landing.ReviewedRequest
 		member, publications[i] = sourceRequest(l.assignment, l.source, l.member.Request, l.member.Message, request.Destination)
 		request.Members = append(request.Members, member)
+	}
+	// The window decides before the lease, so a stack never waits for a lease and then for a gap.
+	if refusals := stackWindow(root, route, landings, publications); len(refusals) > 0 {
+		for _, err := range refusals {
+			landRefusalError(stdout, err)
+		}
+		return 1
+	}
+	lease, err := commitrepo.Store{Root: root}.AcquireLease(request.Destination, landings[0].assignment.ID)
+	if err != nil {
+		return landRefusalError(stdout, landingFaceRoute(err, route.rerun(stackUnattributed), false))
 	}
 	publications[0].Lease = lease
 	result, err := j.landStack(ctx, request, stackAdmission{store: commitrepo.Store{Root: root}, members: publications, gap: j.publicationGap})
@@ -123,7 +131,7 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	}
 	switch {
 	case err != nil:
-		end.exit = landRefusalError(stdout, stackLandingRefusal(err, route, landings, destination, red, result.Published()))
+		end.exit = landRefusalError(stdout, stackLandingRefusal(err, route, landings, destination, branch, red, result.Published()))
 	case end.step != "":
 		// The stack has no resume form, so a stopped step after the publication hands back.
 		stopped := refusalError{refusal{detail: "landing stack stopped after publication at the " + end.step + " step", face: faceLandHandback}}
@@ -160,9 +168,10 @@ func stackUsageRefusal(stderr io.Writer, err error) int {
 	return 2
 }
 
-// stackPreflight runs the destination proofs once and the assignment and source proofs of
-// one landing for each member over its effective tip. It answers every refusal of these
-// groups, and each member refusal names its member index and label.
+// stackPreflight runs the destination proofs once, and for each member over its effective
+// tip the assignment and source proofs of one landing and then the stack proofs. The owner
+// rule then runs over the members that cleared their proofs. It answers every refusal of
+// these groups, and each member refusal names its member index and label.
 func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (destination, branch, priorMarker, fingerprint string, landings []stackMemberLanding, refusals []error) {
 	destination, branch, priorMarker, fingerprint, err := landingDestination(root)
 	if err != nil {
@@ -191,8 +200,15 @@ func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (
 			refusals = append(refusals, stackMemberRefusal(i, assignment.Label, landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), false)))
 			continue
 		}
-		landings = append(landings, stackMemberLanding{member: m, path: route.paths[i], assignment: assignment, source: source})
+		l := stackMemberLanding{index: i, member: m, path: route.paths[i], assignment: assignment, source: source}
+		if err := stackMemberProofs(root, destination, branch, l); err != nil {
+			values := map[string]string{refusalroute.FactRerun: route.rerun(stackRefusedBy(i, err)), refusalroute.FactLabel: assignment.Label}
+			refusals = append(refusals, stackMemberRefusal(i, assignment.Label, landingFaceRouteWith(err, values, false)))
+			continue
+		}
+		landings = append(landings, l)
 	}
+	refusals = append(refusals, stackOverlaps(root, destination, route, landings)...)
 	return destination, branch, priorMarker, fingerprint, landings, refusals
 }
 
@@ -225,9 +241,10 @@ func stackAttributed(err error, result landing.StackResult) int {
 // stackLandingRefusal routes a refusal of the stack owner. A member refusal keeps the face
 // of one landing. The member red, which the bisect attributed, takes the stack-red face: its
 // route removes each of the landed members from the stack file and sets the tip of each
-// later member by its fold. A stop that no member caused hands back, and an infrastructure
-// grade keeps its own face.
-func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLanding, destination string, red, landed int) error {
+// later member by its fold. A destination that moved after the grade takes the
+// moved-destination face of one landing for member 1, whose fold merges from branch. A stop
+// that no member caused hands back, and an infrastructure grade keeps its own face.
+func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLanding, destination, branch string, red, landed int) error {
 	if red >= 0 {
 		raised := refusalError{refusal{detail: err.Error(), face: faceStackRed}}
 		fact := stackRefusedBy(red, raised)
@@ -240,6 +257,11 @@ func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLand
 		label := landings[red].assignment.Label
 		values := map[string]string{refusalroute.FactRerun: route.rerun(fact), refusalroute.FactLabel: label}
 		return stackMemberRefusal(red, label, landingFaceRouteWith(raised, values, false))
+	}
+	if errors.As(err, new(landing.TipMovedError)) {
+		raised, label := destinationMovedRefusal(err, branch), landings[0].assignment.Label
+		values := map[string]string{refusalroute.FactRerun: route.rerun(stackRefusedBy(0, raised)), refusalroute.FactLabel: label}
+		return stackMemberRefusal(0, label, landingFaceRouteWith(raised, values, false))
 	}
 	var member landing.StackMemberError
 	if errors.As(err, &member) && member.Member >= 1 && member.Member <= len(landings) {

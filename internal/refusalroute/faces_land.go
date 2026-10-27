@@ -170,6 +170,30 @@ var landFaces = []Face{
 		},
 	},
 	{
+		// The member's landing closes its deliverable or transitions its staged spec, which a
+		// stack does not do, so the member leaves the stack and takes its own landing.
+		Verb:      Land,
+		Name:      "stack-member-alone",
+		Sentence:  "stack member must land alone",
+		Authority: Agent,
+		Route: []Step{
+			Instruction(Text("remove the member"), Fact(FactLabel), Text("from the stack file, and land it with its own landing")),
+			rerun,
+		},
+	},
+	{
+		// Two members change one path outside capture/, so the later member of the pair leaves
+		// the stack and lands later on its own route.
+		Verb:      Land,
+		Name:      "stack-members-overlap",
+		Sentence:  "stack members change one path",
+		Authority: Agent,
+		Route: []Step{
+			Instruction(Text("remove the member"), Fact(FactLabel), Text("from the stack file; it lands later on its own route")),
+			rerun,
+		},
+	},
+	{
 		// The gate stopped on an infrastructure outcome, so no failure is the diff's. The
 		// authorization policy owns the sentence.
 		Verb:      Land,
