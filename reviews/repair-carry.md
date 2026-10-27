@@ -667,7 +667,75 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards-r1",
+          "performer": "claude:rc-c3-standards-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-standards-20261027",
+            "digest": "sha256:e233c7a9a734a1ac13aa30ea8a63a5ac796ff763e933e2f39d03d9178724bbe0",
+            "excerpt": "Standards: 4 findings; worst: AGENTS.md \"Two derivations of the same fact must collapse into one source\" (the Staging fixture closure).\nS1 | auto-fix | confidence 7 | recordtest/carry.go Owing extracts the closure that recordtest/stage.go:24-26 Staging still holds inline.\nS2 | auto-fix | confidence 6 | craft-comments \"Treat an identifier as provenance\": ticket_carry_test.go lines 75, 108, 122, 141 start with spec row IDs.\nS3 | ask-user | confidence 4 | ticket_carry_test.go re-types carried:, the reached reason, and the carried cell; the ten ticket.go mutants are not in the record.\nS4 | ask-user | confidence 3 | TestChunkChainAnchors rows use the full retired sentences; no recorded red shows a dropped registry row turns the test red.\nCoordinator disposition: S1 is c3-r1-staging, S2 is c3-r1-tags (ticket 04 repair); S3 and S4 are evidence-only and recorded in the review prose.\n"
+          },
+          "axis": "Standards",
+          "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "tip": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+          "finding_ids": [
+            "c3-r1-staging",
+            "c3-r1-tags"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-r1",
+          "performer": "claude:rc-c3-spec-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-spec-20261027",
+            "digest": "sha256:033318ed215d461b217712e36ed41f435ad74ef368156037d659ac5b9eddfb7f",
+            "excerpt": "Spec: 1 finding; worst: ADR 0023 line 16 stale full-rerun clause.\nS1 | ask-user | confidence 7 | Story 45 \"every session reads one repair rule\"; docs/adr/0023-each-ticket-gets-a-fresh-author.md:16 \"and the session runs the verification of its ticket again\" restates the retired clause; the reader sweep (spec.md:285) missed it.\nCF45, CF47, CF50 met: bench-implement-spec.md:66 (24 words), CHANGELOG.md \"### Repair carry\", .bench/BENCH.md:122 (15 words); line counts kept. The ticket form section holds against ticket.go.\nCoordinator disposition: auto-fix under --auto-approve (c3-r1-adr), ticket 05 repair with bench spec widen --decision.\n"
+          },
+          "axis": "Spec",
+          "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "tip": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+          "finding_ids": [
+            "c3-r1-adr"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-r1",
+          "performer": "claude:rc-c3-coverage-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "c6480fbe0b08ae78534b60282f12f01a950cc914",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-coverage-20261027",
+            "digest": "sha256:7af3c37bb713c9fa8625be475a8df9348a1cfe91ee26492582168ae1fe6c2643",
+            "excerpt": "Coverage: 3 findings; worst: a zero-stage call at an unchanged chunk source carries every requirement.\nF1 | ask-user | confidence 4 | zero-stage call at the same chunk source carries every owed requirement with the call performer.\nF2 | auto-fix | confidence 3 | a second carry call with the same or a new id prefix; no test.\nF3 | auto-fix | confidence 4 | mixed refusals: stale stage plus uncarriable requirement; two uncarriable reasons; the ticket-level no current passing entry reason.\nCoordinator disposition: F1 no-op, story 5 asks that a second call at the same chunk source carries every passing entry; F2 optional advice; F3a no-op, the spec makes no order promise between the stale-stage and carry refusals; F3b and F3c are c3-r1-tworeasons (CF41 says each requirement) for the ticket 04 repair.\n"
+          },
+          "axis": "Coverage",
+          "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "tip": "291db835759cc1c4d0b36e85b47c3fcc5de73fe2",
+          "finding_ids": [
+            "c3-r1-tworeasons"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -792,3 +860,25 @@ The axis reported 0 blocking findings.
 ### Advice
 
 A case with a mid-path `...`, such as `./internal/.../a`, would kill a `HasSuffix` mutant of the `...` clause. This check goes beyond the approved rows, so it stays optional advice.
+
+## CF-C3 review round 1
+
+The frozen pair is `95044e7ca..291db8357`. The round has four repair targets on two tickets. So ticket 04 and ticket 05 each take a fresh repair session, and the chunk starts its first of 2 repair cycles.
+
+### Standards
+
+The axis reported 4 findings. The worst finding is that `Staging` in `recordtest/stage.go` repeats the closure that `Owing` now owns. That finding is `c3-r1-staging`, `auto-fix`, confidence 7. The spec row IDs in four test comments of `ticket_carry_test.go` are `c3-r1-tags`, `auto-fix`, confidence 6.
+
+The two other findings ask for recorded reds, and the corrections are evidence-only. The ticket 04 author ran one mutant set of ten mutants on `ticket.go`, and each mutant bit with `restored` `yes`. The mutants preferred the carry, copied the prior performer twice, bound the source to the repair commit, and replaced the `carried:` reference. The others appended the carried entries, emptied the `carried` cell twice, listed every unstaged requirement, and froze before the refusal. The coordinator omitted the new operating-guide Forbid row in `registry_chunk_chain.go`, and `TestChunkChainAnchors` failed with `restored` `yes`.
+
+### Spec
+
+The axis reported 1 finding. The worst finding is that `docs/adr/0023-each-ticket-gets-a-fresh-author.md` still states the full rerun of a repair session. That finding is `c3-r1-adr`, `auto-fix` under `--auto-approve`, confidence 7. The axis graded CF45, CF47, and CF50 as met.
+
+### Coverage
+
+The axis reported 3 findings. The worst finding is that a call with no stage at an unchanged chunk source carries every requirement. The coordinator marks it `no-op`, because story 5 asks for that carry. The refusal with two reasons is `c3-r1-tworeasons`, `auto-fix`, confidence 4, because CF41 names each requirement that cannot carry. The order of a stale-stage refusal and a carry refusal is `no-op`, because the spec makes no order promise.
+
+### Advice
+
+A second carry call with the same evidence prefix has no test. This check goes beyond the approved rows.
