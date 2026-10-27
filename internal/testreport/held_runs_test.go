@@ -52,6 +52,36 @@ func TestHeldRunsReuseOnAFreshVerify(t *testing.T) {
 	}
 }
 
+// RunRequest runs its own selection over the one held build: the held request runs both tests
+// of the module, and a request that names one test runs only that test on the same build.
+func TestHeldRunsRunRequestSelectsItsOwnRun(t *testing.T) {
+	tree := newSealedTree(t)
+	other := "package selectedpathtest\n\nimport \"testing\"\n\nfunc TestOther(t *testing.T) {}\n"
+	if err := os.WriteFile(filepath.Join(tree.root, "other_test.go"), []byte(other), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	held := tree.hold(t, context.Background(), tree.factory())
+	if outcome, out, _ := held.Run(); outcome.Kind != OutcomePassed || outcome.Ran != 2 {
+		t.Fatalf("held run = (%q, ran %d), want passed with 2 tests\n%s", outcome.Kind, outcome.Ran, out)
+	}
+	narrow, line, code := Prepare(tree.root, []string{"--run", "^TestSelectedPath$"})
+	if line != "" {
+		t.Fatalf("Prepare = (%q, %d), want an accepted selection", line, code)
+	}
+	if err := os.Remove(tree.marker); err != nil {
+		t.Fatal(err)
+	}
+	if outcome, out, _ := held.RunRequest(narrow); outcome.Kind != OutcomePassed || outcome.Ran != 1 {
+		t.Fatalf("narrowed run = (%q, ran %d), want passed with 1 test\n%s", outcome.Kind, outcome.Ran, out)
+	}
+	if got := readTestReportFile(t, tree.marker); got != tree.outputs[0] {
+		t.Fatalf("narrowed run selected %q, want the held build %q", got, tree.outputs[0])
+	}
+	if got := held.Builds(); got != 1 {
+		t.Fatalf("Builds() = %d, want 1", got)
+	}
+}
+
 func TestHeldRunsRefuseAStaleInheritedBinary(t *testing.T) {
 	tree := newSealedTree(t)
 	held := tree.hold(t, context.Background(), tree.factory())

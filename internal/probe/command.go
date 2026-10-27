@@ -80,13 +80,14 @@ func Command(args []string) (string, int) {
 	return run(root, parsed)
 }
 
-// probeGrammar answers the grammar a help request reads: the usage line and the focused-run
-// owner's own notes. The notes come from the owner rather than from a copy here, so the
-// help states what the run does instead of a second description of it. A form refusal keeps
-// the bare usage line, because a refused argv needs the shape it broke, not the notes.
+// probeGrammar answers the grammar a help request reads: the usage line, the focused-run
+// owner's own notes, and the probe's narrowing note. Each note comes from its owner rather
+// than from a copy here, so the help states what the run does instead of a second
+// description of it. A form refusal keeps the bare usage line, because a refused argv needs
+// the shape it broke, not the notes.
 func probeGrammar() usage.Grammar {
 	withNotes := grammar
-	withNotes.Help = grammar.Help + "\n" + testreport.ProbeNotes()
+	withNotes.Help = grammar.Help + "\n" + testreport.ProbeNotes() + "\n  " + expectRunNote
 	return withNotes
 }
 

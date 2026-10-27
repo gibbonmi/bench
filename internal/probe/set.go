@@ -106,9 +106,9 @@ func decodeSetEnvelope(tables [][]cellReader) (setEnvelope, error) {
 	return e, readError(tables)
 }
 
-// setRun is one mutant set in flight: the subject, the held runs, the entries and their rows
-// in entry order, the preserved table of a failed restore, and the failure line of a held
-// selection that did not close.
+// setRun is one mutant set in flight: the subject, the held runs, the entries with their rows
+// and the requests of their mutated runs in entry order, the preserved table of a failed
+// restore, and the failure line of a held selection that did not close.
 type setRun struct {
 	replacer  durablefile.Replacer
 	root      string
@@ -117,23 +117,36 @@ type setRun struct {
 	runs      *testreport.HeldRuns
 	entries   []setEntry
 	rows      []mutantRow
+	requests  []testreport.Request
 	preserved string
 	cleanup   string
 }
 
 // runSet grades a mutant set in the single form's refusal order. One subject lock, one reread,
-// one baseline, and one cancel context cover every mutant. Each matching entry then preserves,
-// writes, runs, and restores in file order.
+// one baseline, and one cancel context cover every mutant. The baseline selection narrows to
+// the --expect tests of the matching entries, and each mutated run narrows to its own entry's
+// test. Each matching entry then preserves, writes, runs, and restores in file order.
 func runSet(replacer durablefile.Replacer, root string, parsed usage.Result, subject subject) (string, int) {
 	entries, line, code := readMutantSet(parsed, subject)
 	if line != "" {
 		return line, code
 	}
-	request, line, code := prepareSelection(root, parsed, subject)
+	var expects []string
+	for _, entry := range entries {
+		if !entry.mutant.miss {
+			expects = append(expects, entry.expect)
+		}
+	}
+	request, line, code := prepareSelection(root, parsed, subject, expects)
 	if line != "" {
 		return line, code
 	}
-	s := &setRun{replacer: replacer, root: root, subject: subject, entries: entries, rows: make([]mutantRow, len(entries))}
+	s := &setRun{replacer: replacer, root: root, subject: subject, entries: entries, rows: make([]mutantRow, len(entries)), requests: make([]testreport.Request, len(entries))}
+	for i, entry := range entries {
+		if s.requests[i], line, code = prepareSelection(root, parsed, subject, []string{entry.expect}); line != "" {
+			return line, code
+		}
+	}
 	e := setEnvelope{form: request.Form(), target: request.Target(), run: request.Run()}
 	matched := false
 	for i, entry := range entries {
@@ -202,7 +215,7 @@ func (s *setRun) grade(i int, entry setEntry) bool {
 		s.stopFrom(i+1, untouchedCells(setStoppedCause))
 		return false
 	}
-	run := runRestored(s.replacer, s.subject, preserved, s.runs.Run)
+	run := runRestored(s.replacer, s.subject, preserved, func() (testreport.Outcome, string, int) { return s.runs.RunRequest(s.requests[i]) })
 	cells, code := mutatedCells(run.outcome, entry.expect, testreport.OutcomePassed)
 	s.rows[i] = mutantRow{mutation: entry.input.cell, cells: cells, focused: &run.focused, exit: code, report: run.report}
 	if !run.restored {
