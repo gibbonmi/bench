@@ -1,7 +1,7 @@
 # Share the pass predicate of a chunk verification entry
 
 Blocked by: none
-Writes: internal/reviewrecord/check.go, internal/reviewrecord/record_test.go, internal/reviewrecord/carry_candidate_test.go (new)
+Writes: internal/reviewrecord/check.go, internal/reviewrecord/coverage.go, internal/reviewrecord/record_test.go, internal/reviewrecord/export_test.go, internal/reviewrecord/carry_candidate_test.go (new)
 Covers: CF30
 
 ## What to build
@@ -14,4 +14,6 @@ The chunk verification grade, `checkVerification`, holds the only rule for a pas
 
 - [ ] For each entry variant under the plan performer, the carry candidate and the chunk verification grade give one verdict. The variants are a pass, a failed outcome, a missing exit code, a changed command, a probe that did not bite, and a probe whose restore failed.
 - [ ] `TestProbeChecksAgree` and each checkpoint test that names `verification <id> is incomplete, failed, or stale` pass with no change to the expected text.
-- [ ] The candidate refuses an entry with no source commit, and it reads only the last entry of the requirement.
+- [ ] `carry_candidate_test.go` holds a case where the candidate refuses an entry with no source commit. It also holds a case where an earlier entry passed and the last entry failed, and the candidate refuses.
+
+The candidate reads `EntryCurrent`, which queries Git. An external test can build its repository with `recordtest` and reach `checkVerification` through `export_test.go`. An in-package test can build it with `internal/gittest` instead.

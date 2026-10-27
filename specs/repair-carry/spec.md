@@ -6,7 +6,7 @@ Roadmap: FT448
 
 Decision source: named reviewed artifact `roadmap/FT448.md`, from drain d-0700c4586eaa with the reviewer decision of 2026-10-25, and the reviewer's late answer of 2026-10-27 that only a test-only repair delta carries.
 
-Verification log: pending
+Verification log: 3 iteration(s) to accept — the spec round took 2: iteration 1 found an unrouted carried-entry writer, an undefined assignment-only delta, and an unswept operating-guide clause. The ticket round accepted in 1.
 
 ## Problem
 
@@ -278,7 +278,7 @@ Won't handle: the final verification list does not carry — the ticket form wri
 
 ### Reader sweep
 
-- The ticket form refusal text has one test pin, the missing-stage case of `TestTicketRefusals`, which compares with a substring test. The new text keeps that prefix.
+- The ticket form refusal text has two test pins, which compare with a substring test. One is the missing-stage case of `TestTicketRefusals`. The other is the `quoted` case in the stage tests of the record command. The new text keeps that prefix, and neither requirement has a prior entry, so each pin stays green.
 - The help line of the ticket form has one pin, in `TestHelpInventoryIsComplete`.
 - The ticket output header has no reader outside the ticket form.
 - The full-rerun rule has two statements in guidance: one sentence in the Land section of the implement phase, and one clause in the operating guide. The review phase, the delegation discipline, and the reference do not state it. No anchor pins either statement.
@@ -308,7 +308,7 @@ FT455 records a reviewer decision of 2026-10-27: the test-only predicate is to c
 - Promised field labels: the `carried` cell, the `carried:` reference prefix, and the four reasons `no current passing entry`, `the delta is not test-only`, `the delta changes a whole-only test file`, and `the delta reaches the command`.
 - Changed-function callers: `ownedStages` and `ownedRuns.calls` have one caller, the ticket form. `checkVerification` has three callers: the chunk grade, the completion grade, and `TestProbeChecksAgree`. `deltaPackages` has one caller, the delta plan. `planSelection` and `packageCovers` have one caller each, in the check floor.
 - Copy survival: CF3 and CF32.
-- Rendered-shape readers: the old refusal text has one hit, in `TestTicketRefusals`. The old help line has one hit, in `TestHelpInventoryIsComplete`. The output header has no hit outside the ticket form. Each retired guidance needle has one hit, in its own file.
+- Rendered-shape readers: the old refusal text has two hits, in `TestTicketRefusals` and in the `quoted` stage test. The old help line has one hit, in `TestHelpInventoryIsComplete`. The output header has no hit outside the ticket form. Each retired guidance needle has one hit, in its own file.
 - Pin operators: the refusal test compares with a substring test, and the help test compares whole lines.
 - Entry reads: none. The carry decision takes the root, the spec, the chunk entry, and the requirement as values.
 - Derived expectations: the tests derive each reason and each package operand from the fixture delta, not from the code under test.

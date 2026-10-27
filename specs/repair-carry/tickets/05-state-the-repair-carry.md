@@ -15,7 +15,7 @@ Add two Forbid rows to the chunk chain anchors, with the needles `runs each chec
 
 ## Acceptance
 
-- [ ] The Land section states that a repair session runs each check that its repair delta reaches, and the anchor `Before a successor chunk starts, run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>`.` still holds.
+- [ ] The Land section states that a repair session runs each check that its repair delta reaches, and the anchor ``Before a successor chunk starts, run `bench gate --checkpoint specs/<slug>/spec.md --chunk <id>`.`` still holds.
 - [ ] The operating guide states that a repair session reruns each ticket check that its repair delta reaches.
 - [ ] `TestChunkChainAnchors` refuses each retired needle.
 - [ ] The changelog states the carry and its test-only bound.
