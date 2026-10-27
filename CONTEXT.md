@@ -60,9 +60,10 @@ synonyms. A cold session reads this file first so the vocabulary does not drift.
   a green answers each whole-gate verb from any checkout. Not "authorization key", not
   "evidence key", not "reuse key" — grade key.
 - **background grade** — a gate run that a lane pass starts in a kit worktree and that
-  no caller waits for. It grades the exact subject of the next chunk checkpoint or
-  landing, reads only the graded commit, and never writes a gate cache. Not "prepared
-  run", not "daemon", not "precompute" — background grade.
+  runs detached from that verb. It grades the exact subject of the next chunk checkpoint
+  or landing. It reads commits and machine inputs, never the live worktree. It never
+  writes a gate cache. Not "prepared run", not "daemon", not "precompute" — background
+  grade.
 - **grade claim** — the record that a running background grade holds on its grade key.
   A chunk checkpoint or a landing of that key waits while the claim lives. Not "lease",
   not "gate lock" — grade claim.

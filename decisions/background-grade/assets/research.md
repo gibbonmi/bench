@@ -36,9 +36,9 @@ No measurement ran.
 
 | consumer | graded tree | running executable | citation |
 |---|---|---|---|
-| `bench gate` in a worktree | the working tree | the executable that the wrapper resolves | `internal/gate/gate.go:364-370`, `internal/gate/evaluation.go:39-56` |
+| `bench gate` in a worktree | the working tree | the executable that the wrapper resolves | `internal/gate/evaluation.go:39-56`, `bin/bench.sh:293-317` |
 | chunk checkpoint | the HEAD tree without `reviews/<slug>.md` | the running executable, in its own process | `internal/gate/checkpoint.go:286-306`, `internal/reviewrecord/plan.go:209-218` |
-| prepared chunk run | the tree of the chunk checkpoint | the running executable | `internal/gate/checkpoint.go:84-88`, `internal/gate/gate.go:224` |
+| prepared chunk run | the tree of the chunk checkpoint | the running executable | `internal/gate/checkpoint.go:84-88`, `internal/gate/checkpoint.go:302-304` |
 | complete checkpoint | the published tree of HEAD | the installed broker | `internal/gate/complete_checkpoint.go:16-31`, `internal/gate/complete_checkpoint.go:42-91` |
 | landing | the published tree composed on the destination | the installed broker | `projects/benchkit.md:49-62`, ADR 0031 lines 29-31 |
 
@@ -66,7 +66,7 @@ No measurement ran.
 - The run passes the resolution kind of its plan (`internal/gate/run_transaction.go:161-162`). An ordinary run in the kit resolves `gate-script`, so it builds from the wrapper kit.
 - The identity passes the prospective kind whenever `.bench/gate-prospective.sh` exists in the graded root (`internal/gate/subject.go:93-100`, `internal/gate/subject.go:141-142`).
 - So an ordinary run in the kit frames the build inputs of the graded tree while it builds from the wrapper kit.
-- `KitForRoot` makes the wrapper kit the graded checkout for a worktree of the kit's own repository (`internal/gate/kit_root.go:5-20`). So the two answers differ only when `BENCH_KIT` names another checkout.
+- For a worktree of the kit's own repository, `KitForRoot` answers that worktree as its kit (`internal/gate/kit_root.go:5-20`). So the two answers differ only when `BENCH_KIT` names another checkout.
 - The GR-C1 Coverage axis found this edge as finding C2, and the orchestrator flagged it for reviewer veto (`git show 4645ff51c^:reviews/gate-reuse.md`, line 265).
 
 ### Q5. What lifetime rules bind a process that outlives its verb?
@@ -82,7 +82,9 @@ No measurement ran.
 
 - The host has 16 logical cores and 23 GiB of memory on WSL2, and `go env GOFLAGS` gives `-p=4 -parallel=4` (observed in this session on 2026-10-27).
 - The profile caps concurrent test delegates at two (`projects/benchkit.md:646-649`).
-- The gate gives its children a closed environment (`internal/gate/subject.go:69-71`, `internal/gate/subject.go:101-111`, `internal/gate/subject.go:133-138`, `internal/gate/run_transaction.go:185-191`). It holds `PATH`, the declared `BENCH_HOME` and `HOME` (`.bench/gate-inputs.json`), the build cache, and the run binary.
+- The gate gives its children a closed environment (`internal/gate/subject.go:69-71`, `internal/gate/subject.go:101-111`, `internal/gate/subject.go:133-138`). It holds `PATH`, the declared `BENCH_HOME` and `HOME` (`.bench/gate-inputs.json`), and the build cache.
+- The run adds the run binary, `BENCH_KIT`, the baseline entry, and the run-log entry (`internal/gate/run_transaction.go:185-191`). It also adds the span entry (`internal/gate/engine.go:239`).
+- A delta run adds `BENCH_GATE_DELTA` (`internal/gate/delta_checkpoint.go:84`). That entry is a Bench input outside the grade key, so it is a precedent for a background width input.
 - No Bench setting selects the `-p` width of a gate phase (`internal/gate/phases.go:220-236`). FT255 owns that shared setting and its default of two (`roadmap/FT255.md:8-13`).
 - The reviewer decided on 2026-10-25 that a gate measurement runs at `-p=2` only (`roadmap/FT255.md:19-21`). The FT451 bound criterion repeats it (`.bench/commitment.json:1337-1339`).
 - These workloads run beside each other on this host:
@@ -96,6 +98,7 @@ No measurement ran.
   - one run took all capacity and stopped WSL on 2026-08-25
   - outer phase overlap extended the posture span from 50.9 s to 85.4 s
 - The FT445 landing took 207 s in its test phase and 48 s in its system phase (`git show 61c5adec4:capture/retros/chunk-repair-cycle.md`, lines 11-21). The FT314 landing took 334 s and 53 s (`git show 4645ff51c:capture/retros/gate-reuse.md`, lines 7-14).
+- So a whole landing gate took about 4.3 to 6.5 minutes.
 - A whole `--fresh` checkpoint took 5 min 40 s. The FT445 test-only repair cycle took 40 min 23 s, and the author's own runs took about 26 min of it.
 
 ### Q7. Which work makes lane-passed tips, and which tips reach a consumer?
@@ -164,6 +167,9 @@ None. This run executed no gate and no measurement.
 - U2. This run did not verify that Go reads its `-p` width from the configuration file under `HOME` inside a gate run. The open learning at `capture/learnings.md:7-10` has no repro, and this run did not open the Go documentation.
 - U3. This run did not measure the cost of one background gate beside foreground work at `-p=2`.
 - U4. No record counts how often the destination moves between the last commit of a worktree and its landing.
+- U5. No record counts how many spec-less or tickets-only kit landings take the whole gate and not the reader set. With U4, this count sets the hit rate of the landing consumer.
+- U6. This run did not verify that the lowest I/O priority takes effect on WSL2.
+- U7. This run did not verify whether a whole green and a red with a landing context are the only extra writes of a run. The map review found the reader table and the reader hold (`internal/gate/run_transaction.go:249`, `internal/gate/run_transaction.go:256-258`).
 
 ## Verification record
 
@@ -176,9 +182,13 @@ None. This run executed no gate and no measurement.
 - [x] The unknowns state what this run could not verify.
 - [x] Each load-bearing claim cites a path and a line, a commit, or an observation of this session.
 - [ ] Paired independent reads: not done, by reviewer direction.
+- [x] An independent map review on Opus at high effort spot-checked the Q1 to Q4 citations against the code, and this asset carries its corrections.
 
 ## Validation plan
 
 - The spec writer reproduces U1 with one prepared run and one plan commit before the subject rows lock.
 - The first build ticket measures U3 at `-p=2` under the bound that the map decides.
 - U2 graduates through the repro that `capture/learnings.md:9` names.
+- The census ticket records U6, because its log must show that the priority took effect.
+- The spec writer counts U5 from the landing history before the landing chunk.
+- The spec writer lists every write of a whole run before the write rows lock, to close U7.
