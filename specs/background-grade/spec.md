@@ -207,7 +207,7 @@ BG-C1 to BG-C4 each hold a seam that a later chunk consumes, so each review clos
 | BG14 | 10 | A run with no run-binary selection frames one stable identity value | `internal/gate/run_binary_source_test.go` (`TestNoSelectionFramesAStableValue`) | A missing case frames a path-dependent value and moves the key |
 | BG15 | 9 | One clean kit tree gives one run-binary member to its ordinary run and to its prospective run | `internal/gate/run_binary_source_test.go` (`TestOrdinaryAndProspectiveFrameOneSource`) | A derivation that splits by evaluation mode changes the keys of current greens |
 | BG16 | 39 | A chunk-subject run keeps its subject when a Go build input of the worktree changes during the oracle | planned TestBaselineReadsSurviveAWorktreeEdit in internal/gate/baseline_commit_test.go | A baseline runner read from the working tree moves the oracle digest |
-| BG17 | 39 | A chunk-subject run across a plan commit in its worktree records its green | planned TestBaselineReadsSurviveAPlanCommit in internal/gate/baseline_commit_test.go | A subject that reads the moved worktree refuses, as the GR-C2 run did |
+| BG17 | 39 | A chunk-subject run across a commit that changes a Go build input in its worktree records its green | planned TestBaselineReadsSurviveABuildInputCommit in internal/gate/baseline_commit_test.go | A baseline runner digest read from the moved worktree refuses the run with a changed subject |
 | BG18 | 39 | The baseline schedule member frames the manifest bytes of the identity commit, not the working file | planned TestBaselineScheduleReadsTheCommit in internal/gate/baseline_commit_test.go | A working-file read lets an uncommitted manifest edit move the key |
 | BG19 | 22 | With the width input set, each Go test phase argv holds `-p=2` and `-parallel=2` | planned TestWidthInputSetsTheTestWidths in internal/gate/width_test.go | An ambient `GOFLAGS` never reaches the closed phase environment |
 | BG20 | 23 | The width input leaves the grade key of one subject unchanged | planned TestWidthInputLeavesTheGradeKey in internal/gate/width_test.go | A width that enters the key makes a background green answer nothing |
@@ -344,7 +344,7 @@ Won't handle: the GR44 edge between two foreground runs — BG66 keeps today's r
 | (b) seam or test choice | The state lives in the leaf package `internal/gate/backgroundstate`, so `internal/gocache` can stop grades with no import of `internal/gate`. |
 | (b) seam or test choice | The stop of ticket 05 sends its signal through `internal/subprocess`, because the lifetime closure check refuses a signal from any other package. |
 | (b) seam or test choice | The plumbing entry reuses an existing route line of `bin/bench.sh`, which is over its line budget. |
-| (c) missing fact | Map unknown U1: ticket 03 reproduces the GR-C2 refusal through BG17 before its change. |
+| (c) missing fact | Map unknown U1: a plan commit that changes only the spec, the tickets, or the review record moves no baseline member, because the settle compares no identity member. A commit that changes a Go build input moves the baseline runner digest, and ticket 03 reproduces that refusal through BG17 before its change. |
 | (c) missing fact | Map unknown U3: ticket 01 measures it. |
 | (c) missing fact | Map unknown U5: no record counts how many kit landings take the whole gate. BG-C4 still ships, because a miss costs only the run that the landing pays today. |
 | (c) missing fact | Map unknown U6: the idle I/O class was accepted on this host on 2026-10-27, and ticket 01 records whether it takes effect. |
