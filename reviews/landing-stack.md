@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:e6a655b2de8d9fbfef74544189d63e8129a924c9ee9dad74150d22cb6d37b16b",
+  "plan_digest": "sha256:e18ee3bd955bd9d480859bc7f5dd58bb2dddea5dfa3b0ffa93de2fbf2f5c60e1",
   "implementation_session": "",
   "chunks": [
     {
@@ -1686,9 +1686,9 @@
     {
       "id": "LS-C7",
       "base": "b76b88848e65464364c7e0302359e3a0916fc812",
-      "tip": "a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9",
-      "plan_digest": "sha256:e6a655b2de8d9fbfef74544189d63e8129a924c9ee9dad74150d22cb6d37b16b",
-      "source_digest": "7fd892a347bb2f5209d232e58559ae653a22f5a3",
+      "tip": "f3409275c55a0ff165fab8ff808fd343de397929",
+      "plan_digest": "sha256:e18ee3bd955bd9d480859bc7f5dd58bb2dddea5dfa3b0ffa93de2fbf2f5c60e1",
+      "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
       "acceptance_rows": [
         "LS46",
         "LS47",
@@ -1774,6 +1774,82 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14214,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c7-t09-r1-worktree",
+          "performer": "claude:ls-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t09-repair1-20261026",
+            "digest": "sha256:b5715453524baa2221501b1c5ec10b119cbdfedb62ff45f0890f56ba72a033bc",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,151497,1572\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c7-t09-r1-refusalroute",
+          "performer": "claude:ls-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t09-repair1-20261026",
+            "digest": "sha256:dfc1f80e92253a521ca1579e11429f1c67360e7423b85e70e953e27a91619ee5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/refusalroute,pass,5,22\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "requirement": "refusalroute",
+          "command": "bench test --package ./internal/refusalroute",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c7-t09-r1-commands",
+          "performer": "claude:ls-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t09-repair1-20261026",
+            "digest": "sha256:70705f7a71d48b62a8dc00300390b2d343317608a970ee67cf00c31de77137c4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23676,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "requirement": "commands",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c7-t09-r1-root-conformance",
+          "performer": "claude:ls-t09-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t09-repair1-20261026",
+            "digest": "sha256:841914560ecac35f6f9be21408fe3503e94dcadd5ee81156abc0eeaa96778225",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14276,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f3409275c55a0ff165fab8ff808fd343de397929",
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -2066,6 +2142,33 @@
         ],
         "LS-C6": [
           "LS-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6a655b2de8d9fbfef74544189d63e8129a924c9ee9dad74150d22cb6d37b16b",
+      "to": "sha256:e18ee3bd955bd9d480859bc7f5dd58bb2dddea5dfa3b0ffa93de2fbf2f5c60e1",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ],
+        "LS-C3": [
+          "LS-C3"
+        ],
+        "LS-C4": [
+          "LS-C4"
+        ],
+        "LS-C5": [
+          "LS-C5"
+        ],
+        "LS-C6": [
+          "LS-C6"
+        ],
+        "LS-C7": [
+          "LS-C7"
         ]
       }
     }
