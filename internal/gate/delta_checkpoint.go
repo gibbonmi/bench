@@ -50,10 +50,9 @@ type deltaRun struct {
 // runBinary graded at recordedAt, as the delta record of gitdir through replacer. The verdict
 // cache and the evidence store stay untouched, so no landing and no whole checkpoint reads it.
 func writeDeltaGreen(replacer durablefile.Replacer, gitdir string, run deltaRun, runBinary string, recordedAt time.Time) error {
-	return durableReplaceAt(replacer, gitdir, benchgit.DeltaCacheFile, verdictRecord{
-		Schema: verdictSchema, Tree: run.plan.Tree, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339),
-		RunBinary: runBinary, Delta: run.set, BaseTree: run.base,
-	})
+	rec := storeRecord(run.plan.Tree)
+	rec.RecordedAt, rec.RunBinary, rec.Delta, rec.BaseTree = recordTime(recordedAt), runBinary, run.set, run.base
+	return durableReplaceAt(replacer, gitdir, benchgit.DeltaCacheFile, rec)
 }
 
 // deltaPlan answers the delta of a chunk checkpoint, whose plan carries the environment entry
