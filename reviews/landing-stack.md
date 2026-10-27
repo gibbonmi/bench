@@ -1779,7 +1779,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c7-standards-r1",
+          "performer": "claude:ls-c7-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7fd892a347bb2f5209d232e58559ae653a22f5a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c7-standards-20261026",
+            "digest": "sha256:bd62eda18b76dd2f6b022eb2138fd02eacd66fca09c294f5b4ad89539f792f3d",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 1\nworst: S1 (severity 3)\n\nBind: preflight evidence --check-current reported current=true, dirty_record=false, base b76b888; graded the frozen pair diff.\n\nS1 | 3 | ask-user | 5 | internal/worktree/land_stack_route_test.go:407-429 | foldLandedStack re-parses and re-writes the stack file with its own map[string]string shape and restates the field names members, path and source_tip. The typed stack-file shape already lives in writeStack (internal/worktree/land_stack_test.go:22-40), and production owns the parser. AGENTS.md one source per fact. If reading the file as an operator would is the intent, a comment records it; otherwise one stack-file type serves both.\n\nAdvice:\n- land_stack_red_test.go:96 spells the outcome cells as literals instead of the production constants; it follows the file precedent at land_stack_test.go:128-129.\n- greenDestination (land_stack_red_test.go:225-247) edits the fixture gate with strings.Replace on a literal line; a fixture option would be better.\n- Checked and clean: repairRed is shared by land-red and stack-red (faces_land.go:20-22,147-170); repairsSource is the one source for stack-red repair detection (land_refusal.go:292); stackAttributed gates on authorization.Candidate; stackRouteFixtures and stackRouteKeys feed the walk and the census (identity_component_test.go:226-228); the pin 851 to 853 matches two new tests; all edits are inside ticket 09's Writes:.\n\nCommand: no command change is necessary.\nRead: the evidence bind output, the frozen-pair diff, ticket 09, land_stack.go (85-315), land_stack_rerun.go, land_stack_test.go (1-110), land_stack_rerun_test.go (1-60), spec.md rg hits for stack-red, outcome and LS106, rg hits for the helper definitions.\n"
+          },
+          "axis": "Standards",
+          "base": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "tip": "a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c7-spec-r1",
+          "performer": "claude:ls-c7-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7fd892a347bb2f5209d232e58559ae653a22f5a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c7-spec-20261026",
+            "digest": "sha256:c7ab7079648c447f4e8e707752190f8d8344a4ad76048bf994a9db988d4b70a4",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current reports current=true, dirty_record=false; the HEAD 5aeefe2e differs from the tip a3eae91e only in reviews/landing-stack.md.\n\nAudit:\n- LS46-49: three members with member 2 red grade 3, 1, 2, so the tally is \"ggg\" and member 1 is published; the red cell prints for member 2 and unlanded for member 3; the route label comes from landings[red]. TestLandStackRedJourney (land_stack_red_test.go:268-302) asserts each.\n- LS106: an inherited kind is not authorization.Candidate, so stackAttributed returns -1 and the stack falls through to land-handback (land_stack.go:256-260); the test expects tally \"g\", an unmoved destination, and no lease.\n- stack-red is registered with Authority Agent, and its route is repair, commit at the label, review, the spec-verbatim fold instruction, then the rerun (faces_land.go:143-166); repairsSource includes it (land_refusal.go:292).\n- The seven rerun rules hold in land_stack_rerun.go:71-101, driven by the removed and reset facts at land_stack.go:230-243.\n- LS89, LS102 and LS103 follow from those rules.\n- LS68 and LS69 are covered by the red-middle-of-three fixture with a spaced directory; the fold carry and the late <repaired-tip> fill are at land_stack_route_test.go:398-478.\n- The outcome cell red (land_stack.go:316) matches \"The output and the exits\". The census pin 851 to 853 matches two new tests. The identity_component_test.go edit is the widened Writes: entry.\n\nAdvice:\n- singleRerun renders a repaired single rerun as <repaired-source-tip> (land_rerun.go:10), not the spec's <repaired-tip>; this predates the delta.\n- No acceptance row asserts the red cell alone.\n- LS103's walk does not assert that the first run published member 1 with the override tip.\n- A post-publication step failure beside a red refusal overwrites exit 3 with exit 1 (land_stack.go:124-126); ticket 11 should check it.\n\nCommand: no command change is necessary.\nRead: the diff, the coverage output, spec lines 1-230 and the LS rows, ticket 09, the review skill Spec section, land_stack.go, land_stack_rerun.go, land_refusal.go:150-320, internal/landing/stack.go:30-200, faces_land.go:1-60, routetest.go:40-70, land_fixtures_test.go:290-345.\n"
+          },
+          "axis": "Spec",
+          "base": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "tip": "a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c7-coverage-r1",
+          "performer": "claude:ls-c7-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "7fd892a347bb2f5209d232e58559ae653a22f5a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c7-coverage-20261026",
+            "digest": "sha256:0e9615437b26a7f7d6ac51dad9da94511bd709c0675e3a7cc5b991dc6ddbb085",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 2\nworst: C1, severity 5. The override-over-a-folded-member half of LS103 has no test.\n\nBind: preflight reported current=true, dirty=false; evidence source_tip 5aeefe2 descends from the frozen tip a3eae91, and only reviews/landing-stack.md changed after it.\n\nC1 | 5 | auto-fix | 8 | internal/worktree/land_stack_route_test.go:383-386 (fixture \"red-after-an-override\"), against land_stack.go stackLandingRefusal, the fact.reset loop | The only override fixture pins member 1, which is removed. No fixture pins a surviving member, so the reset wiring of the stack refusal never changes any output. Deleting the fact.reset loop, or starting it at the wrong index, leaves every row green, which lets through the LS103 failure \"keeps an override over a folded tip meets source-tip-mismatch\". A fixture needs an override on member 3 of 3 with member 2 red.\nC2 | 3 | ask-user | 5 | internal/worktree/land_stack.go:121-127 (stackAttributed) | The AuthorizationRefusal and Kind == Candidate guard exists because a recheck or admission refusal after the bisect leaves Attributed set, but no test reaches that state. Dropping the guard would route a post-bisect publication refusal to stack-red. The state is hard to fixture.\n\nChecked and sound:\n- LS47: the walk grades 3, 1, 2 with no cache or reuse in internal/landing or authorization, so a re-grade of the green prefix would run the gate a fourth time and break requireTally \"ggg\". Read from code; the author's mutant was not the LS47 named failure.\n- The <repaired-tip> fill is read from member HEAD after the fold step.\n- The fold is exercised for k=1: landed-member removal and the source_tip set.\n- LS69 passes through the printed next= route with the quoted spaced path.\n- Removing the instruction step makes Follow hit its agent-command fatal.\n\nAdvice:\n- LS48 does not assert that the red member 2 stays active.\n- No fixture lands two or more members; only k<=1 is walked.\n- The walk checks the step count and the label, not which face printed.\n- foldLandedStack hard-codes the stack-file keys, and the LS49 rerun literal duplicates the composer's knowledge, as LS86, LS87 and LS94 do.\n\nCommand: no command change is necessary.\nRead: the frozen diff, ticket 09, spec rows LS46-49, LS68, LS69, LS89, LS102, LS103, LS106, the craft-review Coverage section, the hostile-input checklist, internal/landing/stack.go, land_stack_rerun.go and its test, routetest.go Steps and Follow.\n"
+          },
+          "axis": "Coverage",
+          "base": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "tip": "a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2232,3 +2298,32 @@ Every repair is test-only, so a coordinator confirmation closes it.
 The ticket 08 repair `b76b88848e65464364c7e0302359e3a0916fc812` changes tests only. Repair cycles used: 1 of 2.
 
 The coordinator probe rounded the bisect midpoint up. It reported `bit` in the odd-member case of `TestLandStackBisectsToTheRedMember` with `restored` yes. The confirmation closes S1, C1, and C2. The repair also closes the shadow find with two recheck cases.
+
+## LS-C7 review, round 1
+
+Frozen pair: `b76b88848e65464364c7e0302359e3a0916fc812..a3eae91e35f6ca0d9f28c4d5e5bd1798d3b838d9`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes for the review-mode comparison, and its return is outside this record.
+
+## Standards
+
+Findings: 1. Worst: S1, severity 3.
+
+- S1 (confidence 5), `auto-fix`: `foldLandedStack` parses and writes the stack file with its own field names. The repair shares one stack-file type with `writeStack`.
+
+## Spec
+
+Findings: 0. Worst: none.
+
+## Coverage
+
+Findings: 2. Worst: C1, severity 5.
+
+- C1 (confidence 8), `auto-fix`: no fixture keeps an override on a member that survives the fold. So no test pins the reset wiring of the stack refusal. The repair adds a fixture with an override on member 3 and member 2 red.
+- C2 (confidence 5), `auto-fix`: no test gives `stackAttributed` a refusal that is not an authorization refusal while `Attributed` is set. The repair adds that unit case.
+
+## Shadow finds
+
+The shadow reviewer found two harness duplications that the axes did not report. `requireTally` repeats `requireOneRun`, and the stack walk builds the operator slots a second time beside `operatorFill`. The orchestrator accepts both under the code standard and adds them to the repair.
+
+The axes disagreed on whether a second grade of a green prefix reuses its verdict. The orchestrator keeps LS47 as it is: a reused verdict runs no gate, so the failure that LS47 names does not occur.
+
+Every repair is test-only, so a coordinator confirmation closes it.
