@@ -20,7 +20,7 @@ Avoid "consumer repo" here; `CONTEXT.md` names that thing a linked repo.
 
 Skills: craft-domain, craft-grill, craft-research, and craft-seams for the spec.
 By reviewer direction, this map's research ran in one session with no delegated reads.
-A map-owned asset stays in the map's assets folder, decisions/background-grade/assets/.
+A map-owned asset stays in the map's assets folder, specs/background-grade/decisions/background-grade/assets/.
 The research asset is `background-grade/assets/research.md`.
 
 ## Decisions so far
@@ -48,7 +48,7 @@ The research asset is `background-grade/assets/research.md`.
 
 - The claim mechanism, the queue storage, and the priority mechanism of each platform, provided they meet tickets 6, 7, 13, and 16.
 - The form of the Bench-owned width input, provided that it is not a grade-key member.
-- The rule that classifies a kit worktree as an open spec build and derives its landing deliverable. A wrong answer must only cost a lookup miss.
+- The rule that classifies a kit worktree as an open build of a staged spec and derives its landing deliverable. A wrong answer must only cost a lookup miss.
 - The one stable identity value that a run with no run-binary selection frames under ticket 5.
 - The wording of the background outcome line in `bench commit` and of its `bench status` row.
 - Whether the background grade takes a new ADR, or amends ADR 0002, ADR 0017, ADR 0024, and ADR 0031. Each of those four states a rule that FT451 changes.
