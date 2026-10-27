@@ -82,6 +82,14 @@ func TestStackReaderRefusesAMalformedFile(t *testing.T) {
 	}
 }
 
+// stackMember is the read form of stackMemberJSON(n) with no override.
+func stackMember(n int) StackMember {
+	return StackMember{
+		Path: fmt.Sprintf("wt%d", n), Request: fmt.Sprintf("r%d", n), Base: fmt.Sprintf("b%d", n),
+		SourceTip: fmt.Sprintf("t%d", n), Message: fmt.Sprintf("m%d", n), EffectiveTip: fmt.Sprintf("t%d", n),
+	}
+}
+
 func TestStackReaderAcceptsSixteenMembers(t *testing.T) {
 	t.Parallel()
 	body := strings.Replace(stackFileJSON(16), `"message":"m3"`, `"spec":"s3","message":"m3"`, 1)
@@ -89,15 +97,43 @@ func TestStackReaderAcceptsSixteenMembers(t *testing.T) {
 	mustNoError(t, err)
 	requireTest(t, len(input.Members) == 16 && len(input.Overrides) == 0, "input = %+v, want sixteen members and no override", input)
 	for i, member := range input.Members {
-		n := i + 1
-		want := StackMember{
-			Path: fmt.Sprintf("wt%d", n), Request: fmt.Sprintf("r%d", n), Base: fmt.Sprintf("b%d", n),
-			SourceTip: fmt.Sprintf("t%d", n), Message: fmt.Sprintf("m%d", n), EffectiveTip: fmt.Sprintf("t%d", n),
-		}
-		if n == 3 {
+		want := stackMember(i + 1)
+		if i+1 == 3 {
 			want.Spec = "s3"
 		}
-		requireTest(t, member == want, "member %d = %+v, want %+v", n, member, want)
+		requireTest(t, member == want, "member %d = %+v, want %+v", i+1, member, want)
+	}
+	// Each case gives the path and the working directory for a stack file in dir.
+	for _, tc := range []struct {
+		name    string
+		members int
+		locate  func(t *testing.T, dir string) (path, workingDir string)
+	}{
+		{name: "two members, the floor", members: 2, locate: func(_ *testing.T, dir string) (string, string) {
+			return "stack.json", dir
+		}},
+		{name: "absolute path from another working directory", members: 3, locate: func(t *testing.T, dir string) (string, string) {
+			return filepath.Join(dir, "stack.json"), t.TempDir()
+		}},
+		{name: "symlink to a regular file", members: 3, locate: func(t *testing.T, dir string) (string, string) {
+			linkDir := t.TempDir()
+			if err := os.Symlink(filepath.Join(dir, "stack.json"), filepath.Join(linkDir, "stack.json")); err != nil {
+				capability.Capability(t, capability.Symlink, "cannot create a symlink: "+err.Error())
+			}
+			return "stack.json", linkDir
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			path, workingDir := tc.locate(t, writeStackFile(t, stackFileJSON(tc.members)))
+			input, err := ReadStack(path, workingDir, nil)
+			mustNoError(t, err)
+			want := make([]StackMember, tc.members)
+			for i := range want {
+				want[i] = stackMember(i + 1)
+			}
+			requireTest(t, reflect.DeepEqual(input.Members, want) && len(input.Overrides) == 0, "input = %+v, want members %+v and no override", input, want)
+		})
 	}
 }
 
@@ -145,24 +181,42 @@ func TestStackReaderRefusesABadOverride(t *testing.T) {
 
 func TestStackReaderRefusesASpecialFile(t *testing.T) {
 	t.Parallel()
-	path := filepath.Join(t.TempDir(), "stack.json")
-	if err := syscall.Mkfifo(path, 0o600); err != nil {
+	dir := t.TempDir()
+	fifo := filepath.Join(dir, "stack.json")
+	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
 		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
 	}
-	type result struct {
-		input StackInput
-		err   error
-	}
-	done := make(chan result, 1)
-	go func() {
-		input, err := ReadStack(path, "/", nil)
-		done <- result{input, err}
-	}()
-	select {
-	case got := <-done:
-		refusal := requireStackRefusal(t, got.input, got.err, 0)
-		requireTest(t, strings.Contains(refusal.Error(), "not a regular file"), "refusal %q does not name the special file", refusal.Error())
-	case <-time.After(bounds.TestDeadline(0)):
-		t.Fatal("the stack reader blocked on a FIFO with no writer")
+	for _, tc := range []struct {
+		name   string
+		target string
+		link   bool
+	}{
+		{name: "FIFO (LS65)", target: fifo},
+		{name: "symlink to a FIFO", target: filepath.Join(dir, "link.json"), link: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if tc.link {
+				if err := os.Symlink(fifo, tc.target); err != nil {
+					capability.Capability(t, capability.Symlink, "cannot create a symlink: "+err.Error())
+				}
+			}
+			type result struct {
+				input StackInput
+				err   error
+			}
+			done := make(chan result, 1)
+			go func() {
+				input, err := ReadStack(tc.target, "/", nil)
+				done <- result{input, err}
+			}()
+			select {
+			case got := <-done:
+				refusal := requireStackRefusal(t, got.input, got.err, 0)
+				requireTest(t, strings.Contains(refusal.Error(), "not a regular file"), "refusal %q does not name the special file", refusal.Error())
+			case <-time.After(noWriterDeadline):
+				t.Fatal(bounds.TestTimeoutVerdict("the stack reader to return over a no-writer FIFO", noWriterDeadline))
+			}
+		})
 	}
 }
