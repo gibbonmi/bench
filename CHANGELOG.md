@@ -6,11 +6,6 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
-### Probe narrowing to the expect test
-
-- Changed `bench probe`, which now narrows a `--package` selection with no `--run` to the test that `--expect` names and its subtests. A single probe narrows its baseline run and its mutated run. In a `--mutants` set, each entry with an `--expect` test runs its mutant over that test only, and the baseline runs the union of the entry tests. When a matched entry names no test, the baseline and that entry run the whole selection. An explicit `--run` and each `--check` selection do not change. Before, each run without `--run` ran the whole package.
-- Changed the cause of a misspelled `--expect` test, which now matches no test. A single probe reports `invalid` with `baseline-no-test-run`. A set entry reports `invalid` with `no-test-run`, or with `baseline-no-test-run` when no entry test matches. Before, the whole package ran, and the probe reported `expect-missed`.
-
 ### Landing stack
 
 - Added `bench worktree land --stack <file>`, which lands two to sixteen reviewed spec-less or tickets-only sources under one landing lease. Each member keeps its own landing merge commit and its own folder close. The whole gate grades the top tree once, and one destination update publishes each green member. Before, each source paid its own whole gate and its own fold of `main`.
