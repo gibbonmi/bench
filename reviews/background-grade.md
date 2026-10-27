@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:d3cd8ebcd312d6538a9422dac4b8cf86c3760a8c9d9b0e67f841d3ca08e2c596",
+  "plan_digest": "sha256:95ae74116b52082a4fd47de4f46f1d31070280f54760a77cc819be28f0b52fb5",
   "implementation_session": "",
   "chunks": [
     {
@@ -203,9 +203,9 @@
     {
       "id": "BG-C1",
       "base": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
-      "tip": "2f788c7e089aeb26a394761866c52b08caaba7a7",
-      "plan_digest": "sha256:d3cd8ebcd312d6538a9422dac4b8cf86c3760a8c9d9b0e67f841d3ca08e2c596",
-      "source_digest": "659c103cfb6dc07b4bb03234f3115fc0d6b2c29e",
+      "tip": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+      "plan_digest": "sha256:95ae74116b52082a4fd47de4f46f1d31070280f54760a77cc819be28f0b52fb5",
+      "source_digest": "04e36a315ce7a6307ca29b2a6b05a35c44e2f5f8",
       "acceptance_rows": [
         "BG12",
         "BG13",
@@ -254,6 +254,44 @@
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "bg-c1-t03-gate-03",
+          "performer": "claude:bg-t03-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04e36a315ce7a6307ca29b2a6b05a35c44e2f5f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t03-author-20261027",
+            "digest": "sha256:8071c08ed6d175e0aad9e23c48867295b8e16ee65bdddcb293088993eb7f472a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,133630,738\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+          "requirement": "gate-03",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c1-t03-conformance-03",
+          "performer": "claude:bg-t03-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "04e36a315ce7a6307ca29b2a6b05a35c44e2f5f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t03-author-20261027",
+            "digest": "sha256:0c75e6ccddb169b2bab437a0b79748cb2dd360291c473ea82477083f37d8a636",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16387,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+          "requirement": "conformance-03",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": []
@@ -282,6 +320,18 @@
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d3cd8ebcd312d6538a9422dac4b8cf86c3760a8c9d9b0e67f841d3ca08e2c596",
+      "to": "sha256:95ae74116b52082a4fd47de4f46f1d31070280f54760a77cc819be28f0b52fb5",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
         ]
       }
     }
