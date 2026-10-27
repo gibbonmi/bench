@@ -2,7 +2,6 @@
 package worktree
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,7 +20,6 @@ import (
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/refusalroute"
-	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -125,6 +123,9 @@ func beginLandingSpan(home, root string) (context.Context, func(int, landingMeas
 // landAttributed is the first-run landing itself, with the span's measures written to
 // measures as each becomes known.
 func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+	if hasStackFlag(args) {
+		return landStack(ctx, measures, j, a, root, args, stdout, stderr)
+	}
 	if hasResumeFlag(args) {
 		return resumeLandWith(j, a, root, args, stdout, stderr)
 	}
@@ -185,7 +186,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		measures.pathCount = len(reviewed.CommittedPaths)
 		measures.counted = true
 	}
-	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", source.base, assignment.Start)
+	printLandingSource(stderr, source.base, assignment.Start)
 	printCensusHeads(stderr, a.home, root, assignment.ID)
 	// The release removes the source worktree, so the broker check reads it now and the
 	// notice prints after the effects report the refresh.
@@ -217,23 +218,10 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	measures.subject = result.Commit
-	if err := advanceLandedMarker(root, branch, result, priorMarker); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "marker", records)
+	if step := publishedSteps(j, root, branch, result, priorMarker); step != "" {
+		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, step, records)
 	}
-	if err := j.reconcileCommitment(root); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "commitment", records)
-	}
-	if err := reconcileLandingDestination(j, root, result.Commit, result.Commit, result.DestinationBase); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "reconcile", records)
-	}
-	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
-		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "prune", records)
-	}
-	var releaseDiagnostic bytes.Buffer
-	if release := j.releaseLandingAssignment(j, a, root, []string{"--request", parsed.Flags["--request"], path}, io.Discard, &releaseDiagnostic); release != 0 {
-		if releaseDiagnostic.Len() > 0 {
-			fmt.Fprintln(stderr, sanitize.Controls(strings.TrimSuffix(releaseDiagnostic.String(), "\n")))
-		}
+	if !releaseLanded(j, a, root, parsed.Flags["--request"], path, stderr) {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, "release", records)
 	}
 	return landedAfterEffects(j, a, root, result, parsed.Flags["--spec"], path, assignment.ID, true, brokerChanged, records, stdout, stderr)
@@ -306,13 +294,20 @@ func (a commitmentAdmission) Check(tree string) error {
 	return nil
 }
 
-// Publish leaves a publication failure unwrapped, so compare-and-swap and recovery
-// refusals keep their own text. Only an admission refusal carries the commitment prefix. The
-// window refusal keeps the sentence that it prints before the lease.
 func (a commitmentAdmission) Publish(tree string, publish func() error) error {
+	return publishAdmitted(a.store.Root, a.gap, publish, func(gapped func() error) error {
+		return a.store.PublishAdmitted(a.source, tree, gapped)
+	})
+}
+
+// publishAdmitted runs decide with publish behind the gap at root. It leaves a publication
+// failure unwrapped, so compare-and-swap and recovery refusals keep their own text. Only
+// an admission refusal carries the commitment prefix. The window refusal keeps the sentence
+// that it prints before the lease.
+func publishAdmitted(root string, gap func(string), publish func() error, decide func(func() error) error) error {
 	ran := false
-	err := a.store.PublishAdmitted(a.source, tree, func() error {
-		a.gap(a.store.Root)
+	err := decide(func() error {
+		gap(root)
 		ran = true
 		return publish()
 	})

@@ -22,6 +22,7 @@ const (
 	WorktreeReset       = "bench worktree reset (--to <commit> | --restore <ref>) <target> [--apply <fingerprint>]"
 	WorktreeLand        = "bench worktree land --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] -m <message> <path>"
 	WorktreeLandResume  = "bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>"
+	WorktreeLandStack   = "bench worktree land --stack <file> [--source-tip <request>=<commit>]..."
 )
 
 // WorktreeExecGate is the one gate form a worktree reader gets. It is an exec composition

@@ -1,0 +1,297 @@
+// Stack flow for the worktree landing command: one lease, one grade, and one publication
+// for the reviewed sources of a stack file.
+package worktree
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"slices"
+	"strconv"
+
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
+	"github.com/gibbonmi/bench/internal/worktree/landingpolicy"
+)
+
+var stackLandGrammar = usage.Grammar{
+	Cmd:  usage.CommandName(usage.WorktreeLandStack),
+	Help: "usage: " + usage.WorktreeLandStack,
+	Flags: []usage.Flag{
+		{Name: "--stack", HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: "--source-tip", HasValue: true, NoEmptyValue: true, Repeatable: true},
+	},
+}
+
+// landDispatchGrammar declares every flag of each land form. The dispatch skips the value
+// of each declared flag, so a flag value that reads `--stack` never selects the stack form.
+var landDispatchGrammar = usage.Grammar{Flags: slices.Concat(landGrammar.Flags, resumeLandGrammar.Flags, stackLandGrammar.Flags)}
+
+func hasStackFlag(args []string) bool {
+	return usage.FlagPresent(landDispatchGrammar, args, "--stack")
+}
+
+// stackMemberLanding is one stack member after its proofs: the read member, its worktree
+// path, its assignment, and its source fact.
+type stackMemberLanding struct {
+	member     StackMember
+	path       string
+	assignment intent.Assignment
+	source     landingSourceFact
+}
+
+// landStack is the stack form of the land leaf. It runs inside the landing span of
+// landWith, and the span names the assignment of the first member.
+func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
+	parsed, line, code := usage.Parse(stackLandGrammar, args)
+	if line != "" {
+		fmt.Fprintln(stderr, line)
+		return code
+	}
+	file, err := callPath(a, parsed.Flags["--stack"])
+	if err != nil {
+		return stackUsageRefusal(stderr, err)
+	}
+	input, err := ReadStack(file, a.dir, parsed.Repeated["--source-tip"])
+	if err != nil {
+		return stackUsageRefusal(stderr, err)
+	}
+	route := stackRoute{file: file, input: input, paths: make([]string, len(input.Members)), assignments: make([]string, len(input.Members))}
+	// Each member path resolves the way a single landing resolves its operand, so two
+	// spellings of one worktree meet as one canonical path.
+	unresolved := make([]bool, len(input.Members))
+	named := map[string]int{}
+	for i, m := range input.Members {
+		operand := resolveVerbOperand(root, m.Path)
+		path, err := canonicalPathIn(a, operand)
+		if err != nil {
+			route.paths[i], unresolved[i] = operand, true
+			continue
+		}
+		if first, ok := named[path]; ok {
+			return stackUsageRefusal(stderr, fmt.Errorf("stack members %d and %d name one worktree %s", first+1, i+1, path))
+		}
+		named[path], route.paths[i] = i, path
+	}
+	destination, branch, priorMarker, destinationFingerprint, landings, refusals := stackPreflight(j, root, route, unresolved)
+	if len(refusals) > 0 {
+		for _, err := range refusals {
+			landRefusalError(stdout, err)
+		}
+		return 1
+	}
+	measures.assignment = landings[0].assignment.ID
+	request := landing.StackRequest{Root: root, Destination: "refs/heads/" + branch, DestinationBase: destination, DestinationFingerprint: destinationFingerprint, GreenMarker: priorMarker, Stdout: stdout, Stderr: stderr}
+	lease, err := commitrepo.Store{Root: root}.AcquireLease(request.Destination, landings[0].assignment.ID)
+	if err != nil {
+		return landRefusalError(stdout, landingFaceRoute(err, route.rerun(stackUnattributed), false))
+	}
+	publications := make([]commitrepo.Publication, len(landings))
+	records := make([]int, len(landings))
+	brokerChanged := false
+	for i, l := range landings {
+		// The counts are read before the release step, because that step drops the records.
+		records[i] = censusCount(a.home, root, l.assignment.ID)
+		brokerChanged = brokerChanged || brokerSourceChanged(l.assignment.Worktree, l.source.base, l.source.tip)
+		printLandingSource(stderr, l.source.base, l.assignment.Start)
+		member := landing.ReviewedRequest{
+			Source: l.assignment.Branch, SourceTip: l.source.tip, ReviewBase: l.source.base,
+			SourceWorktree: l.assignment.Worktree, SourceFingerprint: l.source.fingerprint,
+			SpecPath: l.source.specPath, SpecBytes: l.source.specBytes, SpecMode: l.source.specMode, ClosePath: l.source.closePath,
+			Message: l.member.Message,
+		}
+		request.Members = append(request.Members, member)
+		publications[i] = commitrepo.Publication{Assignment: l.assignment.ID, Request: intent.RequestDigest(l.member.Request), Worktree: l.assignment.Worktree, Source: l.source.tip, Deliverable: member.Deliverable(), Destination: request.Destination}
+	}
+	publications[0].Lease = lease
+	result, err := j.landStack(ctx, request, stackAdmission{store: commitrepo.Store{Root: root}, members: publications, gap: j.publicationGap})
+	if err != nil {
+		lease.Release()
+	}
+	printStackMembers(stdout, landings, result, records)
+	end := stackEnd{destinationBase: destination, published: "none", worktree: "active"}
+	if k := result.Published(); k > 0 {
+		top := result.Merges[k-1]
+		measures.subject = top
+		end = stackEnd{destinationBase: result.DestinationBase, published: top, landed: k}
+		end.step = stackAfterPublication(j, a, root, branch, landing.ReviewedResult{DestinationBase: result.DestinationBase, Commit: top, Kind: result.Kind}, priorMarker, landings[:k], brokerChanged, stdout, stderr)
+		outcome := landingpolicy.Terminal(landingpolicy.TerminalFacts{FailedStep: end.step, Active: true})
+		end.worktree, end.exit = outcome.WorktreeState, outcome.ExitCode
+	}
+	switch {
+	case err != nil:
+		end.exit = landRefusalError(stdout, stackLandingRefusal(err, route, landings, destination))
+	case end.step != "":
+		// The stack has no resume form, so a stopped step after the publication hands back.
+		stopped := refusalError{refusal{detail: "landing stack stopped after publication at the " + end.step + " step", face: faceLandHandback}}
+		landRefusalError(stdout, landingFaceRoute(stopped, route.rerun(stackUnattributed), false))
+	}
+	fmt.Fprintf(stdout, "stack{destination_base=%s,published_commit=%s,landed=%d,worktree=%s}\n", end.destinationBase, end.published, end.landed, end.worktree)
+	return end.exit
+}
+
+// stackEnd is the terminal record of a stack and its exit code. step names the step after
+// the publication that stopped, empty when none stopped.
+type stackEnd struct {
+	destinationBase, published, worktree, step string
+	landed, exit                               int
+}
+
+// stackUsageRefusal prints a stack input refusal beside the stack grammar and answers the
+// usage exit. It runs before any ledger read, so the refusal takes no lease.
+func stackUsageRefusal(stderr io.Writer, err error) int {
+	fmt.Fprintln(stderr, stackLandGrammar.Help+" ("+sanitize.Controls(err.Error())+")")
+	return 2
+}
+
+// stackPreflight runs the destination proofs once and the assignment and source proofs of
+// one landing for each member over its effective tip. It answers every refusal of these
+// groups, and each member refusal names its member index and label.
+func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (destination, branch, priorMarker, fingerprint string, landings []stackMemberLanding, refusals []error) {
+	destination, branch, priorMarker, fingerprint, err := landingDestination(root)
+	if err != nil {
+		refusals = append(refusals, landingFaceRoute(err, route.rerun(stackUnattributed), false))
+	}
+	for i, m := range route.input.Members {
+		if unresolved[i] {
+			refusals = append(refusals, stackMemberRefusal(i, "", landingFaceRoute(errors.New("worktree path is not canonical"), route.rerun(stackRerun{refused: i}), false)))
+			continue
+		}
+		base, tip := expandIdentity(root, m.Base), expandIdentity(root, m.EffectiveTip)
+		assignment, err := landingAssignment(j, root, route.paths[i], m.Request, base, tip)
+		if err != nil {
+			refusals = append(refusals, stackMemberRefusal(i, "", landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), true)))
+			continue
+		}
+		route.assignments[i] = assignment.ID
+		source, err := landingSourceProofs(j, root, assignment, base, tip, m.Spec, destination)
+		if err != nil {
+			refusals = append(refusals, stackMemberRefusal(i, assignment.Label, landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), false)))
+			continue
+		}
+		landings = append(landings, stackMemberLanding{member: m, path: route.paths[i], assignment: assignment, source: source})
+	}
+	return destination, branch, priorMarker, fingerprint, landings, refusals
+}
+
+// stackMemberRefusal names the member index and label of a member's refusal ahead of its
+// sentence. A member whose assignment did not resolve has no label to name.
+func stackMemberRefusal(i int, label string, err error) error {
+	prefix := "stack member " + strconv.Itoa(i+1)
+	if label != "" {
+		prefix += " (" + label + ")"
+	}
+	var typed refusalError
+	if errors.As(err, &typed) {
+		typed.detail = prefix + causeJoiner + typed.detail
+		return typed
+	}
+	return fmt.Errorf("%s%s%w", prefix, causeJoiner, err)
+}
+
+// stackLandingRefusal routes a refusal of the stack owner. A member refusal keeps the face
+// of one landing. The stack attributes no red to a member, so a stop that no member caused
+// hands back, and an infrastructure grade keeps its own face.
+func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLanding, destination string) error {
+	var member landing.StackMemberError
+	if errors.As(err, &member) && member.Member >= 1 && member.Member <= len(landings) {
+		i := member.Member - 1
+		l := landings[i]
+		var conflict landing.ConflictError
+		if errors.As(member.Err, &conflict) {
+			// The conflict route repairs the source, as the single landing's re-run states.
+			rerun := route.rerun(stackRerun{refused: i, repairs: true})
+			return stackMemberRefusal(i, l.assignment.Label, landingConflictRefusalAt(conflict, destination, l.assignment.ID, l.path, l.assignment.Worktree, rerun))
+		}
+		return stackMemberRefusal(i, l.assignment.Label, landingFaceRoute(member.Err, route.rerun(stackRefusedBy(i, member.Err)), false))
+	}
+	face := faceLandHandback
+	var refused landing.AuthorizationRefusal
+	if errors.As(err, &refused) && refused.Result.Kind == authorization.Infrastructure {
+		face = faceLandInfrastructure
+	}
+	return landingFaceRoute(refusalError{refusal{detail: err.Error(), face: face}}, route.rerun(stackUnattributed), false)
+}
+
+// stackAfterPublication runs the steps after a stack publication once for the published
+// merge. It then releases each published member in file order and runs the two landing
+// effects once. It answers the name of the step that stopped, or the empty name.
+func stackAfterPublication(j joins, a ambient, root, branch string, result landing.ReviewedResult, priorMarker string, landings []stackMemberLanding, brokerChanged bool, stdout, stderr io.Writer) string {
+	if step := publishedSteps(j, root, branch, result, priorMarker); step != "" {
+		return step
+	}
+	for _, l := range landings {
+		if !releaseLanded(j, a, root, l.member.Request, l.path, stderr) {
+			return "release"
+		}
+	}
+	return runLandedEffects(j, a, root, result.DestinationBase, brokerChanged, stdout, stderr)
+}
+
+// stackMemberRow is one row of the members table.
+type stackMemberRow struct {
+	member                               int
+	label, sourceTip, published, outcome string
+	census                               int
+}
+
+// membersTable names the members table block of a stack.
+const membersTable = "members"
+
+// The outcome cells of the members table.
+const (
+	stackOutcomeLanded   = "landed"
+	stackOutcomeUnlanded = "unlanded"
+)
+
+// stackMembersTable renders the members table of a stack, one row for each member in file
+// order.
+func stackMembersTable(rows []stackMemberRow) (string, error) {
+	cells := make([][]string, len(rows))
+	for i, row := range rows {
+		cells[i] = []string{strconv.Itoa(row.member), row.label, row.sourceTip, row.published, row.outcome, strconv.Itoa(row.census)}
+	}
+	return toon.Table(membersTable, []string{"member", "label", "source_tip", "published_commit", "outcome", "census"}, cells)
+}
+
+// printStackMembers prints the members table of result. A member that published reads
+// landed with its merge, and every other member reads unlanded. A table that does not
+// render prints the render error in its place, and the stack goes on to its record.
+func printStackMembers(stdout io.Writer, landings []stackMemberLanding, result landing.StackResult, records []int) {
+	rows := make([]stackMemberRow, len(landings))
+	for i, l := range landings {
+		rows[i] = stackMemberRow{member: i + 1, label: l.assignment.Label, sourceTip: l.source.tip, published: "none", outcome: stackOutcomeUnlanded, census: records[i]}
+		if i < result.Published() {
+			rows[i].published, rows[i].outcome = result.Merges[i], stackOutcomeLanded
+		}
+	}
+	table, err := stackMembersTable(rows)
+	if err != nil {
+		table = toon.RenderError(err) + "\n"
+	}
+	fmt.Fprint(stdout, table)
+}
+
+// stackAdmission is the installed broker's publication decision for the members of one
+// stack. It decides each member as the single landing's admission decides its source.
+type stackAdmission struct {
+	store   commitrepo.Store
+	members []commitrepo.Publication
+	gap     func(string)
+}
+
+func (a stackAdmission) CheckMember(i int, tree string) error {
+	return commitmentAdmission{store: a.store, source: a.members[i]}.Check(tree)
+}
+
+func (a stackAdmission) PublishStack(k int, trees []string, publish func() error) error {
+	return publishAdmitted(a.store.Root, a.gap, publish, func(gapped func() error) error {
+		return a.store.PublishStackAdmitted(a.members[:k], trees, gapped)
+	})
+}

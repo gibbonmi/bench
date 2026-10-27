@@ -35,6 +35,12 @@ func landedComplete(stdout io.Writer, result landing.ReviewedResult, active bool
 	return outcome.ExitCode
 }
 
+// printLandingSource states the reviewed range of one landing source on stderr before its
+// composition: the review base and the recorded start of its assignment.
+func printLandingSource(stderr io.Writer, reviewBase, assignmentStart string) {
+	fmt.Fprintf(stderr, "landing source{review_base=%s,assignment_start=%s}\n", reviewBase, assignmentStart)
+}
+
 // landingSlug is the spec slug a landing argument names, and the empty slug for the
 // spec-less landing that named no argument.
 func landingSlug(arg string) string {
@@ -88,13 +94,19 @@ func sourceMergePending(source string) bool {
 // the repaired source takes. The registered face puts the review step and that re-run
 // behind the hand repair, so no call site composes a route.
 func landingConflictRefusal(conflict landing.ConflictError, destination, assignment, specArg, path, source string) refusalError {
+	// The conflict route never prints the caller's request, so the re-run names its
+	// placeholder.
+	rerun := landingRerunAt("", destination, repairedSourceTipFlag, specArg, path, assignment)
+	return landingConflictRefusalAt(conflict, destination, assignment, path, source, rerun)
+}
+
+// landingConflictRefusalAt is landingConflictRefusal with the re-run already composed, so a
+// stack member's conflict ends with the stack's re-run.
+func landingConflictRefusalAt(conflict landing.ConflictError, destination, assignment, path, source, rerun string) refusalError {
 	face := faceCompositionConflict
 	if sourceMergePending(source) {
 		face = faceCompositionConflictPending
 	}
-	// The conflict route never prints the caller's request, so the re-run names its
-	// placeholder.
-	rerun := landingRerunAt("", destination, repairedSourceTipFlag, specArg, path, assignment)
 	raised := refusal{detail: conflict.Error(), paths: conflict.Paths, values: conflictFacts(destination, assignment, path)}
 	return landingFaceRefusal(face, raised, rerun, "")
 }
@@ -144,10 +156,17 @@ const (
 // of that flag, so the route comes from an exact swap and not from a re-parse of the
 // command. A refusal that names neither tip keeps the caller's command unchanged.
 func retargetSourceTip(rerun string, raised refusal) string {
-	if raised.observed == "" || raised.wanted == "" {
+	requested, read, ok := sourceTips(raised)
+	if !ok {
 		return rerun
 	}
-	return strings.Replace(rerun, landingSourceTipFlag(raised.observed), landingSourceTipFlag(raised.wanted), 1)
+	return strings.Replace(rerun, landingSourceTipFlag(requested), landingSourceTipFlag(read), 1)
+}
+
+// sourceTips names the two tips that a source-tip refusal carries: the tip that the caller
+// requested and the tip that the tree holds. A refusal that names neither answers false.
+func sourceTips(raised refusal) (requested, read string, ok bool) {
+	return raised.observed, raised.wanted, raised.observed != "" && raised.wanted != ""
 }
 
 // landingFaceOf names the registered face a refusal raised. A proof that raised a face
