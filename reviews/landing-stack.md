@@ -1920,6 +1920,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c7-standards-r2",
+          "performer": "claude:ls-c7-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c7-standards-r2-20261026",
+            "digest": "sha256:cd87f9c8a5c1f3ecafa34cd1908c80c4ce56de754c4b04d09248e5a9ebe9e122",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\nBind: evidence is current (head 225fffeb, dirty false).\n\nS1: closed. One stackFile/stackFileMember type with a write method (land_stack_test.go:18-39); writeStack (land_stack_test.go:41-53) and foldLandedStack (land_stack_route_test.go) both use it. land_stack_input_test.go:21 is a raw JSON string for the parser tests, a different purpose.\nShadow find 1: closed. requireTally is at land_reuse_test.go:26, and requireOneRun (land_reuse_test.go:20) calls it; the duplicate in land_stack_red_test.go is removed.\nShadow find 2: closed. operatorSlots is at refusal_route_follow_test.go:94; operatorFill and the stack walk both call it, in the old slot order. The new comments are timeless present tense.\n\nNew findings: none.\n\nAdvice:\n- Older tests still inline the one-run tally read (land_identity_test.go:260, commitment_landing_test.go:127 and :236, land_lease_test.go:139), outside this delta and ticket 09.\n- The ticket 09 Writes: widening (8c4704bd) matches the two shared helper files the repair touched.\n\nCommand: no command change is necessary.\nRead: the preflight bind, the repair diff dcf404e7..f3409275, git show 8c4704bd, the AGENTS.md standard, craft-comments SKILL.md, rg of stack-file and tally sites in internal/worktree.\n"
+          },
+          "axis": "Standards",
+          "base": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "tip": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c7-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c7-spec-r2",
+          "performer": "claude:ls-c7-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c7-spec-r2-20261026",
+            "digest": "sha256:eeb374fae8c57b1d6235a880ed4e3bed5a762d0ff588bd620c656d415664c8a7",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\nBind: current (head 225fffeb, dirty=false).\n\nChecks:\n- Rows LS46-LS49, LS68, LS69, LS89, LS102, LS103, LS106 stay satisfied. The repair is test-only and factors requireTally, stackFile, and operatorSlots out of existing code with the same replacements, tally values, and stack-file rewrite. The pin moves 853 to 854 for the one new top-level test.\n- The red-before-an-override fixture (land_stack_route_test.go) exercises the second LS103 clause: after the fold, foldLandedStack moves member 3's file tip, so rule 3 of \"The refusal faces\" drops that override. Rule 2 stays covered by red-after-an-override.\n- TestStackAttributedReadsOnlyACandidateRed (land_stack_red_test.go) matches \"The bisect\": index 1 for a candidate red, -1 for an inherited red and a non-authorization refusal; stackAttributed (land_stack.go:217-223) implements the same rule.\n- Commit 8c4704bd adds only two test helper files in internal/worktree to ticket 09's Writes:.\n\nAdvice: none.\nCommand: no command change is necessary.\nRead: the preflight output, git diff dcf404e7..f3409275, git show 8c4704bd, spec.md (The bisect, The refusal faces, rows LS86-LS103/LS106), land_stack.go:205-240.\n"
+          },
+          "axis": "Spec",
+          "base": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "tip": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c7-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c7-coverage-r2",
+          "performer": "claude:ls-c7-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "38171834ab62ba6bead8102596fda91e285455af",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c7-coverage-r2-20261026",
+            "digest": "sha256:cccc3b64ce733f829684754fbde69535a3766f7c9b1b1df513b8f67c38b63096",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\nBind: evidence --check-current returned current=true, dirty_record=false, source_tip 225fffeb.\n\nC1: closed. The red-before-an-override fixture (internal/worktree/land_stack_route_test.go:132, built by overridden(2) at :116-121) keeps an override on member 3, which survives the fold. Without the fact.reset loop (land_stack.go:237-239), the printed rerun keeps that override over the folded tip and meets worktree source tip mismatch.\nC2: closed. TestStackAttributedReadsOnlyACandidateRed (land_stack_red_test.go:79-97) sets Attributed 2: a wrapped candidate red returns 1, an inherited red returns -1, and a plain admission error returns -1, matching stackAttributed (land_stack.go:217-223). The pin moved to 854 (parallel_census_test.go:926).\n\nHelpers weaken nothing: requireTally and requireOneRun (land_reuse_test.go:19-31) keep the exact comparison; operatorSlots (refusal_route_follow_test.go:277-288) fills the same slots; stackFile (land_stack_test.go:182-203) has the same six fields, and the fixtures write only those six.\n\nAdvice: none.\nCommand: no command change is necessary.\nRead: the repair diff dcf404e7..f3409275, land_stack.go lines 95-265, a grep of stackAttributed and fact.reset.\n"
+          },
+          "axis": "Coverage",
+          "base": "b76b88848e65464364c7e0302359e3a0916fc812",
+          "tip": "f3409275c55a0ff165fab8ff808fd343de397929",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c7-coverage-r1"
+          ]
         }
       ]
     }
@@ -2430,3 +2496,13 @@ The shadow reviewer found two harness duplications that the axes did not report.
 The axes disagreed on whether a second grade of a green prefix reuses its verdict. The orchestrator keeps LS47 as it is: a reused verdict runs no gate, so the failure that LS47 names does not occur.
 
 Every repair is test-only, so a coordinator confirmation closes it.
+
+## LS-C7 review, round 2
+
+Confirming round over the repair delta `dcf404e7c3bb537a23f881e20006244d5027a8c6..f3409275c55a0ff165fab8ff808fd343de397929`, with the plan widening `8c4704bdef9295356cf47a06aa706ed9ab55f3fc`. The widening put a ticket file in the chunk delta, so the coordinator confirmation refused and the chunk took this round. Repair cycles used: 1 of 2.
+
+Standards: 0 findings, and S1 and both shadow finds are closed. Spec: 0 findings. Coverage: 0 findings, and C1 and C2 are closed.
+
+The coordinator probe accepted every refusal kind except infrastructure in `stackAttributed`. It reported `bit` in `TestStackAttributedReadsOnlyACandidateRed` with `restored` yes. A shadow unified reviewer confirmed the same closures outside this record.
+
+Advice: older tests still read the gate tally inline in place of `requireOneRun`.
