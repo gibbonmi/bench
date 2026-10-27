@@ -114,6 +114,13 @@ func SeedRowless(t testing.TB, root, deliverable string) {
 func SeedRowlessPair(t testing.TB, root, deliverable string) {
 	t.Helper()
 	SeedRowless(t, root, deliverable)
+	ApproveTickets(t, root)
+}
+
+// ApproveTickets writes the tickets-only folder below root and approves it as a deliverable
+// of the first outcome with no obligation. The caller commits.
+func ApproveTickets(t testing.TB, root string) {
+	t.Helper()
 	identity := WriteTickets(t, root)
 	EditPolicy(t, root, func(policy *commitment.Policy) {
 		delivery := &policy.Milestones[0].Outcomes[0]

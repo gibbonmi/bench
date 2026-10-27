@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -143,11 +142,7 @@ func requireBinding(t *testing.T, root, assignment string, want bool) {
 // A started tickets-only deliverable binds its assignment but opens no build.
 func TestBindingQueryNamesATicketsOnlyAssignment(t *testing.T) {
 	root := commitmenttest.Staged(t, "A")
-	identity := commitmenttest.WriteTickets(t, root)
-	commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
-		delivery := &policy.Milestones[0].Outcomes[0]
-		delivery.Deliverables = append(delivery.Deliverables, commitmenttest.TicketsBinding(identity))
-	})
+	commitmenttest.ApproveTickets(t, root)
 	commitmenttest.Commit(t, root, "approve the tickets-only folder")
 	light := startBuild(t, root, "light", "A", commitmenttest.TicketsFolder)
 	requireBinding(t, root, light.Assignment, true)
