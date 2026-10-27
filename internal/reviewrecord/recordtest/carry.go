@@ -16,11 +16,17 @@ import (
 // commit. A later CommitDelta then gives the delta that a carry decision grades.
 func Carrying(t testing.TB, owed []rr.Requirement) *Fixture {
 	t.Helper()
-	f := Prepare(t, gittest.RepoOnBranch(t, "main"), 1, Spec, Body, func(plan *rr.Plan) {
-		plan.Chunks[0].Verification = append([]rr.Requirement{}, owed...)
-	}, Delegate)
+	f := Prepare(t, gittest.RepoOnBranch(t, "main"), 1, Spec, Body, Owing(owed), Delegate)
 	f.AddChunk()
 	return f
+}
+
+// Owing makes owed the verification plan of the first chunk. It precedes Delegate in the option
+// list, so Delegate gives each requirement its ticket.
+func Owing(owed []rr.Requirement) Option {
+	return func(plan *rr.Plan) {
+		plan.Chunks[0].Verification = append([]rr.Requirement{}, owed...)
+	}
 }
 
 // CommitDelta appends one line to each of paths, which creates an absent file, commits the
