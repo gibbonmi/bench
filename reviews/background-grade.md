@@ -395,6 +395,41 @@
           "finding_ids": [],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "bg-c1-confirm1",
+          "performer": "claude:bg-orchestrator-20261027",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "efea901bdc214ceaf4ceb2444b93cb44c8948fdd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude:bg-orchestrator-20261027:coordinator-probe",
+            "digest": "sha256:13576e0c624568368b62442288476647423b28c65ca19503fa747ed1bdbbf75b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/run_binary_source.go,swap,failed,1,TestOracleIdentityAndOracleShareTheClosure/baseline_runner,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,^TestOracleIdentityAndOracleShareTheClosure$,passed,10\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,492\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,263,10\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/baseline_runner,\"oracle_identity_test.go:203: identity 418394366209bde677aa500d5e90595a2d35ef15195554a023326dd9e3111f63 to 5dad7da15d9b3233579a59a87e1a53d496c222a7cb28606596a2e383bef59794 across baseline runner, want moved = false\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "2bb0564d3585caf53620bd8d754269fcbcbd032b",
+          "reviewed_tip": "9eb53b695b37e5ce87af995b3a733ba1604a84ea",
+          "repaired_tip": "ef7bee35ae936bc3430690a8bbfe015a38d09b71",
+          "finding_ids": [
+            "BG-C1-S1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "run_binary_source.go: if res.Kind == ProspectiveGateSh && -> if false && res.Kind == ProspectiveGateSh &&",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude:bg-orchestrator-20261027:coordinator-probe",
+              "digest": "sha256:13576e0c624568368b62442288476647423b28c65ca19503fa747ed1bdbbf75b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/run_binary_source.go,swap,failed,1,TestOracleIdentityAndOracleShareTheClosure/baseline_runner,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,^TestOracleIdentityAndOracleShareTheClosure$,passed,10\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,492\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,263,10\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestOracleIdentityAndOracleShareTheClosure/baseline_runner,\"oracle_identity_test.go:203: identity 418394366209bde677aa500d5e90595a2d35ef15195554a023326dd9e3111f63 to 5dad7da15d9b3233579a59a87e1a53d496c222a7cb28606596a2e383bef59794 across baseline runner, want moved = false\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
