@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-carry/spec.md",
-  "plan_digest": "sha256:27a4ed4343c6dd59706b191782cbbff3368dacd342335d37405778b2a55fb426",
+  "plan_digest": "sha256:b4b54927f25a8ff4562eafa3747457c1752561f5dfc9cad8e47b8568f8684ee9",
   "implementation_session": "",
   "chunks": [
     {
@@ -182,9 +182,9 @@
     {
       "id": "CF-C2",
       "base": "108ce50cd698202956c0499c9fab1d19292ca78c",
-      "tip": "22dfdadc07c0f973b0e19b9737ce238f565cdbd6",
-      "plan_digest": "sha256:27a4ed4343c6dd59706b191782cbbff3368dacd342335d37405778b2a55fb426",
-      "source_digest": "4f8fc23af8a07fb3325e7e2941edfb633b9f4a0a",
+      "tip": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+      "plan_digest": "sha256:b4b54927f25a8ff4562eafa3747457c1752561f5dfc9cad8e47b8568f8684ee9",
+      "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
       "acceptance_rows": [
         "CF4",
         "CF5",
@@ -213,7 +213,8 @@
         "CF28",
         "CF29",
         "CF31",
-        "CF32"
+        "CF32",
+        "CF51"
       ],
       "verification": [
         {
@@ -288,6 +289,82 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14641,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "22dfdadc07c0f973b0e19b9737ce238f565cdbd6",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-carry",
+          "performer": "claude:rc-t03-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t03-repair1-20261027",
+            "digest": "sha256:48809ffe79fabfe04c3ba79a5990b30105c0fbb89a3ef1842e071ed9b4fdb5fb",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/carry,pass,934,20\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "requirement": "carry",
+          "command": "bench test --package ./internal/reviewrecord/carry",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-fixtures",
+          "performer": "claude:rc-t03-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t03-repair1-20261027",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "requirement": "fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-gate",
+          "performer": "claude:rc-t03-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t03-repair1-20261027",
+            "digest": "sha256:ffa192d5e99ced8dbbb15b0fab05ea3a632ea533c44d215cd9464ab3519a3f35",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,239875,728\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "t03r1-conformance",
+          "performer": "claude:rc-t03-repair1-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2593b8ae94ede23cb90094477b5217052a5eb259",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t03-repair1-20261027",
+            "digest": "sha256:d8565d9c7ec79453d341f924e7ed5a1be652bef0d2e8c196b778e962c7e9161e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13118,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -387,6 +464,18 @@
       "chunk_ids": {
         "CF-C1": [
           "CF-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:27a4ed4343c6dd59706b191782cbbff3368dacd342335d37405778b2a55fb426",
+      "to": "sha256:b4b54927f25a8ff4562eafa3747457c1752561f5dfc9cad8e47b8568f8684ee9",
+      "chunk_ids": {
+        "CF-C1": [
+          "CF-C1"
+        ],
+        "CF-C2": [
+          "CF-C2"
         ]
       }
     }
