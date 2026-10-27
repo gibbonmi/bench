@@ -9,7 +9,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate"
-	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -97,7 +96,7 @@ func runWith(replacer durablefile.Replacer, root string, parsed usage.Result) (s
 	if refused != nil {
 		return refused.line(), 1
 	}
-	request, line, code := prepareSelection(root, parsed, subject)
+	request, line, code := prepareSelection(root, parsed, subject, []string{parsed.Flags[expectFlag.Name]})
 	if line != "" {
 		return line, code
 	}
@@ -128,19 +127,6 @@ func resolveMutation(parsed usage.Result, subject subject) (mutation, mutationRe
 	return input, mutant, refused
 }
 
-// prepareSelection prepares the focused selection of parsed and then grades the prose subject.
-// It answers the request, or the refusal line and its exit.
-func prepareSelection(root string, parsed usage.Result, subject subject) (testreport.Request, string, int) {
-	request, line, code := testreport.Prepare(root, selectionArgs(parsed))
-	if line != "" {
-		return request, line, code
-	}
-	if line := gradeProseSubject(subject, request); line != "" {
-		return request, line, 1
-	}
-	return request, "", 0
-}
-
 // holdSubject grades the gate lock, takes the subject lock, and reads the subject again under
 // that lock. It answers the held lock, or the refusal line with no lock held.
 func holdSubject(root, operand string, subject subject) (subjectLock, string) {
@@ -158,15 +144,6 @@ func holdSubject(root, operand string, subject subject) (subjectLock, string) {
 	return held, ""
 }
 
-// gradeProseSubject refuses a prose probe of a file that the prose grade never reads,
-// because the grade of that mutant equals the baseline and would answer a false silent.
-func gradeProseSubject(subject subject, request testreport.Request) string {
-	if !request.GradesProse() || prose.IsSubjectName(subject.display) {
-		return ""
-	}
-	return toon.Errorf("probe subject not graded", subject.display+" is not a prose subject") + "\n"
-}
-
 // renderInvalidMutation answers a substring miss. Its selection cells come from the prepared
 // request, so the row names the selection that the focused run would have run.
 func renderInvalidMutation(subject subject, mutation string, request testreport.Request) (string, int) {
@@ -177,27 +154,6 @@ func renderInvalidMutation(subject subject, mutation string, request testreport.
 		return toon.RenderError(err) + "\n", 1
 	}
 	return out, 1
-}
-
-// selectionArgs spells the focused run in `bench test`'s own grammar, so the probe and
-// the verb it composes can never disagree about what a selection means. Flags keeps only
-// the last --package value, so the package form reads Repeated.
-func selectionArgs(parsed usage.Result) []string {
-	var args []string
-	if check, ok := parsed.Flags["--check"]; ok {
-		args = append(args, "--check", check)
-	} else {
-		for _, pkg := range parsed.Repeated["--package"] {
-			args = append(args, "--package", pkg)
-		}
-	}
-	if run, ok := parsed.Flags["--run"]; ok {
-		args = append(args, "--run", run)
-	}
-	if _, ok := parsed.Flags["--full"]; ok {
-		args = append(args, "--full")
-	}
-	return args
 }
 
 // gradeGateLock refuses while a gate run holds the tree. The gate grades the bytes it

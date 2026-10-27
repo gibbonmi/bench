@@ -195,9 +195,10 @@ func listRecordSurfaces(t *testing.T, f *fixture) string {
 // PB7, PS30: the check form builds the request `bench test` builds for the same selection,
 // a system run pattern included, so the two verbs cannot disagree about what a named check
 // selects. The system suite takes its pattern as an option, so a bare system selection is
-// accepted too.
+// accepted too. An --expect test does not narrow a check selection.
 func TestProbeSelectsTheCheckForm(t *testing.T) {
 	f := clampFixture(t)
+	checkExpect := []string{"TestClampNegative"}
 	for _, selection := range [][]string{{"--check", "line-routing"}, {"--check", "system", "--run", "^X$"}, {"--check", "system"}} {
 		t.Run(strings.Join(selection, " "), func(t *testing.T) {
 			parsed, line, code := usage.Parse(grammar, append([]string{"clamp.go", "--omit", "n < 0"}, selection...))
@@ -207,10 +208,10 @@ func TestProbeSelectsTheCheckForm(t *testing.T) {
 			if line != "" {
 				t.Fatalf("parse = (%q, %d), want an accepted selection", line, code)
 			}
-			if got := selectionArgs(parsed); !reflect.DeepEqual(got, selection) {
+			if got := selectionArgs(parsed, checkExpect); !reflect.DeepEqual(got, selection) {
 				t.Fatalf("selection args = %q, want %q", got, selection)
 			}
-			got, line, _ := testreport.Prepare(f.root, selectionArgs(parsed))
+			got, line, _ := testreport.Prepare(f.root, selectionArgs(parsed, checkExpect))
 			if line != "" {
 				t.Fatalf("prepare refused the probe's check form: %q", line)
 			}
