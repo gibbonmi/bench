@@ -116,9 +116,22 @@ func durableReplace(replacer durablefile.Replacer, gitdir string, rec verdictRec
 	return durableReplaceAt(replacer, gitdir, benchgit.GateCacheFile, rec)
 }
 
+// storeRecord answers the fields that every record of the store shares: the schema and the
+// tree. Each record constructor starts from it.
+func storeRecord(tree string) verdictRecord {
+	return verdictRecord{Schema: verdictSchema, Tree: tree}
+}
+
+// recordTime answers the store form of a record time: UTC, whole seconds, RFC 3339.
+func recordTime(at time.Time) string {
+	return at.UTC().Truncate(time.Second).Format(time.RFC3339)
+}
+
 // readyVerdict answers the gate cache record of a terminal status of plan, recorded at at.
 func readyVerdict(plan subject, status string, at time.Time) verdictRecord {
-	return verdictRecord{Schema: verdictSchema, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: at.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	rec := storeRecord(plan.Tree)
+	rec.State, rec.Status, rec.Oracle, rec.RecordedAt = Ready, status, plan.Oracle, recordTime(at)
+	return rec
 }
 
 func Inspect(root string) Inspection {
@@ -415,7 +428,7 @@ func validateStoreRecordCommon(r verdictRecord) error {
 
 func strictRecordTime(value string) (time.Time, error) {
 	tm, err := time.Parse(time.RFC3339, value)
-	if err != nil || tm.Nanosecond() != 0 || !strings.HasSuffix(value, "Z") || tm.Format(time.RFC3339) != value {
+	if err != nil || recordTime(tm) != value {
 		return time.Time{}, errors.New("invalid record time")
 	}
 	return tm, nil

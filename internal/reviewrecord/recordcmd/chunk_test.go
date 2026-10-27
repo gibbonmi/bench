@@ -364,14 +364,19 @@ func TestRecordChangesOnlyTheRecordPath(t *testing.T) {
 }
 
 // A requirement ID that already starts with the prefix and a hyphen is the evidence ID, and
-// any other requirement ID takes the prefix once.
+// any other requirement ID takes the prefix once. A prefix with a trailing hyphen writes the
+// same IDs.
 func TestTicketPrefixesTheEvidenceIDOnce(t *testing.T) {
-	f, home := pooled(t, 1, func(plan *rr.Plan) { plan.Chunks[0].Verification[0].ID = "p-tests" })
-	base, _ := advance(f, "chunk 1")
-	stageOwed(f, home, "1", "1.md")
-	succeed(t, f, ticketArgs(t, "1", "1.md", "p", "--base", base))
-	if ids, want := verificationIDs(chunkEntry(t, f, "1")), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
-		t.Fatalf("verification IDs = %q, want %q", ids, want)
+	for _, prefix := range []string{"p", "p-"} {
+		t.Run(prefix, func(t *testing.T) {
+			f, home := pooled(t, 1, func(plan *rr.Plan) { plan.Chunks[0].Verification[0].ID = "p-tests" })
+			base, _ := advance(f, "chunk 1")
+			stageOwed(f, home, "1", "1.md")
+			succeed(t, f, ticketArgs(t, "1", "1.md", prefix, "--base", base))
+			if ids, want := verificationIDs(chunkEntry(t, f, "1")), []string{"p-tests", "p-additional"}; !slices.Equal(ids, want) {
+				t.Fatalf("verification IDs = %q, want %q", ids, want)
+			}
+		})
 	}
 }
 

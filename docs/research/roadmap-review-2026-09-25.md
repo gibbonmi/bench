@@ -34,15 +34,15 @@ These are proposed board consolidations. Each implementation can retain separate
 
 | Retained owner | Fold into it | Outcome and boundary |
 | --- | --- | --- |
-| [FT305](../../roadmap/FT305.md:3) | [FT296](../../roadmap/FT296.md:3) | Durable execution with explicit supervisor and worker lifetimes. Keep platform behavior as a shaping decision. |
-| [FT318](../../roadmap/FT318.md:8) | [FT241's record mechanics](../../roadmap/FT241.md:14); optionally [FT317](../../roadmap/FT317.md:8) as a decision stage | Valid review records, plan identities, and amendments. Decide capability-blocked semantics before the writer encodes them. Keep FT241's end-to-end promises separate. |
-| [FT338](../../roadmap/FT338.md:3) | [FT99's semantic premise checks](../../roadmap/FT99.md:3) | Verify current claims, affected readers, competing writers, and retired claims before review. Move mechanical fence checks to FT293. |
-| [FT293](../../roadmap/FT293.md:17) | [FT262](../../roadmap/FT262.md:3) | Complete and explain ticket ownership before a charge. Retain uncited-row progress and structured closure output. |
-| [FT172](../../roadmap/FT172.md:11) | [FT292](../../roadmap/FT292.md:3) | One roadmap identity and transition contract. The writer records decisions that the reviewer already made. |
-| [FT265](../../roadmap/FT265.md:7) | [FT249's reader gap](../../roadmap/FT249.md:3) | Consistent capture reads from every checkout and one drain snapshot. Do not assume a new Git-ref store is necessary. |
-| [FT326](../../roadmap/FT326.md:7) | [FT325](../../roadmap/FT325.md:3) | Anchor boundaries and canary mutations agree despite harmless line wraps. Preserve the shipped distinctness checks. |
-| [FT341](../../roadmap/FT341.md:3) | [FT254's wrong-tree requirements](../../roadmap/FT254.md:39); [FT339's registry attribution](../../roadmap/FT339.md:3) | Each tree-scoped command reads and identifies its selected tree. Keep exec stdin, timeout, and script behavior with FT254. |
-| [FT125](../../roadmap/FT125.md:3) | [FT254's bounded file reads](../../roadmap/FT254.md:77); [FT339's directory query](../../roadmap/FT339.md:5) | Task-shaped reader projections. Reuse FT336's response budget and FT341's target contract. |
+| [FT305](../../roadmap/FT305.md:3) | [FT296](../../roadmap/FT305.md) | Durable execution with explicit supervisor and worker lifetimes. Keep platform behavior as a shaping decision. |
+| [FT318](../../roadmap/FT318.md:8) | [FT241's record mechanics](../../roadmap/FT241.md:14); optionally [FT317](../../roadmap/FT318.md) as a decision stage | Valid review records, plan identities, and amendments. Decide capability-blocked semantics before the writer encodes them. Keep FT241's end-to-end promises separate. |
+| FT338 | FT99's semantic premise checks | Verify current claims, affected readers, competing writers, and retired claims before review. Move mechanical fence checks to FT293. |
+| FT293 | FT262 | Complete and explain ticket ownership before a charge. Retain uncited-row progress and structured closure output. |
+| [FT172](../../roadmap/FT172.md:11) | [FT292](../../roadmap/FT172.md) | One roadmap identity and transition contract. The writer records decisions that the reviewer already made. |
+| [FT265](../../roadmap/FT265.md:7) | [FT249's reader gap](../../roadmap/FT265.md) | Consistent capture reads from every checkout and one drain snapshot. Do not assume a new Git-ref store is necessary. |
+| [FT326](../../roadmap/FT326.md:7) | [FT325](../../roadmap/FT326.md) | Anchor boundaries and canary mutations agree despite harmless line wraps. Preserve the shipped distinctness checks. |
+| [FT341](../../roadmap/FT341.md:3) | [FT254's wrong-tree requirements](../../roadmap/FT254.md:39); [FT339's registry attribution](../../roadmap/FT341.md) | Each tree-scoped command reads and identifies its selected tree. Keep exec stdin, timeout, and script behavior with FT254. |
+| [FT125](../../roadmap/FT125.md:3) | [FT254's bounded file reads](../../roadmap/FT254.md:77); FT339's directory query | Task-shaped reader projections. Reuse FT336's response budget and FT341's target contract. |
 
 FT307 can also absorb the structure-query requests buried in FT243 and FT6.
 The evidence already names the same working-tree and scoped-headroom outcome.
@@ -80,12 +80,12 @@ FT140 needs individual dispositions. FT254 needs the responsibility transfers ab
 
 Archive FT38's visual revival unless the reviewer wants it.
 Its own row describes optional aesthetics after a functional dashboard shipped.
-[FT38](../../roadmap/FT38.md:3).
+FT38.
 
 FT324 has no current in-tree citation for its alleged competing project rule.
 Treat it as a retirement candidate unless the reviewer supplies that source.
 Private harness memory was outside this review.
-[FT324](../../roadmap/FT324.md:3), [current memory rule](../../.bench/BENCH.md:157).
+FT324, [current memory rule](../../.bench/BENCH.md:157).
 
 FT261 needs a fresh reproducer before more design work.
 Explicit-source facts now include untracked paths, but this review did not run the original command.
@@ -101,7 +101,7 @@ Do not replace those tests with a selected binary.
 Decline or defer FT267's extra dev-tier verifier unless an ordinary-build regression justifies it.
 The ship tier already owns artifact verification and executes the script.
 This is a proposed scope cut, not proof that the requested dev-tier behavior shipped.
-[FT267](../../roadmap/FT267.md:3), [tier contract](../../projects/benchkit.md:466), [execution](../../internal/conformance/native_workflow_test.go:353).
+FT267, [tier contract](../../projects/benchkit.md:466), [execution](../../internal/conformance/native_workflow_test.go:353).
 
 FT222 needs a residual rewrite, not an automatic closure.
 Current routing is explicit, but the row also asks for a configurable review binding and comparative implementation evidence.
@@ -128,7 +128,7 @@ This review did not re-open every historical pickup it cites.
 The board overstates unfinished work when it carries a shipped premise beside a real residual.
 A title can also hide a much larger staged spec.
 FT115's low-priority deadline title hides a staged test-environment and shared-file isolation build.
-[FT115](../../roadmap/FT115.md:6), [staged scope](../../specs/test-determinism/spec.md:15).
+FT115, [staged scope](../../specs/test-determinism/spec.md:15).
 
 Five of the seven current staged specs omit a Roadmap line.
 Only FT336 and FT290 name one.
@@ -183,16 +183,16 @@ Each row below is a proposal. A fold transfers every surviving requirement and o
 | --- | --- | --- |
 | [FT6](../../roadmap/FT6.md:1) | Keep parked | Move the structure-query candidate to FT307; retain the other evidence triggers. |
 | [FT24](../../roadmap/FT24.md:1) | Keep parked | Upstream trigger unchanged; no fresh upstream capability assessment. |
-| [FT38](../../roadmap/FT38.md:1) | Archive proposal | Optional visual revival has no current correctness outcome. |
-| [FT58](../../roadmap/FT58.md:1) | Keep qualification blocker | Root permission and ownership policy remains a release-track decision. |
+| FT38 | Archive proposal | Optional visual revival has no current correctness outcome. |
+| FT58 | Keep qualification blocker | Root permission and ownership policy remains a release-track decision. |
 | [FT89](../../roadmap/FT89.md:1) | Narrow; LOW | Keep live contradictions and FT340's drain wording; remove stale inventory and shipped claims. |
 | [FT98](../../roadmap/FT98.md:1) | Narrow | Keep preservation archives and cleanup edges; remove the delivered basic probe face. |
-| [FT99](../../roadmap/FT99.md:1) | Fold | Semantic residuals to FT338; mechanical ownership facts to FT293. |
+| FT99 | Fold | Semantic residuals to FT338; mechanical ownership facts to FT293. |
 | [FT100](../../roadmap/FT100.md:1) | Keep blocked | Weight reduction stays behind FT231; correctness remains separate. |
 | [FT101](../../roadmap/FT101.md:1) | Defer | Require a concrete multi-context adopter; scoped structure output belongs to FT307. |
 | [FT106](../../roadmap/FT106.md:1) | Narrow; LOW | Keep semantic document checks; remove the fixed research-home claim. |
-| [FT108](../../roadmap/FT108.md:1) | Retire proposal | Use the existing refactor route; preserve any accepted characterization rule in existing guidance. |
-| [FT115](../../roadmap/FT115.md:1) | Promote; HIGH | Deliver the staged test-determinism spec; show its full scope in the row. |
+| FT108 | Retire proposal | Use the existing refactor route; preserve any accepted characterization rule in existing guidance. |
+| FT115 | Promote; HIGH | Deliver the staged test-determinism spec; show its full scope in the row. |
 | [FT125](../../roadmap/FT125.md:1) | Keep | Absorb bounded file reads and directory queries; preserve distinct reader seams. |
 | [FT130](../../roadmap/FT130.md:1) | Keep; LOW | Only caller coordination during the gate window remains. |
 | [FT140](../../roadmap/FT140.md:1) | Dismantle umbrella | Verify and dispose of each historical residual before retiring the owner. |
@@ -200,13 +200,13 @@ Each row below is a proposal. A fold transfers every surviving requirement and o
 | [FT142](../../roadmap/FT142.md:1) | Keep qualification track | Revalidate the old runtime residuals against the release contract. |
 | [FT168](../../roadmap/FT168.md:1) | Keep; MEDIUM | Focused system/Markdown probes remain a distinct tooling gap. |
 | [FT172](../../roadmap/FT172.md:1) | Keep; consolidate | Absorb FT292; connect staged specs, owner stages, and transitions. |
-| [FT199](../../roadmap/FT199.md:1) | Keep | Recovery-aware ref classification remains distinct from removal mechanics. |
+| FT199 | Keep | Recovery-aware ref classification remains distinct from removal mechanics. |
 | [FT200](../../roadmap/FT200.md:1) | Narrow | Keep complete-preflight and spec-discovery policy; path authorization already runs at landing. |
 | [FT204](../../roadmap/FT204.md:1) | Narrow | Keep session queries and the retro consumer; reuse delivered record readers. |
 | [FT207](../../roadmap/FT207.md:1) | Keep decision | Malformed-admin protection across mutation callers remains a separate risk question. |
 | [FT208](../../roadmap/FT208.md:1) | Split residuals | Refusal grammar and marker diagnostics differ from the HI14 fixture seam. |
 | [FT215](../../roadmap/FT215.md:1) | Promote correctness | Prioritize lane omissions and empty merges; separate cost measurements from fixes. |
-| [FT217](../../roadmap/FT217.md:1) | Narrow | Keep inventory deepening; move unrelated broker and canonical-path residuals to their owners. |
+| FT217 | Narrow | Keep inventory deepening; move unrelated broker and canonical-path residuals to their owners. |
 | [FT222](../../roadmap/FT222.md:1) | Revalidate; defer | Remove historical routing conflicts; retain only desired configuration and measurement decisions. |
 | [FT231](../../roadmap/FT231.md:1) | Narrow; measure incrementally | Use delivered records; retain causal trials and missing measures without a giant prerequisite. |
 | [FT232](../../roadmap/FT232.md:1) | Prioritize experiment decision | The collector exists; authorize a real pilot and review its terminal report. |
@@ -215,26 +215,26 @@ Each row below is a proposal. A fold transfers every surviving requirement and o
 | [FT241](../../roadmap/FT241.md:1) | Split requirements | Record mechanics to FT318; versioned acceptance promises remain LOW. |
 | [FT243](../../roadmap/FT243.md:1) | Narrow; LOW | Keep recurring selection policy; transfer concrete query and probe requests. |
 | [FT244](../../roadmap/FT244.md:1) | Keep; LOW | Assignment-owned scratch lifecycle is distinct from output bounds. |
-| [FT246](../../roadmap/FT246.md:1) | Closure candidate | Confirm the constructor census; retain builds whose subject is binary construction. |
-| [FT249](../../roadmap/FT249.md:1) | Fold residual | Move reader consistency to FT265; avoid preselecting Git-ref storage. |
-| [FT253](../../roadmap/FT253.md:1) | Keep | One destination lease could support durable execution; do not merge it with cleanup locks. |
+| FT246 | Closure candidate | Confirm the constructor census; retain builds whose subject is binary construction. |
+| [FT249](../../roadmap/FT265.md) | Fold residual | Move reader consistency to FT265; avoid preselecting Git-ref storage. |
+| [FT253](../adr/0014-main-receives-writes-only-through-landings.md) | Keep | One destination lease could support durable execution; do not merge it with cleanup locks. |
 | [FT254](../../roadmap/FT254.md:1) | Split responsibilities | Target attribution to FT341; file reads to FT125; retain exec and conflict ergonomics. |
 | [FT255](../../roadmap/FT255.md:1) | Keep distinct | Shared capacity control differs from test correctness and stress scheduling. |
 | [FT258](../../roadmap/FT258.md:1) | Promote correctness | Resolve merge-parent behavior first; retain explicit ownership for discovered paths. |
 | [FT260](../../roadmap/FT260.md:1) | Reassess scope | Diff inspection can reuse reader work; patch transfer needs its own current justification. |
 | [FT261](../../roadmap/FT261.md:1) | Park pending repro | Current source-range facts include untracked paths; runtime closure is unverified. |
-| [FT262](../../roadmap/FT262.md:1) | Fold into FT293 | Keep progress output and structured closure diagnostics. |
+| FT262 | Fold into FT293 | Keep progress output and structured closure diagnostics. |
 | [FT265](../../roadmap/FT265.md:1) | Keep; consolidate residual | Absorb FT249; reuse sealed generations and settle retrieval consistency. |
-| [FT267](../../roadmap/FT267.md:1) | Decline or defer proposal | Ship already verifies artifacts; extra dev-tier execution needs a distinct justification. |
+| FT267 | Decline or defer proposal | Ship already verifies artifacts; extra dev-tier execution needs a distinct justification. |
 | [FT275](../../roadmap/FT275.md:1) | Defer cross-project policy | Bench instrumentation does not justify a new universal adoption obligation. |
 | [FT283](../../roadmap/FT283.md:1) | Keep decision | Phase-scoped transition behavior remains distinct from retirement. |
 | [FT284](../../roadmap/FT284.md:1) | Keep decision | Atomic retirement must preserve cited decisions and occurrence-ledger integrity. |
 | [FT287](../../roadmap/FT287.md:1) | Defer policy expansion | The current scoped AXI contract exists; broadening is not a missing current obligation. |
-| [FT290](../../roadmap/FT290.md:1) | Promote ready work | Build the staged test projection; retain its separately noted failure-detail residual. |
-| [FT292](../../roadmap/FT292.md:1) | Fold into FT172 | Atomic recording follows the roadmap identity and transition contract. |
-| [FT293](../../roadmap/FT293.md:1) | Narrow; prioritize decisions | Keep generic owner closure, deleted paths, and proposal adoption policy; absorb FT262. |
-| [FT296](../../roadmap/FT296.md:1) | Fold into FT305 | Worker lifetime is part of durable supervisor design. |
-| [FT299](../../roadmap/FT299.md:1) | Conditional broker grouping | Group rehearsal with broker lifecycle work after the residuals and FT327 repro are confirmed. |
+| FT290 | Promote ready work | Build the staged test projection; retain its separately noted failure-detail residual. |
+| [FT292](../../roadmap/FT172.md) | Fold into FT172 | Atomic recording follows the roadmap identity and transition contract. |
+| FT293 | Narrow; prioritize decisions | Keep generic owner closure, deleted paths, and proposal adoption policy; absorb FT262. |
+| [FT296](../../roadmap/FT305.md) | Fold into FT305 | Worker lifetime is part of durable supervisor design. |
+| FT299 | Conditional broker grouping | Group rehearsal with broker lifecycle work after the residuals and FT327 repro are confirmed. |
 | [FT302](../../roadmap/FT302.md:1) | Demote from front section | Use a fresh census before scheduling the remaining deepening. |
 | [FT304](../../roadmap/FT304.md:1) | Keep after identity | Observation-only view remains distinct; FT172 is its literal dependency. |
 | [FT305](../../roadmap/FT305.md:1) | Keep HIGH; consolidate | Absorb FT296 and preserve explicit limits and recovery authority. |
@@ -242,26 +242,26 @@ Each row below is a proposal. A fold transfers every surviving requirement and o
 | [FT307](../../roadmap/FT307.md:1) | Keep active | Absorb matching structure requests from FT243 and FT6. |
 | [FT308](../../roadmap/FT308.md:1) | Demote; LOW | Stale lock accumulation needs safe ownership design but lacks a demonstrated urgent failure. |
 | [FT312](../../roadmap/FT312.md:1) | Keep; clarify stages | Invocation recipes and review-venue capacity are related but independently deliverable. |
-| [FT314](../../roadmap/FT314.md:1) | Defer decision | Cross-run gate reuse changes authorization and must remain separate from ordinary performance fixes. |
-| [FT317](../../roadmap/FT317.md:1) | Fold option into FT318 | Set capability-blocked reconciliation semantics before the writer implements them. |
+| [FT314](../adr/0031-one-grade-key-names-each-whole-gate-green.md) | Defer decision | Cross-run gate reuse changes authorization and must remain separate from ordinary performance fixes. |
+| [FT317](../../roadmap/FT318.md) | Fold option into FT318 | Set capability-blocked reconciliation semantics before the writer implements them. |
 | [FT318](../../roadmap/FT318.md:1) | Promote; HIGH | Native validated records and plan amendments remove recurring review overhead. |
-| [FT324](../../roadmap/FT324.md:1) | Retirement candidate | No competing project rule was identified in-tree; retain only with a current source. |
-| [FT325](../../roadmap/FT325.md:1) | Fold into FT326 | Wrap-independent canary mutation belongs with anchor semantics. |
+| FT324 | Retirement candidate | No competing project rule was identified in-tree; retain only with a current source. |
+| [FT325](../../roadmap/FT326.md) | Fold into FT326 | Wrap-independent canary mutation belongs with anchor semantics. |
 | [FT326](../../roadmap/FT326.md:1) | Keep; consolidate | Retain sentence and paragraph decisions; same-kind distinctness has shipped. |
 | [FT327](../../roadmap/FT327.md:1) | Keep parked | Require its clean-worktree reproduction before a broker lifecycle build. |
 | [FT328](../../roadmap/FT328.md:1) | Keep parked; prioritize repro | Write access for a shared read lock makes the incident plausible, not runtime-verified. |
-| [FT329](../../roadmap/FT329.md:1) | Keep parked | The recorded current-tree replay did not reproduce the old symptom. |
-| [FT330](../../roadmap/FT330.md:1) | Keep parked; focused repro | Verify the exact refusal route before changing it. |
+| FT329 | Keep parked | The recorded current-tree replay did not reproduce the old symptom. |
+| FT330 | Keep parked; focused repro | Verify the exact refusal route before changing it. |
 | [FT331](../../roadmap/FT331.md:1) | Move to deferred section | The advisor pilot is a separate capability, not a prerequisite to the cost fixes. |
 | [FT332](../../roadmap/FT332.md:1) | Defer | The scheduled stress job stays outside the staged test-determinism build. |
 | [FT333](../../roadmap/FT333.md:1) | Keep distinct | Tickets-only prepared evidence changes the preparation subject, not just record writing. |
 | [FT334](../../roadmap/FT334.md:1) | Move to deferred section | Deadline batching follows dependable execution and measurable costs. |
-| [FT335](../../roadmap/FT335.md:1) | Keep parked | Verify source identity and reproduce full-gate selection before graduation. |
-| [FT336](../../roadmap/FT336.md:1) | Keep priority 1 | The staged output-bound build remains the explicit first choice. |
-| [FT337](../../roadmap/FT337.md:1) | Keep priority 2 | Retain file-stable review evidence and the full-retrieval control. |
-| [FT338](../../roadmap/FT338.md:1) | Keep; consolidate | Absorb FT99 semantic checks; remove already-shipped sweep requirements. |
-| [FT339](../../roadmap/FT339.md:1) | Fold and retire owner | Registry attribution to FT341; directory projection to FT125. |
-| [FT340](../../roadmap/FT340.md:1) | Fold residual; retire owner | Repair-ticket choice is settled; drain lane wording belongs with FT89. |
+| FT335 | Keep parked | Verify source identity and reproduce full-gate selection before graduation. |
+| [FT336](../adr/0025-one-owner-bounds-every-public-bench-response.md) | Keep priority 1 | The staged output-bound build remains the explicit first choice. |
+| FT337 | Keep priority 2 | Retain file-stable review evidence and the full-retrieval control. |
+| FT338 | Keep; consolidate | Absorb FT99 semantic checks; remove already-shipped sweep requirements. |
+| [FT339](../../roadmap/FT341.md) | Fold and retire owner | Registry attribution to FT341; directory projection to FT125. |
+| [FT340](../../roadmap/FT89.md) | Fold residual; retire owner | Repair-ticket choice is settled; drain lane wording belongs with FT89. |
 | [FT341](../../roadmap/FT341.md:1) | Promote shaping | Absorb wrong-tree attribution and clarify command scope before more exec convenience work. |
 
 ## Verification record
