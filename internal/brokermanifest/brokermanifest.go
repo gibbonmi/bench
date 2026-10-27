@@ -38,8 +38,11 @@ const DigestField = "sha256"
 // PathField is the manifest field that binds the symlink-resolved broker path.
 const PathField = "path"
 
+// VersionField is the manifest field that binds the version the broker was installed for.
+const VersionField = "version"
+
 // boundFields are the four values one manifest carries.
-var boundFields = []string{PathField, "version", "platform", DigestField}
+var boundFields = []string{PathField, VersionField, "platform", DigestField}
 
 // Write publishes the manifest in dir, binding broker as the promotion broker for
 // version. It returns the manifest path and the symlink-resolved broker it bound.
@@ -58,7 +61,7 @@ func write(replacer durablefile.Replacer, dir, broker, version string) (string, 
 	}
 	path := filepath.Join(dir, Name)
 	content := PathField + "\t" + broker + "\n" +
-		"version\t" + version + "\n" +
+		VersionField + "\t" + version + "\n" +
 		"platform\t" + Platform() + "\n" +
 		DigestField + "\t" + digest + "\n"
 	if err := replacer.Replace(path, []byte(content), 0o644); err != nil {

@@ -57,10 +57,12 @@ func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, er
 	return owed, nil
 }
 
-// EvidenceID is the evidence ID of requirement under prefix. A requirement ID that already
-// starts with the prefix and a hyphen is the evidence ID, so the prefix occurs once. Any other
-// requirement ID follows the prefix and a hyphen.
+// EvidenceID is the evidence ID of requirement under prefix, with each trailing hyphen of the
+// prefix removed. A requirement ID that already starts with the prefix and a hyphen is the
+// evidence ID, so the prefix occurs once. Any other requirement ID follows the prefix and one
+// hyphen.
 func EvidenceID(prefix, requirement string) string {
+	prefix = strings.TrimRight(prefix, "-")
 	if strings.HasPrefix(requirement, prefix+"-") {
 		return requirement
 	}

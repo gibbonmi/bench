@@ -18,11 +18,15 @@ type Requirement struct {
 	Probe   string `json:"probe,omitempty"`
 	Ticket  string `json:"ticket,omitempty"`
 }
+
+// PlannedChunk is one chunk of a completion plan. Covers maps each ticket of the chunk to the
+// rows of its Covers: line, and Rows is the union of those rows in ticket order.
 type PlannedChunk struct {
-	ID           string        `json:"id"`
-	Tickets      []string      `json:"tickets"`
-	Verification []Requirement `json:"verification"`
-	Rows         []string      `json:"-"`
+	ID           string              `json:"id"`
+	Tickets      []string            `json:"tickets"`
+	Verification []Requirement       `json:"verification"`
+	Rows         []string            `json:"-"`
+	Covers       map[string][]string `json:"-"`
 }
 type Plan struct {
 	Version           int            `json:"version"`
@@ -125,6 +129,10 @@ func checkPlan(spec string, data []byte, read func(string) ([]byte, error)) (Pla
 		parsed = append(parsed, ticket)
 		inputs = append(inputs, data)
 		chunk := &plan.Chunks[owners[name]]
+		if chunk.Covers == nil {
+			chunk.Covers = map[string][]string{}
+		}
+		chunk.Covers[name] = ticket.Covers
 		for _, row := range ticket.Covers {
 			if !slices.Contains(chunk.Rows, row) {
 				chunk.Rows = append(chunk.Rows, row)

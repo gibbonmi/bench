@@ -126,10 +126,10 @@ func writeReaderGreen(replacer durablefile.Replacer, gitdir string, run readerRu
 	if err := ensureEvidenceDir(gitdir, dir); err != nil {
 		return err
 	}
-	return durableReplaceAt(replacer, dir, run.plan.Tree, verdictRecord{
-		Schema: verdictSchema, Tree: run.plan.Tree, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339),
-		RunBinary: runBinary, ReaderSet: run.schedule, DestinationTree: run.destination, GreenMarker: run.marker,
-	})
+	rec := storeRecord(run.plan.Tree)
+	rec.RecordedAt, rec.RunBinary = recordTime(recordedAt), runBinary
+	rec.ReaderSet, rec.DestinationTree, rec.GreenMarker = run.schedule, run.destination, run.marker
+	return durableReplaceAt(replacer, dir, run.plan.Tree, rec)
 }
 
 // ReaderRecorded answers whether the store of root holds a valid reader record for tree. A

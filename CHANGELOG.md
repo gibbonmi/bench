@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Record ticket scope and prefix
+
+- Changed `bench record ticket`, which now refuses a planned seam cell only in a row that the `Covers:` line of the recording ticket names. An earlier ticket of a chunk now records at its own commit while a later ticket of the chunk still plans its rows. Before, the verb read every row of the chunk, so an earlier ticket waited until the last ticket cited its rows. `--id-prefix` now removes each trailing hyphen of the prefix, so `--id-prefix GR-` writes the same evidence IDs as `--id-prefix GR`. Before, `GR-` wrote the evidence ID `GR--tests`.
+
 ### Landing stack
 
 - Added `bench worktree land --stack <file>`, which lands two to sixteen reviewed spec-less or tickets-only sources under one landing lease. Each member keeps its own landing merge commit and its own folder close. The whole gate grades the top tree once, and one destination update publishes each green member. Before, each source paid its own whole gate and its own fold of `main`.
@@ -29,6 +33,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Changed `bench gate`, `bench commit`, `bench worktree merge`, `bench worktree land`, and the checkpoints, which now look up a green under the grade key before they select the delta set or the reader set. On a hit, each verb still runs its own purpose and evidence checks. A reuse records the gate cache of its checkout with the recorded time of the source run. `--fresh` and a declared lane skip the lookup.
 - Changed the complete checkpoint in a repository that declares build inputs, which now runs under the installed landing broker. When the running executable differs from the broker, the checkpoint execs the broker, so its green answers the landing of the same tree. Before, a spec landing ran a second whole gate on the tree of its complete checkpoint.
 - Added the `checkpoint-broker-unavailable` refusal face. The complete checkpoint refuses with it, and runs no gate, when it cannot authenticate or exec the broker.
+- Changed the reader set refusal line, which now names the case `new grade identity` when the grade identity differs from the identity of the reader table. Before, the case named the oracle identity, although the plan compares the grade identity.
 
 ### Lane fixture bite
 

@@ -31,12 +31,23 @@ func refusePlanned(f form, root, spec, commit string, rows func(reviewrecord.Pla
 	return f.refuse(fmt.Sprintf("rows %s hold a planned seam cell at %s; cite each test as %s", strings.Join(held, ", "), commit, coverage.CitationForm))
 }
 
-// chunkRows selects the planned rows of chunk id. A chunk that the plan does not name
-// selects no row, and the writer then refuses it with its own cause.
+// chunkRows selects the planned rows of chunk id.
 func chunkRows(id string) func(reviewrecord.Plan) []string {
+	return inChunk(id, func(chunk *reviewrecord.PlannedChunk) []string { return chunk.Rows })
+}
+
+// ticketRows selects the rows that the Covers: line of ticket names in chunk id. A ticket that
+// the chunk does not list selects no row.
+func ticketRows(id, ticket string) func(reviewrecord.Plan) []string {
+	return inChunk(id, func(chunk *reviewrecord.PlannedChunk) []string { return chunk.Covers[ticket] })
+}
+
+// inChunk selects the rows that pick answers for chunk id. A chunk that the plan does not name
+// selects no row, and the writer then refuses it with its own cause.
+func inChunk(id string, pick func(*reviewrecord.PlannedChunk) []string) func(reviewrecord.Plan) []string {
 	return func(plan reviewrecord.Plan) []string {
 		if chunk := plan.Chunk(id); chunk != nil {
-			return chunk.Rows
+			return pick(chunk)
 		}
 		return nil
 	}

@@ -48,8 +48,7 @@ var execBroker = subprocess.Replace
 // that does not read, a running executable that does not digest, a broker whose digest differs
 // from its manifest, and a failed exec each refuse, so no gate runs under an unknown
 // executable. A chunk checkpoint and a repository without build inputs keep the running
-// executable, and read no manifest. It
-// answers the result, and whether the run ended here.
+// executable, and read no manifest. It answers the result, and whether the run ended here.
 func runUnderBroker(ctx context.Context, root string, checkpoint Checkpoint, stderr io.Writer, mode runMode) (Result, bool) {
 	if !checkpoint.Complete {
 		return Result{}, false

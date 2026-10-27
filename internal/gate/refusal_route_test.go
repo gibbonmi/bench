@@ -223,7 +223,7 @@ func gateFaceFixtures() []gateFaceFixture {
 		proseFixture(record),
 		brokerFixture(),
 		candidateFixture(),
-		overlapFixture(),
+		overlapFixture(false),
 		{
 			// The spec drops its staged status, which only the reviewer restores.
 			face:     "checkpoint-composition",

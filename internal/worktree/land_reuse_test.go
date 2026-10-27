@@ -135,9 +135,7 @@ func TestLandReusesACheckpointGreenOfAGoChange(t *testing.T) {
 // process. The checkout excludes the manifest, so it stays clean.
 func bindRunningBroker(t *testing.T, root string) {
 	t.Helper()
-	running, err := os.Executable()
-	mustNoError(t, err)
-	commitmenttest.BindManifest(t, root, running)
+	commitmenttest.BindRunning(t, root)
 	exclude := mustAdminPath(t, root, "info/exclude")
 	excluded, err := os.ReadFile(exclude)
 	if err != nil && !os.IsNotExist(err) {

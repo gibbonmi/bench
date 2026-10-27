@@ -176,7 +176,7 @@ These values describe one historical run; they do not predict the cost of every 
 FT293 and FT369 should make caller, fixture, and registry closure reliable before author dispatch.
 Their occurrence ledgers show repeated fence amendments and preserve-and-restore work.
 Fix the concrete preparation failures separately from FT369's proposed larger-ticket default.
-[FT293](../../roadmap/FT293.md:27), [FT369](../../roadmap/FT369.md:18).
+FT293, [FT369](../../roadmap/FT369.md:18).
 
 ### Use the existing reader and record owners
 
@@ -225,7 +225,7 @@ FT379 has a recorded reviewer decision awaiting consistent guidance.
 The scorecard says record-only changes consume no repair cycle.
 The current repair policy excludes disposition changes from its evidence-only exception.
 The row records six further rounds over record prose without source changes.
-[Decision](../../capture/agent-performance/claude-models.md:55), [policy](../../.agents/skills/bench-craft-line/references/bounded-repair-policy.md:46), [occurrence](../../roadmap/FT379.md:14).
+[Decision](../../capture/agent-performance/claude-models.md:55), [policy](../../.agents/skills/bench-craft-line/references/bounded-repair-policy.md:46), occurrence.
 
 Align those rules while retaining checks against false claims and stale evidence.
 No cycle exemption excuses an incorrect observation, a missing required check, an unresolved finding, or an invalid source identity.
@@ -284,7 +284,7 @@ FT283 has a specific approved direction for spec-stage lane-only landings.
 Its row explicitly says the whole-project contract remains until the change ships.
 Finish the safe input and phase contract before using that exception.
 Treat FT215's broader Markdown-only proposal and FT314's cross-run evidence reuse as separate decisions.
-[FT283](../../roadmap/FT283.md:11), [FT215](../../roadmap/FT215.md:34), [FT314](../../roadmap/FT314.md:3).
+[FT283](../../roadmap/FT283.md:11), [FT215](../../roadmap/FT215.md:34), [FT314](../adr/0031-one-grade-key-names-each-whole-gate-green.md).
 
 ### Cleanup claims that need correction
 
@@ -337,10 +337,10 @@ Broader experiments do not block small correctness repairs.
 | 3 | [FT354](../../roadmap/FT354.md:1) | Fix exception-policy trailing input first; then consolidate strict readers without waiting on quoting. |
 | 4 | [FT366](../../roadmap/FT366.md:1) | Close the missing-core parser refusal edge; then consolidate wrappers and envelopes. |
 | 5 | [FT215](../../roadmap/FT215.md:1) | Close check-input selection gaps before changing lane or landing cost. |
-| 6 | [FT349](../../roadmap/FT349.md:1) | Require ticket check evidence and remove completed rows' planned-test exemptions. |
-| 7 | [FT342](../../roadmap/FT342.md:1) | Decide one moved-main route; prevent repeated folds, fence repairs, and re-review. |
+| 6 | FT349 | Require ticket check evidence and remove completed rows' planned-test exemptions. |
+| 7 | [FT342](../adr/0014-main-receives-writes-only-through-landings.md) | Decide one moved-main route; prevent repeated folds, fence repairs, and re-review. |
 | 8 | [FT89](../../roadmap/FT89.md:1) | Resolve contradictory verification and mechanical-fix instructions. |
-| 9 | [FT379](../../roadmap/FT379.md:1) | Apply the existing record-only correction decision and narrow confirming rounds. |
+| 9 | FT379 | Apply the existing record-only correction decision and narrow confirming rounds. |
 | 10 | [FT358](../../roadmap/FT358.md:1) | Use the staged block-reader plan to fix inconsistent Markdown interpretation. |
 | 11 | [FT341](../../roadmap/FT341.md:1) | Repair terminal-child behavior and label addressing before completing routing migration. |
 | 12 | [FT362](../adr/0030-one-lifetime-owner-and-process-user-protection.md) | Bound scanner and prep-release cancellation first; then share process ownership. |
@@ -350,22 +350,22 @@ Broader experiments do not block small correctness repairs.
 
 | Rank | Owner | Next action and reason |
 |---|---|---|
-| 14 | [FT293](../../roadmap/FT293.md:1) | Decide complete ownership closure and useful diagnostics before more author dispatches. |
+| 14 | FT293 | Decide complete ownership closure and useful diagnostics before more author dispatches. |
 | 15 | [FT375](../../roadmap/FT375.md:1) | Compute drift and cited-symbol/test state before launching staleness readers. |
 | 16 | [FT283](../../roadmap/FT283.md:1) | Implement the decided spec-stage lane contract after its input coverage is sound. |
 | 17 | [FT125](../../roadmap/FT125.md:1) | Deliver exact bounded artifact and section reads; validate fewer calls on real tasks. |
-| 18 | [FT290](../../roadmap/FT290.md:1) | Complete the staged fixture/count/selection projection; distinguish executed checks from empty success. |
+| 18 | FT290 | Complete the staged fixture/count/selection projection; distinguish executed checks from empty success. |
 | 19 | [FT255](../../roadmap/FT255.md:1) | Set one test concurrency budget; avoid load-driven retries before phase overlap. |
 | 20 | [FT141](../../roadmap/FT141.md:1) | Attribute reds to the exact composed baseline; avoid diagnosing unrelated failures as regressions. |
 | 21 | [FT353](../../roadmap/FT353.md:1) | Replace unique-ref cleanup dead ends with an owned disposition and recovery route. |
 | 22 | [FT265](../../roadmap/FT265.md:1) | Make sealed capture bodies and primary-aware reads exact and consistently reachable. |
-| 23 | [FT317](../../roadmap/FT317.md:1) | Decide capability-blocked evidence values before completion can record them. |
+| 23 | [FT317](../../roadmap/FT318.md) | Decide capability-blocked evidence values before completion can record them. |
 | 24 | [FT318](../../roadmap/FT318.md:1) | Deliver decided completion values and native record forms; depends on FT317 for blocked rows. |
 | 25 | [FT344](../../roadmap/FT344.md:1) | Use the supported worktree-build remedy at every freshness refusal. |
 | 26 | [FT380](../../roadmap/FT380.md:1) | Check plan changes before dispatch; isolate any later publication-enforcement decision. |
 | 27 | [FT369](../../roadmap/FT369.md:1) | Fix caller, fence, and refusal-member preparation; separate the larger-ticket experiment. |
 | 28 | [FT98](../../roadmap/FT98.md:1) | Provide verified evidence preservation and precise cleanup plans. |
-| 29 | [FT253](../../roadmap/FT253.md:1) | Own the full landing lease and its wait route to reduce conflicting landing attempts. |
+| 29 | [FT253](../adr/0014-main-receives-writes-only-through-landings.md) | Own the full landing lease and its wait route to reduce conflicting landing attempts. |
 
 ### Then: consolidate existing machinery
 
@@ -379,26 +379,26 @@ Broader experiments do not block small correctness repairs.
 | 35 | [FT333](../../roadmap/FT333.md:1) | Support current tickets-only evidence without requiring a synthetic spec. |
 | 36 | [FT312](../../roadmap/FT312.md:1) | Automate review invocation and venue lifecycle as independent slices. |
 | 37 | [FT387](../../roadmap/FT387.md:1) | Finish verified output preservation on supported harness paths; refuse unsupported replacement. |
-| 38 | [FT388](../../roadmap/FT388.md:1) | Retire the coordinator immediately after FT387; this is closure, not a build. |
+| 38 | [FT388](../../roadmap/FT387.md) | Retire the coordinator immediately after FT387; this is closure, not a build. |
 | 39 | [FT231](../../roadmap/FT231.md:1) | Run one narrow comparison of an expensive workflow; defer the experiment portfolio. |
 | 40 | [FT100](../../roadmap/FT100.md:1) | Measure and cut unnecessary guidance after FT231; resolve FT89 first. |
 | 41 | [FT326](../../roadmap/FT326.md:1) | Make anchor mutations robust to harmless wrapping without weakening omission detection. |
 | 42 | [FT343](../../roadmap/FT343.md:1) | Decide test-hook policy and remove unused hooks with caller evidence. |
-| 43 | [FT373](../../roadmap/FT373.md:1) | Use the bounded standard-library duplicate check after concrete correctness and rework fixes. |
+| 43 | FT373 | Use the bounded standard-library duplicate check after concrete correctness and rework fixes. |
 | 44 | [FT365](../../roadmap/FT365.md:1) | Complete remaining scanner and expectation work; avoid duplicating landing-test-efficiency. |
 | 45 | [FT360](../../roadmap/FT360.md:1) | Apply the staged shared-fixture plan where it removes divergent harness knowledge. |
 | 46 | [FT363](../../roadmap/FT363.md:1) | Share cleanup-set application while preserving mode-specific decisions and fault behavior. |
 | 47 | [FT302](../../roadmap/FT302.md:1) | Promote only current repeated Git facts; deepen diff policy in a separate slice. |
-| 48 | [FT217](../../roadmap/FT217.md:1) | Share adoption decisions with unchanged public behavior and fixture assertions. |
+| 48 | FT217 | Share adoption decisions with unchanged public behavior and fixture assertions. |
 | 49 | [FT254](../../roadmap/FT254.md:1) | Prioritize stdin, timeout, and recovery ergonomics; defer convenience faces without call evidence. |
 | 50 | [FT244](../../roadmap/FT244.md:1) | Provide lifecycle-owned scratch storage to avoid untracked source contamination. |
-| 51 | [FT378](../../roadmap/FT378.md:1) | Use one concise known-issue owner and retirement trigger; avoid another policy manual. |
+| 51 | FT378 | Use one concise known-issue owner and retirement trigger; avoid another policy manual. |
 | 52 | [FT381](../../roadmap/FT381.md:1) | Decide only demonstrated delegation gaps; preserve the existing bounded repair policy. |
 | 53 | [FT384](../../roadmap/FT384.md:1) | Reproduce the alleged scope mismatch using the now-located matchers before designing a replacement. |
 | 54 | [FT207](../../roadmap/FT207.md:1) | Reproduce malformed-admin hangs, then route mutations through the existing refusal owner. |
 | 55 | [FT350](../../roadmap/FT350.md:1) | Prove the ref race through a sanctioned route before changing transaction guarantees. |
 | 56 | [FT140](../../roadmap/FT140.md:1) | Revalidate and split the mixed residual bundle; drop superseded or unavailable claims. |
-| 57 | [FT348](../../roadmap/FT348.md:1) | Decide disposition of the remaining recovered streams and close settled history. |
+| 57 | FT348 | Decide disposition of the remaining recovered streams and close settled history. |
 | 58 | [FT308](../../roadmap/FT308.md:1) | Design a race-safe stale-lock sweep; never unlink a lock merely because it looks empty. |
 | 59 | [FT208](../../roadmap/FT208.md:1) | Improve current refusal diagnostics; keep its expensive fixture-boundary decision separate. |
 | 60 | [FT260](../../roadmap/FT260.md:1) | Provide historical replay or transfer only for recurring unsupported workflows. |
@@ -407,7 +407,7 @@ Broader experiments do not block small correctness repairs.
 
 | Rank | Owner | Next action and reason |
 |---|---|---|
-| 61 | [FT314](../../roadmap/FT314.md:1) | Consider cross-run green reuse only with the complete authorization key and measured repetition. |
+| 61 | [FT314](../adr/0031-one-grade-key-names-each-whole-gate-green.md) | Consider cross-run green reuse only with the complete authorization key and measured repetition. |
 | 62 | [FT332](../../roadmap/FT332.md:1) | Add constrained stress runs after budgeting shared test resources and assigning a result owner. |
 | 63 | [FT232](../../roadmap/FT232.md:1) | Run the existing repair pilot and finish its report before adding a detector. |
 | 64 | [FT386](../../roadmap/FT386.md:1) | Trial a spec-size advisory; avoid another hard threshold without quality evidence. |
@@ -419,7 +419,7 @@ Broader experiments do not block small correctness repairs.
 | 70 | [FT371](../../roadmap/FT371.md:1) | Decide a safe scratch-Git probe route when a current investigation needs it. |
 | 71 | [FT368](../../roadmap/FT368.md:1) | Decide public consumers before speculative cuts; retain independent test bite. |
 | 72 | [FT364](../../roadmap/FT364.md:1) | Correct the caller/test premise, then decide unsupported staged-release scope after FT142. |
-| 73 | [FT383](../../roadmap/FT383.md:1) | Take the small fixture deduplication during nearby maintenance; no standalone campaign. |
+| 73 | FT383 | Take the small fixture deduplication during nearby maintenance; no standalone campaign. |
 | 74 | [FT235](../../roadmap/FT235.md:1) | Keep directory renaming low; current labels already support human navigation. |
 | 75 | [FT200](../../roadmap/FT200.md:1) | Revisit broader landing admission after FT342 and phase-scoped contracts settle. |
 
@@ -451,8 +451,8 @@ Broader experiments do not block small correctness repairs.
 | [FT261](../../roadmap/FT261.md:1) | Require the exact untracked-spec preflight reproduction; current source facts already include untracked paths. |
 | [FT327](../../roadmap/FT327.md:1) | Require a current landing refusal on doctor-published output. |
 | [FT328](../../roadmap/FT328.md:1) | Require the evidence-store read refusal under the declared read-only sandbox. |
-| [FT330](../../roadmap/FT330.md:1) | Require the checkpoint to emit the wrong recovery command for the named failure. |
-| [FT335](../../roadmap/FT335.md:1) | Keep only the unresolved full-gate-selection face parked; the caller-root face already shipped. |
+| FT330 | Require the checkpoint to emit the wrong recovery command for the named failure. |
+| FT335 | Keep only the unresolved full-gate-selection face parked; the caller-root face already shipped. |
 | FT355, folded into [FT372](../../roadmap/FT372.md:1) | Require a leftover tied to the crash test or its gate process before assigning cause. |
 | [FT372](../../roadmap/FT372.md:1) | Require the local-capture test failure again before treating shared state as its cause. |
 | [FT385](../../roadmap/FT385.md:1) | Require a recorded ambiguous-prefix refusal; do not infer that cause from any test retry. |
