@@ -237,6 +237,17 @@ func BindManifest(t testing.TB, root, executable string) {
 	}
 }
 
+// BindRunning binds the running test binary in the broker manifest of the checkout at root,
+// as the install binds the running executable.
+func BindRunning(t testing.TB, root string) {
+	t.Helper()
+	running, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	BindManifest(t, root, running)
+}
+
 // RequireLedgerKept runs act and fails unless the ledger at root keeps its exact bytes.
 func RequireLedgerKept(t testing.TB, root string, act func()) {
 	t.Helper()

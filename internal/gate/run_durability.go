@@ -97,7 +97,9 @@ func cacheDescribesFreshGreen(root string, plan subject, now time.Time) bool {
 }
 
 func interruptedRecord(plan subject, now time.Time) verdictRecord {
-	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
+	rec := storeRecord(plan.Tree)
+	rec.State, rec.Oracle, rec.StartedAt, rec.OwnerPID = Pending, plan.Oracle, recordTime(now), os.Getpid()
+	return rec
 }
 
 func retainGreen(replacer durablefile.Replacer, root string, plan subject, recordedAt time.Time) error {

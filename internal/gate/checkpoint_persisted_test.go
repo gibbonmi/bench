@@ -6,6 +6,7 @@ package gate_test
 import (
 	"bytes"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -71,17 +73,27 @@ func openSecondDeclaredBuild(t *testing.T, primary string) string {
 
 // overlapFixture is the gate face walk's overlap fixture: the build of the fixture runs the
 // installed candidate, and a second declared build is open. The reviewer ends the second
-// build, which the fixture carries out by blocking its outcome.
-func overlapFixture() gateFaceFixture {
+// build, which the fixture carries out by blocking its outcome. With complete, the fixture
+// runs the complete checkpoint over a build that records its one chunk and retains its
+// completion evidence, so the rerun after the route passes. Otherwise it runs the first chunk
+// of two.
+func overlapFixture(complete bool) gateFaceFixture {
 	const label = "gate-overlap"
+	args, chunks := chunkArgs, 2
+	if complete {
+		args, chunks = completeArgs, 1
+	}
 	var primary, second string
 	return gateFaceFixture{
 		face:     "declared-builds-overlap",
-		args:     chunkArgs,
+		args:     args,
 		contains: routetest.ReviewerMarker + "bench commitment block --outcome ",
 		build: func(t *testing.T) gateSet {
 			var f *recordtest.Fixture
-			f, primary = declaredBuild(t, label, 2)
+			f, primary = declaredBuild(t, label, chunks)
+			if complete {
+				gate.RetainCompletion(f)
+			}
 			installRunning(t, primary)
 			second = openSecondDeclaredBuild(t, primary)
 			return gateSet{f: f, label: label}
@@ -112,6 +124,19 @@ func candidateFixture() gateFaceFixture {
 		},
 		carry: map[int]func(*testing.T, gateSet){0: func(t *testing.T, _ gateSet) { installRunning(t, primary) }},
 	}
+}
+
+// TestCompleteCheckpointRefusesOverlappingBuilds walks the overlap face under the complete
+// checkpoint. While two declared builds are open, the complete checkpoint prints the overlap
+// route, and that route clears the refusal.
+func TestCompleteCheckpointRefusesOverlappingBuilds(t *testing.T) {
+	fixture := overlapFixture(true)
+	faces := refusalroute.Faces(refusalroute.Gate)
+	at := slices.IndexFunc(faces, func(face refusalroute.Face) bool { return face.Name == fixture.face })
+	if at < 0 {
+		t.Fatalf("the gate registers no %s face", fixture.face)
+	}
+	followGateFace(t, faces[at], fixture)
 }
 
 // refuseUninstalled runs the checkpoint that args select in the checkout of f and requires a
