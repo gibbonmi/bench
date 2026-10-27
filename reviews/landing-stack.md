@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
+  "plan_digest": "sha256:6d05989e78cf39b0f9a2ad26082729d71d861dd69e1be31a11285848cbbe9c53",
   "implementation_session": "",
   "chunks": [
     {
@@ -237,9 +237,9 @@
     {
       "id": "LS-C2",
       "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
-      "tip": "a663e75135c53473df75b4da34c3328773d47e11",
-      "plan_digest": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
-      "source_digest": "d0cc933e7a02925b54d615645d7d7d0d983c45b0",
+      "tip": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+      "plan_digest": "sha256:6d05989e78cf39b0f9a2ad26082729d71d861dd69e1be31a11285848cbbe9c53",
+      "source_digest": "2da868db8b6975e387eb1557b24ff3c959dd1d6f",
       "acceptance_rows": [
         "LS7",
         "LS8",
@@ -288,6 +288,44 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14405,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "a663e75135c53473df75b4da34c3328773d47e11",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c2-t02-r1-gate",
+          "performer": "claude:ls-t02-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2da868db8b6975e387eb1557b24ff3c959dd1d6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t02-repair1-20261026",
+            "digest": "sha256:9207685b748abf306d72ab36d74d0119c768487804dfb5213ac9bc669e4a3db1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,234268,726\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c2-t02-r1-root-conformance",
+          "performer": "claude:ls-t02-repair1-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2da868db8b6975e387eb1557b24ff3c959dd1d6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t02-repair1-20261026",
+            "digest": "sha256:cc6551a925e80b97d43e51be95dee04ba1a4a725e288ece5334af54edc078019",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14206,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
           "requirement": "root-conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -389,6 +427,18 @@
       "chunk_ids": {
         "LS-C1": [
           "LS-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
+      "to": "sha256:6d05989e78cf39b0f9a2ad26082729d71d861dd69e1be31a11285848cbbe9c53",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
         ]
       }
     }
