@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/repair-carry/spec.md",
-  "plan_digest": "sha256:b4b54927f25a8ff4562eafa3747457c1752561f5dfc9cad8e47b8568f8684ee9",
+  "plan_digest": "sha256:2654ef811586ab2cf6686a670b913aab7ce29e61ebb2e1de176400adb808aa6e",
   "implementation_session": "",
   "chunks": [
     {
@@ -505,6 +505,112 @@
           ]
         }
       ]
+    },
+    {
+      "id": "CF-C3",
+      "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+      "tip": "6a2c50a3209f6bb675a2a0e5cb9ec94074e2b2b7",
+      "plan_digest": "sha256:2654ef811586ab2cf6686a670b913aab7ce29e61ebb2e1de176400adb808aa6e",
+      "source_digest": "4a0b55dc93afcf7f12a60de3dd1a3055fd68bdc8",
+      "acceptance_rows": [
+        "CF33",
+        "CF34",
+        "CF35",
+        "CF36",
+        "CF37",
+        "CF38",
+        "CF39",
+        "CF40",
+        "CF41",
+        "CF42",
+        "CF43",
+        "CF44",
+        "CF48",
+        "CF45",
+        "CF46",
+        "CF47",
+        "CF49",
+        "CF50"
+      ],
+      "verification": [
+        {
+          "id": "t04-recordcmd",
+          "performer": "claude:rc-t04-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a0b55dc93afcf7f12a60de3dd1a3055fd68bdc8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261027",
+            "digest": "sha256:5bb345ec6f28bc3833814bb4c9a3b126899a73bbaca119c6adc7e9a04af079a1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,23018,289\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "6a2c50a3209f6bb675a2a0e5cb9ec94074e2b2b7",
+          "requirement": "recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-fixtures",
+          "performer": "claude:rc-t04-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a0b55dc93afcf7f12a60de3dd1a3055fd68bdc8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261027",
+            "digest": "sha256:7dd58c33b5a23a0efad8d9151e7542c7202e6f4f5a3c139ceff787447096a540",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "6a2c50a3209f6bb675a2a0e5cb9ec94074e2b2b7",
+          "requirement": "fixtures",
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-help",
+          "performer": "claude:rc-t04-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a0b55dc93afcf7f12a60de3dd1a3055fd68bdc8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261027",
+            "digest": "sha256:07955a3a8ae8a6b670bf1af3c1b0fed326f73408eb9d0290c6e29ae7660c207b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23386,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "6a2c50a3209f6bb675a2a0e5cb9ec94074e2b2b7",
+          "requirement": "help",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "t04-conformance",
+          "performer": "claude:rc-t04-author-20261027",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4a0b55dc93afcf7f12a60de3dd1a3055fd68bdc8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:rc-t04-author-20261027",
+            "digest": "sha256:97ff175a92642f209f68fd1ea23fc5f8cd766ddefe2a6cbea2898c9d1e6411f3",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,12528,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "6a2c50a3209f6bb675a2a0e5cb9ec94074e2b2b7",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -536,6 +642,18 @@
     {
       "from": "sha256:27a4ed4343c6dd59706b191782cbbff3368dacd342335d37405778b2a55fb426",
       "to": "sha256:b4b54927f25a8ff4562eafa3747457c1752561f5dfc9cad8e47b8568f8684ee9",
+      "chunk_ids": {
+        "CF-C1": [
+          "CF-C1"
+        ],
+        "CF-C2": [
+          "CF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b4b54927f25a8ff4562eafa3747457c1752561f5dfc9cad8e47b8568f8684ee9",
+      "to": "sha256:2654ef811586ab2cf6686a670b913aab7ce29e61ebb2e1de176400adb808aa6e",
       "chunk_ids": {
         "CF-C1": [
           "CF-C1"
