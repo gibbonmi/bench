@@ -99,13 +99,6 @@ func (e *gateEvaluation) stackProof(graded *treeGeneration) error {
 	return nil
 }
 
-// sameEntry reports whether path has one entry, or none, in both generations.
-func sameEntry(a, b *treeGeneration, path string) bool {
-	left, inA := a.entry(path)
-	right, inB := b.entry(path)
-	return inA == inB && left.Metadata == right.Metadata
-}
-
 // memberList spells member indexes as "1 and 2", or "1, 2 and 3".
 func memberList(indexes []int) string {
 	names := make([]string, len(indexes))

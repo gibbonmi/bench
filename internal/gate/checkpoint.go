@@ -336,7 +336,10 @@ func (e *gateEvaluation) applyCheckpoint(generation *treeGeneration, plan subjec
 	// The stack proof precedes the return for a run with no deliverable, which a stack of
 	// spec-less members is.
 	if e.stack != nil {
-		return plan, e.stackProof(generation)
+		if err := e.stackProof(generation); err != nil {
+			return subject{}, err
+		}
+		return plan, nil
 	}
 	if e.checkpoint.Spec == "" && e.completionFolder == "" {
 		return plan, nil

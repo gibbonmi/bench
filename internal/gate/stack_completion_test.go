@@ -9,8 +9,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/landing/published"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
 // stackBase is the destination of every stack fixture. Member 1 changes docs/one.md, member 2
@@ -33,25 +39,56 @@ func newStackFixture(t *testing.T) *stackFixture {
 	return &stackFixture{t: t, root: root, destination: outcomeGit(t, root, "rev-parse", "HEAD")}
 }
 
+// edited answers the tree of base after edit changes the work tree.
+func (f *stackFixture) edited(base string, edit func()) string {
+	f.t.Helper()
+	outcomeGit(f.t, f.root, "read-tree", "--reset", "-u", base)
+	edit()
+	outcomeGit(f.t, f.root, "add", "-A")
+	return outcomeGit(f.t, f.root, "write-tree")
+}
+
 // tree answers the destination tree with each file of files written and each path of
 // deleted removed.
 func (f *stackFixture) tree(files map[string]string, deleted ...string) string {
 	f.t.Helper()
-	outcomeGit(f.t, f.root, "read-tree", "--reset", "-u", f.destination)
-	for path, body := range files {
-		outcomeWrite(f.t, f.root, path, body, 0o644)
-	}
-	for _, path := range deleted {
-		outcomeGit(f.t, f.root, "rm", "-q", "--", path)
-	}
-	outcomeGit(f.t, f.root, "add", "-A")
-	return outcomeGit(f.t, f.root, "write-tree")
+	return f.edited(f.destination, func() {
+		for path, body := range files {
+			outcomeWrite(f.t, f.root, path, body, 0o644)
+		}
+		for _, path := range deleted {
+			outcomeGit(f.t, f.root, "rm", "-q", "--", path)
+		}
+	})
+}
+
+// commit answers a commit of tree on the destination.
+func (f *stackFixture) commit(tree string) string {
+	f.t.Helper()
+	return outcomeGit(f.t, f.root, "commit-tree", "-p", f.destination, "-m", "member", tree)
 }
 
 // member commits the tree of files and deleted on the destination, and answers the commit.
 func (f *stackFixture) member(files map[string]string, deleted ...string) string {
 	f.t.Helper()
-	return outcomeGit(f.t, f.root, "commit-tree", "-p", f.destination, "-m", "member", f.tree(files, deleted...))
+	return f.commit(f.tree(files, deleted...))
+}
+
+// closingMember commits on the destination a member whose policy approves its tickets-only
+// folder as the complete delivery of FT1. It answers that member and the tree that the
+// landing publishes from it, whose verified closure deletes roadmap/FT1.md.
+func (f *stackFixture) closingMember() (StackMember, string) {
+	f.t.Helper()
+	tree := f.edited(f.destination, func() {
+		outcomeWrite(f.t, f.root, recordtest.Spec, "# example\n\nStatus: staged\n", 0o644)
+		commitmenttest.SeedTicketsOnly(f.t, f.root, recordtest.Spec)
+	})
+	source := f.commit(tree)
+	closed, err := published.Tree(f.root, tree, commitmenttest.TicketsFolder, source)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return StackMember{Source: source, Folder: commitmenttest.TicketsFolder}, closed
 }
 
 // pair answers the spec-less members 1 and 2 of stackBase.
@@ -87,6 +124,15 @@ func requireFault(t *testing.T, err error, want string) {
 	}
 }
 
+// requireClosed requires that err is the proof fault that names path as kept under a
+// closed folder.
+func requireClosed(t *testing.T, err error, path string) {
+	t.Helper()
+	if !errors.As(err, new(completionProofError)) || !strings.HasPrefix(err.Error(), "completion keeps closed "+path) {
+		t.Fatalf("stack proof = %v; want the proof fault completion keeps closed %s", err, path)
+	}
+}
+
 // exactPair is the exact tree of the members of pair.
 var exactPair = map[string]string{"docs/one.md": "ONE\n", "docs/two.md": "TWO\n"}
 
@@ -108,28 +154,54 @@ func TestStackProofRefusesAChangedMemberPath(t *testing.T) {
 	}
 }
 
-// A tree that changes a path that no member changes refuses, also for a stack of spec-less
-// members.
+// A tree that changes, adds, or drops a path that no member changes refuses, also for a
+// stack of spec-less members.
 func TestStackProofRefusesAnUnreviewedDelta(t *testing.T) {
 	f := newStackFixture(t)
-	err := f.grade(f.pair(), f.tree(map[string]string{"docs/one.md": "ONE\n", "docs/two.md": "TWO\n", "docs/kept.md": "changed\n"}))
-	requireFault(t, err, "stack composition changes docs/kept.md; review the destination delta")
+	changed, added := maps.Clone(exactPair), maps.Clone(exactPair)
+	changed["docs/kept.md"], added["docs/new.md"] = "changed\n", "new\n"
+	for _, row := range []struct {
+		path string
+		tree string
+	}{
+		{path: "docs/kept.md", tree: f.tree(changed)},
+		{path: "docs/new.md", tree: f.tree(added)},
+		{path: "docs/kept.md", tree: f.tree(exactPair, "docs/kept.md")},
+	} {
+		requireFault(t, f.grade(f.pair(), row.tree), "stack composition changes "+row.path+"; review the destination delta")
+	}
 }
 
 // A tree that keeps an entry under a member's tickets folder refuses, and the tree that
-// closes that folder passes.
+// closes that folder passes. The folder close also covers a path that another member adds
+// under that folder, and it keeps a sibling path that only shares the folder's prefix. A
+// later member's verified closure, derived at that member's own tip, removes its entries.
 func TestStackProofRefusesAKeptFolder(t *testing.T) {
 	f := newStackFixture(t)
-	const folder, ticket = "specs/example/tickets", "specs/example/tickets/01-ticket.md"
+	const folder, ticket, sibling = "specs/example/tickets", "specs/example/tickets/01-ticket.md", "specs/example/tickets-x/a.md"
+	const foreign = folder + "/02-foreign.md"
 	members := []StackMember{
-		{Source: f.member(map[string]string{"docs/one.md": "ONE\n", ticket: "ticket\n"}), Folder: folder},
-		{Source: f.member(map[string]string{"docs/two.md": "TWO\n"})},
+		{Source: f.member(map[string]string{"docs/one.md": "ONE\n", ticket: "ticket\n", sibling: "sibling\n"}), Folder: folder},
+		{Source: f.member(map[string]string{"docs/two.md": "TWO\n", foreign: "foreign\n"})},
 	}
-	if err := f.grade(members, f.tree(exactPair)); err != nil {
+	closed := maps.Clone(exactPair)
+	closed[sibling] = "sibling\n"
+	if err := f.grade(members, f.tree(closed)); err != nil {
 		t.Fatalf("closed folder = %v; want a pass", err)
 	}
-	err := f.grade(members, f.tree(map[string]string{"docs/one.md": "ONE\n", "docs/two.md": "TWO\n", ticket: "ticket\n"}))
-	requireFault(t, err, "completion keeps closed "+ticket+"; review the delivery closure")
+	for _, path := range []string{ticket, foreign} {
+		kept := maps.Clone(closed)
+		kept[path] = "kept\n"
+		requireClosed(t, f.grade(members, f.tree(kept)), path)
+	}
+	closing, delivered := f.closingMember()
+	members = []StackMember{{Source: f.member(map[string]string{"docs/one.md": "ONE\n"})}, closing}
+	graded := f.edited(delivered, func() { outcomeWrite(t, f.root, "docs/one.md", "ONE\n", 0o644) })
+	if err := f.grade(members, graded); err != nil {
+		t.Fatalf("closure of member 2 = %v; want a pass", err)
+	}
+	unclosed := f.edited(graded, func() { outcomeGit(t, f.root, "checkout", closing.Source, "--", "roadmap/FT1.md") })
+	requireClosed(t, f.grade(members, unclosed), "roadmap/FT1.md")
 }
 
 // A capture/ path that two members change passes with bytes of neither member, because the
@@ -154,7 +226,13 @@ func TestStackProofRefusesAnOverlap(t *testing.T) {
 		{Source: f.member(map[string]string{"docs/one.md": "second\n"})},
 	}
 	err := f.grade(members, f.tree(map[string]string{"docs/one.md": "second\n"}))
-	requireFault(t, err, "stack members 1 and 2 change docs/one.md; land them apart")
+	if !errors.As(err, new(completionProofError)) {
+		t.Fatalf("overlap = %v; want a proof fault", err)
+	}
+	words := strings.Fields(err.Error())
+	if !strings.Contains(err.Error(), "docs/one.md") || !slices.Contains(words, "1") || !slices.Contains(words, "2") {
+		t.Fatalf("overlap = %v; want a fault that names docs/one.md and the members 1 and 2", err)
+	}
 }
 
 // A destination path that one member deletes passes only when the tree lacks it.

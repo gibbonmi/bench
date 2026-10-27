@@ -61,13 +61,19 @@ func (e *gateEvaluation) completionTree(graded *treeGeneration) (string, error) 
 			if proven[entry.Path] {
 				continue
 			}
-			other, present := pair[1].entry(entry.Path)
-			if !present || other.Metadata != entry.Metadata {
+			if !sameEntry(pair[0], pair[1], entry.Path) {
 				return "", proofFault("completion composition changes %s; review the destination delta", entry.Path)
 			}
 		}
 	}
 	return sourceTree, nil
+}
+
+// sameEntry reports whether path has one entry, or none, in both generations.
+func sameEntry(a, b *treeGeneration, path string) bool {
+	left, inA := a.entry(path)
+	right, inB := b.entry(path)
+	return inA == inB && left.Metadata == right.Metadata
 }
 
 // capturedCommit answers the tree of commit in root and its captured generation.
