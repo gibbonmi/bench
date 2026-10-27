@@ -81,8 +81,10 @@ func TestLandStackJourney(t *testing.T) {
 	}
 	var wantSources []string
 	for _, m := range f.members {
-		if assignmentActive(t, f.root, m.creation.Assignment.ID) {
-			t.Fatalf("member %s is still active after the stack", m.request)
+		// The landed-sibling cleanup also retires a landed member, so the release proof
+		// reads that the cleanup found nothing of the member's left to retire.
+		if assignmentActive(t, f.root, m.creation.Assignment.ID) || strings.Contains(r.stderr, "landing cleanup{assignment="+m.creation.Assignment.ID+",") {
+			t.Fatalf("member %s was not released by the stack: stderr %q", m.request, r.stderr)
 		}
 		if descendant(t, "git", "-C", f.root, "cat-file", "-e", top+":specs/"+m.slug).Run() == nil {
 			t.Fatalf("destination still holds specs/%s", m.slug)
