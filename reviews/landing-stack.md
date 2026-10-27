@@ -400,6 +400,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ls-c2-standards-r2",
+          "performer": "claude:ls-c2-standards-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2da868db8b6975e387eb1557b24ff3c959dd1d6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c2-standards-r2-20261026",
+            "digest": "sha256:485cfdcc7437ae8a75a26a5ea069efbdebcaa7975755684979bbee377ec1a4dd",
+            "excerpt": "axis: Standards\nverdict: pass\nfindings: 0\nworst: none\nBind: preflight evidence current=true, dirty_record=false, tree head d6427128, source_tip d6427128.\nS1: closed - internal/gate/stack_completion_test.go:129-133 (requireClosed asserts the `completion keeps closed <path>` prefix only, used at :195 and :204); :152 and :233 (LS12 asserts the path and members 1 and 2 as whole words via strings.Fields). The full-text requireFault at :171 stays correct: spec LS9 (specs/landing-stack/spec.md:291) dictates that exact message.\nS2: closed - internal/gate/checkpoint.go:339-342 (a stackProof error returns subject{}; success returns plan, nil).\nS3: closed - sameEntry has one definition at internal/gate/completion.go:72-77, and completionTree calls it at completion.go:64. The copy in stack_completion.go is removed. The new form is equivalent to the old inline check.\nNew findings: none. The new test helpers reuse the production published.Tree and commitmenttest seams. The new comments follow craft-comments.\nAdvice: none.\nCommand: no command change is necessary.\nRead: preflight output; the diff 030cd95..b0c0f42; AGENTS.md and craft-comments SKILL.md; rg hits in internal/gate and specs/landing-stack.\n"
+          },
+          "axis": "Standards",
+          "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "tip": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c2-standards-r1"
+          ]
+        },
+        {
+          "id": "ls-c2-spec-r2",
+          "performer": "claude:ls-c2-spec-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2da868db8b6975e387eb1557b24ff3c959dd1d6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c2-spec-r2-20261026",
+            "digest": "sha256:7cae491772ae1184e1ee5923c271abf9c16f35b2e02d9d364f8131cb9d7969c2",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: current=true, dirty_record=false, source_tip d6427128680bc3c4c4fd114f3083698832760ef1.\n\nConfirmation notes:\n- applyCheckpoint (internal/gate/checkpoint.go:338-343) returns subject{} on a stack proof error and plan on success; both callers read only the error on failure.\n- sameEntry moved to completion.go:73-77 and completionTree calls it at completion.go:64. The loop visits only entries of pair[0], so the new test matches the old one. The single completion proof keeps its behavior.\n- stackProof's five ordered rules at stack_completion.go:80-97 are unchanged. The test edits add LS9 rows for an added path and a dropped path.\n- The LS10 edits add a foreign path under a folder, a sibling path that shares the prefix, a later member's closure at its own tip, and a kept closed path.\n- The LS12 test checks the proof fault type, the path, and the indexes 1 and 2; the LS12 row requires only that the message names both member indexes.\n- LS15, LS16, and LS17 are untouched. The new test imports have precedent in gate tests and make no cycle.\n\nAdvice:\n- The production message \"stack members %s change %s; land them apart\" is no longer pinned by a test; the spec row allows that.\n\nCommand: no command change is necessary.\nRead: the bind output; the repair-delta diff; completion.go (1-90), checkpoint.go (300-380), stack_completion.go; spec rows LS7-LS17 and the D3 and overlap lines; an rg of applyCheckpoint callers and gate test imports.\n"
+          },
+          "axis": "Spec",
+          "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "tip": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c2-spec-r1"
+          ]
+        },
+        {
+          "id": "ls-c2-coverage-r2",
+          "performer": "claude:ls-c2-coverage-r2-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "2da868db8b6975e387eb1557b24ff3c959dd1d6f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c2-coverage-r2-20261026",
+            "digest": "sha256:2b94fcea092da731177214ec07dd87832d285d5ca05cbebfa7afd4eed30d0106",
+            "excerpt": "axis: Coverage\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip d642712. Delta read: 030cd95..b0c0f42.\n\nC1: closed. internal/gate/stack_completion_test.go:157-189 has changed, added (docs/new.md) and dropped (docs/kept.md) rows, each with exact LS9 text. A proof that skips paths absent from the destination turns the added row red; a proof that skips paths absent from the graded tree turns the dropped row red.\nC2: closed. Test lines 220-227: the unclosed tree restores roadmap/FT1.md from member 2's tip. Without completionClosure (stack_completion.go:69) that path passes as a sole-owner match at line 90, so the test turns red. A closure source taken from member 1 also reds.\nC3: closed. Test lines 199-219: dropping the line-80 skip turns the closed-tree pass red (\"member 2 differs\"). A sibling tickets-x/a.md passes, and an underFolder (completion.go:132) without the \"/\" turns that pass red.\nC4: closed. Test lines 236-242 check a proof fault, the path, and \"1\" and \"2\" as whole words.\n\nNew findings: none.\n\nAdvice: the whole-word index check would fail if the member list were ever spelled \"1, 2 and 3\"; the two-member fixture does not hit this. Severity below 5.\n\nCommand: no command change is necessary.\nRead: the repair delta, stack_completion.go, completion.go:100-190, spec rows LS9, LS10 and LS12, the stackBase and TicketsFolder definitions.\n"
+          },
+          "axis": "Coverage",
+          "base": "95b0a0d014b9314ef61f294ed80426ec3b442872",
+          "tip": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "finding_ids": [],
+          "supersedes": [
+            "ls-c2-coverage-r1"
+          ]
         }
       ]
     }
@@ -511,3 +577,13 @@ Findings: 4. Worst: C1 and C2, severity 6.
 
 - Tickets 04 and 08 set both `WithLanding` and `WithStack`, because a stack context without a landing value fails as a non-proof error.
 - `decide` takes seven parameters, and `stackProof` mixes the closure loop with the ownership walk.
+
+## LS-C2 review, round 2
+
+Confirming round over the repair delta `030cd95933cf6045949fcbf8610c50580c68e0ff..b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910`. Repair cycles used: 1 of 2. Standards: 0 findings, and S1, S2, and S3 are closed. Spec: 0 findings. Coverage: 0 findings, and C1, C2, C3, and C4 are closed.
+
+The repair's one probe swapped the closure source to the tip of member 1. It reported `bit` in `TestStackProofRefusesAKeptFolder` with `restored` yes. By reviewer direction, the coordinator ran no independent probe.
+
+The first prepared run of LS-C2 went red with `gate subject changed during execution`, because the repair session edited the tree while the run graded it. That red is not owned by the diff.
+
+Advice: no test pins the production overlap message, and the spec row permits that.
