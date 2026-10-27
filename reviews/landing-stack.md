@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/landing-stack/spec.md",
-  "plan_digest": "sha256:6d05989e78cf39b0f9a2ad26082729d71d861dd69e1be31a11285848cbbe9c53",
+  "plan_digest": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
   "implementation_session": "",
   "chunks": [
     {
@@ -468,6 +468,127 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LS-C3",
+      "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+      "tip": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+      "plan_digest": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
+      "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+      "acceptance_rows": [
+        "LS18",
+        "LS19",
+        "LS20",
+        "LS21",
+        "LS22",
+        "LS23",
+        "LS24",
+        "LS25",
+        "LS26",
+        "LS27",
+        "LS28",
+        "LS36",
+        "LS38",
+        "LS39"
+      ],
+      "verification": [
+        {
+          "id": "ls-c3-t03-commitment-repository",
+          "performer": "claude:ls-t03-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2a6044684eb310e7a58b87531dfe3844324aa71f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t03-author-20261026",
+            "digest": "sha256:2dacba9bc1b36f9fb1682c447ec2816ce22999737175cbf91cbfeef4cabf5e70",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,6972,190\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "9648f3cce4ac8a6a9e39d75c61ca2bbcf310e66e",
+          "requirement": "commitment-repository",
+          "command": "bench test --package ./internal/commitment/repository",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t03-root-conformance",
+          "performer": "claude:ls-t03-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2a6044684eb310e7a58b87531dfe3844324aa71f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t03-author-20261026",
+            "digest": "sha256:586b1783b6c8c6439ceafcc80e98a4d9f28a5617019a204bc847c93e445d3f31",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14274,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "9648f3cce4ac8a6a9e39d75c61ca2bbcf310e66e",
+          "requirement": "root-conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-landing",
+          "performer": "claude:ls-t04-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-author-20261026",
+            "digest": "sha256:aec4c08ddd18d3c65fad68ef285895a57c7ae8f9fdcbc5fcfcd823b8526244d5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,22612,232\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-commands",
+          "performer": "claude:ls-t04-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-author-20261026",
+            "digest": "sha256:dd6412369556dd2711f8e768418f4f55f38164b111d35b7caabb4e8d42cbe746",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,26868,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+          "requirement": "commands",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "ls-c3-t04-root-conformance-04",
+          "performer": "claude:ls-t04-author-20261026",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ls-t04-author-20261026",
+            "digest": "sha256:895edb531c05137d50fa27aaaf74bc43267ae5105fdb0a52f7d2898f504fe9a8",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13070,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+          "requirement": "root-conformance-04",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -499,6 +620,18 @@
     {
       "from": "sha256:97ee8ebbdf13e36690b14441b56f46c720a1307c481900c398239f758efbf15e",
       "to": "sha256:6d05989e78cf39b0f9a2ad26082729d71d861dd69e1be31a11285848cbbe9c53",
+      "chunk_ids": {
+        "LS-C1": [
+          "LS-C1"
+        ],
+        "LS-C2": [
+          "LS-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6d05989e78cf39b0f9a2ad26082729d71d861dd69e1be31a11285848cbbe9c53",
+      "to": "sha256:1f7a12aebd083d4b9d8b2805e9d470183c8d3793982d0495f6e4acad9d779013",
       "chunk_ids": {
         "LS-C1": [
           "LS-C1"
