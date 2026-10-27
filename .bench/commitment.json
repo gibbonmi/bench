@@ -1324,6 +1324,18 @@
               "path": "roadmap/FT448.md",
               "identity": "sha256:cc75f4a334e370d68b209684fdd82d871af1dcabbedcdb5be286b8c4f422c875"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "repair-carry",
+                "path": "specs/repair-carry/spec.md",
+                "identity": "sha256:894c64ff1c3dba29c2e665476abded0cf35a1ed9d78f79b90260d237a51daa44"
+              },
+              "obligations": [
+                "FT448"
+              ]
+            }
           ]
         },
         {
