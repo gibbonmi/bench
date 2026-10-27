@@ -124,6 +124,33 @@ func TestRecordChunkReadsTheTip(t *testing.T) {
 	record(t, f, "1", base, tip)
 }
 
+// FT452: in a chunk with two tickets, the earlier ticket reads only the row of its own Covers:
+// line. It records at its own commit while the row of the later ticket is planned, and it
+// refuses, naming only its own row, when its own row is planned.
+func TestTicketReadsOnlyItsOwnPlannedRows(t *testing.T) {
+	for _, tc := range []struct {
+		name, own, want string
+	}{
+		{"own row cited", cited, ""},
+		{"own row planned", planned, "rows E2 hold a planned seam cell"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, home := pooled(t, 3, twoTickets)
+			withMap(cited, tc.own, planned)(f)
+			freezeChunk1(t, f, home)
+			advance(f, "ticket 2.md")
+			stageOwed(f, home, "2", "2.md")
+			out, code := recordcmd.Command(f.Root, ticketArgs(t, "2", "2.md", "early"))
+			if tc.want == "" && code != 0 {
+				t.Fatalf("2.md with its own row cited = exit %d, output %q; want exit 0", code, out)
+			}
+			if tc.want != "" && (code != 1 || !strings.Contains(out, tc.want)) {
+				t.Fatalf("2.md with its own row planned = exit %d, output %q; want exit 1 naming %q", code, out, tc.want)
+			}
+		})
+	}
+}
+
 // completing writes the chunk evidence of count chunks and the final verification through
 // the fixture for a spec whose map holds seams, and returns the fixture and the last chunk
 // tip. The fixture writes each chunk entry itself, so a planned cell that the chunk form

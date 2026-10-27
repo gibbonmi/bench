@@ -23,8 +23,8 @@ var ticketForm = form{name: reviewrecord.FormTicket, description: "write the ent
 // ticket writes the entries that one ticket owes from the stages of its owed requirements,
 // through reviewrecord.RecordTicket at --tip, HEAD by default. Before the write it refuses, in
 // order, what reviewrecord.TicketRequirements refuses for the plan at the tip, a planned seam
-// cell, and an owed requirement with no stage. After the write it removes the stages that it
-// used.
+// cell in a row that the Covers: line of the ticket names, and an owed requirement with no
+// stage. After the write it removes the stages that it used.
 func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := maps.Clone(parsed.Flags)
 	if _, ok := values["--tip"]; !ok {
@@ -49,7 +49,7 @@ func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	if err != nil {
 		return f.refuse(err.Error())
 	}
-	if out, code := refusePlanned(f, root, spec, call.Tip, chunkRows(call.Chunk)); out != "" {
+	if out, code := refusePlanned(f, root, spec, call.Tip, ticketRows(call.Chunk, call.Ticket)); out != "" {
 		return out, code
 	}
 	runs := ownedRuns{root: root, spec: spec, chunk: call.Chunk, prefix: values["--id-prefix"], owed: owed,
