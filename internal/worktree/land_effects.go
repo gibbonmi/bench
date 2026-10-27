@@ -192,7 +192,7 @@ func manifestBindsExecutable(root string) bool {
 		return false
 	}
 	digest, err := brokermanifest.Digest(freshness.PublishedExecutable(root))
-	return err == nil && digest == fields["sha256"]
+	return err == nil && digest == fields[brokermanifest.DigestField]
 }
 
 // cleanLandedSiblings retires the sibling worktrees whose work this landing carries. The

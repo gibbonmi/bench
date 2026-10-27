@@ -274,7 +274,7 @@ func publishInstall(j joins, target installTarget, built string) (string, error)
 		return "", err
 	}
 	defer os.Remove(staged)
-	if err := j.publishCandidate(target.assignment.Worktree, staged, executable, wrapperDir(target.primary), manifest["version"]); err != nil {
+	if err := j.publishCandidate(target.assignment.Worktree, staged, executable, wrapperDir(target.primary), manifest[brokermanifest.VersionField]); err != nil {
 		return "", err
 	}
 	return executable, nil
