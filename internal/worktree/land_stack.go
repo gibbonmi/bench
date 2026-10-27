@@ -11,8 +11,10 @@ import (
 	"strconv"
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -108,7 +110,8 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	if err != nil {
 		lease.Release()
 	}
-	printStackMembers(stdout, landings, result, records)
+	red := stackAttributed(err, result)
+	printStackMembers(stdout, landings, result, red, records)
 	end := stackEnd{destinationBase: destination, published: "none", worktree: "active"}
 	if k := result.Published(); k > 0 {
 		top := result.Merges[k-1]
@@ -120,7 +123,7 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	}
 	switch {
 	case err != nil:
-		end.exit = landRefusalError(stdout, stackLandingRefusal(err, route, landings, destination))
+		end.exit = landRefusalError(stdout, stackLandingRefusal(err, route, landings, destination, red, result.Published()))
 	case end.step != "":
 		// The stack has no resume form, so a stopped step after the publication hands back.
 		stopped := refusalError{refusal{detail: "landing stack stopped after publication at the " + end.step + " step", face: faceLandHandback}}
@@ -208,10 +211,36 @@ func stackMemberRefusal(i int, label string, err error) error {
 	return fmt.Errorf("%s%s%w", prefix, causeJoiner, err)
 }
 
+// stackAttributed is the 0-based member that the bisect attributed the red refusal err to,
+// or -1. A recheck or an admission refusal after the bisect leaves the attribution set, so
+// only a candidate red reads it.
+func stackAttributed(err error, result landing.StackResult) int {
+	var refused landing.AuthorizationRefusal
+	if errors.As(err, &refused) && refused.Result.Kind == authorization.Candidate && result.Attributed >= 1 {
+		return result.Attributed - 1
+	}
+	return -1
+}
+
 // stackLandingRefusal routes a refusal of the stack owner. A member refusal keeps the face
-// of one landing. The stack attributes no red to a member, so a stop that no member caused
-// hands back, and an infrastructure grade keeps its own face.
-func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLanding, destination string) error {
+// of one landing. The member red, which the bisect attributed, takes the stack-red face: its
+// route removes each of the landed members from the stack file and sets the tip of each
+// later member by its fold. A stop that no member caused hands back, and an infrastructure
+// grade keeps its own face.
+func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLanding, destination string, red, landed int) error {
+	if red >= 0 {
+		raised := refusalError{refusal{detail: err.Error(), face: faceStackRed}}
+		fact := stackRefusedBy(red, raised)
+		for i := range landed {
+			fact.removed = append(fact.removed, i)
+		}
+		for i := landed; landed > 0 && i < len(landings); i++ {
+			fact.reset = append(fact.reset, i)
+		}
+		label := landings[red].assignment.Label
+		values := map[string]string{refusalroute.FactRerun: route.rerun(fact), refusalroute.FactLabel: label}
+		return stackMemberRefusal(red, label, landingFaceRouteWith(raised, values, false))
+	}
 	var member landing.StackMemberError
 	if errors.As(err, &member) && member.Member >= 1 && member.Member <= len(landings) {
 		i := member.Member - 1
@@ -259,6 +288,7 @@ const membersTable = "members"
 // The outcome cells of the members table.
 const (
 	stackOutcomeLanded   = "landed"
+	stackOutcomeRed      = "red"
 	stackOutcomeUnlanded = "unlanded"
 )
 
@@ -273,14 +303,18 @@ func stackMembersTable(rows []stackMemberRow) (string, error) {
 }
 
 // printStackMembers prints the members table of result. A member that published reads
-// landed with its merge, and every other member reads unlanded. A table that does not
-// render prints the render error in its place, and the stack goes on to its record.
-func printStackMembers(stdout io.Writer, landings []stackMemberLanding, result landing.StackResult, records []int) {
+// landed with its merge, the 0-based member red reads red, and every other member reads
+// unlanded. A table that does not render prints the render error in its place, and the
+// stack goes on to its record.
+func printStackMembers(stdout io.Writer, landings []stackMemberLanding, result landing.StackResult, red int, records []int) {
 	rows := make([]stackMemberRow, len(landings))
 	for i, l := range landings {
 		rows[i] = stackMemberRow{member: i + 1, label: l.assignment.Label, sourceTip: l.source.tip, published: "none", outcome: stackOutcomeUnlanded, census: records[i]}
-		if i < result.Published() {
+		switch {
+		case i < result.Published():
 			rows[i].published, rows[i].outcome = result.Merges[i], stackOutcomeLanded
+		case i == red:
+			rows[i].outcome = stackOutcomeRed
 		}
 	}
 	table, err := stackMembersTable(rows)

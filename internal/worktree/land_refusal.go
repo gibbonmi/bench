@@ -148,6 +148,8 @@ const (
 	// kind the gate attributed. A lease lock fault raises the infrastructure face too.
 	faceLandRed            = "land-red"
 	faceLandInfrastructure = refusalroute.LandInfrastructure
+	// A stack raises this face for the member that its bisect attributes a red to.
+	faceStackRed = "stack-red"
 )
 
 // retargetSourceTip re-points the caller's own re-run at the source tip the landing read
@@ -287,7 +289,7 @@ func landingFaceName(err error) string {
 // commit moves the tip the caller named, so the face's re-run names the repaired tip.
 func repairsSource(name string) bool {
 	switch name {
-	case faceSourceNotClean, faceSourceNotFenced, faceLandRed, faceLandDestinationMoved, refusalroute.CommitmentLightPathOutside:
+	case faceSourceNotClean, faceSourceNotFenced, faceLandRed, faceStackRed, faceLandDestinationMoved, refusalroute.CommitmentLightPathOutside:
 		return true
 	}
 	return false
