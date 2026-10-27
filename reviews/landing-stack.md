@@ -975,7 +975,76 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c4-standards-r1",
+          "performer": "claude:ls-c4-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "58a1094e71124b28b08ad0cd4e384143d8852a66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c4-standards-20261026",
+            "digest": "sha256:ff44488bf75140e145ba500177dd820e7c296865041a0aa4bac0c1a2571b5fd5",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 3\nworst: S2 (severity 3; the FIFO test re-derives the package's no-writer deadline)\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, tree head da99a76.\n\nS1 | 2 | auto-fix | 6 | internal/conformance/help_inventory_single_source_test.go:88-90 | The comment on helpRowProjections says each listed command's rows \"derive from its own form registry\". The new \"worktree\" entry names worktreeHelpRows, a literal list moved beside the leaves, so the comment states a fact the entry contradicts (craft-comments; AGENTS.md one source per fact). | 05\nS2 | 3 | auto-fix | 7 | internal/worktree/land_stack_input_test.go:165-166 | The FIFO test re-derives the deadline with an inline bounds.TestDeadline(0) and a bare t.Fatal. classifier_shape_test.go:14-19 defines noWriterDeadline for exactly this bound and pairs it with bounds.TestTimeoutVerdict (:95). This adds a third derivation of one fact. | 06\nS3 | 3 | no-op | 5 | internal/worktree/land_stack_input.go:75 and :120-123 | The file-field to flag mapping is spelled twice in one file, and landGrammar (land.go:34-41) holds the same flag spellings. A judgment call: land.go uses the same literal-flag idiom, and a grammar rename turns the member tests red. | 06\n\nAdvice:\n- The literals 16 and 17 in land_stack_input_test.go repeat stackMemberCeiling; the independent-expectation exception needs the recorded ticket 06 probe red.\n- Ticket 05 is byte-identical, and main.go keeps no worktree helpRow.\n- The pin raise 834 to 839 matches the five new top-level tests.\n\nCommand: no command change is necessary.\nRead: the code delta of the frozen pair, tickets 05 and 06, craft-review, craft-comments, projects/benchkit.md, AGENTS.md, BENCH.md, usage/parse.go, land.go, worktree.go, classifier_shape_test.go, land_flags_test.go, command_registry.go.\n"
+          },
+          "axis": "Standards",
+          "base": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "tip": "f2b81fc002c18b450b3c7a32b8a4505506ff21d4",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c4-spec-r1",
+          "performer": "claude:ls-c4-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "58a1094e71124b28b08ad0cd4e384143d8852a66",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c4-spec-20261026",
+            "digest": "sha256:7af9316be946536f0b6b48ad52626df9defd077e0ffd0db544a99d44450e59dd",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, base fd1ccaa0, source_tip da99a76f.\n\nSpec audit:\n- Coverage maps LS54 to LS62, LS64, LS65 and LS96 to LS98 to concrete tests whose names match the seam cells (spec.md:338-349, 361-363) and the LS-C4 chunk row (spec.md:238).\n- Every mapped behavior has a test in land_stack_input_test.go: LS54 to LS61 in the TestStackReaderRefusesAMalformedFile table (LS61 names \"member 2\"); LS62 the sixteen-member file with no final newline; LS64 holds landGrammar.Help and \"member 2\"; LS65 the FIFO with a deadline guard; LS96 to LS98 in the override table.\n- In land_stack_input.go the type check (:171) runs before any open; decoding uses DecodeExactDocument (:179); the member bound is 2 to 16 (:182); members parse through usage.Parse(landGrammar) (:187); a refusal names the member index, and the grammar line is appended when missing (:189-194).\n- Overrides: no \"=\", an empty side, an unknown request, and a repeated request all refuse (:219-228).\n- Ticket 06's unnumbered line is met: EffectiveTip is set, SourceTip is kept, and Overrides keep argument order (test file :376-387).\n- Ticket 05 changes no output: the 13 rows in worktreeHelpRows match the removed rows in order, suffix, gap, and description; main.go holds no worktree helpRow; help_inventory_test.go is untouched.\n- The reader's exported shape serves ticket 07.\n\nAdvice:\n- The ticket 05 widening reaches internal/conformance, outside every signed-off Writes entry; the orchestrator should confirm the decision route.\n- The valid-override acceptance line lives as a subtest inside a \"Refuses\" test.\n- The reader does not require unique request values across members; ticket 07 can catch a repeated member through LS63.\n- worktreeTestCount 839 matches the five new tests.\n\nCommand: no command change is necessary.\nRead: the diff, the coverage output, spec.md lines 86-250, 338-363, 562, tickets 05, 06, 07, usage/parse.go:60-250, land.go:29-56, the jsonfile decoder, worktree.go:167, the commit log of the range.\n"
+          },
+          "axis": "Spec",
+          "base": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "tip": "f2b81fc002c18b450b3c7a32b8a4505506ff21d4",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c4-coverage-r1",
+          "performer": "claude:ls-c4-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "58a1094e71124b28b08ad0cd4e384143d8852a66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c4-coverage-20261026",
+            "digest": "sha256:395ca3d6398b158a17e44c783777273ac592394db8ca1942712a7ece16abb5ad",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 3\nworst: C1, severity 5\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false, source_tip da99a76f.\n\nC1 | 5 | auto-fix | 8 | internal/worktree/land_stack_input_test.go:402 against land_stack_input.go:167-169 | The only absolute-path call is the FIFO test with working dir \"/\", and filepath.Join(\"/\", \"/tmp/x\") is \"/tmp/x\", so deleting the IsAbs guard stays green. With a working dir other than \"/\", an absolute --stack path would become <wd>/abs/stack.json and a valid stack would refuse as absent. | 06\nC2 | 4 | ask-user | 6 | land_stack_input.go:171 (isRegularFile uses os.Stat, worktree.go:167-169); no test | No test covers a symlink at the stack path; the spec has no line and no Won't-handle for it, and the profile checklist lists live and dangling symlinks. An implementation that opens before it stats would block on a link to a FIFO, and the FIFO test does not cover that route. | 06\nC3 | 3 | auto-fix | 7 | land_stack_input_test.go:305-312 | No case accepts exactly two members, so a floor of 3 stays green, and LS56, LS57 and LS58 would then refuse for the wrong cause. | 06\n\nRed-capability: LS54 to LS62, LS64, LS65, LS96 to LS98 and ticket 06's override line are red-capable for their named failures. TestHelpInventoryIsComplete (help_inventory_test.go:65-171) is red-capable for a dropped or reordered worktree row. No duplicated implementation knowledge.\n\nAdvice:\n- Assert one reason keyword per refusal case so fixtures cannot refuse for the wrong cause.\n- Add one case with a trailing newline and a pretty-printed file.\n- A path with a space or glob character, and a control byte in a value, are unexercised at the reader; low risk, because the reader delegates to the landing grammar.\n\nCommand: no command change is necessary.\nRead: the pair diff, land_stack_input.go and its test, spec rows LS54-LS65 and LS96-LS98, the edge inventory and Won't-handle lines, tickets 05 and 06, jsonfile/decode.go and its test, worktree.go:167, command_registry.go:380-390, help_inventory_test.go:65-171, projects/benchkit.md:180-245, the craft-review Coverage section.\n"
+          },
+          "axis": "Coverage",
+          "base": "fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2",
+          "tip": "f2b81fc002c18b450b3c7a32b8a4505506ff21d4",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1190,3 +1259,33 @@ Repair cycles used: 1 of 2. Standards: 0 findings, and S1 is closed. Spec: 0 fin
 The ticket 03 probe removed the binding append from the shared helper, and it reported `bit` with `restored` yes. The ticket 04 probe disabled the `PublishStack` error check, and it reported `bit` with `restored` yes. By reviewer direction, the coordinator ran no independent probe.
 
 Advice: only a test calls the exported accessor `gate.StackMembers`. Ticket 08 reuses it for LS29.
+
+## LS-C4 review, round 1
+
+Frozen pair: `fd1ccaa0e5ac3121675cd476fb3d4d6fcfa517c2..f2b81fc002c18b450b3c7a32b8a4505506ff21d4`. Repair cycles used: 0 of 2. A shadow unified reviewer ran beside the three axes for the review-mode comparison, and its return is outside this record.
+
+## Standards
+
+Findings: 3. Worst: S2, severity 3.
+
+- S1 (confidence 6), `auto-fix`, ticket 05: the comment on `helpRowProjections` says every listed family projects a form registry, but `worktreeHelpRows` holds literal rows. The orchestrator corrects the comment as an evidence-only comment correction.
+- S2 (confidence 7), `auto-fix`, ticket 06: the FIFO test derives its deadline inline. The package's `noWriterDeadline` owns that bound, so the repair uses it.
+- S3 (confidence 5), `no-op`, ticket 06: the reader spells the landing flags beside `landGrammar`. The issuing axis judged it a judgment call. The landing uses the same literal-flag idiom, and a grammar rename turns the member tests red.
+
+## Spec
+
+Findings: 0. Worst: none.
+
+## Coverage
+
+Findings: 3. Worst: C1, severity 5.
+
+- C1 (confidence 8), `auto-fix`, ticket 06: no case reads an absolute stack path with a working directory other than the root. The repair adds that case.
+- C2 (confidence 6), `auto-fix`, ticket 06: no case covers a symlink at the stack path. The orchestrator decides the current behavior: a link to a regular file is read, and a link to a special file refuses before any open. The repair pins both.
+- C3 (confidence 7), `auto-fix`, ticket 06: no case accepts exactly two members. The repair adds that case.
+
+Every ticket 06 repair is test-only, so a coordinator confirmation closes it.
+
+## Advice
+
+- Two members with one `request` are not refused by the reader. Ticket 07 must refuse them, or LS63 must cover them.
