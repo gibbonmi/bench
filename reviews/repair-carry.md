@@ -867,6 +867,72 @@
             "c3-r1-tworeasons"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-r2",
+          "performer": "claude:rc-c3-standards-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-standards-r2-20261027",
+            "digest": "sha256:a46c14542d6617797e877c7e763335b6cd8e9cf20d81b4d31f00faddbb2405f9",
+            "excerpt": "Standards: 1 finding; worst: craft-comments \"Match the surrounding file\" (judgment call, non-blocking).\nc3-r1-staging: closed. recordtest/stage.go:24 reads Pooled(t, 1, Owing(stagePlan), Delegate); recordtest/carry.go:26-30 is the one source of the closure.\nc3-r1-tags: closed. rg \"CF[0-9]+\" internal finds no match; the comments state current behavior.\nADR 0023 line 16 passes invariant 3 and the STE rules (13 and 19 words).\nCoordinator disposition: the comment wrap at ticket_carry_test.go:75-76 is optional advice, a layout preference with no binding requirement.\n"
+          },
+          "axis": "Standards",
+          "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "tip": "5f1995f9bf131549c823901752c5abafd589f5c2",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r1"
+          ]
+        },
+        {
+          "id": "c3-spec-r2",
+          "performer": "claude:rc-c3-spec-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-spec-r2-20261027",
+            "digest": "sha256:507e7478420f1ac8a502fa5af131a51cef4cfc6cb49cd7bcd703a8526d7fc092",
+            "excerpt": "Spec: 0 findings; worst: none\nc3-r1-adr: closed. docs/adr/0023-each-ticket-gets-a-fresh-author.md:16 now states the rule of .bench/BENCH.md:122 and bench-implement-spec.md:66; one line changed, the anchored sentence is untouched. ticket.go is absent from the repair delta; the two-reason case at ticket_carry_test.go:143 meets CF41.\n"
+          },
+          "axis": "Spec",
+          "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "tip": "5f1995f9bf131549c823901752c5abafd589f5c2",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r1"
+          ]
+        },
+        {
+          "id": "c3-coverage-r2",
+          "performer": "claude:rc-c3-coverage-r2-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "c97a12e6eb7fe933a701cfb6b0a1a2dc108134e0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:rc-c3-coverage-r2-20261027",
+            "digest": "sha256:63d609bdd28c61b4aa6f06c13b3bf319a0fb24c2070111d4915cebd205bf2569",
+            "excerpt": "Coverage: 0 findings; worst: none\nc3-r1-tworeasons: closed. ticket_carry_test.go:54-62 two reasons case pins pkg, other; carry: pkg (the delta reaches the command); carry: other (no current passing entry), a consequence of the fixture, in owed order. Staging keeps every caller's plan unchanged.\n"
+          },
+          "axis": "Coverage",
+          "base": "95044e7ca518e3273bbf2648002a05701d9cbc4f",
+          "tip": "5f1995f9bf131549c823901752c5abafd589f5c2",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r1"
+          ]
         }
       ]
     }
@@ -1049,3 +1115,27 @@ A second carry call with the same evidence prefix has no test. This check goes b
 ### Ticket 04 repair 1
 
 The repair session committed `5fe3dd683`, and it changed no production file. Its witness swapped a `break` into the reason loop of `ticket.go`, and `TestTicketNamesTheChecksToRun/two_reasons` failed with `restored` `yes`. The coordinator probe inserted a truncation of the refusal list to its first requirement. The same case failed with `restored` `yes`. The fixture file `recordtest/stage.go` is not a Go test file, so the repair takes a confirming round of the three axes.
+
+### Ticket 05 repair 1
+
+The repair session committed `5f1995f9b`. It replaced the full-rerun clause of ADR 0023 and kept the line count and the anchored sentence. The repair adds no test expectation.
+
+## CF-C3 confirming round
+
+The three axes closed `c3-r1-staging`, `c3-r1-tags`, `c3-r1-tworeasons`, and `c3-r1-adr` on the repair delta `291db8357..5f1995f9b`. The chunk used 1 of its 2 repair cycles.
+
+### Standards
+
+The axis reported 0 blocking findings.
+
+### Spec
+
+The axis reported 0 findings.
+
+### Coverage
+
+The axis reported 0 findings.
+
+### Advice
+
+One test comment in `ticket_carry_test.go` has a long first line after the row IDs went out. This is a layout preference, so it stays optional advice.
