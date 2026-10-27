@@ -14,7 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
-	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -131,7 +130,9 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	}
 	switch {
 	case err != nil:
-		end.exit = landRefusalError(stdout, stackLandingRefusal(err, route, landings, destination, branch, red, result.Published()))
+		for _, refused := range stackLandingRefusal(err, root, route, landings, destination, branch, red, result.Published()) {
+			end.exit = landRefusalError(stdout, refused)
+		}
 	case end.step != "":
 		// The stack has no resume form, so a stopped step after the publication hands back.
 		stopped := refusalError{refusal{detail: "landing stack stopped after publication at the " + end.step + " step", face: faceLandHandback}}
@@ -202,8 +203,7 @@ func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (
 		}
 		l := stackMemberLanding{index: i, member: m, path: route.paths[i], assignment: assignment, source: source}
 		if err := stackMemberProofs(root, destination, branch, l); err != nil {
-			values := map[string]string{refusalroute.FactRerun: route.rerun(stackRefusedBy(i, err)), refusalroute.FactLabel: assignment.Label}
-			refusals = append(refusals, stackMemberRefusal(i, assignment.Label, landingFaceRouteWith(err, values, false)))
+			refusals = append(refusals, stackRaisedRefusal(route, i, assignment.Label, err, stackRefusedBy(i, err)))
 			continue
 		}
 		landings = append(landings, l)
@@ -242,9 +242,10 @@ func stackAttributed(err error, result landing.StackResult) int {
 // of one landing. The member red, which the bisect attributed, takes the stack-red face: its
 // route removes each of the landed members from the stack file and sets the tip of each
 // later member by its fold. A destination that moved after the grade takes the
-// moved-destination face of one landing for member 1, whose fold merges from branch. A stop
-// that no member caused hands back, and an infrastructure grade keeps its own face.
-func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLanding, destination, branch string, red, landed int) error {
+// moved-destination face of one landing for each member that lacks the moved tip, whose fold
+// merges from branch. A stop that no member caused hands back, and so does a moved destination
+// that no member lacks. An infrastructure grade keeps its own face.
+func stackLandingRefusal(err error, root string, route stackRoute, landings []stackMemberLanding, destination, branch string, red, landed int) []error {
 	if red >= 0 {
 		raised := refusalError{refusal{detail: err.Error(), face: faceStackRed}}
 		fact := stackRefusedBy(red, raised)
@@ -254,14 +255,12 @@ func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLand
 		for i := landed; landed > 0 && i < len(landings); i++ {
 			fact.reset = append(fact.reset, i)
 		}
-		label := landings[red].assignment.Label
-		values := map[string]string{refusalroute.FactRerun: route.rerun(fact), refusalroute.FactLabel: label}
-		return stackMemberRefusal(red, label, landingFaceRouteWith(raised, values, false))
+		return []error{stackRaisedRefusal(route, red, landings[red].assignment.Label, raised, fact)}
 	}
 	if errors.As(err, new(landing.TipMovedError)) {
-		raised, label := destinationMovedRefusal(err, branch), landings[0].assignment.Label
-		values := map[string]string{refusalroute.FactRerun: route.rerun(stackRefusedBy(0, raised)), refusalroute.FactLabel: label}
-		return stackMemberRefusal(0, label, landingFaceRouteWith(raised, values, false))
+		if refusals := stackMovedRefusals(root, branch, route, landings); len(refusals) > 0 {
+			return refusals
+		}
 	}
 	var member landing.StackMemberError
 	if errors.As(err, &member) && member.Member >= 1 && member.Member <= len(landings) {
@@ -271,15 +270,32 @@ func stackLandingRefusal(err error, route stackRoute, landings []stackMemberLand
 		if errors.As(member.Err, &conflict) {
 			// The conflict route repairs the source, as the single landing's re-run states.
 			rerun := route.rerun(stackRerun{refused: i, repairs: true})
-			return stackMemberRefusal(i, l.assignment.Label, landingConflictRefusalAt(conflict, destination, l.assignment.ID, l.path, l.assignment.Worktree, rerun))
+			return []error{stackMemberRefusal(i, l.assignment.Label, landingConflictRefusalAt(conflict, destination, l.assignment.ID, l.path, l.assignment.Worktree, rerun))}
 		}
-		return stackMemberRefusal(i, l.assignment.Label, landingFaceRoute(member.Err, route.rerun(stackRefusedBy(i, member.Err)), false))
+		return []error{stackMemberRefusal(i, l.assignment.Label, landingFaceRoute(member.Err, route.rerun(stackRefusedBy(i, member.Err)), false))}
 	}
 	face := authorizationFace(err)
 	if face != faceLandInfrastructure {
 		face = faceLandHandback
 	}
-	return landingFaceRoute(refusalError{refusal{detail: err.Error(), face: face}}, route.rerun(stackUnattributed), false)
+	return []error{landingFaceRoute(refusalError{refusal{detail: err.Error(), face: face}}, route.rerun(stackUnattributed), false)}
+}
+
+// stackMovedRefusals reads the destination tip that moved after the grade and runs the
+// behind proof of each member over it, so one run names every member that folds. A tip that
+// does not read answers no refusal.
+func stackMovedRefusals(root, branch string, route stackRoute, landings []stackMemberLanding) []error {
+	moved, _, _, err := landingDestinationIdentity(root)
+	if err != nil {
+		return nil
+	}
+	var refusals []error
+	for _, l := range landings {
+		if err := stackBehind(root, moved, branch, l); err != nil {
+			refusals = append(refusals, stackRaisedRefusal(route, l.index, l.assignment.Label, err, stackRefusedBy(l.index, err)))
+		}
+	}
+	return refusals
 }
 
 // stackAfterPublication runs the steps after a stack publication once for the published

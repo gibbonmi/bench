@@ -3,7 +3,9 @@
 package worktree
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -25,8 +27,14 @@ func requirePreflightRefusal(t *testing.T, f stackFixture, r verbResult, member 
 		t.Fatalf("stack stdout = %q, want one refusal, got %d", r.stdout, got)
 	}
 	requireNoLease(t, f.root)
-	if _, err := os.Stat(f.tally); !os.IsNotExist(err) {
-		t.Fatalf("stack ran the gate before its refusal: %v", err)
+	requireNoRun(t, f.tally, "before its refusal")
+}
+
+// requireNoRun requires that the fixture gate tally is absent, so the gate never ran.
+func requireNoRun(t *testing.T, tally, when string) {
+	t.Helper()
+	if _, err := os.Stat(tally); !os.IsNotExist(err) {
+		t.Fatalf("stack ran the gate %s: %v", when, err)
 	}
 }
 
@@ -51,7 +59,8 @@ func foldMember(t *testing.T, f *stackFixture, i int) {
 
 // TestLandStackRefusesABehindMember is LS70. A member whose tip lacks the destination tip
 // refuses with its fold route before the lease. A destination that moves after the grade
-// refuses with the same face for member 1.
+// refuses with the same face for each member that lacks the moved tip, so one run names
+// every fold.
 func TestLandStackRefusesABehindMember(t *testing.T) {
 	t.Parallel()
 	moved := func(m stackFixtureMember) map[string]string {
@@ -77,32 +86,94 @@ func TestLandStackRefusesABehindMember(t *testing.T) {
 		file, args := f.stack(t)
 		r := runVerb(t, verbLand, f.callWith(j, args...))
 		r.mustViaJoins(t)
-		m := f.members[0]
-		want := landingRoute(faceLandDestinationMoved, stackRepairRerun(file, m), moved(m))
-		if next := stackRefusalNext(t, r.stdout, "1", m); r.exit != 1 || next != want {
-			t.Fatalf("stack = (%d, %q, %q), want exit 1 and next %q", r.exit, r.stdout, r.stderr, want)
+		for i, m := range f.members {
+			want := landingRoute(faceLandDestinationMoved, stackRepairRerun(file, m), moved(m))
+			if next := stackRefusalNext(t, r.stdout, strconv.Itoa(i+1), m); r.exit != 1 || next != want {
+				t.Fatalf("stack = (%d, %q, %q), want exit 1 and next %q", r.exit, r.stdout, r.stderr, want)
+			}
+		}
+		if got := strings.Count(r.stdout, "refused{"); got != len(f.members) {
+			t.Fatalf("stack stdout = %q, want one refusal for each member, got %d", r.stdout, got)
 		}
 		requireOneRun(t, f.tally, "after the moved stack")
 	})
 }
 
+// commitMemberFiles commits each of names in member i of f and moves its tip there.
+func commitMemberFiles(t *testing.T, f *stackFixture, i int, names ...string) {
+	t.Helper()
+	m := &f.members[i]
+	for _, name := range names {
+		commitInWorktree(t, m.creation.Path, name, "shared bytes\n", "member "+strconv.Itoa(i+1)+" changes "+name)
+	}
+	m.tip = gitOutput(t, m.creation.Path, "rev-parse", "HEAD")
+}
+
 // TestLandStackRefusesAnOverlap is LS71. Two members that change one path outside capture/
 // refuse the later member, and the refusal names both labels and the path. Its route leaves
-// member 1 alone, so the re-run is member 1's single landing.
+// member 1 alone, so the re-run is member 1's single landing. Three owners of one path refuse
+// each pair of them, and each pair's refusal names its sorted paths. A shared capture/ path
+// is no overlap, because the composition settles it.
 func TestLandStackRefusesAnOverlap(t *testing.T) {
 	t.Parallel()
-	f := stackLandingFixture(t, "stack-overlap", 2, nil)
-	first, second := f.members[0], &f.members[1]
-	commitInWorktree(t, second.creation.Path, first.file, "member 2 bytes\n", "member 2 changes the file of member 1")
-	second.tip = gitOutput(t, second.creation.Path, "rev-parse", "HEAD")
-	_, args := f.stack(t)
-	r := runVerb(t, verbLand, f.call(args...))
-	requirePreflightRefusal(t, f, r, "2", *second, landingRoute(faceStackMembersOverlap, singleStackRerun(f, first), labelOf(second.creation)))
-	for _, named := range []string{first.creation.Assignment.Label, second.creation.Assignment.Label, first.file} {
-		if !strings.Contains(r.stdout, named) {
-			t.Fatalf("stack stdout = %q, want it to name %q", r.stdout, named)
+	t.Run("two-members", func(t *testing.T) {
+		t.Parallel()
+		f := stackLandingFixture(t, "stack-overlap", 2, nil)
+		commitMemberFiles(t, &f, 1, f.members[0].file)
+		first, second := f.members[0], f.members[1]
+		_, args := f.stack(t)
+		r := runVerb(t, verbLand, f.call(args...))
+		requirePreflightRefusal(t, f, r, "2", second, landingRoute(faceStackMembersOverlap, singleStackRerun(f, first), labelOf(second.creation)))
+		for _, named := range []string{first.creation.Assignment.Label, second.creation.Assignment.Label, first.file} {
+			if !strings.Contains(r.stdout, named) {
+				t.Fatalf("stack stdout = %q, want it to name %q", r.stdout, named)
+			}
 		}
-	}
+	})
+	t.Run("three-owners", func(t *testing.T) {
+		t.Parallel()
+		f := stackLandingFixture(t, "stack-overlap-three", 3, nil)
+		owned, spaced := f.members[0].file, "shared name.txt"
+		commitMemberFiles(t, &f, 1, owned, spaced)
+		commitMemberFiles(t, &f, 2, owned, spaced)
+		_, args := f.stack(t)
+		r := runVerb(t, verbLand, f.call(args...))
+		pair := func(a, b int) string {
+			return fmt.Sprintf("members %d (%s) and %d (%s) change", a+1, f.members[a].creation.Assignment.Label, b+1, f.members[b].creation.Assignment.Label)
+		}
+		want := []struct {
+			pair  string
+			paths []string
+		}{
+			{pair(0, 1), []string{owned}},
+			{pair(0, 2), []string{owned}},
+			{pair(1, 2), []string{owned, spaced}},
+		}
+		blocks := strings.Split(r.stdout, "refused{")[1:]
+		if r.exit != 1 || len(blocks) != len(want) {
+			t.Fatalf("stack = (%d, %q), want exit 1 and %d refusals", r.exit, r.stdout, len(want))
+		}
+		for i, w := range want {
+			if table := (refusal{paths: w.paths}).table(); !strings.Contains(blocks[i], w.pair) || !strings.Contains(blocks[i], table) {
+				t.Fatalf("refusal %d = %q, want %q and the paths %q", i+1, blocks[i], w.pair, w.paths)
+			}
+		}
+		requireNoLease(t, f.root)
+		requireNoRun(t, f.tally, "before its refusal")
+	})
+	t.Run("shared-capture-path", func(t *testing.T) {
+		t.Parallel()
+		f := stackLandingFixture(t, "stack-overlap-capture", 2, nil)
+		for i := range f.members {
+			mustMkdirAll(t, filepath.Join(f.members[i].creation.Path, "capture"), 0o755)
+			commitMemberFiles(t, &f, i, "capture/notes.md")
+		}
+		_, args := f.stack(t)
+		r := runVerb(t, verbLand, f.call(args...))
+		if r.exit != 0 || strings.Contains(r.stdout, "refused{") {
+			t.Fatalf("stack = (%d, %q, %q), want exit 0 with no refusal", r.exit, r.stdout, r.stderr)
+		}
+	})
 }
 
 // TestLandStackRefusesAStagedSpecMember is LS72. A member whose spec names a staged spec
@@ -159,7 +230,7 @@ func TestLandStackRefusesABoundMember(t *testing.T) {
 
 // TestLandStackAdmitsEachMemberThroughTheWindow is LS74 and LS75. With an open build and no
 // chunk gap, the window refuses each light-path member by its index before the lease. An
-// override for member 1 alone admits member 1 and still refuses member 2.
+// override for member 1 alone admits member 1 and still refuses member 2. The gate never runs.
 func TestLandStackAdmitsEachMemberThroughTheWindow(t *testing.T) {
 	t.Parallel()
 	for _, row := range []struct {
@@ -191,6 +262,7 @@ func TestLandStackAdmitsEachMemberThroughTheWindow(t *testing.T) {
 				t.Fatalf("stack = (%d, %q), want exit 1 and %d refusals", r.exit, r.stdout, len(row.refused))
 			}
 			requireNoLease(t, f.root)
+			requireNoRun(t, f.tally, "before the window refusal")
 		})
 	}
 }

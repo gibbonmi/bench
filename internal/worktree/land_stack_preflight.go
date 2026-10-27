@@ -4,14 +4,12 @@ package worktree
 
 import (
 	"cmp"
-	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing/stackpolicy"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 )
@@ -35,6 +33,12 @@ func stackMemberProofs(root, destination, branch string, l stackMemberLanding) e
 	if destination == "" {
 		return nil
 	}
+	return stackBehind(root, destination, branch, l)
+}
+
+// stackBehind is the behind proof of member l: a member whose tip lacks the destination tip
+// refuses with the fold route of one landing, which merges from branch.
+func stackBehind(root, destination, branch string, l stackMemberLanding) error {
 	holds, err := authorization.IsAncestor(root, destination, l.source.tip)
 	if err != nil {
 		return err
@@ -43,6 +47,13 @@ func stackMemberProofs(root, destination, branch string, l stackMemberLanding) e
 		return destinationMovedRefusal(fmt.Errorf("source tip %s lacks destination tip %s", l.source.tip, destination), branch)
 	}
 	return nil
+}
+
+// stackRaisedRefusal routes raised, a refusal that the stack raised for member i, with the
+// re-run of fact and the member label as its route facts.
+func stackRaisedRefusal(route stackRoute, i int, label string, raised error, fact stackRerun) error {
+	values := map[string]string{refusalroute.FactRerun: route.rerun(fact), refusalroute.FactLabel: label}
+	return stackMemberRefusal(i, label, landingFaceRouteWith(raised, values, false))
 }
 
 // stackAloneRefusal raises the face of a member that lands alone, with cause after the
@@ -58,13 +69,13 @@ func stackOverlaps(root, destination string, route stackRoute, landings []stackM
 	if destination == "" || len(landings) < 2 {
 		return nil
 	}
-	base, err := treeEntries(root, destination)
+	base, err := gate.TreeEntries(root, destination)
 	if err != nil {
 		return []error{landingFaceRoute(err, route.rerun(stackUnattributed), false)}
 	}
 	trees := make([]stackpolicy.Entries, len(landings))
 	for i, l := range landings {
-		if trees[i], err = treeEntries(root, l.source.tip); err != nil {
+		if trees[i], err = gate.TreeEntries(root, l.source.tip); err != nil {
 			return []error{stackMemberRefusal(l.index, l.assignment.Label, landingFaceRoute(err, route.rerun(stackRefusedBy(l.index, err)), false))}
 		}
 	}
@@ -90,31 +101,9 @@ func stackOverlaps(root, destination string, route stackRoute, landings []stackM
 		earlier, later := landings[pair[0]-1], landings[pair[1]-1]
 		cause := fmt.Sprintf("members %d (%s) and %d (%s) change the refusal_paths entries", earlier.index+1, earlier.assignment.Label, later.index+1, later.assignment.Label)
 		raised := refusalError{refusal{detail: refusalroute.Sentence(faceStackMembersOverlap) + causeJoiner + cause, paths: paths, face: faceStackMembersOverlap}}
-		values := map[string]string{refusalroute.FactRerun: route.rerun(stackRefusedBy(later.index, raised)), refusalroute.FactLabel: later.assignment.Label}
-		refusals = append(refusals, stackMemberRefusal(later.index, later.assignment.Label, landingFaceRouteWith(raised, values, false)))
+		refusals = append(refusals, stackRaisedRefusal(route, later.index, later.assignment.Label, raised, stackRefusedBy(later.index, raised)))
 	}
 	return refusals
-}
-
-// treeEntries reads the entries of the tree that tree names, each path with its mode, type,
-// and object, in the one format that the owner rule compares.
-func treeEntries(root, tree string) (stackpolicy.Entries, error) {
-	raw, err := git.Raw("-C", root, "ls-tree", "-r", "-z", tree+"^{tree}")
-	if err != nil {
-		return nil, fmt.Errorf("stack tree %s is unreadable: %w", tree, err)
-	}
-	entries := stackpolicy.Entries{}
-	for record := range strings.SplitSeq(string(raw), "\x00") {
-		metadata, path, ok := strings.Cut(record, "\t")
-		if !ok {
-			if record != "" {
-				return nil, errors.New("stack tree " + tree + " has an entry with no path")
-			}
-			continue
-		}
-		entries[path] = metadata
-	}
-	return entries, nil
 }
 
 // stackWindow decides the build window for each member on its own before the lease, as for
