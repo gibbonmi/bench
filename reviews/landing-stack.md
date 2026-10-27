@@ -588,7 +588,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ls-c3-standards-r1",
+          "performer": "claude:ls-c3-standards-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c3-standards-20261026",
+            "digest": "sha256:f995e3242c2a1951c4fa245a9a7a5fe01207a8c8d8c4de679751f4cec1b07a3b",
+            "excerpt": "axis: Standards\nverdict: findings\nfindings: 1\nworst: S1, severity 3, a repeated tickets-only policy fixture\n\nS1 | 3 | ask-user | 6 | internal/commitment/repository/stack_publication_test.go:145-151 | AGENTS.md \"one source per fact\": the test repeats the tickets-only setup (WriteTickets, EditPolicy appending TicketsBinding, Commit) of window_test.go:97-103, and commitmenttest/light.go:117-121 (SeedRowlessPair) holds the same bind step. Three copies of how a started tickets-only deliverable is bound. A shared helper needs window_test.go, outside the ticket 03 Writes: line but in the same directory as publication.go. | owner: ticket 03\n\nJudged and not raised:\n- PublishAdmitted routes through a one-member PublishStackAdmitted (publication.go:30-32), with the same order of window, admit, publish, override, and lease drop.\n- The PublishStackAdmitted guard (publication.go:43-45) stops an index panic on an empty stack; a test covers it at stack_publication_test.go:83-104.\n- The landing.go extractions (reviewedSource, landingTree) preserve behavior; landReviewed and LandStack both call them.\n- sourceUnchanged, landingMerge and publishMerge have one definition each.\n- Published() derives from len(Merges).\n- The new comments read as timeless present tense.\n\nAdvice:\n- LandStack composes member 1 twice (stack.go:87 and :99), so landingTree prints its \"landing composition{resolved=...}\" stderr line twice for a resolved member.\n- CheckMember(i) is 0-based and StackMemberError.Member is 1-based; ticket 07 must keep them apart.\n- StackRequest repeats the destination fields of each ReviewedRequest and overwrites the member copies (stack.go:76-78).\n- landing.go is 380 lines after the change; ticket 08 has little room left there.\n\nCommand: no command change is necessary.\nRead: the preflight bind, the delta stat, the landing.go diff, publication.go, stack.go, stack_publication_test.go, stack_test.go, tickets 03 and 04, window_test.go 14-129, commitmenttest/light.go 55-122, landing_helpers_test.go 120-193, the craft-review and craft-comments skills.\n"
+          },
+          "axis": "Standards",
+          "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "tip": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c3-spec-r1",
+          "performer": "claude:ls-c3-spec-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c3-spec-20261026",
+            "digest": "sha256:2393ecc62a6d2a67b94d8169139eb990692306cfc101ae64bf8dd254ef95e220",
+            "excerpt": "axis: Spec\nverdict: pass\nfindings: 0\nworst: none\n\nBind: current=true, dirty_record=false, base b0c0f425; the worktree head d27f6d60 is a record-only commit above the frozen tip d966b202.\n\nAudit of LS18-LS28, LS36, LS38 and LS39 (14 rows, all cited):\n- LS18-LS21 (publication.go:42-75): window and admitPublication run for each member inside the intent transaction; publish runs once after every member passes; withoutOverride runs for each member (:61-63); the lease drop uses members[0].Lease (:65).\n- LS22 and LS23 (publication.go:80-87): HoldsDeliveryBinding reads the stored bindings, not openBuilds, which matches \"The preflight\".\n- LS24-LS28, LS36, LS38 and LS39 (stack.go:463-532): the merges chain with the previous merge as first parent, the member tip as second parent, and the member's message; each member's own tree goes to CheckMember; the top tree is graded once; the ref moves once; a conflict returns StackMemberError{2, ConflictError} before any grade; sourceUnchanged runs for every member; a candidate or infrastructure kind publishes nothing until ticket 08.\n\nBehavior preserved: PublishAdmitted is PublishStackAdmitted over a stack of one with the same step order; the landReviewed extraction keeps the check order, the error texts, the transform condition, and the compare-and-swap arguments.\n\nExported shapes serve tickets 07 and 10; ticket 08 must rework the publish closure (stack.go:525-527) and add an attributed-member field to StackResult.\n\nAdvice:\n- The StackAdmission.PublishStack doc does not say whether trees has length n or k; PublishStackAdmitted refuses len(trees) != len(members).\n- PublishStack errors are not wrapped in StackMemberError (stack.go:525-529).\n- landingTree runs twice per member, so a resolved composition prints its stderr line twice (stack.go:490, :502).\n\nCommand: no command change is necessary.\nRead: the preflight output, the delta, spec.md lines 1-245, tickets 03, 04, 07, 08 and 10, craft-review SKILL.md, the bench coverage output, publication.go, window.go:150-280, composition.go:44-96, rg hits for WithStack, StackMember and Deliverable.\n"
+          },
+          "axis": "Spec",
+          "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "tip": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ls-c3-coverage-r1",
+          "performer": "claude:ls-c3-coverage-20261026",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8158f0d3dea14faad1871b13522a77b2f5ad162a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ls-c3-coverage-20261026",
+            "digest": "sha256:d272bd01574f92fa092a01a06494c30507493d92427c73b972b8b437748973de",
+            "excerpt": "axis: Coverage\nverdict: findings\nfindings: 3\nworst: C1 (stack admission refusals are never driven)\n\nBind: preflight evidence --check-current returned current=true, dirty_record=false.\n\nC1 | 6 | auto-fix | 7 | internal/landing/stack_test.go:681-692 (fake admission always returns nil), against stack.go:504-508 and 525-529 | No row drives a CheckMember error or a PublishStack error. A mutant that drops either error check keeps the suite green; the PublishStack variant returns a false receipt (Merges set) after the commitment refused and nothing published. A refused member could also take no StackMemberError. | 04\nC2 | 5 | auto-fix | 7 | internal/landing/stack_test.go (no test) against stack.go:522 | destinationUnchanged is called for the stack, but no test moves the destination ref or dirties the destination checkout during the grade. Deleting that call turns nothing red; the compare-and-swap catches a moved ref but not a changed checkout fingerprint. Ticket 04 step 5 names this recheck. | 04\nC3 | 5 | ask-user | 5 | internal/landing/stack_test.go:660 against stack.go:509-511 | The stub authorize ignores ctx, and gate.stackGradeOf is unexported. Omitting gate.WithStack, or a wrong StackMember folder or order, leaves the landing suite green. Observing it needs a gate accessor outside ticket 04's Writes:. A later end-to-end row may cover it. | 04\n\nRow verdicts: LS18 to LS28, LS36, LS38 and LS39 are each red-capable for their named failure. LS28's literal is independent, and the author's probe demonstrated its red.\n\nNot findings: the fake admission's index-order check, the staged-spec refusal test, and the empty or missing-tree row all bite. The hostile-input checklist classes do not apply to this delta.\n\nAdvice:\n- No positive assertion that merge i holds the bytes of members 0..i; LS38 kills the unchained mutant only indirectly.\n- An erroring variant of the fake admission would close C1 cheaply.\n\nCommand: no command change is necessary.\nRead: spec LS rows and decision table, tickets 03 and 04, the benchkit hostile checklist, craft-review SKILL, the frozen diff, repository publication_test.go and lease_test.go helpers, gate/stack_completion.go.\n"
+          },
+          "axis": "Coverage",
+          "base": "b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910",
+          "tip": "d966b20288a8a026882d87a6acb38c9e85c18baf",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -720,3 +787,31 @@ The repair's one probe swapped the closure source to the tip of member 1. It rep
 The first prepared run of LS-C2 went red with `gate subject changed during execution`, because the repair session edited the tree while the run graded it. That red is not owned by the diff.
 
 Advice: no test pins the production overlap message, and the spec row permits that.
+
+## LS-C3 review, round 1
+
+Frozen pair: `b0c0f4253f9cf3aba6d14d1862b3df6f41e4b910..d966b20288a8a026882d87a6acb38c9e85c18baf`. Repair cycles used: 0 of 2. The accepted findings fall on two tickets, so each ticket takes its own repair session.
+
+## Standards
+
+Findings: 1. Worst: S1, severity 3.
+
+- S1 (confidence 6), `auto-fix`, ticket 03: `stack_publication_test.go:145-151` repeats the tickets-only binding steps of `window_test.go:97-103` and `commitmenttest/light.go:117-121`. A fixture harness pasted three times is duplicated knowledge under the code standard. The orchestrator decides that one `commitmenttest` helper owns the bind step, and the three sites call it.
+
+## Spec
+
+Findings: 0. Worst: none.
+
+## Coverage
+
+Findings: 3. Worst: C1, severity 6.
+
+- C1 (confidence 7), `auto-fix`, ticket 04: no row drives a `CheckMember` refusal or a `PublishStack` refusal. The repair adds a refusing variant of the fake admission and pins that nothing publishes and that the refusal names its member.
+- C2 (confidence 7), `auto-fix`, ticket 04: no row moves the destination or changes its checkout during the grade. The repair pins the destination recheck.
+- C3 (confidence 5), `auto-fix`, ticket 04: no row reads the stack context of the grade. The orchestrator decides that the gate exports one accessor for the stack members of a context. The repair pins the members, their order, and their folders. Ticket 08 reuses the accessor for LS29.
+
+## Advice
+
+- The `PublishStack` contract does not state whether its trees hold every member or only the published prefix. The ticket 04 repair states it.
+- `LandStack` composes member 1 twice, so a resolved composition prints its disclosure line twice.
+- `landing.go` has about 20 lines of headroom left for ticket 08.
