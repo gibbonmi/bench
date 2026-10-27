@@ -170,7 +170,62 @@ Two Forbid anchors refuse the return of the retired bytes. The changelog states 
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"CF-C1","tickets":["01-share-the-plan-command-parser.md","02-share-the-pass-predicate.md"],"verification":[{"id":"testreport","command":"bench test --package ./internal/testreport"},{"id":"preflight","command":"bench test --package ./internal/preflight"},{"id":"record","command":"bench test --package ./internal/reviewrecord"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"CF-C2","tickets":["03-decide-the-carry.md"],"verification":[{"id":"carry","command":"bench test --package ./internal/reviewrecord/carry"},{"id":"fixtures","command":"bench test --package ./internal/reviewrecord/recordtest"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"conformance","command":"bench test --check root-conformance"}]},{"id":"CF-C3","tickets":["04-record-carried-entries.md","05-state-the-repair-carry.md"],"verification":[{"id":"recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"fixtures","command":"bench test --package ./internal/reviewrecord/recordtest"},{"id":"help","command":"bench test --package ./cmd/bench"},{"id":"anchors","command":"bench test --package ./internal/anchors"},{"id":"prose","command":"bench test --check prose"},{"id":"conformance","command":"bench test --check root-conformance"}]}],"final_verification":[{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/repair-carry/spec.md"}]}
+{
+  "version": 2,
+  "chunks": [
+    {
+      "id": "CF-C1",
+      "tickets": ["01-share-the-plan-command-parser.md", "02-share-the-pass-predicate.md"],
+      "verification": [
+        {"id": "testreport", "command": "bench test --package ./internal/testreport", "ticket": "01-share-the-plan-command-parser.md"},
+        {"id": "preflight", "command": "bench test --package ./internal/preflight", "ticket": "01-share-the-plan-command-parser.md"},
+        {"id": "record", "command": "bench test --package ./internal/reviewrecord", "ticket": "02-share-the-pass-predicate.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "01-share-the-plan-command-parser.md"},
+        {"id": "conformance-02", "command": "bench test --check root-conformance", "ticket": "02-share-the-pass-predicate.md"}
+      ]
+    },
+    {
+      "id": "CF-C2",
+      "tickets": ["03-decide-the-carry.md"],
+      "verification": [
+        {"id": "carry", "command": "bench test --package ./internal/reviewrecord/carry", "ticket": "03-decide-the-carry.md"},
+        {"id": "fixtures", "command": "bench test --package ./internal/reviewrecord/recordtest", "ticket": "03-decide-the-carry.md"},
+        {"id": "gate", "command": "bench test --package ./internal/gate", "ticket": "03-decide-the-carry.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "03-decide-the-carry.md"}
+      ]
+    },
+    {
+      "id": "CF-C3",
+      "tickets": ["04-record-carried-entries.md", "05-state-the-repair-carry.md"],
+      "verification": [
+        {"id": "recordcmd", "command": "bench test --package ./internal/reviewrecord/recordcmd", "ticket": "04-record-carried-entries.md"},
+        {"id": "fixtures", "command": "bench test --package ./internal/reviewrecord/recordtest", "ticket": "04-record-carried-entries.md"},
+        {"id": "help", "command": "bench test --package ./cmd/bench", "ticket": "04-record-carried-entries.md"},
+        {"id": "conformance", "command": "bench test --check root-conformance", "ticket": "04-record-carried-entries.md"},
+        {"id": "anchors", "command": "bench test --package ./internal/anchors", "ticket": "05-state-the-repair-carry.md"},
+        {"id": "prose", "command": "bench test --check prose", "ticket": "05-state-the-repair-carry.md"},
+        {"id": "conformance-05", "command": "bench test --check root-conformance", "ticket": "05-state-the-repair-carry.md"}
+      ]
+    }
+  ],
+  "final_verification": [
+    {"id": "whole-project", "command": "bench gate"},
+    {"id": "coverage", "command": "bench coverage --check specs/repair-carry/spec.md"}
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft448-repair-carry-full-20261027",
+    "orchestrator_session": "claude:rc-orchestrator-20261027",
+    "author_limit": 3,
+    "assignments": {
+      "01-share-the-plan-command-parser.md": [],
+      "02-share-the-pass-predicate.md": [],
+      "03-decide-the-carry.md": [],
+      "04-record-carried-entries.md": [],
+      "05-state-the-repair-carry.md": []
+    }
+  }
+}
 ```
 
 ## Testing decisions
