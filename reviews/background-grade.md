@@ -4278,3 +4278,9 @@ Two consultants, on opus and sonnet, each chose to exempt exact paths from one s
 The third repair session recorded this red at the repair commit `1263adef5`.
 
 - F1: a mutant that drops every `GradePaths` entry from the guard list bit five subtests of `TestCheckoutGuardIgnoresBackgroundGradeState`, and the `bench-other` subtest stayed green.
+
+### F1 confirming round pickup
+
+One unified session examined the delta `e7371b25a..9b69abfce`. It confirmed the exact-path exemption, the one source, and the BG117 citation. It found one defect.
+
+- F1-C1, target R4: the repair replaced `internal/gate/checkout_guard_test.go`, so the 15 guard tests of the base file are gone. The orchestrator marked that path new by mistake. Restore every base test and keep `TestCheckoutGuardIgnoresBackgroundGradeState`.
