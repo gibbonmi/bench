@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Landing wait on a background grade
+
+- Changed `bench worktree land`. Before it takes the destination lease, a landing now computes the grade key of the tree that it publishes onto the current destination. When a live claim holds that key, the landing waits until the claim ends, with the wait rules of the chunk checkpoint, so the wait blocks no other landing. Under the lease, the landing looks up its key again, so a background green answers it with no oracle run of its own. A destination that moved during the wait gives a new key, and the landing then runs its own oracle.
+- A landing does not wait on a grade of another key. Before its own run, the landing stops the running grade of its worktree that holds another key and waits for that grade to exit. It also drops the queued grade of its worktree, and each queued grade of its own key leaves the queue.
+
 ### Background landing grade
 
 - Added the landing grade to the background grade. A linked kit worktree whose tip holds no open build of a staged spec now grades the tree that its landing would publish from that tip. The grade composes the tip on the destination when it starts, with the composition of `bench worktree land`. A tip that adds exactly one tickets-only folder takes the folder close and the delivery closure. Any other tip is spec-less and takes no transform. A wrong deliverable only causes a lookup miss, because the grade writes its green only under the key that it ran.
