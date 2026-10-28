@@ -1,7 +1,7 @@
 # Reuse a sealed build that matches the target tree
 
 Blocked by: none
-Writes: internal/treetarget/build.go, internal/treetarget/run.go, internal/treetarget/build_test.go, internal/treetarget/run_test.go, internal/systemtest/tree_target_test.go
+Writes: internal/treetarget/build.go, internal/treetarget/run.go, internal/treetarget/build_test.go, internal/treetarget/run_test.go, internal/systemtest/tree_target_test.go, internal/worktree/target_refusal_test.go
 Covers: BC61, BC62, BC63, BC64, BC65
 
 ## What to build

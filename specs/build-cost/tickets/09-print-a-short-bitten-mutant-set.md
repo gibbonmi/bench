@@ -7,7 +7,7 @@ Covers: BC53, BC54, BC55, BC56, BC57
 ## What to build
 
 A mutant set in which every row bit and restored, with no preserved copy and no cleanup failure, prints its three tables with `trailing_bytes=0`. It prints neither the baseline report nor a `mutant_report` table.
-The predicate is the method `bitten` of the set run, and `answer` calls it on the line `if s.bitten() {`, because the probe-09 command swaps that exact line.
+The `answer` method of the set run omits the reports on the line `if e.command == 0 {`, because the probe-09 command swaps that exact line.
 Every other set keeps its current answer: a silent, invalid, or unrestored row, a preserved copy, and a cleanup failure each keep every report.
 
 The short answer stays importable. `bench record excerpt --mutant 1` stages a canned short answer, and `bench record ticket` then writes a probe entry that bit and restored.
