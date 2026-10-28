@@ -1393,6 +1393,72 @@
           "tip": "3cf91fd013916354df370e3930d4e26a400f01fd",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "bg-c5-confirm1-standards",
+          "performer": "claude:bg-c5-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9dbf1d3c94d4900a8c85598f788e93f1bd57178b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c5-confirm1-20261028",
+            "digest": "sha256:a2b2b930b6204e8c2367019b48c02a7797c27ac8aca6630d148a81f16374df21",
+            "excerpt": "Unified confirming round BG-C5, repair delta 3cf91fd0..98ba3e5a1, Standards axis: T1-T4 closed; foreground callers unchanged; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "78089d45597db83f00dcc9c3982879321337db18",
+          "tip": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c5-review-standards"
+          ]
+        },
+        {
+          "id": "bg-c5-confirm1-spec",
+          "performer": "claude:bg-c5-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9dbf1d3c94d4900a8c85598f788e93f1bd57178b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c5-confirm1-20261028",
+            "digest": "sha256:70587e518ca812bbf98750ac2c535ec408f7af73397c9924b27f840ba9f86903",
+            "excerpt": "Unified confirming round BG-C5, repair delta 3cf91fd0..98ba3e5a1, Spec axis: T1-T4 closed; foreground callers unchanged; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "78089d45597db83f00dcc9c3982879321337db18",
+          "tip": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c5-review-spec"
+          ]
+        },
+        {
+          "id": "bg-c5-confirm1-coverage",
+          "performer": "claude:bg-c5-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "9dbf1d3c94d4900a8c85598f788e93f1bd57178b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c5-confirm1-20261028",
+            "digest": "sha256:b039e8112825ab4d6d40d8eb798c90149d3a4202bb48531bf6d21dd141efe6ec",
+            "excerpt": "Unified confirming round BG-C5, repair delta 3cf91fd0..98ba3e5a1, Coverage axis: T1-T4 closed; foreground callers unchanged; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "78089d45597db83f00dcc9c3982879321337db18",
+          "tip": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c5-review-coverage"
+          ]
         }
       ]
     }
