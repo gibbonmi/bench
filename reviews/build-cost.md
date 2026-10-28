@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
+  "plan_digest": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
   "implementation_session": "",
   "chunks": [
     {
@@ -297,9 +297,9 @@
     {
       "id": "BC-C2",
       "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
-      "tip": "7baeccff5af4a661cece464a917deb025a1de0c1",
-      "plan_digest": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
-      "source_digest": "68617ffbd24061b554a8abddc200f7aea613f463",
+      "tip": "4898ce9bb8d1c8b3d03903144d312129c660ea49",
+      "plan_digest": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
+      "source_digest": "faba25c63e5deb5e174a7863a79caadda655947d",
       "acceptance_rows": [
         "BC1",
         "BC2",
@@ -414,6 +414,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t05-repair1-20261028",
               "digest": "sha256:6d388e124072478c9736c31741976dd6312d70a870b4ef8077bbcf73213cadf5",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,169,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05r2-probe-05",
+          "performer": "claude:bc-t05-repair2-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "faba25c63e5deb5e174a7863a79caadda655947d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t05-repair2-20261028",
+            "digest": "sha256:6c1fde3dee7867be891effb73ef476d0e52979a33252b529fd2bbaf38920b245",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,176,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:309: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:309: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:309: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4898ce9bb8d1c8b3d03903144d312129c660ea49",
+          "requirement": "probe-05",
+          "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t05-repair2-20261028",
+              "digest": "sha256:6c1fde3dee7867be891effb73ef476d0e52979a33252b529fd2bbaf38920b245",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,176,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:309: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:309: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:309: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -643,6 +673,18 @@
     {
       "from": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
       "to": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
+      "to": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"

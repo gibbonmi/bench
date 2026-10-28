@@ -20,7 +20,7 @@ The cost renderer in `internal/roadmap/retro_cost.go` prints these lines from th
 - the author and repair dispatch counts of a version 2 plan, or `unknown` for a version 1 plan
 - the wall minutes per ticket and the bookkeeping commits per ticket, each with its budget from one table
 
-A bookkeeping commit changes only paths below `specs/<slug>/` or the path `reviews/<slug>.md`. A per-ticket value whose printed one-decimal form is above its budget ends its line with `over budget`. The budget table holds 60 minutes and 7.1 commits per ticket.
+A bookkeeping commit changes only paths below `specs/<slug>/` or the path `reviews/<slug>.md`. A per-ticket value above its budget ends its line with `over budget`. The budget table holds 60 minutes and 7.1 commits per ticket.
 The renderer reads the plan of L through a decode-only reader that `internal/reviewrecord` exports beside `checkPlan`, so a plan that the current grade refuses still gives its facts. A slug without a landing prints `unknown` in each derived line.
 
 Each valid retro body in the tests and the testdata gains the `## Cost` heading.

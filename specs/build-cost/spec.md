@@ -159,7 +159,7 @@ The section derives these facts:
 - the wall minutes per ticket and the bookkeeping commits per ticket, each with its budget
 
 A bookkeeping commit is a non-merge commit whose every changed path is below `specs/<slug>/` or is `reviews/<slug>.md`. Every other non-merge commit is a change commit.
-One table in the cost renderer holds the two budgets. A per-ticket value whose printed one-decimal form is above its budget ends its line with `over budget`. No guidance file repeats a budget number.
+One table in the cost renderer holds the two budgets. A per-ticket value above its budget ends its line with `over budget`. No guidance file repeats a budget number.
 
 ### Probe-only chunk requirements
 
