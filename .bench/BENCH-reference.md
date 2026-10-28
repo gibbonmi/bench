@@ -251,9 +251,8 @@ focused test or check. The verb then restores the subject and proves the
 restore byte-exact. The single form prints one verdict: `bit` at exit 0, `silent` at exit 1, `invalid` at
 exit 1, and `restore-failed` at exit 2. A `restore-failed` run names the
 preserved copy under `$BENCH_HOME/probe/<repo-key>/`; every other verdict
-removes the copy. For a worktree, run
-`bench worktree exec <target> -- bench probe ...`, because the verb takes no
-target operand.
+removes the copy.
+For a worktree, run `bench probe --in <target> ...`.
 
 The mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a
 combined mutant, and `bench probe --help` holds the grammar.
