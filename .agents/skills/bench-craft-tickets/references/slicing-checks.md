@@ -41,7 +41,10 @@ research of each ticket chunk returns, and the rule that keeps each research pat
 - an anchor registry file that names a guidance path;
 - a count pin, such as a package test-count pin;
 - a file over its structure budget, with its headroom;
-- a shared file that more than one ticket writes, such as `CHANGELOG.md`.
+- a shared file that more than one ticket writes, such as `CHANGELOG.md`;
+- a test file that goes red in a scratch-patch test run.
+
+A scratch-patch test run applies to a ticket that adds a refusal or retires a rule, a fixture shape, or a row. Before the slicer locks that ticket, the research delegate applies the refusal or the retirement as a scratch patch in its own Bench worktree. The delegate runs the reached packages once with one `bench test` call, and it returns each file that goes red. The delegate then discards the patch and lands nothing.
 
 Each entry cites its evidence as a `path:line` or as a command and its result.
 
