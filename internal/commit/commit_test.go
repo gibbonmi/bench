@@ -96,6 +96,33 @@ func TestParseArgsHelpIsSuccess(t *testing.T) {
 	}
 }
 
+// BC39: --base names the base of the chained build preflight, so the parser takes it only
+// with --preflight-build. A call without the chain prints the usage line with its reason at
+// exit 2 before any repository read, so it publishes nothing.
+func TestParseArgsRefusesABaseWithoutTheChain(t *testing.T) {
+	const refusal = "--base requires --preflight-build"
+	for _, tc := range []struct {
+		name              string
+		args              []string
+		wantBase, wantErr string
+	}{
+		{name: "with the chain", args: []string{"--preflight-build", "s", "--base", "B", "-m", "m", "p"}, wantBase: "B"},
+		{name: "without the chain", args: []string{"--base", "B", "-m", "m", "p"}, wantErr: refusal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if req, _, usageErr := parseRequest(tc.args); req.base != tc.wantBase || usageErr != tc.wantErr {
+				t.Fatalf("parseRequest = (base %q, usageErr %q), want (base %q, usageErr %q)", req.base, usageErr, tc.wantBase, tc.wantErr)
+			}
+		})
+	}
+	t.Chdir(t.TempDir())
+	var stdout, stderr bytes.Buffer
+	code := Command([]string{"--base", "B", "-m", "m", "p"}, &stdout, &stderr)
+	if want := grammar.Help + " (" + refusal + ")\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
+		t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
+	}
+}
+
 func TestCommandGrammarErrorPrintsFlatUsage(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := Command([]string{"--unknown"}, &stdout, &stderr); code != 2 {
