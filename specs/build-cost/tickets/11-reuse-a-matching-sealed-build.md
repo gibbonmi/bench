@@ -1,7 +1,7 @@
 # Reuse a sealed build that matches the target tree
 
 Blocked by: none
-Writes: internal/treetarget/build.go, internal/treetarget/run.go, internal/treetarget/build_test.go, internal/treetarget/run_test.go, internal/systemtest/tree_target_test.go, internal/worktree/target_refusal_test.go
+Writes: internal/treetarget/build.go, internal/treetarget/run.go, internal/treetarget/build_test.go, internal/treetarget/run_test.go, internal/systemtest/tree_target_test.go, internal/worktree/target_refusal_test.go, cmd/bench/tree_scope_test.go, internal/anchors/registry_build_cost.go, internal/anchors/registry_retained_workflow.go, CHANGELOG.md
 Covers: BC61, BC62, BC63, BC64, BC65
 
 ## What to build

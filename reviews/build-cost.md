@@ -1585,7 +1585,83 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bc-c5-standards-1",
+          "performer": "claude:bc-c5-standards-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aa75b725f20c116b3c0b8744671cd39e556a3e5f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-standards-20261028",
+            "digest": "sha256:3f5258c6f302f109fe1535210fe98f25851b2917a3922789630540cd6b6a46f5",
+            "excerpt": "axis: Standards\nchunk: BC-C5  pair: 0164dcb56..9687bc81f\nfindings: 4\nworst: F1, a stale test doc comment says that only the target's own build runs under freshness.Verify.\n- F1 [auto-fix] [confidence 6] internal/treetarget/build_test.go:80-83 — the comment describes the old one-candidate rule — reword it to say these rows hold no other matching candidate.\n- F2 [auto-fix] [confidence 5] cmd/bench/tree_scope_test.go:166 — want builds the insertion a second time beside treeTargetInsertion() — build it from the commit definition's treeTargetInsertion(), as help_inventory_test.go:189 does.\n- F3 [auto-fix] [confidence 4] internal/anchors/registry_build_cost.go:26-27 — the new synthesisSkill constant sits beside three literals of the same path in registry_retained_workflow.go:161-163 — use the constant there.\n- F4 [auto-fix] [confidence 4] internal/treetarget/build.go:34-35 — the worktreeBuild doc restates the candidate order that childExecutable owns — state the order only in the childExecutable doc.\nExamined with no finding: runNamingTarget and treeTargetLine reuse their sources; withoutTreeTargetLine reads production; the anchor move leaves one Require; the BENCH.md widen exception has no second copy; the moved refusal literals are recorded as independent.\nreads: craft-review; craft-comments; check-current; evidence metadata and consumers; the diff; build_test.go; freshness_verify.go; run.go; worktree/build.go; rg sweeps.\nnot-verified: no tests or probes ran; the bounded help forms; the touched=false test consumers one by one.\ncommand-contribution: bench preflight evidence should print the chunk-tip pair beside source_tip.\n"
+          },
+          "axis": "Standards",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "9687bc81f7a57fbfc2fb57c06065c0a1297bfd52",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c5-spec-1",
+          "performer": "claude:bc-c5-spec-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aa75b725f20c116b3c0b8744671cd39e556a3e5f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-spec-20261028",
+            "digest": "sha256:10e7d3f020569cbc791b2f26c9cca6d780afc7ed3bed4ed2e29d0fafcf87063b",
+            "excerpt": "axis: Spec\nchunk: BC-C5  pair: 0164dcb56..9687bc81f\nfindings: 5\nworst: F1, the BC59 narrowing leaves the Tree targets sentence and ticket 10 promising help text for every tree-scoped verb.\n- F1 [ask-user] [confidence 7] specs/build-cost/spec.md:212 (also :38, :104; tickets/10:9, :18) — the spec still promises the line for each tree-scoped definition — narrow them to the exit-0 wording; the narrowing stays flagged for reviewer veto.\n- F2 [auto-fix] [confidence 7] CHANGELOG.md:18 — overclaims the help change for the five verbs that refuse --help — say each tree-scoped verb whose --help answers.\n- F3 [auto-fix] [confidence 7] CHANGELOG.md:13 — omits that bench retro --body refuses a body without ## Cost and that a pending retro without it stays valid.\n- F4 [auto-fix] [confidence 5] CHANGELOG.md:14/:20 — omits the retired post-ticket exec preflight step.\n- F5 [auto-fix] [confidence 4] CHANGELOG.md:17 — a bitten set prints no baseline report and no mutant report.\nUpheld: the CLI help line in internal/usage/worktree.go:33 stays, because the Guidance section retires the forms only in the known issues, the command notes, and craft-synthesis.\nrows: BC58 met; BC59 met as narrowed; BC60-BC69 met; BC70 review-owned met; BC73 met.\nreads: craft-review; the diff; the spec at the tip; tickets 10-12; tree_scope.go; command_registry.go; response_bound.go; treetarget/build.go; freshness VerifyAt; adopt.Run; the releasepreflight entry; rg sweeps.\nnot-verified: that the five verbs refuse --help at exit 2 (code read for release-preflight only).\ncommand-contribution: bench coverage should add the row ID as a column.\n"
+          },
+          "axis": "Spec",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "9687bc81f7a57fbfc2fb57c06065c0a1297bfd52",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c5-coverage-1",
+          "performer": "claude:bc-c5-coverage-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "aa75b725f20c116b3c0b8744671cd39e556a3e5f",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-coverage-20261028",
+            "digest": "sha256:9c1ef3082d6b81c2626141977a620d5c109523a4849ab2f89a610ef218fc7586",
+            "excerpt": "axis: Coverage\nchunk: BC-C5  pair: 0164dcb56..9687bc81f\nfindings: 5\nworst: F1, no row holds a stale own build beside a matching primary build, which story 46 covers.\n- F1 [auto-fix] [confidence 7] internal/treetarget/build_test.go:181-184 — a rule that verifies only a present own build and refuses passes every row — add {changed, matching, absent} wanting the primary build and {changed, absent, matching} wanting the running executable.\n- F2 [auto-fix] [confidence 5] internal/treetarget/build_test.go:182,184 — no intact primary build sealed for other sources; a VerifyExecutable-only check passes — add a row that publishes the primary against k.tree, edits a build input, and wants buildRefusal(buildMissing) with no primary child.\n- F3 [auto-fix] [confidence 4] cmd/bench/tree_scope_test.go:166,187 — BC60 checks only the bracketed text across both streams — assert no tree target: line and no --in operand text for repository-scoped calls, and the line on stdout for tree-scoped calls.\n- F4 [no-op] [confidence 3] internal/treetarget/build.go:22 — no test makes git.PrimaryCheckout fail; reachability not verified.\n- F5 [ask-user] [confidence 4] internal/usage/worktree.go:30-33, cmd/bench/worktree_leaves.go:81 — the CLI help keeps the exec gate form. The orchestrator declines: the spec retires guidance forms only.\nChecked, no finding: candidate order and the running-executable seal; the refusal texts; BC59 and BC60 read commandRegistry; BC70 holds; the Forbid needles and the recorded witness reds; hostile-input classes do not apply.\ntests-run: --package ./internal/treetarget --package ./cmd/bench --package ./internal/anchors with the BC-C5 test names — pass (13 + 1 + 1).\nreads: craft-review; check-current; rows BC58-BC73 and stories 44-52; the diff; tree_scope.go; build_test.go; freshness_verify.go; PrimaryCheckout; TT50; the anchor harness; the review record; the checklist; rg sweeps.\nnot-verified: the F1-F4 mutants were not run.\ncommand-contribution: no command change is necessary\n"
+          },
+          "axis": "Coverage",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "9687bc81f7a57fbfc2fb57c06065c0a1297bfd52",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2131,3 +2207,36 @@ The ticket 11 author showed reds for BC61 and BC62 only, because the base code a
 - BC64: the same swap bit `TestTreeTargetRefusesStaleKitBuild` in the system suite: `bench status --in alpha` ran and did not refuse.
 
 Each mutant compiled, and each subject was restored.
+
+## BC-C5 review, round 1 (pair 0164dcb56..9687bc81f)
+
+Raw findings: Standards 4, Spec 5, Coverage 5. Repair targets: 11, all routed to one ticket 11 repair session. The orchestrator corrects the Spec F1 prose in the repair's plan commit.
+
+## Standards
+
+Findings: 4. Worst: a stale test doc comment describes the old one-candidate rule (F1).
+
+- F1 auto-fix, confidence 6: `internal/treetarget/build_test.go:80-83`. Repair: say that these rows hold no other matching candidate.
+- F2 auto-fix, confidence 5: `cmd/bench/tree_scope_test.go:166` builds the insertion a second time. Repair: build it from `treeTargetInsertion()`.
+- F3 auto-fix, confidence 4: `internal/anchors/registry_retained_workflow.go:161-163` holds three literals of the `synthesisSkill` path. Repair: use the constant.
+- F4 auto-fix, confidence 4: the `worktreeBuild` doc restates the candidate order that the `childExecutable` doc owns. Repair: state the order in one doc only.
+
+## Spec
+
+Findings: 5. Every row is met, and BC59 is met as narrowed.
+
+- F1 ask-user, confidence 7: `spec.md:212`, `:38`, `:104` and ticket 10 lines 9 and 18 still promise the help line for each tree-scoped verb. The orchestrator narrows them to the exit-0 wording. The narrowing stays flagged for reviewer veto.
+- F2 auto-fix, confidence 7: `CHANGELOG.md:18` overclaims the help change for the verbs that refuse `--help`. Repair.
+- F3 auto-fix, confidence 7: `CHANGELOG.md:13` omits the `bench retro --body` refusal of a body without `## Cost`. Repair.
+- F4 auto-fix, confidence 5: the CHANGELOG omits the retired post-ticket exec preflight step. Repair.
+- F5 auto-fix, confidence 4: the CHANGELOG omits that a bitten set prints no baseline report and no mutant report. Repair.
+
+## Coverage
+
+Findings: 5. Worst: no row holds a stale own build beside a matching primary build (F1).
+
+- F1 auto-fix, confidence 7: `internal/treetarget/build_test.go:181-184`. Repair: add the rows {changed, matching, absent} and {changed, absent, matching}.
+- F2 auto-fix, confidence 5: no row holds an intact primary build sealed for other sources. Repair: add that row, which wants `buildMissing` and no primary child.
+- F3 auto-fix, confidence 4: `cmd/bench/tree_scope_test.go:166,187` checks only the bracketed text. Repair: assert the stream and the absence of the line for repository-scoped calls.
+- F4 no-op, confidence 3: no test makes `git.PrimaryCheckout` fail. The orchestrator declines it, because the branch only drops one candidate.
+- F5 ask-user, confidence 4: the CLI help keeps the exec gate form. The orchestrator declines it, because the spec retires the guidance forms only. This decision stays flagged for reviewer veto.
