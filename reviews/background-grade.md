@@ -1289,7 +1289,74 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c5-review-standards",
+          "performer": "claude:bg-c5-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "19909ddc02a28e9ce6ec2844ab1c500f423605b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c5-review-20261028",
+            "digest": "sha256:a9674ae43d18b2a55f3c4b75519c6037dcb95a85c85459e6ae46ba4418ffe9a6",
+            "excerpt": "Unified BG-C5 review (78089d45..3cf91fd0), Standards: 3 findings. Worst: background_priority_linux.go:383 returns on the first thread error, so a failed ioprio call leaves other threads at the old nice (auto-fix). Delta assertion repeats requireDelta (auto-fix). interruptedExit sets the verdict mark (no-op).\n"
+          },
+          "axis": "Standards",
+          "base": "78089d45597db83f00dcc9c3982879321337db18",
+          "tip": "3cf91fd013916354df370e3930d4e26a400f01fd",
+          "finding_ids": [
+            "BG-C5-S1",
+            "BG-C5-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c5-review-spec",
+          "performer": "claude:bg-c5-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "19909ddc02a28e9ce6ec2844ab1c500f423605b9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c5-review-20261028",
+            "digest": "sha256:f8d09e6fc07647ed42671831ab16ebc39ff39695f5e6cf4d99f56bc5e576995e",
+            "excerpt": "Unified BG-C5 review (78089d45..3cf91fd0), Spec: 2 findings. Five keyless ends write no record against story 62 (auto-fix: record aborted with an empty key). A red oracle on a moved subject records red (auto-fix: a settle refusal records aborted).\n"
+          },
+          "axis": "Spec",
+          "base": "78089d45597db83f00dcc9c3982879321337db18",
+          "tip": "3cf91fd013916354df370e3930d4e26a400f01fd",
+          "finding_ids": [
+            "BG-C5-P1",
+            "BG-C5-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c5-review-coverage",
+          "performer": "claude:bg-c5-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "19909ddc02a28e9ce6ec2844ab1c500f423605b9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c5-review-20261028",
+            "digest": "sha256:2f9d0d85f07ab88fe2906e5742e4e52ae86998846ad6032710eccc9009abf567",
+            "excerpt": "Unified BG-C5 review (78089d45..3cf91fd0), Coverage: 2 findings. No test of a settle refusal (closed by the T4 test) or a selection timeout (no-op). Warn path and story 56 reuse untested (no-op).\n"
+          },
+          "axis": "Coverage",
+          "base": "78089d45597db83f00dcc9c3982879321337db18",
+          "tip": "3cf91fd013916354df370e3930d4e26a400f01fd",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1641,3 +1708,31 @@ Count: 3. Worst issue: no test checks that the run sets the width input.
 - BG-C4-C1, auto-fix, confidence 8: `internal/gate/background_grade.go:240` sets the width input, and no test fails when the call is gone. Add `TestBackgroundGradeSetsTheWidthInput` for row BG114. Target T1.
 - No-op, confidence 5: three open-build branches have no test. They cover no staged spec, more than one staged spec, and a record that is not a regular file. Later rows BG40 and BG74 own those outcomes.
 - No-op, confidence 4: the BG24 fixture builds a record with no chunk entry, which is the case that the row names.
+
+## BG-C5 review
+
+One unified session reviewed the frozen pair `78089d45..3cf91fd0`. It found 7 raw findings. Four repair targets on ticket 07 go to one combined repair session. The reviewer accepted the warning on a failed priority call, the per-thread priority on Linux, and the fixtures of BG36 and BG37.
+
+The author witness reds were first failing runs for BG30, BG31, BG36, BG38, BG39, and BG40. One mutant set bit for BG25 and BG37.
+
+## Standards
+
+Count: 3. Worst issue: one failed I/O call stops the nice pass.
+
+- BG-C5-S1, auto-fix, confidence 6: `internal/gate/background_priority_linux.go:383` returns on the first thread error. Set nice 19 on every thread, and make the I/O class step best-effort. Target T1.
+- BG-C5-S2, auto-fix, confidence 5: `internal/gate/background_outcome_test.go:192` repeats the delta assertion of `requireDelta`. Use one shared assertion. Target T2.
+- No-op, confidence 4: `interruptedExit` sets the verdict mark, and its doc comment states that effect.
+
+## Spec
+
+Count: 2. Worst issue: five ends with no key write no record.
+
+- BG-C5-P1, auto-fix, confidence 5: five ends return before the key is known, and each writes no record. Story 62 gives each end without a verdict one name. Record `aborted` with an empty key. Target T3.
+- BG-C5-P2, auto-fix, confidence 5: a red oracle on a subject that moved during the run records `red`. A settle refusal gives no verdict for that key, so it records `aborted`. Target T4.
+
+## Coverage
+
+Count: 2. Worst issue: no test covers a settle refusal.
+
+- Closed by T4, confidence 4: the T4 test covers the settle refusal. A selection timeout has no row, so it is a no-op.
+- No-op, confidence 3: no row requires a test of the warning path or of the delta reuse in story 56.
