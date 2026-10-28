@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
+  "plan_digest": "sha256:9e87e2705bb0e847af9116d1454747c55863e9c721423cc52b99a5b303b5e0aa",
   "implementation_session": "",
   "chunks": [
     {
@@ -1486,6 +1486,24 @@
     {
       "from": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
       "to": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ],
+        "BC-C4": [
+          "BC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
+      "to": "sha256:9e87e2705bb0e847af9116d1454747c55863e9c721423cc52b99a5b303b5e0aa",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
