@@ -1153,6 +1153,72 @@
             "F3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bc-c4-standards-2",
+          "performer": "claude:bc-c4-standards-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c4-standards-c2-20261028",
+            "digest": "sha256:8dbf29bbd2153921e44dbabbc476fec95431dbdfbd4f387b6de38719ebebe2e4",
+            "excerpt": "axis: Standards (confirming)\nchunk: BC-C4  pair: bf4e04b9e..fe2be29e5  repair: c5a2a29f7..fe2be29e5\nfindings: 0 new\nworst: none\n- F1: closed — bitten() is deleted; the guard is if e.command == 0 { at internal/probe/set.go:293; the exit fold at set.go:267-276 covers the old predicate.\n- F2: closed — one helper requireBitEntry at recordcmd/ticket_probe_test.go:47, called from excerpt_short_test.go:24 and ticket_probe_test.go:171.\n- F3: closed — renderStep at refusalroute/registry.go:188, used by every caller; no renderRerun remains.\n- F4: closed — set.go:261-264 is rewrapped.\n- mutantReportHeading (set.go:311) is accepted as the one source of the heading; prefixWriter.Close (runner.go:493-499) is accepted, with one method serving the lane log and the gate stream.\nreads: the repair diff; the BC-C4 sections of the record; set.go; runner.go; lane_output.go; rg sweeps; craft-review.\nnot-verified: no gate or tests ran.\n"
+          },
+          "axis": "Standards",
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "tip": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c4-standards-1"
+          ]
+        },
+        {
+          "id": "bc-c4-spec-2",
+          "performer": "claude:bc-c4-spec-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c4-spec-c2-20261028",
+            "digest": "sha256:7247fa1eaceffc941cb00f5f7a3c64ef11d1598746c5c293e07a6927af3a5ca5",
+            "excerpt": "axis: Spec (confirming)\nchunk: BC-C4  pair: bf4e04b9e..fe2be29e5  repair: c5a2a29f7..fe2be29e5\nfindings: 0 new\nworst: none\n- F1: closed — spec.md:454 and ticket 09:14 no longer name a bitten-case test that does not exist.\nrows: BC49-BC57 still met; the Close newline only ends a last partial line, as phaseLineWriter does (phase_stream.go:83); BC51 is pinned by TestLaneRelaysARedCheckPartialLine; BC52 is stricter; probe-09 matches exactly one line at set.go:293; e.command == 0 equals the old bitten() predicate, so BC53 and BC55 hold.\nreads: check-current; craft-review; the repair delta; bench coverage; spec rows and lines; set.go; runner.go; phase_stream.go; rg sweeps.\nnot-verified: no test or probe ran; the BC56 helper equivalence is reasoned.\n"
+          },
+          "axis": "Spec",
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "tip": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c4-spec-1"
+          ]
+        },
+        {
+          "id": "bc-c4-coverage-2",
+          "performer": "claude:bc-c4-coverage-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c4-coverage-c2-20261028",
+            "digest": "sha256:e0d31be561248a1c5f3f1b2ead81619ec245504b5500082983e01a9f9969d9b8",
+            "excerpt": "axis: Coverage (confirming)\nchunk: BC-C4  pair: bf4e04b9e..fe2be29e5  repair: c5a2a29f7..fe2be29e5\nfindings: 0 new\nworst: none\n- F1: closed — the first run writes the longer lines (lane_report_test.go:30) and an exact sorted compare (:53) requires only this run's lines; no-truncate and append both fail.\n- F2: closed — TestLaneRelaysARedCheckPartialLine (lane_run_test.go:89-105) requires exactly \"[prose] refused\\n\" and is red in both log orders before the fix; prefixWriter.Close ends a partial line (runner.go:493-499).\n- F3: closed — mutantReportHeading (set.go:310-312) is the one source; no hand-written heading remains; the over-broad mutant bit.\n- Run stream: the gate run stream uses phaseStreams and phaseLineWriter, which already ends a partial line (phase_stream.go:83, 108-114), pinned by TestGateRunStreamHoldsEveryPhaseLineInArrivalOrder; only the lane reaches prefixWriter.\n- requireBitEntry keeps every assertion of both callers and is stricter on a missing plan requirement.\ntests-run: --package ./internal/gate --package ./internal/probe --package ./internal/reviewrecord/recordcmd with the BC-C4 test names — pass (4 + 68 + 10).\nreads: craft-review; check-current; the repair delta; the record sections; lane_output.go; runner.go; phase_stream.go; run_stream_test.go; excerpt_short_test.go; recordtest plans; rg sweeps.\nnot-verified: the witness reds were not rerun.\n"
+          },
+          "axis": "Coverage",
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "tip": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c4-coverage-1"
+          ]
         }
       ]
     }
