@@ -14,7 +14,7 @@ import (
 )
 
 // poll is the observation window of each stop in these tests.
-var poll = bounds.ProcessWindow(bounds.FixedWindow(10 * time.Millisecond))
+var poll = bounds.ProcessPoll
 
 // TestStopRefusesAPidThatNamesNoOneProcess guards the signal target. Zero and one select the
 // caller's own group and every process, and a negative pid selects a group, so neither Alive
