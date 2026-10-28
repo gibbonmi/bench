@@ -4272,3 +4272,9 @@ The final `bench gate` at `292fe98bb` went red in the capability phase only. The
 Two consultants, on opus and sonnet, each chose to exempt exact paths from one source in `backgroundstate`. A wait before the snapshot breaks BG29 and leaves the race open. The plan commit adds row BG117, and a third repair session on ticket 13 takes target F1.
 
 - F1, target BG117: `internal/gate/checkout_guard.go` allows the exact paths of the record, the logs, the stop marker, and the claims. One `backgroundstate` function answers those paths from the existing names, and no prefix match widens the set. A test shows that a grade state write during the guard window keeps the guard empty, and that another admin write still shows.
+
+### Final reconciliation repair reds
+
+The third repair session recorded this red at the repair commit `1263adef5`.
+
+- F1: a mutant that drops every `GradePaths` entry from the guard list bit five subtests of `TestCheckoutGuardIgnoresBackgroundGradeState`, and the `bench-other` subtest stayed green.
