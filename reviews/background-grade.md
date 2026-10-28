@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:03f87cfc76ba7aad021ba75407ca1b4585a4dd7f2851e6016387c58b27cb12ef",
+  "plan_digest": "sha256:6c0c45ae29bebbbac299c59ca4cfe419ca6f99fd9abeba2a328a6ac505443538",
   "implementation_session": "",
   "chunks": [
     {
@@ -2426,9 +2426,9 @@
     {
       "id": "BG-C8",
       "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
-      "tip": "a745590c4db655445680b7b76550a89f438bcd17",
-      "plan_digest": "sha256:03f87cfc76ba7aad021ba75407ca1b4585a4dd7f2851e6016387c58b27cb12ef",
-      "source_digest": "c31cb6a3883738f471fa3dd1b66c72bae81c82ff",
+      "tip": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+      "plan_digest": "sha256:6c0c45ae29bebbbac299c59ca4cfe419ca6f99fd9abeba2a328a6ac505443538",
+      "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
       "acceptance_rows": [
         "BG78",
         "BG79",
@@ -2607,6 +2607,120 @@
           "source_commit": "a745590c4db655445680b7b76550a89f438bcd17",
           "requirement": "state",
           "command": "bench test --package ./internal/gate/backgroundstate",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t15-gate",
+          "performer": "claude:bg-t15-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t15-author-20261028",
+            "digest": "sha256:4fd135cffb157f65061d7c30c9e393c4f0d1bf88261681c3d3052738c467d265",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,152603,796\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t15-command-c9",
+          "performer": "claude:bg-t15-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t15-author-20261028",
+            "digest": "sha256:d4bbdf30faa4f66bf7417ea269d2b1d471d8092f44f3295d1f321c0b3ce6c2a3",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,22067,405\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+          "requirement": "command-c9",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t15-anchors",
+          "performer": "claude:bg-t15-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t15-author-20261028",
+            "digest": "sha256:4d821ea2afe82c3aed83b5491e92cc4b1b6884e5fa5578d69c037d1e93fdcb34",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,pass,114,123\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t15-guidance",
+          "performer": "claude:bg-t15-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t15-author-20261028",
+            "digest": "sha256:71cc8d7450f20af93156c768d604505e539abd51725b15d29242abde45adfb05",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,3537,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t15-prose",
+          "performer": "claude:bg-t15-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t15-author-20261028",
+            "digest": "sha256:645caee8dfc325704ba102a87173ca0976772847f6451c1701c73538590509d9",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  prose,prose,0,169\n"
+          },
+          "source_commit": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+          "requirement": "prose",
+          "command": "bench test --check prose",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t15-conformance-c9",
+          "performer": "claude:bg-t15-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e3eed09222ba6677bc8795689997e141b2992a4c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t15-author-20261028",
+            "digest": "sha256:9c4d4742f74a047547da803460f9c1009b25153bb92ba16d758ccf7c6692dbf1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13652,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f47e950627b9d5137082d776d29f183ac5bb2f3d",
+          "requirement": "conformance-c9",
+          "command": "bench test --check root-conformance",
           "exit_code": 0
         }
       ],
@@ -3092,6 +3206,39 @@
     {
       "from": "sha256:ad79191a3d1552c4a37c8cd6a53f9529b62cf452bf752da7a34dab483a4e6235",
       "to": "sha256:03f87cfc76ba7aad021ba75407ca1b4585a4dd7f2851e6016387c58b27cb12ef",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ],
+        "BG-C7": [
+          "BG-C7"
+        ],
+        "BG-C8": [
+          "BG-C8"
+        ]
+      }
+    },
+    {
+      "from": "sha256:03f87cfc76ba7aad021ba75407ca1b4585a4dd7f2851e6016387c58b27cb12ef",
+      "to": "sha256:6c0c45ae29bebbbac299c59ca4cfe419ca6f99fd9abeba2a328a6ac505443538",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
