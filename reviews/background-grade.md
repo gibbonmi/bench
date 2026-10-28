@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
+  "plan_digest": "sha256:8b6c1c1ea39476bed23c4ce0a99a85d08b1d2afd28824145503e56bbc36b8ceb",
   "implementation_session": "",
   "chunks": [
     {
@@ -1465,9 +1465,9 @@
     {
       "id": "BG-C6",
       "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
-      "tip": "a58ef0a78ef140161482bf0adbf9e9ac4864a503",
-      "plan_digest": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
-      "source_digest": "b26d888927f758668bab47989e4b7f365aaec860",
+      "tip": "1502fd38d9558a9621f1936faabcabafecc4c6f6",
+      "plan_digest": "sha256:8b6c1c1ea39476bed23c4ce0a99a85d08b1d2afd28824145503e56bbc36b8ceb",
+      "source_digest": "98d4815c1e128609c2da7c1d3f8c5ade8e1e8655",
       "acceptance_rows": [
         "BG5",
         "BG6",
@@ -1731,6 +1731,44 @@
           "requirement": "conformance-09",
           "command": "bench test --check root-conformance",
           "exit_code": 0
+        },
+        {
+          "id": "bg-c6-t10-gate-10",
+          "performer": "claude:bg-t10-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "98d4815c1e128609c2da7c1d3f8c5ade8e1e8655",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t10-author-20261028",
+            "digest": "sha256:11a7af2363462f939dd68035e696938793efa8f8d49e7acf881e2adc770361a4",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,153672,789\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,318,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,784,13\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,52,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,1469,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1502fd38d9558a9621f1936faabcabafecc4c6f6",
+          "requirement": "gate-10",
+          "command": "bench test --package ./internal/gate/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c6-t10-conformance-10",
+          "performer": "claude:bg-t10-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "98d4815c1e128609c2da7c1d3f8c5ade8e1e8655",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t10-author-20261028",
+            "digest": "sha256:37885bd794692a8b11885f39c2161273365fbddaae4e0f809872064e345e2cd4",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16910,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1502fd38d9558a9621f1936faabcabafecc4c6f6",
+          "requirement": "conformance-10",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
         }
       ],
       "reviews": []
@@ -1960,6 +1998,33 @@
     {
       "from": "sha256:b91df3db3f79aacd242345333fd7d1b09583deb47b2f426703325f7470cc18a8",
       "to": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
+      "to": "sha256:8b6c1c1ea39476bed23c4ce0a99a85d08b1d2afd28824145503e56bbc36b8ceb",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
