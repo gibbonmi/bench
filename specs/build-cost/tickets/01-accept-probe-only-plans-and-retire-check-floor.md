@@ -1,7 +1,7 @@
 # Accept probe-only plans and retire the check-floor row
 
 Blocked by: none
-Writes: internal/reviewrecord/plan.go, internal/reviewrecord/ticket.go, internal/reviewrecord/plan_probe_test.go (new), internal/reviewrecord/recordcmd/ticket_test.go, internal/preflight/check_floor.go, internal/preflight/check_floor_test.go, internal/preflight/check_floor_command_test.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/plan.go, internal/preflight/charge_cells_test.go, internal/testreport/named_check.go, internal/conformance/ticket_grammar_test.go
+Writes: internal/reviewrecord/plan.go, internal/reviewrecord/ticket.go, internal/reviewrecord/plan_probe_test.go (new), internal/reviewrecord/recordcmd/ticket_test.go, internal/preflight/check_floor.go, internal/preflight/check_floor_test.go, internal/preflight/check_floor_command_test.go, internal/preflight/decision.go, internal/preflight/decision_test.go, internal/preflight/plan.go, internal/preflight/charge_cells_test.go, internal/testreport/named_check.go, internal/conformance/ticket_grammar_test.go, internal/reviewrecord/recordcmd/ticket.go
 Covers: BC24, BC25, BC26, BC27, BC28, BC29, BC30, BC31, BC32
 
 ## What to build
