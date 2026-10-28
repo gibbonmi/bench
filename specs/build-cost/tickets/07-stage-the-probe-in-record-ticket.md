@@ -11,7 +11,7 @@ The stage applies the checks of the excerpt form: the bound, the probe import, a
 
 `bench record ticket` takes `--mutant <n>` with the meaning of the excerpt form. A retained call that is not `bench probe` refuses and names `bench record excerpt`. Two or more unstaged owed requirements keep the current refusal. Each refusal leaves the record bytes unchanged.
 The form's help states the `--base` rule: the first ticket of a chunk passes `--base`, with the main tip for the first chunk and the recorded predecessor tip after that. This rule removes the refused record call that the FT448 build paid, by reviewer direction on 2026-10-28.
-After its table, the verb prints one line: `next=bench commit -m <msg> --preflight-build <slug> --base <chunk-base> reviews/<slug>.md`, with the slug and the chunk base of the written entry. The whole response fits in 10 lines.
+After its table, the verb prints one line: `next=bench commit -m <msg> --preflight-build '<slug>' --base '<chunk-base>' 'reviews/<slug>.md'`, with the slug and the chunk base of the written entry. The whole response fits in 10 lines.
 
 The Build section of `.agents/commands/bench-implement-spec.md` replaces the exec preflight sentence with: "After the ticket commit, run the probe, then `bench record ticket`, then the record commit that its `next=` line prints."
 The Land section states that the ticket form stages the last probe response, so that the author runs `bench record excerpt` only for an earlier probe of the same ticket. `.agents/commands/bench-review-implementation.md` points to that rule in its record list. Each edit to `bench-implement-spec.md` stays inside its paragraph, so the file keeps its 97-line budget.
