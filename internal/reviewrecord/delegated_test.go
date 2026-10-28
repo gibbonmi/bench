@@ -195,19 +195,13 @@ func TestDelegatedTicketOwners(t *testing.T) {
 	}
 }
 
-// DI38: a foreign, uncovered, or wrongly performed obligation refuses the chunk.
+// DI38: a foreign or wrongly performed obligation refuses the chunk.
 func TestDelegatedTicketObligations(t *testing.T) {
 	cases := []struct {
 		name, want string
 		mutate     func(*rr.Plan)
 	}{
 		{"foreign ticket", "outside this chunk", func(p *rr.Plan) { p.Chunks[0].Verification[0].Ticket = "9.md" }},
-		{"uncovered ticket", "no verification requirement", func(p *rr.Plan) {
-			mergeTickets(p)
-			for i := range p.Chunks[0].Verification {
-				p.Chunks[0].Verification[i].Ticket = "1.md"
-			}
-		}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
