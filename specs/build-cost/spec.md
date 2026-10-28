@@ -316,6 +316,10 @@ At slicing, each chunk also lists the plain floor commands that the current `che
         {
           "id": "floor-internal-anchors",
           "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "floor-internal-gate",
+          "command": "bench test --package ./internal/gate"
         }
       ]
     },
