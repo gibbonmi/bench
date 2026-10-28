@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:3f7850e8b5587bb3d3ceffc2e5dc137955a9588ccdf7c0c0925a346586eed9b1",
+  "plan_digest": "sha256:f4849436247e81b82f0777a1a4fbfa0a3bf5de3fef0d1c715b657ee66d1c0f6e",
   "implementation_session": "",
   "chunks": [
     {
       "id": "BC-C1",
       "base": "77ec3655a4601a57165b33d58c4328bdfdf72d34",
-      "tip": "731482ea115d71832b2c755e2c478f767d455c63",
-      "plan_digest": "sha256:3f7850e8b5587bb3d3ceffc2e5dc137955a9588ccdf7c0c0925a346586eed9b1",
-      "source_digest": "15c96191a93c6ca21f48a1b8d0df5210cb56ba06",
+      "tip": "25ffaee6634c05d754ea8a6e904ffc078fd35951",
+      "plan_digest": "sha256:f4849436247e81b82f0777a1a4fbfa0a3bf5de3fef0d1c715b657ee66d1c0f6e",
+      "source_digest": "6fa343b43a2a36bf7ceba8ba6f3c847830e96fb5",
       "acceptance_rows": [
         "BC24",
         "BC25",
@@ -267,6 +267,15 @@
     {
       "from": "sha256:d0a2c8675e29491fdd39f0e58359313083b7ee6db24eeb6413b151b08f706585",
       "to": "sha256:3f7850e8b5587bb3d3ceffc2e5dc137955a9588ccdf7c0c0925a346586eed9b1",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3f7850e8b5587bb3d3ceffc2e5dc137955a9588ccdf7c0c0925a346586eed9b1",
+      "to": "sha256:f4849436247e81b82f0777a1a4fbfa0a3bf5de3fef0d1c715b657ee66d1c0f6e",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
