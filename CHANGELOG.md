@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Route bypass check in the commit lane
+
+- Changed the kit commit lane, which now runs the `route-bypass` check when a commit changes a production Go file that the route bypass test scans. The check runs that test alone through `bench test --package`, and the new `write-verb-source` path class selects it. The conformance registry holds the scanned package list, and both the scan and the class read it. Before, a route literal outside the refusal route registry passed the lane, and the chunk checkpoint or the landing gate found it.
+
 ### One-landing row admission
 
 - Changed `bench commitment plan` and `bench commitment approve`. A new outcome source reads the checkout HEAD when the current policy names no source at its path and the default-branch tip lacks that path. Thus one landing carries a new roadmap row and its admission. A row that the default-branch tip holds, and a retained row that it deleted, still read the default-branch tip.
