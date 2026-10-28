@@ -1964,6 +1964,72 @@
           "supersedes": [
             "bg-c6-review-coverage"
           ]
+        },
+        {
+          "id": "bg-c6-confirm2-standards",
+          "performer": "claude:bg-c6-confirm2-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "64526e0eca18a48344b2c7de6218e0cd30c457f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-confirm2-20261028",
+            "digest": "sha256:c0cc8e9fbe23d21cb7c985f086db331b3595a36b19834267ffabc1bf345fe805",
+            "excerpt": "Unified review of the later BG-C6 delta 08d5b79d0..ae69e6a94, Standards axis: pass; the delta widens ticket 09 by the two repair test files; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c6-confirm1-standards"
+          ]
+        },
+        {
+          "id": "bg-c6-confirm2-spec",
+          "performer": "claude:bg-c6-confirm2-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "64526e0eca18a48344b2c7de6218e0cd30c457f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-confirm2-20261028",
+            "digest": "sha256:cf6eaa81b6b10b264672f498f8adb252c7de79d2bb796bfa577f796ba10aac85",
+            "excerpt": "Unified review of the later BG-C6 delta 08d5b79d0..ae69e6a94, Spec axis: pass; the delta widens ticket 09 by the two repair test files; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c6-confirm1-spec"
+          ]
+        },
+        {
+          "id": "bg-c6-confirm2-coverage",
+          "performer": "claude:bg-c6-confirm2-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "64526e0eca18a48344b2c7de6218e0cd30c457f2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-confirm2-20261028",
+            "digest": "sha256:20d790df9d068ba722dbbebd7243db578be28ff5ad11c46c69732ffae3d7ad28",
+            "excerpt": "Unified review of the later BG-C6 delta 08d5b79d0..ae69e6a94, Coverage axis: pass; the delta widens ticket 09 by the two repair test files; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c6-confirm1-coverage"
+          ]
         }
       ]
     }
