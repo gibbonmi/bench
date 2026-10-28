@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:05fcba415de8fcb85ab7a146cd588db4e9e87b6d415855286f7844925eb9fc17",
+  "plan_digest": "sha256:ad79191a3d1552c4a37c8cd6a53f9529b62cf452bf752da7a34dab483a4e6235",
   "implementation_session": "",
   "chunks": [
     {
@@ -2422,6 +2422,119 @@
           ]
         }
       ]
+    },
+    {
+      "id": "BG-C8",
+      "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+      "tip": "4a6e2a177c8b9c7013bb7289c7b7dccab012642e",
+      "plan_digest": "sha256:ad79191a3d1552c4a37c8cd6a53f9529b62cf452bf752da7a34dab483a4e6235",
+      "source_digest": "5ecb03a823ccb66203b1913f9cfac53c8f07e4ff",
+      "acceptance_rows": [
+        "BG78",
+        "BG79",
+        "BG80",
+        "BG81",
+        "BG82",
+        "BG84",
+        "BG85",
+        "BG99",
+        "BG4",
+        "BG86",
+        "BG87",
+        "BG88",
+        "BG89",
+        "BG90",
+        "BG91",
+        "BG92",
+        "BG100",
+        "BG101",
+        "BG102",
+        "BG103",
+        "BG96",
+        "BG97",
+        "BG98",
+        "BG104",
+        "BG105"
+      ],
+      "verification": [
+        {
+          "id": "bg-c8-t13-worktree",
+          "performer": "claude:bg-t13-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ecb03a823ccb66203b1913f9cfac53c8f07e4ff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-author-20261028",
+            "digest": "sha256:259073ca499ff13e98d4112f133e4595bcf1ed932d87984197f88cd4b85e79d1",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,102498,1617\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4a6e2a177c8b9c7013bb7289c7b7dccab012642e",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-gocache",
+          "performer": "claude:bg-t13-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ecb03a823ccb66203b1913f9cfac53c8f07e4ff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-author-20261028",
+            "digest": "sha256:fc790b81210deb11345143245b41c261a8f3233cc57a0bbd23e070c125a91d7b",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,230,49\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4a6e2a177c8b9c7013bb7289c7b7dccab012642e",
+          "requirement": "gocache",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-command",
+          "performer": "claude:bg-t13-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ecb03a823ccb66203b1913f9cfac53c8f07e4ff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-author-20261028",
+            "digest": "sha256:6588b5c375a3c192c7b09ce75157ff7f2fde58672366218112d059b00f2f72c4",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,25261,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4a6e2a177c8b9c7013bb7289c7b7dccab012642e",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-conformance",
+          "performer": "claude:bg-t13-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5ecb03a823ccb66203b1913f9cfac53c8f07e4ff",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-author-20261028",
+            "digest": "sha256:1f4ebb540c3788d03c6678b738e4ca683a203f79f903c2eeecfd77104eacbe36",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15852,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4a6e2a177c8b9c7013bb7289c7b7dccab012642e",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2843,6 +2956,36 @@
     {
       "from": "sha256:9795d74a16661c672bab8d85d1e33e31d3deecc7c73d3869c5a168a3b08c34dc",
       "to": "sha256:05fcba415de8fcb85ab7a146cd588db4e9e87b6d415855286f7844925eb9fc17",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ],
+        "BG-C7": [
+          "BG-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:05fcba415de8fcb85ab7a146cd588db4e9e87b6d415855286f7844925eb9fc17",
+      "to": "sha256:ad79191a3d1552c4a37c8cd6a53f9529b62cf452bf752da7a34dab483a4e6235",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
