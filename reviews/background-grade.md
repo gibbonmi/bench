@@ -3090,6 +3090,72 @@
           "supersedes": [
             "bg-c8-review-coverage"
           ]
+        },
+        {
+          "id": "bg-c8-confirm2-standards",
+          "performer": "claude:bg-c8-confirm2-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c9122ed6bcff8b22abad58c37f81677c70bcee4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm2-20261028",
+            "digest": "sha256:11b07dd8025d84fe36eb0ecfe7e43b1c75c35512d02ebc484d690069d7ad4d0f",
+            "excerpt": "Unified confirming round 2 BG-C8, repair delta 804e39667..fa6c563d0, Standards axis: the R1 test reuses the queue fixtures; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "99c62ee7910b949c6abe3743a1c2a2c1bcb44921",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm1-standards"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm2-spec",
+          "performer": "claude:bg-c8-confirm2-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c9122ed6bcff8b22abad58c37f81677c70bcee4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm2-20261028",
+            "digest": "sha256:45af160d23ca8ec66ddaf68dccdf38364b3a75c4c150f12d642789b6847bc408",
+            "excerpt": "Unified confirming round 2 BG-C8, repair delta 804e39667..fa6c563d0, Spec axis: R2 closed; the reference names the running log and its move, as WriteEnd does; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "99c62ee7910b949c6abe3743a1c2a2c1bcb44921",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm1-spec"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm2-coverage",
+          "performer": "claude:bg-c8-confirm2-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c9122ed6bcff8b22abad58c37f81677c70bcee4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm2-20261028",
+            "digest": "sha256:ddf796110fa3b841d5ea0fa4bae2addf775e90d2f1f966799a2dd02bf1f2e00f",
+            "excerpt": "Unified confirming round 2 BG-C8, repair delta 804e39667..fa6c563d0, Coverage axis: R1 closed; the test drives the real marker and reap path, and the empty-claim mutant bit it; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "99c62ee7910b949c6abe3743a1c2a2c1bcb44921",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm1-coverage"
+          ]
         }
       ]
     }
