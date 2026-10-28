@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:267aa30b49d0ff27c49d165e738172781c0caac90d2ecbae4afbc06d00344740",
+  "plan_digest": "sha256:5961f0f70d539466485c2d2943688958bcf07b0ff4281c3a2faa1ddd140f661b",
   "implementation_session": "",
   "chunks": [
     {
@@ -629,6 +629,59 @@
           }
         }
       ]
+    },
+    {
+      "id": "BC-C3",
+      "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+      "tip": "13d79803d6f03af353bf1814e067af45fc033320",
+      "plan_digest": "sha256:5961f0f70d539466485c2d2943688958bcf07b0ff4281c3a2faa1ddd140f661b",
+      "source_digest": "f2b1de0788790a33af6925ec5c63956909fa5589",
+      "acceptance_rows": [
+        "BC38",
+        "BC39",
+        "BC40",
+        "BC41",
+        "BC42",
+        "BC43",
+        "BC44",
+        "BC45",
+        "BC46",
+        "BC47",
+        "BC48"
+      ],
+      "verification": [
+        {
+          "id": "t06-probe-06",
+          "performer": "claude:bc-t06-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f2b1de0788790a33af6925ec5c63956909fa5589",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bc-t06-author-20261028",
+            "digest": "sha256:442ee88380af61c965d25f1dcb8714df4367f6eafaa9392833a0e08eafcddd34",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/commit_chain.go,omit,failed,1,TestCommitChainPassesTheBase/preflight_argv,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestCommitChainPassesTheBase,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,526\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,100,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestCommitChainPassesTheBase/preflight_argv,\"commit_chain_test.go:97: chain = (0, [[\\\"build\\\" \\\"chain-fixture\\\" \\\"--source-tip\\\" \\\"0123456789abcdef0123456789abcdef01234567\\\"]]), want exit 0 and preflight argv [[\\\"build\\\" \\\"chain-fixture\\\" \\\"--source-tip\\\" \\\"0123456789abcdef0123456789abcdef01234567\\\" … (263 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "13d79803d6f03af353bf1814e067af45fc033320",
+          "requirement": "probe-06",
+          "command": "bench probe cmd/bench/commit_chain.go --omit 'args = append(args, evidencecmd.FlagBase, outcome.Base)' --package ./cmd/bench --run TestCommitChainPassesTheBase",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the base from the chained preflight arguments. The chain test must then see no base.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:bc-t06-author-20261028",
+              "digest": "sha256:442ee88380af61c965d25f1dcb8714df4367f6eafaa9392833a0e08eafcddd34",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/commit_chain.go,omit,failed,1,TestCommitChainPassesTheBase/preflight_argv,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestCommitChainPassesTheBase,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,526\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,100,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestCommitChainPassesTheBase/preflight_argv,\"commit_chain_test.go:97: chain = (0, [[\\\"build\\\" \\\"chain-fixture\\\" \\\"--source-tip\\\" \\\"0123456789abcdef0123456789abcdef01234567\\\"]]), want exit 0 and preflight argv [[\\\"build\\\" \\\"chain-fixture\\\" \\\"--source-tip\\\" \\\"0123456789abcdef0123456789abcdef01234567\\\" … (263 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -732,6 +785,18 @@
     {
       "from": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
       "to": "sha256:267aa30b49d0ff27c49d165e738172781c0caac90d2ecbae4afbc06d00344740",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:267aa30b49d0ff27c49d165e738172781c0caac90d2ecbae4afbc06d00344740",
+      "to": "sha256:5961f0f70d539466485c2d2943688958bcf07b0ff4281c3a2faa1ddd140f661b",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
