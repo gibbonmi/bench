@@ -37,7 +37,7 @@ func WriteClaim(replacer durablefile.Replacer, gitdir string, claim Claim) error
 	if err := claim.valid(); err != nil {
 		return err
 	}
-	if err := ensureDir(filepath.Join(gitdir, claimDir)); err != nil {
+	if err := ensureDir(claimsPath(gitdir)); err != nil {
 		return err
 	}
 	return writeRecord(replacer, ClaimPath(gitdir, claim.Key), claim)
@@ -111,5 +111,8 @@ func validOwner(owner int) error {
 
 // ClaimPath answers the path of the claim of key in the git common directory gitdir.
 func ClaimPath(gitdir, key string) string {
-	return filepath.Join(gitdir, claimDir, key)
+	return filepath.Join(claimsPath(gitdir), key)
 }
+
+// claimsPath answers the path of the claim directory in the git common directory gitdir.
+func claimsPath(gitdir string) string { return filepath.Join(gitdir, claimDir) }

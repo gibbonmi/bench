@@ -306,7 +306,7 @@ BG-C1 to BG-C4 each hold a seam that a later chunk consumes, so each review clos
 | BG114 | 22 | A background chunk grade runs its oracle with the width input set | `internal/gate/background_grade_test.go` (`TestBackgroundGradeSetsTheWidthInput`) | A grade that drops the width input runs at the foreground width and crowds the host |
 | BG115 | 35 | The grade key that a lane pass queues frames the executable that the wrapper resolves for the target worktree | `internal/gate/background_queue_test.go` (`TestLanePassKeyFramesTheTargetExecutable`) | A key framed by the launching executable misses its dedup and its claim lookup |
 | BG116 | 18 | Before its own run, a checkpoint stops the other-key grade of its worktree even when another worktree wants that key | `internal/gate/background_wait_test.go` (`TestCheckpointStopsAWantedOtherKeyGrade`) | A kept grade and the checkpoint write one delta record at once |
-| BG117 | 19 | A foreground `bench gate` stays green when a background grade of its worktree writes its record, its log, its running log, its stop marker, or its claim during the run | planned TestCheckoutGuardIgnoresBackgroundGradeState in internal/gate/checkout_guard_test.go | The end write of a detached grade turns the foreground verdict red |
+| BG117 | 19 | A foreground `bench gate` stays green when a background grade of its worktree writes its record, its log, its running log, its stop marker, or its claim during the run | `internal/gate/checkout_guard_test.go` (`TestCheckoutGuardIgnoresBackgroundGradeState`) | The end write of a detached grade turns the foreground verdict red |
 
 ### Edge inventory
 
