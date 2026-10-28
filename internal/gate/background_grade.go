@@ -37,7 +37,7 @@ const backgroundResolvedEnv = "BENCH_GATE_BACKGROUND"
 
 // backgroundGrade is the state of one background grade: the grade key of the subject that the
 // run accepts, the claim that it holds on that key, the git common directory of that claim, and
-// whether its oracle reached its own exit. A nil grade is a foreground run, so each method below
+// whether its oracle run reached a verdict. A nil grade is a foreground run, so each method below
 // keeps the foreground behavior for it.
 type backgroundGrade struct {
 	key, common string
@@ -85,9 +85,9 @@ func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 }
 
 // gradeInBackground grades tip in the worktree root as one background grade, and arm runs once
-// the grade holds its claim. The run writes its output to the background log of the worktree. Once
-// the run knows its grade key, it records its outcome in the background record. The grade then
-// prints its outcome and its log, and it answers the exit of the run.
+// the grade holds its claim. The run writes its output to the background log of the worktree, and
+// the grade records its outcome in the background record. The grade then prints its outcome and
+// its log, and it answers the exit of the run.
 func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireContextArm, stdout, stderr io.Writer) int {
 	gitdir, err := benchgit.AdminDir(root)
 	if err != nil {
@@ -107,11 +107,11 @@ func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireCon
 		fmt.Fprintf(stderr, "background grade: claim release failed: %v\n", err)
 		return 1
 	}
-	if grade.key == "" {
-		fmt.Fprintf(stdout, "background grade: no verdict (log %s)\n", logPath)
-		return result.ActionExit
-	}
 	outcome := grade.outcome(result)
+	// A tip that does not resolve records the tip as the caller named it.
+	if commit == "" {
+		commit = tip
+	}
 	record := backgroundstate.Record{Outcome: outcome, Key: grade.key, Tip: commit, Log: logPath}
 	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
 		fmt.Fprintf(stderr, "background grade: record persistence failed: %v\n", err)
@@ -122,10 +122,13 @@ func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireCon
 }
 
 // outcome answers the outcome of the run of the grade: green for a run that ends green, red for
-// a run whose oracle reached its own exit and refuses the tree, and aborted for each other end.
-// A timeout, an interrupt, and a subject that the grade cannot hold each end with no verdict.
+// a run whose oracle reached a verdict and refuses the tree, and aborted for each other end. A
+// run that ends before it knows its grade key, a timeout, an interrupt, a settle refusal, and a
+// subject that the grade cannot hold each end with no verdict.
 func (g *backgroundGrade) outcome(result Result) backgroundstate.Outcome {
 	switch {
+	case g.key == "":
+		return backgroundstate.Aborted
 	case result.ActionExit == 0:
 		return backgroundstate.Green
 	case g.verdict && result.GateExit != 0:
@@ -134,11 +137,15 @@ func (g *backgroundGrade) outcome(result Result) backgroundstate.Outcome {
 	return backgroundstate.Aborted
 }
 
-// settle marks that the oracle of the grade reached its own exit. A foreground run marks nothing.
-func (g *backgroundGrade) settle() {
-	if g != nil {
+// settleVerdict runs settleRun over a finished oracle run. When the settle step accepts the run,
+// the background grade that ctx carries marks that its oracle reached a verdict. A settle refusal
+// gives no verdict, so it marks nothing. A foreground run marks nothing.
+func settleVerdict(ctx context.Context, evaluation executionEvaluation, runtimeRoot, storageRoot string, declaredPaths []string, plan subject, run processGroupResult, release func() error, stderr io.Writer) (subject, Result, bool) {
+	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
+	if g := backgroundGradeOf(ctx); g != nil && !refused {
 		g.verdict = true
 	}
+	return after, refusal, refused
 }
 
 // run grades tip in root as the chunk subject of the open build of tip. The chunk id comes from

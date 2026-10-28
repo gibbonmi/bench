@@ -236,7 +236,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if rc == 0 {
 		derived = trace.derive(storageRoot, plan)
 	}
-	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
+	after, refusal, refused := settleVerdict(ctx, evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
 	if refused {
 		return refusal
 	}

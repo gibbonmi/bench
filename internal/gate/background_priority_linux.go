@@ -16,39 +16,49 @@ const (
 	ioprioClassShift = 13
 )
 
-// lowerPriority sets each thread of this process to backgroundNice and to the idle I/O class.
-// On Linux both are attributes of a thread, and a new thread or a child process takes them from
-// the thread that creates it. So the pass repeats until it finds no thread that it has not set.
-// A thread that exits during the pass needs no priority.
+// lowerPriority sets each thread of this process to backgroundNice, and then each thread to the
+// idle I/O class. Each step is best-effort: a refused thread does not stop its pass, and the
+// refusals of both passes reach the caller as one error.
 func lowerPriority() error {
-	set := map[int]bool{}
+	return errors.Join(eachThread(niceThread), eachThread(idleThread))
+}
+
+// eachThread calls set once for each thread of this process. On Linux a priority is an attribute
+// of a thread, and a new thread or a child process takes it from the thread that creates it. So
+// the pass repeats until it finds no thread that it has not set. A thread that exits during the
+// pass needs no priority, and each other refusal joins the answer.
+func eachThread(set func(tid int) error) error {
+	done := map[int]bool{}
+	var refused []error
 	for {
 		entries, err := os.ReadDir("/proc/self/task")
 		if err != nil {
-			return err
+			return errors.Join(append(refused, err)...)
 		}
 		found := false
 		for _, entry := range entries {
 			tid, err := strconv.Atoi(entry.Name())
-			if err != nil || set[tid] {
+			if err != nil || done[tid] {
 				continue
 			}
-			set[tid], found = true, true
-			if err := lowerThread(tid); err != nil && !errors.Is(err, syscall.ESRCH) {
-				return err
+			done[tid], found = true, true
+			if err := set(tid); err != nil && !errors.Is(err, syscall.ESRCH) {
+				refused = append(refused, err)
 			}
 		}
 		if !found {
-			return nil
+			return errors.Join(refused...)
 		}
 	}
 }
 
-// lowerThread sets the thread tid to backgroundNice and to the idle I/O class.
-func lowerThread(tid int) error {
-	if err := syscall.Setpriority(syscall.PRIO_PROCESS, tid, backgroundNice); err != nil {
-		return err
-	}
+// niceThread sets the thread tid to backgroundNice.
+func niceThread(tid int) error {
+	return syscall.Setpriority(syscall.PRIO_PROCESS, tid, backgroundNice)
+}
+
+// idleThread sets the thread tid to the idle I/O class.
+func idleThread(tid int) error {
 	if _, _, errno := syscall.Syscall(syscall.SYS_IOPRIO_SET, ioprioWhoProcess, uintptr(tid), ioprioClassIdle<<ioprioClassShift); errno != 0 {
 		return errno
 	}

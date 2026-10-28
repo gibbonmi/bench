@@ -6,7 +6,6 @@ package gate
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -310,13 +309,7 @@ func requireDelta(t *testing.T, f *recordtest.Fixture, code int, packages ...str
 	if after := evidenceEntries(t, f.Root); got != code || after != before {
 		t.Fatalf("delta checkpoint = %d %s with %d evidence entries after %d; want exit %d and no new entry", got, out, after, before, code)
 	}
-	set, err := json.Marshal(packages)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if schedules := gateSchedules(t, f); !slices.Equal(schedules, []string{wholeSchedule, string(set)}) {
-		t.Fatalf("gate schedules = %q; want the prepared whole run and then the delta set %s", schedules, set)
-	}
+	requireDeltaSet(t, f, packages...)
 	return out
 }
 

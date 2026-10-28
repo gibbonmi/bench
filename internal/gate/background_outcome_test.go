@@ -47,13 +47,7 @@ func TestBackgroundGradeTakesTheDelta(t *testing.T) {
 	if code, out := gradeBackground(t, f, nil); code != 0 {
 		t.Fatalf("background grade = %d %s; want green", code, out)
 	}
-	set, err := json.Marshal([]string{"./."})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if schedules := gateSchedules(t, f); !slices.Equal(schedules, []string{wholeSchedule, string(set)}) {
-		t.Fatalf("gate schedules = %q; want the prepared whole run and then the delta set %s", schedules, set)
-	}
+	requireDeltaSet(t, f, "./.")
 	if _, err := os.Stat(deltaRecordPath(t, f)); err != nil {
 		t.Fatalf("delta record after a background delta green: %v; want the record", err)
 	}
@@ -105,7 +99,7 @@ func TestBackgroundGreenWritesTheReaderTable(t *testing.T) {
 
 // TestTimedOutGradeRecordsAborted is BG38.
 func TestTimedOutGradeRecordsAborted(t *testing.T) {
-	f := markedBackgroundFixture(t, ".gate-sleep")
+	f := markedBackgroundFixture(t, failureOutcomeFixture(t), ".gate-sleep")
 	previous := gateTimeout
 	gateTimeout = time.Second
 	t.Cleanup(func() { gateTimeout = previous })
@@ -145,21 +139,46 @@ func TestRefusedGradeRecordsAborted(t *testing.T) {
 	}
 }
 
+// TestKeylessGradeRecordsAborted is BG-C5-P1. A grade that ends before it knows its grade key
+// records aborted with an empty key, its tip, and its log: here a tip with no open build, and a
+// tip that does not resolve.
+func TestKeylessGradeRecordsAborted(t *testing.T) {
+	root := outcomeFixture(t)
+	head := outcomeGit(t, root, "rev-parse", "HEAD")
+	for _, tip := range []string{head, "no-such-tip"} {
+		var out bytes.Buffer
+		code := gradeInBackground(context.Background(), root, tip, nil, &out, &out)
+		record, err := backgroundstate.ReadRecord(adminDir(t, root))
+		want := backgroundstate.Record{Outcome: backgroundstate.Aborted, Tip: tip, Log: backgroundstate.LogPath(adminDir(t, root))}
+		if err != nil || record != want {
+			t.Fatalf("keyless grade of %s = %d %s, record = %+v %v; want %+v", tip, code, out.String(), record, err, want)
+		}
+	}
+}
+
+// TestMovedRedGradeRecordsAborted is BG-C5-P2. The oracle moves its subject and then exits red,
+// so the settle step refuses the run, and the grade records aborted under its key.
+func TestMovedRedGradeRecordsAborted(t *testing.T) {
+	f := markedBackgroundFixture(t, outcomeFixture(t, func(_ *testrepo.GateFixture, body string) string {
+		return body + "if [ -e .gate-moved-red ]; then printf 'moved\\n' >> tracked.txt; exit 7; fi\n"
+	}), ".gate-moved-red")
+	code, out := gradeBackground(t, f, nil)
+	if got := backgroundRecord(t, f); got.Outcome != backgroundstate.Aborted || got.Key != strippedEvidence(t, f).Grade {
+		t.Fatalf("moved red grade = %d %s, record = %+v; want an aborted record of its key", code, out, got)
+	}
+}
+
 // backgroundPriority runs one background grade of a fixture in a child process, and answers
 // the nice value and the I/O class that its oracle wrote.
 func backgroundPriority(t *testing.T) []string {
 	t.Helper()
-	f := recordtest.Attach(t, outcomeFixture(t, func(g *testrepo.GateFixture, body string) string {
+	f := chunkBackgroundFixture(t, outcomeFixture(t, func(g *testrepo.GateFixture, body string) string {
 		class := ""
 		if runtime.GOOS == "linux" {
 			class = "$(" + g.Command("ionice") + " -p $$)"
 		}
 		return body + `printf '%s\n' "$(` + g.Command("ps") + ` -o nice= -p $$)" "` + class + `" > "$common/` + string(priorityWitness) + "\"\n"
-	}), 1)
-	f.AddChunk()
-	f.Save()
-	f.Commit("retain review evidence")
-	seedGateCache(t, f)
+	}))
 	child := processtest.Helper(t, backgroundGradeHelper, kitRunRootEnv+"="+f.Root, backgroundResolvedEnv+"=1")
 	if out, err := child.CombinedOutput(); err != nil {
 		t.Fatalf("background grade child = %v\n%s", err, out)
@@ -168,15 +187,36 @@ func backgroundPriority(t *testing.T) []string {
 	return []string{strings.TrimSpace(lines[0]), strings.TrimSpace(lines[1])}
 }
 
-// markedBackgroundFixture is a background fixture over the failure gate whose tip commits the
-// gate marker.
-func markedBackgroundFixture(t *testing.T, marker string) *recordtest.Fixture {
+// chunkBackgroundFixture attaches one chunk entry of a review record to the outcome fixture root,
+// and seeds its gate cache, so a background grade of its tip grades a chunk subject.
+func chunkBackgroundFixture(t *testing.T, root string) *recordtest.Fixture {
 	t.Helper()
-	f := recordtest.Attach(t, failureOutcomeFixture(t), 1)
+	f := recordtest.Attach(t, root, 1)
 	f.AddChunk()
 	f.Save()
 	f.Commit("retain review evidence")
 	seedGateCache(t, f)
+	return f
+}
+
+// requireDeltaSet requires that the gate of f ran the prepared whole run and then one run of the
+// delta set of packages.
+func requireDeltaSet(t *testing.T, f *recordtest.Fixture, packages ...string) {
+	t.Helper()
+	set, err := json.Marshal(packages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if schedules := gateSchedules(t, f); !slices.Equal(schedules, []string{wholeSchedule, string(set)}) {
+		t.Fatalf("gate schedules = %q; want the prepared whole run and then the delta set %s", schedules, set)
+	}
+}
+
+// markedBackgroundFixture is a background fixture over the outcome fixture root whose tip commits
+// the gate marker.
+func markedBackgroundFixture(t *testing.T, root, marker string) *recordtest.Fixture {
+	t.Helper()
+	f := chunkBackgroundFixture(t, root)
 	f.Write(marker, "")
 	f.Git("add", "-f", marker)
 	f.Commit("commit the gate marker")

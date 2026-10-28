@@ -34,7 +34,7 @@ const (
 var outcomes = []Outcome{Green, Red, Aborted, Stopped}
 
 // Record is the latest background grade of a worktree: its outcome, its grade key, the tip
-// that it graded, and the path of its log.
+// that it graded, and the path of its log. An aborted record can name no key.
 type Record struct {
 	Outcome Outcome `json:"outcome"`
 	Key     string  `json:"key"`
@@ -68,6 +68,9 @@ func ReadRecord(gitdir string) (Record, error) {
 func (r Record) valid() error {
 	if !slices.Contains(outcomes, r.Outcome) {
 		return fmt.Errorf("outcome %q is not one of %v", r.Outcome, outcomes)
+	}
+	if r.Outcome == Aborted && r.Key == "" {
+		return required("tip", r.Tip, "log", r.Log)
 	}
 	return required("key", r.Key, "tip", r.Tip, "log", r.Log)
 }
