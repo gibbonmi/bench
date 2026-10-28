@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
@@ -68,7 +69,7 @@ func TestBackgroundOracleRunsAtNiceNineteen(t *testing.T) {
 // TestBackgroundOracleRunsInTheIdleClass is BG31.
 func TestBackgroundOracleRunsInTheIdleClass(t *testing.T) {
 	if runtime.GOOS != "linux" {
-		t.Skip("the I/O class is a Linux priority")
+		capability.Environment(t, "the I/O class is a Linux priority")
 	}
 	if class := backgroundPriority(t)[1]; class != "idle" {
 		t.Fatalf("I/O class of the background oracle = %q; want idle", class)
