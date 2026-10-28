@@ -6,8 +6,8 @@ package anchors
 // dispatch in ADR 0023, the main fold at the start of the last chunk and its refreeze, the
 // comment-only correction after a chunk tip, the review as the chunk freezer, the orchestrator's
 // chunk record, the checkpoint gate for every chunk, the README checkpoint edges, the review
-// chain's refusal of a fold, the widened confirming round, the hand-recording sentences, and
-// the full rerun of a repair session.
+// chain's refusal of a fold, the widened confirming round, the hand-recording sentences, the
+// full rerun of a repair session, and the retired prepared run of a chunk checkpoint.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Class: Command, Section: "Build", Needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", Diagnostic: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
@@ -34,14 +34,28 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: reviewPhase, Kind: Forbid, Needle: "Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.", Diagnostic: "chunk chain: the review phase restored the hand-embedded excerpt sentence"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "runs each check that its ticket owes once at its repair commit", Diagnostic: "chunk chain: the implement phase restored the full rerun of a repair session"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "reruns the ticket's verification with current repair coverage", Diagnostic: "chunk chain: the operating guide restored the full rerun of a repair session"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Land", Needle: "--prepare", Diagnostic: "chunk chain: the Land section restored the --prepare flag of the retired prepared run"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Land", Needle: "then start that prepared run beside the confirmation", Diagnostic: "chunk chain: the Land section restored the prepared run after a repair commit"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Land", Needle: "Wait on the PID of the prepared run", Diagnostic: "chunk chain: the Land section restored the wait on the PID of a prepared run"},
+	{Group: AfterImplementSpec, File: boundedRepairPolicy, Kind: Forbid, Needle: "A prepared chunk run excludes the review record from its subject.", Diagnostic: "chunk chain: the bounded repair policy restored the subject of a prepared chunk run"},
+	{Group: AfterImplementSpec, File: boundedRepairPolicy, Kind: Forbid, Needle: "orders the coordinator probe, the prepared run, and the chunk checkpoint", Diagnostic: "chunk chain: the bounded repair policy restored the order of the prepared run"},
+	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "--prepare", Diagnostic: "chunk chain: the reference restored the --prepare flag of the retired prepared run"},
+	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "prepared run", Diagnostic: "chunk chain: the reference restored the retired prepared run"},
+	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "It skips the evidence pass, the record prose grade, and the tip-moved guard.", Diagnostic: "chunk chain: the reference restored the list of what a prepared run skips"},
+	{Group: AfterImplementSpec, File: benchkitProfile, Kind: Forbid, Needle: "prepared chunk run", Diagnostic: "chunk chain: the profile restored the retired prepared chunk run"},
+	{Group: AfterImplementSpec, File: enforcementPosturesADR, Kind: Forbid, Needle: "prepared chunk run", Diagnostic: "chunk chain: ADR 0002 restored the retired prepared chunk run"},
 }
 
 // implementPhase is the phase file that states the chunk chain. reviewPhase, freshAuthorADR,
-// craftTickets, and benchReference carry retired sentences that the Forbid rows refuse.
+// craftTickets, benchReference, boundedRepairPolicy, benchkitProfile, and enforcementPosturesADR
+// carry retired sentences that the Forbid rows refuse.
 const (
-	implementPhase = ".agents/commands/bench-implement-spec.md"
-	reviewPhase    = ".agents/commands/bench-review-implementation.md"
-	craftTickets   = ".agents/skills/bench-craft-tickets/SKILL.md"
-	benchReference = ".bench/BENCH-reference.md"
-	freshAuthorADR = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
+	implementPhase         = ".agents/commands/bench-implement-spec.md"
+	reviewPhase            = ".agents/commands/bench-review-implementation.md"
+	craftTickets           = ".agents/skills/bench-craft-tickets/SKILL.md"
+	benchReference         = ".bench/BENCH-reference.md"
+	freshAuthorADR         = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
+	boundedRepairPolicy    = ".agents/skills/bench-craft-line/references/bounded-repair-policy.md"
+	benchkitProfile        = "projects/benchkit.md"
+	enforcementPosturesADR = "docs/adr/0002-accepted-enforcement-postures.md"
 )

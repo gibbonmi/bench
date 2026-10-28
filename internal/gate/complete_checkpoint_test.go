@@ -172,14 +172,16 @@ func TestCompleteCheckpointEvidenceNamesThePublishedTree(t *testing.T) {
 	}
 }
 
-// TestCompleteCheckpointIgnoresAPreparedChunkGreen covers RC45. The complete checkpoint keeps
-// its own key, so a prepared chunk green of the same source never serves it: the complete
+// TestCompleteCheckpointIgnoresABackgroundChunkGreen is BG4. The complete checkpoint keeps its
+// own key, so a background chunk green of the same source never serves it: the complete
 // checkpoint runs the gate, and its green names the published tree.
-func TestCompleteCheckpointIgnoresAPreparedChunkGreen(t *testing.T) {
+func TestCompleteCheckpointIgnoresABackgroundChunkGreen(t *testing.T) {
 	f := closureSource(t, false)
-	requirePrepared(t, f)
-	if code, out := completeCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 2 {
-		t.Fatalf("complete checkpoint after a prepared chunk green = %d %s after %d runs; want a second run", code, out, outcomeRuns(t, f.Root))
+	seedGateCache(t, f)
+	requireBackgroundGreen(t, f, nil)
+	runs := outcomeRuns(t, f.Root)
+	if code, out := completeCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != runs+1 {
+		t.Fatalf("complete checkpoint after a background chunk green = %d %s after %d runs; want %d runs", code, out, outcomeRuns(t, f.Root), runs+1)
 	}
 	if got := publishedEvidence(t, f); !got.ReusableGreen {
 		t.Fatalf("published tree of HEAD has no reusable green under the completion obligation: %+v", got)

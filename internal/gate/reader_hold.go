@@ -18,10 +18,10 @@ import (
 
 // holdWholeGate writes the reader hold of a red whole run whose landing value names a green
 // marker, and answers the suspects of the red. A run without such a landing value writes
-// nothing and has no suspects.
+// nothing and has no suspects. A background run is speculative, so its red writes no hold either.
 func holdWholeGate(ctx context.Context, replacer durablefile.Replacer, storageRoot string) ([]string, error) {
 	landing, landed := landingOf(ctx)
-	if !landed || landing.marker == "" {
+	if !landed || landing.marker == "" || backgroundGradeOf(ctx) != nil {
 		return nil, nil
 	}
 	gitdir, err := benchgit.CommonDir(storageRoot)

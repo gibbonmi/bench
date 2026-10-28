@@ -1,7 +1,7 @@
 # Grade a landing subject in the background
 
 Blocked by: 09-queue-and-supersede-background-grades.md
-Writes: internal/gate/background_grade.go (new), internal/gate/background_launch.go (new), internal/gate/background_landing.go (new), internal/gate/background_landing_test.go (new), internal/gate/complete_checkpoint.go, internal/gate/reader_plan.go, internal/gate/backgroundstate (new), internal/landing/published, CHANGELOG.md
+Writes: internal/gate/background_grade.go (new), internal/gate/background_launch.go (new), internal/gate/background_landing.go (new), internal/gate/background_landing_test.go (new), internal/gate/complete_checkpoint.go, internal/gate/reader_plan.go, internal/gate/backgroundstate (new), internal/landing/published, CHANGELOG.md, internal/gate/gate.go, internal/landing/composition.go, internal/landing/landing.go, internal/landing/gitexec.go, internal/landing/composition_test.go
 Covers: BG67, BG68, BG69, BG70, BG71, BG72, BG73, BG74
 
 ## What to build

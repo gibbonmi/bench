@@ -338,8 +338,6 @@ file at the path answers a structured refusal at exit 1.
 
 A reviewed spec-backed build keeps its serial ticket commits in one retained integration source. Its approved plan groups tickets into coherent chunks. Before the first dispatch, the plan amendment declares version 2 with a delegate execution block. The amendment splits each chunk verification into one verification for each ticket. The last ticket's author freezes each chunk's base and current tip. Each accepted finding of the chunk review goes to a fresh repair session under the repair rule of `.bench/BENCH.md`.
 
-The Land section of `/bench-implement-spec` says when the orchestrator starts the prepared run of the chunk checkpoint.
-
 A worktree `bench commit`
 runs the fast lane on a private checkout of the composed snapshot, and a lane pass
 publishes onto the worktree branch. The lane writes a lane record and no gate
@@ -384,8 +382,7 @@ A green `bench gate --checkpoint <spec-path> --chunk <id>` in a bound worktree o
 build's chunk gap when the plan names a later chunk. The first
 `bench record assignment` of the next chunk closes the gap. That record refuses
 until the source holds the default branch tip, and its refusal names the fold
-and `bench record fold`. The last chunk opens no gap. A prepared run opens no gap,
-because it grades no evidence.
+and `bench record fold`. The last chunk opens no gap.
 
 The reviewer grants one landing a landing override with
 `bench commitment override --assignment <id> --reason <text>`. The verb runs only
@@ -647,15 +644,9 @@ Each other evidence refusal routes to `bench preflight review <slug>`.
 
 The chunk checkpoint grades the committed tree without the record through prospective execution.
 It keys its verdict to that tree, so a record-only commit reuses its green.
-Each call without `--prepare` still grades the record evidence and the record prose. The key frames no run purpose, so the complete checkpoint runs its own evidence checks before it reuses a green.
-Ordinary lane checks remain available while implementation, review, or repair is in progress.
-
-`--prepare` with `--chunk <id>` starts the prepared run of the chunk checkpoint.
-It runs the gate on the same subject and writes its green under the same key.
-It skips the evidence pass, the record prose grade, and the tip-moved guard.
-So a record write or a record commit during the run leaves its green valid.
-The chunk checkpoint after the record commit reuses that green.
 A change of the spec or another source path, or an expired green, makes the checkpoint run the gate again.
+Each call still grades the record evidence and the record prose. The key frames no run purpose, so the complete checkpoint runs its own evidence checks before it reuses a green.
+Ordinary lane checks remain available while implementation, review, or repair is in progress.
 
 The document is one object with a `phases` array. Each phase carries:
 
@@ -717,8 +708,7 @@ A green run prints one `phases[N]{phase,verdict,elapsed_ms}` table, one
 collapses to one `phases: N/N green` row.
 
 A run that reuses a fresh green of its subject prints one
-`gate: green (fresh verdict reused for this tree)` line and runs no phase. So a chunk
-checkpoint after a green prepared run of its subject prints that line alone.
+`gate: green (fresh verdict reused for this tree)` line and runs no phase.
 
 The grade key names each whole green, and ADR 0031 names its members. A green under the
 key answers the gate, a commit, a merge, a landing, and each checkpoint from any checkout
@@ -742,8 +732,7 @@ complete checkpoint, and no whole checkpoint accepts it.
 
 A later chunk checkpoint of the same base and subject reuses the delta green when the delta
 is still eligible. It prints one `gate: green (delta green reused for this subject)` line and
-runs no phase. A prepared run at a test-only repair commit takes the delta too, so the
-checkpoint after the record commit reuses its green.
+runs no phase.
 
 A kit landing through `bench worktree land` reads its landing plan before any phase. The
 reader set is the second reduced schedule. It runs these phases:
@@ -779,6 +768,55 @@ that marker. Each named commit is a suspect of the red.
 
 The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
 the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
+
+### Background grade
+
+In a kit worktree, each lane pass of `bench commit` or `bench worktree merge` detaches one
+background pass. That pass runs through the wrapper of the target worktree, and it computes the
+grade key of its tip. That key is the key of the chunk subject of an open build, or the key of
+the landing subject. The pass queues no grade when one of these already holds that key:
+
+- a fresh green
+- a live claim
+- the running grade
+- a queued grade
+
+The queue under the Bench home runs one grade at a time on the machine, in the order of the lane
+passes. Each worktree keeps at most one queued grade, so a newer tip replaces the queued grade.
+A newer tip with a new key also stops the running grade of its worktree. A grade runs its Go test
+phases at `-p=2 -parallel=2`, at nice 19, and in the idle I/O class. A linked repository starts
+no grade.
+
+A grade holds a claim on its grade key while it runs. The claim names the key, the worktree, the
+owner pid, and the boot id. A claim is live only while its owner runs in the current boot. The
+grade takes no checkout lock and writes no gate cache, so a foreground gate runs beside it. Its
+green goes to the evidence store under its key.
+
+A chunk checkpoint that finds no green waits on a live claim of its key before it takes the
+checkout lock. A spec-less or tickets-only landing waits the same way before it takes the
+destination lease. The complete checkpoint does not wait on a claim, and it keeps its own run
+under the broker.
+
+The wait moves the I/O class of the grade to best-effort, and the nice value stays 19. The wait
+counts against the gate timeout. After the wait, the run looks up its key
+again, so a background green answers it with no oracle run. A red grade or a grade with no
+verdict makes the run pay its own oracle.
+
+Before its own run, a chunk checkpoint or a landing stops and drops each grade of its worktree
+that holds another key. These verbs also stop the running grade and drop the queued grade of each
+worktree that they act on:
+
+- `bench worktree release`, `bench worktree clean`, and `bench worktree reclaim`
+- the stack form of `bench worktree land`
+- `bench cache clean`, for every grade
+
+A grade writes its output to `bench-background-grade.log.running` in the git directory of its
+worktree. When Bench records the end of the grade, it moves that file to
+`bench-background-grade.log`.
+The background record of that worktree names the latest outcome: `green`, `red`, `aborted`, or
+`stopped`. The record also names the grade key, the tip, and the log. The record is never a
+verdict. `bench status` shows it as the `background` row, and `bench commit` prints it on one
+`background grade: latest` line.
 
 ## Harness adapter for the shift loop
 

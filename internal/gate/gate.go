@@ -156,17 +156,18 @@ func (r Resolution) command(root string) *exec.Cmd {
 // no absolute HOME cannot name that directory, so gateEnv refuses rather than let a
 // child fall back to Go's default.
 func gateEnv() ([]string, error) {
-	// The baseline phase-schedule selector, the delta schedule, the reader schedule, and the
-	// test log directory go too. Each addresses the one gate-phases process the owner launched;
-	// a phase child that inherited one would select its own schedule from the values of a run
-	// it is not part of, or write its own test logs into the logs of that run.
+	// The baseline phase-schedule selector, the delta schedule, the reader schedule, the width
+	// input, and the test log directory go too. Each addresses the one gate-phases process the
+	// owner launched; a phase child that inherited one would select its own schedule or width
+	// from the values of a run it is not part of, or write its own test logs into the logs of
+	// that run.
 	//
 	// The seam record's two entries go too, for the same reason. They address the gate
 	// run that started this process. A phase child that inherited them would attach its
 	// own record lines to a run it is not part of. The parent sets them back on the one
 	// child that runs the phase table.
 	base := env.WithoutWrapperRouting(capability.WithoutEnvironment(capability.WithoutEnvironment(capability.WithoutEnvironment(os.Environ(), capability.LogEnv), baselinePolicyEnv), deltaScheduleEnv))
-	for _, name := range append([]string{readerScheduleEnv, testLogEnv}, otelrecord.HandoffVariables()...) {
+	for _, name := range append([]string{readerScheduleEnv, widthEnv, testLogEnv}, otelrecord.HandoffVariables()...) {
 		base = capability.WithoutEnvironment(base, name)
 	}
 	return gocache.Apply(base)
@@ -183,8 +184,7 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 // requires execution instead of reuse; it can appear on either side of root. A checkpoint
 // refuses a checkout with an uncommitted change. A complete checkpoint grades the tree that
 // the landing publishes from the committed source, and a chunk checkpoint grades the committed
-// source without its review record; every other run grades the checkout. A prepared chunk
-// checkpoint grades that subject alone and opens no chunk gap.
+// source without its review record; every other run grades the checkout.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	root, mode, checkpoint, err := parseGateArgs(args, true)
 	if err != nil {
@@ -221,14 +221,14 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	finishLog(result)
 	finishSpan(result)
-	if result.ActionExit == 0 && checkpoint.Chunk != "" && !checkpoint.gradesSubjectAlone() {
+	if result.ActionExit == 0 && checkpoint.Chunk != "" {
 		return openChunkGap(root, checkpoint, stderr)
 	}
 	return result.ActionExit
 }
 
 // CommandUsage is the public grammar shared with the CLI inventory.
-const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> [" + flagPrepare + "] | " + flagComplete + ")]"
+const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> | " + flagComplete + ")]"
 
 // Command validates the public grammar before entering the gate owner.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
@@ -306,18 +306,6 @@ func (m runMode) String() string {
 		return "fresh"
 	}
 	return "ordinary"
-}
-
-// runBinarySource answers the source root of the run binary: the graded tree when a
-// prospective gate grades a tree that builds its own run binary, and the kit otherwise. The
-// run's selection and the grade identity both read it.
-func runBinarySource(kind Kind, runtimeRoot, storageRoot string) string {
-	if kind == ProspectiveGateSh &&
-		isRegularFile(filepath.Join(runtimeRoot, "scripts", "go-build.sh")) &&
-		GoModuleRoot(runtimeRoot) {
-		return runtimeRoot
-	}
-	return kitRoot(storageRoot)
 }
 
 // sameDirectory reports whether two paths name the same directory, by file identity

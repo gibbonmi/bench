@@ -60,7 +60,7 @@ func BenchkitPhases(root, kit string) []Phase {
 		operands, env := SystemSuite(root)
 		phases = append(phases, Phase{
 			Name: SystemPhaseName,
-			Argv: BaseTestArgv("", operands...),
+			Argv: gateTestArgv(operands...),
 			Env:  env,
 			Dir:  kit,
 		})

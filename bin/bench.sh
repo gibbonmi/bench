@@ -513,7 +513,7 @@ case "${1:-}" in
   consumers) route_porcelain "$@" ;;
   test)     route_porcelain "$@" ;;
   tree-hash) route_binary "$@" ;;
-  gate-run) route_binary "$@" ;;
+  gate-run|gate-background) route_binary "$@" ;;
   freshness-check) route_binary "$@" ;;
   gate-phases) route_binary "$@" ;;
   gate-go) route_binary "$@" ;;

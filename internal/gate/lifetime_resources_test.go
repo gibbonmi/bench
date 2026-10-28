@@ -37,9 +37,10 @@ const (
 	nestedGroupEnv   = "BENCH_TEST_NESTED_GROUP"
 )
 
-// TestMain lets this test binary serve as the gates and the nested users below.
+// TestMain lets this test binary serve as the gates and the nested users below, and as the
+// background grade.
 func TestMain(m *testing.M) {
-	processtest.Main(m, map[string]func() int{kitRunGateHelper: kitRunGate, kitRunUserHelper: kitRunUser, cacheGateHelper: cacheGate, laneGateHelper: laneGate, nestedUserHelper: nestedUser})
+	processtest.Main(m, map[string]func() int{kitRunGateHelper: kitRunGate, kitRunUserHelper: kitRunUser, cacheGateHelper: cacheGate, laneGateHelper: laneGate, nestedUserHelper: nestedUser, backgroundGradeHelper: backgroundGradeChild})
 }
 
 // installTestProtocol admits each kind the composition root's table admits. Only a helper

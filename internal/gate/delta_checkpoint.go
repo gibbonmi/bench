@@ -181,7 +181,7 @@ func runReduced(ctx, runCtx context.Context, runtimeRoot, storageRoot string, de
 	// An eligible reduced schedule runs the phase table, so the run selected its executable.
 	// The release in settleRun can remove those bytes, so the digest reads first.
 	runBinary, err := fileDigest(selection.Path)
-	after, refusal, refused := settleRun(evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
+	after, refusal, refused := settleVerdict(ctx, evaluation, runtimeRoot, storageRoot, declaredPaths, plan, run, release, stderr)
 	if refused {
 		return refusal
 	}

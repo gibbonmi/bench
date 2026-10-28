@@ -1,10 +1,8 @@
 package gate
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,7 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/prose"
-	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
@@ -167,34 +164,6 @@ func TestChunkCheckpointRunsTheProspectiveGate(t *testing.T) {
 	assertNoOracleRun(t, f)
 }
 
-// TestCheckpointPrepareRunsTheGateWithoutEvidence covers RC34. The record commit of a frozen
-// chunk holds no review and a sentence over the prose bound, so the chunk checkpoint refuses
-// it. The prepared run grades its subject alone: the oracle runs once, and the evidence store
-// holds a green for the HEAD tree without the record.
-func TestCheckpointPrepareRunsTheGateWithoutEvidence(t *testing.T) {
-	f, _ := unreviewedFixture(t, prosePolicy)
-	commitOverBoundRecord(t, f)
-	requirePrepared(t, f)
-	stripped, err := rr.SourceDigest(f.Root, f.Tree(), recordtest.Spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := InspectTree(f.Root, stripped); !got.ReusableGreen {
-		t.Fatalf("evidence of the HEAD tree without the record = %+v; want the prepared green", got)
-	}
-}
-
-// TestChunkCheckpointReusesThePreparedGreen covers RC36. The record commit that retains the
-// reviews follows the prepared run, and a second call reloads the evidence store, so the
-// chunk checkpoint reuses the prepared green and runs no phase.
-func TestChunkCheckpointReusesThePreparedGreen(t *testing.T) {
-	f, reviews := unreviewedFixture(t)
-	requirePrepared(t, f)
-	f.Record.Chunks[0].Reviews = reviews
-	resave(t, f, "retain the reviews")
-	requireReuse(t, f, "after the prepared run and a record-only commit")
-}
-
 // TestChunkCheckpointRunsAfterASpecChange covers RC37: the spec stays in the key.
 func TestChunkCheckpointRunsAfterASpecChange(t *testing.T) {
 	requireRunAfterAChange(t, recordtest.Spec)
@@ -206,60 +175,22 @@ func TestChunkCheckpointRunsAfterASourceChange(t *testing.T) {
 	requireRunAfterAChange(t, "source.txt")
 }
 
-// TestCheckpointPrepareSurvivesARecordCommit covers RC42. After the prepared run takes the
-// gate lock, the worktree retains the reviews in a record write and a record commit. The run
-// resolves no tip and captures its private checkout, so it stays green, and the chunk
-// checkpoint after it reuses that green.
-func TestCheckpointPrepareSurvivesARecordCommit(t *testing.T) {
-	f, reviews := unreviewedFixture(t)
-	retain := func() {
-		f.Record.Chunks[0].Reviews = reviews
-		resave(t, f, "retain the reviews during the prepared run")
-	}
-	var stderr bytes.Buffer
-	if code := RunCheckpointArmed(t, f.Root, []string{"--checkpoint", recordtest.Spec, "--chunk", "1", flagPrepare}, retain, &stderr); code != 0 {
-		t.Fatalf("prepared run across a record commit = %d %s; want its green", code, stderr.String())
-	}
-	requireReuse(t, f, "after a record commit during the prepared run")
-}
-
-// TestGateUsageNamesPrepare covers RC49: `bench gate --help` names the prepare flag.
-func TestGateUsageNamesPrepare(t *testing.T) {
-	var stdout bytes.Buffer
-	if code := Command([]string{"--help"}, nil, &stdout, io.Discard); code != 0 || !strings.Contains(stdout.String(), flagPrepare) {
-		t.Fatalf("gate --help = %d %q; want a usage line that names %s", code, stdout.String(), flagPrepare)
-	}
-}
-
-// TestCompleteCheckpointPurposeOmitsPrepare pins the purpose bytes that the oracle digest of a
-// complete checkpoint frames. The grade key that names its evidence frames no purpose.
-func TestCompleteCheckpointPurposeOmitsPrepare(t *testing.T) {
+// TestCompleteCheckpointPurposeOmitsTheBackground pins the purpose bytes that the oracle digest
+// of a complete checkpoint frames. The grade key that names its evidence frames no purpose.
+func TestCompleteCheckpointPurposeOmitsTheBackground(t *testing.T) {
 	const want = `{"Spec":"specs/example/spec.md","Chunk":"","Complete":true}`
 	if got, err := json.Marshal(Checkpoint{Spec: "specs/example/spec.md", Complete: true}); err != nil || string(got) != want {
 		t.Fatalf("complete checkpoint purpose = %s %v; want %s", got, err, want)
 	}
 }
 
-// TestChunkCheckpointRunsAfterThePreparedGreenExpires covers RC52. A prepared green past the
-// freshness window serves no chunk checkpoint, so the checkpoint runs the gate again.
-func TestChunkCheckpointRunsAfterThePreparedGreenExpires(t *testing.T) {
-	f := checkpointFixture(t)
-	requirePrepared(t, f)
+// TestChunkCheckpointRunsAfterTheBackgroundGreenExpires covers RC52. A background green past
+// the freshness window serves no chunk checkpoint, so the checkpoint runs the gate again.
+func TestChunkCheckpointRunsAfterTheBackgroundGreenExpires(t *testing.T) {
+	f := backgroundFixture(t)
+	requireBackgroundGreen(t, f, nil)
 	expireEvidence(t, f.Root)
-	requireRun(t, f, "after the prepared green expires")
-}
-
-// TestCheckpointPrepareRefusesADirtyCheckout grades a prepared run over a dirty checkout. The
-// run grades the HEAD tree that the chunk checkpoint grades, so it refuses the checkout before
-// the oracle, and the rerun of its route prepares again.
-func TestCheckpointPrepareRefusesADirtyCheckout(t *testing.T) {
-	f := checkpointFixture(t)
-	f.Write("tracked.txt", "edited\n")
-	code, out := runCheckpointWith(t, f, flagPrepare)
-	requireCleanCheckoutRefusal(t, f, code, out, "stale reviewed source")
-	if next, one := routetest.Next(out); !one || !strings.HasSuffix(next, " "+flagPrepare) {
-		t.Errorf("dirty prepared run = %q; want a next= rerun that keeps %s", out, flagPrepare)
-	}
+	requireRun(t, f, "after the background green expires")
 }
 
 // unreviewedFixture is a checkpoint fixture whose last record commit holds the frozen chunk
@@ -274,26 +205,28 @@ func unreviewedFixture(t *testing.T, prepare ...func(*recordtest.Fixture)) (*rec
 	return f, reviews
 }
 
-// requireRunAfterAChange prepares chunk 1 of a checkpoint fixture over a commit that changes
-// path. It then commits the reviewed bytes of path again, so the evidence passes. The chunk
-// checkpoint must then run the gate on its own subject, not reuse the prepared green.
+// requireRunAfterAChange grades chunk 1 of a checkpoint fixture in the background over a
+// commit that changes path. It then commits the reviewed bytes of path again, so the evidence
+// passes. The chunk checkpoint must then run the gate on its own subject, not reuse the
+// background green.
 func requireRunAfterAChange(t *testing.T, path string) {
 	t.Helper()
-	f := checkpointFixture(t)
+	f := backgroundFixture(t)
 	reviewed := string(outcomeRead(t, filepath.Join(f.Root, path)))
 	f.Write(path, reviewed+"\nA change after the review.\n")
 	f.Commit("change " + path)
-	requirePrepared(t, f)
+	requireBackgroundGreen(t, f, nil)
 	f.Write(path, reviewed)
 	f.Commit("restore " + path)
 	requireRun(t, f, "after a change of "+path)
 }
 
-// requireRun requires that a chunk checkpoint of f exits 0 after a second oracle run.
+// requireRun requires that a chunk checkpoint of f exits 0 after one more oracle run.
 func requireRun(t *testing.T, f *recordtest.Fixture, when string) {
 	t.Helper()
-	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 2 {
-		t.Fatalf("checkpoint %s = %d %s after %d runs; want a second run", when, code, out, outcomeRuns(t, f.Root))
+	runs := outcomeRuns(t, f.Root)
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != runs+1 {
+		t.Fatalf("checkpoint %s = %d %s after %d runs; want %d runs", when, code, out, outcomeRuns(t, f.Root), runs+1)
 	}
 }
 

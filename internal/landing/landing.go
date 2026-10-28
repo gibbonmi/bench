@@ -304,20 +304,12 @@ func reviewedSource(r ReviewedRequest) (string, string, error) {
 // landingTree composes source onto the commit onto and applies the verified delivery of
 // r, so it answers the tree that the landing of r publishes there.
 func (o Owner) landingTree(r ReviewedRequest, onto, source string) (string, error) {
-	composition, err := o.Compose(CompositionRequest{Root: r.Root, Destination: onto, Source: source, ReviewBase: r.ReviewBase})
-	if err != nil {
-		return "", err
+	tree, err := published.Subject(r.Root, onto, source, r.ReviewBase, r.Deliverable(), r.Stderr)
+	var conflict published.ConflictError
+	if errors.As(err, &conflict) {
+		return "", ConflictError(conflict)
 	}
-	if composition.Conflict.Kind != "" {
-		return "", ConflictError{composition.Conflict}
-	}
-	if len(composition.Resolved) > 0 && r.Stderr != nil {
-		fmt.Fprintf(r.Stderr, "landing composition{resolved=%s}\n", strings.Join(composition.Resolved, ","))
-	}
-	if deliverable := r.Deliverable(); deliverable != "" {
-		return published.Tree(r.Root, composition.Tree, deliverable, source)
-	}
-	return composition.Tree, nil
+	return tree, err
 }
 
 // AuthorizationRefusal is the refusal of a tree the gate did not authorize. It carries the

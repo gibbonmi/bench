@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/git"
 )
 
@@ -42,10 +43,14 @@ func withCheckoutGuard(ctx context.Context, root string) context.Context {
 		for _, path := range strings.Split(string(tracked), "\x00") {
 			guard.tracked[filepath.FromSlash(path)] = true
 		}
-		var admin string
+		var admin, common string
 		admin, err = git.AdminDir(root)
 		if err == nil {
-			paths := []string{registry.TimingPath(root), gateLockPath(admin), gateOwnerPath(admin)}
+			common, err = git.CommonDir(root)
+		}
+		if err == nil {
+			// A detached grade of this checkout can write its own state during the run.
+			paths := append([]string{registry.TimingPath(root), gateLockPath(admin), gateOwnerPath(admin)}, backgroundstate.GradePaths(admin, common)...)
 			if log, _ := ctx.Value(gateRunLogKey{}).(*gateRunLog); log != nil {
 				paths = append(paths, log.file.Name(), log.streamPath())
 			}
@@ -130,6 +135,9 @@ func (g *checkoutGuard) snapshot() (map[string]checkoutFile, error) {
 					return filepath.SkipDir
 				}
 				return nil
+			}
+			if entry.IsDir() && g.allowed[path] {
+				return filepath.SkipDir
 			}
 			if entry.IsDir() || g.allowed[path] || (tree.prefix != "" && !benchAdminFile(rel)) {
 				return nil

@@ -14,8 +14,10 @@ type executionEvaluation interface {
 }
 
 type gateEvaluation struct {
-	runtimeRoot      string
-	identityRoot     string
+	runtimeRoot  string
+	identityRoot string
+	// baselineRoot gives the baseline schedule and the baseline runner of the subject.
+	baselineRoot     string
 	prospective      bool
 	preSource        treeSource
 	validateTree     func(string) error
@@ -40,6 +42,7 @@ func newGateEvaluation(root string) *gateEvaluation {
 	return &gateEvaluation{
 		runtimeRoot:  root,
 		identityRoot: root,
+		baselineRoot: root,
 		preSource:    workingTreeSource{root: root},
 		validateTree: func(want string) error {
 			got, err := (workingTreeSource{root: root}).tree()
@@ -55,10 +58,11 @@ func newGateEvaluation(root string) *gateEvaluation {
 	}
 }
 
-func newProspectiveTreeEvaluation(runtimeRoot, identityRoot, tree string) *gateEvaluation {
+func newProspectiveTreeEvaluation(runtimeRoot, identityRoot, baselineRoot, tree string) *gateEvaluation {
 	return &gateEvaluation{
 		runtimeRoot:  runtimeRoot,
 		identityRoot: identityRoot,
+		baselineRoot: baselineRoot,
 		prospective:  true,
 		preSource:    prospectiveTreeSource{root: identityRoot, treeID: tree},
 		validateTree: func(want string) error { return validateProspectiveCheckout(runtimeRoot, want) },
@@ -118,13 +122,7 @@ func (e *gateEvaluation) capturePost() (subject, error) {
 }
 
 func (e *gateEvaluation) build(generation *treeGeneration) (subject, error) {
-	var plan subject
-	var err error
-	if e.prospective {
-		plan, err = buildProspectiveSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
-	} else {
-		plan, err = buildSubjectForGeneration(e.runtimeRoot, e.identityRoot, generation)
-	}
+	plan, err := buildSubjectInMode(e.runtimeRoot, e.identityRoot, e.baselineRoot, policyVersion, generation.tree, e.prospective)
 	if err != nil {
 		return subject{}, err
 	}

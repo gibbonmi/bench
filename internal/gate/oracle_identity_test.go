@@ -37,7 +37,14 @@ func oracleIdentitySubject(t *testing.T, root, tree string) subject {
 
 func oracleIdentitySubjectFor(t *testing.T, root, identityRoot, policy, tree string) subject {
 	t.Helper()
-	s, err := buildSubjectForTree(root, identityRoot, policy, tree)
+	return oracleIdentitySubjectIn(t, root, identityRoot, policy, tree, false)
+}
+
+// oracleIdentitySubjectIn answers the closed subject of root in the ordinary or the
+// prospective mode, with identityRoot as its baseline.
+func oracleIdentitySubjectIn(t *testing.T, root, identityRoot, policy, tree string, prospective bool) subject {
+	t.Helper()
+	s, err := buildSubjectInMode(root, identityRoot, identityRoot, policy, tree, prospective)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +148,7 @@ func TestOracleIdentityAndOracleShareTheClosure(t *testing.T) {
 			return build(t, root, root, policyVersion), build(t, root, t.TempDir(), policyVersion)
 		}},
 		{"run binary member", true, false, func(t *testing.T) (subject, subject) {
-			root := oracleIdentityFixture(t)
+			root := ownedPhaseTableFixture(t)
 			writeRunBinarySource(t, root, "")
 			before := build(t, root, root, policyVersion)
 			writeRunBinarySource(t, root, " println() ")
@@ -161,15 +168,16 @@ func TestOracleIdentityAndOracleShareTheClosure(t *testing.T) {
 			t.Setenv("PATH", "/bin:/usr/bin")
 			return before, build(t, root, root, policyVersion)
 		}},
-		// The graded tree builds its own run binary, so the baseline's recipe is not the run
-		// binary member.
+		// An owned prospective run of a tree that builds its own run binary selects the graded
+		// tree as the run binary source, so the baseline's recipe moves the oracle digest and
+		// not the run binary member.
 		{"baseline runner", false, true, func(t *testing.T) (subject, subject) {
-			root, identityRoot := bareRoot(t), t.TempDir()
+			root, identityRoot := ownedPhaseTableFixture(t), t.TempDir()
 			writeGateFixtureFile(t, root, prospectiveGatePath, "#!/bin/sh\nexit 0\n", 0o755)
 			writeRunBinarySource(t, root, "")
-			before := build(t, root, identityRoot, policyVersion)
+			before := oracleIdentitySubjectIn(t, root, identityRoot, policyVersion, tree, true)
 			writeGateFixtureFile(t, identityRoot, benchfreshness.BuildInputsManifest, benchfreshness.BuildInputLine("build_script", "scripts/go-build.sh"), 0o644)
-			return before, build(t, root, identityRoot, policyVersion)
+			return before, oracleIdentitySubjectIn(t, root, identityRoot, policyVersion, tree, true)
 		}},
 		{"environment value", true, true, func(t *testing.T) (subject, subject) {
 			root := oracleIdentityFixture(t)

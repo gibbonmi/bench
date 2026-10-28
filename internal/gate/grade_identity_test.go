@@ -89,9 +89,10 @@ func writeRunBinarySource(t *testing.T, root, main string) {
 // whose build inputs differ.
 func TestGradeIdentityFollowsTheRunBinarySource(t *testing.T) {
 	t.Setenv("BENCH_KIT", "")
+	setRunBinaryOwner(t, true)
 	tree := strings.Repeat("a", 40)
 	composed, worktree, primary := t.TempDir(), t.TempDir(), t.TempDir()
-	writeGateFixtureFile(t, composed, ".bench/gate.sh", "#!/bin/sh\nexit 0\n", 0o755)
+	writeGateFixtureFile(t, composed, ".bench/gate.sh", phaseTableGateScript, 0o755)
 	writeGateFixtureFile(t, composed, prospectiveGatePath, "#!/bin/sh\nexit 0\n", 0o755)
 	writeOracleIdentityManifest(t, composed, ``, ``, ``)
 	writeRunBinarySource(t, composed, "")
@@ -101,17 +102,14 @@ func TestGradeIdentityFollowsTheRunBinarySource(t *testing.T) {
 		t.Fatalf("build-input digests = %s and %s, want two readable digests", graded, other)
 	}
 
-	fromWorktree := oracleIdentitySubjectFor(t, composed, worktree, policyVersion, tree)
-	fromPrimary := oracleIdentitySubjectFor(t, composed, primary, policyVersion, tree)
-
-	if fromWorktree.Identity != fromPrimary.Identity {
-		t.Fatalf("identity = %s from the worktree and %s from the primary checkout, want one grade identity", fromWorktree.Identity, fromPrimary.Identity)
+	if fromWorktree, fromPrimary := prospectiveIdentity(t, composed, worktree), prospectiveIdentity(t, composed, primary); fromWorktree != fromPrimary {
+		t.Fatalf("identity = %s from the worktree and %s from the primary checkout, want one grade identity", fromWorktree, fromPrimary)
 	}
 
 	// An ordinary subject of the same source runs the identity root's kit, so the two build
 	// inputs give two identities.
 	ordinary := t.TempDir()
-	writeGateFixtureFile(t, ordinary, ".bench/gate.sh", "#!/bin/sh\nexit 0\n", 0o755)
+	writeGateFixtureFile(t, ordinary, ".bench/gate.sh", phaseTableGateScript, 0o755)
 	writeOracleIdentityManifest(t, ordinary, ``, ``, ``)
 	writeRunBinarySource(t, ordinary, "")
 	if one, other := oracleIdentitySubjectFor(t, ordinary, worktree, policyVersion, tree), oracleIdentitySubjectFor(t, ordinary, primary, policyVersion, tree); one.Identity == other.Identity {
@@ -124,7 +122,7 @@ func TestGradeIdentityFollowsTheRunBinarySource(t *testing.T) {
 func TestGradeIdentityGivesAnUndeclaredSourceOneValue(t *testing.T) {
 	t.Setenv("BENCH_KIT", "")
 	tree := strings.Repeat("a", 40)
-	root, first, second := oracleIdentityFixture(t), t.TempDir(), t.TempDir()
+	root, first, second := ownedPhaseTableFixture(t), t.TempDir(), t.TempDir()
 	writeGateFixtureFile(t, first, "go.mod", "module first\n\ngo 1.21\n", 0o644)
 	writeGateFixtureFile(t, second, "go.mod", "module second\n\ngo 1.21\n", 0o644)
 

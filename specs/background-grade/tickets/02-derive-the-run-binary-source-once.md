@@ -1,7 +1,7 @@
 # Derive the run-binary source once
 
 Blocked by: 01-measure-the-background-census.md
-Writes: internal/gate/gate.go, internal/gate/subject.go, internal/gate/run_transaction.go, internal/gate/run_binary_source.go (new), internal/gate/run_binary_source_test.go (new), internal/gate/grade_identity_test.go, CHANGELOG.md
+Writes: internal/gate/gate.go, internal/gate/subject.go, internal/gate/run_transaction.go, internal/gate/run_binary_source.go (new), internal/gate/run_binary_source_test.go (new), internal/gate/grade_identity_test.go, CHANGELOG.md, internal/gate/prospective.go, internal/gate/oracle_identity_test.go, internal/gate/prospective_owner_test.go
 Covers: BG12, BG13, BG14, BG15, BG109
 
 ## What to build

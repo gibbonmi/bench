@@ -69,9 +69,6 @@ The research asset is `background-grade/assets/research.md`.
 
 ## Sources
 
-- Path: `roadmap/FT451.md`
-  Supports: the outcome, the two named reviewer decisions, and the occurrences.
-  Drift: a drain edit of the row.
 - Path: `.bench/commitment.json`
   Supports: the lookup and bound criteria of `FT451-background-grade`.
   Drift: a `bench commitment plan` change of the outcome.

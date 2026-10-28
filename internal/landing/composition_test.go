@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/landing/published"
 )
 
 func TestLandRealGitCompositionTable(t *testing.T) {
@@ -241,7 +242,7 @@ func TestConflictKindRejectsEmptyMergeTreeOutput(t *testing.T) {
 		{"malformed-header-field-count", "0123456789abcdef0123456789abcdef01234567\x00100644 3\tcapture/learnings.md\x00\x00CONFLICT (contents)"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, _, err := parseConflict(tc.output); err == nil {
+			if _, _, err := published.ParseConflict(tc.output); err == nil {
 				t.Fatalf("merge-tree output %q classified without an error", tc.output)
 			}
 		})

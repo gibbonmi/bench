@@ -13,8 +13,8 @@ func systemBase() string {
 	return "/tmp"
 }
 
-// bootID is the kernel boot identifier.
-func bootID() (string, error) {
+// BootID is the kernel boot identifier.
+func BootID() (string, error) {
 	data, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
 	return strings.TrimSpace(string(data)), err
 }

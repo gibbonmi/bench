@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
@@ -44,6 +45,32 @@ func Helper(t *testing.T, name string, env ...string) *exec.Cmd {
 	cmd := exec.Command(executable)
 	cmd.Env = append(append(os.Environ(), helperEnv+"="+name), env...)
 	return cmd
+}
+
+// Script answers a shell script that replaces itself with the named helper of this test
+// binary, with env added to the environment that the script receives and with the script's
+// own arguments. A test that must hand a program path to the code under test writes it.
+func Script(t *testing.T, name string, env ...string) string {
+	t.Helper()
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	words := []string{"exec", "env", sanitize.ShellQuote(helperEnv + "=" + name)}
+	for _, entry := range env {
+		words = append(words, sanitize.ShellQuote(entry))
+	}
+	return shebang + strings.Join(append(words, sanitize.ShellQuote(executable), `"$@"`), " ") + "\n"
+}
+
+// shebang is the first line of each script that this package answers.
+const shebang = "#!/bin/sh\n"
+
+// Branch answers a shell script that runs the script set when the environment sets variable, and
+// the script unset otherwise. Each is a script of this package, and set is a Script, which
+// replaces the shell, so it never runs on into unset.
+func Branch(variable, set, unset string) string {
+	return shebang + "if [ -n \"${" + variable + "+set}\" ]; then\n" + strings.TrimPrefix(set, shebang) + "fi\n" + strings.TrimPrefix(unset, shebang)
 }
 
 // init runs before the test main, so a holder never runs a test. It leaves its parent's
@@ -95,7 +122,7 @@ func (h *Holder) PID(t *testing.T) int {
 func WaitPID(t *testing.T, path string) int {
 	t.Helper()
 	var pid int
-	waitFor(t, "a child to publish "+filepath.Base(path), func() bool { pid = readPID(path); return pid > 0 })
+	WaitFor(t, "a child to publish "+filepath.Base(path), func() bool { pid = readPID(path); return pid > 0 })
 	t.Cleanup(func() { _ = syscall.Kill(pid, syscall.SIGKILL) })
 	return pid
 }
@@ -103,13 +130,13 @@ func WaitPID(t *testing.T, path string) int {
 // WaitAbsent waits until process group pgid no longer answers a probe.
 func WaitAbsent(t *testing.T, pgid int) {
 	t.Helper()
-	waitFor(t, "process group "+strconv.Itoa(pgid)+" to disappear", func() bool {
+	WaitFor(t, "process group "+strconv.Itoa(pgid)+" to disappear", func() bool {
 		return protection.ObserveGroup(pgid).State == protection.GroupAbsent
 	})
 }
 
-// waitFor polls done until it holds, and it fails the test after the derived deadline.
-func waitFor(t *testing.T, wait string, done func() bool) {
+// WaitFor polls done until it holds, and it fails the test after the derived deadline.
+func WaitFor(t *testing.T, wait string, done func() bool) {
 	t.Helper()
 	window := bounds.TestDeadline(0)
 	for deadline := time.Now().Add(bounds.FixedWindow(window)); time.Now().Before(deadline); {

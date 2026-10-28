@@ -199,6 +199,7 @@ func ReclaimCommand(root, home string, args []string, stdout, stderr io.Writer) 
 		fmt.Fprint(stdout, out)
 		return 1
 	}
+	stopReclaimGrades(plan, home, stderr)
 	applied := applyPoolReclaim(plan, home)
 	out, err := renderPoolReclaimApplied(applied, plan.fingerprint)
 	if err != nil {

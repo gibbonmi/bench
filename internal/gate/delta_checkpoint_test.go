@@ -6,7 +6,6 @@ package gate
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -90,7 +89,7 @@ func TestDeltaCheckpointReadsTheBaseWithoutExpiry(t *testing.T) {
 	expireEvidence(t, f.Root)
 	requireDelta(t, f, 0, "./.")
 	f = frozenDeltaFixture(t)
-	requirePrepared(t, f)
+	requireChunkGreen(t, f)
 	expireEvidence(t, f.Root)
 	requireWhole(t, f)
 }
@@ -285,11 +284,11 @@ func admittedDeltaFixture(t *testing.T) *recordtest.Fixture {
 	return f
 }
 
-// graded runs the prepared run of the frozen chunk, so its reviewed tip holds a whole green,
-// and then applies change.
+// graded runs the chunk checkpoint of the frozen chunk, so its reviewed tip holds a whole
+// green, and then applies change.
 func graded(t *testing.T, change func(*recordtest.Fixture)) func(*recordtest.Fixture) {
 	return func(f *recordtest.Fixture) {
-		requirePrepared(t, f)
+		requireChunkGreen(t, f)
 		change(f)
 	}
 }
@@ -310,13 +309,7 @@ func requireDelta(t *testing.T, f *recordtest.Fixture, code int, packages ...str
 	if after := evidenceEntries(t, f.Root); got != code || after != before {
 		t.Fatalf("delta checkpoint = %d %s with %d evidence entries after %d; want exit %d and no new entry", got, out, after, before, code)
 	}
-	set, err := json.Marshal(packages)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if schedules := gateSchedules(t, f); !slices.Equal(schedules, []string{wholeSchedule, string(set)}) {
-		t.Fatalf("gate schedules = %q; want the prepared whole run and then the delta set %s", schedules, set)
-	}
+	requireDeltaSet(t, f, packages...)
 	return out
 }
 
@@ -324,10 +317,17 @@ func requireDelta(t *testing.T, f *recordtest.Fixture, code int, packages ...str
 // whole run, which leaves a reusable green of its subject.
 func requireWhole(t *testing.T, f *recordtest.Fixture, flags ...string) {
 	t.Helper()
+	requireWholeRun(t, f, func() (int, string) { return runCheckpointWith(t, f, flags...) })
+}
+
+// requireWholeRun requires that run, a grade of the chunk subject of f, exits 0 after one more
+// whole run, which leaves a reusable green of its subject.
+func requireWholeRun(t *testing.T, f *recordtest.Fixture, run func() (int, string)) {
+	t.Helper()
 	before := gateSchedules(t, f)
-	code, out := runCheckpointWith(t, f, flags...)
+	code, out := run()
 	if schedules := gateSchedules(t, f); code != 0 || !slices.Equal(schedules, append(before, wholeSchedule)) {
-		t.Fatalf("checkpoint = %d %s after the schedules %q; want one more whole run", code, out, schedules)
+		t.Fatalf("grade = %d %s after the schedules %q; want one more whole run", code, out, schedules)
 	}
 	if got := InspectTree(f.Root, strippedSubject(t, f)); !got.ReusableGreen {
 		t.Fatalf("evidence after a whole checkpoint = %+v; want a reusable green", got)

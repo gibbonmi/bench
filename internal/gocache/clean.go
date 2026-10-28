@@ -9,6 +9,9 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -24,8 +27,9 @@ var cleanFields = []string{"dir", "bytes_removed", "files_removed"}
 const goTool = "go"
 
 // clean implements `bench cache clean` over an explicit environment slice, which is the
-// seam the command tests drive. It takes the exclusive cache lock without waiting, so a
-// live gate, lane, or focused run refuses it and keeps every archive it is reading. With
+// seam the command tests drive. It first stops every background grade. It then takes the
+// exclusive cache lock without waiting, so a live gate, lane, or focused run refuses it and
+// keeps every archive it is reading. With
 // the lock it measures the footprint, runs `go clean -cache` against the directory, and
 // reports the difference the removal made.
 func clean(env []string) (string, int) { return cleanWith(env, protection.Installed()) }
@@ -42,6 +46,7 @@ func cleanWith(env []string, p *protection.Protocol) (string, int) {
 	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
 		return cleanRow(dir, 0, 0)
 	}
+	stopBackgroundGrades(env)
 	lock, refusal := lockForClean(dir)
 	if refusal != "" {
 		return refusal, 1
@@ -74,6 +79,17 @@ func cleanWith(env []string, p *protection.Protocol) (string, int) {
 	}
 	after := Measure(dir)
 	return cleanRow(dir, before.Bytes-after.Bytes, before.Files-after.Files)
+}
+
+// stopBackgroundGrades stops every background grade and drops every queued grade of the machine
+// queue under the Bench home of env, so an optional grade never holds the lock that the clean
+// takes. The lock and the protection still guard the cache, so a stop that fails leaves the
+// verdict to them: a grade that still runs makes the clean refuse with its pid. An env with no
+// Bench home names no queue.
+func stopBackgroundGrades(env []string) {
+	if home := value(env, benchhome.Env); home != "" {
+		_ = backgroundstate.StopAll(durablefile.Native(), home)
+	}
 }
 
 // releaseUnprotected runs release once no cache user can still need the archives. A store

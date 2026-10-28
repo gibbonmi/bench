@@ -55,8 +55,8 @@ const unreadableBaselineRunner = "unreadable"
 // evidence keys to it beside the graded tree, so a retry reuses green evidence only
 // when both halves of the subject are the ones the owner already accepted. It is an
 // oracle frame only.
-func baselineRunnerIdentity(identityRoot string) string {
-	return buildInputsIdentity(identityRoot)
+func baselineRunnerIdentity(baseline string) string {
+	return buildInputsIdentity(baseline)
 }
 
 // buildInputsIdentity answers the digest of the build inputs that root declares, or a
@@ -72,10 +72,10 @@ func buildInputsIdentity(root string) string {
 	return digest
 }
 
-// frameBaselineSchedule frames the phase-table loader's answer at the identity root: present
+// frameBaselineSchedule frames the phase-table loader's answer at the baseline root: present
 // bytes as bytes, an absence as one value, and a defect as one value with no path.
-func frameBaselineSchedule(w io.Writer, identityRoot string) {
-	data, present, err := readManifest(manifestPath(identityRoot))
+func frameBaselineSchedule(w io.Writer, baseline string) {
+	data, present, err := readManifest(manifestPath(baseline))
 	switch {
 	case err != nil:
 		frame(w, "schedule defect")
@@ -87,30 +87,28 @@ func frameBaselineSchedule(w io.Writer, identityRoot string) {
 	}
 }
 
-func buildProspectiveSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
-	s, err := buildSubjectForGeneration(root, identityRoot, generation)
-	if err != nil {
-		return subject{}, err
-	}
+// prospectiveResolution answers the resolution that a prospective run of root executes: the
+// prospective script when root holds one, and res otherwise.
+func prospectiveResolution(root string, res Resolution) (Resolution, error) {
 	if _, err := os.Lstat(filepath.Join(root, prospectiveGatePath)); err == nil {
-		s.Resolution = Resolution{Kind: ProspectiveGateSh}
+		return Resolution{Kind: ProspectiveGateSh}, nil
 	} else if !errors.Is(err, os.ErrNotExist) {
-		return subject{}, err
+		return Resolution{}, err
 	}
-	return s, nil
+	return res, nil
 }
 
-// hashProspectivePreparation hashes the prospective script of root when it exists, and
-// reports whether it exists. The baseline runner enters the oracle digest only.
-func hashProspectivePreparation(c *identityCollector, root, identityRoot, pathEnv string) (bool, error) {
+// hashProspectivePreparation hashes the prospective script of root when it exists. The
+// baseline runner of the baseline root enters the oracle digest only.
+func hashProspectivePreparation(c *identityCollector, root, baseline, pathEnv string) error {
 	path := filepath.Join(root, prospectiveGatePath)
 	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
-		return false, nil
+		return nil
 	} else if err != nil {
-		return false, err
+		return err
 	}
 	frame(c.w, "prospective preparation")
 	frame(c.oracle, "baseline runner")
-	frame(c.oracle, baselineRunnerIdentity(identityRoot))
-	return true, c.hashExecutable(root, path, pathEnv, true, 0)
+	frame(c.oracle, baselineRunnerIdentity(baseline))
+	return c.hashExecutable(root, path, pathEnv, true, 0)
 }

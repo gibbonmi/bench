@@ -40,52 +40,65 @@ var faceBrokerUnavailable = checkpointFace{name: "checkpoint-broker-unavailable"
 var execBroker = subprocess.Replace
 
 // runUnderBroker moves a complete checkpoint under the landing broker, so its green answers
-// the landing. It decides build inputs from the primary checkout, or from root when the
-// primary checkout does not resolve. In a repository that declares Bench build inputs, it
-// reads the primary checkout's broker manifest. A running executable whose digest the
-// manifest binds keeps the run in this process. Any other executable execs the broker with
-// the same arguments in the same working directory. An unresolved primary checkout, a manifest
-// that does not read, a running executable that does not digest, a broker whose digest differs
-// from its manifest, and a failed exec each refuse, so no gate runs under an unknown
-// executable. A chunk checkpoint and a repository without build inputs keep the running
-// executable, and read no manifest. It answers the result, and whether the run ended here.
+// the landing. A run that authenticateBroker keeps stays in this process. Any other executable
+// execs the broker with the same arguments in the same working directory. A broker that does
+// not authenticate and a failed exec each refuse, so no gate runs under an unknown executable.
+// A chunk checkpoint keeps the running executable, and reads no manifest. It answers the
+// result, and whether the run ended here.
 func runUnderBroker(ctx context.Context, root string, checkpoint Checkpoint, stderr io.Writer, mode runMode) (Result, bool) {
 	if !checkpoint.Complete {
 		return Result{}, false
 	}
+	unavailable := func(cause string) (Result, bool) {
+		return refuse(ctx, root, stderr, mode, faceBrokerUnavailable, "complete checkpoint broker unavailable: "+cause), true
+	}
+	broker, cause := authenticateBroker(root)
+	if cause != "" {
+		return unavailable(cause)
+	}
+	if broker == "" {
+		return Result{}, false
+	}
+	if err := execBroker(broker, os.Args[1:], os.Environ()); err != nil {
+		return unavailable(fmt.Sprintf("exec the broker %q: %v", broker, err))
+	}
+	return Result{}, true
+}
+
+// authenticateBroker answers the landing broker that a run in root moves under, or no broker
+// when the run keeps the running executable: a repository without build inputs, and a running
+// executable whose digest the primary broker manifest binds. It answers the cause when the
+// broker does not authenticate: an unresolved primary checkout, a manifest that does not read,
+// a running executable that does not digest, and a broker whose digest differs from its
+// manifest. The complete checkpoint and the background landing grade both authenticate here.
+func authenticateBroker(root string) (broker, cause string) {
 	primary, located := git.PrimaryCheckout(root)
 	inputs := primary
 	if located != nil {
 		inputs = root
 	}
 	if !benchfreshness.DeclaresBuildInputs(inputs) {
-		return Result{}, false
-	}
-	unavailable := func(cause string) (Result, bool) {
-		return refuse(ctx, root, stderr, mode, faceBrokerUnavailable, "complete checkpoint broker unavailable: "+cause), true
+		return "", ""
 	}
 	if located != nil {
-		return unavailable("the primary checkout does not resolve: " + located.Error())
+		return "", "the primary checkout does not resolve: " + located.Error()
 	}
 	manifest := brokermanifest.Path(primary)
 	fields, err := brokermanifest.Read(manifest)
 	if err != nil {
-		return unavailable("the primary broker manifest does not read: " + err.Error())
+		return "", "the primary broker manifest does not read: " + err.Error()
 	}
 	bound := fields[brokermanifest.DigestField]
 	running := runningExecutableDigest()
 	if running == "" {
-		return unavailable("the running executable does not digest")
+		return "", "the running executable does not digest"
 	}
 	if running == bound {
-		return Result{}, false
+		return "", ""
 	}
-	broker := fields[brokermanifest.PathField]
+	broker = fields[brokermanifest.PathField]
 	if digest, err := brokermanifest.Digest(broker); err != nil || digest != bound {
-		return unavailable(fmt.Sprintf("the broker %q does not match the digest %s that the primary broker manifest %s binds", broker, bound, manifest))
+		return "", fmt.Sprintf("the broker %q does not match the digest %s that the primary broker manifest %s binds", broker, bound, manifest)
 	}
-	if err := execBroker(broker, os.Args[1:], os.Environ()); err != nil {
-		return unavailable(fmt.Sprintf("exec the broker %q: %v", broker, err))
-	}
-	return Result{}, true
+	return broker, ""
 }

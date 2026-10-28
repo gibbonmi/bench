@@ -6,6 +6,87 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade rules recorded
+
+- Changed ADR 0002, ADR 0017, ADR 0024, and ADR 0031, which now state the background grade. A foreground gate takes the checkout lock, and a background grade takes no checkout lock and holds a claim on its grade key. A background grade can pay the gate run of a landed change before the landing. ADR 0024 names the background grade as the one concurrent workload, with its machine bound and its census. ADR 0031 names the background grade as a producer of a reusable green.
+- Added the background grade account to `.bench/BENCH-reference.md`: the queue, the claim, the wait, the stops, and the background record.
+- Changed `projects/benchkit.md`. The note on a running gate now names a foreground gate, and the gate section no longer names the prepared chunk run.
+
+### Prepared run retired
+
+- Removed `--prepare` from `bench gate`. The background grade now grades each chunk subject before its checkpoint, so the prepared run has no use. A call with `--prepare` is a usage error at exit 2.
+- Changed the implement phase guidance. The Land section no longer starts a prepared run at a chunk freeze or after a repair. It states that a chunk checkpoint waits for the live background grade of its key.
+
+### Background outcomes where the author looks
+
+- Changed `bench status`. The board of a worktree now shows a `background` row with the latest background outcome of that worktree, the tip that the grade graded, and the path of its log. The row ranks below each other row of the board, and no other row has its rank. A `red` outcome, and a background record that does not read, rank above each other outcome, which ranks last. The row is not a verdict: the gate row still reads only the gate cache.
+- Changed `bench commit`. Before a commit that publishes starts its background grade, it prints one `background grade: latest` line with the latest background outcome of the worktree, its tip, and its log path.
+
+### Background grade stop when work goes away
+
+- Changed `bench worktree release`, `bench worktree clean`, and `bench worktree reclaim`. Before each of these verbs removes a worktree, it stops the running background grade of that worktree, waits for that grade to exit, and drops the queued grade of that worktree. The reclaim does this for each worktree under each pool key that it removes. The queue then starts its oldest queued grade. A stop that fails prints one `background grade: not stopped` line, and the verb still acts.
+- Changed the stack form of `bench worktree land`. Before the stack grades, it stops the running grade and drops the queued grade of each member worktree.
+- Changed `bench cache clean`. The clean now drops every queued grade and stops the running grade, and waits for that grade to exit, before it takes the cache lock. The clean still refuses under a live run.
+- Each stop of a background grade now goes through one step. Before the stop signal, the step writes a stop marker for that grade beside its background record. A grade that ends with no verdict and finds its marker records `stopped`, also when its teardown is slower than the stop window. A grade that died with a marker records `stopped` at the next queue step, and with no marker it records `aborted`.
+
+### Landing wait on a background grade
+
+- Changed `bench worktree land`. Before it takes the destination lease, a landing from a worktree that background grades run in now computes the grade key of the tree that it publishes onto the current destination. When a live claim holds that key, the landing waits until the claim ends, with the wait rules of the chunk checkpoint, so the wait blocks no other landing. Under the lease, the landing looks up its key again, so a background green answers it with no oracle run of its own. A destination that moved during the wait gives a new key, and the landing then runs its own oracle. A landing from any other worktree, such as a worktree of a linked repository, computes no key, waits on nothing, and clears no grade.
+- A landing does not wait on a grade of another key. Before its own run, the landing stops the running grade of its worktree that holds another key and waits for that grade to exit. It also drops the queued grade of its worktree, and each queued grade of its own key leaves the queue.
+
+### Background landing grade
+
+- Added the landing grade to the background grade. A linked kit worktree whose tip holds no open build of a staged spec now grades the tree that its landing would publish from that tip. The grade composes the tip on the destination when it starts, with the composition of `bench worktree land`. A tip that adds exactly one tickets-only folder takes the folder close and the delivery closure. Any other tip is spec-less and takes no transform. A wrong deliverable only causes a lookup miss, because the grade writes its green only under the key that it ran.
+- The landing grade runs in the primary checkout, as the landing does, so its grade key frames the phase schedule of the destination commit.
+- The landing grade and its lane pass run as the authenticated landing broker, so the grade key frames the digest of the installed broker. A broker whose digest differs from its manifest makes the grade record `aborted`, and no oracle runs.
+- The lane pass evaluates the landing plan of the tip against the destination. A plan that selects the reader set queues no grade. A plan that selects the whole gate queues one landing grade, under the same key deduplication as a chunk grade. A composition conflict that the landing would refuse queues no grade.
+
+### Chunk checkpoint wait on a background grade
+
+- Changed the chunk checkpoint of `bench gate`. A checkpoint that finds no green and finds a live claim on its grade key now waits until that claim ends, before it takes the checkout lock. It then looks up its key again, so a background green answers it with no oracle run of its own. A grade that ends red, or ends with no verdict, makes the checkpoint run its own oracle, with no refusal.
+- When the wait starts, each process group of the session of the waited grade returns from the idle I/O class to the best-effort class on Linux, so the oracle of the grade speeds up too. The nice value of the grade stays 19, because Linux refuses an unprivileged lower nice value.
+- The wait counts against the gate timeout of the checkpoint. A wait that passes that timeout ends the checkpoint with exit 124, and the checkpoint runs no oracle.
+- Before its own run, the checkpoint takes each queued grade of its key out of the machine queue. It also drops the queued grade of its worktree that holds another key, and it stops the running grade of its worktree that holds another key and waits for that grade to exit. The checkpoint stops and drops these grades even when their key is the key of the latest tip of another worktree, because two runs of one worktree must not write one delta record at once. A step that fails prints one `background grade: not cleared` line, and the checkpoint still runs.
+- Two foreground runs in one checkout keep the refusal `gate execution already in progress`.
+
+### Background grade queue
+
+- Changed the lane pass of `bench commit` and `bench worktree merge`, which now passes the grade of its tip to the machine queue under the Bench home. The grade key of a tip is the key of its chunk subject or of its landing subject. A tip with neither subject has no key, and its grade records `aborted`.
+- The lane pass runs as the executable that the wrapper of the worktree resolves, so the key that it queues is the key of the grade. A pass whose tip is no longer the head of its worktree queues nothing, so a late pass does not replace the grade of a newer tip.
+- A lane pass queues nothing when a fresh green, a live claim, the running grade, or a queued grade already has its key. Each worktree keeps at most one queued grade, so a newer tip replaces the queued grade of its worktree. A newer tip with a new key also stops the running grade of its worktree. The stop waits for that grade to exit, and the grade then records `stopped` and writes no green. A grade that reached its verdict before the stop keeps it.
+- A grade whose key is the key of the latest tip of another worktree keeps running, or stays queued.
+- The queue starts its grades in the order of their lane passes. When a grade ends, its own process starts the oldest queued grade and then exits, so no resident process runs. A lane pass that finds no live running grade starts the oldest queued grade. A running grade whose process died records `aborted` at the next lane pass, unless a stop marked it.
+- A background grade now ends on a stop signal from its start, so a stopped grade releases its private prospective checkout before it exits.
+
+### Background grade after a lane pass
+
+- Changed `bench commit` and `bench worktree merge`, which now start one background grade of the tip that they publish. A grade starts only in the worktree of an active assignment whose kit is that worktree, and only when the worktree holds an executable `bin/bench.sh`. A linked repository, a dry run, a refused commit, and a merge of kind `current` start no grade. A merge starts the grade of its new tip whether or not its checkout reconciles.
+- The verb only starts the lane pass of its tip as `bin/bench.sh gate-background <worktree> <tip>` of the worktree in a new session, outside the process group and the session of the verb, and it returns at once. The verb derives no grade key, takes no queue lock, and stops no grade. The pass and the grade that it starts outlive the verb. A pass that does not start leaves the publication and the exit of the verb as they are, and the verb prints one `background grade: not queued` line.
+- Added the machine slot of the background grade under the Bench home. The slot is the running grade of the machine queue, and it names the key, the worktree, the tip, the pid, and the boot of that grade.
+
+### Background grade of a chunk subject
+
+- Added the internal `bench gate-background <worktree> <tip>` entry, which runs one background grade of a tip in the foreground of its process. The entry first replaces its process with the wrapper of the worktree, with no inherited `BENCH_KIT`, `BENCH_WRAPPER`, or `BENCH_RUN_BINARY`. So the grade runs as the executable that the wrapper resolves for that worktree, and the chunk checkpoint of the worktree runs as that executable too.
+- The grade finds the open build of the tip: the one spec with a `Status: staged` line whose review record the tip holds. It grades the tree of the tip without that review record, as the chunk checkpoint does, with no evidence pass and no record prose grade. It takes the chunk id from the latest chunk entry of the record, and with no entry it runs the whole schedule.
+- The grade holds a claim on its grade key while it runs, and it releases the claim at the end. It takes no checkout lock and writes no gate cache, so a foreground gate in the worktree runs beside it. Its Go test phases run at the background width. Its green goes to the evidence store, so a later chunk checkpoint of the tip reuses that green and runs no oracle.
+- The grade writes its output to `bench-background-grade.log.running` in the git directory of the worktree. When the grade records its end, it moves that file to `bench-background-grade.log`, so a later grade does not change the log of an earlier record. It records `green`, `red`, or `aborted`, with the grade key, the tip, and that log, in the background record of the worktree. A timeout, an interrupt, and a claim that the grade cannot write each record `aborted`, and a grade that cannot write its claim runs no oracle. A red run whose subject changed during the run also records `aborted`. A grade that ends before it knows its grade key records `aborted` with an empty key.
+- The grade runs at nice 19, and on Linux in the idle I/O class, so its oracle and each other child inherit the lowest priority. The grade sets nice 19 on each thread before it sets any I/O class. A refused priority step does not stop the other steps, and the grade prints a warning for it. After a whole green, a test-only change makes the grade run the delta set and write the delta record of the worktree, as the chunk checkpoint does. A whole green of the grade writes the reader table of its tree, and a red of the grade writes no reader hold.
+
+### Background grade records
+
+- Added the records of the background grade. A claim holds a grade key for a running grade, and it names the key, the worktree, the owner pid, and the boot id. A claim is live only while its owner process exists and its boot id is the current boot id. The claims are in the git common directory beside the evidence store. The background record of a worktree names the latest outcome (`green`, `red`, `aborted`, or `stopped`), the grade key, the tip, and the log path, and it is in the git directory of that worktree. The machine queue and its slot are under the Bench home. An absent record reads as empty, and a present record that does not read is an error. Every record is written through the durable replacement.
+- Added the stop of a background grade. The stop sends SIGTERM to the owner of a live claim through the process lifetime owner, and it returns only after that owner has exited. The stop of a claim that is not live sends no signal.
+
+### Background width input
+
+- Added the `BENCH_GATE_WIDTH` gate input. When the gate-phases process has a non-empty value, each Go test phase of the gate runs with `-p=2` and `-parallel=2`. These phases are the test, race, and system phases, the test phases of the delta and reader sets, and the core test step. The input is not a member of the grade key, so a green at this width answers a run of the same subject at another width. No phase child inherits the input. A run without the input keeps its argv.
+
+### One run-binary source for the grade key
+
+- Changed the grade key of a gate run, which now frames the build inputs of the source root that the run selects for its run binary. One derivation answers that root for the run and for the key. An ordinary run whose `BENCH_KIT` names another checkout now frames the build inputs of that checkout. Before, the key picked the graded tree when the tree held `.bench/gate-prospective.sh`, while the run built from the kit.
+- Changed the grade key of a run that selects no run binary, because it has no owner or its gate does not route through the phase table. That key now frames one stable value. Before, it framed the build inputs of a source that the run never built. The key of a clean kit worktree does not change.
+- Changed the chunk checkpoint and its subject-alone run, which now read the baseline schedule and the baseline runner from the private checkout of the graded commit. That checkout also names the baseline schedule that the run executes. An edit or a commit of a Go build input in the worktree during the run now keeps the subject, so the run records its green. Before, the run read both members from the worktree and refused with a changed subject. The key of a clean checkout does not change.
+
 ### Repair carry
 
 - Changed `bench record ticket`, which now writes a carried entry for each unstaged owed requirement that the repair delta cannot reach. The carried entry keeps the source commit, the exit code, and the excerpt of the last entry of that requirement, and that entry must pass. Its native reference is `carried:` followed by the evidence ID of that entry. The ticket output row adds the `carried` cell, which lists the carried requirement IDs or `none`. Before, the verb refused the call when one owed requirement had no staged excerpt, so a test-only repair reran the whole system suite.

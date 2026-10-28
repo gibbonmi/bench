@@ -18,11 +18,16 @@ import (
 // reads and the exec-status pipe that it writes.
 const gateEnv = "BENCH_SUBPROCESS_START_GATE"
 
-// init makes a gated launch its start gate before main or TestMain runs. Every actor that
-// registers a launch links this package, so its own executable can serve as its gate.
+// init makes a gated launch its start gate, and a detach helper its helper, before main or
+// TestMain runs. Every actor that registers a launch links this package, so its own
+// executable can serve as its gate and as its helper. A gate execs the helper with no gate
+// variable, so the gate test comes first.
 func init() {
 	if fds, ok := os.LookupEnv(gateEnv); ok {
 		os.Exit(runGate(fds))
+	}
+	if _, ok := os.LookupEnv(detachEnv); ok {
+		os.Exit(runDetach())
 	}
 }
 

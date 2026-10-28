@@ -81,11 +81,12 @@ func runCheckpointWith(t *testing.T, f *recordtest.Fixture, flags ...string) (in
 	return code, out.String() + err.String()
 }
 
-// requirePrepared requires that the prepared run of chunk 1 of f exits 0 after one oracle run.
-func requirePrepared(t *testing.T, f *recordtest.Fixture) {
+// requireChunkGreen requires that the chunk checkpoint of chunk 1 of f exits 0 after one oracle
+// run.
+func requireChunkGreen(t *testing.T, f *recordtest.Fixture) {
 	t.Helper()
-	if code, out := runCheckpointWith(t, f, flagPrepare); code != 0 || outcomeRuns(t, f.Root) != 1 {
-		t.Fatalf("prepared run = %d %s; want exit 0 after one oracle run", code, out)
+	if code, out := runCheckpoint(t, f); code != 0 || outcomeRuns(t, f.Root) != 1 {
+		t.Fatalf("chunk checkpoint = %d %s; want exit 0 after one oracle run", code, out)
 	}
 }
 

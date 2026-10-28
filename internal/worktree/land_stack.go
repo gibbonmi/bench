@@ -99,6 +99,10 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 		return landRefusalError(stdout, landingFaceRoute(err, route.rerun(stackUnattributed), false))
 	}
 	publications[0].Lease = lease
+	// The stack owns the machine while it grades, so no member grade runs beside it.
+	for _, l := range landings {
+		stopGradesOf(a.home, l.path, stderr)
+	}
 	result, err := j.landStack(ctx, request, stackAdmission{store: commitrepo.Store{Root: root}, members: publications, gap: j.publicationGap})
 	if err != nil {
 		lease.Release()

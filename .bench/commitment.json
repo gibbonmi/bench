@@ -1981,6 +1981,14 @@
       "identity": "sha256:894c64ff1c3dba29c2e665476abded0cf35a1ed9d78f79b90260d237a51daa44",
       "source": "2d0842cfb227e50445ae7317d80f419466660c7d",
       "evidence": "ffe82d9afd92559a9854365751b87f538edd1bba"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT451-background-grade",
+      "binding": "background-grade",
+      "identity": "sha256:37e94cfa6f0d19ccb66e33fd84a022a4db8d6cad33a118ee7b38eefbcb642092",
+      "source": "4cd081de83a3faafecaec37d71f858936ea22204",
+      "evidence": "ed1e57802fc5aff52e002d909c58b432c0a8d16b"
     }
   ]
 }

@@ -123,7 +123,7 @@ func sourcePhases(root string) []Phase {
 
 // testPhase is the test phase over operands. It carries the root-conformance environment.
 func testPhase(root, kit string, operands ...string) Phase {
-	return Phase{Name: canary.PhaseTest, Argv: BaseTestArgv("", operands...), Dir: root, Env: rootConformanceEnv(root, kit)}
+	return Phase{Name: canary.PhaseTest, Argv: gateTestArgv(operands...), Dir: root, Env: rootConformanceEnv(root, kit)}
 }
 
 // CoreTestPackages enumerates the packages the core `go test` step runs at tier: the
@@ -209,7 +209,7 @@ func coreTestStep(root string, stdout, stderr io.Writer) int {
 
 // coreTestArgv is the release core test step's argv over the enumerated packages.
 func coreTestArgv(packages []string) []string {
-	return BaseTestArgv("", packages...)
+	return gateTestArgv(packages...)
 }
 
 func raceTestFilter() string {
@@ -229,7 +229,7 @@ func raceTestNames() []string {
 }
 
 func raceDriverArgv() []string {
-	argv := BaseTestArgv("", "-race", "-v")
+	argv := gateTestArgv("-race", "-v")
 	for _, test := range raceTests {
 		if !slices.Contains(argv, test.PackagePath) {
 			argv = append(argv, test.PackagePath)
