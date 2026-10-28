@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
+  "plan_digest": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
   "implementation_session": "",
   "chunks": [
     {
@@ -976,9 +976,9 @@
     {
       "id": "BC-C4",
       "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
-      "tip": "f3715d25f94f91e1d0653ae9bed0bc13093e1a14",
-      "plan_digest": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
-      "source_digest": "0690801faf6ff98f40eec7561b621755af64964d",
+      "tip": "c5a2a29f736677f4bf9371bd7f1c62d1eae79f9e",
+      "plan_digest": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
+      "source_digest": "4d90d2e9cdc6268d244c2c63e6fd7a8e0fa23545",
       "acceptance_rows": [
         "BC49",
         "BC50",
@@ -1018,6 +1018,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t08-author-20261028",
               "digest": "sha256:f7ae3b9359f7d38e18c153d4b4b97dd651557009db5082958bc71964052461c5",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLanePassPrintsNoCheckReport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLanePassPrintsNoCheckReport,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,356\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,48,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLanePassPrintsNoCheckReport,\"lane_report_test.go:44: first run: response line \\\"[prose] prose first run\\\", want no check line on a pass\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t09-probe-09",
+          "performer": "claude:bc-t09-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4d90d2e9cdc6268d244c2c63e6fd7a8e0fa23545",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t09-author-20261028",
+            "digest": "sha256:57c693652ed89820b780a0cb84e817565a40f64529fea2306841376943ad92ca",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1177,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:44: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c5a2a29f736677f4bf9371bd7f1c62d1eae79f9e",
+          "requirement": "probe-09",
+          "command": "bench probe internal/probe/set.go --swap 'if s.bitten() {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t09-author-20261028",
+              "digest": "sha256:57c693652ed89820b780a0cb84e817565a40f64529fea2306841376943ad92ca",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1177,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:44: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1204,6 +1234,24 @@
         ],
         "BC-C3": [
           "BC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
+      "to": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ],
+        "BC-C4": [
+          "BC-C4"
         ]
       }
     }
