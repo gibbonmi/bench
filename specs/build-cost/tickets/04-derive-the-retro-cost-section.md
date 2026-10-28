@@ -6,7 +6,7 @@ Covers: BC1, BC2, BC72, BC3, BC4, BC5, BC6, BC7, BC8, BC9, BC10, BC11, BC12, BC1
 
 ## What to build
 
-`bench retro <slug> --scaffold` prints a `## Cost` section directly after `## Outcome`. The constant `CostHeading = "## Cost"` sits in `internal/retros/retros.go`, and the canonical heading list names it on its own line as `CostHeading,`, because the probe-04 command omits that exact text.
+`bench retro <slug> --scaffold` prints a `## Cost` section directly after `## Outcome`. The constant `CostHeading = "## Cost"` sits in `internal/retros/retros.go`, and the canonical heading list names it on its own line as `CostHeading,`, because the probe-04 command omits that exact text. That text occurs once in the file.
 The retro parser then refuses a body without the heading. The marker grade of pending retros reads no heading, so a pending retro without `## Cost` stays valid.
 
 One function in `internal/spec` answers the landing commit of a slug. It is the newest first-parent commit of the default branch that changes `specs/<slug>/spec.md` to `Status: implemented`: its tree holds that status, and the tree of its first parent does not. It reuses the status parser of `internal/spec`.
