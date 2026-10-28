@@ -162,6 +162,13 @@ var laneClasses = append([]PathClass{
 		Match:  func(path string, tree TreeFacts) bool { return slices.Contains(tree.FixturePins, path) },
 		Checks: []string{fixtureBiteCheck},
 	},
+	// The registry owns the files that the route bypass test scans, so the class claims
+	// exactly those files.
+	{
+		Name:   "write-verb-source",
+		Match:  func(path string, _ TreeFacts) bool { return registry.RouteBypassScanned(path) },
+		Checks: []string{routeBypassCheck},
+	},
 }, documentClasses()...)
 
 func anchorRegistryClass() PathClass {

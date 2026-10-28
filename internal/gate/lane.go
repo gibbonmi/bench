@@ -67,9 +67,12 @@ var laneRunBinary = runbinary.Factory{}
 // fixtureBiteCheck names the lane check that runs the fixture bite test alone.
 const fixtureBiteCheck = "fixture-bite"
 
+// routeBypassCheck names the lane check that runs the route bypass test (RR49) alone.
+const routeBypassCheck = "route-bypass"
+
 // BenchkitLane is the built-in fast lane for the kit root: gofmt, prose, vet, build,
 // structure, then one check per document family the registry binds, and last the
-// fixture bite test. A Bench-owned
+// fixture bite test and the route bypass test. A Bench-owned
 // check carries the run-binary token, which the run replaces with the executable it
 // selected, and the two toolchain checks run the tool directly. The structure check
 // carries the base token, so the growth ratchet reads what the commit composes. The
@@ -79,7 +82,8 @@ const fixtureBiteCheck = "fixture-bite"
 // above it. The whole-project test phase is deliberately absent. The lane is the worktree
 // commit's check, and the landing's gate stays the one full grade. The fixture bite check
 // runs one ordinary test, because a fixture quotes the bytes of the paths it pins and only
-// that test materializes the fixture against those bytes.
+// that test materializes the fixture against those bytes. The route bypass check runs one
+// ordinary test too, so a write-verb author sees a route literal at the commit.
 func BenchkitLane(root, kit string) []Phase {
 	_ = kit
 	checks := append([]Phase{
@@ -89,9 +93,14 @@ func BenchkitLane(root, kit string) []Phase {
 		{Name: "build", Argv: []string{"go", "build", trimPath, DisableBuildVCS, "./..."}},
 		{Name: "structure", Argv: []string{runBinaryArgvToken, "structure", "--growth", LaneBaseToken}},
 	}, documentLaneChecks()...)
-	return append(checks, Phase{Name: fixtureBiteCheck, Argv: []string{
-		runBinaryArgvToken, "test", "--package", "./" + conformancePackagePath, "--run", "^" + registry.FixtureBiteTest + "$",
-	}})
+	return append(checks, conformanceTestCheck(fixtureBiteCheck, registry.FixtureBiteTest), conformanceTestCheck(routeBypassCheck, registry.RouteBypassTest))
+}
+
+// conformanceTestCheck declares a lane check that runs one ordinary conformance test alone.
+func conformanceTestCheck(name, test string) Phase {
+	return Phase{Name: name, Argv: []string{
+		runBinaryArgvToken, "test", "--package", "./" + conformancePackagePath, "--run", "^" + test + "$",
+	}}
 }
 
 // RunLane grades the composed tree against the declared checks and records one lane
