@@ -77,10 +77,10 @@ func buildRefusal(reason, label string) string {
 	return "bench status --in: " + reason + "\nnext=bench worktree build " + label + "\n"
 }
 
-// TT43, TT44, TT45, TT46, TT47, TT48: a kit worktree target runs its own worktree build only
-// after freshness.Verify accepts that build. A missing, stale, or changed build refuses at
-// exit 1 before any child starts, and the refusal names the repair by label. The primary
-// checkout never runs a worktree build.
+// TT43, TT44, TT45, TT46, TT47, TT48: these rows hold no other matching candidate, so a kit
+// worktree target runs its own worktree build only after freshness.Verify accepts that
+// build. A missing, stale, or changed build refuses at exit 1 before any child starts, and
+// the refusal names the repair by label. The primary checkout never runs a worktree build.
 func TestRunKitWorktreeBuild(t *testing.T) {
 	t.Run("TT43 TT48 a current build", func(t *testing.T) {
 		k := newKitTarget(t, "alpha")
@@ -177,11 +177,17 @@ func TestRunReusesAMatchingBuild(t *testing.T) {
 		seals [3]candidateSeal
 		// runs is the candidate that runs, or -1 when the call refuses.
 		runs int
+		// edit edits a build input of the target after the seals, so each intact seal holds
+		// other sources.
+		edit bool
 	}{
 		{name: "BC61 the primary build before the running executable", seals: [3]candidateSeal{absent, matching, matching}, runs: primary},
+		{name: "BC61 the primary build after a changed own build", seals: [3]candidateSeal{changed, matching, absent}, runs: primary},
 		{name: "BC62 the running executable after a changed primary build", seals: [3]candidateSeal{absent, changed, matching}, runs: running},
+		{name: "BC62 the running executable after a changed own build", seals: [3]candidateSeal{changed, absent, matching}, runs: running},
 		{name: "BC63 the own build before the primary build", seals: [3]candidateSeal{matching, matching, matching}, runs: own},
 		{name: "BC65 no matching candidate", seals: [3]candidateSeal{absent, changed, absent}, runs: -1},
+		{name: "BC65 an intact primary build sealed for other sources", seals: [3]candidateSeal{absent, matching, absent}, runs: -1, edit: true},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			k := newKitTarget(t, "alpha")
@@ -198,6 +204,9 @@ func TestRunReusesAMatchingBuild(t *testing.T) {
 				case i == running:
 					paths[i], markers[i] = markerScript(t, "exit 0")
 				}
+			}
+			if row.edit {
+				kittest.EditBuildInput(t, k.tree)
 			}
 			stdout, stderr, code := k.run(wrapper, paths[running], "status", "alpha")
 			requireNoChild(t, wrapperMarker)

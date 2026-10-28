@@ -14,7 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
-	"github.com/gibbonmi/bench/internal/treetarget"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
 
@@ -163,8 +162,10 @@ func TestHelpFormPrintsNoTreeRow(t *testing.T) {
 func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
 	t.Setenv(benchhome.Env, t.TempDir())
 	t.Setenv("BENCH_AGENT", "")
-	want := "[" + treeTargetFlag + " " + treetarget.Operand + "]"
-	if !strings.Contains(renderCommandHelp(), "bench commit "+want) {
+	commit, _ := commandByName("commit")
+	insertion := commit.treeTargetInsertion()
+	want, operand := strings.TrimPrefix(insertion, " "), strings.Trim(insertion, " []")
+	if !strings.Contains(renderCommandHelp(), "bench commit"+insertion) {
 		t.Fatalf("root help names no %q for bench commit", want)
 	}
 	type call struct {
@@ -187,6 +188,13 @@ func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
 		got, named := strings.Contains(result.stdout+result.stderr, want), c.scope == scopeTree && result.code == 0
 		if got != named {
 			t.Errorf("bench %q = (%d, %q, %q) names %q: %v, want %v", c.argv, result.code, result.stdout, result.stderr, want, got, named)
+		}
+		both := result.stdout + result.stderr
+		if line := "tree target: bench " + c.argv[0] + insertion + "\n"; named && !strings.Contains(result.stdout, line) {
+			t.Errorf("bench %q stdout = %q, want the line %q", c.argv, result.stdout, line)
+		}
+		if c.scope == scopeRepository && (strings.Contains(both, "tree target:") || strings.Contains(both, operand)) {
+			t.Errorf("bench %q = (%q, %q), want no tree-target line and no %q", c.argv, result.stdout, result.stderr, operand)
 		}
 		answered[strings.Join(c.argv, " ")] = named
 	}
