@@ -61,7 +61,7 @@ func repairSession(t *testing.T, f *recordtest.Fixture) string {
 // carriedCell is the carried cell of the one ticket output row.
 func carriedCell(t *testing.T, out string) any {
 	t.Helper()
-	document, err := axitest.DecodeDocument(out)
+	document, err := axitest.DecodeDocument(ticketTable(out))
 	if err != nil {
 		t.Fatal(err)
 	}

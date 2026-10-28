@@ -1,12 +1,25 @@
 package recordcmd_test
 
 import (
+	"bytes"
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
+	rr "github.com/gibbonmi/bench/internal/reviewrecord"
+	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
+
+// ticketTable is the TOON table of a ticket response: the bytes before its next= line.
+func ticketTable(out string) string {
+	table, _, _ := strings.Cut(out, refusalroute.NextField+"=")
+	return table
+}
 
 // BC29: a ticket that owes no requirement writes the chunk step alone. The call exits 0, freezes
 // the chunk at the tip, and prints an empty verifications cell.
@@ -22,7 +35,114 @@ func TestTicketFreezesWithoutRequirements(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasSuffix(out, want) {
-		t.Errorf("ticket output = %q, want the table %q", out, want)
+	if !strings.HasPrefix(out, want) {
+		t.Errorf("ticket output = %q, want the table %q first", out, want)
+	}
+}
+
+// ticketCase prepares one call of TestTicketStagesTheRetainedProbe. It answers the fixture, the
+// home, the chunk base, and the ticket argv before the extra flags.
+type ticketCase func(t *testing.T) (*recordtest.Fixture, string, string, []string)
+
+// firstChunk commits chunk 1 of a pooled fixture, and stages the tests requirement when staged.
+func firstChunk(staged bool) ticketCase {
+	return func(t *testing.T) (*recordtest.Fixture, string, string, []string) {
+		f, home := pooled(t, 1)
+		base, _ := advance(f, "chunk 1")
+		if staged {
+			f.Stage(home, "1", "tests", f.Run(0, biting))
+		}
+		return f, home, base, ticketArgs(t, "1", "1.md", "p", "--base", base)
+	}
+}
+
+// carriedRepairCase is the repair of carriedRepair with no stage: system and other can carry,
+// and pkg cannot.
+func carriedRepairCase(t *testing.T) (*recordtest.Fixture, string, string, []string) {
+	f, home, frozen, _ := carriedRepair(t)
+	return f, home, frozen.Base, repairArgs(t, f)
+}
+
+// BC41, BC42, BC43, BC44, BC45, BC46: with the tests requirement staged, the retained `bench
+// probe` response is the entry of the additional requirement, and --mutant names its row of a
+// mutant set. The call removes no other stage, prints at most 10 lines, and ends with the
+// record commit. A retained `bench test` response and two unstaged requirements refuse, name
+// the excerpt form, and leave the record and the store as they were. A requirement that can
+// carry carries, so the retained response is the entry of the one requirement left.
+func TestTicketStagesTheRetainedProbe(t *testing.T) {
+	produce, _ := setProducer(t, linked(t, 1))
+	set, setExit := silentThenBiting(produce)
+	retained := answer("bit", "yes", 0, "1", "packages[1]{package,outcome}:\n  retained,failed\n")
+	bit := rr.Probe{Outcome: "bit", ExitCode: 1, Restore: "pass"}
+	for _, tc := range []struct {
+		name, verb   string
+		output       string
+		exit         int
+		prepare      ticketCase
+		extra        []string
+		entry        string
+		used         int
+		carried      string
+		want         rr.Probe
+		refusalNames string
+	}{
+		{name: "single-form probe", verb: "probe", output: retained, prepare: firstChunk(true), entry: "p-additional", used: 1, carried: "none", want: bit},
+		{name: "mutant row 2", verb: "probe", output: set, exit: setExit, prepare: firstChunk(true), extra: []string{"--mutant", "2"}, entry: "p-additional", used: 1, carried: "none", want: bit},
+		{name: "carried requirements", verb: "probe", output: retained, prepare: carriedRepairCase, entry: "repair-pkg", carried: "system,other", want: bit},
+		{name: "bench test response", verb: "test", output: retained, prepare: firstChunk(true), refusalNames: "these owed requirements have no staged excerpt: additional"},
+		{name: "two unstaged requirements", verb: "probe", output: retained, prepare: firstChunk(false), refusalNames: "these owed requirements have no staged excerpt: tests, additional"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, home, base, args := tc.prepare(t)
+			tip := f.Tip()
+			f.Stage(home, "9", "other", f.Run(0, "ok\n"))
+			f.Retain(home, tc.verb, []string{"clamp.go"}, tc.exit, tc.output)
+			before, stages := recordBytes(t, f), responseboundtest.StoreFiles(t, home)
+			out, code := recordcmd.Command(f.Root, append(args, tc.extra...))
+			if tc.refusalNames != "" {
+				if want := "; write it with bench record excerpt"; code != 1 || !strings.Contains(out, tc.refusalNames) || !strings.Contains(out, want) {
+					t.Fatalf("ticket = exit %d, output %q; want exit 1 naming %q and %q", code, out, tc.refusalNames, want)
+				}
+				if after := recordBytes(t, f); !bytes.Equal(before, after) {
+					t.Errorf("the refusal changed the record bytes:\n%s", after)
+				}
+				if after := responseboundtest.StoreFiles(t, home); !slices.Equal(stages, after) {
+					t.Errorf("store files after the refusal = %q, want %q", after, stages)
+				}
+				return
+			}
+			if code != 0 {
+				t.Fatalf("ticket = exit %d, output %q; want exit 0", code, out)
+			}
+			if cell := carriedCell(t, out); cell != tc.carried {
+				t.Errorf("carried cell = %v, want %s", cell, tc.carried)
+			}
+			results := chunkEntry(t, f, "1").Verification
+			i := slices.IndexFunc(results, func(entry rr.Verification) bool { return entry.ID == tc.entry })
+			if i < 0 {
+				t.Fatalf("entries = %q, want %s", verificationIDs(rr.Chunk{Verification: results}), tc.entry)
+			}
+			got := results[i]
+			requirement := strings.SplitN(tc.entry, "-", 2)[1]
+			for _, planned := range f.Plan.Chunks[0].Verification {
+				if planned.ID == requirement {
+					tc.want.Mutation = planned.Probe
+				}
+			}
+			if got.Probe != nil {
+				tc.want.NativeRef = got.Probe.NativeRef
+			}
+			if got.SourceCommit != tip || got.NativeRef.Excerpt != tc.output || *got.ExitCode != 0 || got.Probe == nil || !reflect.DeepEqual(*got.Probe, tc.want) {
+				t.Errorf("entry %s = at %s, exit %d, probe %+v; want at %s, exit 0, %+v, and the retained bytes", got.ID, got.SourceCommit, *got.ExitCode, got.Probe, tip, tc.want)
+			}
+			if after := responseboundtest.StoreFiles(t, home); len(after) != len(stages)-tc.used {
+				t.Errorf("store files after the write = %q, want %d used stages gone from %q", after, tc.used, stages)
+			}
+			lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
+			next := "next=bench commit -m <msg> --preflight-build " + slug(t) + " --base " + base + " " + recordPath(t)
+			if len(lines) > 10 || lines[len(lines)-1] != next || !strings.HasSuffix(out, "\n") {
+				t.Errorf("ticket output = %q, want at most 10 lines that end with %q", out, next)
+			}
+		})
 	}
 }

@@ -22,15 +22,17 @@ import (
 var excerptForm = form{name: reviewrecord.FormExcerpt, description: "stage the retained response of this worktree as the excerpt of one requirement of the chunk plan at HEAD",
 	flags:  []flag{{"--chunk", "<id>", true, once}, {"--requirement", "<id>", true, once}, {mutantFlag, "<n>", false, once}},
 	layout: []string{"--chunk", "--requirement", "[", mutantFlag, "]"},
-	valid:  func(_ form, parsed usage.Result) bool { return mutantValid(parsed) }, run: excerpt}
+	valid:  mutantRow, run: excerpt}
+
+// mutantRow closes the --mutant value set of a form whose one grammar rule is that row.
+func mutantRow(_ form, parsed usage.Result) bool { return mutantValid(parsed) }
 
 // retainedSource names the retained response in a probe import refusal.
 const retainedSource = "the retained response"
 
 // excerpt stages the retained response for one requirement of the chunk plan at HEAD. The
 // retained call must be the planned command, or `bench probe` for a requirement with a probe,
-// and its bytes must pass the record excerpt bound. It writes no review record and no
-// worktree file.
+// and stageRetained must accept it. It writes no review record and no worktree file.
 func excerpt(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := parsed.Flags
 	head, err := git.ResolveCommit(root, "HEAD", "--quiet", "--end-of-options")
@@ -44,10 +46,6 @@ func excerpt(f form, root, spec string, parsed usage.Result) (string, int) {
 	requirement, err := reviewrecord.ChunkRequirement(plan, head, values["--chunk"], values["--requirement"])
 	if err != nil {
 		return f.refuse(err.Error())
-	}
-	mutant, _ := integer(values, mutantFlag)
-	if mutant != 0 && requirement.Probe == "" {
-		return f.refuse(fmt.Sprintf("%s needs a probe requirement; requirement %s plans no probe", mutantFlag, requirement.ID))
 	}
 	planned, ok := plannedCall(requirement.Command)
 	if !ok {
@@ -69,19 +67,35 @@ func excerpt(f form, root, spec string, parsed usage.Result) (string, int) {
 	} else if !slices.Equal(call, planned) {
 		return f.refuse(fmt.Sprintf("the retained call bench %s differs from the planned command %s", strings.Join(call, " "), requirement.Command))
 	}
-	if graded := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(retained.Output), bounds.ControlRecordLimit)); graded.State != bounds.StateParsed {
-		return f.refuse(fmt.Sprintf("the retained response is %s: %s", graded.State, graded.Reason))
+	mutant, _ := integer(values, mutantFlag)
+	staged, out := stageRetained(requirement, retained, mutant)
+	if out != "" {
+		return f.refuse(out)
 	}
-	if requirement.Probe != "" {
-		if _, out := readImported(retained.Output, mutant, retainedSource); out != "" {
-			return f.refuse(out)
-		}
-	}
-	if err := responsebound.Stage(home, root, parsed.Positionals[0], values["--chunk"], requirement.ID, responsebound.Staged{Retained: retained, Mutant: mutant}); err != nil {
+	if err := responsebound.Stage(home, root, parsed.Positionals[0], values["--chunk"], requirement.ID, staged); err != nil {
 		return f.refuse(err.Error())
 	}
 	return row("excerpt", []string{"chunk", "requirement", "verb", "exit", "head", "bytes"},
 		[]string{values["--chunk"], requirement.ID, retained.Verb, strconv.Itoa(retained.Exit), retained.Head, strconv.Itoa(len(retained.Output))})
+}
+
+// stageRetained answers the stage of retained for requirement, with mutant as the row of a
+// mutant-set answer, or the refusal. The excerpt form and the ticket form apply its checks:
+// --mutant needs a probe requirement, the bytes pass the record excerpt bound, and the bytes of
+// a probe requirement import as a probe answer.
+func stageRetained(requirement reviewrecord.Requirement, retained responsebound.Retained, mutant int) (responsebound.Staged, string) {
+	if mutant != 0 && requirement.Probe == "" {
+		return responsebound.Staged{}, fmt.Sprintf("%s needs a probe requirement; requirement %s plans no probe", mutantFlag, requirement.ID)
+	}
+	if graded := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(retained.Output), bounds.ControlRecordLimit)); graded.State != bounds.StateParsed {
+		return responsebound.Staged{}, fmt.Sprintf("the retained response is %s: %s", graded.State, graded.Reason)
+	}
+	if requirement.Probe != "" {
+		if _, out := readImported(retained.Output, mutant, retainedSource); out != "" {
+			return responsebound.Staged{}, out
+		}
+	}
+	return responsebound.Staged{Retained: retained, Mutant: mutant}, ""
 }
 
 // plannedCall answers the words after `bench` of a planned command. Only a lexed parse of

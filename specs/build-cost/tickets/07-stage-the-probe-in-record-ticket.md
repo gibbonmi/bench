@@ -6,7 +6,7 @@ Covers: BC41, BC42, BC43, BC44, BC45, BC46, BC47, BC48
 
 ## What to build
 
-`bench record ticket` stages the retained response of the worktree when exactly one owed requirement has no stage and the retained call is `bench probe`. The guard line in `ticket.go` reads `if len(unstaged) == 1 && retained.Verb == probe.Verb {`, because the probe-07 command swaps that exact line.
+`bench record ticket` stages the retained response of the worktree when exactly one owed requirement has no stage and no carry and the retained call is `bench probe`. The guard line in `ticket.go` reads `if len(unstaged) == 1 && retained.Verb == probe.Verb {`, because the probe-07 command swaps that exact line.
 The stage applies the checks of the excerpt form: the bound, the probe import, and `--mutant`. Move those checks into one function in `stage.go` that both forms call, so that the rule has one source.
 
 `bench record ticket` takes `--mutant <n>` with the meaning of the excerpt form. A retained call that is not `bench probe` refuses and names `bench record excerpt`. Two or more unstaged owed requirements keep the current refusal. Each refusal leaves the record bytes unchanged.

@@ -387,7 +387,7 @@ func TestTicketBeforeTheChunkTipLeavesTheChunkEntry(t *testing.T) {
 	own := stagedBeforeTheTip(t, f, home)
 	frozen := chunkEntry(t, f, "2")
 	out := succeed(t, f, ticketArgs(t, "2", "2.md", "early", "--tip", own))
-	document, err := axitest.DecodeDocument(out)
+	document, err := axitest.DecodeDocument(ticketTable(out))
 	if err != nil {
 		t.Fatal(err)
 	}
