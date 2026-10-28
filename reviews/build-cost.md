@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:f4849436247e81b82f0777a1a4fbfa0a3bf5de3fef0d1c715b657ee66d1c0f6e",
+  "plan_digest": "sha256:1db4e75f54039b00d03520902048b7276bd42693aa6b70ea57727eb70ec0559a",
   "implementation_session": "",
   "chunks": [
     {
@@ -293,6 +293,72 @@
           ]
         }
       ]
+    },
+    {
+      "id": "BC-C2",
+      "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+      "tip": "afee2cac94ee9037507e52a52e943601a8205ec9",
+      "plan_digest": "sha256:1db4e75f54039b00d03520902048b7276bd42693aa6b70ea57727eb70ec0559a",
+      "source_digest": "1a03f8697b4895c65fb2614ba432a796ba0d0885",
+      "acceptance_rows": [
+        "BC1",
+        "BC2",
+        "BC72",
+        "BC3",
+        "BC4",
+        "BC5",
+        "BC6",
+        "BC7",
+        "BC8",
+        "BC9",
+        "BC10",
+        "BC11",
+        "BC12",
+        "BC13",
+        "BC15",
+        "BC16",
+        "BC17",
+        "BC18",
+        "BC14",
+        "BC19",
+        "BC20",
+        "BC21",
+        "BC22",
+        "BC71"
+      ],
+      "verification": [
+        {
+          "id": "t04-probe-04",
+          "performer": "claude:bc-t04-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1a03f8697b4895c65fb2614ba432a796ba0d0885",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t04-author-20261028",
+            "digest": "sha256:b1e651b527fc8c7ab08366c5580d222ae217a2f1e37a84603db24e1be8d5b37a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/retros.go,omit,failed,1,TestRetroRejectsABodyWithoutCost,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroRejectsABodyWithoutCost,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,363\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,16,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRejectsABodyWithoutCost,\"retro_test.go:39: body without Cost = \\\"captured: costless\\\\\\\\n\\\"/0, want a refusal that names the heading\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "afee2cac94ee9037507e52a52e943601a8205ec9",
+          "requirement": "probe-04",
+          "command": "bench probe internal/retros/retros.go --omit 'CostHeading,' --package ./internal/roadmap --run TestRetroRejectsABodyWithoutCost",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the Cost heading from the canonical heading list. The body without a Cost section must then pass, so the refusal test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t04-author-20261028",
+              "digest": "sha256:b1e651b527fc8c7ab08366c5580d222ae217a2f1e37a84603db24e1be8d5b37a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/retros.go,omit,failed,1,TestRetroRejectsABodyWithoutCost,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroRejectsABodyWithoutCost,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,363\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,16,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRejectsABodyWithoutCost,\"retro_test.go:39: body without Cost = \\\"captured: costless\\\\\\\\n\\\"/0, want a refusal that names the heading\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -342,6 +408,15 @@
     {
       "from": "sha256:3f7850e8b5587bb3d3ceffc2e5dc137955a9588ccdf7c0c0925a346586eed9b1",
       "to": "sha256:f4849436247e81b82f0777a1a4fbfa0a3bf5de3fef0d1c715b657ee66d1c0f6e",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f4849436247e81b82f0777a1a4fbfa0a3bf5de3fef0d1c715b657ee66d1c0f6e",
+      "to": "sha256:1db4e75f54039b00d03520902048b7276bd42693aa6b70ea57727eb70ec0559a",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
