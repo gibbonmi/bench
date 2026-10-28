@@ -1,7 +1,7 @@
 # Let a chunk checkpoint wait on a background grade
 
 Blocked by: 09-queue-and-supersede-background-grades.md
-Writes: internal/gate/run_transaction.go, internal/gate/checkpoint.go, internal/gate/background_wait.go (new), internal/gate/background_wait_test.go (new), internal/gate/backgroundstate (new), CHANGELOG.md
+Writes: internal/gate/run_transaction.go, internal/gate/checkpoint.go, internal/gate/background_wait.go (new), internal/gate/background_wait_test.go (new), internal/gate/backgroundstate (new), CHANGELOG.md, internal/gate/background_priority_linux.go, internal/gate/background_priority_other.go
 Covers: BG57, BG58, BG59, BG60, BG61, BG62, BG63, BG64, BG65, BG66
 
 ## What to build
