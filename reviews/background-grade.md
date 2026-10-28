@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:b91df3db3f79aacd242345333fd7d1b09583deb47b2f426703325f7470cc18a8",
+  "plan_digest": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
   "implementation_session": "",
   "chunks": [
     {
@@ -1465,9 +1465,9 @@
     {
       "id": "BG-C6",
       "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
-      "tip": "87bcc5d86d8b34f3699e442fd65be7c769ab92d5",
-      "plan_digest": "sha256:b91df3db3f79aacd242345333fd7d1b09583deb47b2f426703325f7470cc18a8",
-      "source_digest": "9f8a161597f19d410a3c99e49161661c594e527a",
+      "tip": "a58ef0a78ef140161482bf0adbf9e9ac4864a503",
+      "plan_digest": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
+      "source_digest": "b26d888927f758668bab47989e4b7f365aaec860",
       "acceptance_rows": [
         "BG5",
         "BG6",
@@ -1672,6 +1672,63 @@
           },
           "source_commit": "87bcc5d86d8b34f3699e442fd65be7c769ab92d5",
           "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c6-t09-gate-09",
+          "performer": "claude:bg-t09-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b26d888927f758668bab47989e4b7f365aaec860",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t09-author-20261028",
+            "digest": "sha256:13e16e06d259feba1ce12767eca9818db833a05200c0a9b3d3a0274c9d24903c",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,147873,780\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,317,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,747,13\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,55,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,1357,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a58ef0a78ef140161482bf0adbf9e9ac4864a503",
+          "requirement": "gate-09",
+          "command": "bench test --package ./internal/gate/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c6-t09-subprocess-09",
+          "performer": "claude:bg-t09-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b26d888927f758668bab47989e4b7f365aaec860",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t09-author-20261028",
+            "digest": "sha256:20bc49d2d623f9848ff999eb1242fb5f1de4a6a8af09bc4501a93c454be2e952",
+            "excerpt": "packages[3]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,pass,4738,45\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,67,62\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+          },
+          "source_commit": "a58ef0a78ef140161482bf0adbf9e9ac4864a503",
+          "requirement": "subprocess-09",
+          "command": "bench test --package ./internal/subprocess/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c6-t09-conformance-09",
+          "performer": "claude:bg-t09-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b26d888927f758668bab47989e4b7f365aaec860",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t09-author-20261028",
+            "digest": "sha256:19b0ffc2c23f1dbfbc0fc5d4a788dd9e1148403b5193640d97d11a22c2da8414",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17930,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a58ef0a78ef140161482bf0adbf9e9ac4864a503",
+          "requirement": "conformance-09",
           "command": "bench test --check root-conformance",
           "exit_code": 0
         }
@@ -1897,6 +1954,33 @@
         ],
         "BG-C5": [
           "BG-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b91df3db3f79aacd242345333fd7d1b09583deb47b2f426703325f7470cc18a8",
+      "to": "sha256:d152f0b6e31b474eb8a162143461595552f7a87bb3ace3e8611b774321f5cdff",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
         ]
       }
     }
