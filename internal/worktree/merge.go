@@ -130,9 +130,12 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 	record := fmt.Sprintf("merged{worktree=%s,from=%s,kind=%s,previous_tip=%s,tip=%s,tree=%s",
 		target.ID, incoming, result.Kind, result.PreviousTip, result.Tip, result.Tree)
 	// A `current` target changed nothing, so there is nothing for the checkout to catch
-	// up with; only a published tip needs the reconcile.
+	// up with; only a published tip needs the reconcile and a background grade. The grade
+	// reads the published commit, so it starts whether or not the checkout reconciled.
 	if result.Kind != landing.MergeKindCurrent {
-		if err := reconcileMergeCheckout(target.Worktree, result.Tip); err != nil {
+		reconcileErr := reconcileMergeCheckout(target.Worktree, result.Tip)
+		gate.StartBackground(a.home, a.kit, target.Worktree, result.Tip, stderr)
+		if reconcileErr != nil {
 			next := refusalroute.New(faceMergePublishedUnreconciled, refusalroute.Facts{Values: map[string]string{refusalroute.FactResetPlan: mergeReconcileNext(target, result.Tip)}}).Route
 			fmt.Fprintln(stdout, record+","+refusalroute.NextField+"="+sanitize.Controls(next)+"}")
 			return 3

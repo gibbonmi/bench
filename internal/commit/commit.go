@@ -98,13 +98,13 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 		return outcome, 1
 	}
 	outcome.Root = root
-	// The seam record opens once the repository is known, because the record is addressed
-	// by repository. A grammar answer reaches no repository and records nothing.
+	// The seam record is addressed by repository, so a grammar answer records nothing.
 	var measures commitMeasures
 	finishSpan := beginCommitSpan(root)
 	exit := commitAttributed(&measures, root, req, stdout, stderr)
 	finishSpan(exit, measures)
 	outcome.Published = measures.subject
+	startBackgroundGrade(root, outcome.Published, stderr)
 	return outcome, exit
 }
 

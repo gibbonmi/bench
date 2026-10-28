@@ -75,17 +75,20 @@ func ReleaseClaim(gitdir string, claim Claim) error {
 	return nil
 }
 
-// Live reports whether the owner of claim still runs: the claim names the current boot and
-// its owner pid exists. A pid of an earlier boot can name a new process, so it is not live.
-func (c Claim) Live() (bool, error) {
-	boot, err := protection.BootID()
+// Live reports whether the owner of claim still runs.
+func (c Claim) Live() (bool, error) { return liveOwner(c.Owner, c.Boot) }
+
+// liveOwner reports whether the process owner of boot still runs: boot is the current boot and
+// the pid exists. A pid of an earlier boot can name a new process, so it is not live.
+func liveOwner(owner int, boot string) (bool, error) {
+	current, err := protection.BootID()
 	if err != nil {
 		return false, err
 	}
-	if c.Boot != boot {
+	if boot != current {
 		return false, nil
 	}
-	return subprocess.Alive(c.Owner)
+	return subprocess.Alive(owner)
 }
 
 func (c Claim) valid() error {
@@ -95,7 +98,12 @@ func (c Claim) valid() error {
 	if err := required("worktree", c.Worktree, "boot_id", c.Boot); err != nil {
 		return err
 	}
-	if c.Owner <= 1 {
+	return validOwner(c.Owner)
+}
+
+// validOwner refuses an owner pid that names no one process.
+func validOwner(owner int) error {
+	if owner <= 1 {
 		return errors.New("the owner_pid field names no one process")
 	}
 	return nil

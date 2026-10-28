@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade after a lane pass
+
+- Changed `bench commit` and `bench worktree merge`, which now start one background grade of the tip that they publish. A grade starts only in the worktree of an active assignment whose kit is that worktree, and only when the worktree holds an executable `bin/bench.sh`. A linked repository, a dry run, a refused commit, and a merge of kind `current` start no grade. A merge starts the grade of its new tip whether or not its checkout reconciles.
+- The grade runs `bin/bench.sh gate-background <worktree> <tip>` of the worktree in a new session, outside the process group and the session of the verb, so it outlives the verb. The verb does not wait for the grade. A grade that does not start leaves the publication and the exit of the verb as they are, and the verb prints one `background grade: not started` line.
+- Added the machine slot of the background grade under the Bench home. The slot names the worktree, the tip, the pid, and the boot of the one running grade. While a live grade holds the slot, a lane pass starts no second grade.
+
 ### Background grade of a chunk subject
 
 - Added the internal `bench gate-background <worktree> <tip>` entry, which runs one background grade of a tip in the foreground of its process. The entry first replaces its process with the wrapper of the worktree, with no inherited `BENCH_KIT`, `BENCH_WRAPPER`, or `BENCH_RUN_BINARY`. So the grade runs as the executable that the wrapper resolves for that worktree, and the chunk checkpoint of the worktree runs as that executable too.

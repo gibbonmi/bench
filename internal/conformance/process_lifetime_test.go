@@ -50,6 +50,7 @@ var processLifetimeCensus = []processLifetimeEntry{
 	{"worktree exec", "internal/worktree/exec.go", "runChild"},
 	{"worktree shell", "internal/worktree/subshell.go", "subshellAt"},
 	{"shift adapter", "internal/shift/session.go", "runAdapter"},
+	{"background launch", "internal/gate/background_launch.go", "startGrade"},
 }
 
 // checkProcessLifetimeClosure grades the final migration closure of the live tree: every
