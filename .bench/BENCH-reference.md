@@ -323,6 +323,9 @@ execution row, the answer prints the `preserved` table when a restore failed.
 Then it prints the failed baseline report, or each started mutant's
 `mutant_report[1]{mutant}` and report.
 
+A bitten set prints no report: every row reads `bit`, no restore failed, and
+the cleanup did not fail. Its `trailing_bytes` reads 0.
+
 `bench record verification --probe-result <file> --mutant <n>` imports row `<n>`
 of a mutant-set answer.
 

@@ -260,7 +260,7 @@ func unwritten(mutation string, cells verdictCells) mutantRow {
 
 // answer renders the three tables and then the suffix: the preserved table of a failed
 // restore, the baseline report, each started mutant's report, and the held selection's cleanup
-// failure. The command exit is 2 when a restore failed, 0 when every row bit and the selection
+// failure. A bitten set prints no suffix. The command exit is 2 when a restore failed, 0 when every row bit and the selection
 // closed, and 1 otherwise.
 func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 	e.rows = s.rows
@@ -274,16 +274,9 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 	if s.cleanup != "" {
 		e.command = max(e.command, 1)
 	}
-	reports := ""
-	for i, row := range s.rows {
-		if row.focused == nil {
-			continue
-		}
-		heading, err := toon.TableTyped("mutant_report", mutantReportFields, [][]any{{i + 1}})
-		if err != nil {
-			return s.refuse(err, e.command)
-		}
-		reports += heading + row.report
+	reports, err := s.reports()
+	if err != nil {
+		return s.refuse(err, e.command)
 	}
 	suffix = s.preserved + suffix + reports + s.cleanup
 	e.trailing = len(suffix)
@@ -292,6 +285,37 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 		return s.refuse(err, e.command)
 	}
 	return head + suffix, e.command
+}
+
+// reports answers each started mutant's report under its mutant number. A bitten set needs no
+// report, so it answers nothing.
+func (s *setRun) reports() (string, error) {
+	if s.bitten() {
+		return "", nil
+	}
+	reports := ""
+	for i, row := range s.rows {
+		if row.focused == nil {
+			continue
+		}
+		heading, err := toon.TableTyped("mutant_report", mutantReportFields, [][]any{{i + 1}})
+		if err != nil {
+			return "", err
+		}
+		reports += heading + row.report
+	}
+	return reports, nil
+}
+
+// bitten reports whether every row bit and restored, with no preserved copy and no cleanup
+// failure. Only a row that bit and restored has row exit 0.
+func (s *setRun) bitten() bool {
+	for _, row := range s.rows {
+		if row.exit != 0 {
+			return false
+		}
+	}
+	return s.preserved == "" && s.cleanup == ""
 }
 
 // refuse answers a set whose tables the encoder refused. A kept copy and a cleanup failure
