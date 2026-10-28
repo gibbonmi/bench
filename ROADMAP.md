@@ -194,6 +194,8 @@ and the small cuts. The rows below hold the rest.
 
 **FT461 (MEDIUM, decision required) — an outcome's phase-close commits fold into its build landing, so one outcome pays one landing gate.**
 
+**FT463 (HIGH) — a spec-backed build pays for its checks and its change work, and each retro measures what the build cost.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
