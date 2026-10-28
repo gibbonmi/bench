@@ -1690,6 +1690,78 @@
             "F3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bc-c5-standards-2",
+          "performer": "claude:bc-c5-standards-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "841927d6c9cdcd767b612977bbbc09409594d0a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-standards-c2-20261028",
+            "digest": "sha256:f38db55f3055e4cbb48234e7c7a66b2ee2e970d23168695c5138ed60a9b22303",
+            "excerpt": "axis: Standards\nchunk: BC-C5  pair: 0164dcb56..ceb870076\nfindings: 4\nworst: F1, the repair's new stdout assertion re-types the format of the tree-target line beside its one source, treeTargetLine, and no recorded red needs that copy.\n- F1 [auto-fix] [confidence 5] cmd/bench/tree_scope_test.go:193 — the expected line re-types the format of treeTargetLine (tree_scope.go:92); the recorded Stdout-to-Stderr red still bites when the test uses the source — build the expected line from the definition's treeTargetLine().\n- F2 [auto-fix] [confidence 4] cmd/bench/tree_scope_test.go:167 — `operand` holds the flag and its operand, and the Trim cutset re-encodes the bracket format; line 188 rebuilds `both` — compare against treetarget.Operand or rename, and move `both` above line 188.\n- F3 [auto-fix] [confidence 3] internal/treetarget/build.go:17-18 — the childExecutable doc paragraph is wrapped badly — rewrap it.\n- F4 [ask-user] [confidence 4] reviews/build-cost.md, specs/build-cost/tickets/11-reuse-a-matching-sealed-build.md:4 — one widened ticket 11 session repaired paths of tickets 10 and 12 — the reviewer decides the routing.\nRound 1: F1 fixed; F2 fixed; F3 fixed; F4 fixed.\nreads: AGENTS.md; BENCH.md; craft-review; craft-comments; evidence check-current; the repair diff; the BC-C5 Go deltas; tree_scope_test.go; tree_scope.go; build.go; build_test.go; freshness_verify.go; tickets 10-12 Writes lines; rg sweeps.\nnot-verified: no tests or probes ran; tree-scoped leaves under a repository-scoped definition; CHANGELOG accuracy.\ncommand-contribution: bench preflight evidence --check-current from the primary checkout could name the --in form in its refusal.\n"
+          },
+          "axis": "Standards",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "ceb870076ced1c8da37cc072607f9e52f60c8961",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3"
+          ],
+          "supersedes": [
+            "bc-c5-standards-1"
+          ]
+        },
+        {
+          "id": "bc-c5-spec-2",
+          "performer": "claude:bc-c5-spec-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "841927d6c9cdcd767b612977bbbc09409594d0a3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-spec-c2-20261028",
+            "digest": "sha256:4ed054ac0e58b957d19770c2aa0dc5a549c2b36076c5171ba289240f8ebdf937",
+            "excerpt": "axis: Spec\nchunk: BC-C5  pair: 0164dcb56..ceb870076\nfindings: 0\nworst: none\nRound 1: F1 fixed (spec.md:38, :104, :212, :343 and tickets/10:9, :18 read the exit-0 wording; the narrowing stays flagged for reviewer veto); F2 fixed; F3 fixed; F4 fixed; F5 fixed (each CHANGELOG claim is true of the tree).\nrows: BC58 met; BC59 met as narrowed; BC60-BC65 met; BC66-BC69 and BC73 met; BC70 review-owned met; stories 44-52 met.\nreads: craft-review; evidence check-current; the BC-C5 log and diff; the repair delta; spec.md; tickets 10-12; tree_scope.go; command_registry.go; response_bound.go; treetarget/build.go; freshness; registry_build_cost.go; registry_retained_workflow.go; probe/set.go; reviewrecord/plan.go; retro_test.go; worktree_leaves.go; rg sweeps.\nnot-verified: no test, probe, or gate ran; the five verbs that refuse --help at exit 2; the BC59 leaf clause covers no member today, because every worktree leaf is repository-scoped; repair routing is outside the Spec axis.\ncommand-contribution: bench preflight evidence --check-current from the primary checkout should print a next= line with the --in form of the owning assignment.\n"
+          },
+          "axis": "Spec",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "ceb870076ced1c8da37cc072607f9e52f60c8961",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c5-spec-1"
+          ]
+        },
+        {
+          "id": "bc-c5-coverage-2",
+          "performer": "claude:bc-c5-coverage-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "841927d6c9cdcd767b612977bbbc09409594d0a3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-coverage-c2-20261028",
+            "digest": "sha256:e86b3fd87ad3860cd5c483c3f6d57a0d5d09eba7af360392a44d2d66b2374c45",
+            "excerpt": "axis: Coverage\nchunk: BC-C5  pair: 0164dcb56..ceb870076\nfindings: 1\nworst: BC66 and BC68 only Require the new --in sentence, so a tree that keeps the new sentence and also restores the old exec preflight or exec gate sentence still passes.\n- F1 [auto-fix] [confidence 4] internal/anchors/registry_build_cost.go:15,19 — BC66 and BC68 Require only the new --in sentence, and no Forbid row refuses the old exec forms — add one Forbid row for each exec form in registry_build_cost.go and registry_build_cost_test.go, and show the red by planting the exec sentence beside the --in sentence.\nRound 1: F1 fixed; F2 fixed; F3 fixed; F4 declined, no new evidence; F5 declined, no new evidence.\ntests-run: bench test --package ./internal/treetarget/... --package ./cmd/bench --run \"TestRunReusesAMatchingBuild|TestRunKitWorktreeBuild|TestTreeScopedHelpNamesTheTarget\" at 7d92b3746 — pass (1 + 16).\nreads: evidence check-current; craft-review; spec rows BC58-BC73; the BC-C5 diff of tree_scope, treetarget, systemtest, and anchors; run_test.go helpers; worktree_leaves.go; rg sweeps of the exec forms; BENCH.md:124; reviews/build-cost.md:2250-2304.\nnot-verified: the system suite; the probe-11 rows named in the record; a recorded red for the repository-scope absence assertion; tree-scoped verbs that answer --help at a nonzero exit.\ncommand-contribution: bench preflight evidence --check-current from the primary checkout should name the --in form of the owning assignment.\n"
+          },
+          "axis": "Coverage",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "ceb870076ced1c8da37cc072607f9e52f60c8961",
+          "finding_ids": [
+            "F1"
+          ],
+          "supersedes": [
+            "bc-c5-coverage-1"
+          ]
         }
       ]
     }
@@ -2301,3 +2373,13 @@ Witness return:
 - The two new BC61 and BC62 rows (Coverage F1): probe-11 bit both rows at the repair commit.
 
 Each mutant compiled, and each subject was restored. probe-11 ran again at the repair commit and bit four rows. The `childExecutable` doc now owns the candidate order, which the orchestrator accepts.
+
+## BC-C5 confirming round (pair 0164dcb56..ceb870076)
+
+Every round 1 finding is fixed. Raw findings: Standards 4, Spec 0, Coverage 1. Repair targets: 4, all routed to one second ticket 11 repair session.
+
+- Standards F1 auto-fix: `cmd/bench/tree_scope_test.go:193` types the tree-target line format a second time. Repair: build the line from `treeTargetLine()`.
+- Standards F2 auto-fix: `cmd/bench/tree_scope_test.go:167` names the flag and its operand `operand`, and line 188 builds `both` again. Repair.
+- Standards F3 auto-fix: the `childExecutable` doc in `internal/treetarget/build.go:17-18` is wrapped badly. Repair.
+- Standards F4 ask-user: one widened ticket 11 session repaired paths of tickets 10 and 12. The orchestrator declines it, because the reviewer directed that one repair session takes all small findings. This routing stays flagged for reviewer veto.
+- Coverage F1 auto-fix: BC66 and BC68 do not forbid the old exec gate form or the old exec preflight form. Repair: add one Forbid row for each form, with a demonstrated red.
