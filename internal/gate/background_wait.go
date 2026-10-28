@@ -24,19 +24,46 @@ func foregroundChunk(ctx context.Context) bool {
 	return checkpoint.Chunk != "" && checkpoint.Background == nil
 }
 
+// gateBudget is the gate timeout that a wait on a background grade started before the checkout
+// lock. The zero budget is a run that did not wait.
+type gateBudget struct {
+	waited context.Context
+	cancel context.CancelFunc
+}
+
+// release ends the budget once the run no longer needs it.
+func (b gateBudget) release() {
+	if b.cancel != nil {
+		b.cancel()
+	}
+}
+
+// runContext answers the context of the oracle run under ctx: the gate timeout, which the end of
+// the budget of a wait ends earlier, with the cause of that end. So a wait counts against the
+// gate timeout of its run, and a run after a wait ends with exit 124 at the same deadline.
+func (b gateBudget) runContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	run, cancel := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
+	if b.waited == nil {
+		return run, cancel
+	}
+	spent, end := context.WithCancelCause(run)
+	stop := context.AfterFunc(b.waited, func() { end(context.Cause(b.waited)) })
+	return spent, func() { stop(); end(nil); cancel() }
+}
+
 // awaitClaim waits, for a foreground chunk checkpoint, until no live claim holds the grade key of
 // plan in the git common directory of root. When the wait starts on the claim of an owner, the I/O
-// class of that grade returns to best-effort. The wait counts against the gate timeout, so it
-// answers the timeout that the run keeps. A wait that the timeout or an interrupt ends answers its
-// result, as a run that ends before its oracle does. A claim that does not read holds no wait.
-func awaitClaim(ctx context.Context, root string, plan subject, stderr io.Writer) (time.Duration, Result, bool) {
+// class of that grade returns to best-effort. The wait spends the gate timeout, so it answers the
+// budget that the run keeps. A wait that the timeout or an interrupt ends answers its result, as a
+// run that ends before its oracle does. A claim that does not read holds no wait.
+func awaitClaim(ctx context.Context, root string, plan subject, stderr io.Writer) (gateBudget, Result, bool) {
 	common, err := benchgit.CommonDir(root)
 	if !foregroundChunk(ctx) || err != nil {
-		return gateTimeout, Result{}, false
+		return gateBudget{}, Result{}, false
 	}
-	key, start, promoted := evidenceName(plan), time.Now(), 0
+	key, promoted := evidenceName(plan), 0
 	waitCtx, cancel := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
-	defer cancel()
+	budget := gateBudget{waited: waitCtx, cancel: cancel}
 	for {
 		claim, err := backgroundstate.ReadClaim(common, key)
 		if err != nil || claim.Key == "" {
@@ -56,14 +83,15 @@ func awaitClaim(ctx context.Context, root string, plan subject, stderr io.Writer
 		case <-waitCtx.Done():
 			stop()
 			code, _, _ := interruptedExit(ctx, waitCtx, 130, stderr)
-			return 0, Result{GateExit: code, ActionExit: code, Inspection: inspectAt(root, time.Now().UTC())}, true
+			return budget, Result{GateExit: code, ActionExit: code, Inspection: inspectAt(root, time.Now().UTC())}, true
 		case <-expired:
 		}
 	}
-	if promoted == 0 || gateTimeout == bounds.Unbounded {
-		return gateTimeout, Result{}, false
+	if promoted == 0 {
+		cancel()
+		return gateBudget{}, Result{}, false
 	}
-	return gateTimeout - time.Since(start), Result{}, false
+	return budget, Result{}, false
 }
 
 // clearForRun clears the machine queue for the own run of a foreground chunk checkpoint of plan in

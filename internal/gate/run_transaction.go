@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -89,7 +88,8 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		}
 	}
 	// The wait on a background grade of the key holds no checkout lock, and it spends the gate timeout.
-	timeout, waited, ended := awaitClaim(ctx, storageRoot, plan, stderr)
+	budget, waited, ended := awaitClaim(ctx, storageRoot, plan, stderr)
+	defer budget.release()
 	if ended {
 		return waited
 	}
@@ -148,7 +148,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 		}
 	}
 	clearForRun(ctx, storageRoot, plan, stderr)
-	runCtx, cancelRun := bounds.ContextCause(ctx, timeout, errGateTimeout)
+	runCtx, cancelRun := budget.runContext(ctx)
 	defer cancelRun()
 	// The cache lock spans the whole run: it opens before the run-binary build, the first
 	// Go child of the run, and the deferred release closes it after every teardown above.
