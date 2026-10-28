@@ -1116,3 +1116,13 @@ Findings: 3. Worst: no test reaches the empty `--base` refusal (F1).
 - F1 auto-fix, confidence 8: `internal/commit/grammar.go:32`; add the empty `--base` case. Repair.
 - F2 auto-fix, confidence 7: `internal/reviewrecord/recordcmd/ticket.go:169-175`; add the stale-head and dirty-path refusal cases. Repair.
 - F3 ask-user, confidence 4: the unused `--mutant`, the same as Spec F1. Declined.
+
+## BC-C3 ticket 07 repair, round 1 (commit 5f2ba7211)
+
+Witness return:
+
+- `TestCommitChainRefusesEmptyValue/base` (Coverage F1): the mutant that drops `NoEmptyValue` from the `BaseFlag` row bit.
+- `TestTicketStagesTheRetainedProbe/head_off_the_chunk_line` (Coverage F2): the swap of `if !current {` for `if false && !current {` bit.
+- `TestTicketStagesTheRetainedProbe/dirty_path` (Coverage F2): the swap of `len(dirty) != 0 {` for `len(dirty) != 0 && false {` bit.
+
+Each mutant compiled, and each subject was restored. probe-07 ran again at the repair commit and bit.
