@@ -1021,3 +1021,14 @@ Count: 4. Worst issue: the leaf-import rule has no gate pin.
 - BG-C3-C2, auto-fix, confidence 5: no test covers the refusal of a directory that is not private in `state.go`. No test covers the branch in `claim.go` that names another key. Target T3.
 - Coordinator action, confidence 7: the reds of BG32, BG33, BG35, and BG113 need a record at the current fixtures.
 - No-op, confidence 5: the uncertain branch of `Alive` passes through `protection.Classify`, which has its own tests.
+
+### BG-C3 coordinator reds
+
+The orchestrator ran one coordinator mutant for each row at the repair tip `2b4fa30be`. Each mutant bit, and each file was restored.
+
+- BG33: `Live` returned true at once. `TestClaimOfADeadOwnerIsNotLive` failed with `live = true, <nil>; want not live`.
+- BG32: the tag `boot_id` became `boot`. `TestClaimNamesKeyWorktreeOwnerAndBoot` failed with `claim fields = map[boot:...]`.
+- BG35: the tag `log` became `log_path`. `TestBackgroundRecordNamesTheOutcome` failed with `record fields = map[... log_path:...]`.
+- BG113: the stop loop did not wait for the exit. `TestStopWaitsForTheOwnerExit/live_claim` failed with `Stop returned before the owner exited`.
+
+The repair session showed the reds of its new tests as first failing runs. These tests are `TestImportClosureHoldsNoOtherGatePackage`, `TestWriteClaimRefusesADirectoryThatIsNotPrivate`, and `TestReadClaimRefusesAClaimOfAnotherKey`.
