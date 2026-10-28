@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
+  "plan_digest": "sha256:267aa30b49d0ff27c49d165e738172781c0caac90d2ecbae4afbc06d00344740",
   "implementation_session": "",
   "chunks": [
     {
@@ -297,9 +297,9 @@
     {
       "id": "BC-C2",
       "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
-      "tip": "4898ce9bb8d1c8b3d03903144d312129c660ea49",
-      "plan_digest": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
-      "source_digest": "faba25c63e5deb5e174a7863a79caadda655947d",
+      "tip": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+      "plan_digest": "sha256:267aa30b49d0ff27c49d165e738172781c0caac90d2ecbae4afbc06d00344740",
+      "source_digest": "e794c4b2f9cfb854155c3afab054fca5a25a2b23",
       "acceptance_rows": [
         "BC1",
         "BC2",
@@ -593,6 +593,41 @@
             "bc-c2-coverage-1"
           ]
         }
+      ],
+      "confirmations": [
+        {
+          "id": "bc-c2-confirmation-1",
+          "performer": "claude:bc-orchestrator-20261028",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "e794c4b2f9cfb854155c3afab054fca5a25a2b23",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+            "digest": "sha256:3a14ddd0157b568fd315ad1d35d3e7f0436d18123002cebca208a76cd0a5d21b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,2,TestRetroCostBudget/bookkeeping_rounded_up_over_the_budget,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostBudget,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,460\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,8\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostBudget/bookkeeping_rounded_up_over_the_budget,\"retro_cost_test.go:230: budget lines =\",6\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostBudget/wall_rounded_up_over_the_budget,\"retro_cost_test.go:230: budget lines =\",6\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "reviewed_tip": "7baeccff5af4a661cece464a917deb025a1de0c1",
+          "repaired_tip": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "finding_ids": [
+            "N2"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "budgetLines marks the raw value truncated to one decimal instead of the printed rounded value (swap of 'over = err == nil && printed > budget.limit')",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+              "digest": "sha256:3a14ddd0157b568fd315ad1d35d3e7f0436d18123002cebca208a76cd0a5d21b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,2,TestRetroCostBudget/bookkeeping_rounded_up_over_the_budget,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostBudget,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,460\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,8\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostBudget/bookkeeping_rounded_up_over_the_budget,\"retro_cost_test.go:230: budget lines =\",6\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostBudget/wall_rounded_up_over_the_budget,\"retro_cost_test.go:230: budget lines =\",6\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -685,6 +720,18 @@
     {
       "from": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
       "to": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:031f03c2877f5a77504880440778582a3b61e779b56deffd2b258cc3008631ae",
+      "to": "sha256:267aa30b49d0ff27c49d165e738172781c0caac90d2ecbae4afbc06d00344740",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
