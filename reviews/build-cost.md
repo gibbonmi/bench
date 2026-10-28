@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
+  "plan_digest": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
   "implementation_session": "",
   "chunks": [
     {
@@ -297,9 +297,9 @@
     {
       "id": "BC-C2",
       "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
-      "tip": "23911422b0db3d8e054fffe8cd64dc6f3561581e",
-      "plan_digest": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
-      "source_digest": "92d51e7750e64116f256474f146582132d2f7227",
+      "tip": "7baeccff5af4a661cece464a917deb025a1de0c1",
+      "plan_digest": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
+      "source_digest": "68617ffbd24061b554a8abddc200f7aea613f463",
       "acceptance_rows": [
         "BC1",
         "BC2",
@@ -384,6 +384,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t05-author-20261028",
               "digest": "sha256:76f2baeec18fea1b791b8cc2909d2742261e646dd2c7e7fcffb2719a0c49ea8c",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,132,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05r1-probe-05",
+          "performer": "claude:bc-t05-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "68617ffbd24061b554a8abddc200f7aea613f463",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t05-repair1-20261028",
+            "digest": "sha256:6d388e124072478c9736c31741976dd6312d70a870b4ef8077bbcf73213cadf5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,169,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7baeccff5af4a661cece464a917deb025a1de0c1",
+          "requirement": "probe-05",
+          "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t05-repair1-20261028",
+              "digest": "sha256:6d388e124072478c9736c31741976dd6312d70a870b4ef8077bbcf73213cadf5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,169,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:301: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -541,6 +571,18 @@
           "BC-C2"
         ]
       }
+    },
+    {
+      "from": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
+      "to": "sha256:9debeab8df9462aa287b96e6fc34ffdf99f12d22bf17f20199d9439524214a99",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ]
+      }
     }
   ],
   "folds": [
@@ -642,3 +684,17 @@ Findings: 8. Worst: no test decides the transition half of the landing rule (F1)
 - F6 ask-user, confidence 6: the seam names, the same fix as Standards F2. Repair.
 - F7 no-op, confidence 4: BC17 and BC18 fence an untouched function. Declined, because the fence is acceptable.
 - F8 ask-user, confidence 4: `internal/roadmap/retro_cost.go:109` marks the unrounded value. Repair: the marker compares the printed value.
+
+## BC-C2 ticket 05 repair, round 1 (commit 7baeccff5)
+
+Witness return:
+
+- `TestRetroCostBudget/fractional_minutes` (Spec F2): red on its first run before the production edit.
+- `TestRetroCostBudget/rounded_to_the_budget` (Coverage F8): red on its first run before the production edit.
+- `TestLandingIsTheStatusTransitionOfTheDefaultBranch/later_implemented_edit` (Coverage F1): the mutant that drops the parent check bit.
+- `TestLandingIsTheStatusTransitionOfTheDefaultBranch/flip_on_the_branch` (Coverage F2): the mutant that drops `--first-parent` bit.
+- `TestRetroCostSection/s` (Coverage F3): the `%ct` to `%at` mutant bit.
+- `TestRetroCostSection/s` (Coverage F4): the mutant that drops `-z` bit.
+- `TestRetroCostBudget/zero_tickets` (Coverage F5): the mutant that drops the `tickets > 0` guard bit.
+
+Each mutant compiled, and each subject was restored. probe-05 ran again at the repair commit and bit.
