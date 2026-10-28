@@ -156,6 +156,27 @@ func TestSlowTeardownRecordsStopped(t *testing.T) {
 	requireStoppedRecord(t, h)
 }
 
+// TestReapedStoppedGradeRecordsStopped is BG83 through the reap path. A stop marks the running
+// grade and ends it before it writes any record, and the next lane pass reaps it as stopped.
+func TestReapedStoppedGradeRecordsStopped(t *testing.T) {
+	home := t.TempDir()
+	dead := keyedWorktree(t, home)
+	dead.running(t)
+	queue, err := backgroundstate.ReadQueue(home)
+	if err != nil || queue.Running == nil {
+		t.Fatalf("running grade = %+v (%v); want the grade of %s", queue.Running, err, dead.root)
+	}
+	if err := backgroundstate.StopSlot(durablefile.Native(), *queue.Running); err != nil {
+		t.Fatal(err)
+	}
+	standInWorktree(t, home).pass(t)
+	gitdir, entry := adminDir(t, dead.root), entryOf(t, dead)
+	want := backgroundstate.Record{Outcome: backgroundstate.Stopped, Key: entry.Key, Tip: entry.Tip, Log: backgroundstate.LogPath(gitdir)}
+	if record, err := backgroundstate.ReadRecord(gitdir); err != nil || record != want {
+		t.Fatalf("record of the reaped grade = %+v (%v); want %+v", record, err, want)
+	}
+}
+
 // requireStoppedRecord fails t unless the background record of h names stopped for the key and
 // the tip of its HEAD.
 func requireStoppedRecord(t *testing.T, h queueWorktree) {

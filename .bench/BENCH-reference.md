@@ -810,7 +810,9 @@ worktree that they act on:
 - the stack form of `bench worktree land`
 - `bench cache clean`, for every grade
 
-A grade writes its output to `bench-background-grade.log` in the git directory of its worktree.
+A grade writes its output to `bench-background-grade.log.running` in the git directory of its
+worktree. When Bench records the end of the grade, it moves that file to
+`bench-background-grade.log`.
 The background record of that worktree names the latest outcome: `green`, `red`, `aborted`, or
 `stopped`. The record also names the grade key, the tip, and the log. The record is never a
 verdict. `bench status` shows it as the `background` row, and `bench commit` prints it on one
