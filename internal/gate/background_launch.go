@@ -1,9 +1,10 @@
 package gate
 
 // The launch of a background grade: after a lane pass publishes a tip in a kit worktree, the
-// launch passes the grade of that tip to the machine queue. The queue runs one grade at a time
-// through the wrapper of its worktree as a detached session, and no launch waits for a grade.
-// When a grade ends, its own process starts the oldest queued grade and then exits.
+// launch detaches the lane pass of that tip, which passes its grade to the machine queue. The
+// queue runs one grade at a time through the wrapper of its worktree as a detached session, and
+// no launch waits for a pass or a grade. When a grade ends, its own process starts the oldest
+// queued grade and then exits.
 
 import (
 	"context"
@@ -31,11 +32,13 @@ const (
 	gradeStopWindow = bounds.ProcessGroupCancelGrace + bounds.ProcessFinalWindow
 )
 
-// StartBackground passes the grade of tip, which a lane pass just published in the worktree
-// root, to the machine queue under the Bench home home. kit is the kit that the verb read. A
-// grade queues only in the worktree of an active assignment for which KitForRoot answers root
-// itself, and only when root holds its executable wrapper, because the grade runs as that
-// wrapper. The publication stands whatever the launch does, so a launch that fails prints one
+// StartBackground starts the lane pass of tip, the commit that a lane pass just published in the
+// worktree root, for the machine queue under the Bench home home. kit is the kit that the verb
+// read. A pass starts only in the worktree of an active assignment for which KitForRoot answers
+// root itself, and only when root holds its executable wrapper, because the pass runs as that
+// wrapper. The verb only detaches the pass, so it derives no grade key, takes no queue lock, and
+// stops no grade. The pass runs as the executable that the wrapper resolves, so its key is the key
+// of the grade. The publication stands whatever the launch does, so a launch that fails prints one
 // line to stderr and the verb keeps its exit.
 func StartBackground(home, kit, root, tip string, stderr io.Writer) {
 	if KitForRoot(kit, root) != root || !RealFS().Executable(backgroundWrapper(root)) {
@@ -44,7 +47,7 @@ func StartBackground(home, kit, root, tip string, stderr io.Writer) {
 	if _, assigned := intent.AssignmentForWorktree(root); !assigned {
 		return
 	}
-	if err := passLane(home, root, tip); err != nil {
+	if _, err := startGrade(root, tip, backgroundPassEnv+"="+home); err != nil {
 		fmt.Fprintf(stderr, "background grade: not queued: %v\n", err)
 	}
 }
@@ -52,9 +55,15 @@ func StartBackground(home, kit, root, tip string, stderr io.Writer) {
 // passLane applies the lane pass of tip in root to the queue under home. The pass queues nothing
 // for a key that a fresh green or a live claim already holds. A running grade that the pass
 // supersedes stops before the queue moves on. A claim that does not read retains its grade, so
-// the pass queues nothing.
+// the pass queues nothing. A pass runs after the verb that published its tip, so a later pass of
+// root can run first: a tip that is not the head of root drops out, and it replaces no grade of a
+// newer tip. A dropped pass still moves the queue on.
 func passLane(home, root, tip string) error {
-	key, settled := gradeKey(root, tip)
+	key, settled := "", false
+	if _, _, stripped, err := chunkSubjectOf(root, tip); err == nil {
+		evidence := InspectTree(root, stripped)
+		key, settled = evidence.Grade, evidence.ReusableGreen
+	}
 	if key != "" && !settled {
 		common, err := benchgit.CommonDir(root)
 		if err != nil {
@@ -71,7 +80,10 @@ func passLane(home, root, tip string) error {
 	var superseded *backgroundstate.Slot
 	err := updateQueue(home, func(queue *backgroundstate.Queue) error {
 		reaped := reapRunning(queue)
-		superseded = queue.Pass(backgroundstate.Entry{Key: key, Worktree: root, Tip: tip}, settled)
+		commit, err := benchgit.ResolveCommit(root, tip)
+		if head, headErr := benchgit.ResolveCommit(root, "HEAD"); err == nil && headErr == nil && commit == head {
+			superseded = queue.Pass(backgroundstate.Entry{Key: key, Worktree: root, Tip: commit}, settled)
+		}
 		return errors.Join(reaped, startOldest(home, queue))
 	})
 	if err != nil || superseded == nil {
@@ -157,7 +169,7 @@ func startOldest(home string, queue *backgroundstate.Queue) error {
 	for queue.Running == nil && len(queue.Queued) > 0 {
 		next := queue.Queued[0]
 		queue.Queued = queue.Queued[1:]
-		pid, err := startGrade(home, next.Worktree, next.Tip)
+		pid, err := startGrade(next.Worktree, next.Tip, backgroundQueueEnv+"="+home)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", next.Worktree, err))
 			continue
@@ -171,16 +183,17 @@ func startOldest(home string, queue *backgroundstate.Queue) error {
 	return errors.Join(errs...)
 }
 
-// startGrade starts the background grade of tip in root through the lifetime owner, as a
-// detached session, and answers its pid. The grade learns the queue under home, so it starts the
-// next grade when it ends. The owned group is only the detach helper, which exits once the grade
-// starts, so the teardown window of a process bounds it, and a cancellation kills it at once.
-func startGrade(home, root, tip string) (int, error) {
+// startGrade starts the background entry of tip in root through the lifetime owner, as a detached
+// session, and answers its pid. marker is the one environment entry that names the role of the
+// entry: the queue of a grade, which the grade advances when it ends, or the queue of a lane pass.
+// The owned group is only the detach helper, which exits once the entry starts, so the teardown
+// window of a process bounds it, and a cancellation kills it at once.
+func startGrade(root, tip, marker string) (int, error) {
 	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(bounds.ProcessFinalWindow))
 	defer cancel()
 	cmd := exec.Command(backgroundWrapper(root), backgroundVerb, root, tip)
 	cmd.Dir = root
-	cmd.Env = append(os.Environ(), backgroundQueueEnv+"="+home)
+	cmd.Env = append(os.Environ(), marker)
 	detached, err := subprocess.Detach(cmd)
 	if err != nil {
 		return 0, err

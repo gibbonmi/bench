@@ -305,8 +305,8 @@ BG-C1 to BG-C4 each hold a seam that a later chunk consumes, so each review clos
 | BG112 | 18 | No code in `internal/gate/backgroundstate` sends a signal itself | the `process-lifetime-closure` check over the new package | A signal from the leaf package skips the lifetime owner and its descendant teardown |
 | BG113 | 18 | The stop operation returns only after the owner process has exited | `internal/gate/backgroundstate/stop_test.go` (`TestStopWaitsForTheOwnerExit`) | A stop that returns at the signal lets two runs write one delta record |
 | BG114 | 22 | A background chunk grade runs its oracle with the width input set | `internal/gate/background_grade_test.go` (`TestBackgroundGradeSetsTheWidthInput`) | A grade that drops the width input runs at the foreground width and crowds the host |
-| BG115 | 35 | The grade key that a lane pass queues frames the executable that the wrapper resolves for the target worktree | planned TestLanePassKeyFramesTheTargetExecutable in internal/gate/background_queue_test.go | A key framed by the launching executable misses its dedup and its claim lookup |
-| BG116 | 18 | Before its own run, a checkpoint stops the other-key grade of its worktree even when another worktree wants that key | planned TestCheckpointStopsAWantedOtherKeyGrade in internal/gate/background_wait_test.go | A kept grade and the checkpoint write one delta record at once |
+| BG115 | 35 | The grade key that a lane pass queues frames the executable that the wrapper resolves for the target worktree | `internal/gate/background_queue_test.go` (`TestLanePassKeyFramesTheTargetExecutable`) | A key framed by the launching executable misses its dedup and its claim lookup |
+| BG116 | 18 | Before its own run, a checkpoint stops the other-key grade of its worktree even when another worktree wants that key | `internal/gate/background_wait_test.go` (`TestCheckpointStopsAWantedOtherKeyGrade`) | A kept grade and the checkpoint write one delta record at once |
 
 ### Edge inventory
 

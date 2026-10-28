@@ -19,16 +19,6 @@ func SlotFor(entry Entry, owner int) (Slot, error) {
 	return Slot{Entry: entry, Owner: owner, Boot: boot}, nil
 }
 
-// ReadSlot reads the running grade of the machine queue under the Bench home home. A queue with
-// no running grade answers the empty slot.
-func ReadSlot(home string) (Slot, error) {
-	queue, err := ReadQueue(home)
-	if err != nil || queue.Running == nil {
-		return Slot{}, err
-	}
-	return *queue.Running, nil
-}
-
 // Live reports whether the process of slot still runs. The empty slot is not live.
 func (s Slot) Live() (bool, error) {
 	if s == (Slot{}) {

@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"slices"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
@@ -97,26 +96,25 @@ func awaitClaim(ctx context.Context, root string, plan subject, stderr io.Writer
 // clearForRun clears the machine queue for the own run of a foreground chunk checkpoint of plan in
 // root. A queued grade of its key leaves the queue, the queued grade of root that holds another key
 // leaves it, and the running grade of root that holds another key stops, and the checkpoint waits
-// for its exit. The lane pass owns that supersede policy, so a grade whose key the latest tip of
-// another worktree holds stays. A queue that holds no grade of root and none of its key is not
-// written. A step that fails prints one line, because a background grade never blocks a run.
+// for its exit. A lane pass keeps a grade whose key the latest tip of another worktree holds, but
+// the checkpoint does not, because two runs of root never write one delta record at once. A step
+// that fails prints one line, because a background grade never blocks a run.
 func clearForRun(ctx context.Context, root string, plan subject, stderr io.Writer) {
 	if !foregroundChunk(ctx) {
 		return
 	}
 	home, key := benchhome.Dir(), evidenceName(plan)
-	clears := func(entry backgroundstate.Entry) bool { return entry.Worktree == root || entry.Key == key }
+	// The clear first runs on the queue as read, which it does not write: a queue that the clear
+	// leaves as it is needs no lock.
 	queue, err := backgroundstate.ReadQueue(home)
-	if err == nil && (queue.Running == nil || queue.Running.Worktree != root) && !slices.ContainsFunc(queue.Queued, clears) {
+	if queued := len(queue.Queued); err == nil && queue.ClearForCheckpoint(key, root) == nil && len(queue.Queued) == queued {
 		return
 	}
-	source, _ := ctx.Value(deltaSourceKey{}).(chunkSource)
 	var superseded *backgroundstate.Slot
 	if err == nil {
 		err = updateQueue(home, func(queue *backgroundstate.Queue) error {
 			reaped := reapRunning(queue)
-			superseded = queue.Pass(backgroundstate.Entry{Key: key, Worktree: root, Tip: source.tip}, true)
-			queue.Queued = slices.DeleteFunc(queue.Queued, func(entry backgroundstate.Entry) bool { return entry.Key == key })
+			superseded = queue.ClearForCheckpoint(key, root)
 			return reaped
 		})
 	}

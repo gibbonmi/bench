@@ -63,6 +63,18 @@ func (q *Queue) Pass(entry Entry, settled bool) *Slot {
 	return nil
 }
 
+// ClearForCheckpoint clears the queue for the own run of a chunk checkpoint of key in worktree. It
+// drops each queued grade of worktree and each queued grade of key. It answers the running grade
+// of worktree that holds another key, which the caller stops, or nil. A checkpoint is the current
+// run of its worktree, so a key that another worktree wants keeps no grade of worktree.
+func (q *Queue) ClearForCheckpoint(key, worktree string) *Slot {
+	q.Queued = slices.DeleteFunc(q.Queued, func(queued Entry) bool { return queued.Worktree == worktree || queued.Key == key })
+	if r := q.Running; r != nil && r.Worktree == worktree && r.Key != key {
+		return r
+	}
+	return nil
+}
+
 // wanted reports whether a worktree other than except has key as the key of its latest tip.
 // The empty key is no grade, so no worktree wants it.
 func (q *Queue) wanted(key, except string) bool {

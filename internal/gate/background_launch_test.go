@@ -52,6 +52,33 @@ func (f launchFixture) launch(t *testing.T, tip string) {
 	}
 }
 
+// passing makes the wrapper of the fixture a pass wrapper, and answers the HEAD tip.
+func (f launchFixture) passing(t *testing.T) string {
+	t.Helper()
+	if err := os.WriteFile(backgroundWrapper(f.root), []byte(passWrapper(t, f.root, f.launches)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return gittest.Output(t, f.root, "rev-parse", "HEAD")
+}
+
+// passWrapper answers a wrapper of the worktree root that runs the real entry of this test binary
+// for a lane pass, and the stand-in grade of grades for each other run. So a test sees the grade
+// that the detached lane pass starts.
+func passWrapper(t *testing.T, root string, grades *processtest.Launches) string {
+	t.Helper()
+	return processtest.Branch(backgroundPassEnv, processtest.Script(t, backgroundGradeHelper, kitRunRootEnv+"="+root, backgroundResolvedEnv+"=1"), grades.StandIn())
+}
+
+// awaitQueue waits until the queue under home holds what done reports, so a detached lane pass has
+// written it.
+func awaitQueue(t *testing.T, home string, done func(backgroundstate.Queue) bool) {
+	t.Helper()
+	processtest.WaitFor(t, "the lane pass to write the queue", func() bool { queue, err := backgroundstate.ReadQueue(home); return err == nil && done(queue) })
+}
+
+// running reports whether the queue runs a grade.
+func running(queue backgroundstate.Queue) bool { return queue.Running != nil }
+
 // sessionOf answers the session id of process pid from its stat record. A host with no stat
 // record skips the test.
 func sessionOf(t *testing.T, pid int) string {
@@ -69,26 +96,31 @@ func sessionOf(t *testing.T, pid int) string {
 	return fields[3]
 }
 
-// TestLaunchedGradeLeavesTheVerbSession is BG43. The launched grade runs in a session other than
-// the session of the launching verb, so the end of the verb's session does not end the grade.
+// TestLaunchedGradeLeavesTheVerbSession is BG43. The grade that the detached lane pass starts runs
+// in a session other than the session of the launching verb, so the end of the verb's session does
+// not end the grade.
 func TestLaunchedGradeLeavesTheVerbSession(t *testing.T) {
 	f := newLaunchFixture(t, true)
 	verb := sessionOf(t, os.Getpid())
-	f.launch(t, "tip")
+	f.launch(t, f.passing(t))
 	if grade := sessionOf(t, f.launches.Await(t).PID); grade == verb {
 		t.Fatalf("grade session = %s, want a session other than the verb session %s", grade, verb)
 	}
 }
 
-// TestSecondGradeStartsNoSecondOracle is BG45. While one grade runs, a second lane pass starts no
-// second grade, so the machine runs one oracle.
+// TestSecondGradeStartsNoSecondOracle is BG45. While one grade runs, the lane pass of a second tip
+// queues its grade and starts no second grade, so the machine runs one oracle.
 func TestSecondGradeStartsNoSecondOracle(t *testing.T) {
 	f := newLaunchFixture(t, true)
-	f.launch(t, "first")
+	first := f.passing(t)
+	f.launch(t, first)
 	f.launches.Await(t)
-	f.launch(t, "second")
+	awaitQueue(t, f.home, running)
+	gittest.Output(t, f.root, "commit", "-q", "--allow-empty", "-m", "second")
+	f.launch(t, gittest.Output(t, f.root, "rev-parse", "HEAD"))
+	awaitQueue(t, f.home, func(queue backgroundstate.Queue) bool { return len(queue.Queued) == 1 })
 	f.launches.End(t)
-	want := []string{backgroundVerb, f.root, "first"}
+	want := []string{backgroundVerb, f.root, first}
 	if got := f.launches.Launched(t); len(got) != 1 || !slices.Equal(got[0].Args, want) {
 		t.Fatalf("launches = %+v, want the one grade %q", got, want)
 	}
@@ -100,8 +132,8 @@ func TestUnassignedWorktreeStartsNoGrade(t *testing.T) {
 	f := newLaunchFixture(t, false)
 	f.launch(t, "tip")
 	f.launches.End(t)
-	slot, err := backgroundstate.ReadSlot(f.home)
-	if err != nil || slot != (backgroundstate.Slot{}) || len(f.launches.Launched(t)) != 0 {
-		t.Fatalf("slot = %+v (%v), launches = %+v; want no grade", slot, err, f.launches.Launched(t))
+	queue, err := backgroundstate.ReadQueue(f.home)
+	if err != nil || queue.Running != nil || len(f.launches.Launched(t)) != 0 {
+		t.Fatalf("running grade = %+v (%v), launches = %+v; want no grade", queue.Running, err, f.launches.Launched(t))
 	}
 }

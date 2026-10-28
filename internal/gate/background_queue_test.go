@@ -11,9 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"testing"
-	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
@@ -22,7 +20,6 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
-	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // queueWorktree is one worktree: its root, its queue home, the temporary directory of a real
@@ -70,14 +67,20 @@ func (w queueWorktree) wrap(t *testing.T, body string) {
 	}
 }
 
-// pass runs the lane pass of the HEAD tip of w, and the launch prints nothing. It answers w.
+// pass runs the lane pass of the HEAD tip of w in this process, as the detached pass runs it. It
+// answers w.
 func (w queueWorktree) pass(t *testing.T) queueWorktree {
 	t.Helper()
-	var stderr bytes.Buffer
-	if StartBackground(w.home, w.root, w.root, entryOf(t, w).Tip, &stderr); stderr.Len() != 0 {
-		t.Fatalf("lane pass of %s printed %q", w.root, stderr.String())
-	}
+	w.passTip(t, gittest.Output(t, w.root, "rev-parse", "HEAD"))
 	return w
+}
+
+// passTip runs the lane pass of tip in w, and the pass fails nothing.
+func (w queueWorktree) passTip(t *testing.T, tip string) {
+	t.Helper()
+	if err := passLane(w.home, w.root, tip); err != nil {
+		t.Fatalf("lane pass of %s in %s: %v", tip, w.root, err)
+	}
 }
 
 // running makes the grade of w the running grade of its queue, and answers its stand-in.
@@ -201,16 +204,39 @@ func TestQueuedKeyQueuesNothing(t *testing.T) {
 }
 
 // TestNewerTipReplacesTheQueuedGrade is BG50. A newer tip with a new key replaces the queued grade
-// of its worktree.
+// of its worktree. A late lane pass of the older tip is no longer the head of the worktree, so it
+// drops out and does not replace the grade of the newer tip.
 func TestNewerTipReplacesTheQueuedGrade(t *testing.T) {
 	home := t.TempDir()
 	first := standInWorktree(t, home)
 	first.running(t)
 	w := keyedWorktree(t, home)
-	w.pass(t)
+	older := w.pass(t).f.Tip()
 	w.supersede(t)
 	w.pass(t)
+	w.passTip(t, older)
 	requireQueue(t, home, entryOf(t, first), entryOf(t, w))
+}
+
+// TestLanePassKeyFramesTheTargetExecutable is BG115. The launching verb runs an executable other
+// than the one that the wrapper of the worktree resolves. The grade that its detached lane pass
+// queues holds the key of the wrapper's executable, which is the key that the grade runs.
+func TestLanePassKeyFramesTheTargetExecutable(t *testing.T) {
+	w := keyedWorktree(t, t.TempDir())
+	w.wrap(t, passWrapper(t, w.root, w.launches))
+	w.f.Commit("pass through the wrapper")
+	want := entryOf(t, w)
+	setRunningExecutable(t, "the launching executable")
+	if launcher := entryOf(t, w); launcher.Key == want.Key {
+		t.Fatalf("key under the launching executable = %s; want a key other than the key of the wrapper's executable", launcher.Key)
+	}
+	var stderr bytes.Buffer
+	if StartBackground(w.home, w.root, w.root, want.Tip, &stderr); stderr.Len() != 0 {
+		t.Fatalf("launch printed %q", stderr.String())
+	}
+	w.launches.Await(t)
+	awaitQueue(t, w.home, running)
+	requireQueue(t, w.home, want)
 }
 
 // TestNewerTipStopsTheRunningGrade is BG51. A newer tip with a new key stops the running grade of
@@ -316,58 +342,6 @@ func TestStoppedGradeReleasesItsResources(t *testing.T) {
 	requireAlive(t, s.grade.Owner, false)
 	if retained, err := filepath.Glob(filepath.Join(s.tmp, prospectiveartifact.BundlePrefix+"*")); err != nil || len(retained) != 0 {
 		t.Fatalf("bundles of the stopped grade = %v (%v); want none", retained, err)
-	}
-}
-
-// holdingGate is the fixture gate step of a holding worktree. The oracle of a tip that commits
-// .gate-hold marks that it holds, and then it waits for the release for a bounded count of polls.
-func holdingGate(g *testrepo.GateFixture, body string) string {
-	polls := strconv.Itoa(int(bounds.TestDeadline(0) / bounds.FixedWindow(10*time.Millisecond)))
-	return body + `if [ -e .gate-hold ]; then
-  : > "$common/.gate-holding"
-  i=0
-  while [ ! -e "$common/.gate-release" ] && [ "$i" -lt ` + polls + ` ]; do ` + g.Command("sleep") + ` 0.01; i=$((i+1)); done
-fi
-`
-}
-
-// holdingWorktree answers a checkpoint fixture under the queue of home whose wrapper runs the real
-// grade entry. Its seed gate runs before .gate-hold, so only the grade of its tip holds.
-func holdingWorktree(t *testing.T, home string) queueWorktree {
-	t.Helper()
-	f := recordtest.Attach(t, outcomeFixture(t, holdingGate), 1)
-	f.AddChunk()
-	f.Save()
-	f.Commit("retain review evidence")
-	seedGateCache(t, f)
-	h := queueWorktree{root: f.Root, home: home, tmp: t.TempDir(), launches: processtest.NewLaunches(t), f: f}
-	h.wrap(t, processtest.Script(t, backgroundGradeHelper, kitRunRootEnv+"="+f.Root, backgroundResolvedEnv+"=1", "TMPDIR="+h.tmp))
-	f.Write(".gate-hold", "")
-	f.Git("add", "-f", ".gate-hold")
-	f.Commit("hold the oracle")
-	commitmenttest.Register(t, f.Root, "holding")
-	return h
-}
-
-// awaitHolding waits until the oracle of the running grade holds, and answers the slot of that
-// grade. The cleanup releases the oracle and waits for the grade to exit.
-func (h queueWorktree) awaitHolding(t *testing.T) backgroundstate.Slot {
-	t.Helper()
-	slot, err := backgroundstate.ReadSlot(h.home)
-	if err != nil || slot.Owner == 0 {
-		t.Fatalf("slot = %+v (%v); want the running grade", slot, err)
-	}
-	t.Cleanup(func() { h.release(t); awaitExit(t, slot.Owner) })
-	holding := filepath.Join(commonDir(t, h.root), ".gate-holding")
-	processtest.WaitFor(t, "the oracle to hold", func() bool { _, err := os.Stat(holding); return err == nil })
-	return slot
-}
-
-// release lets the held oracle end.
-func (h queueWorktree) release(t *testing.T) {
-	t.Helper()
-	if err := os.WriteFile(filepath.Join(commonDir(t, h.root), ".gate-release"), nil, 0o600); err != nil {
-		t.Fatal(err)
 	}
 }
 

@@ -1,8 +1,9 @@
 package commit
 
-// The background grade that a commit starts. Each fixture worktree holds a wrapper that runs
-// the stand-in grade of this test binary, so each grade that a commit starts is observable,
-// and each one ends at the cleanup of its test.
+// The background grade that a commit starts. A commit only detaches the lane pass of its tip,
+// which runs as the wrapper of the worktree. Each fixture worktree holds a wrapper that runs the
+// stand-in of this test binary, so each lane pass that a commit starts is observable, and each one
+// ends at the cleanup of its test. The gate package tests what a pass then queues.
 
 import (
 	"os"
@@ -96,14 +97,14 @@ func (f launchFixture) asKit(t *testing.T) {
 func (f launchFixture) requireNoGrade(t *testing.T) {
 	t.Helper()
 	f.launches.End(t)
-	slot, err := backgroundstate.ReadSlot(f.home)
-	if err != nil || slot != (backgroundstate.Slot{}) || len(f.launches.Launched(t)) != 0 {
-		t.Fatalf("slot = %+v (%v), launches = %+v; want no grade", slot, err, f.launches.Launched(t))
+	queue, err := backgroundstate.ReadQueue(f.home)
+	if err != nil || queue.Running != nil || len(f.launches.Launched(t)) != 0 {
+		t.Fatalf("running grade = %+v (%v), launches = %+v; want no grade", queue.Running, err, f.launches.Launched(t))
 	}
 }
 
 // TestCommitStartsABackgroundGrade is BG5. A commit that publishes in a kit worktree starts one
-// grade, and that grade names the worktree and the published tip.
+// lane pass, and the test waits for that pass. The pass names the worktree and the published tip.
 func TestCommitStartsABackgroundGrade(t *testing.T) {
 	f := newLaunchFixture(t, passingCheck)
 	f.asKit(t)
@@ -114,7 +115,7 @@ func TestCommitStartsABackgroundGrade(t *testing.T) {
 	f.launches.Await(t)
 	f.launches.End(t)
 	if got := f.launches.Launched(t); len(got) != 1 || len(got[0].Args) != 3 || !slices.Equal(got[0].Args[1:], want) {
-		t.Fatalf("launches = %+v, want one grade of %q", got, want)
+		t.Fatalf("launches = %+v, want one lane pass of %q", got, want)
 	}
 }
 
@@ -149,9 +150,9 @@ func TestRefusedCommitStartsNoGrade(t *testing.T) {
 	f.requireNoGrade(t)
 }
 
-// TestCommitReturnsBeforeItsGrade is BG11. The commit exits 0 while its grade still runs: after
-// the commit returns, the grade holds a live claim on its key. A commit that waited for the grade
-// would return only after the grade released that claim.
+// TestCommitReturnsBeforeItsGrade is BG11. The commit exits 0 while its lane pass still runs:
+// after the commit returns, the stand-in pass holds a live claim. A commit that waited for its pass
+// would return only after the pass released that claim.
 func TestCommitReturnsBeforeItsGrade(t *testing.T) {
 	f := newLaunchFixture(t, passingCheck)
 	f.asKit(t)

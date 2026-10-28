@@ -60,7 +60,17 @@ func Script(t *testing.T, name string, env ...string) string {
 	for _, entry := range env {
 		words = append(words, sanitize.ShellQuote(entry))
 	}
-	return "#!/bin/sh\n" + strings.Join(append(words, sanitize.ShellQuote(executable), `"$@"`), " ") + "\n"
+	return shebang + strings.Join(append(words, sanitize.ShellQuote(executable), `"$@"`), " ") + "\n"
+}
+
+// shebang is the first line of each script that this package answers.
+const shebang = "#!/bin/sh\n"
+
+// Branch answers a shell script that runs the script set when the environment sets variable, and
+// the script unset otherwise. Each is a script of this package, and set is a Script, which
+// replaces the shell, so it never runs on into unset.
+func Branch(variable, set, unset string) string {
+	return shebang + "if [ -n \"${" + variable + "+set}\" ]; then\n" + strings.TrimPrefix(set, shebang) + "fi\n" + strings.TrimPrefix(unset, shebang)
 }
 
 // init runs before the test main, so a holder never runs a test. It leaves its parent's

@@ -54,7 +54,7 @@ func NewLaunches(t *testing.T) *Launches {
 // StandIn answers a shell stand-in. It writes its record line in one append, with a tab before
 // each argument, so an argument with a space stays one argument.
 func (l *Launches) StandIn() string {
-	return "#!/bin/sh\ntab=$(printf '\\t')\nline=$$\nfor arg in \"$@\"; do line=$line$tab$arg; done\n" +
+	return shebang + "tab=$(printf '\\t')\nline=$$\nfor arg in \"$@\"; do line=$line$tab$arg; done\n" +
 		"printf '%s\\n' \"$line\" >> " + sanitize.ShellQuote(l.record) + "\ni=0\n" +
 		"while [ ! -e " + sanitize.ShellQuote(l.release) + " ] && [ \"$i\" -lt " + strconv.Itoa(launchPolls()) + " ]; do sleep " +
 		strconv.FormatFloat(launchPoll.Seconds(), 'f', -1, 64) + "; i=$((i+1)); done\n"

@@ -1,5 +1,5 @@
 // The background grade that a merge starts: a merge that publishes a new tip in a kit
-// worktree starts one grade of that tip, and a merge with nothing to publish starts none.
+// worktree starts the lane pass of that tip, and a merge with nothing to publish starts none.
 package worktree
 
 import (
@@ -34,16 +34,16 @@ func launchMergeSet(t *testing.T) (mergeSet, Creation, *processtest.Launches) {
 	return f, target, launches
 }
 
-// mergeSlot answers the machine slot under the home of f.
-func mergeSlot(t *testing.T, f mergeSet) backgroundstate.Slot {
+// mergeRunning answers the running grade of the machine queue under the home of f, or nil.
+func mergeRunning(t *testing.T, f mergeSet) *backgroundstate.Slot {
 	t.Helper()
-	slot, err := backgroundstate.ReadSlot(f.home)
+	queue, err := backgroundstate.ReadQueue(f.home)
 	mustNoError(t, err)
-	return slot
+	return queue.Running
 }
 
-// TestMergeStartsABackgroundGrade is BG6. A merge of kind merge starts one grade, and that grade
-// names the target worktree and the new tip.
+// TestMergeStartsABackgroundGrade is BG6. A merge of kind merge starts one lane pass, and the test
+// waits for that pass. The pass names the target worktree and the new tip.
 func TestMergeStartsABackgroundGrade(t *testing.T) {
 	t.Parallel()
 	f, target, launches := launchMergeSet(t)
@@ -55,7 +55,7 @@ func TestMergeStartsABackgroundGrade(t *testing.T) {
 	launches.Await(t)
 	launches.End(t)
 	if got := launches.Launched(t); len(got) != 1 || len(got[0].Args) != 3 || !slices.Equal(got[0].Args[1:], want) {
-		t.Fatalf("launches = %+v, want one grade of %q", got, want)
+		t.Fatalf("launches = %+v, want one lane pass of %q", got, want)
 	}
 }
 
@@ -70,7 +70,7 @@ func TestCurrentMergeStartsNoGrade(t *testing.T) {
 		t.Fatalf("merge = (%d, %q, %q), want a merge of kind current at exit 0", r.exit, r.stdout, r.stderr)
 	}
 	launches.End(t)
-	if slot, got := mergeSlot(t, f), launches.Launched(t); slot != (backgroundstate.Slot{}) || len(got) != 0 {
-		t.Fatalf("slot = %+v, launches = %+v; want no grade", slot, got)
+	if running, got := mergeRunning(t, f), launches.Launched(t); running != nil || len(got) != 0 {
+		t.Fatalf("running grade = %+v, launches = %+v; want no grade", running, got)
 	}
 }

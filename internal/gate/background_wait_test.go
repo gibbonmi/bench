@@ -16,11 +16,14 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // TestChunkCheckpointWaitsForItsKey is BG57. The checkpoint finds the live claim of a real grade
@@ -131,6 +134,20 @@ func TestCheckpointStopsOtherKeyGrades(t *testing.T) {
 	requireQueue(t, w.home, backgroundstate.Entry{})
 }
 
+// TestCheckpointStopsAWantedOtherKeyGrade is BG116. A second worktree at the running tip wants the
+// running key, which would keep that grade at a lane pass. The checkpoint of a newer tip of the
+// first worktree still stops it and waits for its exit before its own run.
+func TestCheckpointStopsAWantedOtherKeyGrade(t *testing.T) {
+	w := recordedWorktree(t, privateHome(t))
+	old := w.running(t)
+	linkedWorktree(t, w.home, w.f).pass(t)
+	w.supersede(t)
+	rerecord(t, w.f)
+	requireOwnRun(t, w)
+	requireAlive(t, old.PID, false)
+	requireQueue(t, w.home, backgroundstate.Entry{})
+}
+
 // TestCheckpointDropsOtherKeyQueue is BG65. The queued grade of an older tip of the worktree holds
 // another key, and the checkpoint drops it before its own run.
 func TestCheckpointDropsOtherKeyQueue(t *testing.T) {
@@ -143,6 +160,88 @@ func TestCheckpointDropsOtherKeyQueue(t *testing.T) {
 	rerecord(t, w.f)
 	requireOwnRun(t, w)
 	requireQueue(t, home, entryOf(t, first))
+}
+
+// TestChunkCheckpointRefusesInFlightExecution is the chunk checkpoint form of BG66. While the
+// chunk checkpoint of a checkout holds its oracle, a second chunk checkpoint of that checkout
+// refuses at once and does not wait.
+func TestChunkCheckpointRefusesInFlightExecution(t *testing.T) {
+	h := holdingWorktree(t, privateHome(t))
+	rerecord(t, h.f)
+	first := &checkpointEnd{done: make(chan struct{})}
+	go func() {
+		first.code, first.out = runCheckpoint(t, h.f)
+		close(first.done)
+	}()
+	t.Cleanup(func() { h.release(t); first.await(t) })
+	h.awaitOracle(t)
+	runs := outcomeRuns(t, h.root)
+	if code, out := runCheckpoint(t, h.f); code != 1 || !strings.Contains(out, "gate execution already in progress") || outcomeRuns(t, h.root) != runs {
+		t.Fatalf("second checkpoint = %d %s after %d runs; want the in-flight refusal after %d runs", code, out, outcomeRuns(t, h.root), runs)
+	}
+	h.release(t)
+	if first.await(t); first.code != 0 {
+		t.Fatalf("held checkpoint = %d %s; want its green", first.code, first.out)
+	}
+}
+
+// holdingGate is the fixture gate step of a holding worktree. The oracle of a tip that commits
+// .gate-hold marks that it holds, and then it waits for the release for a bounded count of polls.
+func holdingGate(g *testrepo.GateFixture, body string) string {
+	polls := strconv.Itoa(int(bounds.TestDeadline(0) / bounds.FixedWindow(10*time.Millisecond)))
+	return body + `if [ -e .gate-hold ]; then
+  : > "$common/.gate-holding"
+  i=0
+  while [ ! -e "$common/.gate-release" ] && [ "$i" -lt ` + polls + ` ]; do ` + g.Command("sleep") + ` 0.01; i=$((i+1)); done
+fi
+`
+}
+
+// holdingWorktree answers a checkpoint fixture under the queue of home whose wrapper runs the real
+// grade entry. Its seed gate runs before .gate-hold, so only the run of its tip holds.
+func holdingWorktree(t *testing.T, home string) queueWorktree {
+	t.Helper()
+	f := recordtest.Attach(t, outcomeFixture(t, holdingGate), 1)
+	f.AddChunk()
+	f.Save()
+	f.Commit("retain review evidence")
+	seedGateCache(t, f)
+	h := queueWorktree{root: f.Root, home: home, tmp: t.TempDir(), launches: processtest.NewLaunches(t), f: f}
+	h.wrap(t, processtest.Script(t, backgroundGradeHelper, kitRunRootEnv+"="+f.Root, backgroundResolvedEnv+"=1", "TMPDIR="+h.tmp))
+	f.Write(".gate-hold", "")
+	f.Git("add", "-f", ".gate-hold")
+	f.Commit("hold the oracle")
+	commitmenttest.Register(t, f.Root, "holding")
+	return h
+}
+
+// awaitHolding waits until the oracle of the running grade holds, and answers the slot of that
+// grade. The cleanup releases the oracle and waits for the grade to exit.
+func (h queueWorktree) awaitHolding(t *testing.T) backgroundstate.Slot {
+	t.Helper()
+	queue, err := backgroundstate.ReadQueue(h.home)
+	if err != nil || queue.Running == nil {
+		t.Fatalf("running grade = %+v (%v); want the running grade", queue.Running, err)
+	}
+	slot := *queue.Running
+	t.Cleanup(func() { h.release(t); awaitExit(t, slot.Owner) })
+	h.awaitOracle(t)
+	return slot
+}
+
+// awaitOracle waits until the held oracle of a run in h holds.
+func (h queueWorktree) awaitOracle(t *testing.T) {
+	t.Helper()
+	holding := filepath.Join(commonDir(t, h.root), ".gate-holding")
+	processtest.WaitFor(t, "the oracle to hold", func() bool { _, err := os.Stat(holding); return err == nil })
+}
+
+// release lets the held oracle end.
+func (h queueWorktree) release(t *testing.T) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(commonDir(t, h.root), ".gate-release"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // privateHome answers a Bench home for one test. The checkpoints of that test read it too.
