@@ -142,7 +142,8 @@ The lp-lean-author-charge light path already makes the charge name the verb gram
 The cost section is a fourth derived section of the retro scaffold, beside the timings, the calibration table, and the repair table. The `## Cost` heading joins the canonical heading list directly after `## Outcome`.
 The retro parser then demands it in each new body. The gate's retro grade reads only the destination markers, so a pending retro without the heading stays valid.
 
-The landing commit is the newest first-parent commit of the default branch whose tree holds `specs/<slug>/spec.md` with `Status: implemented`. The build range is `<landing>^1..<landing>^2`.
+The landing commit is the newest first-parent commit of the default branch that changes `specs/<slug>/spec.md` to `Status: implemented`. Its tree holds that status, and the tree of its first parent does not. The build range is `<landing>^1..<landing>^2`.
+One function in `internal/spec`, beside the status parser, owns this transition rule. No Bench helper names a spec's landing commit now, so the cost renderer must not derive it a second time in its own package.
 The scaffold reads the plan and the tickets from the tree of the landing commit, so a retired spec folder loses no fact. A slug with no such commit prints `unknown` in each derived line.
 
 The section derives these facts:
@@ -164,6 +165,7 @@ The plan grade refuses a chunk requirement without a `probe` key, and it names t
 A chunk's `verification` list can be empty or absent. A version 2 plan no longer needs a requirement for each ticket, but each listed chunk requirement still names a ticket of its chunk.
 
 `bench record ticket` accepts a ticket that owes no requirement. It then writes the chunk step and no verification entry.
+The shared plan fixtures of `internal/reviewrecord/recordtest` and `internal/preflight/preflighttest` hold plain chunk requirements now. The ticket that adds the refusal moves them, and each test that reads them, to probe requirements.
 The checkpoint's evidence pass and its oracle stay as they are. The pass grades only the planned requirements, and those are now probes.
 
 The `check-floor` row, its facts, and its guidance retire. The charge's root conformance line stays, because it names a development check and not a recorded requirement.
@@ -177,11 +179,14 @@ This build changes the rules that grade its own plan. The current binary runs th
 Thus no single plan passes both binaries, and the order below keeps each step green:
 
 1. At the spec stage, each chunk lists one probe requirement for each ticket and the plain floor commands that the current `check-floor` row names. The spec-stage `--plan-only` preflight and the first charge then pass on the current binary.
-2. Ticket 01 changes the plan grade and retires `check-floor` in one commit. The same commit deletes every plain chunk requirement of this plan, so its plan passes the new grade.
-3. After ticket 01, the orchestrator installs the worktree build before the next dispatch, as the build guidance states. Each later preflight, charge, and checkpoint runs the new binary.
+2. Ticket 01 lets the plan grade accept a probe-only plan and retires `check-floor` in one commit. The same commit deletes every plain chunk requirement of this plan, so its plan passes on the new binary.
+3. Ticket 01's author records with the current binary. Its `bench record ticket` writes the plan-digest amendment itself, because its amendment step runs when the record digest differs from the plan at the tip.
+4. Ticket 01's record commit uses plain `bench commit`. The chained form runs the build preflight in its own process, which is the current binary, so it would red on `check-floor`.
+5. After ticket 01, the orchestrator installs the worktree build before the next dispatch, as the build guidance states. Each later preflight, charge, and checkpoint runs the new binary.
+6. Ticket 02 then refuses a plain chunk requirement and moves the shared plan fixtures to probe requirements. This plan already holds none.
 
 No author runs a plain floor command as a recorded requirement. Ticket 01's own record owes only its probe, because the plan at its commit holds no plain chunk requirement.
-Ticket 01 runs its post-ticket preflight through `bench preflight --in <target>` after `bench worktree build <target>`, so that preflight runs the new binary. Later tickets obey the sequence that tickets 02 and 06 state.
+Ticket 01 runs its post-ticket preflight through `bench preflight --in <target>` after `bench worktree build <target>`, so that preflight runs the new binary. Later tickets obey the sequence that tickets 03 and 07 state.
 
 ### One record step
 
@@ -209,19 +214,20 @@ Each candidate's seal is the same trust root as today. The operator trusts the p
 ### Guidance
 
 The build guidance names the post-ticket sequence: the probe, `bench record ticket`, and the record commit that its `next=` line prints. The separate post-ticket `bench worktree exec` preflight step retires.
-The known issues, the command notes, and the craft-synthesis skill name the `--in` forms. `.bench/BENCH.md` keeps the learning for every plan or gate expansion except a `Writes:` widen.
+The known issues, the command notes, and the craft-synthesis skill name the `--in` forms. The known-issues row for the evidence check keeps its no-owner retire condition, which then names the `--in` form. `.bench/BENCH.md` keeps the learning for every plan or gate expansion except a `Writes:` widen.
 
 ## Implementation chunks
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| BC-C1 / 01-grade-probe-only-plans-and-retire-check-floor.md, 02-state-the-probe-only-rule.md | The checkpoint grade is the only green evidence for a plain check | BC23–BC37 | TestPlanProbeOnlyChunks, TestTicketFreezesWithoutRequirements, TestDecideHasNoCheckFloorRow, TestCommandBuildRedsAPlainChunkRequirement, TestBuildCostAnchors | yes |
-| BC-C2 / 03-derive-the-retro-cost-section.md, 04-add-trace-times-and-the-drain-rule.md | The retro measures what the build cost | BC1–BC22, BC71 | TestRetroCostSection, TestRetroCostBudget, TestRetroCostTraceTimes, TestRetroRejectsABodyWithoutCost, TestBuildCostAnchors | no |
-| BC-C3 / 05-pass-the-chunk-base-to-the-commit-chain.md, 06-stage-the-probe-in-record-ticket.md | One record step follows the ticket commit | BC38–BC48 | TestCommitChainPassesTheBase, TestParseArgsRefusesABaseWithoutTheChain, TestTicketStagesTheRetainedProbe, TestBuildCostAnchors | yes |
-| BC-C4 / 07-print-a-short-lane-pass.md, 08-print-a-short-bitten-mutant-set.md | Success output fits the bound | BC49–BC57 | TestLanePassPrintsNoCheckReport, TestMutantSetSuccessOmitsTheReports, TestExcerptStagesAShortMutantSet | no |
-| BC-C5 / 09-name-the-tree-target-in-verb-help.md, 10-reuse-a-matching-sealed-build.md, 11-name-the-tree-target-forms-in-guidance.md | A tree target costs one call | BC58–BC70 | TestTreeScopedHelpNamesTheTarget, TestRunReusesAMatchingBuild, TestTreeTargetRefusesStaleKitBuild, TestBuildCostAnchors | no |
+| BC-C1 / 01-accept-probe-only-plans-and-retire-check-floor.md, 02-refuse-plain-chunk-requirements.md, 03-state-the-probe-only-rule.md | The checkpoint grade is the only green evidence for a plain check | BC23–BC37 | TestPlanProbeOnlyChunks, TestTicketFreezesWithoutRequirements, TestDecideHasNoCheckFloorRow, TestCommandBuildRedsAPlainChunkRequirement, TestBuildCostAnchors | yes |
+| BC-C2 / 04-derive-the-retro-cost-section.md, 05-add-trace-times-and-the-drain-rule.md | The retro measures what the build cost | BC1–BC22, BC71, BC72 | TestRetroCostSection, TestRetroCostBudget, TestRetroCostTraceTimes, TestRetroRejectsABodyWithoutCost, TestBuildCostAnchors | no |
+| BC-C3 / 06-pass-the-chunk-base-to-the-commit-chain.md, 07-stage-the-probe-in-record-ticket.md | One record step follows the ticket commit | BC38–BC48 | TestCommitChainPassesTheBase, TestParseArgsRefusesABaseWithoutTheChain, TestTicketStagesTheRetainedProbe, TestChunkChainAnchors | yes |
+| BC-C4 / 08-print-a-short-lane-pass.md, 09-print-a-short-bitten-mutant-set.md | Success output fits the bound | BC49–BC57 | TestLanePassPrintsNoCheckReport, TestMutantSetSuccessOmitsTheReports, TestExcerptStagesAShortMutantSet | no |
+| BC-C5 / 10-name-the-tree-target-in-verb-help.md, 11-reuse-a-matching-sealed-build.md, 12-name-the-tree-target-forms-in-guidance.md | A tree target costs one call | BC58–BC70, BC73 | TestTreeScopedHelpNamesTheTarget, TestRunReusesAMatchingBuild, TestTreeTargetRefusesStaleKitBuild, TestBuildCostAnchors | no |
 
-The chunk graph has BC-C3 after BC-C1, BC-C2 after BC-C1, and BC-C5 after every other chunk. BC-C4 needs no other chunk.
+The chunk graph has BC-C2 and BC-C3 after BC-C1, and BC-C5 after every other chunk. BC-C4 needs no other chunk.
+BC-C2 and BC-C3 write no shared file, so they can author at the same time. The chunk-chain anchors of BC-C3 stay in `internal/anchors/registry_chunk_chain.go`, and the other anchors of this spec go to `internal/anchors/registry_build_cost.go`.
 At slicing, each chunk also lists the plain floor commands that the current `check-floor` row names, as the self-hosting order states. Ticket 01's commit deletes them.
 
 ### Completion plan
@@ -232,49 +238,121 @@ At slicing, each chunk also lists the plain floor commands that the current `che
   "chunks": [
     {
       "id": "BC-C1",
-      "tickets": ["01-grade-probe-only-plans-and-retire-check-floor.md", "02-state-the-probe-only-rule.md"],
+      "tickets": [
+        "01-accept-probe-only-plans-and-retire-check-floor.md",
+        "02-refuse-plain-chunk-requirements.md",
+        "03-state-the-probe-only-rule.md"
+      ],
       "verification": [
-        {"id": "probe-01", "command": "bench probe internal/reviewrecord/plan.go --swap 'if owned != nil && item.Probe == \"\" {' --with 'if false {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks", "probe": "Disable the plain chunk requirement refusal. The plan with a plain chunk requirement must then pass, so the plan test fails."},
-        {"id": "probe-02", "command": "bench probe .agents/commands/bench-implement-spec.md --omit 'After the ticket commit, the author runs only the probes of the plan, because the chunk checkpoint grades every other check.' --check docs-currency-workflow", "probe": "Remove the probe-only sentence from the build guidance. Its Require anchor must then fail."}
+        {
+          "id": "probe-01",
+          "command": "bench probe internal/reviewrecord/plan.go --swap 'if len(items) == 0 && owned == nil {' --with 'if len(items) == 0 {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks",
+          "probe": "Refuse an empty chunk list again. The probe-only plan with an empty chunk list must then refuse, so the plan test fails."
+        },
+        {
+          "id": "probe-02",
+          "command": "bench probe internal/reviewrecord/plan.go --swap 'if owned != nil && item.Probe == \"\" {' --with 'if false {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks",
+          "probe": "Disable the plain chunk requirement refusal. The plan with a plain chunk requirement must then pass, so the plan test fails."
+        },
+        {
+          "id": "probe-03",
+          "command": "bench probe .agents/commands/bench-implement-spec.md --omit 'After the ticket commit, the author runs only the probes of the plan, because the chunk checkpoint grades every other check.' --check docs-currency-workflow",
+          "probe": "Remove the probe-only sentence from the build guidance. Its Require anchor must then fail."
+        }
       ]
     },
     {
       "id": "BC-C2",
-      "tickets": ["03-derive-the-retro-cost-section.md", "04-add-trace-times-and-the-drain-rule.md"],
+      "tickets": [
+        "04-derive-the-retro-cost-section.md",
+        "05-add-trace-times-and-the-drain-rule.md"
+      ],
       "verification": [
-        {"id": "probe-03", "command": "bench probe internal/retros/retros.go --omit 'CostHeading,' --package ./internal/roadmap --run TestRetroRejectsABodyWithoutCost", "probe": "Remove the Cost heading from the canonical heading list. The body without a Cost section must then pass, so the refusal test fails."},
-        {"id": "probe-04", "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes", "probe": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails."}
+        {
+          "id": "probe-04",
+          "command": "bench probe internal/retros/retros.go --omit 'CostHeading,' --package ./internal/roadmap --run TestRetroRejectsABodyWithoutCost",
+          "probe": "Remove the Cost heading from the canonical heading list. The body without a Cost section must then pass, so the refusal test fails."
+        },
+        {
+          "id": "probe-05",
+          "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes",
+          "probe": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails."
+        }
       ]
     },
     {
       "id": "BC-C3",
-      "tickets": ["05-pass-the-chunk-base-to-the-commit-chain.md", "06-stage-the-probe-in-record-ticket.md"],
+      "tickets": [
+        "06-pass-the-chunk-base-to-the-commit-chain.md",
+        "07-stage-the-probe-in-record-ticket.md"
+      ],
       "verification": [
-        {"id": "probe-05", "command": "bench probe cmd/bench/commit_chain.go --omit 'args = append(args, evidencecmd.FlagBase, outcome.Base)' --package ./cmd/bench --run TestCommitChainPassesTheBase", "probe": "Drop the base from the chained preflight arguments. The chain test must then see no base."},
-        {"id": "probe-06", "command": "bench probe internal/reviewrecord/recordcmd/ticket.go --swap 'if len(unstaged) == 1 && retained.Verb == probe.Verb {' --with 'if false {' --package ./internal/reviewrecord/recordcmd --run TestTicketStagesTheRetainedProbe", "probe": "Disable the staging of the retained probe. The ticket call must then refuse with the excerpt form, so the staging test fails."}
+        {
+          "id": "probe-06",
+          "command": "bench probe cmd/bench/commit_chain.go --omit 'args = append(args, evidencecmd.FlagBase, outcome.Base)' --package ./cmd/bench --run TestCommitChainPassesTheBase",
+          "probe": "Drop the base from the chained preflight arguments. The chain test must then see no base."
+        },
+        {
+          "id": "probe-07",
+          "command": "bench probe internal/reviewrecord/recordcmd/ticket.go --swap 'if len(unstaged) == 1 && retained.Verb == probe.Verb {' --with 'if false {' --package ./internal/reviewrecord/recordcmd --run TestTicketStagesTheRetainedProbe",
+          "probe": "Disable the staging of the retained probe. The ticket call must then refuse with the excerpt form, so the staging test fails."
+        }
       ]
     },
     {
       "id": "BC-C4",
-      "tickets": ["07-print-a-short-lane-pass.md", "08-print-a-short-bitten-mutant-set.md"],
+      "tickets": [
+        "08-print-a-short-lane-pass.md",
+        "09-print-a-short-bitten-mutant-set.md"
+      ],
       "verification": [
-        {"id": "probe-07", "command": "bench probe internal/gate/lane.go --swap 'laneWriters(log, log, diagnostics)' --with 'laneWriters(req.Stdout, req.Stderr, diagnostics)' --package ./internal/gate --run TestLanePassPrintsNoCheckReport", "probe": "Stream the check reports to the response again. The pass response must then hold check lines, so the lane test fails."},
-        {"id": "probe-08", "command": "bench probe internal/probe/set.go --swap 'if s.bitten() {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports", "probe": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails."}
+        {
+          "id": "probe-08",
+          "command": "bench probe internal/gate/lane.go --swap 'laneWriters(log, log, diagnostics)' --with 'laneWriters(req.Stdout, req.Stderr, diagnostics)' --package ./internal/gate --run TestLanePassPrintsNoCheckReport",
+          "probe": "Stream the check reports to the response again. The pass response must then hold check lines, so the lane test fails."
+        },
+        {
+          "id": "probe-09",
+          "command": "bench probe internal/probe/set.go --swap 'if s.bitten() {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports",
+          "probe": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails."
+        }
       ]
     },
     {
       "id": "BC-C5",
-      "tickets": ["09-name-the-tree-target-in-verb-help.md", "10-reuse-a-matching-sealed-build.md", "11-name-the-tree-target-forms-in-guidance.md"],
+      "tickets": [
+        "10-name-the-tree-target-in-verb-help.md",
+        "11-reuse-a-matching-sealed-build.md",
+        "12-name-the-tree-target-forms-in-guidance.md"
+      ],
       "verification": [
-        {"id": "probe-09", "command": "bench probe cmd/bench/tree_scope.go --swap 'if definition.Scope != scopeTree {' --with 'if true {' --package ./cmd/bench --run TestTreeScopedHelpNamesTheTarget", "probe": "Give no definition the tree-target text. The verb help must then omit --in, so the help test fails."},
-        {"id": "probe-10", "command": "bench probe internal/treetarget/build.go --swap 'if freshness.VerifyAt(root, root, candidate) == nil {' --with 'if candidate == freshness.PublishedExecutable(root) && freshness.VerifyAt(root, root, candidate) == nil {' --package ./internal/treetarget --run TestRunReusesAMatchingBuild", "probe": "Accept only the target's own build. A target without its own build must then refuse, so the reuse test fails."},
-        {"id": "probe-11", "command": "bench probe .bench/BENCH.md --omit ' except a `Writes:` widen' --check docs-currency-workflow", "probe": "Restore the learning for every widen. The Require anchor of the widen exception must then fail."}
+        {
+          "id": "probe-10",
+          "command": "bench probe cmd/bench/tree_scope.go --swap 'if definition.Scope != scopeTree {' --with 'if true {' --package ./cmd/bench --run TestTreeScopedHelpNamesTheTarget",
+          "probe": "Give no definition the tree-target text. The verb help must then omit --in, so the help test fails."
+        },
+        {
+          "id": "probe-11",
+          "command": "bench probe internal/treetarget/build.go --swap 'if freshness.VerifyAt(root, root, candidate) == nil {' --with 'if candidate == freshness.PublishedExecutable(root) && freshness.VerifyAt(root, root, candidate) == nil {' --package ./internal/treetarget --run TestRunReusesAMatchingBuild",
+          "probe": "Accept only the target's own build. A target without its own build must then refuse, so the reuse test fails."
+        },
+        {
+          "id": "probe-12",
+          "command": "bench probe .bench/BENCH.md --omit ' except a `Writes:` widen' --check docs-currency-workflow",
+          "probe": "Restore the learning for every widen. The Require anchor of the widen exception must then fail."
+        }
       ]
     }
   ],
   "final_verification": [
-    {"id": "whole-project", "command": "bench gate"},
-    {"id": "coverage", "command": "bench coverage --check specs/build-cost/spec.md"}
+    {
+      "id": "whole-project",
+      "command": "bench gate"
+    },
+    {
+      "id": "coverage",
+      "command": "bench coverage --check specs/build-cost/spec.md"
+    }
   ]
 }
 ```
@@ -321,6 +399,7 @@ The gate observes every row through its package tests and the `docs-currency-wor
 |---|---|---|---|---|
 | BC1 | 1 | The scaffold prints the `## Cost` heading directly after the `## Outcome` heading, followed by derived lines | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | The current scaffold prints no Cost heading |
 | BC2 | 2 | For a fixture landing L, the first cost line names L and the range `L^1..L^2` | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | A section that measured the newest landing of another slug names another commit |
+| BC72 | 2 | When the landing L of the slug comes before a landing of another slug and then the retirement of the slug, the first cost line still names L | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | A rule that takes the newest commit whose tree holds the status names the other landing |
 | BC3 | 3 | For a range whose oldest non-merge commit is 960 minutes older than L, the wall line reads 960 min | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | A start at the first parent of L or at a folded default-branch commit gives another number |
 | BC4 | 4 | For a range of three commits that touch only `specs/<slug>/` or `reviews/<slug>.md` and two commits that touch `internal/x.go`, the commits line reads 5 total, 3 bookkeeping, and 2 change | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | A subject-based count or a count of folded commits differs |
 | BC5 | 4 | A commit that touches `specs/<slug>/spec.md` and `internal/x.go` counts as a change commit | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | An any-path rule counts it as bookkeeping |
@@ -331,7 +410,7 @@ The gate observes every row through its package tests and the `docs-currency-wor
 | BC10 | 9 | After a later commit deletes `specs/<slug>/`, the scaffold prints the same graph line from the tree of L | planned TestRetroCostSection in internal/roadmap/retro_cost_test.go | A read of the working tree prints unknown |
 | BC11 | 10 | For 20 tickets and 1,300 wall minutes, the wall line reads 65.0 min per ticket against 60 min and ends with `over budget` | planned TestRetroCostBudget in internal/roadmap/retro_cost_test.go | A missing comparison prints no marker |
 | BC12 | 11 | For 20 tickets and 140 bookkeeping commits, the bookkeeping line reads 7.0 per ticket against 7.1 and carries no `over budget` | planned TestRetroCostBudget in internal/roadmap/retro_cost_test.go | A marker on every line, or a marker at or below the budget, marks it |
-| BC13 | 11 | For 20 tickets and 143 bookkeeping commits, the bookkeeping line reads 7.2 per ticket and ends with `over budget` | planned TestRetroCostBudget in internal/roadmap/retro_cost_test.go | A wall-only comparison leaves this breach without a marker |
+| BC13 | 11 | For 20 tickets and 144 bookkeeping commits, the bookkeeping line reads 7.2 per ticket and ends with `over budget` | planned TestRetroCostBudget in internal/roadmap/retro_cost_test.go | A wall-only comparison leaves this breach without a marker |
 | BC14 | 10 | `bench-drain.md` holds neither budget number | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | A second copy of a budget drifts from the renderer table |
 | BC15 | 14 | `bench retro <slug> --body` refuses a body without `## Cost`, names that heading, and writes no file | planned TestRetroRejectsABodyWithoutCost in internal/roadmap/retro_test.go | A heading list without Cost accepts the body |
 | BC16 | 1 | The scaffold draft with the Cost section passes the retro parser | `internal/roadmap/retro_scaffold_test.go` (`TestRetroScaffoldParses`) | A Cost heading at another position fails the parser |
@@ -366,8 +445,8 @@ The gate observes every row through its package tests and the `docs-currency-wor
 | BC44 | 31 | With two owed probe requirements unstaged, the verb refuses, names the excerpt form, and leaves the record bytes unchanged | planned TestTicketStagesTheRetainedProbe in internal/reviewrecord/recordcmd/ticket_probe_test.go | A verb that maps the response to the first requirement records the wrong probe |
 | BC45 | 32 | After the ticket table, the verb prints `next=bench commit -m <msg> --preflight-build <slug> --base <chunk-base> reviews/<slug>.md` with the slug and the chunk base of the written entry | planned TestTicketStagesTheRetainedProbe in internal/reviewrecord/recordcmd/ticket_probe_test.go | A missing line or a line without the base sends the author to the help |
 | BC46 | 36 | The response of a ticket call that writes three entries is at most 10 lines | planned TestTicketStagesTheRetainedProbe in internal/reviewrecord/recordcmd/ticket_probe_test.go | A response that lists each entry on its own lines spills |
-| BC47 | 35 | The Build section of `bench-implement-spec.md` holds the sentence "After the ticket commit, run the probe, then `bench record ticket`, then the record commit that its `next=` line prints." | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The author keeps the separate preflight and excerpt calls |
-| BC48 | 35 | `bench-implement-spec.md` holds no "`bench worktree exec <target> -- bench preflight build`" | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The retired exec preflight step survives |
+| BC47 | 35 | The Build section of `bench-implement-spec.md` holds the sentence "After the ticket commit, run the probe, then `bench record ticket`, then the record commit that its `next=` line prints." | planned TestChunkChainAnchors in internal/anchors/registry_chunk_chain_test.go | The author keeps the separate preflight and excerpt calls |
+| BC48 | 35 | `bench-implement-spec.md` holds no "`bench worktree exec <target> -- bench preflight build`" | planned TestChunkChainAnchors in internal/anchors/registry_chunk_chain_test.go | The retired exec preflight step survives |
 | BC49 | 37 | A lane pass of `bench commit` over the prose and docs-currency-workflow checks prints no line that starts with `[prose]` or `[docs-currency-workflow]` | planned TestLanePassPrintsNoCheckReport in internal/gate/lane_report_test.go | The current lane streams each report to the response |
 | BC50 | 38 | After that pass, `bench-lane.log` in the git directory holds the `[prose]` and `[docs-currency-workflow]` lines | planned TestLanePassPrintsNoCheckReport in internal/gate/lane_report_test.go | A pass that discards the reports loses them |
 | BC51 | 39 | A lane red prints the failing check's own lines | `internal/gate/lane_run_test.go` (`TestLaneRelaysARedCheckOwnLines`) | A lane that hides every report hides the failure |
@@ -386,6 +465,7 @@ The gate observes every row through its package tests and the `docs-currency-wor
 | BC64 | 49 | A kit target with an edited build input and no matching candidate refuses `worktree build does not match the tree` and starts no child | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRefusesStaleKitBuild`) | A reuse without the seal check starts a stale child |
 | BC65 | 49 | A kit target without its own build whose candidates all differ refuses `worktree build is missing` and starts no child | planned TestRunReusesAMatchingBuild in internal/treetarget/build_test.go | A reuse that falls back to the wrapper starts a stale child |
 | BC66 | 50 | `docs/known-issues.md` holds "Run it as `bench preflight --in <target> evidence <id> --check-current`." | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The double-bound exec form survives |
+| BC73 | 50 | `docs/known-issues.md` holds no "names the exec form" | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The retire column still routes the reader to the exec form |
 | BC67 | 50 | `.bench/BENCH-reference.md` holds "For a worktree, run `bench probe --in <target> ...`." and no "`bench worktree exec <target> -- bench probe ...`" | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The stale claim that the probe takes no target survives |
 | BC68 | 50 | The craft-synthesis skill holds "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench gate --in <target>` for a batch that waits for approval." | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The exec gate form survives |
 | BC69 | 51 | `.bench/BENCH.md` holds "record every plan or gate expansion except a `Writes:` widen with `bench learning`" | planned TestBuildCostAnchors in internal/anchors/registry_build_cost_test.go | The learning for each widen survives |
@@ -453,7 +533,7 @@ It computed the longest `Blocked by:` chain and the longest chain of chunk depen
 | landing-gate-long-poles | 16 tickets, chain 14, 10 chunks, 9 serial |
 | chunk-repair-cycle | 12 tickets, chain 12, 10 chunks, 10 serial |
 
-Recent builds are almost fully serial, so a parallel author limit saves little. This spec's own graph has 11 tickets, a longest chain of 4, 5 chunks, and 3 serial checkpoints.
+Recent builds are almost fully serial, so a parallel author limit saves little. This spec's own graph has 12 tickets, a longest chain of 5, 5 chunks, and 3 serial checkpoints.
 The FT451 landing range `55c699286..4cd081de8` holds 143 non-merge commits, of which 113 are bookkeeping by the changed-path rule. Its wall time is 964.8 minutes.
 Thus FT451 measures 60.3 minutes and 7.06 bookkeeping commits per ticket against the budgets.
 
@@ -470,16 +550,24 @@ The changed owners and their callers are these:
 - `setRun.answer` serves each mutant-set path of `internal/probe`.
 - `treeTargetInsertion` serves the root help. `childExecutable` and `worktreeBuild` serve `treetarget.Run`.
 
+These files pin the surfaces that the spec changes:
+
+- `internal/anchors/registry_chunk_chain.go:12`, pinned by `internal/anchors/registry_chunk_chain_test.go:14`, requires the exec preflight sentence that BC48 forbids. Ticket 07 replaces that entry.
+- `internal/anchors/registry_retained_workflow.go:162` requires the exec gate sentence that BC68 replaces. Ticket 12 replaces that entry.
+- `internal/preflight/charge_cells_test.go:22` and `internal/preflight/decision_test.go:57` and `:535` assert the `check-floor` row. Ticket 01 changes them and deletes `check_floor.go`, `check_floor_test.go`, and `check_floor_command_test.go`.
+- The shared plan fixtures are `internal/reviewrecord/recordtest/fixture.go:194` and `internal/preflight/preflighttest/fixture.go:102`. Their plain requirement `additional` is read in `internal/reviewrecord/recordcmd/verification_test.go`, `internal/reviewrecord/recordcmd/ticket_test.go`, and `internal/preflight/ownership/premises_test.go`. Ticket 02 moves them.
+- The retro body fixtures are `internal/retros/retros_test.go`, `internal/retros/recommendations_test.go`, and `internal/retros/testdata/eligible.md`. Ticket 04 adds the Cost heading to each valid body.
+
 The build reruns `bench consumers` on each changed function before each charge, unexported functions included.
 
 ### Pre-review proof checklist
 
-- Cited symbols: each symbol above resolves in the named file at base 887fd6c93.
+- Cited symbols: each symbol above resolves in the named file at base 887fd6c93. The landing-commit owner in `internal/spec` is new.
 - Import edges: `go list -deps ./internal/reviewrecord` holds no `internal/roadmap`, so the new edge from `internal/roadmap` to `internal/reviewrecord` adds no cycle.
 - Source-row clauses and occurrences: the source-to-row table below.
 - Promised field labels: `## Cost`, `over budget`, `bench-lane.log`, `next=`, and `--base`.
 - Changed-function callers: the inventory above.
-- Copy survival: BC14 reds a second copy of a budget, BC35 and BC37 red the retired floor wording, and BC48 reds the retired exec step.
+- Copy survival: BC14 reds a second copy of a budget, BC35 and BC37 red the retired floor wording, BC48 reds the retired exec step, and BC73 reds the exec form in the known-issues row. The two live Require anchors on the retired forms change in tickets 07 and 12.
 - Rendered-shape readers: the `[<check>]` prefix lines appear in `internal/gate/lane_run_test.go` and `internal/gate/run_stream_test.go`. Only the lane file reads lane lines, and BC51 keeps its red case. The `mutant_report` table appears in `internal/probe/set_test.go` (`TestMutantSetPrintsEachReport`), which ticket 08 adjusts for the bitten case.
 - Pin operators: the output rows compare exact lines, and the bound rows compare a line count with `<=` 10.
 - Entry reads: the cost renderer takes the home and the root as arguments, as `scaffoldBody` does now.
@@ -492,7 +580,7 @@ The build reruns `bench consumers` on each changed function before each charge, 
 
 | source sentence | rows |
 |---|---|
-| The retro scaffold derives a cost section from git and the trace store. | BC1–BC10, BC19–BC21 |
+| The retro scaffold derives a cost section from git and the trace store. | BC1–BC10, BC19–BC21, BC72 |
 | A budget overrun makes the drain propose one removal or one merge, and it never makes the gate red. | BC11–BC14, BC17, BC18, BC22, BC71 |
 | An author records no requirement runs. | BC23–BC30, BC32–BC37 |
 | The witness reds, the `--mutants` probe, the lane pass, and the chunk checkpoint grade stay. | BC30, BC31 |
@@ -500,7 +588,7 @@ The build reruns `bench consumers` on each changed function before each charge, 
 | A widen writes no learning. | BC69, BC70 |
 | The success output of `bench commit` and of `bench probe --mutants` fits in 10 lines. | BC49–BC57 |
 | Per-verb help names `--in` (reviewer scope, 2026-10-28). | BC58–BC60 |
-| Guidance names `bench <verb> --in` (reviewer scope, 2026-10-28). | BC66–BC68 |
+| Guidance names `bench <verb> --in` (reviewer scope, 2026-10-28). | BC66–BC68, BC73 |
 | A kit worktree target reuses a sealed binary that matches its tree (FT341 spec A reopened, 2026-10-28). | BC61–BC65 |
 
 ### Flagged additions
