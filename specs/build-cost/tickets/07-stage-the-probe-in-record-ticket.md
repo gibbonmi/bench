@@ -1,7 +1,7 @@
 # Stage the retained probe in the ticket record
 
 Blocked by: 01-accept-probe-only-plans-and-retire-check-floor.md, 02-refuse-plain-chunk-requirements.md, 03-state-the-probe-only-rule.md, 06-pass-the-chunk-base-to-the-commit-chain.md
-Writes: internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/stage.go, internal/reviewrecord/recordcmd/ticket_probe_test.go (new), internal/reviewrecord/recordcmd/command_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go
+Writes: internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/stage.go, internal/reviewrecord/recordcmd/ticket_probe_test.go (new), internal/reviewrecord/recordcmd/command_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/reviewrecord/recordcmd/chunk_test.go, internal/reviewrecord/recordcmd/ticket_carry_test.go
 Covers: BC41, BC42, BC43, BC44, BC45, BC46, BC47, BC48
 
 ## What to build
