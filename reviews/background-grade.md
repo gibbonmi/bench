@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:17b978c5c27d1ec26874ce7f4fd0aa6411e1b8e3814a25990f61df5ba9b390fb",
+  "plan_digest": "sha256:cbda9e7dc9401ae560f5253c676e92f6f1e487b6a345818d055fcbfe4db607b4",
   "implementation_session": "",
   "chunks": [
     {
@@ -852,9 +852,9 @@
     {
       "id": "BG-C4",
       "base": "d78984f50a5a0596f70f19b752e3662e3cc92160",
-      "tip": "c05c87a8d42e7c13e44c8181f2cb43dddd7e1eb7",
-      "plan_digest": "sha256:17b978c5c27d1ec26874ce7f4fd0aa6411e1b8e3814a25990f61df5ba9b390fb",
-      "source_digest": "6f9348524fcdb85d7e2cb1762598b66df431eb10",
+      "tip": "78089d45597db83f00dcc9c3982879321337db18",
+      "plan_digest": "sha256:cbda9e7dc9401ae560f5253c676e92f6f1e487b6a345818d055fcbfe4db607b4",
+      "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
       "acceptance_rows": [
         "BG1",
         "BG23",
@@ -866,7 +866,8 @@
         "BG41",
         "BG42",
         "BG106",
-        "BG107"
+        "BG107",
+        "BG114"
       ],
       "verification": [
         {
@@ -979,6 +980,120 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17792,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "c05c87a8d42e7c13e44c8181f2cb43dddd7e1eb7",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c4-t06-r1-gate",
+          "performer": "claude:bg-t06-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t06-repair1-20261028",
+            "digest": "sha256:157c52eb128914176736bd2e150ff67aef5327b91f61e26acbc333d7b2c71235",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,160891,754\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,334,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,770,13\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,57,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,1438,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "78089d45597db83f00dcc9c3982879321337db18",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c4-t06-r1-command",
+          "performer": "claude:bg-t06-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t06-repair1-20261028",
+            "digest": "sha256:b910fd59a7312de26f65b40168444ee39dc47c923b2b8cb0ed1b5b9d752b81ee",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,30688,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "78089d45597db83f00dcc9c3982879321337db18",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c4-t06-r1-conformance-package",
+          "performer": "claude:bg-t06-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t06-repair1-20261028",
+            "digest": "sha256:50dfa66fd438155cc5eecd73f1ba1bd8c804545fc9cfae4fc7bbb9ffcecc98fc",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,49331,1143\nfailures[0]{package,test,line,lines}:\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "78089d45597db83f00dcc9c3982879321337db18",
+          "requirement": "conformance-package",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c4-t06-r1-routes",
+          "performer": "claude:bg-t06-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t06-repair1-20261028",
+            "digest": "sha256:825e04c7f47899f230efcfc95b5926e431fd647046ca6cc76d04300c23491f7c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  bench-sh-routes,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "78089d45597db83f00dcc9c3982879321337db18",
+          "requirement": "routes",
+          "command": "bench test --check bench-sh-routes",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c4-t06-r1-routing",
+          "performer": "claude:bg-t06-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t06-repair1-20261028",
+            "digest": "sha256:eaaf70a4171f59978e2f8c7e00da06890ea8308d6e3285bd8a43bc5ed1500f0e",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,30,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "78089d45597db83f00dcc9c3982879321337db18",
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c4-t06-r1-conformance",
+          "performer": "claude:bg-t06-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "eb0eb17b12640b9386522c03bfc6e8d49fb82ae6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t06-repair1-20261028",
+            "digest": "sha256:201ed592644af5f761a9f98bda30450b692ee26655ea9a350ab25a6fb4d1c707",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19692,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "78089d45597db83f00dcc9c3982879321337db18",
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -1181,6 +1296,27 @@
         ],
         "BG-C3": [
           "BG-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:17b978c5c27d1ec26874ce7f4fd0aa6411e1b8e3814a25990f61df5ba9b390fb",
+      "to": "sha256:cbda9e7dc9401ae560f5253c676e92f6f1e487b6a345818d055fcbfe4db607b4",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
         ]
       }
     }
