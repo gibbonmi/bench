@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
@@ -13,19 +12,19 @@ import (
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-// costBudget is one per-ticket budget of the cost section. value selects the build total
-// that the line divides by the ticket count.
+// costBudget is one per-ticket budget of the cost section. value selects the build total,
+// in the unit of the line, that the line divides by the ticket count.
 type costBudget struct {
 	label, unit string
 	limit       float64
-	value       func(costFacts) int
+	value       func(costFacts) float64
 }
 
 // costBudgets is the one budget table. No guidance file states a budget number, so a
 // changed budget changes here and nowhere else.
 var costBudgets = []costBudget{
-	{label: "wall per ticket", unit: " min", limit: 60, value: func(f costFacts) int { return f.wall }},
-	{label: "bookkeeping per ticket", limit: 7.1, value: func(f costFacts) int { return f.bookkeeping }},
+	{label: "wall per ticket", unit: " min", limit: 60, value: func(f costFacts) float64 { return float64(f.wall) / 60 }},
+	{label: "bookkeeping per ticket", limit: 7.1, value: func(f costFacts) float64 { return float64(f.bookkeeping) }},
 }
 
 // overBudget ends a per-ticket line whose value is above its budget. The drain finds each
@@ -34,6 +33,7 @@ const overBudget = ", over budget"
 
 // costFacts holds the derived facts of one landing. ranged marks the facts of the build
 // range, graphed the facts of the plan graph, and dispatched the version 2 dispatch counts.
+// wall is in seconds, so a per-ticket value keeps the part of a minute.
 type costFacts struct {
 	landing                             string
 	ranged                              bool
@@ -46,13 +46,12 @@ type costFacts struct {
 }
 
 // traceSeams are the seams that the trace line sums, in line order, each with its label.
-var traceSeams = []struct{ label, seam string }{{"commit", "commit"}, {"lane", "lane"}, {"landing", otelrecord.SeamLanding}}
+var traceSeams = []struct{ label, seam string }{{"commit", otelrecord.SeamCommit}, {"lane", otelrecord.SeamLane}, {"landing", otelrecord.SeamLanding}}
 
 // costSection prints the build cost of slug from its landing commit L. It reads git
-// history and the tree of L, so a retired spec folder loses no fact. The trace line reads
-// the record of the resolved Bench home. Each fact that the
+// history and the tree of L, so a retired spec folder loses no fact. Each fact that the
 // tree does not hold reads unknown, so a missing measurement never blocks the draft.
-func costSection(root, slug string) string {
+func costSection(home, root, slug string) string {
 	f := deriveCost(root, slug)
 	rangeText := unknownFact
 	if f.landing != "" {
@@ -60,11 +59,11 @@ func costSection(root, slug string) string {
 	}
 	lines := []string{
 		"- landing: " + orUnknown(f.landing) + ", range " + rangeText,
-		"- wall: " + costCount(f.wall, f.ranged) + " min",
+		"- wall: " + costCount(f.wall/60, f.ranged) + " min",
 		"- commits: " + costCount(f.total, f.ranged) + " total, " + costCount(f.bookkeeping, f.ranged) + " bookkeeping, " + costCount(f.change, f.ranged) + " change",
 		"- graph: " + costCount(f.tickets, f.graphed) + " tickets, chain " + costCount(f.chain, f.graphed) + ", " + costCount(f.chunks, f.graphed) + " chunks, " + costCount(f.checkpoints, f.graphed) + " serial checkpoints",
 		"- dispatch: " + costCount(f.authors, f.dispatched) + " authors, " + costCount(f.repairs, f.dispatched) + " repairs",
-		"- trace: " + traceTimes(benchhome.Dir(), root, f.assignments),
+		"- trace: " + traceTimes(home, root, f.assignments),
 	}
 	return strings.Join(append(lines, budgetLines(f)...), "\n")
 }
@@ -99,14 +98,16 @@ func traceTimes(home, root string, ids map[string]bool) string {
 	return strings.Join(parts, ", ")
 }
 
-// budgetLines compares each per-ticket value with its budget in costBudgets.
+// budgetLines compares each per-ticket value with its budget in costBudgets. The compare
+// reads the printed value, so a line never marks a value that prints equal to its budget.
 func budgetLines(f costFacts) []string {
 	lines := make([]string, 0, len(costBudgets))
 	for _, budget := range costBudgets {
 		value, over := unknownFact, false
 		if f.ranged && f.graphed && f.tickets > 0 {
-			per := float64(budget.value(f)) / float64(f.tickets)
-			value, over = strconv.FormatFloat(per, 'f', 1, 64), per > budget.limit
+			value = strconv.FormatFloat(budget.value(f)/float64(f.tickets), 'f', 1, 64)
+			printed, err := strconv.ParseFloat(value, 64)
+			over = err == nil && printed > budget.limit
 		}
 		line := "- " + budget.label + ": " + value + budget.unit + " against " + strconv.FormatFloat(budget.limit, 'f', -1, 64) + budget.unit
 		if over {
@@ -172,7 +173,7 @@ func rangeCost(root, slug string, f *costFacts) {
 			f.change++
 		}
 	}
-	f.wall, f.ranged = int((end-oldest)/60), true
+	f.wall, f.ranged = int(end-oldest), true
 }
 
 // buildRange is the revision range of the build that landing L merged: the commits of its

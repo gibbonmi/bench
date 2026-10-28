@@ -17,7 +17,7 @@ func Landing(root, slug string) (commit string, found bool, err error) {
 	if !ok {
 		return "", false, errors.New("default branch is unresolved")
 	}
-	path := specPath(slug)
+	path := LiveSpecPath(slug)
 	raw, err := git.Output("-C", root, "log", "--first-parent", "--format=%H %P", branch, "--", ":(literal,top)"+path)
 	if err != nil {
 		return "", false, err

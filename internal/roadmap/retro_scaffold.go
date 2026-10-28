@@ -51,7 +51,7 @@ func scaffoldBody(home, root, slug string) string {
 func scaffoldSection(home, root, slug, heading string) string {
 	switch heading {
 	case retros.CostHeading:
-		return costSection(root, slug)
+		return costSection(home, root, slug)
 	case retros.TimingsHeading:
 		return timingsSection(home, root)
 	case retros.DelegateHeading:

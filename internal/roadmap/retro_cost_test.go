@@ -1,16 +1,20 @@
 package roadmap
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/retros"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // costEpoch is the committer time of the first build commit of the fixture. Every other
@@ -26,9 +30,15 @@ type costRepo struct {
 
 func (r costRepo) git(at int, args ...string) string {
 	r.t.Helper()
+	return r.gitAuthored(at, at, args...)
+}
+
+// gitAuthored runs git with the author time authored and the committer time at.
+func (r costRepo) gitAuthored(authored, at int, args ...string) string {
+	r.t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", r.root}, args...)...)
-	stamp := "@" + strconv.Itoa(costEpoch+at) + " +0000"
-	cmd.Env = append(os.Environ(), "GIT_AUTHOR_DATE="+stamp, "GIT_COMMITTER_DATE="+stamp)
+	stamp := func(offset int) string { return "@" + strconv.Itoa(costEpoch+offset) + " +0000" }
+	cmd.Env = append(os.Environ(), "GIT_AUTHOR_DATE="+stamp(authored), "GIT_COMMITTER_DATE="+stamp(at))
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		r.t.Fatalf("git %v: %v: %s", args, err, out)
@@ -86,7 +96,9 @@ func costTicket(blocker string) string {
 //
 //   - a fold commit on main 60 minutes before the first build commit;
 //   - the build branch of slug s: five non-merge commits, three of them bookkeeping, one
-//     fold merge of main, and the landing L at 960 minutes;
+//     fold merge of main, and the landing L at 960 minutes. The first build commit has an
+//     author time 30 minutes before its committer time, and one bookkeeping commit
+//     changes a spec-folder path that git quotes;
 //   - the landing of slug o with a version 1 plan;
 //   - the retirement of slug s, which deletes its folder.
 func newCostRepo(t *testing.T) (costRepo, string) {
@@ -104,16 +116,18 @@ func newCostRepo(t *testing.T) (costRepo, string) {
 		`"b.md":[{"session":"b1","assignment":"asg-b"}],"c.md":[{"session":"c1"},{"session":"c2","predecessor":"c1"}],"d.md":[]}},` +
 		`"chunks":[{"id":"X","tickets":["a.md","b.md"]},{"id":"Y","tickets":["c.md"]},{"id":"Z","tickets":["d.md"]}],` +
 		`"final_verification":[{"id":"g","command":"bench gate"}]}`
-	r.commit(0, "spec", map[string]string{
+	r.write(map[string]string{
 		"specs/s/spec.md":      costSpec(plan),
 		"specs/s/tickets/a.md": costTicket("none"),
 		"specs/s/tickets/b.md": costTicket("a.md"),
 		"specs/s/tickets/c.md": costTicket("b.md"),
 		"specs/s/tickets/d.md": costTicket("none"),
 	})
+	r.git(0, "add", "-A")
+	r.gitAuthored(-1800, 0, "commit", "-q", "-m", "spec")
 	r.commit(600, "change", map[string]string{"internal/x.go": "package x\n"})
 	r.git(1200, "merge", "-q", "--no-ff", "-m", "fold main", "main")
-	r.commit(1800, "record", map[string]string{"reviews/s.md": "record\n"})
+	r.commit(1800, "record", map[string]string{"reviews/s.md": "record\n", `specs/s/n"q".md`: "quoted\n"})
 	r.commit(2400, "mixed", map[string]string{"internal/x.go": "package x // mixed\n", "specs/s/spec.md": costSpec(plan) + "More.\n"})
 	r.commit(3000, "ticket", map[string]string{"specs/s/tickets/a.md": costTicket("none") + "More.\n"})
 	landing := r.land(960*60, "build", "s")
@@ -133,8 +147,7 @@ func newCostRepo(t *testing.T) (costRepo, string) {
 
 func TestRetroCostSection(t *testing.T) {
 	r, landing := newCostRepo(t)
-	t.Chdir(r.root)
-	t.Setenv("BENCH_HOME", t.TempDir())
+	home := t.TempDir()
 	for _, tc := range []struct {
 		slug, want string
 	}{
@@ -161,10 +174,7 @@ func TestRetroCostSection(t *testing.T) {
 		}, "\n")},
 	} {
 		t.Run(tc.slug, func(t *testing.T) {
-			body, code := RetroCommand([]string{tc.slug, "--scaffold"})
-			if code != 0 {
-				t.Fatalf("scaffold exit = %d, want 0: %q", code, body)
-			}
+			body := scaffoldBody(home, r.root, tc.slug)
 			if !strings.Contains(body, "## Outcome\n\n"+retros.CostHeading+"\n\n- landing: ") {
 				t.Fatalf("scaffold prints no Cost section directly after the Outcome heading:\n%s", body)
 			}
@@ -185,13 +195,25 @@ func TestRetroCostBudget(t *testing.T) {
 		tickets, wall, booked int
 		want                  []string
 	}{
-		{name: "wall over", tickets: 20, wall: 1300, booked: 140, want: []string{
+		{name: "wall over", tickets: 20, wall: 1300 * 60, booked: 140, want: []string{
 			"- wall per ticket: 65.0 min against 60 min, over budget",
 			"- bookkeeping per ticket: 7.0 against 7.1",
 		}},
-		{name: "bookkeeping over", tickets: 20, wall: 1200, booked: 144, want: []string{
+		{name: "bookkeeping over", tickets: 20, wall: 1200 * 60, booked: 144, want: []string{
 			"- wall per ticket: 60.0 min against 60 min",
 			"- bookkeeping per ticket: 7.2 against 7.1, over budget",
+		}},
+		{name: "fractional minutes", tickets: 16, wall: 57888, booked: 0, want: []string{
+			"- wall per ticket: 60.3 min against 60 min, over budget",
+			"- bookkeeping per ticket: 0.0 against 7.1",
+		}},
+		{name: "rounded to the budget", tickets: 50, wall: 3002 * 60, booked: 357, want: []string{
+			"- wall per ticket: 60.0 min against 60 min",
+			"- bookkeeping per ticket: 7.1 against 7.1",
+		}},
+		{name: "zero tickets", tickets: 0, wall: 600, booked: 3, want: []string{
+			"- wall per ticket: unknown min against 60 min",
+			"- bookkeeping per ticket: unknown against 7.1",
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -210,49 +232,54 @@ type costSpan struct {
 	ms                      int
 }
 
-// writeCostRecord writes spans as the live record of root below home, one OTLP line each.
+// writeCostRecord appends spans to the record of root below home through the record's own
+// encoder and writer. trace is the last hex digit of a fixed trace ID.
 func writeCostRecord(t *testing.T, home, root string, spans []costSpan) {
 	t.Helper()
-	var lines []string
+	writer := otelrecord.NewWriter(home, root)
+	start := time.Unix(costEpoch, 0).UTC()
 	for i, s := range spans {
-		attrs := []map[string]any{{"key": otelrecord.AttrSeam, "value": map[string]string{"stringValue": s.seam}}}
-		if s.assignment != "" {
-			attrs = append(attrs, map[string]any{"key": otelrecord.AttrAssignmentID, "value": map[string]string{"stringValue": s.assignment}})
-		}
-		start := int64(costEpoch) * 1e9
-		line, err := json.Marshal(map[string]any{"resourceSpans": []any{map[string]any{"resource": map[string]any{}, "scopeSpans": []any{map[string]any{"scope": map[string]any{}, "spans": []any{map[string]any{
-			"traceId": s.trace, "spanId": strconv.Itoa(i + 1), "name": s.seam, "kind": 1,
-			"startTimeUnixNano": strconv.FormatInt(start, 10), "endTimeUnixNano": strconv.FormatInt(start+int64(s.ms)*1e6, 10),
-			"attributes": attrs, "status": map[string]int{"code": 0},
-		}}}}}}})
+		traceID, err := trace.TraceIDFromHex("0102030405060708090a0b0c0d0e0f0" + s.trace)
 		if err != nil {
 			t.Fatal(err)
 		}
-		lines = append(lines, string(line))
-	}
-	path := otelrecord.Path(home, root)
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
-		t.Fatal(err)
+		spanID, err := trace.SpanIDFromHex(fmt.Sprintf("%016x", i+1))
+		if err != nil {
+			t.Fatal(err)
+		}
+		attrs := []attribute.KeyValue{attribute.String(otelrecord.AttrSeam, s.seam)}
+		if s.assignment != "" {
+			attrs = append(attrs, attribute.String(otelrecord.AttrAssignmentID, s.assignment))
+		}
+		line, err := otelrecord.Encode(tracetest.SpanStub{
+			Name:        s.seam,
+			SpanContext: trace.NewSpanContext(trace.SpanContextConfig{TraceID: traceID, SpanID: spanID, TraceFlags: trace.FlagsSampled}),
+			SpanKind:    trace.SpanKindInternal,
+			StartTime:   start,
+			EndTime:     start.Add(time.Duration(s.ms) * time.Millisecond),
+			Attributes:  attrs,
+		}.Snapshot())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Append(line); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
 func TestRetroCostTraceTimes(t *testing.T) {
 	r, _ := newCostRepo(t)
-	t.Chdir(r.root)
-	root := r.git(0, "rev-parse", "--show-toplevel")
 	planned := []costSpan{
-		{trace: "t1", seam: "commit", assignment: "asg-a", ms: 100},
-		{trace: "t1", seam: "commit", ms: 200},
-		{trace: "t1", seam: "lane", ms: 300},
-		{trace: "t1", seam: otelrecord.SeamGatePhase, ms: 50},
-		{trace: "t2", seam: otelrecord.SeamLanding, assignment: "asg-b", ms: 400},
+		{trace: "1", seam: otelrecord.SeamCommit, assignment: "asg-a", ms: 100},
+		{trace: "1", seam: otelrecord.SeamCommit, ms: 200},
+		{trace: "1", seam: otelrecord.SeamLane, ms: 300},
+		{trace: "1", seam: otelrecord.SeamGatePhase, ms: 50},
+		{trace: "2", seam: otelrecord.SeamLanding, assignment: "asg-b", ms: 400},
 	}
 	foreign := []costSpan{
-		{trace: "t3", seam: "commit", assignment: "asg-other", ms: 1000},
-		{trace: "t4", seam: "commit", ms: 2000},
+		{trace: "3", seam: otelrecord.SeamCommit, assignment: "asg-other", ms: 1000},
+		{trace: "4", seam: otelrecord.SeamCommit, ms: 2000},
 	}
 	for _, tc := range []struct {
 		name, slug string
@@ -266,14 +293,10 @@ func TestRetroCostTraceTimes(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			home := t.TempDir()
-			t.Setenv("BENCH_HOME", home)
 			if tc.spans != nil {
-				writeCostRecord(t, home, root, tc.spans)
+				writeCostRecord(t, home, r.root, tc.spans)
 			}
-			body, code := RetroCommand([]string{tc.slug, "--scaffold"})
-			if code != 0 {
-				t.Fatalf("scaffold exit = %d, want 0: %q", code, body)
-			}
+			body := scaffoldBody(home, r.root, tc.slug)
 			if got := stageLine(t, sectionOf(t, body, retros.CostHeading), "- trace:"); got != tc.want {
 				t.Fatalf("trace line = %q, want %q", got, tc.want)
 			}
