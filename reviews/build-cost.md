@@ -1867,7 +1867,62 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-merged-conformance",
+        "performer": "claude:bc-orchestrator-20261028",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+          "digest": "sha256:119fb06da5518eeb7c2dc345b559894f58023284e979cb8f28a9dd3aeb82a9b3",
+          "excerpt": "bench test --in build-cost --package ./internal/conformance\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,39686,1144\nfailures[0]{package,test,line,lines}:\nskips[1]: TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device (capability: privilege)\n"
+        },
+        "requirement": "merged-test:./internal/conformance",
+        "command": "bench test --package ./internal/conformance",
+        "exit_code": 0
+      },
+      {
+        "id": "final-merged-gate",
+        "performer": "claude:bc-orchestrator-20261028",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+          "digest": "sha256:d4f0516dcddc319c9a4aa9dd1e70e830f8d6f9b45b9ce49b1a5c70639800c675",
+          "excerpt": "bench test --in build-cost --package ./internal/gate\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,143080,810\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "merged-test:./internal/gate",
+        "command": "bench test --package ./internal/gate",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage",
+        "performer": "claude:bc-orchestrator-20261028",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+          "digest": "sha256:68191da4b3123f79cbdf9eea00266335e16f18ade287e741c181844108817e87",
+          "excerpt": "bench coverage --in build-cost --check specs/build-cost/spec.md\nok: coverage map valid — 73 row(s)\nuncited: 7 row(s) with no seam-cell citation — BC22, BC71, BC31, BC34, BC36, BC47, BC70\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/build-cost/spec.md",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
