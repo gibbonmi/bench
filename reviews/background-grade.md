@@ -2426,9 +2426,9 @@
     {
       "id": "BG-C8",
       "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
-      "tip": "666bd246160988a8cff4317eb255b35a03d562eb",
+      "tip": "5993bac555d8048668687a9a4794c12039003681",
       "plan_digest": "sha256:6bfdd9b7fd4c3e039ded5667af3dd77098e677596bc820da60b9794ecbfe7859",
-      "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+      "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
       "acceptance_rows": [
         "BG78",
         "BG79",
