@@ -12,6 +12,13 @@ import (
 // the gate cache of that worktree, so it names the latest background grade of that checkout.
 const recordFile = "bench-background-grade"
 
+// logFile is the background log beside the background record. It holds the output of the
+// latest background grade of that checkout.
+const logFile = "bench-background-grade.log"
+
+// LogPath answers the path of the background log of the worktree git directory gitdir.
+func LogPath(gitdir string) string { return filepath.Join(gitdir, logFile) }
+
 // Outcome is the end of one background grade.
 type Outcome string
 

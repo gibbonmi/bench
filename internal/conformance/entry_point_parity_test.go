@@ -133,6 +133,7 @@ var parityExemptCommands = map[string]string{
 	"worktree-lease-file": whyWrapperVerb,
 	"resume-clean":        whyWrapperVerb,
 	"gate-run":            whyWrapperVerb,
+	"gate-background":     whyWrapperVerb,
 	"freshness-check":     whyWrapperVerb,
 	"gate-go":             whyGatePhase,
 	"gate-prose":          whyGatePhase,
@@ -357,7 +358,6 @@ var parityHonestStatics = map[string]string{
 // leaves the tree. A skip would retire the row's whole route in silence.
 func TestEntryPointParityNamesAnAbsentStaticEntry(t *testing.T) {
 	diags := checkEntryPointParity(throwawayRoot{}.build(t))
-
 	want := `entry-point-parity: scripts/release-preflight.sh is absent or unreadable, and the registry command "release-preflight" is therefore ungraded`
 	if !containsDiagnostic(diags, want) {
 		t.Fatalf("an absent static entry did not bite with %q:\n%s", want, strings.Join(diags, "\n"))

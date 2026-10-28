@@ -62,6 +62,19 @@ func ReadClaim(gitdir, key string) (Claim, error) {
 	return claim, nil
 }
 
+// ReleaseClaim removes the claim of its key in the git common directory gitdir when that claim
+// is still claim, so a grade releases only its own hold. A claim of another owner stays.
+func ReleaseClaim(gitdir string, claim Claim) error {
+	held, err := ReadClaim(gitdir, claim.Key)
+	if err != nil || held != claim {
+		return err
+	}
+	if err := os.Remove(ClaimPath(gitdir, claim.Key)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
+
 // Live reports whether the owner of claim still runs: the claim names the current boot and
 // its owner pid exists. A pid of an earlier boot can name a new process, so it is not live.
 func (c Claim) Live() (bool, error) {

@@ -75,9 +75,15 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if refusal, refused := gradeCheckpointRecord(ctx, storageRoot, stderr, mode); refused {
 		return refusal
 	}
+	// A background grade holds a claim on its key in place of the checkout lock, and it writes
+	// no gate cache, so its reuse writes nothing and a foreground run never refuses because of it.
+	grade := backgroundGradeOf(ctx)
+	if err := grade.hold(replacer, storageRoot, plan); err != nil {
+		return operational(storageRoot, 0, stderr, "background claim unavailable: "+err.Error())
+	}
 	if mode == reuseFreshGreen {
 		now := time.Now().UTC()
-		if reuse := reusableEvidence(storageRoot, plan, now); reuse.ReusableGreen && reuseWritesNothing(storageRoot, plan, now) {
+		if reuse := reusableEvidence(storageRoot, plan, now); reuse.ReusableGreen && (grade != nil || reuseWritesNothing(storageRoot, plan, now)) {
 			logGateEvent(ctx, gateLogRecord{Event: "gate.reused", Root: storageRoot})
 			return reusedGreenResult(stdout, reuse)
 		}
@@ -86,32 +92,36 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if err != nil {
 		return operational(storageRoot, 0, stderr, "git directory unavailable")
 	}
-	lock, err := os.OpenFile(gateLockPath(gitdir), os.O_CREATE|os.O_RDWR, 0o600)
-	if err != nil {
-		return operational(storageRoot, 0, stderr, besideDemotion("gate lock unavailable", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
-	}
-	defer lock.Close()
-	if err := acquireExecutionLock(lock); err != nil {
-		if gocache.Contended(err) {
-			fmt.Fprintln(stderr, besideDemotion("gate execution already in progress", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
-			writeOwnerDiagnostic(stderr, gateOwnerPath(gitdir))
-			inspection := inspectAt(storageRoot, time.Now().UTC())
-			inspection.ReusableGreen = false
-			return Result{ActionExit: 1, Inspection: inspection}
+	if grade == nil {
+		lock, err := os.OpenFile(gateLockPath(gitdir), os.O_CREATE|os.O_RDWR, 0o600)
+		if err != nil {
+			return operational(storageRoot, 0, stderr, besideDemotion("gate lock unavailable", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
 		}
-		return operational(storageRoot, 0, stderr, besideDemotion("gate lock unavailable: "+err.Error(), persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
+		defer lock.Close()
+		if err := acquireExecutionLock(lock); err != nil {
+			if gocache.Contended(err) {
+				fmt.Fprintln(stderr, besideDemotion("gate execution already in progress", persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
+				writeOwnerDiagnostic(stderr, gateOwnerPath(gitdir))
+				inspection := inspectAt(storageRoot, time.Now().UTC())
+				inspection.ReusableGreen = false
+				return Result{ActionExit: 1, Inspection: inspection}
+			}
+			return operational(storageRoot, 0, stderr, besideDemotion("gate lock unavailable: "+err.Error(), persistInterruptedIfGreen(replacer, storageRoot, gitdir, plan)))
+		}
+		defer unlockExecutionLock(lock)
+		logGateEvent(ctx, gateLogRecord{Event: "gate.locked", Root: storageRoot, Path: gateLockPath(gitdir)})
 	}
-	defer unlockExecutionLock(lock)
-	logGateEvent(ctx, gateLogRecord{Event: "gate.locked", Root: storageRoot, Path: gateLockPath(gitdir)})
 	if arm != nil {
 		var stop func()
 		ctx, stop = arm(ctx)
 		defer stop()
 	}
-	ownerPath := gateOwnerPath(gitdir)
-	defer func() { _ = os.Remove(ownerPath) }()
-	if err := os.WriteFile(ownerPath, ownerRecord(time.Now().UTC()), 0o600); err != nil {
-		return operational(storageRoot, 0, stderr, "gate owner persistence failed")
+	if grade == nil {
+		ownerPath := gateOwnerPath(gitdir)
+		defer func() { _ = os.Remove(ownerPath) }()
+		if err := os.WriteFile(ownerPath, ownerRecord(time.Now().UTC()), 0o600); err != nil {
+			return operational(storageRoot, 0, stderr, "gate owner persistence failed")
+		}
 	}
 	underLock, err := evaluation.validatePre()
 	if errors.Is(err, errCheckpointTipMoved) {
@@ -122,7 +132,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	}
 	// The check sits ahead of the pending replace, so a reuse writes at most the reused green:
 	// no pending record to leave behind, no verdict to restore.
-	if mode == reuseFreshGreen {
+	if mode == reuseFreshGreen && grade == nil {
 		now := time.Now().UTC()
 		if reuse := reusableEvidence(storageRoot, plan, now); reuse.ReusableGreen {
 			if err := recordReusedGreen(replacer, storageRoot, gitdir, plan, reuse, now); err != nil {
@@ -187,7 +197,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	if baseline != "" {
 		plan.Env = mergeEnv(plan.Env, []string{baselinePolicyEnv + "=" + baseline})
 	}
-	plan.Env = withGateRunLogEnv(ctx, plan.Env)
+	plan.Env = withGateRunLogEnv(ctx, grade.oracleEnv(plan.Env))
 	// The oracle can run the selected executable, so it registers on the selection too.
 	local := append(append(cache, bundle.Resources()...), selection.Resources()...)
 	if delta, eligible := deltaPlan(ctx, storageRoot, runtimeRoot, plan, mode); eligible {
@@ -202,7 +212,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 	// Persist the interrupted posture before the oracle starts. The branch-native gate
 	// always grades the complete subject; there is no component partition to retain.
 	pending := interruptedRecord(plan, time.Now().UTC())
-	if err := persistRecovering(replacer, gitdir, pending, pending); err != nil {
+	if err := grade.persist(replacer, gitdir, pending, pending); err != nil {
 		return persistenceFailure(storageRoot, 0, stderr, "gate pending persistence failed", err)
 	}
 	logGateEvent(ctx, gateLogRecord{Event: "oracle.start", Root: runtimeRoot})
@@ -216,7 +226,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 				return operational(storageRoot, code, stderr, "gate evidence invalidation failed")
 			}
 			ready := readyVerdict(plan, "timeout", time.Now())
-			if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
+			if err := grade.persist(replacer, gitdir, ready, pending); err != nil {
 				return persistenceFailure(storageRoot, code, stderr, "gate timeout persistence failed", err)
 			}
 		}
@@ -249,7 +259,7 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 			return persistenceFailure(storageRoot, rc, stderr, "gate reader hold persistence failed", err)
 		}
 	}
-	if err := persistRecovering(replacer, gitdir, ready, pending); err != nil {
+	if err := grade.persist(replacer, gitdir, ready, pending); err != nil {
 		return persistenceFailure(storageRoot, rc, stderr, "gate final persistence failed", err)
 	}
 	if status == "green" {

@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade of a chunk subject
+
+- Added the internal `bench gate-background <worktree> <tip>` entry, which runs one background grade of a tip in the foreground of its process. The entry first replaces its process with the wrapper of the worktree, with no inherited `BENCH_KIT`, `BENCH_WRAPPER`, or `BENCH_RUN_BINARY`. So the grade runs as the executable that the wrapper resolves for that worktree, and the chunk checkpoint of the worktree runs as that executable too.
+- The grade finds the open build of the tip: the one spec with a `Status: staged` line whose review record the tip holds. It grades the tree of the tip without that review record, as the chunk checkpoint does, with no evidence pass and no record prose grade. It takes the chunk id from the latest chunk entry of the record, and with no entry it runs the whole schedule.
+- The grade holds a claim on its grade key while it runs, and it releases the claim at the end. It takes no checkout lock and writes no gate cache, so a foreground gate in the worktree runs beside it. Its Go test phases run at the background width. Its green goes to the evidence store, so a later chunk checkpoint of the tip reuses that green and runs no oracle.
+- The grade writes its output to `bench-background-grade.log` in the git directory of the worktree. It records `green` or `red`, with the grade key, the tip, and that log, in the background record of the worktree.
+
 ### Background grade records
 
 - Added the records of the background grade. A claim holds a grade key for a running grade, and it names the key, the worktree, the owner pid, and the boot id. A claim is live only while its owner process exists and its boot id is the current boot id. The claims are in the git common directory beside the evidence store. The background record of a worktree names the latest outcome (`green`, `red`, `aborted`, or `stopped`), the grade key, the tip, and the log path, and it is in the git directory of that worktree. The machine queue and its slot are under the Bench home. An absent record reads as empty, and a present record that does not read is an error. Every record is written through the durable replacement.

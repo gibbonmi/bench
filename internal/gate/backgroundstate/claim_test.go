@@ -98,6 +98,36 @@ func TestClaimOfAnotherBootIsNotLive(t *testing.T) {
 	}
 }
 
+// TestReleaseClaimRemovesOnlyItsOwnClaim guards the release of a claim. A grade releases the
+// claim that it holds, and it keeps a claim of the same key that another owner holds.
+func TestReleaseClaimRemovesOnlyItsOwnClaim(t *testing.T) {
+	gitdir := t.TempDir()
+	claim, err := backgroundstate.ClaimFor(key, "worktree")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := claim
+	other.Owner = claim.Owner + 1
+	if err := backgroundstate.WriteClaim(durablefile.Native(), gitdir, other); err != nil {
+		t.Fatal(err)
+	}
+	if err := backgroundstate.ReleaseClaim(gitdir, claim); err != nil {
+		t.Fatal(err)
+	}
+	if read, err := backgroundstate.ReadClaim(gitdir, key); err != nil || read != other {
+		t.Fatalf("after the release of another owner's claim: ReadClaim = %+v, %v; want %+v", read, err, other)
+	}
+	if err := backgroundstate.WriteClaim(durablefile.Native(), gitdir, claim); err != nil {
+		t.Fatal(err)
+	}
+	if err := backgroundstate.ReleaseClaim(gitdir, claim); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(backgroundstate.ClaimPath(gitdir, key)); !os.IsNotExist(err) {
+		t.Fatalf("after the release of its own claim: Lstat = %v; want no claim", err)
+	}
+}
+
 // TestWriteClaimRefusesADirectoryThatIsNotPrivate guards the record directory. A claim
 // directory that another user can read, or a file at its path, is not private, so the claim
 // is not written.
