@@ -34,8 +34,9 @@ type TicketRecord struct {
 }
 
 // TicketRequirements answers the requirements of chunk in plan, the plan at tip, that ticket
-// owes, in plan order. It refuses a chunk that the plan does not name, a ticket that the chunk
-// does not list, and chunk requirements that name no ticket.
+// owes, in plan order. A ticket that owes nothing answers an empty list, also when the chunk
+// lists no requirement. It refuses a chunk that the plan does not name, a ticket that the chunk
+// does not list, and a plan that is not delegated, whose requirements name no ticket.
 func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, error) {
 	planned, err := plannedChunk(plan, tip, chunk)
 	if err != nil {
@@ -44,15 +45,14 @@ func TicketRequirements(plan Plan, tip, chunk, ticket string) ([]Requirement, er
 	if !slices.Contains(planned.Tickets, ticket) {
 		return nil, fmt.Errorf("ticket %s is not a ticket of chunk %s in the plan at %s; the chunk tickets are %s", ticket, chunk, tip, strings.Join(planned.Tickets, ", "))
 	}
-	owed, named := []Requirement{}, false
+	if !plan.Delegated() {
+		return nil, fmt.Errorf("the requirements of chunk %s in the plan at %s name no ticket; the ticket form reads a version 2 plan", chunk, tip)
+	}
+	owed := []Requirement{}
 	for _, requirement := range planned.Verification {
-		named = named || requirement.Ticket != ""
 		if requirement.Ticket == ticket {
 			owed = append(owed, requirement)
 		}
-	}
-	if !named {
-		return nil, fmt.Errorf("the requirements of chunk %s in the plan at %s name no ticket; the ticket form reads a version 2 plan", chunk, tip)
 	}
 	return owed, nil
 }

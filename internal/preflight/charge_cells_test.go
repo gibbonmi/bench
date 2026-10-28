@@ -19,7 +19,7 @@ import (
 func TestDecideChargeRows(t *testing.T) {
 	verdictRows := []string{
 		"paths-authorized",
-		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
+		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
 		"kit-pin", "binary-seal",
 		"rows-owned", "rows-membership", "chunk-rows", "diff-nonempty",
 	}
@@ -45,6 +45,17 @@ func TestDecideChargeRows(t *testing.T) {
 		if verdict.Red || !slices.Equal(got, test.want) {
 			t.Errorf("Decide under operation %d = red %t, checks %v, want green %v", test.kind, verdict.Red, got, test.want)
 		}
+	}
+}
+
+// TestDecideHasNoCheckFloorRow covers BC32. A build verdict over tickets prints no
+// check-floor row, because the chunk checkpoint is the only grade of a plain check.
+func TestDecideHasNoCheckFloorRow(t *testing.T) {
+	f := baseFacts()
+	f.Mode = modeBuild
+	f.TicketsDirExists = true
+	if row, ok := checkRow(Decide(f), "check-floor"); ok {
+		t.Fatalf("build verdict holds the retired row %+v", row)
 	}
 }
 
