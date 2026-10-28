@@ -1602,3 +1602,13 @@ Findings: 4. Worst: a log opened without `O_TRUNC` passes BC52 (F1).
 - F2 ask-user, confidence 6: a partial last line mixes two checks in the shared lane log (`internal/gate/runner.go:493-498`). The orchestrator accepts it: `prefixWriter.Close` ends a partial line, and a BC51 case pins it.
 - F3 ask-user, confidence 4: a third copy of the `mutant_report` heading, with no recorded red for the started-report cases. Repair: derive the heading from `mutantReportFields`, and record the red of an over-broad mutant.
 - F4 no-op, confidence 3: an empty chunk base is unreachable (`internal/reviewrecord/parse.go:69`).
+
+## BC-C4 ticket 08 repair, round 1 (commit fe2be29e5)
+
+Witness return:
+
+- `TestLaneRelaysARedCheckPartialLine` (Coverage F2): red on its first run before the `Close` fix.
+- `TestLanePassPrintsNoCheckReport` (Coverage F1): the lane_output.go swap of `os.O_CREATE|os.O_TRUNC|os.O_WRONLY` for `os.O_CREATE|os.O_WRONLY` bit.
+- `TestMutantSetSuccessOmitsTheReports` (Coverage F3): the set.go swap of `if e.command == 0 {` for `if true {` bit, with `failed_restore` first.
+
+Each mutant compiled, and each subject was restored. probe-08 ran again at the repair commit and bit. `mutantReportHeading` in `internal/probe/set.go` is now the one source of the report heading, which the orchestrator accepts.
