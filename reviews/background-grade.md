@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:9795d74a16661c672bab8d85d1e33e31d3deecc7c73d3869c5a168a3b08c34dc",
+  "plan_digest": "sha256:05fcba415de8fcb85ab7a146cd588db4e9e87b6d415855286f7844925eb9fc17",
   "implementation_session": "",
   "chunks": [
     {
@@ -2813,6 +2813,36 @@
     {
       "from": "sha256:a135acc90942d8f65fc3491b4bffa2de709719e30b20beeea05a338460667f36",
       "to": "sha256:9795d74a16661c672bab8d85d1e33e31d3deecc7c73d3869c5a168a3b08c34dc",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ],
+        "BG-C7": [
+          "BG-C7"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9795d74a16661c672bab8d85d1e33e31d3deecc7c73d3869c5a168a3b08c34dc",
+      "to": "sha256:05fcba415de8fcb85ab7a146cd588db4e9e87b6d415855286f7844925eb9fc17",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
