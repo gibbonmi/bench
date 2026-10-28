@@ -15,13 +15,13 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
-// carryPlan is the chunk plan of carriedRepair. The repair changes a test file of
+// carryPlan is the probe chunk plan of carriedRepair. The repair changes a test file of
 // ./internal/a, so only pkg is reached. The carried system requirement comes before pkg, so an
 // owed-order write puts a carried entry before a staged one.
 var carryPlan = []rr.Requirement{
 	{ID: "system", Command: "bench test --check system", Probe: "omit the check"},
-	{ID: "pkg", Command: "bench test --package ./internal/a"},
-	{ID: "other", Command: "bench test --package ./internal/b"},
+	{ID: "pkg", Command: "bench test --package ./internal/a", Probe: "omit the a check"},
+	{ID: "other", Command: "bench test --package ./internal/b", Probe: "omit the b check"},
 }
 
 // carriedRepair records ticket 1.md of a one-chunk delegated fixture that owes carryPlan, with
@@ -76,7 +76,7 @@ func carriedCell(t *testing.T, out string) any {
 // session, and references the candidate.
 func TestTicketCarriesTheUnreachedRequirement(t *testing.T) {
 	f, home, frozen, repair := carriedRepair(t)
-	f.Stage(home, "1", "pkg", f.Run(0, "ok\n"))
+	f.Stage(home, "1", "pkg", f.Run(0, biting))
 	out := succeed(t, f, repairArgs(t, f))
 	if cell := carriedCell(t, out); cell != "system,other" {
 		t.Errorf("carried cell = %v, want system,other", cell)
@@ -127,14 +127,14 @@ func TestTicketNamesTheChecksToRun(t *testing.T) {
 		want  string
 	}{
 		{"one reason", func(t *testing.T, f *recordtest.Fixture, home string) {
-			f.Stage(home, "1", "other", f.Run(0, "ok\n"))
+			f.Stage(home, "1", "other", f.Run(0, biting))
 		}, "these owed requirements have no staged excerpt: pkg; carry: pkg (the delta reaches the command); write it with "},
 		// The repair session records a passing pkg run and a failing other run, then commits a
 		// second test-only repair in ./internal/a. The system entry carries again, pkg is reached
 		// again, and other has a failing last entry.
 		{"two reasons", func(t *testing.T, f *recordtest.Fixture, home string) {
-			f.Stage(home, "1", "pkg", f.Run(0, "ok\n"))
-			f.Stage(home, "1", "other", f.Run(1, "FAIL\n"))
+			f.Stage(home, "1", "pkg", f.Run(0, biting))
+			f.Stage(home, "1", "other", f.Run(1, answer("silent", "yes", 1, "0", report)))
 			args := repairArgs(t, f)
 			args[slices.Index(args, "--id-prefix")+1] = "failed"
 			succeed(t, f, args)
@@ -166,7 +166,7 @@ func TestTicketNamesTheChecksToRun(t *testing.T) {
 // of the chunk and refuses at its review step, because no review is recorded.
 func TestCarriedEntryPassesTheChunkGrade(t *testing.T) {
 	f, home, _, _ := carriedRepair(t)
-	f.Stage(home, "1", "pkg", f.Run(0, "ok\n"))
+	f.Stage(home, "1", "pkg", f.Run(0, biting))
 	succeed(t, f, repairArgs(t, f))
 	f.Commit("record the repair of 1.md")
 	err := rr.Check(f.Root, f.Tree(), f.Tip(), recordtest.Spec, "1", false)

@@ -21,10 +21,14 @@ const (
 func testIn(pkg string) string     { return pkg + "/carry_test.go" }
 func packageRun(pkg string) string { return "bench test --package ./" + pkg }
 
-// carryCase is one owed requirement of a row and its expected reason, empty for a carry.
+// carryCase is one owed probe requirement of a row and its expected reason, empty for a carry.
+// A chunk requirement is always a probe, so the reason reads the command and the probe entry.
 type carryCase struct {
-	command, probe, reason string
+	command, reason string
 }
+
+// carryProbe is the planned probe of every owed requirement.
+const carryProbe = "omit the check"
 
 // carryRow is one fixture: delta commits the change after the prior entries, edit reshapes the
 // chunk entry before the record saves, and each case is decided against the saved chunk.
@@ -47,7 +51,7 @@ func decideRows(t *testing.T, rows []carryRow) {
 		t.Run(row.name, func(t *testing.T) {
 			owed := make([]rr.Requirement, len(row.cases))
 			for i, c := range row.cases {
-				owed[i] = rr.Requirement{ID: fmt.Sprintf("owed-%d", i), Command: c.command, Probe: c.probe}
+				owed[i] = rr.Requirement{ID: fmt.Sprintf("owed-%d", i), Command: c.command, Probe: carryProbe}
 			}
 			f := recordtest.Carrying(t, owed)
 			if row.delta != nil {
@@ -123,11 +127,6 @@ func TestCarryDecision(t *testing.T) {
 		}, cases: []carryCase{{command: packageRun(pkgA), reason: noEntry}}},
 		{name: "a probe that did not bite", delta: testOnlyIn(pkgB), edit: func(_ *recordtest.Fixture, chunk *rr.Chunk) {
 			chunk.Verification[0].Probe.Outcome = "silent"
-		}, cases: []carryCase{{command: packageRun(pkgA), probe: "omit the check", reason: noEntry}}},
-		{name: "a probe that bit and restored", delta: testOnlyIn(pkgB), edit: func(f *recordtest.Fixture, chunk *rr.Chunk) {
-			if probe := chunk.Verification[0].Probe; probe == nil || probe.Outcome != "bit" || probe.Restore != "pass" {
-				f.T.Fatalf("the fixture probe %+v did not bite and restore", probe)
-			}
-		}, cases: []carryCase{{command: packageRun(pkgA), probe: "omit the check"}}},
+		}, cases: []carryCase{{command: packageRun(pkgA), reason: noEntry}}},
 	})
 }

@@ -174,8 +174,8 @@ func ReadSpecAtCommit(root, spec, commit string) ([]byte, Plan, error) {
 
 // requirementsValid grades one verification inventory. A nil owned list marks
 // the final inventory, which must be non-empty and names no ticket in either
-// version. A chunk inventory can be empty, and a version 2 chunk inventory maps
-// every obligation onto one of its own tickets.
+// version. A chunk inventory can be empty, each of its requirements is a probe,
+// and a version 2 chunk inventory maps every obligation onto one of its own tickets.
 func requirementsValid(items []Requirement, owned []string, delegated bool) error {
 	if len(items) == 0 && owned == nil {
 		return errors.New("missing required verification inventory")
@@ -186,6 +186,9 @@ func requirementsValid(items []Requirement, owned []string, delegated bool) erro
 			return errors.New("invalid verification requirement")
 		}
 		seen[item.ID] = true
+		if owned != nil && item.Probe == "" {
+			return fmt.Errorf("verification %s has no probe; a chunk requirement must be a probe", item.ID)
+		}
 		if !delegated || owned == nil {
 			if item.Ticket != "" {
 				return fmt.Errorf("verification %s names a ticket; only a version 2 chunk obligation owns one", item.ID)

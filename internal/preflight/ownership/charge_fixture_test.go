@@ -203,7 +203,7 @@ var finalTests = []reviewrecord.Requirement{{ID: "acceptance", Command: "go test
 
 // splitPlan places one.md in chunk c1 and two.md in chunk c2.
 func splitPlan() string {
-	tests := []reviewrecord.Requirement{{ID: "tests", Command: preflighttest.PlanCommand}}
+	tests := []reviewrecord.Requirement{{ID: "tests", Command: preflighttest.PlanCommand, Probe: preflighttest.PlanProbe}}
 	return preflighttest.PlanSection(reviewrecord.Plan{Version: 1, FinalVerification: finalTests, Chunks: []reviewrecord.PlannedChunk{
 		{ID: "c1", Tickets: []string{"one.md"}, Verification: tests}, {ID: "c2", Tickets: []string{"two.md"}, Verification: tests}}})
 }
@@ -215,7 +215,7 @@ func delegatedPlan() string {
 		Execution: &reviewrecord.Execution{Mode: "delegate", RunID: "run-1", OrchestratorSession: "orchestrator", AuthorLimit: 1,
 			Assignments: map[string][]reviewrecord.Assignment{"one.md": {}, "two.md": {}}},
 		Chunks: []reviewrecord.PlannedChunk{{ID: "c1", Tickets: []string{"one.md", "two.md"}, Verification: []reviewrecord.Requirement{
-			{ID: "tests-one", Command: preflighttest.PlanCommand, Ticket: "one.md"}, {ID: "tests-two", Command: preflighttest.PlanCommand, Ticket: "two.md"}}}}})
+			{ID: "tests-one", Command: preflighttest.PlanCommand, Probe: preflighttest.PlanProbe, Ticket: "one.md"}, {ID: "tests-two", Command: preflighttest.PlanCommand, Probe: preflighttest.PlanProbe, Ticket: "two.md"}}}}})
 }
 
 // secondTicket is the committed two.md ticket that covers rows.

@@ -191,7 +191,7 @@ func Prepare(t testing.TB, root string, count int, spec, body string, options ..
 	plan := rr.Plan{Version: 1, FinalVerification: []rr.Requirement{{ID: "acceptance", Command: "go test ./..."}, {ID: "integration", Command: "go test -tags=system ./..."}}}
 	for i := 1; i <= count; i++ {
 		id, ticket := fmt.Sprint(i), fmt.Sprintf("%d.md", i)
-		plan.Chunks = append(plan.Chunks, rr.PlannedChunk{ID: id, Tickets: []string{ticket}, Verification: []rr.Requirement{{ID: "tests", Command: "go test ./...", Probe: "omit source check"}, {ID: "additional", Command: "go test -race ./..."}}})
+		plan.Chunks = append(plan.Chunks, rr.PlannedChunk{ID: id, Tickets: []string{ticket}, Verification: []rr.Requirement{{ID: "tests", Command: "go test ./...", Probe: "omit source check"}, {ID: "additional", Command: "go test -race ./...", Probe: "omit race check"}}})
 		blocker := "none"
 		if i > 1 {
 			blocker = fmt.Sprintf("%d.md", i-1)

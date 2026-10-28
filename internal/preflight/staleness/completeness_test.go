@@ -171,9 +171,9 @@ func commitCompleteness(t *testing.T, root, slug string, sections ...string) []s
 // plan that own every row.
 func completenessFiles(slug string, sections ...string) map[string]string {
 	plan := reviewrecord.Plan{Version: 1, FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}}, Chunks: []reviewrecord.PlannedChunk{
-		{ID: "c1", Tickets: []string{"one.md"}, Verification: []reviewrecord.Requirement{{ID: "tests", Command: preflighttest.PlanCommand}}},
+		{ID: "c1", Tickets: []string{"one.md"}, Verification: []reviewrecord.Requirement{{ID: "tests", Command: preflighttest.PlanCommand, Probe: preflighttest.PlanProbe}}},
 		{ID: "SS-C3", Tickets: []string{nativeTicket}, Verification: []reviewrecord.Requirement{
-			{ID: "ss-native-diagnostic", Command: preflighttest.PlanCommand}, {ID: "ss-native-clean", Command: preflighttest.PlanCommand}}},
+			{ID: "ss-native-diagnostic", Command: preflighttest.PlanCommand, Probe: preflighttest.PlanProbe}, {ID: "ss-native-clean", Command: preflighttest.PlanCommand, Probe: preflighttest.PlanProbe}}},
 	}}
 	var native []string
 	for _, row := range nativeRows {

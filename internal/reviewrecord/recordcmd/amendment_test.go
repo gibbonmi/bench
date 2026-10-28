@@ -181,7 +181,7 @@ func TestRecordAmendmentReportsItsRow(t *testing.T) {
 func TestRecordedAmendmentPassesTheCheckpoint(t *testing.T) {
 	f := recorded(t, 2)
 	verify(t, f)
-	verify(t, f, unprobed)
+	verify(t, f, additionalCall)
 	for _, axis := range rr.Axes() {
 		review(t, f, axis, "review-1-"+axis)
 	}
@@ -198,7 +198,7 @@ func TestRecordedAmendmentPassesTheCheckpoint(t *testing.T) {
 	record(t, f, "2", base, tip)
 	chunk2 := map[string]string{"--chunk": "2", "--performer": recordtest.Author("2.md")}
 	verify(t, f, chunk2, map[string]string{"--id": "tests-2"})
-	verify(t, f, chunk2, unprobed, map[string]string{"--id": "additional-2"})
+	verify(t, f, chunk2, additionalCall, map[string]string{"--id": "additional-2"})
 	for _, axis := range rr.Axes() {
 		succeed(t, f, reviewArgs(t, axis, "review-2-"+axis, nil, map[string]string{"--chunk": "2"}))
 	}

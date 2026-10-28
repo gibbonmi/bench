@@ -10,11 +10,11 @@ import (
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
-// stagePlan is the chunk plan of a Staging fixture: a probe requirement, and a requirement
-// whose planned command holds a single-quoted operand.
+// stagePlan is the chunk plan of a Staging fixture: two probe requirements, the second with a
+// single-quoted operand in its planned command.
 var stagePlan = []rr.Requirement{
 	{ID: "tests", Command: "bench test --package ./internal/example", Probe: "omit source check"},
-	{ID: "quoted", Command: "bench test --run 'TestA|TestB'"},
+	{ID: "quoted", Command: "bench probe clamp.go --omit 'a|b' --run 'TestA|TestB'", Probe: "omit the alternation"},
 }
 
 // Staging prepares a delegated one-chunk fixture in an assignment worktree with stagePlan as

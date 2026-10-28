@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
@@ -13,23 +12,15 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
-// probeOnly keeps only the probe requirements of each chunk of a delegated plan. The final
-// list keeps its plain requirements.
-func probeOnly(p *rr.Plan) {
-	for i := range p.Chunks {
-		p.Chunks[i].Verification = slices.DeleteFunc(p.Chunks[i].Verification, func(item rr.Requirement) bool { return item.Probe == "" })
-	}
-}
-
 // emptySecond empties the requirement list of the second chunk.
 func emptySecond(p *rr.Plan) { p.Chunks[1].Verification = []rr.Requirement{} }
 
 // absentKey is the encoded verification key of a chunk whose list is nil.
 const absentKey = `,"verification":null`
 
-// TestPlanProbeOnlyChunks covers BC24, BC25, BC26, BC27, BC28, and BC30. Each plan case starts
-// from a two-chunk delegated plan with only its probe requirements, and the reader grades the
-// committed plan.
+// TestPlanProbeOnlyChunks covers BC23, BC24, BC25, BC26, BC27, BC28, and BC30. Each plan case
+// starts from a two-chunk delegated plan whose chunk requirements are all probes, beside the
+// plain final list, and the reader grades the committed plan.
 func TestPlanProbeOnlyChunks(t *testing.T) {
 	for _, tc := range []struct {
 		name, want string
@@ -44,11 +35,15 @@ func TestPlanProbeOnlyChunks(t *testing.T) {
 		{"ticket that owes nothing", "", mergeTickets, false},
 		// BC27: a chunk requirement still names a ticket of its own chunk.
 		{"requirement outside its chunk", `"2.md" outside this chunk`, func(p *rr.Plan) { p.Chunks[0].Verification[0].Ticket = "2.md" }, false},
+		// BC23: a chunk requirement without a probe refuses, and the refusal names the chunk
+		// and the requirement.
+		{"plain chunk requirement", "chunk 2: verification plain has no probe", func(p *rr.Plan) {
+			p.Chunks[1].Verification = append(p.Chunks[1].Verification, rr.Requirement{ID: "plain", Command: "go vet ./...", Ticket: "2.md"})
+		}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := recordtest.NewDelegated(t, 2)
 			tc.mutate(&f.Plan)
-			probeOnly(&f.Plan)
 			f.WritePlan()
 			if tc.absent {
 				path := filepath.Join(f.Root, f.Record.Spec)
@@ -71,7 +66,7 @@ func TestPlanProbeOnlyChunks(t *testing.T) {
 	// BC30: the checkpoint still grades each planned probe, so a missing probe entry refuses
 	// through the verification form.
 	t.Run("missing probe entry", func(t *testing.T) {
-		f := recordtest.Prepare(t, gittest.RepoOnBranch(t, "main"), 2, recordtest.Spec, recordtest.Body, recordtest.Delegate, probeOnly, emptySecond)
+		f := recordtest.Prepare(t, gittest.RepoOnBranch(t, "main"), 2, recordtest.Spec, recordtest.Body, recordtest.Delegate, emptySecond)
 		f.AddChunk()
 		f.AddChunk()
 		f.Complete()
