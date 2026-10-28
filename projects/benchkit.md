@@ -366,6 +366,10 @@ A path that a retained canary fixture pins selects the fixture bite test. A
 reflow of a pinned line can stop the fixture from biting, and no document check
 reads the line bytes that the fixture quotes.
 
+A production Go file that the route bypass test scans selects that test. So a
+write-verb author sees a route literal outside the refusal route registry at the
+commit, not first at the landing gate.
+
 | check | authoritative argv | selected by |
 |---|---|---|
 | `gofmt` | `bench gate-go gofmt` | go-source |
@@ -381,6 +385,7 @@ reads the line bytes that the fixture quotes.
 | `roadmap-detail-integrity` | `bench test --check roadmap-detail-integrity` | roadmap-board |
 | `retro-improvement-markers` | `bench test --check retro-improvement-markers` | capture-retros |
 | `fixture-bite` | `bench test --package ./internal/conformance --run ^TestEveryRetainedFixtureBitesThroughRegisteredOwner$` | canary-pin |
+| `route-bypass` | `bench test --package ./internal/conformance --run ^TestNoWriteVerbComposesARouteOutsideTheRegistry$` | write-verb-source |
 
 Go owns package scheduling inside the one ordinary test driver, and that driver grades
 the live tree: the `test` phase carries the graded root and the dev tier to the

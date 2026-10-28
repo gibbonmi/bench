@@ -13,25 +13,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
-
-// routeBypassPackages are the packages in which a write verb raises or prints a refusal.
-// The scan reads each one's own directory and no subdirectory, so a package that this list
-// omits goes unscanned.
-var routeBypassPackages = []string{
-	"internal/commit",
-	"internal/commitment",
-	"internal/commitment/commitcmd",
-	"internal/commitment/repository",
-	"internal/gate",
-	"internal/gate/authorization",
-	"internal/landing",
-	"internal/reviewrecord/recordcmd",
-	"internal/worktree",
-	"internal/worktree/landingpolicy",
-}
 
 // routeBypassAllowed is the reviewed allowlist: each file of a scanned package whose routes
 // the registry does not own, keyed to the read or shared caller that its routes serve.
@@ -52,13 +37,12 @@ var routeBypassNeedles = []string{refusalroute.NextField + "=", refusalroute.Nex
 // package with no production file is a fault too, so a moved package cannot leave the scan.
 func routeBypassFaults(root string) []string {
 	var faults []string
-	for _, pkg := range routeBypassPackages {
+	for _, pkg := range registry.RouteBypassPackages {
 		entries, _ := os.ReadDir(filepath.Join(root, filepath.FromSlash(pkg)))
 		scanned := 0
 		for _, entry := range entries {
-			name := entry.Name()
-			rel := pkg + "/" + name
-			if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
+			rel := pkg + "/" + entry.Name()
+			if entry.IsDir() || !registry.RouteBypassScanned(rel) {
 				continue
 			}
 			scanned++
@@ -116,6 +100,23 @@ func TestNoWriteVerbComposesARouteOutsideTheRegistry(t *testing.T) {
 	}
 }
 
+// TestRouteBypassLaneNameIsTheRR49Test guards the name that the commit lane runs. A run
+// pattern that matches no test passes, so a renamed RR49 test would leave the lane check
+// green and empty. The test reads this package's own source, which is what the lane runs.
+func TestRouteBypassLaneNameIsTheRR49Test(t *testing.T) {
+	const path = "refusal_route_bypass_test.go"
+	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, declaration := range file.Decls {
+		if function, ok := declaration.(*ast.FuncDecl); ok && function.Name.Name == registry.RouteBypassTest {
+			return
+		}
+	}
+	t.Fatalf("%s declares no %s, so the commit lane runs no route bypass test", path, registry.RouteBypassTest)
+}
+
 // TestRouteBypassCheckBites is RR50 and RR65. Each scanned package holds one planted route
 // literal, the commitment tail in internal/commitment/repository included, and each plant
 // reds with a fault that names its file. Each literal holds one needle, and each needle has
@@ -132,7 +133,7 @@ func TestRouteBypassCheckBites(t *testing.T) {
 			notLineSafe = `"refused\x1b[31m\nnext=bench doctor"`
 		)
 		joined := strconv.Quote("bench doctor" + refusalroute.StepJoiner + "bench gate")
-		// The planted packages are spelled apart from routeBypassPackages, so a package that
+		// The planted packages are spelled apart from registry.RouteBypassPackages, so a package that
 		// leaves the list leaves its plant unscanned and reds. Each scanned package must hold
 		// a plant, so the plants follow the list.
 		planted := map[string]string{
@@ -147,7 +148,7 @@ func TestRouteBypassCheckBites(t *testing.T) {
 			"internal/worktree":               nextField,
 			"internal/worktree/landingpolicy": nextTable,
 		}
-		for _, pkg := range routeBypassPackages {
+		for _, pkg := range registry.RouteBypassPackages {
 			if _, ok := planted[pkg]; !ok {
 				t.Errorf("scanned package %s holds no planted route", pkg)
 			}
@@ -185,8 +186,8 @@ func TestRouteBypassCheckBites(t *testing.T) {
 		}
 	})
 	t.Run("an empty tree", func(t *testing.T) {
-		if faults := routeBypassFaults(t.TempDir()); len(faults) != len(routeBypassPackages) {
-			t.Fatalf("faults = %q, want one for each of the %d scanned packages", faults, len(routeBypassPackages))
+		if faults := routeBypassFaults(t.TempDir()); len(faults) != len(registry.RouteBypassPackages) {
+			t.Fatalf("faults = %q, want one for each of the %d scanned packages", faults, len(registry.RouteBypassPackages))
 		}
 	})
 }

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -236,6 +237,30 @@ func TestSelectLaneByCanaryPin(t *testing.T) {
 		selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), []ComposedChange{laneChange(tc.path)}, pins)
 		if got := laneCheckNames(selected); !reflect.DeepEqual(got, tc.checks) || !reflect.DeepEqual(classes, tc.classes) {
 			t.Errorf("%s selects %v with classes %v, want %v with %v", tc.path, got, classes, tc.checks, tc.classes)
+		}
+	}
+}
+
+// TestSelectLaneByWriteVerbSource states the check that a scanned write-verb file adds. A
+// changed or deleted production Go file in each package that the route bypass test scans
+// selects that check. A test file there, and a Go file in a subdirectory package that the
+// scan does not read, select only the Go source checks.
+func TestSelectLaneByWriteVerbSource(t *testing.T) {
+	goSource := []string{"gofmt", "vet", "build", "structure"}
+	for _, pkg := range registry.RouteBypassPackages {
+		for _, tc := range []struct {
+			change          ComposedChange
+			checks, classes []string
+		}{
+			{laneChange(pkg + "/x.go"), append(slices.Clone(goSource), routeBypassCheck), []string{"go-source", "write-verb-source"}},
+			{laneDeletion(pkg + "/x.go"), append(slices.Clone(goSource), routeBypassCheck), []string{"go-source", "write-verb-source"}},
+			{laneChange(pkg + "/x_test.go"), goSource, []string{"go-source"}},
+			{laneChange(pkg + "/unscanned/x.go"), goSource, []string{"go-source"}},
+		} {
+			selected, classes := SelectLane(BenchkitLane("/repo", "/repo"), []ComposedChange{tc.change}, TreeFacts{})
+			if got := laneCheckNames(selected); !reflect.DeepEqual(got, tc.checks) || !reflect.DeepEqual(classes, tc.classes) {
+				t.Errorf("%s %s selects %v with classes %v, want %v with %v", tc.change.Status, tc.change.Path, got, classes, tc.checks, tc.classes)
+			}
 		}
 	}
 }
