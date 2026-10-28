@@ -90,19 +90,19 @@ func TestBaselineReadsSurviveAWorktreeEdit(t *testing.T) {
 	}
 }
 
-// BG17: a commit that changes a Go build input lands in the worktree during a subject-alone
-// chunk run. The run reads both baseline members from its private checkout, so it records its
-// green for the tree that it graded.
+// BG17: a commit that changes a Go build input lands in the worktree during a background grade.
+// The grade reads both baseline members from its private checkout, so it records its green for
+// the tree that it graded.
 func TestBaselineReadsSurviveABuildInputCommit(t *testing.T) {
 	f := baselineFixture(t)
+	seedGateCache(t, f)
 	stripped := strippedTree(t, f)
 	commit := func() {
 		editBuildInput(t, f)
 		f.Commit("change a Go build input during the run")
 	}
-	var stderr bytes.Buffer
-	if code := RunCheckpointArmed(t, f.Root, []string{"--checkpoint", recordtest.Spec, "--chunk", "1", flagPrepare}, commit, &stderr); code != 0 {
-		t.Fatalf("subject-alone chunk run across a build-input commit = %d %s; want its green", code, stderr.String())
+	if code, out := gradeBackground(t, f, commit); code != 0 {
+		t.Fatalf("background grade across a build-input commit = %d %s; want its green", code, out)
 	}
 	if got := InspectTree(f.Root, stripped); !got.ReusableGreen {
 		t.Fatalf("evidence of the graded tree = %+v; want the green of the run", got)
@@ -116,11 +116,12 @@ func TestBaselineScheduleReadsTheCommit(t *testing.T) {
 	f := baselineFixture(t, func(f *recordtest.Fixture) {
 		f.Write(".gitignore", ".gate-*\n"+canary.PhaseManifestPath+"\n")
 	})
+	seedGateCache(t, f)
 	stripped := strippedTree(t, f)
 	working := filepath.Join(f.Root, filepath.FromSlash(canary.PhaseManifestPath))
 	outcomeWrite(t, f.Root, canary.PhaseManifestPath, emptySchedule, 0o644)
-	if code, out := runCheckpointWith(t, f, flagPrepare); code != 0 {
-		t.Fatalf("subject-alone chunk run over an uncommitted phase manifest = %d %s; want its green", code, out)
+	if code, out := gradeBackground(t, f, nil); code != 0 {
+		t.Fatalf("background grade over an uncommitted phase manifest = %d %s; want its green", code, out)
 	}
 	if err := os.Remove(working); err != nil {
 		t.Fatal(err)

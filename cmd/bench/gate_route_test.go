@@ -90,27 +90,11 @@ func TestShellWrapperRejectsUnknownGateShapes(t *testing.T) {
 	}
 }
 
-// preparedRouteFixture is the recorded checkpoint fixture whose chunk the public wrapper
-// prepares green, so a usage error after it belongs to the refused shape alone.
-func preparedRouteFixture(t *testing.T) *recordtest.Fixture {
-	t.Helper()
+// TestCheckpointPrepareIsAUsageError is BG86. The gate grammar holds no prepared run, so a
+// chunk checkpoint of a recorded chunk with --prepare exits 2 with the usage line.
+func TestCheckpointPrepareIsAUsageError(t *testing.T) {
 	f := checkpointRouteFixture(t)
-	if _, diagnostic, code := gateRoute(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1", "--prepare"); code != 0 {
-		t.Fatalf("public prepared chunk checkpoint: %d %s", code, diagnostic)
-	}
-	return f
-}
-
-// TestCheckpointPrepareRefusesComplete covers RC50: the complete form has no prepared run.
-func TestCheckpointPrepareRefusesComplete(t *testing.T) {
-	f := preparedRouteFixture(t)
-	requireGateUsage(t, f.Root, "--checkpoint", f.Record.Spec, "--complete", "--prepare")
-}
-
-// TestCheckpointPrepareRefusesNoCheckpoint covers RC51: a prepared run grades a checkpoint
-// subject, so a prepare with no checkpoint names nothing to grade.
-func TestCheckpointPrepareRefusesNoCheckpoint(t *testing.T) {
-	requireGateUsage(t, preparedRouteFixture(t).Root, "--prepare")
+	requireGateUsage(t, f.Root, "--checkpoint", f.Record.Spec, "--chunk", "1", "--prepare")
 }
 
 // checkpointRouteFixture is one recorded and completed chunk under a gate that exits 0, at a

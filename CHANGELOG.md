@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Prepared run retired
+
+- Removed `--prepare` from `bench gate`. The background grade now grades each chunk subject before its checkpoint, so the prepared run has no use. A call with `--prepare` is a usage error at exit 2.
+- Changed the implement phase guidance. The Land section no longer starts a prepared run at a chunk freeze or after a repair. It states that a chunk checkpoint waits for the live background grade of its key.
+
 ### Background outcomes where the author looks
 
 - Changed `bench status`. The board of a worktree now shows a `background` row with the latest background outcome of that worktree, the tip that the grade graded, and the path of its log. A `red` outcome, and a background record that does not read, rank below the gate, Git, and worktree rows. Each other outcome ranks last. The row is not a verdict: the gate row still reads only the gate cache.

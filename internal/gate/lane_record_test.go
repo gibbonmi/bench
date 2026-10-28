@@ -252,7 +252,7 @@ func laneSpanAttributes(t *testing.T, home, root string) map[string]string {
 }
 
 // TestDeltaGreenLeavesTheGateCacheUntouched covers RC69. A green delta writes its own record
-// and leaves the gate cache as the prepared whole run left it. Once the whole base green is
+// and leaves the gate cache as the whole chunk green left it. Once the whole base green is
 // gone, the delta green serves no checkpoint, so the checkpoint runs the whole gate.
 func TestDeltaGreenLeavesTheGateCacheUntouched(t *testing.T) {
 	var base string
@@ -262,7 +262,7 @@ func TestDeltaGreenLeavesTheGateCacheUntouched(t *testing.T) {
 	requireDelta(t, f, 0, "./.")
 	requireDeltaGreen(t, f, base)
 	if after := outcomeRead(t, cache); !bytes.Equal(after, before) {
-		t.Fatalf("gate cache after a delta green = %s; want the prepared record %s", after, before)
+		t.Fatalf("gate cache after a delta green = %s; want the record of the whole green %s", after, before)
 	}
 	common, err := benchgit.CommonDir(f.Root)
 	if err != nil {
@@ -274,67 +274,64 @@ func TestDeltaGreenLeavesTheGateCacheUntouched(t *testing.T) {
 	requireWhole(t, f)
 }
 
-// TestCheckpointPrepareTakesTheDelta covers RC74. The prepared run at the test repair runs
-// before the record commits refreeze the chunk, so the record names the reviewed tip as the
-// chunk tip. It runs the delta set and writes its green, and the checkpoint after the record
-// commits reuses that green with no run.
-func TestCheckpointPrepareTakesTheDelta(t *testing.T) {
+// TestCheckpointReusesABackgroundDelta covers RC74. The background grade of the test repair
+// runs before the record commits refreeze the chunk, so the record names the reviewed tip as
+// the chunk tip. It runs the delta set and writes its green, and the checkpoint after the
+// record commits reuses that green with no run.
+func TestCheckpointReusesABackgroundDelta(t *testing.T) {
 	f := frozenDeltaFixture(t)
 	base := strippedSubject(t, f)
 	confirmRepair(f, repairChunk(f, graded(t, func(f *recordtest.Fixture) {
 		modifyTest(f)
 		f.Commit("repair the test")
-		requirePreparedDelta(t, f, base)
-		// The record commit of the failed result follows the prepared run.
+		requireBackgroundDelta(t, f, base)
+		// The record commit of the failed result follows the background grade.
 		f.Save()
 	})))
 	code, out := runCheckpoint(t, f)
 	if schedules := gateSchedules(t, f); code != 0 || !strings.Contains(out, deltaReusedLine) || len(schedules) != 2 {
-		t.Fatalf("checkpoint after the prepared delta = %d %s with the schedules %q; want the reuse line and no run", code, out, schedules)
+		t.Fatalf("checkpoint after the background delta = %d %s with the schedules %q; want the reuse line and no run", code, out, schedules)
 	}
 }
 
-// TestCheckpointPrepareRunsWholeForANonTestRepair covers RC82. The record names the test repair
-// as the chunk tip, and a later production repair is not refrozen. The prepared run proves
+// TestBackgroundGradeRunsWholeForANonTestRepair covers RC82. The record names the test repair
+// as the chunk tip, and a later production repair is not refrozen. The background grade proves
 // the change from the reviewed tip, so it runs the whole gate and keeps the earlier delta green.
-func TestCheckpointPrepareRunsWholeForANonTestRepair(t *testing.T) {
+func TestBackgroundGradeRunsWholeForANonTestRepair(t *testing.T) {
 	f := deltaFixture(t, graded(t, modifyTest))
 	requireDelta(t, f, 0, "./.")
 	recorded := outcomeRead(t, deltaRecordPath(t, f))
 	modifySource(f)
 	f.Commit("repair the source")
-	requireWhole(t, f, flagPrepare)
+	requireWholeRun(t, f, func() (int, string) { return gradeBackground(t, f, nil) })
 	if after := outcomeRead(t, deltaRecordPath(t, f)); !bytes.Equal(after, recorded) {
-		t.Fatalf("delta record after the whole prepared run = %s; want the earlier delta green %s", after, recorded)
+		t.Fatalf("delta record after the whole background grade = %s; want the earlier delta green %s", after, recorded)
 	}
 }
 
-// TestDeltaGreenNeedsTheCurrentBase covers RC83. A new review round moves the three axis
-// results to the test repair, so the base moves, and the delta green over the old base serves
-// no run. The prepared run shares the run decision of the chunk checkpoint and runs no
-// evidence pass, so the fixture moves the results alone. Before the round, a second test
-// commit on the same base is a new subject, so the delta green of the first serves it no run.
+// TestDeltaGreenNeedsTheCurrentBase covers RC83. Before a review round, a second test commit on
+// the same base is a new subject, so the delta green of the first serves it no run. A new
+// review round then moves the three axis results to the test repair, so the base moves, and
+// the delta green over the old base serves no run. That base holds no whole green, so the
+// grade runs the whole gate. The background grade shares the run decision of the chunk
+// checkpoint and runs no evidence pass, so the fixture moves the results alone.
 func TestDeltaGreenNeedsTheCurrentBase(t *testing.T) {
 	f := frozenDeltaFixture(t)
 	first := strippedSubject(t, f)
-	requirePrepared(t, f)
+	requireChunkGreen(t, f)
 	modifyTest(f)
 	f.Commit("repair the test")
-	round, second := f.Tip(), strippedSubject(t, f)
-	requirePreparedDelta(t, f, first)
-	// A fresh prepared run grades the test repair whole, so the new base has its green.
-	if code, out := runCheckpointWith(t, f, flagPrepare, flagFresh); code != 0 {
-		t.Fatalf("fresh prepared run = %d %s", code, out)
-	}
+	round := f.Tip()
+	requireBackgroundDelta(t, f, first)
 	addTest(f)
 	f.Commit("add a test")
-	requirePreparedDelta(t, f, first)
+	requireBackgroundDelta(t, f, first)
 	for i := range f.Record.Chunks[0].Reviews {
 		f.Record.Chunks[0].Reviews[i].Tip = round
 	}
 	f.Save()
 	f.Commit("review the test repair")
-	requirePreparedDelta(t, f, second)
+	requireWholeRun(t, f, func() (int, string) { return gradeBackground(t, f, nil) })
 }
 
 // TestDeltaGreenNeedsAValidRecord is the witness that a delta record of the current base and
@@ -362,14 +359,14 @@ func TestDeltaGreenPersistenceFailureFailsTheCheckpoint(t *testing.T) {
 	}
 }
 
-// requirePreparedDelta requires that the prepared run of f exits 0 after one run of the delta
-// set of the root package, and that its green names base.
-func requirePreparedDelta(t *testing.T, f *recordtest.Fixture, base string) {
+// requireBackgroundDelta requires that a background grade of f exits 0 after one run of the
+// delta set of the root package, and that its green names base.
+func requireBackgroundDelta(t *testing.T, f *recordtest.Fixture, base string) {
 	t.Helper()
 	before := gateSchedules(t, f)
-	code, out := runCheckpointWith(t, f, flagPrepare)
+	code, out := gradeBackground(t, f, nil)
 	if schedules := gateSchedules(t, f); code != 0 || !slices.Equal(schedules, append(before, `["./."]`)) {
-		t.Fatalf("prepared run = %d %s with the schedules %q; want one more run of the delta set", code, out, schedules)
+		t.Fatalf("background grade = %d %s with the schedules %q; want one more run of the delta set", code, out, schedules)
 	}
 	requireDeltaGreen(t, f, base)
 }

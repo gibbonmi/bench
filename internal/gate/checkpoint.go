@@ -23,9 +23,6 @@ import (
 type Checkpoint struct {
 	Spec, Chunk string
 	Complete    bool
-	// Prepare selects the prepared run of a chunk checkpoint. It stays out of the purpose JSON,
-	// so the complete form keeps its key.
-	Prepare bool `json:"-"`
 	// Background carries the state of a background grade, which grades a chunk subject alone
 	// and needs no chunk id. It stays out of the purpose JSON.
 	Background *backgroundGrade `json:"-"`
@@ -36,8 +33,8 @@ type verbKey struct{}
 // chunkSourceKey carries the committed source that a chunk checkpoint accepted.
 type chunkSourceKey struct{}
 
-// deltaSourceKey carries the HEAD source of a chunk checkpoint, prepared or not, to the delta
-// decision, which derives the reviewed tip from the record of that source.
+// deltaSourceKey carries the HEAD source of a chunk checkpoint or a background grade to the
+// delta decision, which derives the reviewed tip from the record of that source.
 type deltaSourceKey struct{}
 
 // chunkSource is the HEAD commit and the HEAD tree of a chunk checkpoint.
@@ -67,7 +64,7 @@ func checkpointEvaluation(ctx context.Context, evaluation *gateEvaluation) *gate
 
 func (checkpoint Checkpoint) validate() error {
 	if checkpoint.Spec == "" {
-		if checkpoint.Chunk != "" || checkpoint.Complete || checkpoint.Prepare {
+		if checkpoint.Chunk != "" || checkpoint.Complete {
 			return errors.New("checkpoint spec is required")
 		}
 		return nil
@@ -78,19 +75,15 @@ func (checkpoint Checkpoint) validate() error {
 	if (checkpoint.Background == nil && (checkpoint.Chunk != "") == checkpoint.Complete) || hasUnsafeText(checkpoint.Chunk) {
 		return errors.New("select one checkpoint chunk or complete")
 	}
-	if checkpoint.Prepare && checkpoint.Complete {
-		return errors.New("prepare a chunk checkpoint only")
-	}
 	return nil
 }
 
-// gradesSubjectAlone reports a prepared run or a background grade, which accepts no committed
-// source. So it guards no tip, reads no completion evidence and no record prose, and opens no
-// chunk gap. A record commit during the run then moves no accepted tip, and its key holds only
-// the stripped tree that it captured. Only its delta decision reads the record, from the source
-// it captured.
+// gradesSubjectAlone reports a background grade, which accepts no committed source. So it
+// guards no tip, reads no completion evidence and no record prose, and opens no chunk gap. A
+// record commit during the run then moves no accepted tip, and its key holds only the stripped
+// tree that it captured. Only its delta decision reads the record, from the source it captured.
 func (checkpoint Checkpoint) gradesSubjectAlone() bool {
-	return checkpoint.Prepare || checkpoint.Background != nil
+	return checkpoint.Background != nil
 }
 
 // The gate's flags. The parser, the usage line, and a route's rerun read these spellings.
@@ -99,7 +92,6 @@ const (
 	flagCheckpoint = "--checkpoint"
 	flagChunk      = "--chunk"
 	flagComplete   = "--complete"
-	flagPrepare    = "--prepare"
 )
 
 func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, error) {
@@ -128,8 +120,6 @@ func parseGateArgs(args []string, plumbing bool) (string, runMode, Checkpoint, e
 			}
 		case flagComplete:
 			checkpoint.Complete = true
-		case flagPrepare:
-			checkpoint.Prepare = true
 		default:
 			if !plumbing || root != "" || strings.HasPrefix(arg, "-") {
 				return "", mode, checkpoint, errors.New("unknown gate argument")
@@ -301,7 +291,7 @@ func executeChunkCheckpoint(ctx context.Context, root, spec string, stdout, stde
 }
 
 // rerunArguments composes the caller's gate arguments, each value rendered by Arg. A fresh
-// rerun names --fresh, and the rerun of a prepared run prepares again.
+// rerun names --fresh.
 func rerunArguments(checkpoint Checkpoint, fresh bool) string {
 	var args []string
 	if fresh {
@@ -313,9 +303,6 @@ func rerunArguments(checkpoint Checkpoint, fresh bool) string {
 			args = append(args, flagComplete)
 		} else {
 			args = append(args, flagChunk, refusalroute.Arg("id", checkpoint.Chunk))
-		}
-		if checkpoint.Prepare {
-			args = append(args, flagPrepare)
 		}
 	}
 	return strings.Join(args, " ")

@@ -5,7 +5,11 @@ import "testing"
 // These independent expectations make removal of a chunk-chain command line, or
 // the return of a retired chunk-chain sentence, fail.
 func TestChunkChainAnchors(t *testing.T) {
-	const implement = ".agents/commands/bench-implement-spec.md"
+	const (
+		implement    = ".agents/commands/bench-implement-spec.md"
+		repairPolicy = ".agents/skills/bench-craft-line/references/bounded-repair-policy.md"
+		reference    = ".bench/BENCH-reference.md"
+	)
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
 		{file: implement, section: "Build", needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", want: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
 		{file: implement, section: "Build", needle: "Prepare the review charge before the author record commit.", want: "chunk chain: the Build section puts the review charge before the author record commit", forbidden: true},
@@ -32,5 +36,13 @@ func TestChunkChainAnchors(t *testing.T) {
 		{file: ".agents/commands/bench-review-implementation.md", needle: "Embed the minimal native excerpt and its SHA-256 digest; local logs are supplemental evidence.", want: "chunk chain: the review phase restored the hand-embedded excerpt sentence", forbidden: true},
 		{file: implement, needle: "A repair session runs each check that its ticket owes once at its repair commit, and its `bench record ticket` call refreezes the chunk at that commit.", want: "chunk chain: the implement phase restored the full rerun of a repair session", forbidden: true},
 		{file: ".bench/BENCH.md", needle: "A post-review repair goes to a fresh repair session for each affected ticket, and that session reruns the ticket's verification with current repair coverage.", want: "chunk chain: the operating guide restored the full rerun of a repair session", forbidden: true},
+		{file: implement, section: "Land", needle: "When a chunk freezes, start `bench gate --checkpoint specs/<slug>/spec.md --chunk <id> --prepare` beside the review axes, but only when each axis probes in its own worktree.", want: "chunk chain: the Land section restored the --prepare flag of the retired prepared run", forbidden: true},
+		{file: implement, section: "Land", needle: "When a repair commits, run the coordinator probe first, then start that prepared run beside the confirmation.", want: "chunk chain: the Land section restored the prepared run after a repair commit", forbidden: true},
+		{file: implement, section: "Land", needle: "Wait on the PID of the prepared run before this checkpoint, because a checkpoint refuses while that run holds the gate lock.", want: "chunk chain: the Land section restored the wait on the PID of a prepared run", forbidden: true},
+		{file: repairPolicy, needle: "A prepared chunk run excludes the review record from its subject.", want: "chunk chain: the bounded repair policy restored the subject of a prepared chunk run", forbidden: true},
+		{file: repairPolicy, needle: "The Land section of `/bench-implement-spec` orders the coordinator probe, the prepared run, and the chunk checkpoint.", want: "chunk chain: the bounded repair policy restored the order of the prepared run", forbidden: true},
+		{file: reference, needle: "Each call without `--prepare` still grades the record evidence and the record prose.", want: "chunk chain: the reference restored the --prepare flag of the retired prepared run", forbidden: true},
+		{file: reference, needle: "The Land section of `/bench-implement-spec` says when the orchestrator starts the prepared run of the chunk checkpoint.", want: "chunk chain: the reference restored the retired prepared run", forbidden: true},
+		{file: reference, needle: "It skips the evidence pass, the record prose grade, and the tip-moved guard.", want: "chunk chain: the reference restored the list of what a prepared run skips", forbidden: true},
 	}}.check(t)
 }

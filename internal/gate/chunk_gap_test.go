@@ -32,12 +32,11 @@ func chunkCheckpoint(t *testing.T, chunks int, bound bool) *recordtest.Fixture {
 	return f
 }
 
-// checkpointChunk runs the gate verb's checkpoint of chunk 1 at the root of f, with flags
-// after it.
-func checkpointChunk(t *testing.T, f *recordtest.Fixture, flags ...string) (int, string) {
+// checkpointChunk runs the gate verb's checkpoint of chunk 1 at the root of f.
+func checkpointChunk(t *testing.T, f *recordtest.Fixture) (int, string) {
 	t.Helper()
 	var out, diagnostic bytes.Buffer
-	code := gate.RunCommand(append([]string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}, flags...), &out, &diagnostic)
+	code := gate.RunCommand([]string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "1"}, &out, &diagnostic)
 	return code, out.String() + diagnostic.String()
 }
 
@@ -72,16 +71,6 @@ func TestGreenChunkCheckpointOpensAGap(t *testing.T) {
 	f := chunkCheckpoint(t, 2, true)
 	requireGreen(t, f)
 	requireOpenGap(t, f.Root)
-}
-
-// TestCheckpointPrepareOpensNoChunkGap covers RC35. A green prepared run of chunk 1, which
-// chunk 2 follows, in the bound checkout writes no gap, because that run grades no evidence.
-func TestCheckpointPrepareOpensNoChunkGap(t *testing.T) {
-	f := chunkCheckpoint(t, 2, true)
-	if code, out := checkpointChunk(t, f, "--prepare"); code != 0 {
-		t.Fatalf("prepared run = exit %d: %s; want green", code, out)
-	}
-	requireNoGap(t, f.Root)
 }
 
 // TestEarlierChunkCheckpointKeepsTheGap is BW99. A green checkpoint of chunk 1 keeps the

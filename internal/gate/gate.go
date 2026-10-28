@@ -184,8 +184,7 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 // requires execution instead of reuse; it can appear on either side of root. A checkpoint
 // refuses a checkout with an uncommitted change. A complete checkpoint grades the tree that
 // the landing publishes from the committed source, and a chunk checkpoint grades the committed
-// source without its review record; every other run grades the checkout. A prepared chunk
-// checkpoint grades that subject alone and opens no chunk gap.
+// source without its review record; every other run grades the checkout.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	root, mode, checkpoint, err := parseGateArgs(args, true)
 	if err != nil {
@@ -222,14 +221,14 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	finishLog(result)
 	finishSpan(result)
-	if result.ActionExit == 0 && checkpoint.Chunk != "" && !checkpoint.gradesSubjectAlone() {
+	if result.ActionExit == 0 && checkpoint.Chunk != "" {
 		return openChunkGap(root, checkpoint, stderr)
 	}
 	return result.ActionExit
 }
 
 // CommandUsage is the public grammar shared with the CLI inventory.
-const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> [" + flagPrepare + "] | " + flagComplete + ")]"
+const CommandUsage = "usage: bench gate [" + flagFresh + "] [" + flagCheckpoint + " <spec-path> (" + flagChunk + " <id> | " + flagComplete + ")]"
 
 // Command validates the public grammar before entering the gate owner.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
