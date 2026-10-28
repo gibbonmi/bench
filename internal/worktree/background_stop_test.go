@@ -6,6 +6,7 @@ package worktree
 
 import (
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -57,6 +58,23 @@ func TestReleaseStopsTheGrade(t *testing.T) {
 	r := runVerb(t, verbRelease, f.call("--request", "landed-background-stop-release", f.creation.Path))
 	requireTest(t, strings.Contains(r.stdout, ",complete,removed\n"), "release = (%d, %q, %q), want a removed row", r.exit, r.stdout, r.stderr)
 	requireGradesStopped(t, f.home, grade, r)
+}
+
+// TestReleaseKeepsTheGradeOfAPrefixWorktree is BG-C8-C1. A second worktree whose path starts
+// with the path of the released worktree is not under it, so the release keeps its running grade
+// and its queued grade.
+func TestReleaseKeepsTheGradeOfAPrefixWorktree(t *testing.T) {
+	t.Parallel()
+	f := newOwnedAssignment(t, "background-keep-prefix")
+	prefix := f.creation.Path + "2"
+	grade := queueGrades(t, f.home, prefix, prefix)
+	before, err := backgroundstate.ReadQueue(f.home)
+	mustNoError(t, err)
+	r := runVerb(t, verbRelease, f.call("--request", "landed-background-keep-prefix", f.creation.Path))
+	requireTest(t, strings.Contains(r.stdout, ",complete,removed\n"), "release = (%d, %q, %q), want a removed row", r.exit, r.stdout, r.stderr)
+	after, err := backgroundstate.ReadQueue(f.home)
+	mustNoError(t, err)
+	requireTest(t, grade.alive() && reflect.DeepEqual(after, before) && !strings.Contains(r.stderr, "background grade:"), "release beside the grade of %s = (%d, %q), grade alive %t, queue %+v; want the grade and the queue %+v kept", prefix, r.exit, r.stderr, grade.alive(), after, before)
 }
 
 // TestCleanStopsTheGrade is BG79. Before the clean removes a worktree that it selected, it stops

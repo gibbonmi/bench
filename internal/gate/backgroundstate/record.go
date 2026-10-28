@@ -13,11 +13,19 @@ import (
 const recordFile = "bench-background-grade"
 
 // logFile is the background log beside the background record. It holds the output of the
-// latest background grade of that checkout.
-const logFile = "bench-background-grade.log"
+// grade that the background record names. runningLogFile beside it holds the output of the
+// grade that runs, until the end of that grade replaces the log with it.
+const (
+	logFile        = "bench-background-grade.log"
+	runningLogFile = "bench-background-grade.log.running"
+)
 
 // LogPath answers the path of the background log of the worktree git directory gitdir.
 func LogPath(gitdir string) string { return filepath.Join(gitdir, logFile) }
+
+// RunningLogPath answers the path of the log of the running grade of the worktree git
+// directory gitdir.
+func RunningLogPath(gitdir string) string { return filepath.Join(gitdir, runningLogFile) }
 
 // Outcome is the end of one background grade.
 type Outcome string

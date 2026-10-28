@@ -129,17 +129,17 @@ func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 }
 
 // gradeInBackground grades tip in the worktree root as one background grade, and arm runs once
-// the grade holds its claim. The run writes its output to the background log of the worktree, and
-// the grade records its outcome in the background record. The grade then prints its outcome and
-// its log, and it answers the exit of the run.
+// the grade holds its claim. The run writes its output to the running log of the worktree, so the
+// log of the latest record stays whole while the grade runs. The grade then records its end
+// through WriteEnd, which names a stopped grade stopped and moves the running log over the log of
+// the record. The grade prints its outcome and its log, and it answers the exit of the run.
 func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireContextArm, stdout, stderr io.Writer) int {
 	gitdir, err := benchgit.AdminDir(root)
 	if err != nil {
 		fmt.Fprintf(stderr, "background grade: git directory unavailable: %v\n", err)
 		return 1
 	}
-	logPath := backgroundstate.LogPath(gitdir)
-	log, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	log, err := os.OpenFile(backgroundstate.RunningLogPath(gitdir), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		fmt.Fprintf(stderr, "background grade: log unavailable: %v\n", err)
 		return 1
@@ -151,17 +151,19 @@ func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireCon
 		fmt.Fprintf(stderr, "background grade: claim release failed: %v\n", err)
 		return 1
 	}
-	outcome := grade.outcome(result)
 	// A tip that does not resolve records the tip as the caller named it.
 	if commit == "" {
 		commit = tip
 	}
-	record := backgroundstate.Record{Outcome: outcome, Key: grade.key, Tip: commit, Log: logPath}
-	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
+	// The owner of the grade is this process. A boot that does not read names no owner, so no
+	// stop marker names the grade.
+	owner, _ := backgroundstate.ClaimFor(grade.key, root)
+	record, err := backgroundstate.WriteEnd(durablefile.Native(), gitdir, owner, backgroundstate.Record{Outcome: grade.outcome(result), Key: grade.key, Tip: commit, Log: backgroundstate.LogPath(gitdir)})
+	if err != nil {
 		fmt.Fprintf(stderr, "background grade: record persistence failed: %v\n", err)
 		return 1
 	}
-	fmt.Fprintf(stdout, "background grade: %s (log %s)\n", outcome, logPath)
+	fmt.Fprintf(stdout, "background grade: %s (log %s)\n", record.Outcome, record.Log)
 	return result.ActionExit
 }
 

@@ -2,6 +2,8 @@ package gate
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
@@ -123,6 +126,44 @@ func TestSecondGradeStartsNoSecondOracle(t *testing.T) {
 	want := []string{backgroundVerb, f.root, first}
 	if got := f.launches.Launched(t); len(got) != 1 || !slices.Equal(got[0].Args, want) {
 		t.Fatalf("launches = %+v, want the one grade %q", got, want)
+	}
+}
+
+// TestStopAllRecordsStopped is BG83 through the stop of every grade. The stop ends a real grade
+// during its oracle, and that grade records stopped itself.
+func TestStopAllRecordsStopped(t *testing.T) {
+	h := holdingWorktree(t, t.TempDir())
+	h.pass(t)
+	h.awaitHolding(t)
+	if err := backgroundstate.StopAll(durablefile.Native(), h.home); err != nil {
+		t.Fatal(err)
+	}
+	requireStoppedRecord(t, h)
+}
+
+// TestSlowTeardownRecordsStopped is BG83 under a slow teardown. The stop window ends before the
+// real grade exits, so the stopper returns first, and the grade records stopped when it ends.
+func TestSlowTeardownRecordsStopped(t *testing.T) {
+	h := holdingWorktree(t, t.TempDir())
+	h.pass(t)
+	grade := h.awaitHolding(t)
+	window, end := context.WithCancel(context.Background())
+	end()
+	if err := backgroundstate.Stop(window, durablefile.Native(), grade.Claim()); err != nil && !errors.Is(err, context.Canceled) {
+		t.Fatalf("stop after the end of its window = %v; want no error or the end of the window", err)
+	}
+	awaitExit(t, grade.Owner)
+	requireStoppedRecord(t, h)
+}
+
+// requireStoppedRecord fails t unless the background record of h names stopped for the key and
+// the tip of its HEAD.
+func requireStoppedRecord(t *testing.T, h queueWorktree) {
+	t.Helper()
+	gitdir := adminDir(t, h.root)
+	want := backgroundstate.Record{Outcome: backgroundstate.Stopped, Key: strippedEvidence(t, h.f).Grade, Tip: h.f.Tip(), Log: backgroundstate.LogPath(gitdir)}
+	if record, err := backgroundstate.ReadRecord(gitdir); err != nil || record != want {
+		t.Fatalf("record of the stopped grade = %+v (%v); want %+v", record, err, want)
 	}
 }
 

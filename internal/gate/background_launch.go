@@ -149,9 +149,9 @@ func updateQueue(home string, update func(*backgroundstate.Queue) error) error {
 	return backgroundstate.UpdateQueue(ctx, durablefile.Native(), home, update)
 }
 
-// reapRunning frees the slot of a running grade whose owner is not live. Its worktree records
-// aborted unless the grade recorded its own end. A slot whose liveness does not read retains
-// its grade.
+// reapRunning frees the slot of a running grade whose owner is not live. Unless the grade recorded
+// its own end, its worktree records the end of the grade through WriteEnd: stopped when a stop
+// marked that grade, and aborted otherwise. A slot whose liveness does not read retains its grade.
 func reapRunning(queue *backgroundstate.Queue) error {
 	if queue.Running == nil {
 		return nil
@@ -165,27 +165,14 @@ func reapRunning(queue *backgroundstate.Queue) error {
 	if err != nil || gitdir == "" || record.Tip == dead.Tip {
 		return err
 	}
-	return backgroundstate.WriteRecord(durablefile.Native(), gitdir, backgroundstate.Record{Outcome: backgroundstate.Aborted, Key: dead.Key, Tip: dead.Tip, Log: backgroundstate.LogPath(gitdir)})
+	_, err = backgroundstate.WriteEnd(durablefile.Native(), gitdir, dead.Claim(), backgroundstate.Record{Outcome: backgroundstate.Aborted, Key: dead.Key, Tip: dead.Tip, Log: backgroundstate.LogPath(gitdir)})
+	return err
 }
 
-// stopGrade stops the running grade of slot within the stop window. The grade records its own
-// end before it exits, so the stop then names that end stopped. A grade that reached its verdict
-// before the stop keeps that verdict.
+// stopGrade stops the running grade of slot through the one stop step of backgroundstate, which
+// marks the grade before its signal, so the grade names its own end stopped.
 func stopGrade(slot backgroundstate.Slot) error {
-	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(backgroundstate.StopWindow))
-	defer cancel()
-	if err := backgroundstate.Stop(ctx, slot.Claim()); err != nil {
-		return err
-	}
-	gitdir, record, err := endedRecord(slot)
-	if err != nil || gitdir == "" || record.Tip != slot.Tip || record.Outcome == backgroundstate.Green || record.Outcome == backgroundstate.Red {
-		return err
-	}
-	if record.Key == "" {
-		record.Key = slot.Key
-	}
-	record.Outcome = backgroundstate.Stopped
-	return backgroundstate.WriteRecord(durablefile.Native(), gitdir, record)
+	return backgroundstate.StopSlot(durablefile.Native(), slot)
 }
 
 // endedRecord answers the git directory of the worktree of slot and its background record,

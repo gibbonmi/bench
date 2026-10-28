@@ -8,12 +8,13 @@ import (
 // backgroundSignal names the background row of the board.
 const backgroundSignal = "background"
 
-// The background row sits on the ladder below the gate, Git, and worktree rows: a red ranks
-// beside the guards, because the author acts on it, and each other outcome ranks last, because
-// it only reports.
+// The background row is not a verdict, so it ranks below each other row of the board, and each
+// of its severities is a value that no other row uses. A red ranks above each other background
+// outcome, because the author acts on it, and each other outcome ranks last, because it only
+// reports.
 const (
-	backgroundRedSeverity  = 3
-	backgroundInfoSeverity = 13
+	backgroundRedSeverity  = 13
+	backgroundInfoSeverity = 14
 )
 
 // appendBackground adds the latest background outcome of the worktree root and its log path.

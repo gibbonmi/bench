@@ -168,6 +168,24 @@ func TestMovedRedGradeRecordsAborted(t *testing.T) {
 	}
 }
 
+// TestLaterGradeKeepsTheRecordedLog is BG-C8-P2 under story 41. A red grade records its log.
+// While a later grade of the worktree runs, the log that the red record names still holds the
+// output of the red grade. The fixture oracle prints its run count, so each grade prints its own
+// output.
+func TestLaterGradeKeepsTheRecordedLog(t *testing.T) {
+	f := markedBackgroundFixture(t, outcomeFixture(t, func(_ *testrepo.GateFixture, body string) string {
+		return body + "printf 'oracle run %s\\n' \"$((count + 1))\"\n"
+	}), ".gate-red")
+	gradeBackground(t, f, nil)
+	record := backgroundRecord(t, f)
+	red := outcomeRead(t, record.Log)
+	var during []byte
+	gradeBackground(t, f, func() { during, _ = os.ReadFile(record.Log) })
+	if record.Outcome != backgroundstate.Red || len(red) == 0 || !bytes.Equal(during, red) {
+		t.Fatalf("log of the %s record during a later grade = %q; want the output of that grade %q", record.Outcome, during, red)
+	}
+}
+
 // backgroundPriority runs one background grade of a fixture in a child process, and answers
 // the nice value and the I/O class that its oracle wrote.
 func backgroundPriority(t *testing.T) []string {
@@ -199,8 +217,8 @@ func chunkBackgroundFixture(t *testing.T, root string) *recordtest.Fixture {
 	return f
 }
 
-// requireDeltaSet requires that the gate of f ran the prepared whole run and then one run of the
-// delta set of packages.
+// requireDeltaSet requires that the gate of f ran one whole run and then one run of the delta set
+// of packages.
 func requireDeltaSet(t *testing.T, f *recordtest.Fixture, packages ...string) {
 	t.Helper()
 	set, err := json.Marshal(packages)
@@ -208,7 +226,7 @@ func requireDeltaSet(t *testing.T, f *recordtest.Fixture, packages ...string) {
 		t.Fatal(err)
 	}
 	if schedules := gateSchedules(t, f); !slices.Equal(schedules, []string{wholeSchedule, string(set)}) {
-		t.Fatalf("gate schedules = %q; want the prepared whole run and then the delta set %s", schedules, set)
+		t.Fatalf("gate schedules = %q; want one whole run and then the delta set %s", schedules, set)
 	}
 }
 
