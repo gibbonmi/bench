@@ -266,6 +266,7 @@ func signalsWith(root string, query Query, home string) []Signal {
 
 	rows = appendSetup(rows, root)
 	rows = appendGate(rows, root)
+	rows = appendBackground(rows, root)
 	rows = appendGit(rows, root, query)
 	rows = appendWorktree(rows, root)
 	rows = appendIntent(rows, root)

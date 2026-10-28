@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background outcomes where the author looks
+
+- Changed `bench status`. The board of a worktree now shows a `background` row with the latest background outcome of that worktree, the tip that the grade graded, and the path of its log. A `red` outcome, and a background record that does not read, rank below the gate, Git, and worktree rows. Each other outcome ranks last. The row is not a verdict: the gate row still reads only the gate cache.
+- Changed `bench commit`. Before a commit that publishes starts its background grade, it prints one `background grade: latest` line with the latest background outcome of the worktree, its tip, and its log path.
+
 ### Background grade stop when work goes away
 
 - Changed `bench worktree release`, `bench worktree clean`, and `bench worktree reclaim`. Before each of these verbs removes a worktree, it stops the running background grade of that worktree, waits for that grade to exit, and drops the queued grade of that worktree. The reclaim does this for each worktree under each pool key that it removes. The queue then starts its oldest queued grade. A stop that fails prints one `background grade: not stopped` line, and the verb still acts.

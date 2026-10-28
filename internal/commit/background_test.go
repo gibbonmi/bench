@@ -150,6 +150,41 @@ func TestRefusedCommitStartsNoGrade(t *testing.T) {
 	f.requireNoGrade(t)
 }
 
+// TestCommitPrintsTheLastBackgroundOutcome is BG85. The next commit in a worktree prints the
+// outcome of the latest background grade of that worktree and the log path of that grade, and
+// then it starts the next grade. A commit with no record prints no background outcome.
+func TestCommitPrintsTheLastBackgroundOutcome(t *testing.T) {
+	f := newLaunchFixture(t, passingCheck)
+	f.asKit(t)
+	gitdir, err := git.AdminDir(f.root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := backgroundstate.Record{Outcome: backgroundstate.Red, Key: "key", Tip: head(t, f.root), Log: backgroundstate.LogPath(gitdir)}
+	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
+		t.Fatal(err)
+	}
+	code, stdout, stderr := runCommand(t, f.root, "-m", "m", "tracked.txt")
+	if code != 0 {
+		t.Fatalf("commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
+	}
+	f.launches.Await(t)
+	f.launches.End(t)
+	if want := backgroundOutcomeLine(record); !strings.Contains(stderr, want) || !strings.Contains(want, string(record.Outcome)) || !strings.Contains(want, record.Log) {
+		t.Fatalf("commit stderr = %q, want the line %q that names the red outcome and %s", stderr, want, record.Log)
+	}
+}
+
+// TestCommitPrintsNoOutcomeWithoutARecord keeps a commit in a worktree with no background grade
+// free of a background outcome line.
+func TestCommitPrintsNoOutcomeWithoutARecord(t *testing.T) {
+	f := newLaunchFixture(t, passingCheck)
+	if code, stdout, stderr := runCommand(t, f.root, "-m", "m", "tracked.txt"); code != 0 || strings.Contains(stderr, backgroundOutcomePrefix) {
+		t.Fatalf("commit = (%d, %q, %q), want exit 0 and no background outcome", code, stdout, stderr)
+	}
+	f.requireNoGrade(t)
+}
+
 // TestCommitReturnsBeforeItsGrade is BG11. The commit exits 0 while its lane pass still runs:
 // after the commit returns, the stand-in pass holds a live claim. A commit that waited for its pass
 // would return only after the pass released that claim.
