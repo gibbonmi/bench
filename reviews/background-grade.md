@@ -3309,6 +3309,72 @@
           "supersedes": [
             "bg-c8-confirm1-coverage"
           ]
+        },
+        {
+          "id": "bg-c8-confirm3-standards",
+          "performer": "claude:bg-c8-confirm3-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm3-20261028",
+            "digest": "sha256:b3ace0bf259ddfc1b1a0a2f850c6b94bf049e45fba3c165f97939a4b2cbc59a1",
+            "excerpt": "Unified confirming rounds of the final reconciliation, deltas e7371b25a..9b69abfce and 5ee9a04d6..59428694d, Standards axis: one exact-path source; R4 restored all 15 guard tests; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "666bd246160988a8cff4317eb255b35a03d562eb",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm2-standards"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm3-spec",
+          "performer": "claude:bg-c8-confirm3-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm3-20261028",
+            "digest": "sha256:c5ba21abbf1db3d56979cbe4988bf9e88e24873364ad5f42efb85cfb12088dc5",
+            "excerpt": "Unified confirming rounds of the final reconciliation, Spec axis: BG117 cites TestCheckoutGuardIgnoresBackgroundGradeState; story 19 holds; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "666bd246160988a8cff4317eb255b35a03d562eb",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm2-spec"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm3-coverage",
+          "performer": "claude:bg-c8-confirm3-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm3-20261028",
+            "digest": "sha256:6b14f1a938f58b079353f14c93684e0db437b4ae7f8f175724aacf9e980d7c03",
+            "excerpt": "Unified confirming rounds of the final reconciliation, Coverage axis: F1-C1 closed by R4; the F1 mutant bit five subtests; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "666bd246160988a8cff4317eb255b35a03d562eb",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm2-coverage"
+          ]
         }
       ]
     }
@@ -3318,7 +3384,44 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "bg-final-whole-project",
+        "performer": "claude:bg-orchestrator-20261027",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:bg-orchestrator-20261027",
+          "digest": "sha256:9cc1951c43d22f570ec6d81b22064ef5a0a484703edd8649a614cfb8d8514fda",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT451-background-grade,59428694df42e36e599d60e4e640f3fc3fcbf8ae,false\ngate: progress log /home/mgibs/.bench/worktrees/bench-2826441890/e76595bcb779900d284d6606cf28cf35-c7bb50cb85b54be3caa07403fc532593/.logs/gate-20261028T105010.621026410Z-3836593.jsonl\ngate: stream /home/mgibs/.bench/worktrees/bench-2826441890/e76595bcb779900d284d6606cf28cf35-c7bb50cb85b54be3caa07403fc532593/.logs/gate-20261028T105010.621026410Z-3836593.out\nphases[6]{phase,verdict,elapsed_ms}:\n  gofmt,green,202\nspilled{lines=12,bytes=730,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/c7bb50cb85b54be3caa07403fc532593/1793185006781632259-c12ac338becda7a7.out}\n  system,green,65240\n  shellcheck,green,642\ncapability-skips: 6 (capability=6 environment=0; privilege=6)\ngo-build-cache: 66061656516 bytes in 1001052 files at /home/mgibs/.cache/bench/go-build (over bound 10737418240 bytes, next: bench cache clean)\ngate: green\n"
+        },
+        "requirement": "whole-project",
+        "command": "bench gate",
+        "exit_code": 0
+      },
+      {
+        "id": "bg-final-coverage",
+        "performer": "claude:bg-orchestrator-20261027",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:bg-orchestrator-20261027",
+          "digest": "sha256:ccc17fdfe4370c5b475ca1b9fe259e146b26be5721d68d6071f5b5d38953415c",
+          "excerpt": "ok: coverage map valid — 117 row(s)\nuncited: 2 row(s) with no seam-cell citation — BG44, BG112\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/background-grade/spec.md",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
