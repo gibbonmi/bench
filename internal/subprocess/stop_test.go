@@ -8,9 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 )
+
+// poll is the observation window of each stop in these tests.
+var poll = bounds.ProcessWindow(bounds.FixedWindow(10 * time.Millisecond))
 
 // TestStopRefusesAPidThatNamesNoOneProcess guards the signal target. Zero and one select the
 // caller's own group and every process, and a negative pid selects a group, so neither Alive
@@ -20,7 +24,7 @@ func TestStopRefusesAPidThatNamesNoOneProcess(t *testing.T) {
 		if _, err := subprocess.Alive(pid); err == nil {
 			t.Errorf("Alive(%d) answered with no error", pid)
 		}
-		if err := subprocess.Stop(context.Background(), pid); err == nil {
+		if err := subprocess.Stop(context.Background(), pid, poll); err == nil {
 			t.Errorf("Stop(%d) answered with no error", pid)
 		}
 	}
@@ -39,7 +43,7 @@ func TestStopEndsWithItsContext(t *testing.T) {
 	pid := processtest.WaitPID(t, ready)
 	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
-	if err := subprocess.Stop(ctx, pid); !errors.Is(err, context.DeadlineExceeded) {
+	if err := subprocess.Stop(ctx, pid, poll); !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("Stop of a process that ignores SIGTERM = %v, want the context deadline", err)
 	}
 	if alive, err := subprocess.Alive(pid); err != nil || !alive {

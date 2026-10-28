@@ -3,12 +3,12 @@ package backgroundstate_test
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"reflect"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
+	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
@@ -63,7 +63,7 @@ func TestClaimNamesKeyWorktreeOwnerAndBoot(t *testing.T) {
 // TestClaimOfADeadOwnerIsNotLive is BG33. The claim of this live process is live, and the same
 // claim with the pid of an exited process is not.
 func TestClaimOfADeadOwnerIsNotLive(t *testing.T) {
-	exited := exec.Command("true")
+	exited := processtest.Helper(t, "exit")
 	if err := exited.Run(); err != nil {
 		t.Fatal(err)
 	}

@@ -24,7 +24,7 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	processtest.Main(m, map[string]func() int{"owner": ownerHelper})
+	processtest.Main(m, map[string]func() int{"owner": ownerHelper, "exit": func() int { return 0 }})
 }
 
 // ownerHelper is a grade owner with no child. It publishes its pid once its SIGTERM handler is
@@ -66,7 +66,7 @@ func TestStopWaitsForTheOwnerExit(t *testing.T) {
 	defer cancel()
 	t.Run("live claim", func(t *testing.T) {
 		pid, exited := owner(t)
-		claim := backgroundstate.Claim{Key: key, Worktree: "worktree", Owner: pid, Boot: currentBoot(t)}
+		claim := backgroundstate.Claim{Key: key, Worktree: "/work/grade", Owner: pid, Boot: currentBoot(t)}
 		if err := backgroundstate.Stop(ctx, claim); err != nil {
 			t.Fatal(err)
 		}
@@ -79,7 +79,7 @@ func TestStopWaitsForTheOwnerExit(t *testing.T) {
 	})
 	t.Run("claim of another boot", func(t *testing.T) {
 		pid, exited := owner(t)
-		claim := backgroundstate.Claim{Key: key, Worktree: "worktree", Owner: pid, Boot: "another-boot"}
+		claim := backgroundstate.Claim{Key: key, Worktree: "/work/grade", Owner: pid, Boot: "another-boot"}
 		if err := backgroundstate.Stop(ctx, claim); err != nil {
 			t.Fatal(err)
 		}

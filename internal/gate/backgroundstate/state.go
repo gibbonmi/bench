@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -31,22 +30,14 @@ const (
 // readRecord decodes the record at path into value and validates it with valid. An absent
 // record leaves value empty and answers no error.
 func readRecord(path string, value any, valid func() error) error {
-	file, err := os.Open(path)
-	if errors.Is(err, fs.ErrNotExist) {
+	read := bounds.Classify(path, bounds.ControlRecordLimit)
+	if read.State == bounds.StateAbsent {
 		return nil
 	}
-	if err != nil {
-		return err
+	if read.State.Failed() {
+		return fmt.Errorf("%s is %s: %s", path, read.State, read.Reason)
 	}
-	defer file.Close()
-	data, err := io.ReadAll(io.LimitReader(file, bounds.ControlRecordLimit+1))
-	if err != nil {
-		return err
-	}
-	if int64(len(data)) > bounds.ControlRecordLimit {
-		return fmt.Errorf("%s is larger than %d bytes", path, bounds.ControlRecordLimit)
-	}
-	if err := jsonfile.Decode(data, value); err != nil {
+	if err := jsonfile.Decode(read.Data, value); err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
 	if err := valid(); err != nil {

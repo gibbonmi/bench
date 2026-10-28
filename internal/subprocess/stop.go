@@ -5,13 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"syscall"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
-
-// stopPoll is the interval at which Stop observes whether its process has exited.
-const stopPoll = 10 * time.Millisecond
 
 // Alive reports whether process pid exists. Only ESRCH proves that it is absent, so every
 // other probe failure is an error.
@@ -30,25 +26,26 @@ func Alive(pid int) (bool, error) {
 }
 
 // Stop asks process pid to end with SIGTERM, one of CancelSignals, and returns only after pid
-// no longer exists. A ctx that ends first ends the wait with the context error.
-func Stop(ctx context.Context, pid int) error {
+// no longer exists. Each expiry of poll observes pid again, and a poll that never expires
+// observes it only once. A ctx that ends first ends the wait with the context error.
+func Stop(ctx context.Context, pid int, poll Window) error {
 	if err := onePID(pid); err != nil {
 		return err
 	}
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil && !errors.Is(err, syscall.ESRCH) {
 		return err
 	}
-	ticker := time.NewTicker(stopPoll)
-	defer ticker.Stop()
 	for {
 		alive, err := Alive(pid)
 		if err != nil || !alive {
 			return err
 		}
+		expired, stop := poll()
 		select {
 		case <-ctx.Done():
+			stop()
 			return ctx.Err()
-		case <-ticker.C:
+		case <-expired:
 		}
 	}
 }
