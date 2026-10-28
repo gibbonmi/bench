@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:47d8afc46c1acb68d1be8e849fa8c0ae2f69e301e20767715f0ecfb3308fcac2",
+  "plan_digest": "sha256:c7e36f948e68443db9ffb436986f6f1edd71a420743b6be989ec62f716f749c8",
   "implementation_session": "",
   "chunks": [
     {
@@ -2032,6 +2032,109 @@
           ]
         }
       ]
+    },
+    {
+      "id": "BG-C7",
+      "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+      "tip": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
+      "plan_digest": "sha256:c7e36f948e68443db9ffb436986f6f1edd71a420743b6be989ec62f716f749c8",
+      "source_digest": "1ee289d9ca0c3250fe34d49d0fbee5a7f24ed6b3",
+      "acceptance_rows": [
+        "BG67",
+        "BG68",
+        "BG69",
+        "BG70",
+        "BG71",
+        "BG72",
+        "BG73",
+        "BG74",
+        "BG2",
+        "BG3",
+        "BG75",
+        "BG76",
+        "BG77",
+        "BG110",
+        "BG111"
+      ],
+      "verification": [
+        {
+          "id": "bg-c7-t11-gate",
+          "performer": "claude:bg-t11-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ee289d9ca0c3250fe34d49d0fbee5a7f24ed6b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t11-author-20261028",
+            "digest": "sha256:620c45fc33a9d607eab56c61aa875f1b27a7e1dc60b3072d0ece1d433ddf18b1",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,152957,800\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,326,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,753,13\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,55,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,1418,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t11-published",
+          "performer": "claude:bg-t11-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ee289d9ca0c3250fe34d49d0fbee5a7f24ed6b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t11-author-20261028",
+            "digest": "sha256:ca36d9a61864af2b5a1cf9e1216feeef40b4d3724a916450f5d7b70044a0c85a",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing/published,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
+          "requirement": "published",
+          "command": "bench test --package ./internal/landing/published",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t11-conformance",
+          "performer": "claude:bg-t11-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ee289d9ca0c3250fe34d49d0fbee5a7f24ed6b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t11-author-20261028",
+            "digest": "sha256:3a84eac7d1b96e75db1c199fcd3346065c43b4e5d2c8412d77bca98d02cb4a4d",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,17206,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t11-landing",
+          "performer": "claude:bg-t11-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "1ee289d9ca0c3250fe34d49d0fbee5a7f24ed6b3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t11-author-20261028",
+            "digest": "sha256:66f937424380f23f22fc02c9afc34283cd19c8e566db385ac443afc34711700e",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,pass,13746,247\nfailures[0]{package,test,line,lines}:\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
+          "requirement": "landing",
+          "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2339,6 +2442,33 @@
     {
       "from": "sha256:80d3005736670aa2bf634284bd63aba96a12a31b54a96841d484bf45e387bfdf",
       "to": "sha256:47d8afc46c1acb68d1be8e849fa8c0ae2f69e301e20767715f0ecfb3308fcac2",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:47d8afc46c1acb68d1be8e849fa8c0ae2f69e301e20767715f0ecfb3308fcac2",
+      "to": "sha256:c7e36f948e68443db9ffb436986f6f1edd71a420743b6be989ec62f716f749c8",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
