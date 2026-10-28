@@ -1140,6 +1140,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1168,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t09r1-probe-09-at-tip",
+          "performer": "claude:bc-t09-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t09-repair1-20261028",
+            "digest": "sha256:fbc1f4bce88ed67f07e0c8575d13f111e5fe6bc5c47afb5f32835e2015dc2266",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1157,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "requirement": "probe-09",
+          "command": "bench probe internal/probe/set.go --swap 'if e.command == 0 {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t09-repair1-20261028",
+              "digest": "sha256:fbc1f4bce88ed67f07e0c8575d13f111e5fe6bc5c47afb5f32835e2015dc2266",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1157,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
