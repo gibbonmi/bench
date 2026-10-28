@@ -4082,3 +4082,9 @@ One unified session examined the repair delta `3330d5d51..80b59327c`. It closed 
 - BG-C8-R1, target R1: `reapRunning` in `internal/gate/background_launch.go` passes the dead claim to `WriteEnd`, but no test reads `stopped` after a marked grade dies. A mutant that passes an empty claim stayed silent. Add a test that kills a marked grade and reads `stopped` through the reap path.
 - Target R2: `.bench/BENCH-reference.md:813` still says that a grade writes to `bench-background-grade.log`. Name the running file and the move at the end of the grade.
 - BG-C8-R2, no-op, confidence 4: the severities 13 and 14 are above the top of the ladder, so they cannot collide with another row.
+
+### BG-C8 repair 2 reds
+
+The second repair session recorded this red at the repair commit `99c62ee79`.
+
+- R1: the empty-claim mutant in `background_launch.go` bit `TestReapedStoppedGradeRecordsStopped`, because the record named `aborted`.
