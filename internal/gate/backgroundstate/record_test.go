@@ -34,11 +34,11 @@ func TestBackgroundRecordNamesTheOutcome(t *testing.T) {
 // back unchanged.
 func TestQueueRoundTrips(t *testing.T) {
 	home := t.TempDir()
-	running := backgroundstate.Entry{Key: key, Worktree: "/work/a", Tip: "a"}
+	running := backgroundstate.Slot{Entry: backgroundstate.Entry{Key: key, Worktree: "/work/a", Tip: "a"}, Owner: 4242, Boot: "boot"}
 	queue := backgroundstate.Queue{Running: &running, Queued: []backgroundstate.Entry{
 		{Key: "b" + key[1:], Worktree: "/work/b", Tip: "b"},
 		{Key: "c" + key[1:], Worktree: "/work/c", Tip: "c"},
-	}}
+	}, Latest: map[string]string{"/work/b": "b" + key[1:]}}
 	if err := backgroundstate.WriteQueue(durablefile.Native(), home, queue); err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestAbsentRecordsReadEmptyAndUnreadableOnesRefuse(t *testing.T) {
 	invalid := map[string]string{
 		"claim":  `{"key":"` + key + `","worktree":"w","owner_pid":0,"boot_id":"b"}`,
 		"record": `{"outcome":"blue","key":"` + key + `","tip":"t","log":"l"}`,
-		"queue":  `{"running":{"key":"","worktree":"w","tip":"t"},"queued":[]}`,
+		"queue":  `{"running":null,"queued":[{"key":"a/b","worktree":"w","tip":"t"}]}`,
 	}
 	for name, r := range reads {
 		for label, body := range map[string]string{"undecodable": "{\n", "invalid": invalid[name] + "\n"} {

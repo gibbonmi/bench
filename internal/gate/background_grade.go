@@ -7,6 +7,7 @@ package gate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -35,6 +36,10 @@ const backgroundNice = 19
 // entry consumes it, so no child of the grade inherits it.
 const backgroundResolvedEnv = "BENCH_GATE_BACKGROUND"
 
+// backgroundQueueEnv names the Bench home of the machine queue that started the grade. The entry
+// consumes it, and only a grade that a queue started takes the next grade of that queue.
+const backgroundQueueEnv = "BENCH_GATE_BACKGROUND_QUEUE"
+
 // backgroundGrade is the state of one background grade: the grade key of the subject that the
 // run accepts, the claim that it holds on that key, the git common directory of that claim, and
 // whether its oracle run reached a verdict. A nil grade is a foreground run, so each method below
@@ -59,7 +64,7 @@ var reenterImage = func(dir, name string, args, env []string) error {
 // executable that the wrapper of worktree resolves, and its grade key frames the digest of that
 // executable. So the entry first replaces its image with that wrapper, with no inherited wrapper
 // routing and no inherited run binary, and the executable that the wrapper resolves runs the
-// grade.
+// grade. A grade that the machine queue started then starts the oldest queued grade.
 func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 	if len(args) != 2 || args[0] == "" || args[1] == "" {
 		fmt.Fprintln(stderr, backgroundUsage)
@@ -72,16 +77,30 @@ func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "bench %s: %v\n", backgroundVerb, err)
 		return 1
 	}
-	if err := os.Unsetenv(backgroundResolvedEnv); err != nil {
-		fmt.Fprintf(stderr, "bench %s: %v\n", backgroundVerb, err)
-		return 1
+	home, queued := os.LookupEnv(backgroundQueueEnv)
+	for _, name := range []string{backgroundResolvedEnv, backgroundQueueEnv} {
+		if err := os.Unsetenv(name); err != nil {
+			fmt.Fprintf(stderr, "bench %s: %v\n", backgroundVerb, err)
+			return 1
+		}
 	}
 	// The grade runs at the lowest priority that the platform allows, so a refused step keeps
 	// the grade at the priority that it has.
 	if err := lowerPriority(); err != nil {
 		fmt.Fprintf(stderr, "bench %s: priority not lowered: %v\n", backgroundVerb, err)
 	}
-	return gradeInBackground(context.Background(), root, tip, notifyGateSignals, stdout, stderr)
+	// A stop can come at any step, so the signals end the grade from its start, and the grade
+	// releases each resource that it holds before it exits.
+	ctx, stop := notifyGateSignals(context.Background())
+	code := gradeInBackground(ctx, root, tip, nil, stdout, stderr)
+	stop()
+	// A grade that a queue started starts the next grade of that queue, and then it exits.
+	if queued {
+		if err := advanceQueue(home, os.Getpid()); err != nil {
+			fmt.Fprintf(stderr, "background grade: next grade not started: %v\n", err)
+		}
+	}
+	return code
 }
 
 // gradeInBackground grades tip in the worktree root as one background grade, and arm runs once
@@ -152,20 +171,49 @@ func settleVerdict(ctx context.Context, evaluation executionEvaluation, runtimeR
 // the latest chunk entry of the review record at tip, and with no entry the run takes the whole
 // schedule. It answers the commit of tip and the result of the run.
 func (g *backgroundGrade) run(ctx context.Context, root, tip string, arm postAcquireContextArm, out io.Writer) (string, Result) {
+	source, spec, err := chunkSubjectOf(root, tip)
+	if err != nil {
+		return source.tip, operational(root, 0, out, "background grade: "+err.Error())
+	}
+	ctx = WithCheckpoint(ctx, Checkpoint{Spec: spec, Chunk: latestChunk(root, source.tree, spec), Background: g})
+	return source.tip, executeChunkSubject(ctx, root, spec, source, out, out, arm, reuseFreshGreen)
+}
+
+// chunkSubjectOf answers the source of tip in root and the spec of the open build of its tree,
+// which together name the chunk subject of a background grade. A source that it cannot read
+// keeps each part that it resolved.
+func chunkSubjectOf(root, tip string) (chunkSource, string, error) {
 	commit, err := benchgit.ResolveCommit(root, tip)
 	if err != nil {
-		return "", operational(root, 0, out, "background grade: tip unavailable: "+err.Error())
+		return chunkSource{}, "", fmt.Errorf("tip unavailable: %w", err)
 	}
 	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", commit+"^{tree}")
 	if err != nil {
-		return commit, operational(root, 0, out, "background grade: tip unavailable: "+err.Error())
+		return chunkSource{tip: commit}, "", fmt.Errorf("tip unavailable: %w", err)
 	}
+	source := chunkSource{tip: commit, tree: tree}
 	spec, open := openBuild(root, tree)
 	if !open {
-		return commit, operational(root, 0, out, "background grade: the tip holds no open build of a staged spec")
+		return source, "", errors.New("the tip holds no open build of a staged spec")
 	}
-	ctx = WithCheckpoint(ctx, Checkpoint{Spec: spec, Chunk: latestChunk(root, tree, spec), Background: g})
-	return commit, executeChunkSubject(ctx, root, spec, chunkSource{tip: commit, tree: tree}, out, out, arm, reuseFreshGreen)
+	return source, spec, nil
+}
+
+// gradeKey answers the grade key of the chunk subject of tip in root, and whether the evidence
+// store holds a fresh green under that key. The key is the key of the tree of tip without the
+// review record, as executeChunkSubject grades it. A tip with no chunk subject answers the empty
+// key.
+func gradeKey(root, tip string) (string, bool) {
+	source, spec, err := chunkSubjectOf(root, tip)
+	if err != nil {
+		return "", false
+	}
+	stripped, err := reviewrecord.SourceDigest(root, source.tree, spec)
+	if err != nil {
+		return "", false
+	}
+	evidence := InspectTree(root, stripped)
+	return evidence.Grade, evidence.ReusableGreen
 }
 
 // openBuild answers the spec of the open build of tree: the one spec with a Status: staged line

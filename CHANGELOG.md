@@ -6,11 +6,19 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade queue
+
+- Changed the lane pass of `bench commit` and `bench worktree merge`, which now passes the grade of its tip to the machine queue under the Bench home. The grade key of a tip is the key of its chunk subject. A tip with no chunk subject has no key, and its grade records `aborted`.
+- A lane pass queues nothing when a fresh green, a live claim, the running grade, or a queued grade already has its key. Each worktree keeps at most one queued grade, so a newer tip replaces the queued grade of its worktree. A newer tip with a new key also stops the running grade of its worktree. The stop waits for that grade to exit, and the grade then records `stopped` and writes no green. A grade that reached its verdict before the stop keeps it.
+- A grade whose key is the key of the latest tip of another worktree keeps running, or stays queued.
+- The queue starts its grades in the order of their lane passes. When a grade ends, its own process starts the oldest queued grade and then exits, so no resident process runs. A lane pass that finds no live running grade starts the oldest queued grade. A running grade whose process died records `aborted` at the next lane pass.
+- A background grade now ends on a stop signal from its start, so a stopped grade releases its private prospective checkout before it exits.
+
 ### Background grade after a lane pass
 
 - Changed `bench commit` and `bench worktree merge`, which now start one background grade of the tip that they publish. A grade starts only in the worktree of an active assignment whose kit is that worktree, and only when the worktree holds an executable `bin/bench.sh`. A linked repository, a dry run, a refused commit, and a merge of kind `current` start no grade. A merge starts the grade of its new tip whether or not its checkout reconciles.
-- The grade runs `bin/bench.sh gate-background <worktree> <tip>` of the worktree in a new session, outside the process group and the session of the verb, so it outlives the verb. The verb does not wait for the grade. A grade that does not start leaves the publication and the exit of the verb as they are, and the verb prints one `background grade: not started` line.
-- Added the machine slot of the background grade under the Bench home. The slot names the worktree, the tip, the pid, and the boot of the one running grade. While a live grade holds the slot, a lane pass starts no second grade.
+- The grade runs `bin/bench.sh gate-background <worktree> <tip>` of the worktree in a new session, outside the process group and the session of the verb, so it outlives the verb. The verb does not wait for the grade. A grade that does not queue leaves the publication and the exit of the verb as they are, and the verb prints one `background grade: not queued` line.
+- Added the machine slot of the background grade under the Bench home. The slot is the running grade of the machine queue, and it names the key, the worktree, the tip, the pid, and the boot of that grade.
 
 ### Background grade of a chunk subject
 
