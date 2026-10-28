@@ -2946,6 +2946,74 @@
             "BG-C8-C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bg-c8-confirm1-standards",
+          "performer": "claude:bg-c8-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm1-20261028",
+            "digest": "sha256:bb64ae38c6711987512538e3f959a7322831d28200c2a44db63ab9847d24ca92",
+            "excerpt": "Unified confirming round BG-C8, repair delta 3330d5d51..80b59327c, Standards axis: T1, T4, T5, T6 closed; one stop flow remains; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-review-standards"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm1-spec",
+          "performer": "claude:bg-c8-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm1-20261028",
+            "digest": "sha256:c01d85eeabdcdb15cfee4699977c436fb37eebea0aee81a5ecb1321131ffa122",
+            "excerpt": "Unified confirming round BG-C8, repair delta 3330d5d51..80b59327c, Spec axis: T1, T2, T3 closed against stories 41 and 55 and BG83; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-review-spec"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm1-coverage",
+          "performer": "claude:bg-c8-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm1-20261028",
+            "digest": "sha256:35f8ba70893b8b11f94ada1aef8acc306bf93629804452a7b93ad1e3f694f0c4",
+            "excerpt": "Unified confirming round BG-C8, repair delta 3330d5d51..80b59327c, Coverage axis: BG-C8-R1, the reap path passes the claim with no biting test (orchestrator probe silent); BG-C8-R2 severity pin, no-op.\n"
+          },
+          "axis": "Coverage",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "finding_ids": [
+            "BG-C8-R1"
+          ],
+          "supersedes": [
+            "bg-c8-review-coverage"
+          ]
         }
       ]
     }
@@ -3897,3 +3965,11 @@ The repair session recorded these reds at the repair commit `c20009c23`. The orc
 - T2: `TestLaterGradeKeepsTheRecordedLog` read an empty log of the red record during the later grade.
 - T4: a prefix match without the path separator in `queue.go` bit both `TestWithdrawTakesOutOnlyTheWorktreeAndItsChildren` and `TestReleaseKeepsTheGradeOfAPrefixWorktree`.
 - T5: a complete checkpoint that reuses the stripped chunk green bit `TestCompleteCheckpointIgnoresABackgroundChunkGreen` through reuse, not a refusal.
+
+### BG-C8 confirming round 1 pickup
+
+One unified session examined the repair delta `3330d5d51..80b59327c`. It closed T1, T2, T4, T5, and T6, and it raised one coverage gap. The orchestrator gives a second repair session on ticket 13 two targets.
+
+- BG-C8-R1, target R1: `reapRunning` in `internal/gate/background_launch.go` passes the dead claim to `WriteEnd`, but no test reads `stopped` after a marked grade dies. A mutant that passes an empty claim stayed silent. Add a test that kills a marked grade and reads `stopped` through the reap path.
+- Target R2: `.bench/BENCH-reference.md:813` still says that a grade writes to `bench-background-grade.log`. Name the running file and the move at the end of the grade.
+- BG-C8-R2, no-op, confidence 4: the severities 13 and 14 are above the top of the ladder, so they cannot collide with another row.
