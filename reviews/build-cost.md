@@ -2434,3 +2434,13 @@ Every round 1 finding is fixed. Raw findings: Standards 4, Spec 0, Coverage 1. R
 - Standards F3 auto-fix: the `childExecutable` doc in `internal/treetarget/build.go:17-18` is wrapped badly. Repair.
 - Standards F4 ask-user: one widened ticket 11 session repaired paths of tickets 10 and 12. The orchestrator declines it, because the reviewer directed that one repair session takes all small findings. This routing stays flagged for reviewer veto.
 - Coverage F1 auto-fix: BC66 and BC68 do not forbid the old exec gate form or the old exec preflight form. Repair: add one Forbid row for each form, with a demonstrated red.
+
+## BC-C5 ticket 11 repair, round 2 (commit a86c5bb73)
+
+Witness return:
+
+- `TestTreeScopedHelpNamesTheTarget` (Standards F1): the tree_scope.go swap of `fmt.Fprint(c.Stdout, definition.treeTargetLine())` for `fmt.Fprint(c.Stderr, definition.treeTargetLine())` bit the stdout assertion, which now reads `treeTargetLine()`.
+- `docs-currency-workflow` (Coverage F1, known issues): the insertion of ``Run it as `bench worktree exec <target> -- bench preflight evidence <id> --check-current`.`` before the `--in` sentence in `docs/known-issues.md` bit the new Forbid row.
+- `docs-currency-workflow` (Coverage F1, craft-synthesis): the insertion of ``Or run `bench worktree exec <target> -- bench gate` for a batch.`` in the craft-synthesis skill bit the new Forbid row.
+
+Each mutant compiled, and each subject was restored. probe-11 ran again at the repair commit and bit four rows.
