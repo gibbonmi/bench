@@ -3375,6 +3375,72 @@
           "supersedes": [
             "bg-c8-confirm2-coverage"
           ]
+        },
+        {
+          "id": "bg-c8-confirm4-standards",
+          "performer": "claude:bg-c8-confirm4-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm4-20261028",
+            "digest": "sha256:f472ad3bb4c66fe1cc1d0cb4c465de16bfa0fe570a70ee6659be0b36240d5bad",
+            "excerpt": "Unified confirming round of the later BG-C8 delta 666bd2461..87687649a: one Sources entry deleted for the closing roadmap row; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "5993bac555d8048668687a9a4794c12039003681",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm3-standards"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm4-spec",
+          "performer": "claude:bg-c8-confirm4-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm4-20261028",
+            "digest": "sha256:f472ad3bb4c66fe1cc1d0cb4c465de16bfa0fe570a70ee6659be0b36240d5bad",
+            "excerpt": "Unified confirming round of the later BG-C8 delta 666bd2461..87687649a: one Sources entry deleted for the closing roadmap row; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "5993bac555d8048668687a9a4794c12039003681",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm3-spec"
+          ]
+        },
+        {
+          "id": "bg-c8-confirm4-coverage",
+          "performer": "claude:bg-c8-confirm4-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-confirm4-20261028",
+            "digest": "sha256:f472ad3bb4c66fe1cc1d0cb4c465de16bfa0fe570a70ee6659be0b36240d5bad",
+            "excerpt": "Unified confirming round of the later BG-C8 delta 666bd2461..87687649a: one Sources entry deleted for the closing roadmap row; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "5993bac555d8048668687a9a4794c12039003681",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c8-confirm3-coverage"
+          ]
         }
       ]
     }
