@@ -211,6 +211,14 @@ func TestRetroCostBudget(t *testing.T) {
 			"- wall per ticket: 60.0 min against 60 min",
 			"- bookkeeping per ticket: 7.1 against 7.1",
 		}},
+		{name: "bookkeeping rounded up over the budget", tickets: 50, wall: 3000 * 60, booked: 358, want: []string{
+			"- wall per ticket: 60.0 min against 60 min",
+			"- bookkeeping per ticket: 7.2 against 7.1, over budget",
+		}},
+		{name: "wall rounded up over the budget", tickets: 50, wall: 3003 * 60, booked: 355, want: []string{
+			"- wall per ticket: 60.1 min against 60 min, over budget",
+			"- bookkeeping per ticket: 7.1 against 7.1",
+		}},
 		{name: "zero tickets", tickets: 0, wall: 600, booked: 3, want: []string{
 			"- wall per ticket: unknown min against 60 min",
 			"- bookkeeping per ticket: unknown against 7.1",
