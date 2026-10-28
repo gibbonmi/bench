@@ -266,7 +266,7 @@ func TestRunCanaryRetainsPositionalGrammar(t *testing.T) {
 		if rc := (Command{Stdout: stdout, Stderr: stderr}).Run([]string{"canary", help}); rc != 0 {
 			t.Errorf("canary %s exit = %d, want 0", help, rc)
 		}
-		if got := readFile(t, stdout); got != "usage: bench canary [root]\n" {
+		if got := withoutTreeTargetLine("canary", readFile(t, stdout)); got != "usage: bench canary [root]\n" {
 			t.Errorf("canary %s stdout = %q, want exact usage", help, got)
 		}
 	}

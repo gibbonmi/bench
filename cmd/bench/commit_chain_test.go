@@ -102,7 +102,7 @@ func TestCommitChainPassesTheBase(t *testing.T) {
 		t.Setenv(benchhome.Env, t.TempDir())
 		var out, errOut bytes.Buffer
 		code := Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run([]string{"commit", "--help"})
-		usageLine, chainLine := strings.SplitN(out.String(), "\n", 2)[0], lastLine(out.String())
+		usageLine, chainLine := strings.SplitN(out.String(), "\n", 2)[0], lastLine(withoutTreeTargetLine("commit", out.String()))
 		if code != 0 || !strings.Contains(usageLine, "[--dry-run | "+group+"]") || !strings.HasPrefix(chainLine, group+": ") {
 			t.Fatalf("help = (%d, %q), want %q in the usage line and at the start of the chain line", code, out.String(), group)
 		}
@@ -179,7 +179,7 @@ func TestCommitHelpEndsWithChainHelp(t *testing.T) {
 	t.Setenv(benchhome.Env, t.TempDir())
 	var out, errOut bytes.Buffer
 	code := Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run([]string{"commit", "--help"})
-	if code != 0 || !strings.HasPrefix(out.String(), "usage: bench commit") || !strings.HasSuffix(out.String(), "\n"+chainHelp+"\n") {
+	if code != 0 || !strings.HasPrefix(out.String(), "usage: bench commit") || !strings.HasSuffix(withoutTreeTargetLine("commit", out.String()), "\n"+chainHelp+"\n") {
 		t.Fatalf("help = (%d, %q), want the commit help ending in the chain help line", code, out.String())
 	}
 	if want := fmt.Sprintf("exit %d: published; a later step failed", wantPublishedStepRedExit); !strings.Contains(chainHelp, want) {

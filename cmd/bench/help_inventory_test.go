@@ -193,7 +193,7 @@ func TestEvidenceHelpInventory(t *testing.T) {
 			rootForms = append(rootForms, command)
 		}
 	}
-	for _, line := range strings.Split(strings.TrimSpace(preflightHelp.String()), "\n") {
+	for _, line := range strings.Split(strings.TrimSpace(withoutTreeTargetLine("preflight", preflightHelp.String())), "\n") {
 		form := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "usage:"))
 		preflightForms = append(preflightForms, strings.TrimPrefix(form, "bench preflight "))
 	}
@@ -234,7 +234,7 @@ func TestEvidenceHelpInventory(t *testing.T) {
 func TestRecordRouteAnswersItsUsage(t *testing.T) {
 	want, _ := recordcmd.Command("", []string{"--help"})
 	var stdout bytes.Buffer
-	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || stdout.String() != want {
+	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || withoutTreeTargetLine("record", stdout.String()) != want {
 		t.Fatalf("record --help = exit %d, stdout %q; want exit 0 and the recordcmd usage %q", code, stdout.String(), want)
 	}
 }

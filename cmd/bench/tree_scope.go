@@ -74,6 +74,26 @@ func (definition commandDefinition) treeTargetInsertion() string {
 	return " [" + treeTargetFlag + " " + treetarget.Operand + "]"
 }
 
+// runNamingTarget runs one call of definition. A help form that answers at exit 0 then
+// prints the tree-target line.
+func (definition commandDefinition) runNamingTarget(c Command, args []string) int {
+	exit := definition.run(c, args)
+	if exit == 0 && definition.helpForm(args) {
+		fmt.Fprint(c.Stdout, definition.treeTargetLine())
+	}
+	return exit
+}
+
+// treeTargetLine answers the line that ends the help of definition: the tree-target form for
+// a tree-scoped definition, and nothing otherwise. The verb help and the root help read one
+// insertion.
+func (definition commandDefinition) treeTargetLine() string {
+	if insertion := definition.treeTargetInsertion(); insertion != "" {
+		return "tree target: bench " + definition.Name + insertion + "\n"
+	}
+	return ""
+}
+
 // scope answers the scope of one call. A call that names a family leaf takes the scope of
 // that leaf, and every other call takes the scope of the definition.
 func (definition commandDefinition) scope(args []string) treeScope {
