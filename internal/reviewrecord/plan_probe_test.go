@@ -15,8 +15,15 @@ import (
 // emptySecond empties the requirement list of the second chunk.
 func emptySecond(p *rr.Plan) { p.Chunks[1].Verification = []rr.Requirement{} }
 
-// absentKey is the encoded verification key of a chunk whose list is nil.
-const absentKey = `,"verification":null`
+// absentKey and absentFinalKey are the encoded keys of a chunk list and of a final list
+// that are nil.
+const (
+	absentKey      = `,"verification":null`
+	absentFinalKey = `,"final_verification":null`
+)
+
+// missingFinal is the refusal of an empty or absent final list.
+const missingFinal = "final verification: missing required verification inventory"
 
 // TestPlanProbeOnlyChunks covers BC23, BC24, BC25, BC26, BC27, BC28, and BC30. Each plan case
 // starts from a two-chunk delegated plan whose chunk requirements are all probes, beside the
@@ -25,33 +32,37 @@ func TestPlanProbeOnlyChunks(t *testing.T) {
 	for _, tc := range []struct {
 		name, want string
 		mutate     func(*rr.Plan)
-		absent     bool
+		// drop is the encoded key that the case removes from the plan document, or empty.
+		drop string
 	}{
 		// BC24 and BC28: an empty chunk list passes beside the plain final list.
-		{"empty chunk list", "", emptySecond, false},
+		{"empty chunk list", "", emptySecond, ""},
 		// BC25: the encoded plan holds no verification key for the second chunk.
-		{"absent chunk list", "", func(p *rr.Plan) { p.Chunks[1].Verification = nil }, true},
+		{"absent chunk list", "", func(p *rr.Plan) { p.Chunks[1].Verification = nil }, absentKey},
 		// BC26: 2.md joins the chunk of 1.md, whose requirements all name 1.md, so 2.md owes none.
-		{"ticket that owes nothing", "", mergeTickets, false},
+		{"ticket that owes nothing", "", mergeTickets, ""},
 		// BC27: a chunk requirement still names a ticket of its own chunk.
-		{"requirement outside its chunk", `"2.md" outside this chunk`, func(p *rr.Plan) { p.Chunks[0].Verification[0].Ticket = "2.md" }, false},
+		{"requirement outside its chunk", `"2.md" outside this chunk`, func(p *rr.Plan) { p.Chunks[0].Verification[0].Ticket = "2.md" }, ""},
 		// BC23: a chunk requirement without a probe refuses, and the refusal names the chunk
 		// and the requirement.
 		{"plain chunk requirement", "chunk 2: verification plain has no probe", func(p *rr.Plan) {
 			p.Chunks[1].Verification = append(p.Chunks[1].Verification, rr.Requirement{ID: "plain", Command: "go vet ./...", Ticket: "2.md"})
-		}, false},
+		}, ""},
+		// The final list must still be non-empty, when it is empty and when its key is absent.
+		{"empty final list", missingFinal, func(p *rr.Plan) { p.FinalVerification = []rr.Requirement{} }, ""},
+		{"absent final list", missingFinal, func(p *rr.Plan) { p.FinalVerification = nil }, absentFinalKey},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := recordtest.NewDelegated(t, 2)
 			tc.mutate(&f.Plan)
 			f.WritePlan()
-			if tc.absent {
+			if tc.drop != "" {
 				path := filepath.Join(f.Root, f.Record.Spec)
 				data, err := os.ReadFile(path)
-				if err != nil || !strings.Contains(string(data), absentKey) {
-					t.Fatalf("plan document %v lacks %s:\n%s", err, absentKey, data)
+				if err != nil || !strings.Contains(string(data), tc.drop) {
+					t.Fatalf("plan document %v lacks %s:\n%s", err, tc.drop, data)
 				}
-				f.Write(f.Record.Spec, strings.Replace(string(data), absentKey, "", 1))
+				f.Write(f.Record.Spec, strings.Replace(string(data), tc.drop, "", 1))
 			}
 			f.Commit("stage the plan under test")
 			_, err := rr.ReadPlan(f.Root, f.Tree(), f.Record.Spec)

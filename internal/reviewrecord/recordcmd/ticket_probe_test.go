@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // BC29: a ticket that owes no requirement writes the chunk step alone. The call exits 0, freezes
@@ -16,7 +17,12 @@ func TestTicketFreezesWithoutRequirements(t *testing.T) {
 	if chunk := chunkEntry(t, f, "1"); chunk.Base != base || chunk.Tip != tip || len(chunk.Verification) != 0 {
 		t.Errorf("chunk 1 = %s..%s with %d results, want %s..%s with none", chunk.Base, chunk.Tip, len(chunk.Verification), base, tip)
 	}
-	if want := `  "1",1.md,none,created,` + base + "," + tip + `,"",none` + "\n"; !strings.HasSuffix(out, want) {
-		t.Errorf("ticket output = %q, want the row %q", out, want)
+	want, err := toon.Table("ticket", []string{"chunk", "ticket", "amendment", "freeze", "base", "tip", "verifications", "carried"},
+		[][]string{{"1", "1.md", "none", "created", base, tip, "", "none"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasSuffix(out, want) {
+		t.Errorf("ticket output = %q, want the table %q", out, want)
 	}
 }

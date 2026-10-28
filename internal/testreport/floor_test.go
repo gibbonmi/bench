@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"slices"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // floorFixture returns the changed-selection module and its canned graph. Each extra
@@ -55,18 +53,10 @@ func floorOf(t *testing.T, root string, packages []listedPackage, entries ...str
 	return got
 }
 
-// declareEmbedPatterns gives each canned package one embed pattern for each embed file
-// that it holds.
-func declareEmbedPatterns(packages []listedPackage) {
-	for index := range packages {
-		packages[index].EmbedPatterns = slices.Clone(packages[index].EmbedFiles)
-	}
-}
-
-func assertFloor(t *testing.T, got Floor, packages []string, embed bool) {
+func assertFloor(t *testing.T, got Floor, packages []string) {
 	t.Helper()
-	if !slices.Equal(got.Packages, packages) || got.Embed != embed {
-		t.Fatalf("floor = %+v, want packages %q and embed %t", got, packages, embed)
+	if !slices.Equal(got.Packages, packages) {
+		t.Fatalf("floor = %+v, want packages %q", got, packages)
 	}
 }
 
@@ -74,58 +64,46 @@ func assertFloor(t *testing.T, got Floor, packages []string, embed bool) {
 // its directory, and that a Go file at the root adds the root package.
 func TestWritesFloorAddsTheFilePackage(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "direct/direct.go"), []string{"./direct"}, false)
+	assertFloor(t, floorOf(t, root, packages, "direct/direct.go"), []string{"./direct"})
 	if err := os.WriteFile(filepath.Join(root, "root.go"), []byte("package changedfixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	rootPackage := listedPackage{Dir: root, ImportPath: "changedfixture"}
-	assertFloor(t, floorOf(t, root, append(packages, rootPackage), "root.go"), []string{"./."}, false)
+	assertFloor(t, floorOf(t, root, append(packages, rootPackage), "root.go"), []string{"./."})
 }
 
 // TestWritesFloorAddsTheNewFilePackage grades that a `(new)` Go file in a current
 // package directory adds that package, although the file does not exist yet.
 func TestWritesFloorAddsTheNewFilePackage(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "production/later.go (new)"), []string{"./production"}, false)
+	assertFloor(t, floorOf(t, root, packages, "production/later.go (new)"), []string{"./production"})
 }
 
 // TestWritesFloorCoversADirectoryEntry grades that a directory entry adds the package
 // at the directory and the package below it, and no package outside it.
 func TestWritesFloorCoversADirectoryEntry(t *testing.T) {
 	root, packages := floorFixture(t, "nest", "nest/inner")
-	assertFloor(t, floorOf(t, root, packages, "nest/"), []string{"./nest", "./nest/inner"}, false)
-}
-
-// TestWritesFloorFlagsAnEmbeddingDirectory grades that a directory entry over a package
-// that declares an embed pattern sets the embed flag.
-func TestWritesFloorFlagsAnEmbeddingDirectory(t *testing.T) {
-	root, packages := floorFixture(t)
-	declareEmbedPatterns(packages)
-	assertFloor(t, floorOf(t, root, packages, "embedprod/"), []string{"./embedprod"}, true)
+	assertFloor(t, floorOf(t, root, packages, "nest/"), []string{"./nest", "./nest/inner"})
 }
 
 // TestWritesFloorKeepsTheSegmentBoundary grades that a directory entry covers a package
 // at a `/` boundary only, so a sibling that shares its leading bytes stays out.
 func TestWritesFloorKeepsTheSegmentBoundary(t *testing.T) {
 	root, packages := floorFixture(t, "internal/git", "internal/git2")
-	assertFloor(t, floorOf(t, root, packages, "internal/git"), []string{"./internal/git"}, false)
+	assertFloor(t, floorOf(t, root, packages, "internal/git"), []string{"./internal/git"})
 }
 
-// TestWritesFloorAddsTheEmbedOwner grades that an embed file adds its owner and sets the
-// embed flag, and that a Go file sets the flag only in a package that declares an embed
-// pattern.
+// TestWritesFloorAddsTheEmbedOwner grades that an embed file adds its owner, and that a
+// Go file at the root of a module that `go list` reads adds the root package.
 func TestWritesFloorAddsTheEmbedOwner(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "embedprod/input.txt"), []string{"./embedprod"}, true)
-	assertFloor(t, floorOf(t, root, packages, "embedprod/embed.go"), []string{"./embedprod"}, false)
-	declareEmbedPatterns(packages)
-	assertFloor(t, floorOf(t, root, packages, "embedprod/embed.go"), []string{"./embedprod"}, true)
-	// `go list` itself reports the embed patterns of a module whose root package embeds.
+	assertFloor(t, floorOf(t, root, packages, "embedprod/input.txt"), []string{"./embedprod"})
+	assertFloor(t, floorOf(t, root, packages, "embedprod/embed.go"), []string{"./embedprod"})
 	got, err := WritesFloor(context.Background(), currentPackageGraphModule(t), []string{"embed.go"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertFloor(t, got, []string{"./."}, true)
+	assertFloor(t, got, []string{"./."})
 }
 
 // TestWritesFloorAddsEveryPackageForModuleMetadata grades that a `go.mod` entry and a
@@ -133,7 +111,7 @@ func TestWritesFloorAddsTheEmbedOwner(t *testing.T) {
 func TestWritesFloorAddsEveryPackageForModuleMetadata(t *testing.T) {
 	root, packages := floorFixture(t)
 	for _, metadata := range []string{"go.mod", "go.sum"} {
-		assertFloor(t, floorOf(t, root, packages, metadata), []string{"./..."}, false)
+		assertFloor(t, floorOf(t, root, packages, metadata), []string{"./..."})
 	}
 }
 
@@ -141,14 +119,14 @@ func TestWritesFloorAddsEveryPackageForModuleMetadata(t *testing.T) {
 // adds no package, also inside a package directory.
 func TestWritesFloorIgnoresAGuidancePath(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "direct/README.md", "guidance.md"), nil, false)
+	assertFloor(t, floorOf(t, root, packages, "direct/README.md", "guidance.md"), nil)
 }
 
 // TestWritesFloorSkipsAnUnbornPackage grades that a `(new)` Go file under no current
 // package directory adds no package and returns no error.
 func TestWritesFloorSkipsAnUnbornPackage(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "unborn/unborn.go (new)"), nil, false)
+	assertFloor(t, floorOf(t, root, packages, "unborn/unborn.go (new)"), nil)
 }
 
 // TestWritesFloorSkipsAnUnbornEmbedFile grades that an absent `(new)` file in an embed
@@ -156,7 +134,7 @@ func TestWritesFloorSkipsAnUnbornPackage(t *testing.T) {
 // the embed files that exist.
 func TestWritesFloorSkipsAnUnbornEmbedFile(t *testing.T) {
 	root, packages := floorFixture(t)
-	assertFloor(t, floorOf(t, root, packages, "embedprod/later.txt (new)"), nil, false)
+	assertFloor(t, floorOf(t, root, packages, "embedprod/later.txt (new)"), nil)
 }
 
 // TestWritesFloorSkipsANonGoRoot grades that a root without `go.mod` gives an empty floor
@@ -170,7 +148,7 @@ func TestWritesFloorSkipsANonGoRoot(t *testing.T) {
 	if err != nil || calls != 0 {
 		t.Fatalf("floor error = %v and loader calls = %d, want no error and no call", err, calls)
 	}
-	assertFloor(t, got, nil, false)
+	assertFloor(t, got, nil)
 }
 
 // TestWritesFloorReturnsTheGraphError grades that the floor returns the loader error, and
@@ -190,20 +168,18 @@ func TestWritesFloorReturnsTheGraphError(t *testing.T) {
 	}
 }
 
-// TestWritesFloorNamesTheSystemCheck grades that a system-suite file owes the system check
-// in place of a package run of the suite.
-func TestWritesFloorNamesTheSystemCheck(t *testing.T) {
+// TestWritesFloorSkipsTheSystemSuite grades that a system-suite file adds no package,
+// because a package run of the suite builds no file of the suite.
+func TestWritesFloorSkipsTheSystemSuite(t *testing.T) {
 	root, packages := systemFloorFixture(t)
-	if got := floorOf(t, root, packages, systemSuiteFile()); got.Packages != nil || !slices.Equal(got.Checks, []string{gate.SystemPhaseName}) {
-		t.Fatalf("floor = %+v, want the system check alone", got)
-	}
+	assertFloor(t, floorOf(t, root, packages, systemSuiteFile()), nil)
 }
 
 // TestWritesFloorAgreesWithChangedSelection grades that the floor and the `--changed`
-// selection give the same direct packages for each canned path, across the Go file, the
-// three embed classes, and the system suite, whose floor element is the system check.
+// selection give the same direct packages for each canned path, across the Go file and
+// the three embed classes.
 func TestWritesFloorAgreesWithChangedSelection(t *testing.T) {
-	root, packages := systemFloorFixture(t)
+	root, packages := floorFixture(t)
 	patterns := map[string]string{}
 	for _, pkg := range packages {
 		directory, err := filepath.Rel(root, pkg.Dir)
@@ -212,8 +188,7 @@ func TestWritesFloorAgreesWithChangedSelection(t *testing.T) {
 		}
 		patterns[pkg.ImportPath] = packagePattern(root, filepath.ToSlash(directory))
 	}
-	patterns[packages[len(packages)-1].ImportPath] = gate.SystemPhaseName
-	for _, path := range []string{"direct/direct.go", "embedprod/input.txt", "embedtest/input.txt", "embedxtest/input.txt", "space [glob]/embed input[*].txt", systemSuiteFile()} {
+	for _, path := range []string{"direct/direct.go", "embedprod/input.txt", "embedtest/input.txt", "embedxtest/input.txt", "space [glob]/embed input[*].txt"} {
 		selection, err := resolveChangedPackagesWithLoader(context.Background(), root, []string{path}, cannedLoader(packages))
 		if err != nil {
 			t.Fatal(err)
@@ -226,7 +201,7 @@ func TestWritesFloorAgreesWithChangedSelection(t *testing.T) {
 		}
 		slices.Sort(direct)
 		floor := floorOf(t, root, packages, path)
-		if got := slices.Sorted(slices.Values(append(floor.Packages, floor.Checks...))); len(direct) == 0 || !reflect.DeepEqual(got, direct) {
+		if got := floor.Packages; len(direct) == 0 || !reflect.DeepEqual(got, direct) {
 			t.Errorf("floor of %q = %q, want the selection's direct packages %q", path, got, direct)
 		}
 	}

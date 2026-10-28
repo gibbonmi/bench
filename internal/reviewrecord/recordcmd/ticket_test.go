@@ -91,6 +91,10 @@ func TestTicketRefusals(t *testing.T) {
 			f, home := recordtest.Pooled(t, 1)
 			return f, home, ticketArgs(t, "1", "1.md", "p"), "the requirements of chunk 1 in the plan at "
 		}},
+		{"version 1 plan with no requirement", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+			f, home := recordtest.Pooled(t, 1, recordtest.Owing(nil))
+			return f, home, ticketArgs(t, "1", "1.md", "p"), "the ticket form reads a version 2 plan"
+		}},
 		{"planned seam cell", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)
 			withMap(planned)(f)
