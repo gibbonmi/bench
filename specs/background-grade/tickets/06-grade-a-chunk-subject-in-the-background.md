@@ -2,7 +2,7 @@
 
 Blocked by: 02-derive-the-run-binary-source-once.md, 03-read-the-baseline-members-from-commits.md, 04-add-the-background-width-input.md, 05-record-background-claims-and-outcomes.md
 Writes: internal/gate/background_grade.go (new), internal/gate/background_grade_test.go (new), internal/gate/run_transaction.go, internal/gate/checkpoint.go, internal/gate/backgroundstate (new), cmd/bench/main.go, cmd/bench/command_registry.go, cmd/bench/main_test.go, bin/bench.sh, internal/conformance/subcommand_routing_table_test.go, internal/conformance/entry_point_parity_test.go, CHANGELOG.md
-Covers: BG1, BG23, BG24, BG26, BG27, BG28, BG29, BG41, BG42, BG106, BG107
+Covers: BG1, BG23, BG24, BG26, BG27, BG28, BG29, BG41, BG42, BG106, BG107, BG114
 
 ## What to build
 
@@ -14,7 +14,7 @@ For a kit worktree with an open build of a staged spec, the run grades the chunk
 - The subject is the HEAD tree of the tip without the review record of the spec, as `executeChunkCheckpoint` computes it (`internal/gate/checkpoint.go:286-306`).
 - The chunk id comes from the latest chunk entry of the review record at the tip. When no entry resolves, the run takes the whole schedule. Ticket 07 adds the delta decision.
 - The run grades the subject alone, with no evidence pass and no record prose grade, as `gradesSubjectAlone` does today (`internal/gate/checkpoint.go:84-88`).
-- The run executes as the executable that the wrapper resolves for the target worktree. It clears any inherited `BENCH_RUN_BINARY` and `BENCH_KIT`, so the wrapper resolves fresh (`bin/bench.sh:293-317`).
+- The run executes as the executable that the wrapper resolves for the target worktree. It clears any inherited `BENCH_RUN_BINARY`, `BENCH_KIT`, and `BENCH_WRAPPER`, so the wrapper resolves fresh (`bin/bench.sh:293-317`).
 - The run sets the width input of ticket 04.
 
 The run holds a claim of ticket 05 on its grade key while it runs.
