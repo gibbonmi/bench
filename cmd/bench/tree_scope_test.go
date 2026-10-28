@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/treetarget"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
 
@@ -164,7 +165,7 @@ func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
 	t.Setenv("BENCH_AGENT", "")
 	commit, _ := commandByName("commit")
 	insertion := commit.treeTargetInsertion()
-	want, operand := strings.TrimPrefix(insertion, " "), strings.Trim(insertion, " []")
+	want := strings.TrimPrefix(insertion, " ")
 	if !strings.Contains(renderCommandHelp(), "bench commit"+insertion) {
 		t.Fatalf("root help names no %q for bench commit", want)
 	}
@@ -185,16 +186,17 @@ func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
 	answered := map[string]bool{}
 	for _, c := range calls {
 		result := runAXICommandAt(t, root, c.argv)
-		got, named := strings.Contains(result.stdout+result.stderr, want), c.scope == scopeTree && result.code == 0
+		both := result.stdout + result.stderr
+		got, named := strings.Contains(both, want), c.scope == scopeTree && result.code == 0
 		if got != named {
 			t.Errorf("bench %q = (%d, %q, %q) names %q: %v, want %v", c.argv, result.code, result.stdout, result.stderr, want, got, named)
 		}
-		both := result.stdout + result.stderr
-		if line := "tree target: bench " + c.argv[0] + insertion + "\n"; named && !strings.Contains(result.stdout, line) {
+		definition, _ := commandByName(c.argv[0])
+		if line := definition.treeTargetLine(); named && (line == "" || !strings.Contains(result.stdout, line)) {
 			t.Errorf("bench %q stdout = %q, want the line %q", c.argv, result.stdout, line)
 		}
-		if c.scope == scopeRepository && (strings.Contains(both, "tree target:") || strings.Contains(both, operand)) {
-			t.Errorf("bench %q = (%q, %q), want no tree-target line and no %q", c.argv, result.stdout, result.stderr, operand)
+		if c.scope == scopeRepository && (strings.Contains(both, "tree target:") || strings.Contains(both, treetarget.Operand)) {
+			t.Errorf("bench %q = (%q, %q), want no tree-target line and no %q", c.argv, result.stdout, result.stderr, treetarget.Operand)
 		}
 		answered[strings.Join(c.argv, " ")] = named
 	}

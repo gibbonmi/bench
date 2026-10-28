@@ -13,10 +13,12 @@ var buildCostAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Forbid, Needle: "60 min", Diagnostic: "build cost: the drain repeats the wall budget of the cost renderer"},
 	{Group: AfterImplementSpec, File: drainCommand, Kind: Forbid, Needle: "7.1", Diagnostic: "build cost: the drain repeats the bookkeeping budget of the cost renderer"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Require, Class: Command, Needle: "Run it as `bench preflight --in <target> evidence <id> --check-current`.", Diagnostic: "build cost: the known issues dropped the --in form of the evidence check"},
+	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Needle: "`bench worktree exec <target> -- bench preflight evidence", Diagnostic: "build cost: the known issues restored the exec form of the evidence check"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Needle: "names the exec form", Diagnostic: "build cost: the known-issues retire column restored the exec form"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: Require, Class: Command, Needle: "For a worktree, run `bench probe --in <target> ...`.", Diagnostic: "build cost: the command notes dropped the --in form of the worktree probe"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "`bench worktree exec <target> -- bench probe ...`", Diagnostic: "build cost: the command notes restored the exec probe form"},
 	{Group: AfterImplementSpec, File: synthesisSkill, Kind: Require, Class: Command, Needle: "Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench gate --in <target>` for a batch that waits for approval.", Diagnostic: "build cost: craft-synthesis dropped the whole-project gate or its --in batch form"},
+	{Group: AfterImplementSpec, File: synthesisSkill, Kind: Forbid, Needle: "`bench worktree exec <target> -- bench gate`", Diagnostic: "build cost: craft-synthesis restored the exec form of the batch gate"},
 	{Group: AfterImplementSpec, File: operatingGuide, Kind: Forbid, Needle: "record every plan or gate expansion with `bench learning`", Diagnostic: "build cost: the operating guide restored the learning for each Writes: widen"},
 }
 

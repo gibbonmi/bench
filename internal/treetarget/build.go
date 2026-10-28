@@ -14,10 +14,9 @@ import (
 // declares Bench build inputs is a kit worktree target, and it runs a sealed build that
 // matches the tree, so the registries compiled into the child match the tree. Its candidates
 // are its own published build, the primary checkout's published build, and the running
-// executable, in that order. The primary
-// checkout never runs a worktree build. Every other target runs the invoking wrapper, which
-// resolves the kit of the tree that it runs in. A direct run of the executable has no
-// wrapper, and the child runs the same executable.
+// executable, in that order. The primary checkout never runs a worktree build. Every other
+// target runs the invoking wrapper, which resolves the kit of the tree that it runs in. A
+// direct run of the executable has no wrapper, and the child runs the same executable.
 func childExecutable(call Call, value, dir string) (executable, refusal string) {
 	if value != primaryTarget && freshness.DeclaresBuildInputs(dir) {
 		candidates := []string{freshness.PublishedExecutable(dir)}
