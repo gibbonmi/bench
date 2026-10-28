@@ -639,7 +639,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c3-review-standards",
+          "performer": "claude:bg-c3-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3248d249f1e1a907129c133fb6696690ff72da66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c3-review-20261027",
+            "digest": "sha256:6231ba5efb84fe9e8cf116b577d0b2b40866f25617ac763af5d32f231aa464d2",
+            "excerpt": "Unified BG-C3 review (14eed7eca..1ab1a028e), Standards: 4 findings. Worst: backgroundstate/stop.go stopPoll repeats bounds.ProcessPoll (auto-fix, conf 8). ensureDir third copy of the private-directory logic (parked as a learning: needs a shared seam). writeRecord recipe and pid<=1 guard (no-op).\n"
+          },
+          "axis": "Standards",
+          "base": "14eed7eca23c445e642ba609a4e27b432787c26b",
+          "tip": "1ab1a028ed36d92630caeefde4e71181307e4498",
+          "finding_ids": [
+            "BG-C3-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c3-review-spec",
+          "performer": "claude:bg-c3-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3248d249f1e1a907129c133fb6696690ff72da66",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c3-review-20261027",
+            "digest": "sha256:dcd00c60e5861370516d8f8546687ce1d4d6973b29a473c18feaa08b638a614e",
+            "excerpt": "Unified BG-C3 review (14eed7eca..1ab1a028e), Spec: 2 findings. A zombie owner counts as alive in subprocess.Stop (no-op: the detached owner of ticket 08 is reaped by init; consumers pass a bounded context). Orchestrator plan and record edits (no-op).\n"
+          },
+          "axis": "Spec",
+          "base": "14eed7eca23c445e642ba609a4e27b432787c26b",
+          "tip": "1ab1a028ed36d92630caeefde4e71181307e4498",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c3-review-coverage",
+          "performer": "claude:bg-c3-review-20261027",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "3248d249f1e1a907129c133fb6696690ff72da66",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c3-review-20261027",
+            "digest": "sha256:fda79ac665b8524717dfcd9c6b8b8fb93548f5d32f17a96bb807eaee2ee2aa3b",
+            "excerpt": "Unified BG-C3 review (14eed7eca..1ab1a028e), Coverage: 4 findings. Leaf-import rule has no gate pin (auto-fix). Non-private directory refusal and the names-another-key branch untested (auto-fix). BG32/BG35/BG33/BG113 reds not recorded at the current fixtures (coordinator mutants probe). Uncertain Alive branch untested (no-op).\n"
+          },
+          "axis": "Coverage",
+          "base": "14eed7eca23c445e642ba609a4e27b432787c26b",
+          "tip": "1ab1a028ed36d92630caeefde4e71181307e4498",
+          "finding_ids": [
+            "BG-C3-C1",
+            "BG-C3-C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -832,3 +898,32 @@ Count: 1. Worst issue: plan and record edits sit in the delta.
 Count: 1. Worst issue: the test does not walk the reader phases.
 
 - No-op, confidence 4: `internal/gate/width_test.go:153` does not walk the reader phases. Those phases reuse `testPhase`, and the delta table covers it.
+
+## BG-C3 review
+
+One unified session reviewed the frozen pair `14eed7eca..1ab1a028e`. It found 10 raw findings. The orchestrator collapsed them into 3 repair targets on ticket 05, and one combined repair session receives all three. After the repair, the orchestrator runs one coordinator mutant set for the reds of BG32, BG33, BG35, and BG113 at the current fixtures.
+
+## Standards
+
+Count: 4. Worst issue: a poll window repeats a shared bound.
+
+- BG-C3-S1, auto-fix, confidence 8: `internal/gate/backgroundstate/stop.go` defines `stopPoll` as a copy of `bounds.ProcessPoll`, and `internal/subprocess/stop_test.go` repeats it. Use `bounds.ProcessPoll`. Target T1.
+- Parked, confidence 7: `internal/gate/backgroundstate/state.go` holds the third copy of the private-directory logic. A fix needs a shared seam across three packages, so a learning holds it.
+- No-op, confidence 6: `writeRecord` goes through the shared `durablefile.Replacer`, and its record recipe is incidental text.
+- No-op, confidence 6: the `pid <= 1` guard of `internal/subprocess/stop.go` is a one-line precondition.
+
+## Spec
+
+Count: 2. Worst issue: a zombie owner counts as alive.
+
+- No-op, confidence 4: `subprocess.Stop` treats an un-reaped zombie as alive. The owner of ticket 08 is a detached session leader that init reaps, and each consumer passes a bounded context.
+- No-op, confidence 7: the plan and record commits of the orchestrator sit in the delta.
+
+## Coverage
+
+Count: 4. Worst issue: the leaf-import rule has no gate pin.
+
+- BG-C3-C1, auto-fix, confidence 5: no test pins acceptance item 7. Add a test that asserts that the import closure of the leaf holds no other `internal/gate` package. Target T2.
+- BG-C3-C2, auto-fix, confidence 5: no test covers the refusal of a directory that is not private in `state.go`. No test covers the branch in `claim.go` that names another key. Target T3.
+- Coordinator action, confidence 7: the reds of BG32, BG33, BG35, and BG113 need a record at the current fixtures.
+- No-op, confidence 5: the uncertain branch of `Alive` passes through `protection.Classify`, which has its own tests.
