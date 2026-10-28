@@ -16,7 +16,7 @@ Put the fence under a `### Completion plan` heading at the end of
       "id": "<stable chunk ID>",
       "tickets": ["<ticket basename>"],
       "verification": [
-        {"id": "<requirement ID>", "command": "<exact command>"}
+        {"id": "<requirement ID>", "command": "<exact command>", "probe": "<named mutation>"}
       ]
     }
   ],
@@ -34,19 +34,19 @@ The keys have these meanings:
   value at the chunk checkpoint.
 - `tickets`: The ticket basenames under `specs/<slug>/tickets/`. Each ticket is
   in exactly one chunk.
-- `verification`: The requirements that the chunk checkpoint grades. Each
-  requirement needs a passing result for the chunk source.
+- `verification`: The requirements that the chunk checkpoint grades.
+  Each chunk requirement names a `probe`, and a chunk can list no requirement.
+  Each requirement needs a passing result for the chunk source.
 - `id` (requirement): A requirement name that is unique in its list.
 - `command`: The exact command whose passing result the checkpoint requires.
-- `probe` (optional): A named mutation. The checkpoint then also requires a
-  `bench probe` result that bit, with a passed restore.
+- `probe`: A named mutation. The checkpoint then also requires a `bench probe`
+  result that bit, with a passed restore. A final requirement can omit it.
 - `final_verification`: The requirements that the `--complete` checkpoint
   grades. These requirements name no ticket.
 
-The parser refuses an unknown key, a duplicate key, and an empty list. A chunk
-must not come before a chunk that holds one of its `Blocked by:` tickets. Do not
-write `execution` or a requirement `ticket`; the version 2 amendment adds them.
-The `check-floor` row of build preflight names each floor command that a chunk
-omits. The `chunk-rows` row compares the chunk table with the coverage map in
-both directions. It names each map row that no acceptance cell lists and each
+The parser refuses an unknown key, a duplicate key, and an empty
+`final_verification` list. A chunk must not come before a chunk that holds one
+of its `Blocked by:` tickets. Do not write `execution` or a requirement
+`ticket`; the version 2 amendment adds them. The `chunk-rows` row compares the
+chunk table with the coverage map in both directions. It names each map row that no acceptance cell lists and each
 listed ID that the map does not declare.

@@ -55,7 +55,7 @@ acceptance coverage, hostile-input attachment, and gate attachment; shaping sour
 
 ## Process
 
-1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source and the research findings. Lock no row before the findings cover its enforcement surface and `craft-spec`'s reader sweep. Plan the probes and the check floor from the findings, including any `docs/known-issues.md` finding. Read only what the findings leave open, before you lock the rows.
+1. **Author.** Charge `bench-craft-spec` (and `bench-craft-domain` for terms) on the decision source and the research findings. Lock no row before the findings cover its enforcement surface and `craft-spec`'s reader sweep. Plan the probes from the findings, including any `docs/known-issues.md` finding. Read only what the findings leave open, before you lock the rows.
 
    Apply `craft-spec`'s implementation-line recommendation contract through `craft-line`. Write `specs/<feature>/spec.md` from the template and run `bench coverage --check`. The stale-command-reference sweep remains fail-closed across staged specs.
 
