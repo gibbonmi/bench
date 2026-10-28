@@ -33,9 +33,15 @@ root carries a built-in lane, and that lane is the selective one. A linked repo
 declares its lane in the phase manifest, and a manifest lane runs as declared
 with no selection. A repo with no declared lane keeps the full-gate commit.
 
+In a kit worktree, a lane pass can also queue a background grade of its tip.
+That grade is a gate run and not a lane check, so its green is reusable under
+its grade key.
+
 ## Consequence
 
-One landed change pays one gate run, at the landing. That run is the reader set
+One landed change pays one gate run. In a kit worktree, a background grade can
+pay that run before the landing, and the landing then reuses the green of that
+grade. Otherwise the landing pays the run. That landing run is the reader set
 for a covered kit change and the whole-project gate otherwise. A Markdown
 commit runs no vet check and no build check, and a Go commit runs no prose
 check. A lane pass never reads as green, so no consumer can mistake a worktree

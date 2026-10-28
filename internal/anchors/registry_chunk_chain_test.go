@@ -44,5 +44,7 @@ func TestChunkChainAnchors(t *testing.T) {
 		{file: reference, needle: "Each call without `--prepare` still grades the record evidence and the record prose.", want: "chunk chain: the reference restored the --prepare flag of the retired prepared run", forbidden: true},
 		{file: reference, needle: "The Land section of `/bench-implement-spec` says when the orchestrator starts the prepared run of the chunk checkpoint.", want: "chunk chain: the reference restored the retired prepared run", forbidden: true},
 		{file: reference, needle: "It skips the evidence pass, the record prose grade, and the tip-moved guard.", want: "chunk chain: the reference restored the list of what a prepared run skips", forbidden: true},
+		{file: "projects/benchkit.md", needle: "A prepared chunk run writes a green under that key, or a delta green, before the record commit.", want: "chunk chain: the profile restored the retired prepared chunk run", forbidden: true},
+		{file: "docs/adr/0002-accepted-enforcement-postures.md", needle: "A prepared chunk run grades the same subject and writes its green under the same key.", want: "chunk chain: ADR 0002 restored the retired prepared chunk run", forbidden: true},
 	}}.check(t)
 }

@@ -50,13 +50,11 @@ A record that implies coverage it does not have is worse than silence.
    without the review record. The checkpoint grades that review record on every
    call.
 
-   Gate execution serializes on one lock in each checkout. A reuse writes at most
-   the gate cache of its checkout, and that cache keeps the recorded time of the
-   source run. So reuse never slides its own freshness window.
-
-   A prepared chunk run grades the same subject and writes its green under the same key.
-   It grades no review record and no completion evidence. So a record commit during that
-   run leaves its green valid, and the chunk checkpoint after it reuses that green.
+   A foreground gate run takes one lock in each checkout, so two foreground runs
+   in one checkout never overlap. A background grade takes no checkout lock and
+   writes no gate cache. It holds a claim on its grade key while it runs. A reuse
+   writes at most the gate cache of its checkout, and that cache keeps the
+   recorded time of the source run. So reuse never slides its own freshness window.
 
    Any
    other state durably replaces the older verdict with a pending record. This

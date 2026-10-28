@@ -769,6 +769,53 @@ that marker. Each named commit is a suspect of the red.
 The complete phase stream goes to `.logs/gate-<run>.out`. That file sits beside
 the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
 
+### Background grade
+
+In a kit worktree, each lane pass of `bench commit` or `bench worktree merge` detaches one
+background pass. That pass runs through the wrapper of the target worktree, and it computes the
+grade key of its tip. That key is the key of the chunk subject of an open build, or the key of
+the landing subject. The pass queues no grade when one of these already holds that key:
+
+- a fresh green
+- a live claim
+- the running grade
+- a queued grade
+
+The queue under the Bench home runs one grade at a time on the machine, in the order of the lane
+passes. Each worktree keeps at most one queued grade, so a newer tip replaces the queued grade.
+A newer tip with a new key also stops the running grade of its worktree. A grade runs its Go test
+phases at `-p=2 -parallel=2`, at nice 19, and in the idle I/O class. A linked repository starts
+no grade.
+
+A grade holds a claim on its grade key while it runs. The claim names the key, the worktree, the
+owner pid, and the boot id. A claim is live only while its owner runs in the current boot. The
+grade takes no checkout lock and writes no gate cache, so a foreground gate runs beside it. Its
+green goes to the evidence store under its key.
+
+A chunk checkpoint that finds no green waits on a live claim of its key before it takes the
+checkout lock. A spec-less or tickets-only landing waits the same way before it takes the
+destination lease. The complete checkpoint does not wait on a claim, and it keeps its own run
+under the broker.
+
+The wait moves the I/O class of the grade to best-effort, and the nice value stays 19. The wait
+counts against the gate timeout. After the wait, the run looks up its key
+again, so a background green answers it with no oracle run. A red grade or a grade with no
+verdict makes the run pay its own oracle.
+
+Before its own run, a chunk checkpoint or a landing stops and drops each grade of its worktree
+that holds another key. These verbs also stop the running grade and drop the queued grade of each
+worktree that they act on:
+
+- `bench worktree release`, `bench worktree clean`, and `bench worktree reclaim`
+- the stack form of `bench worktree land`
+- `bench cache clean`, for every grade
+
+A grade writes its output to `bench-background-grade.log` in the git directory of its worktree.
+The background record of that worktree names the latest outcome: `green`, `red`, `aborted`, or
+`stopped`. The record also names the grade key, the tip, and the log. The record is never a
+verdict. `bench status` shows it as the `background` row, and `bench commit` prints it on one
+`background grade: latest` line.
+
 ## Harness adapter for the shift loop
 
 `bench shift` drives whatever harness `BENCH_AGENT` names. Each iteration it

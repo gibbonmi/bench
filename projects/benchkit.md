@@ -500,8 +500,9 @@ the green marker, so each landing runs the whole gate until that marker moves.
 
 Prospective execution uses the same complete phase architecture. A stale exact verdict stays stale rather than being
 softened by path classification. A chunk checkpoint keys its green to the committed tree
-without the review record. A prepared chunk run writes a green under that key, or a delta
-green, before the record commit.
+without the review record. In a kit worktree, a background grade can write a green under that
+key, or a delta green, before the checkpoint. `.bench/BENCH-reference.md` owns the account of
+the background grade.
 
 `BENCH_REQUIRE_CAPABILITIES=1` makes capability skips fatal. Without it, capability
 rows stay informational because a developer host may legitimately lack optional
@@ -697,8 +698,10 @@ This host exception overrides the shared command's opener step.
   exports it; the gate-inputs closure declares it). Without it the prospective
   subject stays open, so a landing's gate can run fully green and still refuse
   as `prospective authorization refused: infrastructure`.
-- Never mutate the repository while a gate is running. The gate binds its
-  verdict to the starting subject and rejects a run whose subject changes.
+- Never mutate the repository while a foreground gate is running. That gate binds
+  its verdict to the starting subject and rejects a run whose subject changes. A
+  commit during a background grade is safe, because that grade grades a committed
+  tip in a private checkout.
 - When SessionStart diagnoses incomplete environment closure, prepend the
   recovered tool directory to the ambient PATH. Do not replace the harness
   toolchain that is already present.

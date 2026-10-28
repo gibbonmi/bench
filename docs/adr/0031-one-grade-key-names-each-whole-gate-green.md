@@ -25,6 +25,11 @@ On a hit, each verb still runs its own purpose checks and evidence checks, so a 
 A reused green records the gate cache of its checkout, with the recorded time of the source run.
 So a reuse never extends the freshness window of the green.
 
+A background grade is a producer of a green under the grade key.
+It grades a chunk subject or a landing subject, so its green answers the chunk checkpoint or the landing of the same key.
+A chunk grade runs as the executable that the wrapper of its worktree resolves, and the chunk checkpoint runs as that executable too.
+A landing grade runs as the authenticated broker, so its green answers the landing.
+
 The capability posture binds every reuse, so a relaxed green never answers a strict run.
 The running executable binds every reuse, so a green from a candidate build never answers the landing of the broker.
 

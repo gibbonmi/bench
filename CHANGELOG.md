@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade rules recorded
+
+- Changed ADR 0002, ADR 0017, ADR 0024, and ADR 0031, which now state the background grade. A foreground gate takes the checkout lock, and a background grade takes no checkout lock and holds a claim on its grade key. A background grade can pay the gate run of a landed change before the landing. ADR 0024 names the background grade as the one concurrent workload, with its machine bound and its census. ADR 0031 names the background grade as a producer of a reusable green.
+- Added the background grade account to `.bench/BENCH-reference.md`: the queue, the claim, the wait, the stops, and the background record.
+- Changed `projects/benchkit.md`. The note on a running gate now names a foreground gate, and the gate section no longer names the prepared chunk run.
+
 ### Prepared run retired
 
 - Removed `--prepare` from `bench gate`. The background grade now grades each chunk subject before its checkpoint, so the prepared run has no use. A call with `--prepare` is a usage error at exit 2.

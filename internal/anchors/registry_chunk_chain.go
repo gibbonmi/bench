@@ -42,16 +42,20 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "--prepare", Diagnostic: "chunk chain: the reference restored the --prepare flag of the retired prepared run"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "prepared run", Diagnostic: "chunk chain: the reference restored the retired prepared run"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: Forbid, Needle: "It skips the evidence pass, the record prose grade, and the tip-moved guard.", Diagnostic: "chunk chain: the reference restored the list of what a prepared run skips"},
+	{Group: AfterImplementSpec, File: benchkitProfile, Kind: Forbid, Needle: "prepared chunk run", Diagnostic: "chunk chain: the profile restored the retired prepared chunk run"},
+	{Group: AfterImplementSpec, File: enforcementPosturesADR, Kind: Forbid, Needle: "prepared chunk run", Diagnostic: "chunk chain: ADR 0002 restored the retired prepared chunk run"},
 }
 
 // implementPhase is the phase file that states the chunk chain. reviewPhase, freshAuthorADR,
-// craftTickets, benchReference, and boundedRepairPolicy carry retired sentences that the
-// Forbid rows refuse.
+// craftTickets, benchReference, boundedRepairPolicy, benchkitProfile, and enforcementPosturesADR
+// carry retired sentences that the Forbid rows refuse.
 const (
-	implementPhase      = ".agents/commands/bench-implement-spec.md"
-	reviewPhase         = ".agents/commands/bench-review-implementation.md"
-	craftTickets        = ".agents/skills/bench-craft-tickets/SKILL.md"
-	benchReference      = ".bench/BENCH-reference.md"
-	freshAuthorADR      = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
-	boundedRepairPolicy = ".agents/skills/bench-craft-line/references/bounded-repair-policy.md"
+	implementPhase         = ".agents/commands/bench-implement-spec.md"
+	reviewPhase            = ".agents/commands/bench-review-implementation.md"
+	craftTickets           = ".agents/skills/bench-craft-tickets/SKILL.md"
+	benchReference         = ".bench/BENCH-reference.md"
+	freshAuthorADR         = "docs/adr/0023-each-ticket-gets-a-fresh-author.md"
+	boundedRepairPolicy    = ".agents/skills/bench-craft-line/references/bounded-repair-policy.md"
+	benchkitProfile        = "projects/benchkit.md"
+	enforcementPosturesADR = "docs/adr/0002-accepted-enforcement-postures.md"
 )
