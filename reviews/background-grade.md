@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:072e6900bdb63ce0263190bc907591bf4ce06f1479834871be2e47d3fab97e11",
+  "plan_digest": "sha256:f4a6eb1cbcd0427de906cb2e0806b276f5308b36f7a31fdb4cec0ddd1cdef4db",
   "implementation_session": "",
   "chunks": [
     {
@@ -1236,9 +1236,9 @@
     {
       "id": "BG-C5",
       "base": "78089d45597db83f00dcc9c3982879321337db18",
-      "tip": "3cf91fd013916354df370e3930d4e26a400f01fd",
-      "plan_digest": "sha256:072e6900bdb63ce0263190bc907591bf4ce06f1479834871be2e47d3fab97e11",
-      "source_digest": "19909ddc02a28e9ce6ec2844ab1c500f423605b9",
+      "tip": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+      "plan_digest": "sha256:f4a6eb1cbcd0427de906cb2e0806b276f5308b36f7a31fdb4cec0ddd1cdef4db",
+      "source_digest": "9dbf1d3c94d4900a8c85598f788e93f1bd57178b",
       "acceptance_rows": [
         "BG25",
         "BG30",
@@ -1284,6 +1284,44 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,18023,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "3cf91fd013916354df370e3930d4e26a400f01fd",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c5-t07-r1-gate",
+          "performer": "claude:bg-t07-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dbf1d3c94d4900a8c85598f788e93f1bd57178b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t07-repair1-20261028",
+            "digest": "sha256:194a17ec54b94920f3f4d8ee8e1ec20ec533e1918ab29f98ae7412657fc69706",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,166858,764\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,319,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,1982,13\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,56,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,1466,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "requirement": "gate",
+          "command": "bench test --package ./internal/gate/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c5-t07-r1-conformance",
+          "performer": "claude:bg-t07-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9dbf1d3c94d4900a8c85598f788e93f1bd57178b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t07-repair1-20261028",
+            "digest": "sha256:bc4fbd0a21e195d0b3711683ba62d6240551b780e427da0afcdb18e4d823094c",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,19756,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -1529,6 +1567,30 @@
         ],
         "BG-C4": [
           "BG-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:072e6900bdb63ce0263190bc907591bf4ce06f1479834871be2e47d3fab97e11",
+      "to": "sha256:f4a6eb1cbcd0427de906cb2e0806b276f5308b36f7a31fdb4cec0ddd1cdef4db",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
         ]
       }
     }
