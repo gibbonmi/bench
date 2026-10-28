@@ -1465,9 +1465,9 @@
     {
       "id": "BG-C6",
       "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
-      "tip": "08d5b79d0a01998b4d1c33ae0091210efb42af58",
-      "plan_digest": "sha256:80d3005736670aa2bf634284bd63aba96a12a31b54a96841d484bf45e387bfdf",
-      "source_digest": "613f45a7caa4610fea328a6a5500eb43c46151ee",
+      "tip": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+      "plan_digest": "sha256:47d8afc46c1acb68d1be8e849fa8c0ae2f69e301e20767715f0ecfb3308fcac2",
+      "source_digest": "64526e0eca18a48344b2c7de6218e0cd30c457f2",
       "acceptance_rows": [
         "BG5",
         "BG6",
