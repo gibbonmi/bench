@@ -2291,3 +2291,13 @@ Findings: 5. Worst: no row holds a stale own build beside a matching primary bui
 - F3 auto-fix, confidence 4: `cmd/bench/tree_scope_test.go:166,187` checks only the bracketed text. Repair: assert the stream and the absence of the line for repository-scoped calls.
 - F4 no-op, confidence 3: no test makes `git.PrimaryCheckout` fail. The orchestrator declines it, because the branch only drops one candidate.
 - F5 ask-user, confidence 4: the CLI help keeps the exec gate form. The orchestrator declines it, because the spec retires the guidance forms only. This decision stays flagged for reviewer veto.
+
+## BC-C5 ticket 11 repair, round 1 (commit ceb870076)
+
+Witness return:
+
+- `TestRunReusesAMatchingBuild/BC65_an_intact_primary_build_sealed_for_other_sources` (Coverage F2): the build.go swap of `if freshness.VerifyAt(root, root, candidate) == nil {` for `if freshness.VerifyExecutable(candidate) == nil {` bit that row only.
+- `TestTreeScopedHelpNamesTheTarget` (Coverage F3): the tree_scope.go swap of `fmt.Fprint(c.Stdout, definition.treeTargetLine())` for `fmt.Fprint(c.Stderr, definition.treeTargetLine())` bit the new stdout assertion. The old check read both streams and passed this mutant.
+- The two new BC61 and BC62 rows (Coverage F1): probe-11 bit both rows at the repair commit.
+
+Each mutant compiled, and each subject was restored. probe-11 ran again at the repair commit and bit four rows. The `childExecutable` doc now owns the candidate order, which the orchestrator accepts.
