@@ -1792,6 +1792,72 @@
           "supersedes": [
             "bc-c5-coverage-1"
           ]
+        },
+        {
+          "id": "bc-c5-standards-3",
+          "performer": "claude:bc-c5-standards-c3-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-standards-c3-20261028",
+            "digest": "sha256:523776e0f2cdacc0e08daec6519eb446832ccd34f6ccf4ea9b747e8f9d4de17b",
+            "excerpt": "axis: Standards\nchunk: BC-C5  pair: 0164dcb56..a86c5bb73\nfindings: 0\nworst: none\nRound 2: F1 fixed (tree_scope_test.go:189-190 builds the expected line from definition.treeTargetLine(), with a guard on an empty line); F2 fixed (tree_scope_test.go:192-193 compares against treetarget.Operand, and both is built once); F3 fixed (build.go:14-19 is rewrapped with unchanged content).\nreads: evidence check-current; git diff ceb870076..a86c5bb73; the record red prose; tree_scope.go:60-104; treetarget/flag.go:12; rg of the anchor harness.\nnot-verified: no test, probe, or gate ran; the recorded reds were not rerun; anchor_harness_test.go was not read in full.\ncommand-contribution: bench worktree exec <label> -- git diff could print a per-file stat header beside the spill notice.\n"
+          },
+          "axis": "Standards",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "a86c5bb73865372f25361c0a10aa616d7a85ef7a",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c5-standards-2"
+          ]
+        },
+        {
+          "id": "bc-c5-spec-3",
+          "performer": "claude:bc-c5-spec-c3-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-spec-c3-20261028",
+            "digest": "sha256:f87a0e96a9f042df6d37e007a0ba5d1d935c15f36e9ca00063dd9e5157294410",
+            "excerpt": "axis: Spec\nchunk: BC-C5  pair: 0164dcb56..a86c5bb73\nfindings: 0\nworst: none\nrows: BC58 met; BC59 met (the stdout line comes from treeTargetLine(), and an empty line fails); BC60 met (the absence check uses treetarget.Operand); BC61-BC65 met (the build.go delta rewraps the doc only); BC66 met (the new Forbid refuses the base exec preflight form); BC68 met (the new Forbid refuses the base exec gate form); BC67, BC69, BC73 met; BC70 review-owned, unchanged; no promise beyond the spec.\nreads: craft-review; evidence check-current; git diff ceb870076..a86c5bb73; spec.md rows BC58-BC73, :391, :473-475; tree_scope.go; tree_scope_test.go; treetarget/flag.go; registry_build_cost.go and its test; the base forms at 0164dcb56; rg --hidden sweep of the exec forms.\nnot-verified: no test, probe, or gate ran; the recorded Forbid reds were not rerun; CHANGELOG coverage of the two new Forbid rows.\ncommand-contribution: bench worktree exec <label> -- git diff could print the --stat summary in its spilled header.\n"
+          },
+          "axis": "Spec",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "a86c5bb73865372f25361c0a10aa616d7a85ef7a",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c5-spec-2"
+          ]
+        },
+        {
+          "id": "bc-c5-coverage-3",
+          "performer": "claude:bc-c5-coverage-c3-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c5-coverage-c3-20261028",
+            "digest": "sha256:4bf1fc29074154f4a258c031dcde7f61458c249f3498ef8814104ad4f82f4497",
+            "excerpt": "axis: Coverage\nchunk: BC-C5  pair: 0164dcb56..a86c5bb73\nfindings: 0\nworst: none\nRound 2: F1 fixed\ntests-run: bench test --in build-cost --package ./internal/anchors --package ./cmd/bench --run \"TestBuildCostAnchors|TestTreeScopedHelpNamesTheTarget\" at 8368dcf9f — pass (anchors 1, cmd/bench 1, 0 failures)\nreads: evidence check-current; craft-review; git diff ceb870076..a86c5bb73; registry_build_cost.go:15-16,19-20; registry_build_cost_test.go:22-23,27-28; the retired text at 0164dcb56; current known-issues and synthesis lines; reviews/build-cost.md:2438-2446; tree_scope_test.go:163-206; tree_scope.go:70-95; treetarget/flag.go:12; spec.md:343-344; rg for the literal line text.\nnot-verified: the BC59 and BC60 cheapest-wrong cases are a trace, not a run; the line on a repository-scoped verb has no recorded red; no test pins the line format beyond the flag and operand, which BC59 and BC60 do not require; no probe, system suite, or gate ran.\ncommand-contribution: no command change is necessary\n"
+          },
+          "axis": "Coverage",
+          "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "tip": "a86c5bb73865372f25361c0a10aa616d7a85ef7a",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c5-coverage-2"
+          ]
         }
       ]
     }
@@ -2444,3 +2510,7 @@ Witness return:
 - `docs-currency-workflow` (Coverage F1, craft-synthesis): the insertion of ``Or run `bench worktree exec <target> -- bench gate` for a batch.`` in the craft-synthesis skill bit the new Forbid row.
 
 Each mutant compiled, and each subject was restored. probe-11 ran again at the repair commit and bit four rows.
+
+## BC-C5 third confirming round (pair 0164dcb56..a86c5bb73)
+
+Every second-round finding is fixed. Raw findings: Standards 0, Spec 0, Coverage 0. BC-C5 review is complete.
