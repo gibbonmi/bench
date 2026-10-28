@@ -186,7 +186,9 @@ Thus no single plan passes both binaries, and the order below keeps each step gr
 6. Ticket 02 then refuses a plain chunk requirement and moves the shared plan fixtures to probe requirements. This plan already holds none.
 
 No author runs a plain floor command as a recorded requirement. Ticket 01's own record owes only its probe, because the plan at its commit holds no plain chunk requirement.
-Ticket 01 runs its post-ticket preflight through `bench preflight --in <target>` after `bench worktree build <target>`, so that preflight runs the new binary. Later tickets obey the sequence that tickets 03 and 07 state.
+Ticket 01 runs its post-ticket preflight through `bench preflight --in <target>` after `bench worktree build <target>`, so that preflight runs the new binary.
+Tickets 02 to 06 record with the excerpt form and the chained record commit, because ticket 07's `next=` line does not exist yet. Each ticket after ticket 07 obeys the sequence that tickets 03 and 07 state.
+Before the first dispatch, the orchestrator converts this version 1 plan to version 2, as the build guidance states, because the ticket form reads a version 2 plan.
 
 ### One record step
 
@@ -563,7 +565,7 @@ The build reruns `bench consumers` on each changed function before each charge, 
 ### Pre-review proof checklist
 
 - Cited symbols: each symbol above resolves in the named file at base 887fd6c93. The landing-commit owner in `internal/spec` is new.
-- Import edges: `go list -deps ./internal/reviewrecord` holds no `internal/roadmap`, so the new edge from `internal/roadmap` to `internal/reviewrecord` adds no cycle.
+- Import edges: `go list -deps ./internal/reviewrecord` holds no `internal/roadmap`, so the new edge from `internal/roadmap` to `internal/reviewrecord` adds no cycle. `internal/spec` already imports `internal/git`, and `go list -deps ./internal/git` holds no `internal/spec`.
 - Source-row clauses and occurrences: the source-to-row table below.
 - Promised field labels: `## Cost`, `over budget`, `bench-lane.log`, `next=`, and `--base`.
 - Changed-function callers: the inventory above.
