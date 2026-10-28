@@ -25,14 +25,24 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	return exit
 }
 
-// An empty --preflight-build value is what an unset shell variable expands to, so the
-// grammar refuses it before any repository read.
-func TestCommitChainRefusesEmptySlug(t *testing.T) {
-	t.Chdir(t.TempDir())
-	var stdout, stderr bytes.Buffer
-	code := Command([]string{"-m", "m", "--preflight-build", "", "a.txt"}, &stdout, &stderr)
-	if want := toon.Usage(grammar.Cmd, usage.EmptyFlagValue(PreflightBuildFlag)) + "\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
-		t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
+// An empty --preflight-build or --base value is what an unset shell variable expands to, so
+// the grammar refuses it before any repository read.
+func TestCommitChainRefusesEmptyValue(t *testing.T) {
+	for _, tc := range []struct {
+		name, flag string
+		args       []string
+	}{
+		{name: "slug", flag: PreflightBuildFlag, args: []string{"-m", "m", PreflightBuildFlag, "", "a.txt"}},
+		{name: "base", flag: BaseFlag, args: []string{PreflightBuildFlag, "s", BaseFlag, "", "-m", "m", "p"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			var stdout, stderr bytes.Buffer
+			code := Command(tc.args, &stdout, &stderr)
+			if want := toon.Usage(grammar.Cmd, usage.EmptyFlagValue(tc.flag)) + "\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
+				t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
+			}
+		})
 	}
 }
 
@@ -64,8 +74,8 @@ func TestRefusalReRunKeepsTheBase(t *testing.T) {
 }
 
 // Run hands the command layer the checkout it ran in, the slug --preflight-build named,
-// the base --base named, and the commit it published: HEAD after a green commit or a publication remainder,
-// and nothing after a refusal.
+// the base --base named, and the commit it published: HEAD after a green commit or a
+// publication remainder, and nothing after a refusal.
 func TestRunOutcomeNamesThePublishedCommit(t *testing.T) {
 	for _, tc := range []struct {
 		name      string

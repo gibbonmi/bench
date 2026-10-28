@@ -136,10 +136,10 @@ type ownedRuns struct {
 // answers against entry, the chunk entry. When exactly one owed requirement has neither a stage
 // nor a carry and the retained call is `bench probe`, stageRetained stages that response for it.
 // The count maps the response to one requirement only; no check compares the retained call with
-// that requirement's planned command. It refuses a stage whose run reviewrecord.RunBinding does not find current for entry, then a
-// stage whose run had a dirty path other than the record path, each as a repair of the excerpt
-// form that names the requirement. It then refuses, as one repair of the excerpt form, the
-// unstaged requirements that cannot carry.
+// that requirement's planned command. It refuses a stage whose run reviewrecord.RunBinding does
+// not find current for entry, then a stage whose run had a dirty path other than the record
+// path, each as a repair of the excerpt form that names the requirement. It then refuses, as one
+// repair of the excerpt form, the unstaged requirements that cannot carry.
 func (r *ownedRuns) calls(entry reviewrecord.Chunk) ([]reviewrecord.VerificationCall, error) {
 	restage := func(id, format string, args ...any) error {
 		return reviewrecord.Repair{Form: reviewrecord.FormExcerpt, Chunk: r.chunk, Requirement: id, Err: fmt.Errorf("requirement %s: "+format, append([]any{id}, args...)...)}
@@ -235,6 +235,6 @@ func stagedProbe(staged responsebound.Staged) (int, *reviewrecord.Probe, string)
 		}
 		exit = answer.exit
 	}
-	probe, out := importedProbe(staged.Output, exit, staged.Mutant)
-	return exit, probe, out
+	imported, out := importedProbe(staged.Output, exit, staged.Mutant)
+	return exit, imported, out
 }

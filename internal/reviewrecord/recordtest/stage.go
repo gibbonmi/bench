@@ -39,14 +39,20 @@ func Pooled(t *testing.T, count int, options ...Option) (*Fixture, string) {
 }
 
 // Retain makes output the retained response of the fixture's worktree, as the call
-// `bench <verb> <args>…` printed it with exit at the current tip.
+// `bench <verb> <args>…` printed it with exit at the current tip in a clean checkout.
 func (f *Fixture) Retain(home, verb string, args []string, exit int, output string) {
+	f.T.Helper()
+	f.RetainAt(home, f.Tip(), []string{}, verb, args, exit, output)
+}
+
+// RetainAt is Retain for a call that ran at head with the dirty paths dirty.
+func (f *Fixture) RetainAt(home, head string, dirty []string, verb string, args []string, exit int, output string) {
 	f.T.Helper()
 	owner := responsebound.New(home, io.Discard, io.Discard, func() string { return f.Root }, false)
 	_, _ = io.WriteString(owner.Stdout(), output)
 	owner.Finish()
 	err := owner.Retain(home, f.Root, func() (responsebound.Retained, error) {
-		return responsebound.Retained{Verb: verb, Args: args, Exit: exit, Head: f.Tip(), Dirty: []string{}}, nil
+		return responsebound.Retained{Verb: verb, Args: args, Exit: exit, Head: head, Dirty: dirty}, nil
 	})
 	if err != nil {
 		f.T.Fatal(err)

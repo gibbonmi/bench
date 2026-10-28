@@ -67,8 +67,9 @@ func carriedRepairCase(t *testing.T) (*recordtest.Fixture, string, string, []str
 // probe` response is the entry of the additional requirement, and --mutant names its row of a
 // mutant set. The call removes no other stage, prints at most 10 lines, and ends with the
 // record commit. A retained `bench test` response and two unstaged requirements refuse, name
-// the excerpt form, and leave the record and the store as they were. A requirement that can
-// carry carries, so the retained response is the entry of the one requirement left.
+// the excerpt form, and leave the record and the store as they were. A retained run off the
+// chunk line or with a dirty path refuses the same way and names the staged run. A requirement
+// that can carry carries, so the retained response is the entry of the one requirement left.
 func TestTicketStagesTheRetainedProbe(t *testing.T) {
 	produce, _ := setProducer(t, linked(t, 1))
 	set, setExit := silentThenBiting(produce)
@@ -80,6 +81,8 @@ func TestTicketStagesTheRetainedProbe(t *testing.T) {
 		exit         int
 		prepare      ticketCase
 		extra        []string
+		offLine      bool
+		dirty        []string
 		entry        string
 		used         int
 		carried      string
@@ -91,12 +94,19 @@ func TestTicketStagesTheRetainedProbe(t *testing.T) {
 		{name: "carried requirements", verb: "probe", output: retained, prepare: carriedRepairCase, entry: "repair-pkg", carried: "system,other", want: bit},
 		{name: "bench test response", verb: "test", output: retained, prepare: firstChunk(true), refusalNames: "these owed requirements have no staged excerpt: additional"},
 		{name: "two unstaged requirements", verb: "probe", output: retained, prepare: firstChunk(false), refusalNames: "these owed requirements have no staged excerpt: tests, additional"},
+		{name: "head off the chunk line", verb: "probe", output: retained, prepare: firstChunk(true), offLine: true, refusalNames: "requirement additional: the staged run at "},
+		{name: "dirty path", verb: "probe", output: retained, prepare: firstChunk(true), dirty: []string{"x.go"}, refusalNames: "requirement additional: the staged run had the dirty path x.go"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f, home, base, args := tc.prepare(t)
 			tip := f.Tip()
 			f.Stage(home, "9", "other", f.Run(0, "ok\n"))
-			f.Retain(home, tc.verb, []string{"clamp.go"}, tc.exit, tc.output)
+			head := tip
+			if tc.offLine {
+				head = f.Git("rev-parse", base+"^")
+				tc.refusalNames += head
+			}
+			f.RetainAt(home, head, append([]string{}, tc.dirty...), tc.verb, []string{"clamp.go"}, tc.exit, tc.output)
 			before, stages := recordBytes(t, f), responseboundtest.StoreFiles(t, home)
 			out, code := recordcmd.Command(f.Root, append(args, tc.extra...))
 			if tc.refusalNames != "" {
