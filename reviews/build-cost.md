@@ -904,6 +904,72 @@
           "supersedes": [
             "bc-c3-coverage-1"
           ]
+        },
+        {
+          "id": "bc-c3-standards-3",
+          "performer": "claude:bc-c3-standards-c3-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1a61d622e7f2bc3a7ea37cf076ba1fd782d99379",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-standards-c3-20261028",
+            "digest": "sha256:7fa8d33239c0bb2bdabfe905cbc2f9954a68d958d92b936e42885404e782244a",
+            "excerpt": "axis: Standards (confirming 2)\nchunk: BC-C3  pair: 884822a21..8aff6fd8e  repair: 16ee91c9f..8aff6fd8e\nfindings: 2 new\nworst: N1, the chain argv is composed in two places with two placeholder names for --base.\n- F1: closed — internal/reviewrecord/recordcmd/ticket.go:101-103 renders through refusalroute.ChainCommit (registry.go:72-75), with each chain value through Arg, as callerRerun does.\n- help-label: legitimate — the label comes from refusalroute.NextField; RR49 refuses route spellings, not label mentions (refusal_route_bypass_test.go:44-47, 111-112); the tree spells NextField + \"=\" the same way at commit/grammar.go:25, recordcmd/refusal.go:58, and worktree/reset.go:75.\n- N1 [ask-user] [confidence 6] internal/reviewrecord/recordcmd/ticket.go:101 — the chain arguments are built again beside internal/commit/commit.go:243-246, and --base has three placeholder names — export one chain-args helper from internal/commit and use it at both sites. The orchestrator routes this to ticket 08.\n- N2 [no-op] [confidence 3] internal/refusalroute/registry.go:75 — ChainCommit repeats the body of renderRerun — share one helper. The orchestrator routes this with N1.\nreads: check-current; the repair delta; the round 1 and checkpoint-red sections; refusalroute route.go and registry.go; refusal_route_bypass_test.go; grammar.go; commit.go:228-256; rg sweeps.\nnot-verified: no test, probe, or gate ran.\n"
+          },
+          "axis": "Standards",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "8aff6fd8e3600feb9e18e252709db436e74ef167",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c3-standards-2"
+          ]
+        },
+        {
+          "id": "bc-c3-spec-3",
+          "performer": "claude:bc-c3-spec-c3-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1a61d622e7f2bc3a7ea37cf076ba1fd782d99379",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-spec-c3-20261028",
+            "digest": "sha256:4c03568ee057c27d2aa853fde67e56a7460fe58ee7b5c3030be9f3bd84b6b0cd",
+            "excerpt": "axis: Spec (confirming 2)\nchunk: BC-C3  pair: 884822a21..8aff6fd8e  repair: 16ee91c9f..8aff6fd8e\nfindings: 1 new\nworst: the planned amendment misses a third unquoted copy of the next= line at specs/build-cost/spec.md:200.\n- BC45: met — ticket.go:85-87 prints one next= line with the chain flags and the quoted slug, base, and record path; ticket_probe_test.go:153-154 compares the whole last line; an absent base now prints <chunk-base>.\n- N1 [auto-fix] [confidence 8] specs/build-cost/spec.md:200 — a third unquoted copy of the printed line beside spec.md:329 and ticket 07 line 14 — amend it in the same plan commit. The orchestrator amends all three in the BC-C4 plan commit.\n- N2 [no-op] [confidence 3] internal/refusalroute/registry.go:24 — chainCommit prints no --in; BC45 has none either.\nrows: BC38-BC48 still met; BC47 gives no literal form; the review guidance points to the staging rule.\nreads: check-current; the repair diff; bench coverage; spec rows; tickets 06 and 07; refusalroute route.go and registry.go; a repo-wide search; the two guidance files; learnings.md.\nnot-verified: no test or probe ran.\n"
+          },
+          "axis": "Spec",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "8aff6fd8e3600feb9e18e252709db436e74ef167",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c3-spec-2"
+          ]
+        },
+        {
+          "id": "bc-c3-coverage-3",
+          "performer": "claude:bc-c3-coverage-c3-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1a61d622e7f2bc3a7ea37cf076ba1fd782d99379",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-coverage-c3-20261028",
+            "digest": "sha256:50a12084c9866707c06fe46018eeeae3c8e3632af1101c222eaed14138ff0805",
+            "excerpt": "axis: Coverage (confirming 2)\nchunk: BC-C3  pair: 884822a21..8aff6fd8e  repair: 16ee91c9f..8aff6fd8e\nfindings: 1 new\nworst: no ticket-record test asserts the next= line for a chunk after the first, so a mutant that reads the wrong chunk's base is not caught; the gap predates the repair.\n- N1 [no-op] [confidence 3] internal/reviewrecord/recordcmd/ticket_probe_test.go:94 — every passing case runs chunk 1, where the base is the main tip — add a case for the first ticket of chunk 2 that asserts the recorded predecessor tip. The orchestrator routes this to ticket 08.\nNo gap: the plain-values row of registry_test.go:49-50 catches an unquoted value, a placeholder for a valid value, and swapped order; the carried case catches a missing base; the moved expectation keeps the 10-line bound, the last-line match, and the trailing newline.\ntests-run: --package ./internal/refusalroute --package ./internal/reviewrecord/recordcmd --run 'TestChainCommitRendersTheRecordCommit|TestTicketStagesTheRetainedProbe' pass (4 + 8).\nreads: check-current; the repair diff; route.go; ticket.go:40-104; ticket_probe_test.go; ticket_carry_test.go; chunk_test.go; craft-review.\nnot-verified: the author's mutant result was not rerun and was not yet in the record.\n"
+          },
+          "axis": "Coverage",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "8aff6fd8e3600feb9e18e252709db436e74ef167",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c3-coverage-2"
+          ]
         }
       ]
     }
@@ -1243,3 +1309,18 @@ Each mutant compiled, and each subject was restored. probe-07 ran again at the r
 The chunk checkpoint went red on `TestNoWriteVerbComposesARouteOutsideTheRegistry` at `internal/conformance/refusal_route_bypass_test.go:115`. The fault names `internal/reviewrecord/recordcmd/ticket.go:23`, a help literal that spells `next=` outside the route registry.
 
 The red confirms Standards F1 of round 1, which the orchestrator had declined. F1 is reopened. A second ticket 07 repair composes the `next=` line through `internal/refusalroute` and keeps the help text free of a route literal.
+
+## BC-C3 ticket 07 repair, round 2 (commit 8aff6fd8e)
+
+Witness return:
+
+- `TestChainCommitRendersTheRecordCommit/no_chain`: the registry.go swap of `Operator("msg"), Composed(FactChain), Fact(FactRecord))` for `Operator("msg"), Fact(FactRecord))` bit with 6 failed tests, and the BC45 rows of `TestTicketStagesTheRetainedProbe` also went red. The subject was restored.
+- The orchestrator ran `TestNoWriteVerbComposesARouteOutsideTheRegistry` green at 9215bcdd6. `internal/conformance/refusal_route_bypass_test.go` has no change since the build base.
+
+## BC-C3 second confirming round (pair 884822a21..8aff6fd8e)
+
+All three axes pass. Standards F1 is closed, and the help label is a legitimate single source.
+
+- Standards N1 and N2: the chain arguments are built in `recordcmd/ticket.go:101` and in `internal/commit/commit.go:243-246`. The fix goes to ticket 08 in BC-C4: one exported chain-args helper and one placeholder name for `--base`.
+- Spec N1: three unquoted copies of the `next=` line remain, at `spec.md:200`, `spec.md:329`, and ticket 07 line 14. The BC-C4 plan commit amends them to the quoted form.
+- Coverage N1: no case asserts the `next=` base of a later chunk. The test goes to ticket 08 in BC-C4.
