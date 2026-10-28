@@ -15,7 +15,7 @@ Section 4 of `.agents/commands/bench-drain.md` gains two sentences:
 - "When a retro's `## Cost` section marks a line `over budget`, propose one removal or one merge of a build step for that line."
 - "A budget breach never makes the gate red."
 
-The drain guidance repeats no budget number. Add the Require anchors of BC22 and BC71 and the Forbid anchors of BC14 to `registry_build_cost.go`.
+The drain guidance repeats no budget number. Add the Forbid anchors of BC14 to `registry_build_cost.go`. BC22 and BC71 are review-owned, because ADR 0012 keeps rule wording out of the anchor registry.
 
 ## Acceptance
 

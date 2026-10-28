@@ -1,7 +1,7 @@
 # State the probe-only rule in the guidance
 
 Blocked by: 01-accept-probe-only-plans-and-retire-check-floor.md
-Writes: .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-spec/references/completion-plan.md, internal/anchors/registry_build_cost.go (new), internal/anchors/registry_build_cost_test.go (new), internal/anchors/registry_data.go
+Writes: .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-spec/references/completion-plan.md, internal/anchors/registry_build_cost.go (new), internal/anchors/registry_build_cost_test.go (new), internal/anchors/registry_data.go, .agents/commands/bench-write-spec.md
 Covers: BC34, BC35, BC36, BC37
 
 ## What to build
@@ -17,7 +17,7 @@ Three other sentences name the floor, and each one changes:
 The completion-plan reference states: "Each chunk requirement names a `probe`, and a chunk can list no requirement." It loses its `check-floor` sentence.
 Its template shows the `probe` key on the chunk requirement. Its parser sentence says that the parser refuses an empty final list, because an empty chunk list is now valid.
 
-Create `internal/anchors/registry_build_cost.go` with the anchors of this spec, and append its slice to the registry in `registry_data.go`. This ticket adds the Require anchors of BC34 and BC36 and the Forbid anchors of BC35 and BC37. `TestBuildCostAnchors` pins each entry.
+Create `internal/anchors/registry_build_cost.go` with the anchors of this spec, and append its slice to the registry in `registry_data.go`. This ticket adds the Forbid anchors of BC35 and BC37. BC34 and BC36 are review-owned, because ADR 0012 keeps rule wording out of the anchor registry. `TestBuildCostAnchors` pins each entry.
 
 ## Acceptance
 

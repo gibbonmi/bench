@@ -15,7 +15,7 @@ The guidance names the `--in` form for three Bench calls:
 `internal/anchors/registry_retained_workflow.go` loses its exec gate Require entry, and `registry_build_cost.go` gains the Require entry of the new craft-synthesis sentence, so the sentence has one anchor.
 `.bench/BENCH.md` keeps the learning for every plan or gate expansion except a `Writes:` widen. Insert the text ` except a `Writes:` widen` after "record every plan or gate expansion", because the probe-12 command omits that exact text. The file keeps its 192-line budget.
 
-Add the anchors of BC66, BC67, BC68, BC69, BC70, and BC73 to `registry_build_cost.go`. Write one `CHANGELOG.md` entry for the whole build. `.bench/commitment.json` is in this fence because the spec-stage binding commit sits in the graded range.
+Add the anchors of BC66, BC67, BC68, BC69, and BC73 to `registry_build_cost.go`. BC69 is a Forbid anchor on the retired text "record every plan or gate expansion with `bench learning`", which the probe-12 omission restores. BC70 is review-owned, because ADR 0012 keeps rule wording out of the anchor registry. Write one `CHANGELOG.md` entry for the whole build. `.bench/commitment.json` is in this fence because the spec-stage binding commit sits in the graded range.
 
 ## Acceptance
 

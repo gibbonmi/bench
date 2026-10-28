@@ -15,7 +15,7 @@ After its table, the verb prints one line: `next=bench commit -m <msg> --preflig
 
 The Build section of `.agents/commands/bench-implement-spec.md` replaces the exec preflight sentence with: "After the ticket commit, run the probe, then `bench record ticket`, then the record commit that its `next=` line prints."
 The Land section states that the ticket form stages the last probe response, so that the author runs `bench record excerpt` only for an earlier probe of the same ticket. `.agents/commands/bench-review-implementation.md` states the same staging rule in its record list. Each edit to `bench-implement-spec.md` stays inside its paragraph, so the file keeps its 97-line budget.
-`internal/anchors/registry_chunk_chain.go` replaces its exec preflight Require entry with the new sentence, and it adds the Forbid entry of BC48.
+`internal/anchors/registry_chunk_chain.go` removes its exec preflight Require entry and adds the Forbid entry of BC48. BC47 is review-owned, because ADR 0012 keeps rule wording out of the anchor registry.
 
 ## Acceptance
 
