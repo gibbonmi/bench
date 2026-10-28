@@ -88,6 +88,11 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
+	// The wait on a background grade of the key holds no checkout lock, and it spends the gate timeout.
+	timeout, waited, ended := awaitClaim(ctx, storageRoot, plan, stderr)
+	if ended {
+		return waited
+	}
 	gitdir, err := benchgit.AdminDir(storageRoot)
 	if err != nil {
 		return operational(storageRoot, 0, stderr, "git directory unavailable")
@@ -142,7 +147,8 @@ func executeSubjectOwning(ctx context.Context, runtimeRoot, storageRoot string, 
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
-	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
+	clearForRun(ctx, storageRoot, plan, stderr)
+	runCtx, cancelRun := bounds.ContextCause(ctx, timeout, errGateTimeout)
 	defer cancelRun()
 	// The cache lock spans the whole run: it opens before the run-binary build, the first
 	// Go child of the run, and the deferred release closes it after every teardown above.

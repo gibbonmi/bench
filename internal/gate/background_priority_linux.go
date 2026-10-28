@@ -9,11 +9,17 @@ import (
 	"syscall"
 )
 
-// The I/O priority value of the idle class, as ioprio_set(2) encodes it for one thread.
+// The I/O priority values of ioprio_set(2): the targets of one thread and of one process group,
+// the idle class, and the best-effort class at the level that the nice value backgroundNice gives
+// a thread with no class of its own.
 const (
-	ioprioWhoProcess = 1
-	ioprioClassIdle  = 3
-	ioprioClassShift = 13
+	ioprioWhoProcess       = 1
+	ioprioWhoGroup         = 2
+	ioprioClassBestEffort  = 2
+	ioprioClassIdle        = 3
+	ioprioClassShift       = 13
+	ioprioBestEffortLevel  = (backgroundNice + 20) / 5
+	ioprioPromotedPriority = ioprioClassBestEffort<<ioprioClassShift | ioprioBestEffortLevel
 )
 
 // lowerPriority sets each thread of this process to backgroundNice, and then each thread to the
@@ -50,6 +56,51 @@ func eachThread(set func(tid int) error) error {
 			return errors.Join(refused...)
 		}
 	}
+}
+
+// promoteIO returns each process group of the session that leader leads to the best-effort I/O
+// class. A background grade leads its own session, and its oracle runs in a process group of that
+// session, so the pass reaches the grade and each process that it started. The nice value stays,
+// because Linux refuses an unprivileged lower nice value. A group that is gone needs no class, and
+// each other refusal joins the answer.
+func promoteIO(leader int) error {
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		return err
+	}
+	groups := map[int]bool{}
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+		session, _, errno := syscall.RawSyscall(syscall.SYS_GETSID, uintptr(pid), 0, 0)
+		if errno != 0 || int(session) != leader {
+			continue
+		}
+		if group, err := syscall.Getpgid(pid); err == nil {
+			groups[group] = true
+		}
+	}
+	var refused []error
+	for group := range groups {
+		if _, _, errno := syscall.Syscall(syscall.SYS_IOPRIO_SET, ioprioWhoGroup, uintptr(group), ioprioPromotedPriority); errno != 0 && errno != syscall.ESRCH {
+			refused = append(refused, errno)
+		}
+	}
+	return errors.Join(refused...)
+}
+
+// ioClassNames names each I/O class as ionice(1) prints it.
+var ioClassNames = map[int]string{0: "none", 1: "realtime", ioprioClassBestEffort: "best-effort", ioprioClassIdle: "idle"}
+
+// ioClass answers the name of the I/O class of the thread tid.
+func ioClass(tid int) (string, error) {
+	value, _, errno := syscall.Syscall(syscall.SYS_IOPRIO_GET, ioprioWhoProcess, uintptr(tid), 0)
+	if errno != 0 {
+		return "", errno
+	}
+	return ioClassNames[int(value)>>ioprioClassShift], nil
 }
 
 // niceThread sets the thread tid to backgroundNice.

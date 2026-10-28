@@ -6,6 +6,14 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Chunk checkpoint wait on a background grade
+
+- Changed the chunk checkpoint of `bench gate`. A checkpoint that finds no green and finds a live claim on its grade key now waits until that claim ends, before it takes the checkout lock. It then looks up its key again, so a background green answers it with no oracle run of its own. A grade that ends red, or ends with no verdict, makes the checkpoint run its own oracle, with no refusal.
+- When the wait starts, each process group of the session of the waited grade returns from the idle I/O class to the best-effort class on Linux, so the oracle of the grade speeds up too. The nice value of the grade stays 19, because Linux refuses an unprivileged lower nice value.
+- The wait counts against the gate timeout of the checkpoint. A wait that passes that timeout ends the checkpoint with exit 124, and the checkpoint runs no oracle.
+- Before its own run, the checkpoint takes each queued grade of its key out of the machine queue. It also drops the queued grade of its worktree that holds another key, and it stops the running grade of its worktree that holds another key and waits for that grade to exit. A grade whose key is the key of the latest tip of another worktree stays, as at a lane pass. A step that fails prints one `background grade: not cleared` line, and the checkpoint still runs.
+- Two foreground runs in one checkout keep the refusal `gate execution already in progress`.
+
 ### Background grade queue
 
 - Changed the lane pass of `bench commit` and `bench worktree merge`, which now passes the grade of its tip to the machine queue under the Bench home. The grade key of a tip is the key of its chunk subject. A tip with no chunk subject has no key, and its grade records `aborted`.
