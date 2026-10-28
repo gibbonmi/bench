@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:1db4e75f54039b00d03520902048b7276bd42693aa6b70ea57727eb70ec0559a",
+  "plan_digest": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
   "implementation_session": "",
   "chunks": [
     {
@@ -297,9 +297,9 @@
     {
       "id": "BC-C2",
       "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
-      "tip": "afee2cac94ee9037507e52a52e943601a8205ec9",
-      "plan_digest": "sha256:1db4e75f54039b00d03520902048b7276bd42693aa6b70ea57727eb70ec0559a",
-      "source_digest": "1a03f8697b4895c65fb2614ba432a796ba0d0885",
+      "tip": "23911422b0db3d8e054fffe8cd64dc6f3561581e",
+      "plan_digest": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
+      "source_digest": "92d51e7750e64116f256474f146582132d2f7227",
       "acceptance_rows": [
         "BC1",
         "BC2",
@@ -354,6 +354,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t04-author-20261028",
               "digest": "sha256:b1e651b527fc8c7ab08366c5580d222ae217a2f1e37a84603db24e1be8d5b37a",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/retros.go,omit,failed,1,TestRetroRejectsABodyWithoutCost,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroRejectsABodyWithoutCost,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,363\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,16,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRejectsABodyWithoutCost,\"retro_test.go:39: body without Cost = \\\"captured: costless\\\\\\\\n\\\"/0, want a refusal that names the heading\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05-probe-05",
+          "performer": "claude:bc-t05-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "92d51e7750e64116f256474f146582132d2f7227",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t05-author-20261028",
+            "digest": "sha256:76f2baeec18fea1b791b8cc2909d2742261e646dd2c7e7fcffb2719a0c49ea8c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,132,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "23911422b0db3d8e054fffe8cd64dc6f3561581e",
+          "requirement": "probe-05",
+          "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t05-author-20261028",
+              "digest": "sha256:76f2baeec18fea1b791b8cc2909d2742261e646dd2c7e7fcffb2719a0c49ea8c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro_cost.go,swap,failed,3,TestRetroCostTraceTimes/no_plan_span,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,TestRetroCostTraceTimes,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,958\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,132,5\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/no_plan_span,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 2 spans in 3000 ms, lane 0 spans in 0 ms, landing 0 spans in 0 ms\\\", want \\\"- trace: unknown\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/plan_spans,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 4 spans in 3300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\"\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroCostTraceTimes/version_1_plan,\"retro_cost_test.go:278: trace line = \\\"- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms\\\", want \\\"- trace: unknown\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -420,6 +450,18 @@
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1db4e75f54039b00d03520902048b7276bd42693aa6b70ea57727eb70ec0559a",
+      "to": "sha256:8ea45b58f44eb5bbde9eb7fdd116bc4ec4a57d6fbb7cd083c6d2e1aed61e1f12",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
         ]
       }
     }
