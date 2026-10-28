@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:09980ff61f50b93eee0fb166dc5464a9c75860fe31e90086b5f02f2ca01b8a0a",
+  "plan_digest": "sha256:d0a2c8675e29491fdd39f0e58359313083b7ee6db24eeb6413b151b08f706585",
   "implementation_session": "",
   "chunks": [
     {
       "id": "BC-C1",
       "base": "77ec3655a4601a57165b33d58c4328bdfdf72d34",
-      "tip": "8224ff46132acdcdd36e4c86da54a2f49283c1d3",
-      "plan_digest": "sha256:09980ff61f50b93eee0fb166dc5464a9c75860fe31e90086b5f02f2ca01b8a0a",
-      "source_digest": "8558e1a9088a828e6abf0f6e8f00574a2ecaa55c",
+      "tip": "367fc96849d0c878ff42b60a75713c751ccc99ae",
+      "plan_digest": "sha256:d0a2c8675e29491fdd39f0e58359313083b7ee6db24eeb6413b151b08f706585",
+      "source_digest": "1e026f7e122cc579350293b2da40af0e472feb81",
       "acceptance_rows": [
         "BC24",
         "BC25",
@@ -88,6 +88,36 @@
               "ref": "claude-agent:bench-writer-high:bc-t02-author-20261028",
               "digest": "sha256:698e50a3fa8e1c863d7ddafbfd6aa9aa024d8f24f20572abc18503d7abdc259e",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/plan.go,swap,failed,1,TestPlanProbeOnlyChunks/plain_chunk_requirement,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestPlanProbeOnlyChunks,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,392\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,158,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/plain_chunk_requirement,\"plan_probe_test.go:62: plan grade = <nil>, want a refusal naming \\\"chunk 2: verification plain has no probe\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t01r1-probe-01",
+          "performer": "claude:bc-t01-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1e026f7e122cc579350293b2da40af0e472feb81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bc-t01-repair1-20261028",
+            "digest": "sha256:7bf4d0f26545392fffb2a8a0c0c7b5f6625edb57e7b4fca13556b74149c21e34",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/plan.go,swap,failed,3,TestPlanProbeOnlyChunks/absent_chunk_list,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestPlanProbeOnlyChunks,passed,9\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,765\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,126,9\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/absent_chunk_list,\"plan_probe_test.go:70: plan grade refused the probe-only plan: chunk 2: missing required verification inventory\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/empty_chunk_list,\"plan_probe_test.go:70: plan grade refused the probe-only plan: chunk 2: missing required verification inventory\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/missing_probe_entry,\"plan_probe_test.go:80: chunk 2: missing required verification inventory\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "367fc96849d0c878ff42b60a75713c751ccc99ae",
+          "requirement": "probe-01",
+          "command": "bench probe internal/reviewrecord/plan.go --swap 'if len(items) == 0 && owned == nil {' --with 'if len(items) == 0 {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Refuse an empty chunk list again. The probe-only plan with an empty chunk list must then refuse, so the plan test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:bc-t01-repair1-20261028",
+              "digest": "sha256:7bf4d0f26545392fffb2a8a0c0c7b5f6625edb57e7b4fca13556b74149c21e34",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/plan.go,swap,failed,3,TestPlanProbeOnlyChunks/absent_chunk_list,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestPlanProbeOnlyChunks,passed,9\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,765\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,126,9\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/absent_chunk_list,\"plan_probe_test.go:70: plan grade refused the probe-only plan: chunk 2: missing required verification inventory\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/empty_chunk_list,\"plan_probe_test.go:70: plan grade refused the probe-only plan: chunk 2: missing required verification inventory\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/missing_probe_entry,\"plan_probe_test.go:80: chunk 2: missing required verification inventory\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -194,6 +224,15 @@
           "BC-C1"
         ]
       }
+    },
+    {
+      "from": "sha256:09980ff61f50b93eee0fb166dc5464a9c75860fe31e90086b5f02f2ca01b8a0a",
+      "to": "sha256:d0a2c8675e29491fdd39f0e58359313083b7ee6db24eeb6413b151b08f706585",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ]
+      }
     }
   ]
 }
@@ -229,3 +268,13 @@ Findings: 5. Worst: no test refuses an empty or absent final list (F1).
 - F3 auto-fix, confidence 4: `internal/reviewrecord/ticket.go:48`; add a version 1 plan with an empty chunk that the ticket form refuses. Ticket 01 repair.
 - F4 ask-user, confidence 3: a refreeze case for a ticket that owes nothing. Declined, because `freezeTip` and `changeChunk` have no branch on the owed count.
 - F5 no-op, confidence 5: `internal/preflight/ownership/premises_fixture_test.go:229` holds a comment that is now false. Ticket 02 repair.
+
+## BC-C1 ticket 01 repair, round 1 (commit 367fc9684)
+
+Witness return:
+
+- `TestPlanProbeOnlyChunks/empty_final_list`: the plan.go swap of `if len(items) == 0 && owned == nil {` for `if false {` bit (`1,bit,swap,failed,1,TestPlanProbeOnlyChunks/empty_final_list,2,1,0,null,yes`).
+- `TestPlanProbeOnlyChunks/absent_final_list`: the same swap bit (`2,bit,swap,failed,1,TestPlanProbeOnlyChunks/absent_final_list,2,1,0,null,yes`).
+- `TestTicketRefusals/version_1_plan_with_no_requirement`: the ticket.go swap of `if !plan.Delegated() {` for `if false {` bit (`1,bit,swap,failed,1,TestTicketRefusals/version_1_plan_with_no_requirement,2,1,0,null,yes`).
+
+The repair narrowed `TestWritesFloorAgreesWithChangedSelection` to the package paths, because the floor no longer names the system check; `TestWritesFloorSkipsTheSystemSuite` covers the system path. The orchestrator accepts this narrowing.
