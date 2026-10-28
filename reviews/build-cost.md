@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:a1c02921c7157eafe9179d13edd69159344b31b80d143cae065349e251fdc795",
+  "plan_digest": "sha256:e94bd1ac5ff6e27ad382b440816c4facc6765cff52c26320a4ccdabfb8b528ab",
   "implementation_session": "",
   "chunks": [
     {
@@ -633,9 +633,9 @@
     {
       "id": "BC-C3",
       "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
-      "tip": "bd4f2b3cc16aebb6e0fc338702f48cb566295bfd",
-      "plan_digest": "sha256:a1c02921c7157eafe9179d13edd69159344b31b80d143cae065349e251fdc795",
-      "source_digest": "450656de1cf8bb6fb6cb601b724d6d84111c6a76",
+      "tip": "5f2ba7211acdae7570b96f1f272f068a2df3596f",
+      "plan_digest": "sha256:e94bd1ac5ff6e27ad382b440816c4facc6765cff52c26320a4ccdabfb8b528ab",
+      "source_digest": "cffd084a89b7a945564f6bb3735c4f10cc8397d9",
       "acceptance_rows": [
         "BC38",
         "BC39",
@@ -707,6 +707,36 @@
               "ref": "claude-agent:bench-writer-high:bc-t07-author-20261028",
               "digest": "sha256:70476d88295fc8a242ce60f8fc1919dab428f111baa4a86ea59344fb6cbb819d",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,3,TestTicketStagesTheRetainedProbe/carried_requirements,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1311\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,1360,6\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/carried_requirements,\"ticket_probe_test.go:115: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: pkg; carry: pkg (the delta reaches the command); write it with bench record excerpt 'example' --chunk '1… (293 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/mutant_row_2,\"ticket_probe_test.go:115: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (302 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/single-form_probe,\"ticket_probe_test.go:115: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (302 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t07r1-probe-07",
+          "performer": "claude:bc-t07-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cffd084a89b7a945564f6bb3735c4f10cc8397d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bc-t07-repair1-20261028",
+            "digest": "sha256:171753e8f162bcf8b64e6b3f95bd22bfe348d62e96f25e3c72319654cf9da428",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,5,TestTicketStagesTheRetainedProbe/carried_requirements,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2058\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,1532,8\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/carried_requirements,\"ticket_probe_test.go:125: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: pkg; carry: pkg (the delta reaches the command); write it with bench record excerpt 'example' --chunk '1… (293 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/dirty_path,\"ticket_probe_test.go:114: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (417 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/head_off_the_chunk_line,\"ticket_probe_test.go:114: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (437 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/mutant_row_2,\"ticket_probe_test.go:125: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (302 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/single-form_probe,\"ticket_probe_test.go:125: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (302 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5f2ba7211acdae7570b96f1f272f068a2df3596f",
+          "requirement": "probe-07",
+          "command": "bench probe internal/reviewrecord/recordcmd/ticket.go --swap 'if len(unstaged) == 1 && retained.Verb == probe.Verb {' --with 'if false && retained.Verb == probe.Verb {' --package ./internal/reviewrecord/recordcmd --run TestTicketStagesTheRetainedProbe",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Disable the staging of the retained probe. The ticket call must then refuse with the excerpt form, so the staging test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:bc-t07-repair1-20261028",
+              "digest": "sha256:171753e8f162bcf8b64e6b3f95bd22bfe348d62e96f25e3c72319654cf9da428",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/recordcmd/ticket.go,swap,failed,5,TestTicketStagesTheRetainedProbe/carried_requirements,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2058\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,fail,1532,8\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/carried_requirements,\"ticket_probe_test.go:125: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: pkg; carry: pkg (the delta reaches the command); write it with bench record excerpt 'example' --chunk '1… (293 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/dirty_path,\"ticket_probe_test.go:114: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (417 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/head_off_the_chunk_line,\"ticket_probe_test.go:114: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (437 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/mutant_row_2,\"ticket_probe_test.go:125: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (302 bytes)\",1\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,TestTicketStagesTheRetainedProbe/single-form_probe,\"ticket_probe_test.go:125: ticket = exit 1, output \\\"error: bench record ticket refused — these owed requirements have no staged excerpt: additional; carry: additional (no current passing entry); write it with bench record excerpt 'example' -… (302 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -907,6 +937,21 @@
     {
       "from": "sha256:5961f0f70d539466485c2d2943688958bcf07b0ff4281c3a2faa1ddd140f661b",
       "to": "sha256:a1c02921c7157eafe9179d13edd69159344b31b80d143cae065349e251fdc795",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a1c02921c7157eafe9179d13edd69159344b31b80d143cae065349e251fdc795",
+      "to": "sha256:e94bd1ac5ff6e27ad382b440816c4facc6765cff52c26320a4ccdabfb8b528ab",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
