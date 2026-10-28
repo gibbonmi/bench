@@ -35,22 +35,29 @@ const (
 
 // StartBackground starts the lane pass of tip, the commit that a lane pass just published in the
 // worktree root, for the machine queue under the Bench home home. kit is the kit that the verb
-// read. A pass starts only in the worktree of an active assignment for which KitForRoot answers
-// root itself, and only when root holds its executable wrapper, because the pass runs as that
-// wrapper. The verb only detaches the pass, so it derives no grade key, takes no queue lock, and
-// stops no grade. The pass runs as the executable that the wrapper resolves, so its key is the key
-// of the grade. The publication stands whatever the launch does, so a launch that fails prints one
-// line to stderr and the verb keeps its exit.
+// read. A pass starts only in a background worktree. The verb only detaches the pass, so it
+// derives no grade key, takes no queue lock, and stops no grade. The pass runs as the executable
+// that the wrapper resolves, so its key is the key of the grade. The publication stands whatever
+// the launch does, so a launch that fails prints one line to stderr and the verb keeps its exit.
 func StartBackground(home, kit, root, tip string, stderr io.Writer) {
-	if KitForRoot(kit, root) != root || !RealFS().Executable(backgroundWrapper(root)) {
-		return
-	}
-	if _, assigned := intent.AssignmentForWorktree(root); !assigned {
+	if !backgroundWorktree(kit, root) {
 		return
 	}
 	if _, err := startGrade(root, tip, backgroundPassEnv+"="+home); err != nil {
 		fmt.Fprintf(stderr, "background grade: not queued: %v\n", err)
 	}
+}
+
+// backgroundWorktree reports whether root, under the kit that the verb read, is a worktree that
+// background grades run in: the worktree of an active assignment for which KitForRoot answers root
+// itself, which holds its executable wrapper, because a grade runs as that wrapper. The checks
+// read no tree, so a worktree of another repository pays only for them.
+func backgroundWorktree(kit, root string) bool {
+	if KitForRoot(kit, root) != root || !RealFS().Executable(backgroundWrapper(root)) {
+		return false
+	}
+	_, assigned := intent.AssignmentForWorktree(root)
+	return assigned
 }
 
 // passLane applies the lane pass of tip in root to the queue under home. The pass queues nothing

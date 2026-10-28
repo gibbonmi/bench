@@ -198,7 +198,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	if err := (commitrepo.Store{Root: root}).AdmitWindow(publication); err != nil {
 		return landRefusalError(stdout, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
 	}
-	ctx, endWait := gate.AwaitLanding(ctx, a.home, assignment.Worktree, source.tip, stderr)
+	ctx, endWait := gate.AwaitLanding(ctx, a.home, a.kit, assignment.Worktree, source.tip, stderr)
 	defer endWait()
 	if publication.Lease, err = leaseLanding(root, request.Destination, assignment, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path); err != nil {
 		return landRefusalError(stdout, err)

@@ -314,8 +314,9 @@ func backgroundGradeOf(ctx context.Context) *backgroundGrade {
 }
 
 // hold writes the claim of the grade on the grade key of plan through replacer, in the git common
-// directory of root, for the worktree of the grade, or for root when the grade names none. The grade keeps that key before the claim, so a claim that fails still
-// records its outcome under the key. A foreground run holds none.
+// directory of root, for the worktree of the grade, or for root when the grade names none. The
+// grade keeps that key before the claim, so a claim that fails still records its outcome under the
+// key. A foreground run holds none.
 func (g *backgroundGrade) hold(replacer durablefile.Replacer, root string, plan subject) error {
 	if g == nil {
 		return nil

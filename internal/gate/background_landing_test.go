@@ -19,6 +19,7 @@ import (
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/landing/published"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 )
@@ -245,6 +246,54 @@ func TestWholeGateLandingStartsAGrade(t *testing.T) {
 	f.launches.End(t)
 	if got := f.launches.Launched(t); len(got) != 1 || !slices.Equal(got[0].Args, []string{backgroundVerb, f.root, tip}) {
 		t.Fatalf("launches = %+v; want the one landing grade of %s", got, tip)
+	}
+}
+
+// TestConflictedLandingStartsNoGrade is a lane pass of a tip whose landing composition conflicts
+// on main. The landing refuses before its gate, so the pass queues no grade and starts none.
+func TestConflictedLandingStartsNoGrade(t *testing.T) {
+	w := linkWorktree(t, outcomeFixture(t))
+	launches, home := processtest.NewLaunches(t), t.TempDir()
+	outcomeWrite(t, w.root, "bin/bench.sh", launches.StandIn(), 0o755)
+	tip := w.commit(map[string]string{"work.txt": "work\n"})
+	outcomeWrite(t, w.primary, "work.txt", "main\n", 0o644)
+	outcomeCommit(t, w.primary, "conflict on main")
+	if err := passLane(home, w.root, tip); err != nil {
+		t.Fatalf("lane pass of the conflicted tip: %v", err)
+	}
+	requireQueue(t, home, backgroundstate.Entry{})
+	launches.End(t)
+	if got := launches.Launched(t); len(got) != 0 {
+		t.Fatalf("launches = %+v; want none", got)
+	}
+}
+
+// TestNonKitLandingDerivesNoSubject is story 6 for the landing wait. The worktree holds its
+// wrapper and an active assignment, and a live claim holds the key of its landing, so a landing
+// that derives its subject waits on that claim. The landing of a kit worktree waits, and the
+// landing of a worktree that is not its kit derives no subject: it carries no wait and no clear.
+func TestNonKitLandingDerivesNoSubject(t *testing.T) {
+	w := linkWorktree(t, outcomeFixture(t))
+	tip := w.commit(map[string]string{"work.txt": "work\n"})
+	outcomeWrite(t, w.root, "bin/bench.sh", "#!/bin/sh\nexit 0\n", 0o755)
+	commitmenttest.Register(t, w.root, "non-kit-landing")
+	claim, err := backgroundstate.ClaimFor(InspectTree(w.primary, w.subject(tip, "")).Grade, w.root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := backgroundstate.WriteClaim(durablefile.Native(), outcomeGit(t, w.root, "rev-parse", "--path-format=absolute", "--git-common-dir"), claim); err != nil {
+		t.Fatal(err)
+	}
+	// The wait ends at once, so a landing that derives its subject answers the budget of a wait.
+	ended, cancel := context.WithCancel(context.Background())
+	cancel()
+	for kit, derives := range map[string]bool{w.root: true, gittest.RepoOnBranch(t, "main"): false} {
+		ctx, release := AwaitLanding(ended, t.TempDir(), kit, w.root, tip, io.Discard)
+		wait, carried := landingWaitOf(ctx)
+		release()
+		if waited := wait.budget.waited != nil; carried != derives || waited != derives {
+			t.Fatalf("landing with kit %s carries a wait %t that waited %t; want %t for both", kit, carried, waited, derives)
+		}
 	}
 }
 

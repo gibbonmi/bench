@@ -8,7 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Landing wait on a background grade
 
-- Changed `bench worktree land`. Before it takes the destination lease, a landing now computes the grade key of the tree that it publishes onto the current destination. When a live claim holds that key, the landing waits until the claim ends, with the wait rules of the chunk checkpoint, so the wait blocks no other landing. Under the lease, the landing looks up its key again, so a background green answers it with no oracle run of its own. A destination that moved during the wait gives a new key, and the landing then runs its own oracle.
+- Changed `bench worktree land`. Before it takes the destination lease, a landing from a worktree that background grades run in now computes the grade key of the tree that it publishes onto the current destination. When a live claim holds that key, the landing waits until the claim ends, with the wait rules of the chunk checkpoint, so the wait blocks no other landing. Under the lease, the landing looks up its key again, so a background green answers it with no oracle run of its own. A destination that moved during the wait gives a new key, and the landing then runs its own oracle. A landing from any other worktree, such as a worktree of a linked repository, computes no key, waits on nothing, and clears no grade.
 - A landing does not wait on a grade of another key. Before its own run, the landing stops the running grade of its worktree that holds another key and waits for that grade to exit. It also drops the queued grade of its worktree, and each queued grade of its own key leaves the queue.
 
 ### Background landing grade

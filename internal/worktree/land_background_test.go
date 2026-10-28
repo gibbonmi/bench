@@ -179,12 +179,36 @@ type landingEnd struct {
 	done chan struct{}
 }
 
+// backgroundLightLanding is lightLandingOn of f after main commits an executable wrapper, so the
+// source of request is a background worktree that holds its wrapper. The landing base is that
+// commit.
+func backgroundLightLanding(t *testing.T, f landingFixture, request string) landingFixture {
+	t.Helper()
+	wrapper := filepath.Join(f.root, "bin", "bench.sh")
+	mustMkdirAll(t, filepath.Dir(wrapper), 0o755)
+	mustWrite(t, wrapper, []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	gitRun(t, f.root, "add", "bin/bench.sh")
+	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "wrapper")
+	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
+	return lightLandingOn(t, f, request)
+}
+
+// backgroundLand answers the tickets-only landing call of a backgroundLightLanding fixture, which
+// reads the fixture repository as its kit.
+func backgroundLand(t *testing.T, f landingFixture, request string) verbCall {
+	t.Helper()
+	call := f.call(ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)...)
+	call.kit = f.root
+	return call
+}
+
 // landBeside starts the tickets-only landing of the fixture beside the test.
 func landBeside(t *testing.T, f landingFixture, request string) *landingEnd {
 	t.Helper()
 	end := &landingEnd{done: make(chan struct{})}
+	call := backgroundLand(t, f, request)
 	go func() {
-		end.r = runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)...))
+		end.r = runVerb(t, verbLand, call)
 		close(end.done)
 	}()
 	t.Cleanup(func() { <-end.done })
@@ -216,7 +240,7 @@ type waitedLanding struct {
 func waitOnStandIn(t *testing.T, request string) waitedLanding {
 	t.Helper()
 	grade := startStandInGrade(t)
-	f := lightLandingFixture(t, request)
+	f := backgroundLightLanding(t, specLessLandingFixture(t, request+"-bound"), request)
 	tree, key := lightLandingTree(t, f)
 	grade.claim(t, f, key)
 	w := waitedLanding{landingFixture: f, grade: grade, tree: tree, end: landBeside(t, f, request)}
@@ -277,9 +301,9 @@ func TestLandingOfAnotherKeyDoesNotWait(t *testing.T) {
 	t.Parallel()
 	grade := startStandInGrade(t)
 	request := "land-background-other-key"
-	f := lightLandingFixture(t, request)
+	f := backgroundLightLanding(t, specLessLandingFixture(t, request+"-bound"), request)
 	grade.claim(t, f, otherKey)
-	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)...))
+	r := runVerb(t, verbLand, backgroundLand(t, f, request))
 	if r.exit != 0 || !grade.alive() || grade.ioClass(t) != "idle" {
 		t.Fatalf("landing beside a grade of another key = (%d, %q, %q), grade alive %t in class %q; want a publication beside the idle grade", r.exit, r.stdout, r.stderr, grade.alive(), grade.ioClass(t))
 	}
@@ -296,12 +320,12 @@ func TestLandingOfAnotherKeyStopsTheGrade(t *testing.T) {
 	step := func(*testrepo.GateFixture, string) string {
 		return "if kill -0 " + strconv.Itoa(grade.pid) + " 2>/dev/null; then exit 9; fi\n"
 	}
-	f := lightLandingOn(t, landingFixtureWithGateStep(t, request+"-bound", "", "", filepath.Join(t.TempDir(), "bench-home"), false, step), request)
+	f := backgroundLightLanding(t, landingFixtureWithGateStep(t, request+"-bound", "", "", filepath.Join(t.TempDir(), "bench-home"), false, step), request)
 	running := grade.slot(t, otherKey, f.creation.Path, f.tip)
 	queued := backgroundstate.Entry{Key: strings.Repeat("b", 64), Worktree: f.creation.Path, Tip: f.tip}
 	mustNoError(t, backgroundstate.WriteQueue(durablefile.Native(), f.home, backgroundstate.Queue{Running: &running, Queued: []backgroundstate.Entry{queued}}))
 	grade.claim(t, f, otherKey)
-	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)...))
+	r := runVerb(t, verbLand, backgroundLand(t, f, request))
 	queue, err := backgroundstate.ReadQueue(f.home)
 	mustNoError(t, err)
 	if r.exit != 0 || grade.alive() || queue.Running != nil || len(queue.Queued) != 0 {
@@ -317,13 +341,13 @@ func TestLandingDropsItsQueuedKey(t *testing.T) {
 	t.Parallel()
 	grade := startStandInGrade(t)
 	request := "land-background-queued-key"
-	f := lightLandingFixture(t, request)
+	f := backgroundLightLanding(t, specLessLandingFixture(t, request+"-bound"), request)
 	_, key := lightLandingTree(t, f)
 	other := filepath.Join(t.TempDir(), "other")
 	running := grade.slot(t, otherKey, other, f.tip)
 	queued := backgroundstate.Entry{Key: key, Worktree: other, Tip: f.tip}
 	mustNoError(t, backgroundstate.WriteQueue(durablefile.Native(), f.home, backgroundstate.Queue{Running: &running, Queued: []backgroundstate.Entry{queued}}))
-	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, lightLandingSlug, f.creation.Path)...))
+	r := runVerb(t, verbLand, backgroundLand(t, f, request))
 	queue, err := backgroundstate.ReadQueue(f.home)
 	mustNoError(t, err)
 	if r.exit != 0 || !grade.alive() || queue.Running == nil || *queue.Running != running || len(queue.Queued) != 0 {

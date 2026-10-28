@@ -61,14 +61,19 @@ type landingWait struct {
 	budget         gateBudget
 }
 
-// AwaitLanding waits, for the landing of tip from the linked worktree under the Bench home home,
-// until no live claim holds the grade key of the tree that the landing publishes onto the
-// destination at this call. The landing calls it before it takes the destination lease, so the
-// wait blocks no other landing. A key that a fresh green holds needs no wait, and a key that does
-// not derive holds none. The answered context carries the wait to the gate run of the landing,
-// which then spends the rest of the gate timeout and clears the queue for its own run. The
-// landing calls the answered release when the run no longer needs the budget.
-func AwaitLanding(ctx context.Context, home, worktree, tip string, stderr io.Writer) (context.Context, func()) {
+// AwaitLanding waits, for the landing of tip from the linked worktree under the Bench home home and
+// the kit kit, until no live claim holds the grade key of the tree that the landing publishes onto
+// the destination at this call. The landing calls it before it takes the destination lease, so the
+// wait blocks no other landing. A worktree that is not a background worktree runs no background
+// grade, so its landing derives no subject, waits on nothing, and clears nothing. A key that a
+// fresh green holds needs no wait, and a key that does not derive holds none. The answered context
+// carries the wait to the gate run of the landing, which then spends the rest of the gate timeout
+// and clears the queue for its own run. The landing calls the answered release when the run no
+// longer needs the budget.
+func AwaitLanding(ctx context.Context, home, kit, worktree, tip string, stderr io.Writer) (context.Context, func()) {
+	if !backgroundWorktree(kit, worktree) {
+		return ctx, func() {}
+	}
 	wait := landingWait{home: home, worktree: worktree}
 	common, err := benchgit.CommonDir(worktree)
 	if subject, derived := backgroundSubjectOf(worktree, tip); err == nil && derived == nil && subject.landing != nil {
