@@ -1,7 +1,7 @@
 # Stop background grades when work goes away
 
 Blocked by: 09-queue-and-supersede-background-grades.md
-Writes: internal/worktree/worktree.go, internal/worktree/ownership.go, internal/worktree/resume.go, internal/worktree/clean.go, internal/worktree/clean_set.go, internal/worktree/pool_reclaim.go, internal/worktree/land_stack.go, internal/worktree/land_effects.go, internal/worktree/background_stop.go (new), internal/worktree/background_stop_test.go (new), internal/worktree/parallel_census_test.go, internal/gocache/clean.go, internal/gocache/background_clean_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/gate/backgroundstate (new), CHANGELOG.md
+Writes: internal/worktree/worktree.go, internal/worktree/ownership.go, internal/worktree/resume.go, internal/worktree/clean.go, internal/worktree/clean_set.go, internal/worktree/pool_reclaim.go, internal/worktree/land_stack.go, internal/worktree/land_effects.go, internal/worktree/background_stop.go (new), internal/worktree/background_stop_test.go (new), internal/worktree/parallel_census_test.go, internal/gocache/clean.go, internal/gocache/background_clean_test.go (new), cmd/bench/main.go, cmd/bench/help_inventory_test.go, internal/gate/backgroundstate (new), CHANGELOG.md, internal/gate/background_launch.go, internal/gate/background_launch_test.go
 Covers: BG78, BG79, BG80, BG81, BG82
 
 ## What to build
