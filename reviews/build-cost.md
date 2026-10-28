@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:3dc0abc6073127bedf16439d57b1213ad2aaa73e88abf98c452808a32d8de885",
+  "plan_digest": "sha256:3ac14d7ad258c14662f37bdbd53ce0f2977b9165484b6df91679c382d6b8982f",
   "implementation_session": "",
   "chunks": [
     {
@@ -1474,9 +1474,9 @@
     {
       "id": "BC-C5",
       "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
-      "tip": "ceb870076ced1c8da37cc072607f9e52f60c8961",
-      "plan_digest": "sha256:3dc0abc6073127bedf16439d57b1213ad2aaa73e88abf98c452808a32d8de885",
-      "source_digest": "841927d6c9cdcd767b612977bbbc09409594d0a3",
+      "tip": "a86c5bb73865372f25361c0a10aa616d7a85ef7a",
+      "plan_digest": "sha256:3ac14d7ad258c14662f37bdbd53ce0f2977b9165484b6df91679c382d6b8982f",
+      "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
       "acceptance_rows": [
         "BC58",
         "BC59",
@@ -1611,6 +1611,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t11-repair1-20261028",
               "digest": "sha256:4d9b2720d914cbdafc0bf9c7c44eebd709a50b586a0e6a9f61f738242e2e848c",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/treetarget/build.go,swap,failed,4,TestRunReusesAMatchingBuild/BC61_the_primary_build_after_a_changed_own_build,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunReusesAMatchingBuild,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1483\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,1036,8\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_after_a_changed_own_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build does not match the tree\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_own_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build does not match the tree\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_primary_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t11r2-probe-11",
+          "performer": "claude:bc-t11-repair2-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f25151a2ac9aaf80221f6506e60110c02220247e",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t11-repair2-20261028",
+            "digest": "sha256:47b84ec6cbd8eb72813cf169b3daaec2900a160bbf3e294f04d11891007a7a8a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/treetarget/build.go,swap,failed,4,TestRunReusesAMatchingBuild/BC61_the_primary_build_after_a_changed_own_build,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunReusesAMatchingBuild,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1483\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,1057,8\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_after_a_changed_own_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build does not match the tree\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_own_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build does not match the tree\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_primary_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a86c5bb73865372f25361c0a10aa616d7a85ef7a",
+          "requirement": "probe-11",
+          "command": "bench probe internal/treetarget/build.go --swap 'if freshness.VerifyAt(root, root, candidate) == nil {' --with 'if candidate == freshness.PublishedExecutable(root) && freshness.VerifyAt(root, root, candidate) == nil {' --package ./internal/treetarget --run TestRunReusesAMatchingBuild",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Accept only the target's own build. A target without its own build must then refuse, so the reuse test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t11-repair2-20261028",
+              "digest": "sha256:47b84ec6cbd8eb72813cf169b3daaec2900a160bbf3e294f04d11891007a7a8a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/treetarget/build.go,swap,failed,4,TestRunReusesAMatchingBuild/BC61_the_primary_build_after_a_changed_own_build,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunReusesAMatchingBuild,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1483\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,1057,8\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_after_a_changed_own_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build does not match the tree\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_own_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build does not match the tree\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_primary_build,\"build_test.go:218: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -2065,6 +2095,27 @@
     {
       "from": "sha256:672e7c8c5ad393360fa8ca61d5279838bbb8d049edbb618abdcc138b38c520ea",
       "to": "sha256:3dc0abc6073127bedf16439d57b1213ad2aaa73e88abf98c452808a32d8de885",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ],
+        "BC-C4": [
+          "BC-C4"
+        ],
+        "BC-C5": [
+          "BC-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3dc0abc6073127bedf16439d57b1213ad2aaa73e88abf98c452808a32d8de885",
+      "to": "sha256:3ac14d7ad258c14662f37bdbd53ce0f2977b9165484b6df91679c382d6b8982f",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
