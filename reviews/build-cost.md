@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
+  "plan_digest": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
   "implementation_session": "",
   "chunks": [
     {
@@ -976,9 +976,9 @@
     {
       "id": "BC-C4",
       "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
-      "tip": "c5a2a29f736677f4bf9371bd7f1c62d1eae79f9e",
-      "plan_digest": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
-      "source_digest": "4d90d2e9cdc6268d244c2c63e6fd7a8e0fa23545",
+      "tip": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+      "plan_digest": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
+      "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
       "acceptance_rows": [
         "BC49",
         "BC50",
@@ -1048,6 +1048,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t09-author-20261028",
               "digest": "sha256:57c693652ed89820b780a0cb84e817565a40f64529fea2306841376943ad92ca",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1177,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:44: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t08r1-probe-08",
+          "performer": "claude:bc-t08-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t08-repair1-20261028",
+            "digest": "sha256:89a4210571caad1843f56aabe924bdbe8306440097b14bf87df21aaae4120ea2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLanePassPrintsNoCheckReport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLanePassPrintsNoCheckReport,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,418\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLanePassPrintsNoCheckReport,\"lane_report_test.go:44: first run, which writes the longer lines: response line \\\"[prose] prose first run, which writes the longer lines\\\", want no check line on a pass\",6\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "requirement": "probe-08",
+          "command": "bench probe internal/gate/lane.go --swap 'laneWriters(log, log, diagnostics)' --with 'laneWriters(req.Stdout, req.Stderr, diagnostics)' --package ./internal/gate --run TestLanePassPrintsNoCheckReport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Stream the check reports to the response again. The pass response must then hold check lines, so the lane test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t08-repair1-20261028",
+              "digest": "sha256:89a4210571caad1843f56aabe924bdbe8306440097b14bf87df21aaae4120ea2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLanePassPrintsNoCheckReport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLanePassPrintsNoCheckReport,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,418\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLanePassPrintsNoCheckReport,\"lane_report_test.go:44: first run, which writes the longer lines: response line \\\"[prose] prose first run, which writes the longer lines\\\", want no check line on a pass\",6\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1312,6 +1342,24 @@
     {
       "from": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
       "to": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ],
+        "BC-C4": [
+          "BC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4a305a89642f42b4366bdf04484c342d79e121f6cce0d17e7c218502800da012",
+      "to": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
