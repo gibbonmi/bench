@@ -2800,7 +2800,78 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c8-review-standards",
+          "performer": "claude:bg-c8-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "065c19cde303549456e23fc3b87385c79d56dea2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-review-20261028",
+            "digest": "sha256:3cff36b78902b5e89627851e7cd6831549931684b583c75695b9c48f076e2353",
+            "excerpt": "Unified BG-C8 review (12d7410d0..3330d5d51), Standards: 4 findings. Stale prepared-run comment (auto-fix); status red severity not unique (auto-fix); two stop flows (auto-fix through one stop step); duplicated record read (no-op).\n"
+          },
+          "axis": "Standards",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "3330d5d51d8926b085b12057119315ed82e96ead",
+          "finding_ids": [
+            "BG-C8-S1",
+            "BG-C8-S2",
+            "BG-C8-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c8-review-spec",
+          "performer": "claude:bg-c8-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "065c19cde303549456e23fc3b87385c79d56dea2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-review-20261028",
+            "digest": "sha256:2e49c1c3267c216c351e49907dedd4ba25b23aea85814a46a3939624acd0cf3f",
+            "excerpt": "Unified BG-C8 review (12d7410d0..3330d5d51), Spec: 3 findings. A stopped grade records aborted under cache clean, slow teardown, or hard kill against story 55 and BG83 (auto-fix); a new grade truncates the shared log against story 41 (auto-fix). BG92 and BG96-BG98 pass.\n"
+          },
+          "axis": "Spec",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "3330d5d51d8926b085b12057119315ed82e96ead",
+          "finding_ids": [
+            "BG-C8-P1",
+            "BG-C8-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c8-review-coverage",
+          "performer": "claude:bg-c8-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "065c19cde303549456e23fc3b87385c79d56dea2",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c8-review-20261028",
+            "digest": "sha256:61e9b838f8274d93c1d692db6d5157e8ab7e9dd9aa93d53ee4679d54c0e5c353",
+            "excerpt": "Unified BG-C8 review (12d7410d0..3330d5d51), Coverage: 3 findings. No fixture holds another worktree, and Withdraw and StopAll lack unit tests (auto-fix); BG4 red is the wrong mutation (auto-fix); RC83 positive case changed (no-op).\n"
+          },
+          "axis": "Coverage",
+          "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "tip": "3330d5d51d8926b085b12057119315ed82e96ead",
+          "finding_ids": [
+            "BG-C8-C1",
+            "BG-C8-C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3669,3 +3740,41 @@ The repair session recorded these reds at the repair commit `12d7410d0`. The orc
 - BG72 and BG73: an inverted reader selection bit `TestReaderSetLandingStartsNoGrade` and `TestWholeGateLandingStartsAGrade`.
 - T2: `TestNonKitLandingDerivesNoSubject` failed on its first run, because the landing outside the kit still waited.
 - T4: a mutant that drops the conflict case bit `TestConflictedLandingStartsNoGrade`.
+
+## BG-C8 review
+
+One unified session reviewed the frozen pair `12d7410d0..3330d5d51` of the merged chunk, which holds tickets 13 to 16. It found 10 raw findings, and the orchestrator gave it two observations from the live run in this worktree. Plan commit `07e11ccda` widened ticket 13, so one combined repair session on ticket 13 receives six repair targets. The review passed the review-owned rows BG92 and BG96 to BG98.
+
+The author witness reds were these:
+
+- Ticket 13: first failing runs for BG78 to BG82, and one mutant set bit for the hook sites.
+- Ticket 14: first failing runs for BG84, BG85, and BG99, and one mutant set bit for the status rows.
+- Ticket 15: first failing runs for BG86, BG87, and the eight Forbid rows, and one probe bit for BG17.
+- Ticket 16: first failing runs for the Forbid rows of BG104 and BG105.
+
+## Standards
+
+Count: 4. Worst issue: two flows stop a grade.
+
+- BG-C8-S1, auto-fix, confidence 8: `internal/gate/background_outcome_test.go:202` names the retired prepared run. Target T6.
+- BG-C8-S2, auto-fix, confidence 5: the red row of `internal/status/background.go` shares its severity, and `status.go:285` requires a unique severity. Target T3.
+- BG-C8-S3, auto-fix, confidence 6: `backgroundstate.StopAll` and `stopGrade` are two stop flows, and only one of them names the end `stopped`. Target T1.
+- No-op, confidence 3: the commit line and the status row each read the record in three short steps.
+
+## Spec
+
+Count: 3. Worst issue: a stopped grade can record `aborted`.
+
+- BG-C8-P1, auto-fix, confidence 7: a grade that `bench cache clean`, a slow teardown, or a hard kill stops records `aborted`, and story 55 and BG83 require `stopped`. Put one stop step in `backgroundstate`: the stopper writes a stop marker before it sends the signal, and the grade then records `stopped` itself. Target T1.
+- BG-C8-P2, auto-fix, confidence 7: each new grade truncates the one shared log, so the log of a red grade is lost. Story 41 requires that log. A running grade writes to a sibling file and renames it over the log path together with its record. Target T2.
+- No-op, confidence 3: the cleanup transaction also serves the resume, so the resume stops grades too.
+
+## Coverage
+
+Count: 3. Worst issue: no fixture holds a second worktree.
+
+- BG-C8-C1, auto-fix, confidence 7: no worktree fixture queues another worktree, and `Withdraw` and `StopAll` have no unit test. Add a test that a second worktree, whose path starts with the same text, keeps its grade. Target T4.
+- BG-C8-C2, auto-fix, confidence 6: the BG4 red went through a refusal path. Record a mutant in which the complete checkpoint reuses a chunk green. Target T5.
+- No-op, confidence 4: RC83 now asserts a whole run after the retirement of the prepared run.
+
+The BG92 sentence at `.agents/commands/bench-implement-spec.md:68` says that the checkpoint reuses the green, but it reuses the green only when the grade ends green. Target T6 corrects it. `Queue.Withdraw` does not queue again a key that another worktree wanted. That loss costs one optional grade, and the code documents it.
