@@ -98,7 +98,7 @@ func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	if code != 0 {
 		return table, code
 	}
-	chain := []string{benchcommit.PreflightBuildFlag, refusalroute.Arg(refusalroute.FactSlug, slug), benchcommit.BaseFlag, refusalroute.Arg("chunk-base", written.Chunk.Base)}
+	chain := benchcommit.ChainArgs(slug, written.Chunk.Base)
 	next := refusalroute.ChainCommit(map[string]string{refusalroute.FactChain: strings.Join(chain, " "), refusalroute.FactRecord: runs.record})
 	return table + refusalroute.NextField + "=" + next + "\n", 0
 }

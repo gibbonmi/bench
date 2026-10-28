@@ -239,11 +239,9 @@ func refuse(stderr io.Writer, root string, req request, face string, cause error
 	if req.dryRun {
 		args = append(args, "--dry-run")
 	}
+	// The grammar refuses a base without the chain, so the chain carries the base.
 	if req.preflightBuild != "" {
-		args = append(args, PreflightBuildFlag, refusalroute.Arg("slug", req.preflightBuild))
-	}
-	if req.base != "" {
-		args = append(args, BaseFlag, refusalroute.Arg("base", req.base))
+		args = append(args, ChainArgs(req.preflightBuild, req.base)...)
 	}
 	args = append(args, "-m", refusalroute.Arg("msg", req.msg), "--")
 	for _, path := range req.paths {

@@ -13,7 +13,7 @@ import (
 // handoff.
 const (
 	otelGateSeam      = "gate"
-	otelGatePhaseSeam = "gate.phase"
+	otelGatePhaseSeam = otelrecord.SeamGatePhase
 )
 
 // otelRecordRootKey addresses the repository the run records under. The child that runs

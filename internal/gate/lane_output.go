@@ -5,7 +5,10 @@ package gate
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -61,6 +64,40 @@ func laneWriters(stdout, stderr io.Writer, diagnostics *laneDiagnostics) func(Ph
 			closeWriters()
 		}
 	}
+}
+
+// laneLogFile is the lane log's name inside the worktree's own Git dir. The log holds each
+// check's prefixed stream of the last lane run, so a pass prints no check line and its
+// reports stay readable.
+const laneLogFile = "bench-lane.log"
+
+// openLaneLog creates the lane log in gitdir, or truncates the log of the run before, so the
+// log holds one run.
+func openLaneLog(gitdir string) (*os.File, error) {
+	log, err := os.OpenFile(filepath.Join(gitdir, laneLogFile), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("gate: lane log unavailable: %w", err)
+	}
+	return log, nil
+}
+
+// relayCheckLines copies the lines of the check name from the lane log at path to dst, so a
+// red lane prints the failing check's own lines and no line of a check that passed.
+func relayCheckLines(path, name string, dst io.Writer) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("gate: lane log unreadable: %w", err)
+	}
+	// The prefix writer owns the line prefix of a check, so the relay reads it there.
+	prefix := newPrefixWriter(nil, io.Discard, name).prefix
+	for _, line := range strings.SplitAfter(string(data), "\n") {
+		if strings.HasPrefix(line, prefix) {
+			if _, err := io.WriteString(dst, line); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func discardIfNil(w io.Writer) io.Writer {

@@ -346,6 +346,11 @@ composes that pair and runs the gate on it before publication and source release
 That run is the whole-project gate, unless the landing plan selects the reader set.
 Executable help owns its flags and positional grammar.
 
+The lane writes the output of each check to the lane log `bench-lane.log`
+in the Git directory of the worktree. It truncates that log at the start of each run.
+A lane pass prints no check line, and a lane red prints the lines of the failing check
+from that log.
+
 During a pending merge, a worktree `bench commit` requires every path that the
 merge changed. It records each merge head as a further parent and then ends the
 merge.

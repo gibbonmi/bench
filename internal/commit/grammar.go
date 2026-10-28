@@ -40,9 +40,25 @@ const PreflightBuildFlag = "--preflight-build"
 // BaseFlag names the base that the command layer passes to the chained build preflight.
 const BaseFlag = "--base"
 
+// The placeholder names of the chain values. The grammar line and a composed chain read them.
+const (
+	slugOperand = "slug"
+	baseOperand = "commit"
+)
+
 // PreflightBuildGroup is the argument shape of the chain: the slug and the optional base.
 // The usage line, the `bench help` row, and the chain help line read it.
-const PreflightBuildGroup = PreflightBuildFlag + " <slug> [" + BaseFlag + " <commit>]"
+const PreflightBuildGroup = PreflightBuildFlag + " <" + slugOperand + "> [" + BaseFlag + " <" + baseOperand + ">]"
+
+// ChainArgs composes the chain flags of a commit call: the slug, and the base when it is
+// set. Each value is rendered by refusalroute.Arg under the placeholder name of the grammar line.
+func ChainArgs(slug, base string) []string {
+	args := []string{PreflightBuildFlag, refusalroute.Arg(slugOperand, slug)}
+	if base != "" {
+		args = append(args, BaseFlag, refusalroute.Arg(baseOperand, base))
+	}
+	return args
+}
 
 // HelpRowSuffix is the argument shape of the `bench help` row.
 const HelpRowSuffix = " -m <msg> [" + PreflightBuildGroup + "] <path>..."
