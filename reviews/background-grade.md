@@ -1898,6 +1898,72 @@
             "BG-C6-C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bg-c6-confirm1-standards",
+          "performer": "claude:bg-c6-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "613f45a7caa4610fea328a6a5500eb43c46151ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-confirm1-20261028",
+            "digest": "sha256:08345a04ad86d9c6db91075947cbda1f79e9e85b8f3d48393cebd0b83f2241d3",
+            "excerpt": "Unified confirming round BG-C6, repair delta 1502fd38d..08d5b79d0, Standards axis: T1-T4 closed; the lane pass returns without key work; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "08d5b79d0a01998b4d1c33ae0091210efb42af58",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c6-review-standards"
+          ]
+        },
+        {
+          "id": "bg-c6-confirm1-spec",
+          "performer": "claude:bg-c6-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "613f45a7caa4610fea328a6a5500eb43c46151ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-confirm1-20261028",
+            "digest": "sha256:50726389854fdf4e7c251eb39227f711c78d1660f0a49a134b30404cd820a1ad",
+            "excerpt": "Unified confirming round BG-C6, repair delta 1502fd38d..08d5b79d0, Spec axis: T1-T4 closed; the lane pass returns without key work; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "08d5b79d0a01998b4d1c33ae0091210efb42af58",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c6-review-spec"
+          ]
+        },
+        {
+          "id": "bg-c6-confirm1-coverage",
+          "performer": "claude:bg-c6-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "613f45a7caa4610fea328a6a5500eb43c46151ee",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-confirm1-20261028",
+            "digest": "sha256:ebf71cc756cbe046589b39a4044c3786eb93f3a47a955c7c3021a901c9f4f30b",
+            "excerpt": "Unified confirming round BG-C6, repair delta 1502fd38d..08d5b79d0, Coverage axis: T1-T4 closed; the lane pass returns without key work; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "08d5b79d0a01998b4d1c33ae0091210efb42af58",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c6-review-coverage"
+          ]
         }
       ]
     }
