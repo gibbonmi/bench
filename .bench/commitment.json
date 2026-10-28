@@ -1371,6 +1371,34 @@
           ]
         },
         {
+          "id": "FT463-build-cost",
+          "criteria": [
+            {
+              "id": "FT463-build-cost.measure",
+              "text": "Before the spec sets any slicing target, it measures the graph depth and the serial checkpoints of recent builds from git and the trace store."
+            },
+            {
+              "id": "FT463-build-cost.cost",
+              "text": "Each spec retro carries a derived cost section, and a budget overrun makes the drain propose one removal or one merge without a red gate."
+            },
+            {
+              "id": "FT463-build-cost.cut",
+              "text": "A ticket author pays fewer fixed record calls than the 24.5 that FT451 measured, and no recorded author run repeats a check that the checkpoint grades."
+            },
+            {
+              "id": "FT463-build-cost.keep",
+              "text": "The build keeps every gate, lane pass, chunk checkpoint grade, witness red, probe, review, done-claim check, fresh author session, fresh repair session, and reviewer stop."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT463",
+              "path": "roadmap/FT463.md",
+              "identity": "sha256:fd2f24a21313128367e9ce0569147d83e82d5e8a79601b1afa6af580a8315c54"
+            }
+          ]
+        },
+        {
           "id": "FT402-git-cache",
           "criteria": [
             {

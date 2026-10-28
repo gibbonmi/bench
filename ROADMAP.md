@@ -364,17 +364,18 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT402-git-cache
-2. FT360-shared-fixtures
-3. FT411
-4. FT125-exact-readers
-5. FT375-residual
-6. FT344-remedy
-7. FT406-rebuild
-8. FT366-rg-guard
-9. FT380-residual
-10. FT354-strict-json
-11. FT363-member-set
-12. FT358-block-reader
-13. FT365-conformance
-14. FT414-preconditions
+1. FT463-build-cost
+2. FT402-git-cache
+3. FT360-shared-fixtures
+4. FT411
+5. FT125-exact-readers
+6. FT375-residual
+7. FT344-remedy
+8. FT406-rebuild
+9. FT366-rg-guard
+10. FT380-residual
+11. FT354-strict-json
+12. FT363-member-set
+13. FT358-block-reader
+14. FT365-conformance
+15. FT414-preconditions
