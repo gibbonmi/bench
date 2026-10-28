@@ -3447,7 +3447,7 @@
   ],
   "completion": {
     "state": "completed",
-    "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+    "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
     "performer": "claude:bg-orchestrator-20261027",
     "reconciliation": {
       "BG1": "covered",
@@ -3594,6 +3594,42 @@
         "model": "opus",
         "effort": "high",
         "source_digest": "75954cfad90097136ff2f8f5134377757fe3aa38",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:bg-orchestrator-20261027",
+          "digest": "sha256:ccc17fdfe4370c5b475ca1b9fe259e146b26be5721d68d6071f5b5d38953415c",
+          "excerpt": "ok: coverage map valid — 117 row(s)\nuncited: 2 row(s) with no seam-cell citation — BG44, BG112\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/background-grade/spec.md",
+        "exit_code": 0
+      },
+      {
+        "id": "bg-final-whole-project-2",
+        "performer": "claude:bg-orchestrator-20261027",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude:bg-orchestrator-20261027",
+          "digest": "sha256:3fbaa5aeb01b0f07b4ab7c335ce7a171e7d754797dc3bec8773d1f4db687d5ec",
+          "excerpt": "tree[1]{target,head,dirty}:\n  FT451-background-grade,\"00107932d95cd59f627a27cbacfd3b46fb8f824e\",false\ngate: progress log /home/mgibs/.bench/worktrees/bench-2826441890/e76595bcb779900d284d6606cf28cf35-c7bb50cb85b54be3caa07403fc532593/.logs/gate-20261028T111208.365261563Z-1337317.jsonl\ngate: stream /home/mgibs/.bench/worktrees/bench-2826441890/e76595bcb779900d284d6606cf28cf35-c7bb50cb85b54be3caa07403fc532593/.logs/gate-20261028T111208.365261563Z-1337317.out\nphases[6]{phase,verdict,elapsed_ms}:\n  gofmt,green,219\nspilled{lines=12,bytes=730,omitted_lines=3,cut_lines=0,path=/home/mgibs/.bench/responses/bench-2826441890/c7bb50cb85b54be3caa07403fc532593/1793186319835169909-b063a86576fbcb71.out}\n  system,green,63451\n  shellcheck,green,662\ncapability-skips: 6 (capability=6 environment=0; privilege=6)\ngo-build-cache: 66245681826 bytes in 1008522 files at /home/mgibs/.cache/bench/go-build (over bound 10737418240 bytes, next: bench cache clean)\ngate: green\n"
+        },
+        "requirement": "whole-project",
+        "command": "bench gate",
+        "exit_code": 0
+      },
+      {
+        "id": "bg-final-coverage-2",
+        "performer": "claude:bg-orchestrator-20261027",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "734d850af177a7b6307337758a3badee7075dc03",
         "state": "completed",
         "outcome": "pass",
         "native_ref": {
