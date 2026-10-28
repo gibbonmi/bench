@@ -1,7 +1,7 @@
 # Pass the chunk base to the commit chain
 
 Blocked by: none
-Writes: internal/commit/commit.go, internal/commit/commit_test.go, cmd/bench/commit_chain.go, cmd/bench/commit_chain_test.go, cmd/bench/help_inventory_test.go, internal/commit/chain_grammar_test.go
+Writes: internal/commit/commit.go, internal/commit/commit_test.go, cmd/bench/commit_chain.go, cmd/bench/commit_chain_test.go, cmd/bench/help_inventory_test.go, internal/commit/chain_grammar_test.go, internal/commit/grammar.go (new)
 Covers: BC38, BC39, BC40
 
 ## What to build
