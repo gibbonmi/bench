@@ -65,8 +65,8 @@ func formArgs(t *testing.T, form string, flags map[string]string, edits ...map[s
 	return args
 }
 
-// unprobed edits a call to requirement additional, which plans no probe.
-var unprobed = map[string]string{"--requirement": "additional", "--id": "additional-1", "--probe-outcome": drop, "--probe-exit-code": drop, "--probe-restore": drop}
+// additionalCall edits a call to requirement additional, the second planned probe of chunk 1.
+var additionalCall = map[string]string{"--requirement": "additional", "--id": "additional-1"}
 
 // final edits a call to the completion list at source.
 func final(source string) map[string]string {
@@ -180,7 +180,7 @@ func TestRecordVerificationWritesTheSourceCommit(t *testing.T) {
 	_, tip := advance(f, "chunk 1")
 	record(t, f, "1", base, tip)
 	verify(t, f, map[string]string{"--source": own})
-	verify(t, f, unprobed)
+	verify(t, f, additionalCall)
 	if results := chunkResults(t, f); len(results) != 2 || results[0].SourceCommit != own || results[1].SourceCommit != tip {
 		t.Fatalf("source commits of %+v, want the named source %s and then the chunk tip %s", results, own, tip)
 	}
@@ -275,11 +275,12 @@ func TestRecordVerificationRequiresThePlannedProbe(t *testing.T) {
 	refuseVerify(t, f, "--probe-outcome", map[string]string{"--probe-outcome": drop, "--probe-exit-code": drop, "--probe-restore": drop})
 }
 
+// Only a final requirement plans no probe, so a probe on it refuses.
 func TestRecordVerificationRefusesAnUnplannedProbe(t *testing.T) {
 	f := recorded(t, 1)
-	out := refuseVerify(t, f, "--probe-outcome", unprobed, map[string]string{"--probe-outcome": "bit", "--probe-exit-code": "1", "--probe-restore": "pass"})
-	if !strings.Contains(out, "additional") {
-		t.Fatalf("output = %q, want requirement additional", out)
+	out := refuseVerify(t, f, "--probe-outcome", final(f.Tip()), map[string]string{"--probe-outcome": "bit", "--probe-exit-code": "1", "--probe-restore": "pass"})
+	if !strings.Contains(out, "acceptance") {
+		t.Fatalf("output = %q, want requirement acceptance", out)
 	}
 }
 
@@ -301,7 +302,7 @@ func TestRecordFinalVerificationNeedsARecord(t *testing.T) {
 
 func TestRecordVerificationRefusesADuplicateID(t *testing.T) {
 	f := recorded(t, 1)
-	verify(t, f, unprobed)
+	verify(t, f, additionalCall)
 	refuseVerify(t, f, "additional-1", map[string]string{"--id": "additional-1"})
 }
 
@@ -354,7 +355,7 @@ func TestRecordFinalVerificationReportsTheCompletionList(t *testing.T) {
 func TestRecordedVerificationPassesTheCheckpoint(t *testing.T) {
 	f := recorded(t, 1)
 	verify(t, f)
-	verify(t, f, unprobed)
+	verify(t, f, additionalCall)
 	if err := checkpoint(t, f); err != nil {
 		t.Fatalf("checkpoint for chunk 1: %v", err)
 	}

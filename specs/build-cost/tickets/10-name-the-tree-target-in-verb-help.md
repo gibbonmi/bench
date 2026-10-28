@@ -6,7 +6,7 @@ Covers: BC58, BC59, BC60
 
 ## What to build
 
-The `--help` output of each tree-scoped definition and each tree-scoped family leaf names the `--in` flag with the operand that the root help shows. The text comes from `treeTargetInsertion`, which reads the same scope field as the dispatcher, so the root help and the verb help have one source.
+This rule applies to each tree-scoped definition and each tree-scoped family leaf that answers `--help` at exit 0. Its `--help` output names the `--in` flag with the operand that the root help shows. The text comes from `treeTargetInsertion`, which reads the same scope field as the dispatcher, so the root help and the verb help have one source.
 `treeTargetInsertion` keeps its guard line `if definition.Scope != scopeTree {`, because the probe-10 command swaps that exact line.
 A repository-scoped definition's `--help` names no `--in`.
 
@@ -15,5 +15,5 @@ The test enumerates the command registry, so a new tree-scoped verb gets the tex
 ## Acceptance
 
 - [ ] `bench commit --help` names the `--in` flag with its operand (BC58).
-- [ ] Each tree-scoped definition and leaf in the registry names it in its help (BC59).
+- [ ] Each tree-scoped definition and leaf in the registry whose `--help` answers at exit 0 names it in that output (BC59).
 - [ ] No repository-scoped definition names it (BC60).

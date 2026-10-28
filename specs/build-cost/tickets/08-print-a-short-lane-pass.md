@@ -1,7 +1,7 @@
 # Print a short lane pass
 
 Blocked by: none
-Writes: internal/gate/lane.go, internal/gate/lane_output.go, internal/gate/lane_report_test.go (new), internal/gate/lane_run_test.go, internal/gate/authorization/lane_test.go, internal/commit/lane_test.go, internal/worktree/merge_test.go, internal/worktree/land_journey_test.go, internal/worktree/merge_target_lane_test.go, .bench/BENCH-reference.md
+Writes: internal/gate/lane.go, internal/gate/lane_output.go, internal/gate/lane_report_test.go (new), internal/gate/lane_run_test.go, internal/gate/authorization/lane_test.go, internal/commit/lane_test.go, internal/worktree/merge_test.go, internal/worktree/land_journey_test.go, internal/worktree/merge_target_lane_test.go, .bench/BENCH-reference.md, internal/gate/telemetry.go, internal/gate/run_stream_test.go, internal/gate/run_log_prune_test.go, internal/commit/commit.go, internal/commit/grammar.go, internal/commit/chain_grammar_test.go, internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/ticket_probe_test.go, internal/refusalroute/registry.go, internal/refusalroute/registry_test.go, internal/gate/runner.go, internal/probe/set.go, internal/probe/set_report_test.go, internal/probe/set_test.go, internal/probe/set_cleanup_test.go, internal/reviewrecord/recordcmd/excerpt_short_test.go, internal/refusalroute/faces_gate.go, internal/refusalroute/faces_commitment.go
 Covers: BC49, BC50, BC51, BC52
 
 ## What to build
@@ -12,9 +12,16 @@ The `lane{...}` line, the background line, and the `committed{...}` line keep th
 
 The lane paragraph of the command notes in `.bench/BENCH-reference.md` names the lane log and its truncation.
 
+The lane opener and the gate phase opener name their seams through `otelrecord.SeamLane` and `otelrecord.SeamGatePhase`: `otelLaneSeam` in `internal/gate/lane.go` and the phase seam in `internal/gate/telemetry.go` take those constants, so each seam name has one source.
+
+This ticket also takes three findings of the BC-C3 review. `internal/commit` exports one helper that builds the chain arguments `--preflight-build <slug>` and `--base <commit>` through `refusalroute.Arg`, and both `internal/commit/commit.go` and `internal/reviewrecord/recordcmd/ticket.go` call it, with the one `--base` placeholder name of the commit grammar. `refusalroute.ChainCommit` and the rerun renderer share one step renderer. A ticket-record case for the first ticket of a later chunk asserts that the `next=` line names the recorded predecessor tip as its base.
+
 ## Acceptance
 
 - [ ] A lane pass over the prose and docs-currency-workflow checks prints no line that starts with `[prose]` or `[docs-currency-workflow]` (BC49).
 - [ ] After that pass, `bench-lane.log` holds those lines (BC50).
 - [ ] A lane red prints the failing check's own lines (BC51).
 - [ ] A second run truncates the log (BC52).
+- [ ] `otelLaneSeam` is `otelrecord.SeamLane`, and the gate phase seam is `otelrecord.SeamGatePhase` (BC-C2 review, Standards N1).
+- [ ] One exported helper in `internal/commit` builds the chain arguments, and both callers use it (BC-C3 review, Standards N1).
+- [ ] The `next=` line of the first ticket of a later chunk names the recorded predecessor tip (BC-C3 review, Coverage N1).

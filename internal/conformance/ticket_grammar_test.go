@@ -18,16 +18,16 @@ import (
 // grade the same files at phase entry.
 const ticketGrammarPrefix = "ticket-grammar: "
 
-// checkTicketGrammar grades every staged spec's ticket files and the command-package list
-// that check-floor reads. The gate owns this sweep, so a malformed ticket cannot land green
-// behind a phase that never re-ran preflight.
+// checkTicketGrammar grades every staged spec's ticket files and the command-package list.
+// The gate owns this sweep, so a malformed ticket cannot land green behind a phase that
+// never re-ran preflight.
 func checkTicketGrammar(root string) []string {
 	return append(sweepTicketFolders(root), gradeCommandPackages(approvedAXIQueries, tickets.CommandPackage)...)
 }
 
 // gradeCommandPackages reds each approved AXI query command whose package the
 // command-package predicate does not hold. The approved query set is the AXI check's own
-// inventory, so a new verb cannot ship outside the list that check-floor reads.
+// inventory, so a new verb cannot ship outside the command-package list.
 func gradeCommandPackages(approved map[string][]string, commandPackage func(string) bool) []string {
 	commands := make([]string, 0, len(approved))
 	for command := range approved {

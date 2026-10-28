@@ -9,23 +9,30 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
+	benchcommit "github.com/gibbonmi/bench/internal/commit"
+	"github.com/gibbonmi/bench/internal/probe"
+	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/carry"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-var ticketForm = form{name: reviewrecord.FormTicket, description: "write the entries that one ticket owes from its staged excerpts, and a carried entry for each unstaged requirement that can carry, in one record write; " + writeOrder(reviewrecord.TicketSteps()),
+var ticketForm = form{name: reviewrecord.FormTicket, description: "write the entries that one ticket owes from its staged excerpts, a carried entry for each unstaged requirement that can carry, " +
+	"and an entry from the retained bench probe response for the one requirement left, with --mutant naming its row, in one record write; " +
+	"the first ticket of a chunk passes --base, the main tip for the first chunk and the recorded predecessor tip after it; " + refusalroute.NextField + "= prints the record commit; " + writeOrder(reviewrecord.TicketSteps()),
 	flags: []flag{{"--chunk", "<id>", true, once}, {"--ticket", "<basename>", true, once}, {"--id-prefix", "<prefix>", true, once}, {"--performer", "<session>", true, once},
-		{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--ref", "<ref>", true, once}, {"--base", "<commit>", false, once}, {"--tip", "<commit>", false, once}},
-	layout: []string{"--chunk", "--ticket", "--id-prefix", "--performer", "--model", "--effort", "--ref", "[", "--base", "]", "[", "--tip", "]"},
-	run:    ticket}
+		{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--ref", "<ref>", true, once}, {"--base", "<commit>", false, once}, {"--tip", "<commit>", false, once},
+		{mutantFlag, "<n>", false, once}},
+	layout: []string{"--chunk", "--ticket", "--id-prefix", "--performer", "--model", "--effort", "--ref", "[", "--base", "]", "[", "--tip", "]", "[", mutantFlag, "]"},
+	valid:  mutantRow, run: ticket}
 
 // ticket writes the entries that one ticket owes from the stages of its owed requirements and
 // the carried entries of the unstaged ones, through reviewrecord.RecordTicket at --tip, HEAD by
 // default. Before the write it refuses, in order, what reviewrecord.TicketRequirements refuses
 // for the plan at the tip and a planned seam cell in a row that the Covers: line of the ticket
-// names. After the write it removes the stages that it used.
+// names. After the write it removes the stages that it used, and after its table it prints the
+// record commit with the slug and the chunk base on one next= line.
 func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	values := maps.Clone(parsed.Flags)
 	if _, ok := values["--tip"]; !ok {
@@ -53,12 +60,13 @@ func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	if out, code := refusePlanned(f, root, spec, call.Tip, ticketRows(call.Chunk, call.Ticket)); out != "" {
 		return out, code
 	}
-	runs := ownedRuns{root: root, spec: spec, chunk: call.Chunk, prefix: values["--id-prefix"], owed: owed,
+	home, slug := benchhome.Dir(), parsed.Positionals[0]
+	runs := ownedRuns{home: home, root: root, spec: spec, chunk: call.Chunk, prefix: values["--id-prefix"], owed: owed,
 		evidence: reviewrecord.Evidence{Performer: values["--performer"], Model: values["--model"], Effort: values["--effort"], NativeRef: reviewrecord.NativeRef{Ref: values["--ref"]}}}
+	runs.mutant, _ = integer(values, mutantFlag)
 	if runs.record, err = reviewrecord.RecordPath(spec); err != nil {
 		return f.refuse(err.Error())
 	}
-	home, slug := benchhome.Dir(), parsed.Positionals[0]
 	if runs.stages, err = ownedStages(home, root, slug, call.Chunk, owed); err != nil {
 		return f.refuse(cause(spec, err))
 	}
@@ -85,8 +93,14 @@ func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	if len(runs.carried) != 0 {
 		carried = strings.Join(runs.carried, ",")
 	}
-	return row("ticket", []string{"chunk", "ticket", "amendment", "freeze", "base", "tip", "verifications", "carried"},
+	table, code := row("ticket", []string{"chunk", "ticket", "amendment", "freeze", "base", "tip", "verifications", "carried"},
 		[]string{call.Chunk, call.Ticket, amendment, freeze, written.Chunk.Base, written.Chunk.Tip, strings.Join(ids, ","), carried})
+	if code != 0 {
+		return table, code
+	}
+	chain := benchcommit.ChainArgs(slug, written.Chunk.Base)
+	next := refusalroute.ChainCommit(map[string]string{refusalroute.FactChain: strings.Join(chain, " "), refusalroute.FactRecord: runs.record})
+	return table + refusalroute.NextField + "=" + next + "\n", 0
 }
 
 // ownedStages reads the stage of each owed requirement of chunk that has one, by requirement ID.
@@ -106,26 +120,59 @@ func ownedStages(home, root, slug, chunk string, owed []reviewrecord.Requirement
 }
 
 // ownedRuns is the owed requirements of one ticket call, in owed order, and the stage of each
-// staged one, with the root and the spec of the record, its record path, and the evidence
-// fields that every entry shares. calls fills carried with the IDs of the carried
-// requirements, in owed order.
+// staged one, with the Bench home, the root and the spec of the record, its record path, the
+// --mutant row of the retained response, and the evidence fields that every entry shares. calls
+// fills carried with the IDs of the carried requirements, in owed order.
 type ownedRuns struct {
-	root, spec, chunk, record, prefix string
-	evidence                          reviewrecord.Evidence
-	owed                              []reviewrecord.Requirement
-	stages                            map[string]responsebound.Staged
-	carried                           []string
+	home, root, spec, chunk, record, prefix string
+	mutant                                  int
+	evidence                                reviewrecord.Evidence
+	owed                                    []reviewrecord.Requirement
+	stages                                  map[string]responsebound.Staged
+	carried                                 []string
 }
 
 // calls answers the chunk verification call of each owed requirement in owed order: from its
 // stage, with the run commit as the source, or else from the carry candidate that carry.Decide
-// answers against entry, the chunk entry. It refuses a stage whose run reviewrecord.RunBinding
-// does not find current for entry, then a stage whose run had a dirty path other than the
-// record path, each as a repair of the excerpt form that names the requirement. It then
-// refuses, as one repair of the excerpt form, the unstaged requirements that cannot carry.
+// answers against entry, the chunk entry. When exactly one owed requirement has neither a stage
+// nor a carry and the retained call is `bench probe`, stageRetained stages that response for it.
+// The count maps the response to one requirement only; no check compares the retained call with
+// that requirement's planned command. It refuses a stage whose run reviewrecord.RunBinding does
+// not find current for entry, then a stage whose run had a dirty path other than the record
+// path, each as a repair of the excerpt form that names the requirement. It then refuses, as one
+// repair of the excerpt form, the unstaged requirements that cannot carry.
 func (r *ownedRuns) calls(entry reviewrecord.Chunk) ([]reviewrecord.VerificationCall, error) {
 	restage := func(id, format string, args ...any) error {
 		return reviewrecord.Repair{Form: reviewrecord.FormExcerpt, Chunk: r.chunk, Requirement: id, Err: fmt.Errorf("requirement %s: "+format, append([]any{id}, args...)...)}
+	}
+	candidates, unstaged, reasons := map[string]reviewrecord.Verification{}, []reviewrecord.Requirement{}, ""
+	for _, requirement := range r.owed {
+		if _, ok := r.stages[requirement.ID]; ok {
+			continue
+		}
+		candidate, reason, err := carry.Decide(r.root, r.spec, entry, requirement)
+		if err != nil {
+			return nil, err
+		}
+		if reason != "" {
+			unstaged, reasons = append(unstaged, requirement), reasons+fmt.Sprintf("; carry: %s (%s)", requirement.ID, reason)
+			continue
+		}
+		candidates[requirement.ID] = candidate
+	}
+	var retained responsebound.Retained
+	if len(unstaged) == 1 {
+		var err error
+		if retained, err = responsebound.ReadRetained(r.home, r.root); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return nil, err
+		}
+	}
+	if len(unstaged) == 1 && retained.Verb == probe.Verb {
+		staged, out := stageRetained(unstaged[0], retained, r.mutant)
+		if out != "" {
+			return nil, fmt.Errorf("requirement %s: %s", unstaged[0].ID, out)
+		}
+		r.stages[unstaged[0].ID], unstaged = staged, nil
 	}
 	for _, requirement := range r.owed {
 		staged, ok := r.stages[requirement.ID]
@@ -146,22 +193,11 @@ func (r *ownedRuns) calls(entry reviewrecord.Chunk) ([]reviewrecord.Verification
 			return nil, restage(requirement.ID, "the staged run had the dirty path %s", dirty[0])
 		}
 	}
-	candidates, missing, reasons := map[string]reviewrecord.Verification{}, []string{}, ""
-	for _, requirement := range r.owed {
-		if _, ok := r.stages[requirement.ID]; ok {
-			continue
+	if len(unstaged) != 0 {
+		missing := []string{}
+		for _, requirement := range unstaged {
+			missing = append(missing, requirement.ID)
 		}
-		candidate, reason, err := carry.Decide(r.root, r.spec, entry, requirement)
-		if err != nil {
-			return nil, err
-		}
-		if reason != "" {
-			missing, reasons = append(missing, requirement.ID), reasons+fmt.Sprintf("; carry: %s (%s)", requirement.ID, reason)
-			continue
-		}
-		candidates[requirement.ID] = candidate
-	}
-	if len(missing) != 0 {
 		return nil, reviewrecord.Repair{Form: reviewrecord.FormExcerpt, Chunk: r.chunk, Err: fmt.Errorf("these owed requirements have no staged excerpt: %s%s", strings.Join(missing, ", "), reasons)}
 	}
 	calls := []reviewrecord.VerificationCall{}
@@ -200,6 +236,6 @@ func stagedProbe(staged responsebound.Staged) (int, *reviewrecord.Probe, string)
 		}
 		exit = answer.exit
 	}
-	probe, out := importedProbe(staged.Output, exit, staged.Mutant)
-	return exit, probe, out
+	imported, out := importedProbe(staged.Output, exit, staged.Mutant)
+	return exit, imported, out
 }

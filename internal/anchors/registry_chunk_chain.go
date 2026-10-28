@@ -1,15 +1,15 @@
 package anchors
 
-// chunkChainAnchors pin the chunk chain command lines of the implement phase: the post-ticket
-// build preflight, the main fold, and the chunk checkpoint gate. They forbid the retired
-// sentences of the chain: the review charge before the author record, the unscoped light-path
+// chunkChainAnchors pin the chunk chain command lines of the implement phase: the main fold and
+// the chunk checkpoint gate. They forbid the retired sentences of the chain: the exec build
+// preflight after a ticket commit, the review charge before the author record, the unscoped light-path
 // dispatch in ADR 0023, the main fold at the start of the last chunk and its refreeze, the
 // comment-only correction after a chunk tip, the review as the chunk freezer, the orchestrator's
 // chunk record, the checkpoint gate for every chunk, the README checkpoint edges, the review
 // chain's refusal of a fold, the widened confirming round, the hand-recording sentences, the
 // full rerun of a repair session, and the retired prepared run of a chunk checkpoint.
 var chunkChainAnchors = []Anchor{
-	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Class: Command, Section: "Build", Needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", Diagnostic: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "bench worktree exec <target> -- bench preflight build", Diagnostic: "chunk chain: the implement phase restored the exec build preflight after a ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
 	{Group: AfterImplementSpec, File: freshAuthorADR, Kind: Forbid, Needle: "and so does a phase that needs a learning's fix.", Diagnostic: "chunk chain: ADR 0023 restored the unscoped light-path dispatch of a phase"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: RequireInSection, Class: Command, Section: "Land", Needle: "A build folds `main` with `bench worktree merge --from main <target>` before the first chunk, or in a chunk gap before the first dispatch of the next chunk.", Diagnostic: "chunk chain: a build folds main only before the first chunk or in a chunk gap"},

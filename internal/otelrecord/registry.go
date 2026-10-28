@@ -22,8 +22,8 @@ type SeamEntry struct {
 var Registry = []SeamEntry{
 	{Seam: "gate", Package: "internal/gate", Function: "beginGateSpan"},
 	{Seam: SeamGatePhase, Package: "internal/gate", Function: "startPhaseSpan"},
-	{Seam: "lane", Package: "internal/gate", Function: "beginLaneSpan"},
-	{Seam: "commit", Package: "internal/commit", Function: "beginCommitSpan"},
+	{Seam: SeamLane, Package: "internal/gate", Function: "beginLaneSpan"},
+	{Seam: SeamCommit, Package: "internal/commit", Function: "beginCommitSpan"},
 	{Seam: SeamLanding, Package: "internal/worktree", Function: "beginLandingSpan"},
 	{Seam: "worktree.create", Package: "internal/worktree", Function: "beginVerbSpan"},
 	{Seam: "worktree.exec", Package: "internal/worktree", Function: "beginVerbSpan"},

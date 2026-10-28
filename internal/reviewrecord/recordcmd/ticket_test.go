@@ -38,18 +38,15 @@ func ticketArgs(t *testing.T, chunk, ticket, prefix string, extra ...string) []s
 // biting is a biting single-form probe answer whose command exited 0.
 var biting = answer("bit", "yes", 0, "1", report)
 
-// stageOwed stages a passing run at the current tip for each requirement of chunk that ticket
-// owes, with dirty as the run's dirty paths: a biting answer for a probe requirement.
+// stageOwed stages a biting answer at the current tip for each probe requirement of chunk that
+// ticket owes, with dirty as the run's dirty paths.
 func stageOwed(f *recordtest.Fixture, home, chunk, ticket string, dirty ...string) {
 	f.T.Helper()
 	for _, requirement := range f.Plan.Chunk(chunk).Verification {
 		if requirement.Ticket != ticket {
 			continue
 		}
-		run := f.Run(0, "ok\n")
-		if requirement.Probe != "" {
-			run = f.Run(0, biting)
-		}
+		run := f.Run(0, biting)
 		run.Dirty = append(run.Dirty, dirty...)
 		f.Stage(home, chunk, requirement.ID, run)
 	}
@@ -93,6 +90,10 @@ func TestTicketRefusals(t *testing.T) {
 		{"requirements that name no ticket", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := recordtest.Pooled(t, 1)
 			return f, home, ticketArgs(t, "1", "1.md", "p"), "the requirements of chunk 1 in the plan at "
+		}},
+		{"version 1 plan with no requirement", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
+			f, home := recordtest.Pooled(t, 1, recordtest.Owing(nil))
+			return f, home, ticketArgs(t, "1", "1.md", "p"), "the ticket form reads a version 2 plan"
 		}},
 		{"planned seam cell", func(t *testing.T) (*recordtest.Fixture, string, []string, string) {
 			f, home := pooled(t, 1)

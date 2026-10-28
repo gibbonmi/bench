@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
+	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
 // specWithoutPlan is the seeded spec body with its completion plan removed, the
@@ -49,6 +50,23 @@ func TestCommandBuildRedsAbsentCompletionPlan(t *testing.T) {
 	row := planRow(t, out)
 	if !strings.HasPrefix(row, "completion-plan,red,") || !strings.Contains(row, "bench-completion-plan") {
 		t.Errorf("completion-plan row = %q, want a red naming the fence", row)
+	}
+}
+
+// TestCommandBuildRedsAPlainChunkRequirement covers BC33. A staged spec whose chunk lists one
+// requirement without a probe reds the row, and the row names that requirement, so the build
+// entry of each such spec changes its plan first.
+func TestCommandBuildRedsAPlainChunkRequirement(t *testing.T) {
+	_, slug := preflighttest.SeedConformant(t)
+	plan := reviewrecord.Plan{Version: 1,
+		Chunks:            []reviewrecord.PlannedChunk{{ID: "c1", Tickets: []string{"one.md"}, Verification: []reviewrecord.Requirement{{ID: "plain-tests", Command: preflighttest.PlanCommand}}}},
+		FinalVerification: []reviewrecord.Requirement{{ID: "acceptance", Command: "go test ./..."}}}
+	preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", specWithoutPlan(slug)+preflighttest.PlanSection(plan))
+	preflighttest.RunGit(t, "commit", "-q", "-a", "-m", "plan a plain chunk requirement")
+
+	out, code := Command([]string{"build", slug})
+	if row := planRow(t, out); code != 1 || !strings.HasPrefix(row, "completion-plan,red,") || !strings.Contains(row, "chunk c1: verification plain-tests has no probe") {
+		t.Fatalf("Command exit = %d, completion-plan row = %q; want a red naming plain-tests\n%s", code, row, out)
 	}
 }
 

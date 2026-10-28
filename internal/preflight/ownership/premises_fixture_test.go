@@ -190,7 +190,6 @@ type evidenceCommits struct {
 	otherSubject      string
 	missingNeedle     string
 	unrestoredPlanned string
-	unrestored        string
 	compileFailure    string
 	forgedCompile     string
 }
@@ -226,19 +225,13 @@ func seedEvidenceCommits(t *testing.T, root string) evidenceCommits {
 		chunk.Verification[0].Probe.Restore = "fail"
 		chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
 	})
-	// additionalProbe records a probe of the mutation on the unplanned additional verification.
-	additionalProbe := func(chunk *rr.Chunk, outcome, restore, excerpt string) {
-		chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
-		chunk.Verification[1].Probe = &rr.Probe{Mutation: evidenceMutation, Outcome: outcome, ExitCode: 1, Restore: restore, NativeRef: recordtest.Native(excerpt)}
-	}
-	commits.unrestored = saveVariant("record unrestored evidence", func(chunk *rr.Chunk) {
-		additionalProbe(chunk, "bit", "fail", behavioralExcerpt)
-	})
-	// A real compile-failure probe records the outcome build-failed; its excerpt names the
-	// subject and red_needle, so only the shared probe-bite predicate refuses it.
+	// A real compile-failure probe of the planned mutation records the outcome build-failed; its
+	// excerpt names the subject and red_needle, so the checkpoint refuses it as a probe that did
+	// not bite: the verification requires a successful diagnostic probe.
 	compileExcerpt := "# internal/reused [internal/reused.test]\ninternal/reused/reused_test.go:5:2: undefined: " + evidenceTestFunc
 	commits.compileFailure = saveVariant("record compile failure evidence", func(chunk *rr.Chunk) {
-		additionalProbe(chunk, "build-failed", "pass", compileExcerpt+" "+evidenceNeedle+"\nFAIL\tinternal/reused [build failed]")
+		chunk.Verification[0].Probe.Outcome = "build-failed"
+		chunk.Verification[0].Probe.NativeRef = recordtest.Native(compileExcerpt + " " + evidenceNeedle + "\nFAIL\tinternal/reused [build failed]")
 	})
 	// A forged probe reads bit over a compile-failure excerpt that lacks red_needle.
 	commits.forgedCompile = saveVariant("record forged compile failure evidence", func(chunk *rr.Chunk) {

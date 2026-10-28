@@ -6,6 +6,19 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Build cost
+
+- Changed the completion-plan grade. Each chunk requirement must name a probe, and a chunk can have no requirement. A plain chunk requirement refuses with its chunk and its requirement ID. `bench record ticket` accepts a ticket that owes no requirement.
+- Removed the `check-floor` row of `bench preflight build` and its guidance. The chunk checkpoint grades the subject with the whole gate, so the author runs no plain check after the ticket commit.
+- Added a derived `## Cost` section to each new retro, directly after `## Outcome`. It shows the landing commit, the build range, the wall time, the commit counts, the ticket and chunk graph, the dispatch counts, the trace span times, and two per-ticket values with their budgets. A value above its budget ends with `over budget`, and the drain then proposes one removal or one merge. A breach does not make the gate red. `bench retro --body` refuses a body without `## Cost`, but a pending retro without that heading stays valid.
+- Changed `bench record ticket`. It stages the retained probe response itself when one owed requirement has no stage, and it takes `--mutant <n>`. After its table, it prints one `next=` line with the exact record commit. After the ticket commit, the author runs the probe, `bench record ticket`, and that record commit. The separate `bench worktree exec ... bench preflight build` step is retired.
+- Added `bench commit --base <commit>`, which is valid only with `--preflight-build`. The chain passes that base to the build preflight.
+- Changed the `bench commit` lane pass. The lane writes each check stream to `bench-lane.log` in the git directory of its worktree, and a pass prints no check line. A lane red prints the lines of the failing check from that log.
+- Changed `bench probe` for a mutant set. A set in which every row bit and restored prints no baseline report and no mutant report.
+- Changed the `--help` of each tree-scoped verb whose `--help` answers at exit 0. That output now names `[--in <label|primary>]`.
+- Changed the kit worktree target. It runs the first sealed build that matches its tree: its own build, the build of the primary checkout, or the running executable.
+- Changed the guidance. The known issues, the command notes, and `craft-synthesis` name the `--in` forms of the evidence check, the worktree probe, and the batch gate. `.bench/BENCH.md` records no learning for a `Writes:` widen.
+
 ### Route bypass check in the commit lane
 
 - Changed the kit commit lane, which now runs the `route-bypass` check when a commit changes a production Go file that the route bypass test scans. The check runs that test alone through `bench test --package`, and the new `write-verb-source` path class selects it. The conformance registry holds the scanned package list, and both the scan and the class read it. Before, a route literal outside the refusal route registry passed the lane, and the chunk checkpoint or the landing gate found it.

@@ -1,7 +1,7 @@
 # Add the trace times and the drain budget rule
 
 Blocked by: 03-state-the-probe-only-rule.md, 04-derive-the-retro-cost-section.md
-Writes: internal/roadmap/retro_cost.go (new), internal/roadmap/retro_cost_test.go (new), .agents/commands/bench-drain.md, internal/anchors/registry_build_cost.go (new), internal/anchors/registry_build_cost_test.go (new)
+Writes: internal/roadmap/retro_cost.go (new), internal/roadmap/retro_cost_test.go (new), .agents/commands/bench-drain.md, internal/anchors/registry_build_cost.go (new), internal/anchors/registry_build_cost_test.go (new), internal/roadmap/retro_scaffold.go, internal/spec/landing.go, internal/spec/landing_test.go (new), internal/otelrecord/reader.go, internal/otelrecord/registry.go
 Covers: BC14, BC19, BC20, BC21, BC22, BC71
 
 ## What to build
@@ -15,7 +15,7 @@ Section 4 of `.agents/commands/bench-drain.md` gains two sentences:
 - "When a retro's `## Cost` section marks a line `over budget`, propose one removal or one merge of a build step for that line."
 - "A budget breach never makes the gate red."
 
-The drain guidance repeats no budget number. Add the Require anchors of BC22 and BC71 and the Forbid anchors of BC14 to `registry_build_cost.go`.
+The drain guidance repeats no budget number. Add the Forbid anchors of BC14 to `registry_build_cost.go`. BC22 and BC71 are review-owned, because ADR 0012 keeps rule wording out of the anchor registry.
 
 ## Acceptance
 

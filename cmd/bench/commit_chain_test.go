@@ -28,9 +28,9 @@ type chainCalls struct {
 
 // runCommitChain replaces the three chain steps and runs `bench commit` through the
 // production dispatcher, with --preflight-build naming slug when slug is not empty. The
-// commit step prints one line and answers slug, published, and commitExit; the build and
-// preflight steps print one line each and answer their own exits.
-func runCommitChain(t *testing.T, slug, published string, commitExit, buildExit, preflightExit int) (stdout string, code int, calls *chainCalls) {
+// commit step prints one line and answers slug, base, published, and commitExit; the build
+// and preflight steps print one line each and answer their own exits.
+func runCommitChain(t *testing.T, slug, base, published string, commitExit, buildExit, preflightExit int) (stdout string, code int, calls *chainCalls) {
 	t.Helper()
 	t.Setenv(benchhome.Env, t.TempDir())
 	old := commitChain
@@ -39,7 +39,7 @@ func runCommitChain(t *testing.T, slug, published string, commitExit, buildExit,
 	commitChain = chainSteps{
 		Commit: func(_ []string, stdout, _ io.Writer) (commit.Outcome, int) {
 			fmt.Fprintln(stdout, "commit step")
-			return commit.Outcome{Root: chainWorktree, Published: published, PreflightBuild: slug}, commitExit
+			return commit.Outcome{Root: chainWorktree, Published: published, PreflightBuild: slug, Base: base}, commitExit
 		},
 		Build: func(root, home string, args []string, stdout, _ io.Writer) int {
 			calls.builds = append(calls.builds, append([]string{root, home}, args...))
@@ -74,7 +74,7 @@ func lastLine(stdout string) string {
 // BO51: a green commit, build, and preflight run in order, each prints its own response,
 // and the chain line names the published commit at exit 0.
 func TestCommitChainRunsThreeSteps(t *testing.T) {
-	stdout, code, calls := runCommitChain(t, chainSlug, chainPublished, 0, 0, 0)
+	stdout, code, calls := runCommitChain(t, chainSlug, "", chainPublished, 0, 0, 0)
 	want := "commit step\nbuild step\npreflight step\n" + wantChainLine(chainPublished, "green", "green") + "\n"
 	if code != 0 || stdout != want {
 		t.Fatalf("chain = (%d, %q), want (0, %q)", code, stdout, want)
@@ -87,9 +87,31 @@ func TestCommitChainRunsThreeSteps(t *testing.T) {
 	}
 }
 
+// BC38, BC40: a chain that names a base passes it to the build preflight after the published
+// commit as the source tip, and the commit help names --base <commit> in the
+// --preflight-build group of the usage line and of the chain line.
+func TestCommitChainPassesTheBase(t *testing.T) {
+	t.Run("preflight argv", func(t *testing.T) {
+		_, code, calls := runCommitChain(t, chainSlug, "chunk-base", chainPublished, 0, 0, 0)
+		if want := [][]string{{"build", chainSlug, "--source-tip", chainPublished, "--base", "chunk-base"}}; code != 0 || !reflect.DeepEqual(calls.preflights, want) {
+			t.Fatalf("chain = (%d, %q), want exit 0 and preflight argv %q", code, calls.preflights, want)
+		}
+	})
+	t.Run("help", func(t *testing.T) {
+		const group = "--preflight-build <slug> [--base <commit>]"
+		t.Setenv(benchhome.Env, t.TempDir())
+		var out, errOut bytes.Buffer
+		code := Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run([]string{"commit", "--help"})
+		usageLine, chainLine := strings.SplitN(out.String(), "\n", 2)[0], lastLine(withoutTreeTargetLine("commit", out.String()))
+		if code != 0 || !strings.Contains(usageLine, "[--dry-run | "+group+"]") || !strings.HasPrefix(chainLine, group+": ") {
+			t.Fatalf("help = (%d, %q), want %q in the usage line and at the start of the chain line", code, out.String(), group)
+		}
+	})
+}
+
 // BO52: a lane refusal publishes nothing, so the chain calls no build and exits 1.
 func TestCommitChainSkipsAfterRefusal(t *testing.T) {
-	stdout, code, calls := runCommitChain(t, chainSlug, "", 1, 0, 0)
+	stdout, code, calls := runCommitChain(t, chainSlug, "", "", 1, 0, 0)
 	if want := wantChainLine("none", "skipped", "skipped"); code != 1 || lastLine(stdout) != want {
 		t.Fatalf("chain = (%d, %q), want exit 1 ending in %q", code, stdout, want)
 	}
@@ -106,7 +128,7 @@ const wantPublishedStepRedExit = 4
 // BO53: a red build after a published commit exits with the published-step-red code, not
 // the build's own exit, calls no preflight, and still names the commit.
 func TestCommitChainStopsAtRedBuild(t *testing.T) {
-	stdout, code, calls := runCommitChain(t, chainSlug, chainPublished, 0, 130, 0)
+	stdout, code, calls := runCommitChain(t, chainSlug, "", chainPublished, 0, 130, 0)
 	if want := wantChainLine(chainPublished, "red", "skipped"); code != wantPublishedStepRedExit || lastLine(stdout) != want {
 		t.Fatalf("chain = (%d, %q), want exit %d ending in %q", code, stdout, wantPublishedStepRedExit, want)
 	}
@@ -120,7 +142,7 @@ func TestCommitChainStopsAtRedBuild(t *testing.T) {
 // line names the published commit.
 func TestCommitChainReportsRedPreflight(t *testing.T) {
 	for _, preflightExit := range []int{1, 2, 3} {
-		stdout, code, _ := runCommitChain(t, chainSlug, chainPublished, 0, 0, preflightExit)
+		stdout, code, _ := runCommitChain(t, chainSlug, "", chainPublished, 0, 0, preflightExit)
 		if want := wantChainLine(chainPublished, "green", "red"); code != wantPublishedStepRedExit || lastLine(stdout) != want {
 			t.Fatalf("preflight exit %d: chain = (%d, %q), want exit %d ending in %q", preflightExit, code, stdout, wantPublishedStepRedExit, want)
 		}
@@ -130,7 +152,7 @@ func TestCommitChainReportsRedPreflight(t *testing.T) {
 // BO71: a commit that published without reconciling its checkout stops the chain at exit
 // 3, and the chain line names the published commit.
 func TestCommitChainStopsAtRemainder(t *testing.T) {
-	stdout, code, calls := runCommitChain(t, chainSlug, chainPublished, 3, 0, 0)
+	stdout, code, calls := runCommitChain(t, chainSlug, "", chainPublished, 3, 0, 0)
 	if want := wantChainLine(chainPublished, "skipped", "skipped"); code != 3 || lastLine(stdout) != want {
 		t.Fatalf("chain = (%d, %q), want exit 3 ending in %q", code, stdout, want)
 	}
@@ -142,7 +164,7 @@ func TestCommitChainStopsAtRemainder(t *testing.T) {
 // BO56: a commit without --preflight-build runs the commit step alone through the
 // dispatcher: no build, no preflight, no chain line, and the commit step's exit.
 func TestCommitWithoutPreflightBuildRunsCommitAlone(t *testing.T) {
-	stdout, code, calls := runCommitChain(t, "", chainPublished, 0, 130, 1)
+	stdout, code, calls := runCommitChain(t, "", "", chainPublished, 0, 130, 1)
 	if code != 0 || stdout != "commit step\n" {
 		t.Fatalf("commit = (%d, %q), want (0, %q)", code, stdout, "commit step\n")
 	}
@@ -157,7 +179,7 @@ func TestCommitHelpEndsWithChainHelp(t *testing.T) {
 	t.Setenv(benchhome.Env, t.TempDir())
 	var out, errOut bytes.Buffer
 	code := Command{Stdout: &out, Stderr: &errOut, Executable: "bench"}.Run([]string{"commit", "--help"})
-	if code != 0 || !strings.HasPrefix(out.String(), "usage: bench commit") || !strings.HasSuffix(out.String(), "\n"+chainHelp+"\n") {
+	if code != 0 || !strings.HasPrefix(out.String(), "usage: bench commit") || !strings.HasSuffix(withoutTreeTargetLine("commit", out.String()), "\n"+chainHelp+"\n") {
 		t.Fatalf("help = (%d, %q), want the commit help ending in the chain help line", code, out.String())
 	}
 	if want := fmt.Sprintf("exit %d: published; a later step failed", wantPublishedStepRedExit); !strings.Contains(chainHelp, want) {

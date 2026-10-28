@@ -91,7 +91,7 @@ func TestVerificationImportsProbeResult(t *testing.T) {
 			if got.NativeRef.Excerpt != tc.data || got.NativeRef.Digest != rr.Digest([]byte(tc.data)) {
 				t.Fatalf("excerpt = %q (%s), want the exact file bytes %q", got.NativeRef.Excerpt, got.NativeRef.Digest, tc.data)
 			}
-			verify(t, f, unprobed)
+			verify(t, f, additionalCall)
 			if err := checkpoint(t, f); tc.refusal == "" && err != nil || tc.refusal != "" && (err == nil || !strings.Contains(err.Error(), tc.refusal)) {
 				t.Fatalf("checkpoint = %v, want refusal %q", err, tc.refusal)
 			}

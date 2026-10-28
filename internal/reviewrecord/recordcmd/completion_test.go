@@ -17,7 +17,7 @@ func readyCompletion(t *testing.T, prepare ...func(*recordtest.Fixture)) (*recor
 	t.Helper()
 	f := recorded(t, 1, prepare...)
 	verify(t, f)
-	verify(t, f, unprobed)
+	verify(t, f, additionalCall)
 	for _, axis := range rr.Axes() {
 		review(t, f, axis, "review-"+axis)
 	}

@@ -16,10 +16,13 @@ const Directory = "capture/retros"
 
 var retrospectiveSlug = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
-// The three headings a scaffold fills with derived facts. They are named here, beside the
+// The headings a scaffold fills with derived facts. They are named here, beside the
 // heading list itself, so a renderer addresses a section through this symbol rather than
 // through a second spelling of the heading.
 const (
+	// CostHeading opens the build-cost section.
+	CostHeading = "## Cost"
+
 	// TimingsHeading opens the gate-stage timings section.
 	TimingsHeading = "## Gate-stage timings"
 
@@ -37,6 +40,7 @@ const CalibrationHeader = "| surface | claim | status | confidence | label | mod
 
 var requiredHeadings = []string{
 	"## Outcome",
+	CostHeading,
 	TimingsHeading,
 	DelegateHeading,
 	"## Coordinator catches",

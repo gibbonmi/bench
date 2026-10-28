@@ -661,7 +661,7 @@ func TestSkillsIndexRoutesThroughDispatch(t *testing.T) {
 		{"conflicting modes", []string{"skills-index", "--check", "--write"}, "usage: bench skills-index [--check|--write] (--check and --write are mutually exclusive)\n", 2},
 	} {
 		result := runAXICommandAt(t, root, tc.argv)
-		if result.stdout != tc.stdout || result.stderr != "" || result.code != tc.code {
+		if withoutTreeTargetLine("skills-index", result.stdout) != tc.stdout || result.stderr != "" || result.code != tc.code {
 			t.Fatalf("%s: %v = stdout=%q stderr=%q exit=%d, want stdout=%q exit=%d", tc.name, tc.argv, result.stdout, result.stderr, result.code, tc.stdout, tc.code)
 		}
 	}

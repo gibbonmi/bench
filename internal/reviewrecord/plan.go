@@ -65,6 +65,10 @@ func parsePlan(data []byte) (Plan, error) {
 	return plan, err
 }
 
+// DecodePlan is the decode-only plan reader. It applies no grade, so a reader of a landed
+// plan that a later grade refuses still gets the plan's facts. checkPlan grades its answer.
+func DecodePlan(data []byte) (Plan, error) { return parsePlan(data) }
+
 // ticketPath is the repository path of a planned ticket basename beside spec.
 func ticketPath(spec, name string) string {
 	return path.Join(path.Dir(spec), "tickets", name)
@@ -173,11 +177,11 @@ func ReadSpecAtCommit(root, spec, commit string) ([]byte, Plan, error) {
 }
 
 // requirementsValid grades one verification inventory. A nil owned list marks
-// the final inventory, which names no ticket in either version. A version 2
-// chunk inventory maps every obligation onto one of its own tickets, and leaves
-// no ticket uncovered.
+// the final inventory, which must be non-empty and names no ticket in either
+// version. A chunk inventory can be empty, each of its requirements is a probe,
+// and a version 2 chunk inventory maps every obligation onto one of its own tickets.
 func requirementsValid(items []Requirement, owned []string, delegated bool) error {
-	if len(items) == 0 {
+	if len(items) == 0 && owned == nil {
 		return errors.New("missing required verification inventory")
 	}
 	seen := map[string]bool{}
@@ -186,6 +190,9 @@ func requirementsValid(items []Requirement, owned []string, delegated bool) erro
 			return errors.New("invalid verification requirement")
 		}
 		seen[item.ID] = true
+		if owned != nil && item.Probe == "" {
+			return fmt.Errorf("verification %s has no probe; a chunk requirement must be a probe", item.ID)
+		}
 		if !delegated || owned == nil {
 			if item.Ticket != "" {
 				return fmt.Errorf("verification %s names a ticket; only a version 2 chunk obligation owns one", item.ID)

@@ -199,6 +199,9 @@ After every recommendation has a disposition, remove every drained
 retro drain is not allowed. The pending count must reach zero, and remove no
 source file before its dispositions are present for review.
 
+When a retro's `## Cost` section marks a line `over budget`, propose one removal or one merge of a build step for that line.
+A budget breach never makes the gate red.
+
 ## 5. Verdict the journal
 
 Read `capture/learnings.md` itself, not just the open-entry count. A malformed

@@ -145,7 +145,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree land --resume <published-commit> --stack <file> [--source-tip <request>=<commit>]...  resume incomplete post-publication stack work
   bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] --outcome <id> "<objective>" gated loop in a pooled worktree; commit on green
-  bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug>] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
+  bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug> [--base <commit>]] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench record [--in <label|primary>] assignment <slug> --source <commit> --ticket <basename> --performer <session> --assignment <id> --model <model> --effort <effort> --ref <native-dispatch-ref> --run <run-id> --orchestrator <session> --author-limit <positive> [--review-mode unified] [--predecessor <session> --trigger <trigger> --stopped <ref> --preserved <ref> [--reassessment <ref>]]  append one author dispatch to a ticket's history in the version 2 completion plan at HEAD
   bench record [--in <label|primary>] chunk <slug> --chunk <id> --base <commit> --tip <commit>  write one chunk's frozen pair, digests, and acceptance rows into reviews/<slug>.md
   bench record [--in <label|primary>] verification <slug> (--chunk <id> [--source <commit>] | --final --source <commit>) --requirement <id> --id <id> --performer <session> --model <model> --effort <effort> --exit-code <n> --ref <ref> (--excerpt <file> [--probe-outcome <verdict> --probe-exit-code <n> --probe-restore pass|fail] | --probe-result <file> [--mutant <n>])  append one planned verification result with its computed digests; for a probe, --exit-code is the bench probe command exit, checked against probe_execution.command_exit_code on import, --probe-outcome is bench probe probe.verdict, --probe-exit-code is bench probe probe_execution.focused_exit_code, the normalized focused-execution exit, --probe-restore is bench probe probe.restored through the producer owner's restoration projection, and --probe-result reads them from one complete bench probe answer; with --mutant, --probe-result reads row n of one complete mutant-set answer, --exit-code is checked against mutants.exit_code, and the probe values are mutants.verdict, mutants.focused_exit_code, and mutants.restored
@@ -155,7 +155,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench record [--in <label|primary>] completion <slug> --source <commit>  validate and write final completion evidence for a source commit; write in the order amendment, chunk, verification, review, confirmation, fold, final verification, completion
   bench record [--in <label|primary>] amendment <slug> --source <commit> [--map <old>=<new>[,<new>...]]...  record the plan-digest change at a source commit
   bench record [--in <label|primary>] excerpt <slug> --chunk <id> --requirement <id> [--mutant <n>]  stage the retained response of this worktree as the excerpt of one requirement of the chunk plan at HEAD
-  bench record [--in <label|primary>] ticket <slug> --chunk <id> --ticket <basename> --id-prefix <prefix> --performer <session> --model <model> --effort <effort> --ref <ref> [--base <commit>] [--tip <commit>]  write the entries that one ticket owes from its staged excerpts, and a carried entry for each unstaged requirement that can carry, in one record write; write in the order amendment, chunk, verification
+  bench record [--in <label|primary>] ticket <slug> --chunk <id> --ticket <basename> --id-prefix <prefix> --performer <session> --model <model> --effort <effort> --ref <ref> [--base <commit>] [--tip <commit>] [--mutant <n>]  write the entries that one ticket owes from its staged excerpts, a carried entry for each unstaged requirement that can carry, and an entry from the retained bench probe response for the one requirement left, with --mutant naming its row, in one record write; the first ticket of a chunk passes --base, the main tip for the first chunk and the recorded predecessor tip after it; next= prints the record commit; write in the order amendment, chunk, verification
   bench spec [--in <label|primary>] retire <slug>  delete a merged spec + its review pickup (validated)
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
@@ -193,7 +193,7 @@ func TestEvidenceHelpInventory(t *testing.T) {
 			rootForms = append(rootForms, command)
 		}
 	}
-	for _, line := range strings.Split(strings.TrimSpace(preflightHelp.String()), "\n") {
+	for _, line := range strings.Split(strings.TrimSpace(withoutTreeTargetLine("preflight", preflightHelp.String())), "\n") {
 		form := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "usage:"))
 		preflightForms = append(preflightForms, strings.TrimPrefix(form, "bench preflight "))
 	}
@@ -234,7 +234,7 @@ func TestEvidenceHelpInventory(t *testing.T) {
 func TestRecordRouteAnswersItsUsage(t *testing.T) {
 	want, _ := recordcmd.Command("", []string{"--help"})
 	var stdout bytes.Buffer
-	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || stdout.String() != want {
+	if code := (Command{Stdout: &stdout}).Run([]string{"record", "--help"}); code != 0 || want == "" || withoutTreeTargetLine("record", stdout.String()) != want {
 		t.Fatalf("record --help = exit %d, stdout %q; want exit 0 and the recordcmd usage %q", code, stdout.String(), want)
 	}
 }

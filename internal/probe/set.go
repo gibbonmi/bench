@@ -260,8 +260,8 @@ func unwritten(mutation string, cells verdictCells) mutantRow {
 
 // answer renders the three tables and then the suffix: the preserved table of a failed
 // restore, the baseline report, each started mutant's report, and the held selection's cleanup
-// failure. The command exit is 2 when a restore failed, 0 when every row bit and the selection
-// closed, and 1 otherwise.
+// failure. A bitten set prints no suffix. The command exit is 2 when a restore failed, 0 when
+// every row bit and the selection closed, and 1 otherwise.
 func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 	e.rows = s.rows
 	for _, row := range s.rows {
@@ -274,16 +274,9 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 	if s.cleanup != "" {
 		e.command = max(e.command, 1)
 	}
-	reports := ""
-	for i, row := range s.rows {
-		if row.focused == nil {
-			continue
-		}
-		heading, err := toon.TableTyped("mutant_report", mutantReportFields, [][]any{{i + 1}})
-		if err != nil {
-			return s.refuse(err, e.command)
-		}
-		reports += heading + row.report
+	reports, err := s.reports(e)
+	if err != nil {
+		return s.refuse(err, e.command)
 	}
 	suffix = s.preserved + suffix + reports + s.cleanup
 	e.trailing = len(suffix)
@@ -292,6 +285,31 @@ func (s *setRun) answer(e setEnvelope, suffix string) (string, int) {
 		return s.refuse(err, e.command)
 	}
 	return head + suffix, e.command
+}
+
+// reports answers each started mutant's report under its mutant number. A set whose command
+// exit is 0 bit in every row, so it needs no report and answers nothing.
+func (s *setRun) reports(e setEnvelope) (string, error) {
+	if e.command == 0 {
+		return "", nil
+	}
+	reports := ""
+	for i, row := range s.rows {
+		if row.focused == nil {
+			continue
+		}
+		heading, err := mutantReportHeading(i + 1)
+		if err != nil {
+			return "", err
+		}
+		reports += heading + row.report
+	}
+	return reports, nil
+}
+
+// mutantReportHeading renders the table that heads the report of mutant n.
+func mutantReportHeading(n int) (string, error) {
+	return toon.TableTyped("mutant_report", mutantReportFields, [][]any{{n}})
 }
 
 // refuse answers a set whose tables the encoder refused. A kept copy and a cleanup failure

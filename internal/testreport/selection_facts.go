@@ -71,12 +71,6 @@ func (r Request) Run() string {
 	return AllTests
 }
 
-// Filtered answers whether the caller passed a run pattern. A `--run all` pattern filters
-// too, although Run answers the same word as for a run with no pattern.
-func (r Request) Filtered() bool {
-	return r.focused.run != ""
-}
-
 // GradesProse answers whether the request names the prose check.
 func (r Request) GradesProse() bool {
 	return r.focused.check == ProseCheckName

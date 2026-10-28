@@ -12,7 +12,6 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
-	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
@@ -47,9 +46,8 @@ func setAnswer(t *testing.T) string {
 	return data
 }
 
-// RT10, RT57: a retained call that equals the planned command stages its bytes, exit, commit,
-// and dirty paths, and the planned single-quoted operand folds as the shell folds it. A probe
-// requirement stages a `bench probe` answer, and a mutant-set answer stages with its row.
+// RT10: a retained `bench probe` answer of a probe requirement stages its bytes, exit, commit,
+// and dirty paths, and a mutant-set answer stages with its row.
 func TestExcerptStagesTheRetainedResponse(t *testing.T) {
 	set := setAnswer(t)
 	for _, tc := range []struct {
@@ -59,8 +57,8 @@ func TestExcerptStagesTheRetainedResponse(t *testing.T) {
 		extra                   []string
 		mutant                  int
 	}{
-		{"quoted operand", "quoted", "test", []string{"--run", "TestA|TestB"}, "ok\n", nil, 0},
 		{"probe", "tests", "probe", []string{"clamp.go"}, answer("bit", "yes", 0, "1", report), nil, 0},
+		{"quoted command", "quoted", "probe", []string{"clamp.go", "--omit", "a|b"}, answer("bit", "yes", 0, "1", report), nil, 0},
 		{"probe row", "tests", "probe", []string{"--mutants", "m.json"}, set, []string{"--mutant", "1"}, 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -84,46 +82,47 @@ func TestExcerptStagesTheRetainedResponse(t *testing.T) {
 // RT16: a second stage of one requirement replaces the first staged bytes.
 func TestExcerptReplacesTheFirstStage(t *testing.T) {
 	f, home := recordtest.Staging(t)
-	args := []string{"--run", "TestA|TestB"}
-	f.Retain(home, "test", args, 0, "first\n")
+	first, second := answer("bit", "yes", 0, "1", report), answer("silent", "yes", 1, "0", report)
+	f.Retain(home, "probe", nil, 0, first)
 	succeed(t, f, stageArgs(t, "quoted"))
-	f.Retain(home, "test", args, 1, "second\n")
+	f.Retain(home, "probe", nil, 1, second)
 	succeed(t, f, stageArgs(t, "quoted"))
-	if got, err := staged(t, f, home, "quoted"); err != nil || string(got.Output) != "second\n" || got.Exit != 1 {
+	if got, err := staged(t, f, home, "quoted"); err != nil || string(got.Output) != second || got.Exit != 1 {
 		t.Fatalf("staged = (%q, exit %d, %v), want the second response", got.Output, got.Exit, err)
 	}
 }
 
-// RT11, RT12, RT13, RT14, RT15, RT17: each refusal stages nothing and writes no worktree file.
+// RT11, RT12, RT13, RT14, RT15, RT17: each refusal stages nothing and writes no worktree file. A
+// plain chunk requirement refuses at the plan grade, so the excerpt form stages only probes.
 func TestExcerptRefusals(t *testing.T) {
-	quoted, set := []string{"--run", "TestA|TestB"}, setAnswer(t)
+	bit, set := answer("bit", "yes", 0, "1", report), setAnswer(t)
 	for _, tc := range []struct {
 		name, requirement string
 		retain            func(f *recordtest.Fixture, home string)
 		extra             []string
 		want              string
 	}{
-		{"no retained response", "quoted", nil, nil, "this worktree has no retained response; run bench test --run 'TestA|TestB' first"},
-		{"differing arguments", "quoted", func(f *recordtest.Fixture, home string) {
-			f.Retain(home, "test", []string{"--run", "TestA"}, 0, "ok\n")
-		}, nil,
-			"the retained call bench test --run TestA differs from the planned command bench test --run 'TestA|TestB'"},
+		{"no retained response", "quoted", nil, nil, "this worktree has no retained response; run bench probe clamp.go --omit 'a|b' --run 'TestA|TestB' first"},
+		{"plain chunk requirement", "quoted", func(f *recordtest.Fixture, home string) {
+			f.Plan.Chunks[0].Verification[1].Probe = ""
+			f.WritePlan()
+			f.Commit("plan a plain chunk requirement")
+			f.Retain(home, "probe", nil, 0, bit)
+		}, nil, "chunk 1: verification quoted has no probe"},
 		{"probe without bench probe", "tests", func(f *recordtest.Fixture, home string) {
 			f.Retain(home, "test", []string{"--package", "./internal/example"}, 0, answer("bit", "yes", 0, "1", report))
 		}, nil, "requirement tests plans a probe; the retained call is bench test, not bench probe"},
 		{"mutant set without --mutant", "tests", func(f *recordtest.Fixture, home string) { f.Retain(home, "probe", nil, 0, set) }, nil,
 			"the retained response is a mutant-set answer; name one row with --mutant <n>"},
-		{"unplanned requirement", "typo", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "ok\n") }, nil,
+		{"unplanned requirement", "typo", func(f *recordtest.Fixture, home string) { f.Retain(home, "probe", nil, 0, bit) }, nil,
 			"requirement typo is not planned; the planned requirements are tests, quoted"},
 		{"over the excerpt limit", "quoted", func(f *recordtest.Fixture, home string) {
-			f.Retain(home, "test", quoted, 0, strings.Repeat("x", int(bounds.ControlRecordLimit)+1))
+			f.Retain(home, "probe", nil, 0, strings.Repeat("x", int(bounds.ControlRecordLimit)+1))
 		}, nil, "the retained response is unreadable: read limit exceeded"},
-		{"empty", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "") }, nil,
+		{"empty", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "probe", nil, 0, "") }, nil,
 			"the retained response is empty"},
-		{"invalid UTF-8", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "\xff\n") }, nil,
+		{"invalid UTF-8", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "probe", nil, 0, "\xff\n") }, nil,
 			"the retained response is malformed"},
-		{"mutant without a probe", "quoted", func(f *recordtest.Fixture, home string) { f.Retain(home, "test", quoted, 0, "ok\n") }, []string{"--mutant", "1"},
-			"--mutant needs a probe requirement; requirement quoted plans no probe"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f, home := recordtest.Staging(t)
@@ -170,7 +169,7 @@ func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 	f, home := recordtest.Staging(t)
 	f.Plan.Chunks[0].Verification[1].ID = "../x"
 	f.RewritePlan()
-	f.Retain(home, "test", []string{"--run", "TestA|TestB"}, 0, "ok\n")
+	f.Retain(home, "probe", nil, 0, answer("bit", "yes", 0, "1", report))
 	before := responseboundtest.StoreFiles(t, home)
 	if len(before) != 1 {
 		t.Fatalf("store files before the stage = %q, want the retained response alone", before)
@@ -184,38 +183,22 @@ func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 	requireNoWorktreeWrite(t, f)
 }
 
-// RC48: a requirement whose planned command runs the gate keeps the staged native excerpt. The
-// excerpt form stages only the retained call of that planned command, a reused green as it
-// printed included, and the ticket form refuses that requirement with no staged excerpt. The
-// ticket entry then holds the staged bytes with their digest.
-func TestGateRequirementKeepsTheNativeExcerpt(t *testing.T) {
+// A chunk requirement whose planned command runs the gate is a plain requirement, so the ticket
+// form refuses at the plan grade and writes no record.
+func TestTicketRefusesAPlainGateRequirement(t *testing.T) {
 	f, home := recordtest.Staging(t)
-	planned := []string{"--checkpoint", recordtest.Spec, "--chunk", "1"}
-	f.Plan.Chunks[0].Verification[1].Command = "bench gate " + strings.Join(planned, " ")
-	f.RewritePlan()
 	base, _ := advance(f, "chunk 1")
-	const reused = "gate: green (fresh verdict reused for this tree)\n"
-	f.Retain(home, "gate", planned[:2], 0, reused)
-	if out, code := recordcmd.Command(f.Root, stageArgs(t, "quoted")); code != 1 || !strings.Contains(out, "differs from the planned command") {
-		t.Fatalf("excerpt of another gate call = exit %d, output %q; want the planned-command refusal", code, out)
+	stageOwed(f, home, "1", "1.md")
+	gate := &f.Plan.Chunks[0].Verification[1]
+	gate.Command, gate.Probe = "bench gate --checkpoint "+recordtest.Spec+" --chunk 1", ""
+	f.WritePlan()
+	f.Commit("plan a plain gate requirement")
+	out, code := recordcmd.Command(f.Root, ticketArgs(t, "1", "1.md", "g", "--base", base))
+	if want := "chunk 1: verification quoted has no probe"; code != 1 || !strings.Contains(out, want) {
+		t.Fatalf("ticket = exit %d, output %q; want exit 1 naming %q", code, out, want)
 	}
-	f.Stage(home, "1", "tests", f.Run(0, biting))
-	if out, code := recordcmd.Command(f.Root, ticketArgs(t, "1", "1.md", "g", "--base", base)); code != 1 || !strings.Contains(out, "have no staged excerpt: quoted") {
-		t.Fatalf("ticket with no staged gate excerpt = exit %d, output %q; want the refusal of the gate requirement", code, out)
-	}
-	f.Retain(home, "gate", planned, 0, reused)
-	succeed(t, f, stageArgs(t, "quoted"))
-	succeed(t, f, ticketArgs(t, "1", "1.md", "g", "--base", base))
-	record, err := rr.Read(f.Root, recordtest.Spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	gate := slices.IndexFunc(record.Chunks[0].Verification, func(entry rr.Verification) bool { return entry.Requirement == "quoted" })
-	if gate < 0 {
-		t.Fatalf("entries = %+v, want one for the gate requirement", record.Chunks[0].Verification)
-	}
-	if native := record.Chunks[0].Verification[gate].NativeRef; native.Excerpt != reused || native.Digest != rr.Digest([]byte(reused)) {
-		t.Fatalf("gate entry native reference = %+v, want the staged bytes %q and their digest", native, reused)
+	if record := recordBytes(t, f); record != nil {
+		t.Fatalf("the refusal wrote the record:\n%s", record)
 	}
 }
 

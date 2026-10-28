@@ -12,16 +12,22 @@ import (
 	"time"
 )
 
-// The two seams a consumer of a landing's timings selects by. The reader names both
-// here rather than importing the packages that open those spans, because this package
-// owns the record and neither gate nor worktree may sit below it. A reader test
-// reconciles the pair against Registry, so a renamed seam reds rather than drifting.
+// The seams a consumer of the record selects by. The reader names them here rather than
+// importing the packages that open those spans, because this package owns the record and
+// neither gate, commit, nor worktree may sit below it. Registry names each of them
+// through these constants, so a renamed seam changes in one place.
 const (
 	// SeamLanding is the seam a landing's own span states.
 	SeamLanding = "worktree.land"
 
 	// SeamGatePhase is the seam one gate phase's span states.
 	SeamGatePhase = "gate.phase"
+
+	// SeamCommit is the seam one commit's span states.
+	SeamCommit = "commit"
+
+	// SeamLane is the seam one lane run's span states.
+	SeamLane = "lane"
 )
 
 // recordLineLimit bounds one record line. A line longer than this is a record no

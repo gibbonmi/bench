@@ -227,6 +227,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    Use explicit `unknown` for unavailable model or effort metadata.
    Pass the minimal native excerpt to `bench record` in a file, and the verb computes its digest.
    `bench record chunk` writes one chunk entry, `bench record excerpt` stages the last retained response as one excerpt, and `bench record ticket` writes one ticket's entries.
+   `/bench-implement-spec` owns the staging rule of `bench record ticket`.
    Local logs are supplemental evidence.
    Keep author verification separate from independent review.
 

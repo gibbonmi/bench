@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/treetarget"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
 
@@ -152,6 +153,63 @@ func TestHelpFormPrintsNoTreeRow(t *testing.T) {
 			t.Errorf("%q = (%d, %q, %q), want exit 0 and no row", argv, code, stdout, stderr)
 		}
 	}
+}
+
+// BC58, BC59, BC60: the help form of each registry definition and family leaf names the
+// tree-target flag with its operand exactly when that call is tree-scoped and answers at
+// exit 0. A verb that refuses its help argument at exit 2 has no help answer. The calls come
+// from the registry, so a new verb needs no test edit. The text is the root help text of
+// `bench commit`, so the verb help and the root help show one form.
+func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
+	t.Setenv(benchhome.Env, t.TempDir())
+	t.Setenv("BENCH_AGENT", "")
+	commit, _ := commandByName("commit")
+	insertion := commit.treeTargetInsertion()
+	want := strings.TrimPrefix(insertion, " ")
+	if !strings.Contains(renderCommandHelp(), "bench commit"+insertion) {
+		t.Fatalf("root help names no %q for bench commit", want)
+	}
+	type call struct {
+		argv  []string
+		scope treeScope
+	}
+	var calls []call
+	for _, definition := range commandRegistry {
+		if definition.Scope != 0 && !definition.WrapperOnly {
+			calls = append(calls, call{[]string{definition.Name, "--help"}, definition.Scope})
+		}
+		for _, leaf := range definition.Leaves {
+			calls = append(calls, call{[]string{definition.Name, leaf.Name, "--help"}, leaf.Scope})
+		}
+	}
+	root := newAXIEnvelopeRepo(t)
+	answered := map[string]bool{}
+	for _, c := range calls {
+		result := runAXICommandAt(t, root, c.argv)
+		both := result.stdout + result.stderr
+		got, named := strings.Contains(both, want), c.scope == scopeTree && result.code == 0
+		if got != named {
+			t.Errorf("bench %q = (%d, %q, %q) names %q: %v, want %v", c.argv, result.code, result.stdout, result.stderr, want, got, named)
+		}
+		definition, _ := commandByName(c.argv[0])
+		if line := definition.treeTargetLine(); named && (line == "" || !strings.Contains(result.stdout, line)) {
+			t.Errorf("bench %q stdout = %q, want the line %q", c.argv, result.stdout, line)
+		}
+		if c.scope == scopeRepository && (strings.Contains(both, "tree target:") || strings.Contains(both, treetarget.Operand)) {
+			t.Errorf("bench %q = (%q, %q), want no tree-target line and no %q", c.argv, result.stdout, result.stderr, treetarget.Operand)
+		}
+		answered[strings.Join(c.argv, " ")] = named
+	}
+	if !answered["commit --help"] {
+		t.Fatalf("help answers = %v, want bench commit --help among the named answers", answered)
+	}
+}
+
+// withoutTreeTargetLine answers the help output of verb without the tree-target line that
+// ends it, so a test that grades the verb's own help keeps its expectation.
+func withoutTreeTargetLine(verb, out string) string {
+	definition, _ := commandByName(verb)
+	return strings.TrimSuffix(out, definition.treeTargetLine())
 }
 
 // TT24: outside a repository a tree-scoped verb prints no row and keeps its own answer,

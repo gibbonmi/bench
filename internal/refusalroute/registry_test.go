@@ -58,6 +58,29 @@ func TestUnregisteredFaceRefusesWithAReviewerRoute(t *testing.T) {
 	}
 }
 
+// TestChainCommitRendersTheRecordCommit renders the record commit of a ticket record. The
+// composed chain prints as written ahead of the record path, which prints quoted, and a value
+// that is absent or not line-safe prints its placeholder.
+func TestChainCommitRendersTheRecordCommit(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		chain, record string
+		want          string
+	}{
+		{name: "plain values", chain: "--preflight-build 's' --base 'abc'", record: "reviews/s.md",
+			want: "bench commit -m <msg> --preflight-build 's' --base 'abc' 'reviews/s.md'"},
+		{name: "no chain", record: "reviews/s.md", want: "bench commit -m <msg> <chain> 'reviews/s.md'"},
+		{name: "record not line-safe", chain: "--preflight-build 's'", record: "reviews/\n.md",
+			want: "bench commit -m <msg> --preflight-build 's' <record>"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := ChainCommit(map[string]string{FactChain: tc.chain, FactRecord: tc.record}); got != tc.want {
+				t.Fatalf("ChainCommit = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // TestConstructorCarriesTheRegisteredFace asks the constructor for a face of an injected
 // inventory. The declared sentence fills an empty observed one, an observed sentence
 // keeps its cause, and the paths and the rendered route travel on the refusal.

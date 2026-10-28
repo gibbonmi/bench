@@ -89,9 +89,11 @@ func TestTreeTargetRunsInNamedWorktree(t *testing.T) {
 	}
 }
 
-// TT50: the real executable, with BENCH_KIT set to the kit root, refuses a kit worktree
-// target whose build no longer matches the tree, and it starts no child. The build is a
-// script that freshness.Publish seals and that writes a marker when it runs.
+// TT50, BC64: the real executable, with BENCH_KIT set to the kit root, refuses a kit
+// worktree target whose build no longer matches the tree, and it starts no child. The build
+// is a script that freshness.Publish seals and that writes a marker when it runs. The primary
+// checkout holds no build that matches the target tree, and the seal of the running
+// executable names the kit tree, so no candidate matches.
 func TestTreeTargetRefusesStaleKitBuild(t *testing.T) {
 	t.Parallel()
 	fixture, alpha := treeTargetFixture(t)

@@ -49,31 +49,59 @@ func TestBenchkitLaneBuildIgnoresAStrayGitDirAboveTheCheckout(t *testing.T) {
 	}
 }
 
-// BG29: the lane keeps its relay. The engine buffers each phase's stream and prints
-// failure rows instead, but a worktree commit still prints its red check's own lines,
-// each under that check's prefix. A lane routed through the engine's buffer would print
-// nothing here.
+// BG29 and BC51: the lane keeps its relay. A worktree commit still prints its red check's
+// own lines, each under that check's prefix, from the lane log. A passing check's lines
+// stay in the log, and a lane that hides every report prints nothing here.
 func TestLaneRelaysARedCheckOwnLines(t *testing.T) {
-	diagnostics := &laneDiagnostics{first: map[string]string{}}
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
 	var stdout, stderr bytes.Buffer
-	checks := []Phase{{Name: "prose", Argv: []string{"sh", "-c", "echo prose refused a marker phrase; echo on stderr too >&2; exit 1"}}}
-	results, cancelled := schedule(context.Background(), t.TempDir(), checks, laneWriters(&stdout, &stderr, diagnostics))
-
-	if cancelled || len(results) != 1 || results[0].Code == 0 {
-		t.Fatalf("lane schedule = %+v, cancelled %v; want one red check", results, cancelled)
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Stdout: &stdout, Stderr: &stderr,
+		Checks: []Phase{
+			{Name: "docs", Argv: []string{"sh", "-c", "echo docs passed"}},
+			{Name: "prose", Argv: []string{"sh", "-c", "echo prose refused a marker phrase; echo on stderr too >&2; exit 1"}},
+		},
+	})
+	if err != nil || result.Passed() || result.Check != "prose" {
+		t.Fatalf("lane = %+v, %v; want a red prose check", result, err)
 	}
-	if want := "[prose] prose refused a marker phrase\n"; stdout.String() != want {
-		t.Errorf("lane stdout = %q, want %q", stdout.String(), want)
+	for _, want := range []string{"[prose] prose refused a marker phrase\n", "[prose] on stderr too\n"} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Errorf("lane stdout = %q, want %q", stdout.String(), want)
+		}
 	}
-	if want := "[prose] on stderr too\n"; stderr.String() != want {
-		t.Errorf("lane stderr = %q, want %q", stderr.String(), want)
+	if strings.Contains(stdout.String()+stderr.String(), "[docs]") {
+		t.Errorf("lane response = %q %q, want no line of the passing check", stdout.String(), stderr.String())
 	}
 	// Which stream reached the tap first is the copier goroutines' race, so the
 	// diagnostic is pinned to being one of the check's own lines, not to which one.
-	switch diagnostics.firstLine("prose", nil) {
+	switch result.Diagnostic {
 	case "prose refused a marker phrase", "on stderr too":
 	default:
-		t.Errorf("lane diagnostic = %q, want one of the check's own lines", diagnostics.firstLine("prose", nil))
+		t.Errorf("lane diagnostic = %q, want one of the check's own lines", result.Diagnostic)
+	}
+}
+
+// BC51: a red check whose output ends with no newline still relays only its own line. Each
+// check's last partial line ends at its close, so in the shared lane log the next check's
+// text starts a line of its own.
+func TestLaneRelaysARedCheckPartialLine(t *testing.T) {
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	var stdout bytes.Buffer
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Stdout: &stdout,
+		Checks: []Phase{
+			{Name: "docs", Argv: []string{"sh", "-c", "printf 'docs passed'"}},
+			{Name: "prose", Argv: []string{"sh", "-c", "printf refused; exit 1"}},
+		},
+	})
+	if err != nil || result.Passed() || result.Check != "prose" {
+		t.Fatalf("lane = %+v, %v; want a red prose check", result, err)
+	}
+	if want := "[prose] refused\n"; stdout.String() != want {
+		t.Errorf("lane stdout = %q, want exactly %q", stdout.String(), want)
 	}
 }
 

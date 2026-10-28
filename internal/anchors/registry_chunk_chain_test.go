@@ -11,7 +11,7 @@ func TestChunkChainAnchors(t *testing.T) {
 		reference    = ".bench/BENCH-reference.md"
 	)
 	anchorHarness{group: AfterImplementSpec, rules: []anchorRule{
-		{file: implement, section: "Build", needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", want: "chunk chain: build preflight runs through the worktree with the chunk's --base and --source-tip after each ticket commit"},
+		{file: implement, section: "Build", needle: "After each ticket commit, run `bench worktree exec <target> -- bench preflight build <slug> --base <chunk-base> --source-tip <tip>`.", want: "chunk chain: the implement phase restored the exec build preflight after a ticket commit", forbidden: true},
 		{file: implement, section: "Build", needle: "Prepare the review charge before the author record commit.", want: "chunk chain: the Build section puts the review charge before the author record commit", forbidden: true},
 		{file: "docs/adr/0023-each-ticket-gets-a-fresh-author.md", needle: "and so does a phase that needs a learning's fix.", want: "chunk chain: ADR 0023 restored the unscoped light-path dispatch of a phase", forbidden: true},
 		{file: implement, section: "Land", needle: "A build folds `main` with `bench worktree merge --from main <target>` before the first chunk, or in a chunk gap before the first dispatch of the next chunk.", want: "chunk chain: a build folds main only before the first chunk or in a chunk gap"},

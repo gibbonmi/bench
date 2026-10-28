@@ -27,6 +27,22 @@ func TestRetroRejectsMalformedBodyWithoutWriting(t *testing.T) {
 	}
 }
 
+func TestRetroRejectsABodyWithoutCost(t *testing.T) {
+	root := newRepo(t)
+	body := eligibleRetro(t)
+	start, end := strings.Index(body, "## Cost\n"), strings.Index(body, "## Gate-stage timings\n")
+	if start < 0 || end < start {
+		t.Fatalf("eligible fixture holds no Cost section before the timings:\n%s", body)
+	}
+	out, code := RetroCommand([]string{"costless", "--body", body[:start] + body[end:]})
+	if code == 0 || !strings.Contains(out, "## Cost") {
+		t.Fatalf("body without Cost = %q/%d, want a refusal that names the heading", out, code)
+	}
+	if _, err := os.Stat(filepath.Join(root, retros.Path("costless"))); !os.IsNotExist(err) {
+		t.Fatalf("refused retrospective created a file: %v", err)
+	}
+}
+
 func TestRetroRoundTripsOneEligibleArtifact(t *testing.T) {
 	root := newRepo(t)
 	out, code := RetroCommand([]string{"first", "--body", eligibleRetro(t)})

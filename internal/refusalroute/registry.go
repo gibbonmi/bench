@@ -160,6 +160,12 @@ const (
 	// FactTarget is the label of the integration target of a declared build. Its placeholder
 	// is the build grammar's <target>, which a route prints when the ledger does not read.
 	FactTarget = "target"
+	// FactChain is the chained build preflight of a commit: the chain flags of the commit
+	// verb, each value rendered by Arg. The raising site composes it, because the commit verb
+	// owns the flags and imports this package.
+	FactChain = "chain"
+	// FactRecord is the path of the review record that a step commits.
+	FactRecord = "record"
 )
 
 // Arg renders one value of a command that a raising site composes: shell-quoted, or the
@@ -177,10 +183,9 @@ func callerRerun(verb string) Step {
 	return TreeCommand(verb, Fact(FactLabel), Composed(FactArguments))
 }
 
-// renderRerun renders the caller's re-run step over values: the label and the arguments
-// that the printing verb composed. A face whose route ends with the printing verb's re-run
-// reads the result.
-func renderRerun(step Step, values map[string]string) string { return step.render(factsFill(values)) }
+// renderStep renders one step over values, the facts that the printing verb composed. The
+// caller's re-run steps and the record commit render through it.
+func renderStep(step Step, values map[string]string) string { return step.render(factsFill(values)) }
 
 // recordRerun re-runs the caller's own record form. The record grammar puts the form first,
 // so the raising site composes the arguments from the form, the slug, and the caller's flags.
@@ -188,7 +193,7 @@ var recordRerun = callerRerun("bench record")
 
 // RecordRerun renders the caller's own record re-run over values, so a refused record form
 // re-runs itself and never names another verb.
-func RecordRerun(values map[string]string) string { return renderRerun(recordRerun, values) }
+func RecordRerun(values map[string]string) string { return renderStep(recordRerun, values) }
 
 // commitAt commits the operator's repair in the worktree that the named label fact
 // addresses. Every face whose repair is the agent's own commit names this one step.
@@ -199,6 +204,13 @@ func commitAt(label string) Step { return commitPathsAt(label, Operators("path")
 func commitPathsAt(label string, paths Word) Step {
 	return TreeCommand("bench commit", Fact(label), Text("-m"), Operator("msg"), Text("--"), paths)
 }
+
+// chainCommit commits the review record with the build preflight chained after the commit.
+// The ticket record prints it after its table, so the author's next paste records the ticket.
+var chainCommit = Command(Text("bench commit"), Text("-m"), Operator("msg"), Composed(FactChain), Fact(FactRecord))
+
+// ChainCommit renders the record commit over values: the composed chain and the record path.
+func ChainCommit(values map[string]string) string { return renderStep(chainCommit, values) }
 
 // doctor diagnoses an infrastructure outcome ahead of the caller's re-run.
 var doctor = Command(Text("bench doctor"))

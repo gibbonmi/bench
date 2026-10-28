@@ -332,7 +332,7 @@ func (c Command) Run(args []string) int {
 	}
 	row := definition.treeRow(args[1:])
 	if !definition.bound(args[1:]).bounded {
-		return c.finishExempt(row, definition.run(c, args[1:]))
+		return c.finishExempt(row, definition.runNamingTarget(c, args[1:]))
 	}
 	return c.runBounded(definition, args[0], args[1:], row)
 }

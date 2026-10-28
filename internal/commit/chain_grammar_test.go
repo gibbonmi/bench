@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -23,14 +25,24 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	return exit
 }
 
-// An empty --preflight-build value is what an unset shell variable expands to, so the
-// grammar refuses it before any repository read.
-func TestCommitChainRefusesEmptySlug(t *testing.T) {
-	t.Chdir(t.TempDir())
-	var stdout, stderr bytes.Buffer
-	code := Command([]string{"-m", "m", "--preflight-build", "", "a.txt"}, &stdout, &stderr)
-	if want := toon.Usage(grammar.Cmd, usage.EmptyFlagValue(PreflightBuildFlag)) + "\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
-		t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
+// An empty --preflight-build or --base value is what an unset shell variable expands to, so
+// the grammar refuses it before any repository read.
+func TestCommitChainRefusesEmptyValue(t *testing.T) {
+	for _, tc := range []struct {
+		name, flag string
+		args       []string
+	}{
+		{name: "slug", flag: PreflightBuildFlag, args: []string{"-m", "m", PreflightBuildFlag, "", "a.txt"}},
+		{name: "base", flag: BaseFlag, args: []string{PreflightBuildFlag, "s", BaseFlag, "", "-m", "m", "p"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			var stdout, stderr bytes.Buffer
+			code := Command(tc.args, &stdout, &stderr)
+			if want := toon.Usage(grammar.Cmd, usage.EmptyFlagValue(tc.flag)) + "\n"; code != 2 || stdout.Len() != 0 || stderr.String() != want {
+				t.Fatalf("exit = %d, stdout = %q, stderr = %q; want exit 2, no stdout, and stderr %q", code, stdout.String(), stderr.String(), want)
+			}
+		})
 	}
 }
 
@@ -47,9 +59,23 @@ func TestCommitChainRefusesDryRun(t *testing.T) {
 	}
 }
 
+// A refused chained commit re-runs with its base, so the pasted route passes the same base
+// to the build preflight as the caller's own commit.
+func TestRefusalReRunKeepsTheBase(t *testing.T) {
+	quoted := sanitize.ShellQuote
+	f := assignedCommitSet(t, "rerun", gateScript("exit 0"))
+	code, stdout, stderr := runCommand(t, f.checkout, PreflightBuildFlag, "commit-fixture", "--base", "chunk-base", "-m", "m", "--", "missing.txt")
+	next, printed := printedNext(stderr)
+	steps := refusalroute.Steps(next)
+	want := callerCommit(quoted("rerun"), PreflightBuildFlag, quoted("commit-fixture"), "--base", quoted("chunk-base"), "-m", quoted("m"), "--", quoted("missing.txt"))
+	if code != 1 || !printed || steps[len(steps)-1] != want {
+		t.Fatalf("commit = (%d, %q, %q), want exit 1 and a next= route that ends with %q", code, stdout, stderr, want)
+	}
+}
+
 // Run hands the command layer the checkout it ran in, the slug --preflight-build named,
-// and the commit it published: HEAD after a green commit or a publication remainder,
-// and nothing after a refusal.
+// the base --base named, and the commit it published: HEAD after a green commit or a
+// publication remainder, and nothing after a refusal.
 func TestRunOutcomeNamesThePublishedCommit(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -70,11 +96,12 @@ func TestRunOutcomeNamesThePublishedCommit(t *testing.T) {
 				namedDir(t, root, "named")
 			}
 			t.Chdir(root)
-			outcome, code := Run([]string{"-m", "m", "--preflight-build", "slug", tc.path}, io.Discard, io.Discard)
+			outcome, code := Run([]string{"-m", "m", "--preflight-build", "slug", "--base", "chunk-base", tc.path}, io.Discard, io.Discard)
 			head := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
 			want := Outcome{
 				Root:           strings.TrimSpace(string(runGit(t, root, "rev-parse", "--show-toplevel"))),
 				PreflightBuild: "slug",
+				Base:           "chunk-base",
 			}
 			if tc.published {
 				want.Published = head

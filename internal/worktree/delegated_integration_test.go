@@ -39,13 +39,13 @@ func delegatedJourneyChunks(plan *rr.Plan) {
 	plan.Chunks = []rr.PlannedChunk{
 		{ID: "A", Tickets: []string{"1.md", "2.md"}, Verification: []rr.Requirement{
 			{ID: "first", Command: "go test ./...", Probe: "omit source check"},
-			{ID: "second", Command: "go test -race ./..."},
+			{ID: "second", Command: "go test -race ./...", Probe: "omit race check"},
 		}},
 		{ID: "B", Tickets: []string{"3.md"}, Verification: []rr.Requirement{
-			{ID: "independent", Command: "go test ./..."},
+			{ID: "independent", Command: "go test ./...", Probe: "omit source check"},
 		}},
 		{ID: "C", Tickets: []string{"4.md"}, Verification: []rr.Requirement{
-			{ID: "dependent", Command: "go test ./..."},
+			{ID: "dependent", Command: "go test ./...", Probe: "omit source check"},
 		}},
 	}
 }

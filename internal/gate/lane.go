@@ -171,7 +171,12 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 	runCtx, cancel := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancel()
 	diagnostics := &laneDiagnostics{first: map[string]string{}}
-	results, cancelled := schedule(runCtx, checkout, checks, laneWriters(req.Stdout, req.Stderr, diagnostics))
+	log, err := openLaneLog(gitdir)
+	if err != nil {
+		return LaneResult{}, err
+	}
+	defer log.Close()
+	results, cancelled := schedule(runCtx, checkout, checks, laneWriters(log, log, diagnostics))
 	if cancelled {
 		return LaneResult{}, errors.New("gate: lane interrupted")
 	}
@@ -194,6 +199,10 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 		}
 		result.Outcome, result.Check = laneFail, settled.Name
 		result.Diagnostic = diagnostics.firstLine(settled.Name, settled.StartErr)
+		// A pass prints no check line, so a red prints its failing check's lines from the log.
+		if err := relayCheckLines(log.Name(), settled.Name, discardIfNil(req.Stdout)); err != nil {
+			return LaneResult{}, err
+		}
 		break
 	}
 	// A nested user that outlives its check keeps a resource, so the run reaches no outcome.
@@ -208,7 +217,7 @@ func runLane(ctx context.Context, req LaneRequest) (LaneResult, error) {
 
 // The lane's seam record. The lane runs in this process, so the boundary that opens the
 // span is the lane itself rather than a verb above it.
-const otelLaneSeam = "lane"
+const otelLaneSeam = otelrecord.SeamLane
 
 // beginLaneSpan starts the lane's span and returns the closer that ends it. A red lane
 // carries the first failing check and that check's first diagnostic line, because the

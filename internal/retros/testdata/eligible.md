@@ -2,6 +2,10 @@
 
 Land the ticket.
 
+## Cost
+
+- wall: 960 min
+
 ## Gate-stage timings
 
 - test: 1s

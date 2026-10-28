@@ -54,7 +54,7 @@ func TestDecideAllGreen(t *testing.T) {
 
 	wantChecks := []string{
 		"base-current", "paths-authorized",
-		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve", "kit-pin",
+		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve", "kit-pin",
 		"rows-owned", "rows-membership", "chunk-rows", "diff-nonempty",
 	}
 	if len(first.Checks) != len(wantChecks) {
@@ -97,8 +97,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 10 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 10", naSeen)
+	if naSeen != 9 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
 	}
 }
 
@@ -532,7 +532,7 @@ func TestTicketGatedRowsNotApplicableWithoutTickets(t *testing.T) {
 	v := Decide(f)
 
 	want := []string{
-		"tickets-parse", "completion-plan", "check-floor", "blockers-resolve", "writes-resolve",
+		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
 		"kit-pin",
 	}
 	at := -1

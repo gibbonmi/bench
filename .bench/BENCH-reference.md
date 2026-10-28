@@ -251,9 +251,8 @@ focused test or check. The verb then restores the subject and proves the
 restore byte-exact. The single form prints one verdict: `bit` at exit 0, `silent` at exit 1, `invalid` at
 exit 1, and `restore-failed` at exit 2. A `restore-failed` run names the
 preserved copy under `$BENCH_HOME/probe/<repo-key>/`; every other verdict
-removes the copy. For a worktree, run
-`bench worktree exec <target> -- bench probe ...`, because the verb takes no
-target operand.
+removes the copy.
+For a worktree, run `bench probe --in <target> ...`.
 
 The mutation is a swap, an omission, an unwrap, an insertion, a deletion, or a
 combined mutant, and `bench probe --help` holds the grammar.
@@ -323,6 +322,9 @@ execution row, the answer prints the `preserved` table when a restore failed.
 Then it prints the failed baseline report, or each started mutant's
 `mutant_report[1]{mutant}` and report.
 
+A bitten set prints no report: every row reads `bit`, no restore failed, and
+the cleanup did not fail. Its `trailing_bytes` reads 0.
+
 `bench record verification --probe-result <file> --mutant <n>` imports row `<n>`
 of a mutant-set answer.
 
@@ -345,6 +347,11 @@ verdict. From the destination, `bench worktree land` is the operational handoff:
 composes that pair and runs the gate on it before publication and source release.
 That run is the whole-project gate, unless the landing plan selects the reader set.
 Executable help owns its flags and positional grammar.
+
+The lane writes the output of each check to the lane log `bench-lane.log`
+in the Git directory of the worktree. It truncates that log at the start of each run.
+A lane pass prints no check line, and a lane red prints the lines of the failing check
+from that log.
 
 During a pending merge, a worktree `bench commit` requires every path that the
 merge changed. It records each merge head as a further parent and then ends the

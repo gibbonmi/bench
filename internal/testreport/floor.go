@@ -8,18 +8,11 @@ import (
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
-// Floor is the package part of one ticket's check floor: the packages that the ticket
-// writes directly, without the reverse-import closure of `--changed`.
+// Floor is the set of packages that a list of `Writes:` entries writes directly, without
+// the reverse-import closure of `--changed`.
 type Floor struct {
 	// Packages are the directory-relative package patterns, in sorted order.
 	Packages []string
-	// Checks are the named checks that the ticket owes in place of a package run: the
-	// system check for the system-suite package, whose package run builds no file of the
-	// suite.
-	Checks []string
-	// Embed reports that an entry is an embed file or selects a package that declares
-	// an embed pattern.
-	Embed bool
 }
 
 // WritesFloor derives the floor of one ticket from its raw `Writes:` entries, `(new)`
@@ -44,12 +37,6 @@ func writesFloorWithLoader(ctx context.Context, root string, entries []string, l
 	}
 	floor := Floor{}
 	selected := map[string]bool{}
-	add := func(importPath string) {
-		selected[importPath] = true
-		if len(index.byImport[importPath].EmbedPatterns) != 0 {
-			floor.Embed = true
-		}
-	}
 	everyPackage := false
 	for _, entry := range entries {
 		entryPath, _ := tickets.WritesPath(entry)
@@ -59,26 +46,23 @@ func writesFloorWithLoader(ctx context.Context, root string, entries []string, l
 		}
 		goPackage, embedOwner := index.owners(entryPath)
 		if goPackage != "" {
-			add(goPackage)
+			selected[goPackage] = true
 		}
 		// The index holds only the embed files that exist, so an absent `(new)` asset
 		// adds no owner.
 		if embedOwner != "" {
-			add(embedOwner)
-			floor.Embed = true
+			selected[embedOwner] = true
 		}
 		for directory, importPath := range index.byDirectory {
 			if tickets.Covers(entryPath, directory) {
-				add(importPath)
+				selected[importPath] = true
 			}
 		}
 	}
 	for directory, importPath := range index.byDirectory {
-		switch {
-		case !selected[importPath]:
-		case importPath == index.system:
-			floor.Checks = []string{gate.SystemPhaseName}
-		default:
+		// The system-suite package adds no pattern, because its package run builds no file
+		// of the suite.
+		if selected[importPath] && importPath != index.system {
 			floor.Packages = append(floor.Packages, packagePattern(root, directory))
 		}
 	}

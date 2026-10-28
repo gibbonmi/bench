@@ -139,7 +139,7 @@ func TestRecordReviewReportsItsRow(t *testing.T) {
 func TestRecordedChunkPassesTheCheckpoint(t *testing.T) {
 	f := recorded(t, 1)
 	verify(t, f)
-	verify(t, f, unprobed)
+	verify(t, f, additionalCall)
 	for _, axis := range rr.Axes() {
 		review(t, f, axis, "review-"+axis)
 	}

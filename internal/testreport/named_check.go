@@ -19,8 +19,8 @@ import (
 const ProseCheckName = "prose"
 
 // RootConformanceCheckName names the unscoped run of the root conformance test, which
-// grades every registered dev-tier check. The build preflight reads it as the check-floor
-// element, so the name has one spelling.
+// grades every registered dev-tier check. Every reader of the check reads this name, so
+// the name has one spelling.
 const RootConformanceCheckName = "root-conformance"
 
 // rootConformanceUnavailable is the error title of a root-conformance run over a root

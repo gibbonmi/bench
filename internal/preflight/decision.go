@@ -16,7 +16,6 @@ import (
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/preflight/staleness"
-	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/tickets"
 )
 
@@ -107,10 +106,6 @@ type Facts struct {
 	// and a verdict can never disagree about the plan.
 	CompletionPlanDigest string
 	CompletionPlanError  string
-	// CompletionPlan is the parsed plan that the digest names, and CheckFloor is the
-	// evidence that check-floor grades against it.
-	CompletionPlan reviewrecord.Plan
-	CheckFloor     CheckFloorFacts
 
 	// WritesPathExists reports, for each `Writes:` entry declared across the parsed
 	// tickets, whether the path it names resolves in the tree. The gatherer owns the
@@ -217,7 +212,6 @@ func Decide(f Facts) Verdict {
 		pathsAuthorizedCheck(f),
 		ticketRow(f, "tickets-parse", ticketsParseCheck),
 		ticketRow(f, "completion-plan", completionPlanCheck),
-		ticketRow(f, checkFloorName, checkFloorCheck),
 		ticketRow(f, "blockers-resolve", blockersResolveCheck),
 		ticketRow(f, "writes-resolve", writesResolveCheck),
 		ticketRow(f, "kit-pin", kitPinCheck),

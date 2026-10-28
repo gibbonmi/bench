@@ -62,7 +62,7 @@ Run in order; prune or send back a change that fails a loop, never ship it.
    Proportionality: a prose-only change (no hook, gate, CLI, or adapter touched)
    may replace the full shift with a green gate verdict plus a read of every surface
    the prose steers. Say which verification ran.
-   Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench worktree exec <target> -- bench gate` for a batch that waits for approval.
+   Take the green verdict from the whole-project gate. That gate is the landing's gate, or `bench gate --in <target>` for a batch that waits for approval.
    Anything that touches behavior always dogfoods.
 
 ## Propose; the reviewer merges

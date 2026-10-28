@@ -30,7 +30,7 @@ var commitChain = chainSteps{Commit: commit.Run, Build: worktree.BuildCommand, P
 const publishedStepRedExit = 4
 
 // chainHelp is the help line for the chain that commitChainCommand runs.
-var chainHelp = commit.PreflightBuildFlag + " <slug>: after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit; end with commit-chain{commit,build,preflight}; " +
+var chainHelp = commit.PreflightBuildGroup + ": after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit, with " + commit.BaseFlag + " when the commit names one; end with commit-chain{commit,build,preflight}; " +
 	"exit " + strconv.Itoa(publishedStepRedExit) + ": published; a later step failed, so the commit exists and the commit-chain line names it; the commit's own exits keep their meaning"
 
 // commitChainCommand runs the commit and, when --preflight-build names a slug, the worktree
@@ -55,7 +55,12 @@ func commitChainCommand(c Command, args []string) int {
 		exit = steps.Build(outcome.Root, worktree.Home(), []string{outcome.Root}, c.Stdout, c.Stderr)
 		build = stepState[exit == 0]
 		if exit == 0 {
-			out, code := steps.Preflight([]string{evidencecmd.ModeBuild, outcome.PreflightBuild, evidencecmd.FlagTip, outcome.Published})
+			args := []string{evidencecmd.ModeBuild, outcome.PreflightBuild, evidencecmd.FlagTip, outcome.Published}
+			// A commit that names no base passes none, so the preflight reads its own default.
+			if outcome.Base != "" {
+				args = append(args, evidencecmd.FlagBase, outcome.Base)
+			}
+			out, code := steps.Preflight(args)
 			fmt.Fprint(c.Stdout, out)
 			exit, preflight = code, stepState[code == 0]
 		}
