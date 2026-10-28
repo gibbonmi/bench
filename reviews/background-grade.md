@@ -3887,3 +3887,13 @@ Count: 3. Worst issue: no fixture holds a second worktree.
 - No-op, confidence 4: RC83 now asserts a whole run after the retirement of the prepared run.
 
 The BG92 sentence at `.agents/commands/bench-implement-spec.md:68` says that the checkpoint reuses the green, but it reuses the green only when the grade ends green. Target T6 corrects it. `Queue.Withdraw` does not queue again a key that another worktree wanted. That loss costs one optional grade, and the code documents it.
+
+### BG-C8 repair reds
+
+The repair session recorded these reds at the repair commit `c20009c23`. The orchestrator ran the T4 probe at the record commit `ff1b073d4`.
+
+- T1: `TestStopAllRecordsStopped` and `TestSlowTeardownRecordsStopped` each recorded `aborted` before the change.
+- T1: four mutants of `internal/gate/backgroundstate/stop.go` bit, and each one names a part of the stop step.
+- T2: `TestLaterGradeKeepsTheRecordedLog` read an empty log of the red record during the later grade.
+- T4: a prefix match without the path separator in `queue.go` bit both `TestWithdrawTakesOutOnlyTheWorktreeAndItsChildren` and `TestReleaseKeepsTheGradeOfAPrefixWorktree`.
+- T5: a complete checkpoint that reuses the stripped chunk green bit `TestCompleteCheckpointIgnoresABackgroundChunkGreen` through reuse, not a refusal.
