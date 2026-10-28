@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:afed42110e5cf94f89620cf212044f2461429b735a54964f193ce5cadf70276d",
+  "plan_digest": "sha256:efd81b765659c0c100c9c772db9e2519769687f6535d71d70ec3384b47c17814",
   "implementation_session": "",
   "chunks": [
     {
       "id": "BC-C1",
       "base": "77ec3655a4601a57165b33d58c4328bdfdf72d34",
-      "tip": "f0d811335ac529969264109ac3439c54bc649f1c",
-      "plan_digest": "sha256:afed42110e5cf94f89620cf212044f2461429b735a54964f193ce5cadf70276d",
-      "source_digest": "09e8efc193f31a48ceba77ac89b1b2bf23665fa8",
+      "tip": "94c5e6fb21bcb29adc29b58701eca5da8c96eb01",
+      "plan_digest": "sha256:efd81b765659c0c100c9c772db9e2519769687f6535d71d70ec3384b47c17814",
+      "source_digest": "1973ab354a72c1d6c865d7ecedda279f379d1d8a",
       "acceptance_rows": [
         "BC24",
         "BC25",
@@ -60,6 +60,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/plan.go,swap,failed,3,TestPlanProbeOnlyChunks/absent_chunk_list,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestPlanProbeOnlyChunks,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,765\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,101,6\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/absent_chunk_list,\"plan_probe_test.go:64: plan grade refused the probe-only plan: chunk 2: missing required verification inventory\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/empty_chunk_list,\"plan_probe_test.go:64: plan grade refused the probe-only plan: chunk 2: missing required verification inventory\",1\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/missing_probe_entry,\"plan_probe_test.go:74: chunk 2: missing required verification inventory\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t02-probe-02",
+          "performer": "claude:bc-t02-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1973ab354a72c1d6c865d7ecedda279f379d1d8a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bc-t02-author-20261028",
+            "digest": "sha256:698e50a3fa8e1c863d7ddafbfd6aa9aa024d8f24f20572abc18503d7abdc259e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/plan.go,swap,failed,1,TestPlanProbeOnlyChunks/plain_chunk_requirement,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestPlanProbeOnlyChunks,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,392\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,158,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/plain_chunk_requirement,\"plan_probe_test.go:62: plan grade = <nil>, want a refusal naming \\\"chunk 2: verification plain has no probe\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "94c5e6fb21bcb29adc29b58701eca5da8c96eb01",
+          "requirement": "probe-02",
+          "command": "bench probe internal/reviewrecord/plan.go --swap 'if owned != nil && item.Probe == \"\" {' --with 'if false {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Disable the plain chunk requirement refusal. The plan with a plain chunk requirement must then pass, so the plan test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:bc-t02-author-20261028",
+              "digest": "sha256:698e50a3fa8e1c863d7ddafbfd6aa9aa024d8f24f20572abc18503d7abdc259e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/plan.go,swap,failed,1,TestPlanProbeOnlyChunks/plain_chunk_requirement,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestPlanProbeOnlyChunks,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,392\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,158,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestPlanProbeOnlyChunks/plain_chunk_requirement,\"plan_probe_test.go:62: plan grade = <nil>, want a refusal naming \\\"chunk 2: verification plain has no probe\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -71,6 +101,17 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:afed42110e5cf94f89620cf212044f2461429b735a54964f193ce5cadf70276d",
+      "to": "sha256:efd81b765659c0c100c9c772db9e2519769687f6535d71d70ec3384b47c17814",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
