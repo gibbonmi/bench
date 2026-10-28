@@ -6,7 +6,9 @@ Roadmap: FT463
 
 Decision source: reviewer-confirmed current conversation, 2026-10-28, with `roadmap/FT463.md` as the reviewed row
 
-Verification log: pending
+Verification log: 4 iterations to accept — the spec round took 2 (S1 picked a later landing because the rule named a state, and S2 left two live anchors outside the fence), and the ticket round took 2 (T1 left three fixture readers outside ticket 02, and T2 left the command-notes reader outside ticket 09). Both rounds ran on fable / high.
+
+Implementation approval: approved by the reviewer on 2026-10-28 in the current conversation
 
 ## Problem
 
