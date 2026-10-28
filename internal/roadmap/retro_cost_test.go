@@ -1,6 +1,7 @@
 package roadmap
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/retros"
 )
 
@@ -98,8 +100,8 @@ func newCostRepo(t *testing.T) (costRepo, string) {
 	r.commit(-3600, "fold source", map[string]string{"main.txt": "fold\n"})
 	r.git(0, "checkout", "-q", "build")
 	plan := `{"version":2,"execution":{"mode":"delegate","run_id":"r","orchestrator_session":"o","author_limit":1,"assignments":{` +
-		`"a.md":[{"session":"a1"},{"session":"a2","predecessor":"a1"}],` +
-		`"b.md":[{"session":"b1"}],"c.md":[{"session":"c1"},{"session":"c2","predecessor":"c1"}],"d.md":[]}},` +
+		`"a.md":[{"session":"a1","assignment":"asg-a"},{"session":"a2","assignment":"asg-a","predecessor":"a1"}],` +
+		`"b.md":[{"session":"b1","assignment":"asg-b"}],"c.md":[{"session":"c1"},{"session":"c2","predecessor":"c1"}],"d.md":[]}},` +
 		`"chunks":[{"id":"X","tickets":["a.md","b.md"]},{"id":"Y","tickets":["c.md"]},{"id":"Z","tickets":["d.md"]}],` +
 		`"final_verification":[{"id":"g","command":"bench gate"}]}`
 	r.commit(0, "spec", map[string]string{
@@ -142,6 +144,7 @@ func TestRetroCostSection(t *testing.T) {
 			"- commits: 5 total, 3 bookkeeping, 2 change",
 			"- graph: 4 tickets, chain 3, 3 chunks, 2 serial checkpoints",
 			"- dispatch: 3 authors, 2 repairs",
+			"- trace: unknown",
 			"- wall per ticket: 240.0 min against 60 min, over budget",
 			"- bookkeeping per ticket: 0.8 against 7.1",
 		}, "\n")},
@@ -152,6 +155,7 @@ func TestRetroCostSection(t *testing.T) {
 			"- commits: unknown total, unknown bookkeeping, unknown change",
 			"- graph: unknown tickets, chain unknown, unknown chunks, unknown serial checkpoints",
 			"- dispatch: unknown authors, unknown repairs",
+			"- trace: unknown",
 			"- wall per ticket: unknown min against 60 min",
 			"- bookkeeping per ticket: unknown against 7.1",
 		}, "\n")},
@@ -194,6 +198,84 @@ func TestRetroCostBudget(t *testing.T) {
 			got := budgetLines(costFacts{tickets: tc.tickets, wall: tc.wall, bookkeeping: tc.booked, ranged: true, graphed: true})
 			if strings.Join(got, "\n") != strings.Join(tc.want, "\n") {
 				t.Fatalf("budget lines =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(tc.want, "\n"))
+			}
+		})
+	}
+}
+
+// costSpan is one canned finished span of the record. start and the elapsed ms are fixed,
+// so the sums are exact and no expectation reads the wall clock.
+type costSpan struct {
+	trace, seam, assignment string
+	ms                      int
+}
+
+// writeCostRecord writes spans as the live record of root below home, one OTLP line each.
+func writeCostRecord(t *testing.T, home, root string, spans []costSpan) {
+	t.Helper()
+	var lines []string
+	for i, s := range spans {
+		attrs := []map[string]any{{"key": otelrecord.AttrSeam, "value": map[string]string{"stringValue": s.seam}}}
+		if s.assignment != "" {
+			attrs = append(attrs, map[string]any{"key": otelrecord.AttrAssignmentID, "value": map[string]string{"stringValue": s.assignment}})
+		}
+		start := int64(costEpoch) * 1e9
+		line, err := json.Marshal(map[string]any{"resourceSpans": []any{map[string]any{"resource": map[string]any{}, "scopeSpans": []any{map[string]any{"scope": map[string]any{}, "spans": []any{map[string]any{
+			"traceId": s.trace, "spanId": strconv.Itoa(i + 1), "name": s.seam, "kind": 1,
+			"startTimeUnixNano": strconv.FormatInt(start, 10), "endTimeUnixNano": strconv.FormatInt(start+int64(s.ms)*1e6, 10),
+			"attributes": attrs, "status": map[string]int{"code": 0},
+		}}}}}}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		lines = append(lines, string(line))
+	}
+	path := otelrecord.Path(home, root)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRetroCostTraceTimes(t *testing.T) {
+	r, _ := newCostRepo(t)
+	t.Chdir(r.root)
+	root := r.git(0, "rev-parse", "--show-toplevel")
+	planned := []costSpan{
+		{trace: "t1", seam: "commit", assignment: "asg-a", ms: 100},
+		{trace: "t1", seam: "commit", ms: 200},
+		{trace: "t1", seam: "lane", ms: 300},
+		{trace: "t1", seam: otelrecord.SeamGatePhase, ms: 50},
+		{trace: "t2", seam: otelrecord.SeamLanding, assignment: "asg-b", ms: 400},
+	}
+	foreign := []costSpan{
+		{trace: "t3", seam: "commit", assignment: "asg-other", ms: 1000},
+		{trace: "t4", seam: "commit", ms: 2000},
+	}
+	for _, tc := range []struct {
+		name, slug string
+		spans      []costSpan
+		want       string
+	}{
+		{name: "plan spans", slug: "s", spans: append(append([]costSpan{}, planned...), foreign...), want: "- trace: commit 2 spans in 300 ms, lane 1 spans in 300 ms, landing 1 spans in 400 ms"},
+		{name: "absent record", slug: "s", want: "- trace: unknown"},
+		{name: "no plan span", slug: "s", spans: foreign, want: "- trace: unknown"},
+		{name: "version 1 plan", slug: "o", spans: planned, want: "- trace: unknown"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home := t.TempDir()
+			t.Setenv("BENCH_HOME", home)
+			if tc.spans != nil {
+				writeCostRecord(t, home, root, tc.spans)
+			}
+			body, code := RetroCommand([]string{tc.slug, "--scaffold"})
+			if code != 0 {
+				t.Fatalf("scaffold exit = %d, want 0: %q", code, body)
+			}
+			if got := stageLine(t, sectionOf(t, body, retros.CostHeading), "- trace:"); got != tc.want {
+				t.Fatalf("trace line = %q, want %q", got, tc.want)
 			}
 		})
 	}

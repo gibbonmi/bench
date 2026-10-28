@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/tickets"
@@ -40,10 +42,15 @@ type costFacts struct {
 	tickets, chain, chunks, checkpoints int
 	dispatched                          bool
 	authors, repairs                    int
+	assignments                         map[string]bool
 }
 
+// traceSeams are the seams that the trace line sums, in line order, each with its label.
+var traceSeams = []struct{ label, seam string }{{"commit", "commit"}, {"lane", "lane"}, {"landing", otelrecord.SeamLanding}}
+
 // costSection prints the build cost of slug from its landing commit L. It reads git
-// history and the tree of L, so a retired spec folder loses no fact. Each fact that the
+// history and the tree of L, so a retired spec folder loses no fact. The trace line reads
+// the record of the resolved Bench home. Each fact that the
 // tree does not hold reads unknown, so a missing measurement never blocks the draft.
 func costSection(root, slug string) string {
 	f := deriveCost(root, slug)
@@ -57,8 +64,39 @@ func costSection(root, slug string) string {
 		"- commits: " + costCount(f.total, f.ranged) + " total, " + costCount(f.bookkeeping, f.ranged) + " bookkeeping, " + costCount(f.change, f.ranged) + " change",
 		"- graph: " + costCount(f.tickets, f.graphed) + " tickets, chain " + costCount(f.chain, f.graphed) + ", " + costCount(f.chunks, f.graphed) + " chunks, " + costCount(f.checkpoints, f.graphed) + " serial checkpoints",
 		"- dispatch: " + costCount(f.authors, f.dispatched) + " authors, " + costCount(f.repairs, f.dispatched) + " repairs",
+		"- trace: " + traceTimes(benchhome.Dir(), root, f.assignments),
 	}
 	return strings.Join(append(lines, budgetLines(f)...), "\n")
+}
+
+// traceTimes states the count and the summed milliseconds of each seam in traceSeams. It
+// keeps each trace that holds a span of an assignment in ids. An absent record and a record
+// without a span of those assignments state unknown, because a zero would read as measured.
+func traceTimes(home, root string, ids map[string]bool) string {
+	spans, err := otelrecord.ReadSpans(home, root)
+	if err != nil {
+		return unknownFact
+	}
+	traces := map[string]bool{}
+	for _, span := range spans {
+		if ids[span.Attributes[otelrecord.AttrAssignmentID]] {
+			traces[span.TraceID] = true
+		}
+	}
+	if len(traces) == 0 {
+		return unknownFact
+	}
+	parts := make([]string, 0, len(traceSeams))
+	for _, seam := range traceSeams {
+		count, total := 0, int64(0)
+		for _, span := range spans {
+			if traces[span.TraceID] && span.Seam == seam.seam {
+				count, total = count+1, total+span.Elapsed().Milliseconds()
+			}
+		}
+		parts = append(parts, seam.label+" "+strconv.Itoa(count)+" spans in "+strconv.FormatInt(total, 10)+" ms")
+	}
+	return strings.Join(parts, ", ")
 }
 
 // budgetLines compares each per-ticket value with its budget in costBudgets.
@@ -178,8 +216,12 @@ func planCost(root, slug string, f *costFacts) {
 		return
 	}
 	if plan.Version == 2 && plan.Execution != nil {
+		f.assignments = map[string]bool{}
 		for _, history := range plan.Execution.Assignments {
 			for _, assignment := range history {
+				if assignment.Assignment != "" {
+					f.assignments[assignment.Assignment] = true
+				}
 				if assignment.Predecessor != "" {
 					f.repairs++
 				} else {
