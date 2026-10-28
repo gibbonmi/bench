@@ -83,6 +83,28 @@ func TestLaneRelaysARedCheckOwnLines(t *testing.T) {
 	}
 }
 
+// BC51: a red check whose output ends with no newline still relays only its own line. Each
+// check's last partial line ends at its close, so in the shared lane log the next check's
+// text starts a line of its own.
+func TestLaneRelaysARedCheckPartialLine(t *testing.T) {
+	root := outcomeFixture(t)
+	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	var stdout bytes.Buffer
+	result, err := RunLane(context.Background(), LaneRequest{
+		Root: root, Tree: tree, Stdout: &stdout,
+		Checks: []Phase{
+			{Name: "docs", Argv: []string{"sh", "-c", "printf 'docs passed'"}},
+			{Name: "prose", Argv: []string{"sh", "-c", "printf refused; exit 1"}},
+		},
+	})
+	if err != nil || result.Passed() || result.Check != "prose" {
+		t.Fatalf("lane = %+v, %v; want a red prose check", result, err)
+	}
+	if want := "[prose] refused\n"; stdout.String() != want {
+		t.Errorf("lane stdout = %q, want exactly %q", stdout.String(), want)
+	}
+}
+
 // T03: the kit lane's two toolchain checks carry -trimpath, so a lane checkout writes no
 // path-keyed archive. The literals are independent of the flag owner.
 func TestBenchkitLaneToolchainChecksCarryTrimPath(t *testing.T) {

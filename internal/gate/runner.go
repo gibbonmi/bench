@@ -490,11 +490,11 @@ func (w *prefixWriter) Write(p []byte) (int, error) {
 	}
 }
 
+// Close ends a last partial line with a newline, so the next check's text starts its own line.
 func (w *prefixWriter) Close() {
-	if len(w.buf) == 0 {
-		return
+	if len(w.buf) > 0 {
+		_ = w.writeLine(append(w.buf, '\n'))
 	}
-	_ = w.writeLine(w.buf)
 	w.buf = nil
 }
 

@@ -49,7 +49,7 @@ func TestSetSelectionCloseFailure(t *testing.T) {
 				}
 				return
 			}
-			if report := strings.LastIndex(out, "mutant_report[1]{mutant}:\n  2\n"); report < 0 || report > at {
+			if report := strings.LastIndex(out, reportHeading(t, 2)); report < 0 || report > at {
 				t.Fatalf("stdout = %q, want the cleanup line after the reports", out)
 			}
 			requireRow(t, out, code, 1, setRows(t, biteRow(1, "swap"), biteRow(2, "swap"))+setSelection(t, "passed", 1))

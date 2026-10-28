@@ -341,7 +341,7 @@ func TestMutantSetPrintsEachReport(t *testing.T) {
 		installStubStarts(t, f, probetest.Start{Events: events, Exit: 1}, probetest.Start{Events: events, Exit: 1})
 		reports[events], _ = testreport.Command(f.root, clampSelection)
 	}
-	suffix := "mutant_report[1]{mutant}:\n  1\n" + reports[first] + "mutant_report[1]{mutant}:\n  3\n" + reports[third]
+	suffix := reportHeading(t, 1) + reports[first] + reportHeading(t, 3) + reports[third]
 	head := setRows(t, biteRow(1, "swap"), missRow(2), biteRow(3, "swap"), missRow(4)) + setSelection(t, "passed", 0) + setExecution(t, 1, len(suffix))
 	if want := head + suffix; out != want || code != 1 {
 		t.Fatalf("stdout = (%q, %d), want (%q, 1)", out, code, want)

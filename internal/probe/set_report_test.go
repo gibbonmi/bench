@@ -2,13 +2,23 @@ package probe
 
 import (
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/probe/probetest"
 )
+
+// reportHeading is the heading of mutant n's report. The answer's renderer owns the
+// mutant_report table and its mutantReportFields schema, so each report test reads it there.
+func reportHeading(t *testing.T, n int) string {
+	t.Helper()
+	heading, err := mutantReportHeading(n)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return heading
+}
 
 // TestMutantSetSuccessOmitsTheReports covers BC53, BC54, BC55, and BC57. A set of four mutants
 // that each bit and restored prints its three tables with trailing_bytes=0 in at most 10 lines,
@@ -49,7 +59,7 @@ func TestMutantSetSuccessOmitsTheReports(t *testing.T) {
 				t.Fatalf("exit = %d, want %d\n%s", code, tc.command, out)
 			}
 			for _, n := range tc.started {
-				if heading := "mutant_report[1]{mutant}:\n  " + strconv.Itoa(n) + "\n"; !strings.Contains(out, heading) {
+				if heading := reportHeading(t, n); !strings.Contains(out, heading) {
 					t.Errorf("stdout = %q, want the report of mutant %d", out, n)
 				}
 			}

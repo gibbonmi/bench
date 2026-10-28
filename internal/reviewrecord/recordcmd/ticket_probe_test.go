@@ -41,6 +41,32 @@ func TestTicketFreezesWithoutRequirements(t *testing.T) {
 	}
 }
 
+// requireBitEntry requires that chunk's verification entry id is a probe that bit and restored,
+// at tip, with exit 0 and the excerpt bytes. Its mutation is the plan probe of the requirement
+// that the ID names after its prefix.
+func requireBitEntry(t *testing.T, f *recordtest.Fixture, chunk, id, tip, excerpt string) {
+	t.Helper()
+	results := chunkEntry(t, f, chunk).Verification
+	i := slices.IndexFunc(results, func(entry rr.Verification) bool { return entry.ID == id })
+	if i < 0 {
+		t.Fatalf("entries = %q, want %s", verificationIDs(rr.Chunk{Verification: results}), id)
+	}
+	got := results[i]
+	requirement := strings.SplitN(id, "-", 2)[1]
+	planned := f.Plan.Chunk(chunk).Verification
+	j := slices.IndexFunc(planned, func(item rr.Requirement) bool { return item.ID == requirement })
+	if j < 0 {
+		t.Fatalf("chunk %s plans no requirement %s", chunk, requirement)
+	}
+	want := rr.Probe{Outcome: "bit", ExitCode: 1, Restore: "pass", Mutation: planned[j].Probe}
+	if got.Probe != nil {
+		want.NativeRef = got.Probe.NativeRef
+	}
+	if got.SourceCommit != tip || got.NativeRef.Excerpt != excerpt || *got.ExitCode != 0 || got.Probe == nil || !reflect.DeepEqual(*got.Probe, want) {
+		t.Errorf("entry %s = at %s, exit %d, probe %+v; want at %s, exit 0, %+v, and the excerpt bytes", id, got.SourceCommit, *got.ExitCode, got.Probe, tip, want)
+	}
+}
+
 // ticketCase prepares one call of TestTicketStagesTheRetainedProbe. It answers the fixture, the
 // home, the chunk base, and the ticket argv before the extra flags.
 type ticketCase func(t *testing.T) (*recordtest.Fixture, string, string, []string)
@@ -86,7 +112,6 @@ func TestTicketStagesTheRetainedProbe(t *testing.T) {
 	produce, _ := setProducer(t, linked(t, 1))
 	set, setExit := silentThenBiting(produce)
 	retained := answer("bit", "yes", 0, "1", "packages[1]{package,outcome}:\n  retained,failed\n")
-	bit := rr.Probe{Outcome: "bit", ExitCode: 1, Restore: "pass"}
 	for _, tc := range []struct {
 		name, verb   string
 		chunk        string
@@ -99,13 +124,12 @@ func TestTicketStagesTheRetainedProbe(t *testing.T) {
 		entry        string
 		used         int
 		carried      string
-		want         rr.Probe
 		refusalNames string
 	}{
-		{name: "single-form probe", verb: "probe", output: retained, prepare: firstChunk(true), entry: "p-additional", used: 1, carried: "none", want: bit},
-		{name: "mutant row 2", verb: "probe", output: set, exit: setExit, prepare: firstChunk(true), extra: []string{"--mutant", "2"}, entry: "p-additional", used: 1, carried: "none", want: bit},
-		{name: "first ticket of a later chunk", verb: "probe", chunk: "2", output: retained, prepare: laterChunk, entry: "p-additional", used: 1, carried: "none", want: bit},
-		{name: "carried requirements", verb: "probe", output: retained, prepare: carriedRepairCase, entry: "repair-pkg", carried: "system,other", want: bit},
+		{name: "single-form probe", verb: "probe", output: retained, prepare: firstChunk(true), entry: "p-additional", used: 1, carried: "none"},
+		{name: "mutant row 2", verb: "probe", output: set, exit: setExit, prepare: firstChunk(true), extra: []string{"--mutant", "2"}, entry: "p-additional", used: 1, carried: "none"},
+		{name: "first ticket of a later chunk", verb: "probe", chunk: "2", output: retained, prepare: laterChunk, entry: "p-additional", used: 1, carried: "none"},
+		{name: "carried requirements", verb: "probe", output: retained, prepare: carriedRepairCase, entry: "repair-pkg", carried: "system,other"},
 		{name: "bench test response", verb: "test", output: retained, prepare: firstChunk(true), refusalNames: "these owed requirements have no staged excerpt: additional"},
 		{name: "two unstaged requirements", verb: "probe", output: retained, prepare: firstChunk(false), refusalNames: "these owed requirements have no staged excerpt: tests, additional"},
 		{name: "head off the chunk line", verb: "probe", output: retained, prepare: firstChunk(true), offLine: true, refusalNames: "requirement additional: the staged run at "},
@@ -144,24 +168,7 @@ func TestTicketStagesTheRetainedProbe(t *testing.T) {
 			if cell := carriedCell(t, out); cell != tc.carried {
 				t.Errorf("carried cell = %v, want %s", cell, tc.carried)
 			}
-			results := chunkEntry(t, f, tc.chunk).Verification
-			i := slices.IndexFunc(results, func(entry rr.Verification) bool { return entry.ID == tc.entry })
-			if i < 0 {
-				t.Fatalf("entries = %q, want %s", verificationIDs(rr.Chunk{Verification: results}), tc.entry)
-			}
-			got := results[i]
-			requirement := strings.SplitN(tc.entry, "-", 2)[1]
-			for _, planned := range f.Plan.Chunk(tc.chunk).Verification {
-				if planned.ID == requirement {
-					tc.want.Mutation = planned.Probe
-				}
-			}
-			if got.Probe != nil {
-				tc.want.NativeRef = got.Probe.NativeRef
-			}
-			if got.SourceCommit != tip || got.NativeRef.Excerpt != tc.output || *got.ExitCode != 0 || got.Probe == nil || !reflect.DeepEqual(*got.Probe, tc.want) {
-				t.Errorf("entry %s = at %s, exit %d, probe %+v; want at %s, exit 0, %+v, and the retained bytes", got.ID, got.SourceCommit, *got.ExitCode, got.Probe, tip, tc.want)
-			}
+			requireBitEntry(t, f, tc.chunk, tc.entry, tip, tc.output)
 			if after := responseboundtest.StoreFiles(t, home); len(after) != len(stages)-tc.used {
 				t.Errorf("store files after the write = %q, want %d used stages gone from %q", after, tc.used, stages)
 			}

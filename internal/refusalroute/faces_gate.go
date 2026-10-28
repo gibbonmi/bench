@@ -11,7 +11,7 @@ import (
 var gateRerun = callerRerun("bench gate")
 
 // GateRerun renders the caller's own gate re-run over values.
-func GateRerun(values map[string]string) string { return renderRerun(gateRerun, values) }
+func GateRerun(values map[string]string) string { return renderStep(gateRerun, values) }
 
 // FactForm is the record form that writes the entry a checkpoint refusal lacks.
 const FactForm = "form"

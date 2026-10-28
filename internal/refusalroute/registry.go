@@ -183,10 +183,9 @@ func callerRerun(verb string) Step {
 	return TreeCommand(verb, Fact(FactLabel), Composed(FactArguments))
 }
 
-// renderRerun renders one step over values, the facts that the printing verb composed. The
-// caller's re-run steps and the record commit render through it. A face whose route ends
-// with the printing verb's re-run reads the result.
-func renderRerun(step Step, values map[string]string) string { return step.render(factsFill(values)) }
+// renderStep renders one step over values, the facts that the printing verb composed. The
+// caller's re-run steps and the record commit render through it.
+func renderStep(step Step, values map[string]string) string { return step.render(factsFill(values)) }
 
 // recordRerun re-runs the caller's own record form. The record grammar puts the form first,
 // so the raising site composes the arguments from the form, the slug, and the caller's flags.
@@ -194,7 +193,7 @@ var recordRerun = callerRerun("bench record")
 
 // RecordRerun renders the caller's own record re-run over values, so a refused record form
 // re-runs itself and never names another verb.
-func RecordRerun(values map[string]string) string { return renderRerun(recordRerun, values) }
+func RecordRerun(values map[string]string) string { return renderStep(recordRerun, values) }
 
 // commitAt commits the operator's repair in the worktree that the named label fact
 // addresses. Every face whose repair is the agent's own commit names this one step.
@@ -211,7 +210,7 @@ func commitPathsAt(label string, paths Word) Step {
 var chainCommit = Command(Text("bench commit"), Text("-m"), Operator("msg"), Composed(FactChain), Fact(FactRecord))
 
 // ChainCommit renders the record commit over values: the composed chain and the record path.
-func ChainCommit(values map[string]string) string { return renderRerun(chainCommit, values) }
+func ChainCommit(values map[string]string) string { return renderStep(chainCommit, values) }
 
 // doctor diagnoses an infrastructure outcome ahead of the caller's re-run.
 var doctor = Command(Text("bench doctor"))
