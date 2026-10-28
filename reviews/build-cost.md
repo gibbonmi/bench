@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:b622acd49359a136d5db51a81fdfb5c2968ea605b1930f108260833a7735bcb1",
+  "plan_digest": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
   "implementation_session": "",
   "chunks": [
     {
@@ -972,6 +972,57 @@
           ]
         }
       ]
+    },
+    {
+      "id": "BC-C4",
+      "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+      "tip": "f3715d25f94f91e1d0653ae9bed0bc13093e1a14",
+      "plan_digest": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
+      "source_digest": "0690801faf6ff98f40eec7561b621755af64964d",
+      "acceptance_rows": [
+        "BC49",
+        "BC50",
+        "BC51",
+        "BC52",
+        "BC53",
+        "BC54",
+        "BC55",
+        "BC56",
+        "BC57"
+      ],
+      "verification": [
+        {
+          "id": "t08-probe-08",
+          "performer": "claude:bc-t08-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0690801faf6ff98f40eec7561b621755af64964d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t08-author-20261028",
+            "digest": "sha256:f7ae3b9359f7d38e18c153d4b4b97dd651557009db5082958bc71964052461c5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLanePassPrintsNoCheckReport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLanePassPrintsNoCheckReport,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,356\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,48,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLanePassPrintsNoCheckReport,\"lane_report_test.go:44: first run: response line \\\"[prose] prose first run\\\", want no check line on a pass\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f3715d25f94f91e1d0653ae9bed0bc13093e1a14",
+          "requirement": "probe-08",
+          "command": "bench probe internal/gate/lane.go --swap 'laneWriters(log, log, diagnostics)' --with 'laneWriters(req.Stdout, req.Stderr, diagnostics)' --package ./internal/gate --run TestLanePassPrintsNoCheckReport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Stream the check reports to the response again. The pass response must then hold check lines, so the lane test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t08-author-20261028",
+              "digest": "sha256:f7ae3b9359f7d38e18c153d4b4b97dd651557009db5082958bc71964052461c5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLanePassPrintsNoCheckReport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLanePassPrintsNoCheckReport,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,356\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,48,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLanePassPrintsNoCheckReport,\"lane_report_test.go:44: first run: response line \\\"[prose] prose first run\\\", want no check line on a pass\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1129,6 +1180,21 @@
     {
       "from": "sha256:e94bd1ac5ff6e27ad382b440816c4facc6765cff52c26320a4ccdabfb8b528ab",
       "to": "sha256:b622acd49359a136d5db51a81fdfb5c2968ea605b1930f108260833a7735bcb1",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b622acd49359a136d5db51a81fdfb5c2968ea605b1930f108260833a7735bcb1",
+      "to": "sha256:470e287b5b23fbcec53c6e0e1018b34c55c81879a1a49aab33bf78767a0f0fce",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
