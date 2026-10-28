@@ -1080,6 +1080,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/lane.go,swap,failed,1,TestLanePassPrintsNoCheckReport,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLanePassPrintsNoCheckReport,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,418\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,49,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLanePassPrintsNoCheckReport,\"lane_report_test.go:44: first run, which writes the longer lines: response line \\\"[prose] prose first run, which writes the longer lines\\\", want no check line on a pass\",6\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t09-probe-09-r1",
+          "performer": "claude:bc-orchestrator-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2d222051837882e3b988f789f46dbe336e3df38a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+            "digest": "sha256:8c3719c4b11a10457d1f9d558aaa4283c9328d8c80be63048a31d868f2786f2e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1168,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "requirement": "probe-09",
+          "command": "bench probe internal/probe/set.go --swap 'if e.command == 0 {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+              "digest": "sha256:8c3719c4b11a10457d1f9d558aaa4283c9328d8c80be63048a31d868f2786f2e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1168,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
