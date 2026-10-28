@@ -1,7 +1,7 @@
 # Let a landing wait on a background grade
 
 Blocked by: 10-let-a-chunk-checkpoint-wait-on-a-background-grade.md, 11-grade-a-landing-subject-in-the-background.md
-Writes: internal/worktree/land.go, internal/worktree/land_background.go (new), internal/worktree/land_background_test.go (new), internal/worktree/parallel_census_test.go, internal/gate/background_wait.go (new), internal/gate/background_landing.go (new), internal/gate/backgroundstate (new), CHANGELOG.md
+Writes: internal/worktree/land.go, internal/worktree/land_background.go (new), internal/worktree/land_background_test.go (new), internal/worktree/parallel_census_test.go, internal/gate/background_wait.go (new), internal/gate/background_landing.go (new), internal/gate/backgroundstate (new), CHANGELOG.md, internal/gate/background_launch.go
 Covers: BG2, BG3, BG75, BG76, BG77, BG110, BG111
 
 ## What to build
