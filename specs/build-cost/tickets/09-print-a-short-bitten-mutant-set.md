@@ -11,7 +11,7 @@ The predicate is the method `bitten` of the set run, and `answer` calls it on th
 Every other set keeps its current answer: a silent, invalid, or unrestored row, a preserved copy, and a cleanup failure each keep every report.
 
 The short answer stays importable. `bench record excerpt --mutant 1` stages a canned short answer, and `bench record ticket` then writes a probe entry that bit and restored.
-The test of the bitten case in `set_test.go` moves to the short answer. The mutant-set paragraph of the command notes in `.bench/BENCH-reference.md` states that a bitten set prints no report.
+No existing test reads the reports of a bitten set, so the short answer takes a new test. The mutant-set paragraph of the command notes in `.bench/BENCH-reference.md` states that a bitten set prints no report.
 
 ## Acceptance
 

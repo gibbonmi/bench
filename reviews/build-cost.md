@@ -1052,7 +1052,79 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bc-c4-standards-1",
+          "performer": "claude:bc-c4-standards-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d90d2e9cdc6268d244c2c63e6fd7a8e0fa23545",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c4-standards-20261028",
+            "digest": "sha256:e26292dc68aa79da86fb4211c43fdb4257d06661c9287bc8c1019e43df4dc8b7",
+            "excerpt": "axis: Standards\nchunk: BC-C4  pair: bf4e04b9e..c5a2a29f7\nfindings: 4\nworst: F1, setRun.bitten() derives the exit-0 fact a second time beside the e.command computation in answer.\n- F1 [auto-fix] [confidence 7] internal/probe/set.go:312-319 — bitten() repeats the fact that answer derives as e.command == 0 (set.go:266-276); the preserved term adds nothing — skip reports() when e.command == 0 and delete bitten().\n- F2 [auto-fix] [confidence 6] internal/reviewrecord/recordcmd/excerpt_short_test.go:502-514 — a pasted copy of the entry assertion harness of ticket_probe_test.go:147-164 — move it into one helper and call it from both tests.\n- F3 [auto-fix] [confidence 4] internal/refusalroute/registry.go:186-189,214 — renderRerun now renders a step that is not a rerun — rename it renderStep and drop the explaining clause; callers in faces_gate.go:14 and faces_commitment.go:112.\n- F4 [auto-fix] [confidence 5] internal/probe/set.go:263 — one comment line of about 127 columns in a file wrapped at about 96 — rewrap set.go:261-264.\nChecked, no finding: the \"bench-lane.log\" literal pins a spec contract; the prefix read in lane_output.go:156 uses its one source; ChainArgs is the only chain composition; the two seam swaps remove duplicated literals; test ID tags follow tree convention; every path is on a Writes line; no conformance check enforces F1-F4.\nreads: craft-review; craft-comments; AGENTS.md; BENCH.md; check-current; evidence metadata and consumers; the delta; set.go, lane.go, lane_output.go, refusalroute registry.go, otelrecord reader.go and registry.go, ticket_probe_test.go; spec rows BC49-BC57.\nnot-verified: projects/benchkit.md; the touched=false consumers beyond rg; no tests or probes ran.\ncommand-contribution: bench preflight review --charge could name the frozen chunk tip beside the source tip.\n"
+          },
+          "axis": "Standards",
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "tip": "c5a2a29f736677f4bf9371bd7f1c62d1eae79f9e",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c4-spec-1",
+          "performer": "claude:bc-c4-spec-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d90d2e9cdc6268d244c2c63e6fd7a8e0fa23545",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c4-spec-20261028",
+            "digest": "sha256:d086a4b972162395ca764d959d2c7c062c24818f5ea02fc2ca252a159fcc26fd",
+            "excerpt": "axis: Spec\nchunk: BC-C4  pair: bf4e04b9e..c5a2a29f7\nfindings: 4\nworst: F1, ticket 09 and spec.md:454 claim a bitten-case test in set_test.go that does not exist, and spec.md:454 names ticket 08 for it.\n- F1 [auto-fix] [confidence 7] specs/build-cost/tickets/09-print-a-short-bitten-mutant-set.md:14 and specs/build-cost/spec.md:454 — TestMutantSetPrintsEachReport (set_test.go:334-349) holds two misses, so its set is not bitten — reword both sentences: no existing test reads a bitten set's reports. The orchestrator rewords them in the BC-C5 plan commit.\n- F2 [no-op] [confidence 4] internal/probe/set.go:293 — the guard sits in the reports helper that answer calls; the probe-09 text still matches once.\n- F3 [no-op] [confidence 3] internal/reviewrecord/recordcmd/ticket_probe_test.go:67 — the later-chunk case passes --base explicitly, so it shows a pass-through; it meets ticket 08's routed line.\n- F4 [no-op] [confidence 2] internal/commit/grammar.go ChainArgs — an empty base drops --base; unreachable, because a written chunk base is an object ID (parse.go:69).\nrows: BC49-BC57 met; the routed ticket 08 lines met; the BC45 quoted text matches the printed line, and the three copies agree.\nreads: check-current; craft-review; the delta; spec stories, sections, rows, and spec:454; tickets 07-09; route.go; sanitize.ShellQuote; reviewrecord/ticket.go; parse.go; set.go; set_test.go; stage_test.go.\nnot-verified: no test or probe ran; where the caller prints lane{...} after RunLane.\ncommand-contribution: bench coverage should take a chunk or row filter.\n"
+          },
+          "axis": "Spec",
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "tip": "c5a2a29f736677f4bf9371bd7f1c62d1eae79f9e",
+          "finding_ids": [
+            "F1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c4-coverage-1",
+          "performer": "claude:bc-c4-coverage-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4d90d2e9cdc6268d244c2c63e6fd7a8e0fa23545",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c4-coverage-20261028",
+            "digest": "sha256:89429b0e3069025b2f70d2938a45abfa5ff56b1301439796d6471ca240de972d",
+            "excerpt": "axis: Coverage\nchunk: BC-C4  pair: bf4e04b9e..c5a2a29f7\nfindings: 4\nworst: F1, a log opened without O_TRUNC still passes BC52, because the second run writes more bytes than the first.\n- F1 [auto-fix] [confidence 8] internal/gate/lane_output.go:77, lane_report_test.go:204 — no-truncate passes BC52 — make the first run write more than the second and assert that the log holds only the second run's lines.\n- F2 [ask-user] [confidence 6] internal/gate/runner.go:493-498, lane_output.go:93-99 — prefixWriter.Close writes a final partial line with no newline, so a check that ends without one mixes with the next check's line in the shared log, and the relay prints a passing check's text or drops a red line — add a BC51 case with a red check that ends without a newline beside a passing check; end each partial line in the log.\n- F3 [ask-user] [confidence 4] internal/probe/set_report_test.go:52 — a third hand copy of the mutant_report heading, and no recorded red for the started-report cases — derive the heading from mutantReportFields in one test helper, or record the red of an over-broad mutant.\n- F4 [no-op] [confidence 3] internal/reviewrecord/recordcmd/ticket.go:101 — an empty chunk base drops --base; likely unreachable.\nExamined with no gap: BC49 scans both streams; BC50 reads AdminDir; BC51 every-line and no-line relays; BC53/BC57 exact compare; the cleanup-failure set keeps reports; the preserved term is equivalent; BC56 runs the real producer; the later-chunk next= base; the ChainArgs callers.\ntests-run: --package ./internal/gate --package ./internal/probe --package ./internal/reviewrecord/recordcmd --package ./internal/commit with the BC-C4 test names — pass (5 + 8 + 12 + 7).\nreads: craft-review; check-current; rows BC49-BC57; tickets 08 and 09; the code delta; lane.go; lane_output.go; runner.go; set.go; set_cleanup_test.go; ticket_probe_test.go; ticket.go; stage_test.go; the review record; the benchkit checklist.\nnot-verified: F1 and F2 are reasoned, not run; whether written.Chunk.Base can be empty.\ncommand-contribution: no command change is necessary\n"
+          },
+          "axis": "Coverage",
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "tip": "c5a2a29f736677f4bf9371bd7f1c62d1eae79f9e",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1453,3 +1525,32 @@ All three axes pass. Standards F1 is closed, and the help label is a legitimate 
 - Standards N1 and N2: the chain arguments are built in `recordcmd/ticket.go:101` and in `internal/commit/commit.go:243-246`. The fix goes to ticket 08 in BC-C4: one exported chain-args helper and one placeholder name for `--base`.
 - Spec N1: three unquoted copies of the `next=` line remain, at `spec.md:200`, `spec.md:329`, and ticket 07 line 14. The BC-C4 plan commit amends them to the quoted form.
 - Coverage N1: no case asserts the `next=` base of a later chunk. The test goes to ticket 08 in BC-C4.
+
+## BC-C4 review, round 1 (pair bf4e04b9e..c5a2a29f7)
+
+Raw findings: Standards 4, Spec 4, Coverage 4. Repair targets: 7, all routed to one ticket 08 repair session. The orchestrator corrects the Spec F1 prose in the repair's plan commit.
+
+## Standards
+
+Findings: 4. Worst: `bitten()` derives the exit-0 fact a second time (F1).
+
+- F1 auto-fix, confidence 7: `internal/probe/set.go:312-319`. Repair: skip the reports when `e.command == 0` and delete `bitten()`.
+- F2 auto-fix, confidence 6: `excerpt_short_test.go:502-514` pastes an assertion harness. Repair: one shared helper.
+- F3 auto-fix, confidence 4: `internal/refusalroute/registry.go:186-189` names a general renderer `renderRerun`. Repair: rename it `renderStep`.
+- F4 auto-fix, confidence 5: `internal/probe/set.go:263` holds an unwrapped comment. Repair.
+
+## Spec
+
+Findings: 4. Every row is met.
+
+- F1 auto-fix, confidence 7: ticket 09 and `spec.md:454` name a bitten-case test that does not exist. The orchestrator corrects both sentences.
+- F2, F3, F4 no-op: wording drift, a pass-through base case, and an unreachable empty base.
+
+## Coverage
+
+Findings: 4. Worst: a log opened without `O_TRUNC` passes BC52 (F1).
+
+- F1 auto-fix, confidence 8: `internal/gate/lane_output.go:77`. Repair: a first run that writes more than the second.
+- F2 ask-user, confidence 6: a partial last line mixes two checks in the shared lane log (`internal/gate/runner.go:493-498`). The orchestrator accepts it: `prefixWriter.Close` ends a partial line, and a BC51 case pins it.
+- F3 ask-user, confidence 4: a third copy of the `mutant_report` heading, with no recorded red for the started-report cases. Repair: derive the heading from `mutantReportFields`, and record the red of an over-broad mutant.
+- F4 no-op, confidence 3: an empty chunk base is unreachable (`internal/reviewrecord/parse.go:69`).
