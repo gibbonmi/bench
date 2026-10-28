@@ -1,7 +1,7 @@
 # Retire the prepared run
 
 Blocked by: 10-let-a-chunk-checkpoint-wait-on-a-background-grade.md
-Writes: internal/gate/checkpoint.go, internal/gate/gate.go, internal/gate/checkpoint_prepare_test.go, internal/gate/chunk_gap_test.go, internal/gate/review_checkpoint_test.go, internal/gate/lane_record_test.go, internal/gate/delta_checkpoint_test.go, internal/gate/complete_checkpoint_test.go, internal/gate/background_grade_test.go (new), cmd/bench/gate_route_test.go, cmd/bench/help_inventory_test.go, .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .bench/BENCH-reference.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, CHANGELOG.md
+Writes: internal/gate/checkpoint.go, internal/gate/gate.go, internal/gate/checkpoint_prepare_test.go, internal/gate/chunk_gap_test.go, internal/gate/review_checkpoint_test.go, internal/gate/lane_record_test.go, internal/gate/delta_checkpoint_test.go, internal/gate/complete_checkpoint_test.go, internal/gate/background_grade_test.go (new), cmd/bench/gate_route_test.go, cmd/bench/help_inventory_test.go, .agents/commands/bench-implement-spec.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .bench/BENCH-reference.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, CHANGELOG.md, internal/gate/baseline_commit_test.go
 Covers: BG4, BG86, BG87, BG88, BG89, BG90, BG91, BG92, BG100, BG101, BG102, BG103
 
 ## What to build
