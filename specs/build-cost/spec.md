@@ -260,6 +260,62 @@ At slicing, each chunk also lists the plain floor commands that the current `che
           "id": "probe-03",
           "command": "bench probe .agents/commands/bench-implement-spec.md --omit 'After the ticket commit, the author runs only the probes of the plan, because the chunk checkpoint grades every other check.' --check docs-currency-workflow",
           "probe": "Remove the probe-only sentence from the build guidance. Its Require anchor must then fail."
+        },
+        {
+          "id": "floor-root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "floor-internal-conformance",
+          "command": "bench test --package ./internal/conformance"
+        },
+        {
+          "id": "floor-internal-preflight",
+          "command": "bench test --package ./internal/preflight"
+        },
+        {
+          "id": "floor-internal-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord"
+        },
+        {
+          "id": "floor-internal-reviewrecord-recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd"
+        },
+        {
+          "id": "floor-internal-testreport",
+          "command": "bench test --package ./internal/testreport"
+        },
+        {
+          "id": "floor-cmd-bench",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "floor-internal-assessment",
+          "command": "bench test --package ./internal/assessment"
+        },
+        {
+          "id": "floor-internal-preflight-ownership",
+          "command": "bench test --package ./internal/preflight/ownership"
+        },
+        {
+          "id": "floor-internal-preflight-preflighttest",
+          "command": "bench test --package ./internal/preflight/preflighttest"
+        },
+        {
+          "id": "floor-internal-preflight-staleness",
+          "command": "bench test --package ./internal/preflight/staleness"
+        },
+        {
+          "id": "floor-internal-reviewrecord-recordtest",
+          "command": "bench test --package ./internal/reviewrecord/recordtest"
+        },
+        {
+          "id": "floor-internal-worktree",
+          "command": "bench test --package ./internal/worktree"
+        },
+        {
+          "id": "floor-internal-anchors",
+          "command": "bench test --package ./internal/anchors"
         }
       ]
     },
@@ -279,6 +335,34 @@ At slicing, each chunk also lists the plain floor commands that the current `che
           "id": "probe-05",
           "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes",
           "probe": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails."
+        },
+        {
+          "id": "floor-root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "floor-internal-retros",
+          "command": "bench test --package ./internal/retros"
+        },
+        {
+          "id": "floor-internal-reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord"
+        },
+        {
+          "id": "floor-internal-roadmap",
+          "command": "bench test --package ./internal/roadmap"
+        },
+        {
+          "id": "floor-internal-spec",
+          "command": "bench test --package ./internal/spec"
+        },
+        {
+          "id": "floor-cmd-bench",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "floor-internal-anchors",
+          "command": "bench test --package ./internal/anchors"
         }
       ]
     },
@@ -298,6 +382,26 @@ At slicing, each chunk also lists the plain floor commands that the current `che
           "id": "probe-07",
           "command": "bench probe internal/reviewrecord/recordcmd/ticket.go --swap 'if len(unstaged) == 1 && retained.Verb == probe.Verb {' --with 'if false {' --package ./internal/reviewrecord/recordcmd --run TestTicketStagesTheRetainedProbe",
           "probe": "Disable the staging of the retained probe. The ticket call must then refuse with the excerpt form, so the staging test fails."
+        },
+        {
+          "id": "floor-root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "floor-cmd-bench",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "floor-internal-commit",
+          "command": "bench test --package ./internal/commit"
+        },
+        {
+          "id": "floor-internal-anchors",
+          "command": "bench test --package ./internal/anchors"
+        },
+        {
+          "id": "floor-internal-reviewrecord-recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd"
         }
       ]
     },
@@ -317,6 +421,38 @@ At slicing, each chunk also lists the plain floor commands that the current `che
           "id": "probe-09",
           "command": "bench probe internal/probe/set.go --swap 'if s.bitten() {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports",
           "probe": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails."
+        },
+        {
+          "id": "floor-root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "floor-internal-commit",
+          "command": "bench test --package ./internal/commit"
+        },
+        {
+          "id": "floor-internal-gate",
+          "command": "bench test --package ./internal/gate"
+        },
+        {
+          "id": "floor-internal-gate-authorization",
+          "command": "bench test --package ./internal/gate/authorization"
+        },
+        {
+          "id": "floor-internal-worktree",
+          "command": "bench test --package ./internal/worktree"
+        },
+        {
+          "id": "floor-cmd-bench",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "floor-internal-probe",
+          "command": "bench test --package ./internal/probe"
+        },
+        {
+          "id": "floor-internal-reviewrecord-recordcmd",
+          "command": "bench test --package ./internal/reviewrecord/recordcmd"
         }
       ]
     },
@@ -342,6 +478,26 @@ At slicing, each chunk also lists the plain floor commands that the current `che
           "id": "probe-12",
           "command": "bench probe .bench/BENCH.md --omit ' except a `Writes:` widen' --check docs-currency-workflow",
           "probe": "Restore the learning for every widen. The Require anchor of the widen exception must then fail."
+        },
+        {
+          "id": "floor-root-conformance",
+          "command": "bench test --check root-conformance"
+        },
+        {
+          "id": "floor-cmd-bench",
+          "command": "bench test --package ./cmd/bench"
+        },
+        {
+          "id": "floor-system",
+          "command": "bench test --check system"
+        },
+        {
+          "id": "floor-internal-treetarget",
+          "command": "bench test --package ./internal/treetarget"
+        },
+        {
+          "id": "floor-internal-anchors",
+          "command": "bench test --package ./internal/anchors"
         }
       ]
     }
