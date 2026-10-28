@@ -20,7 +20,7 @@ import (
 
 var ticketForm = form{name: reviewrecord.FormTicket, description: "write the entries that one ticket owes from its staged excerpts, a carried entry for each unstaged requirement that can carry, " +
 	"and an entry from the retained bench probe response for the one requirement left, with --mutant naming its row, in one record write; " +
-	"the first ticket of a chunk passes --base, the main tip for the first chunk and the recorded predecessor tip after it; next= prints the record commit; " + writeOrder(reviewrecord.TicketSteps()),
+	"the first ticket of a chunk passes --base, the main tip for the first chunk and the recorded predecessor tip after it; " + refusalroute.NextField + "= prints the record commit; " + writeOrder(reviewrecord.TicketSteps()),
 	flags: []flag{{"--chunk", "<id>", true, once}, {"--ticket", "<basename>", true, once}, {"--id-prefix", "<prefix>", true, once}, {"--performer", "<session>", true, once},
 		{"--model", "<model>", true, once}, {"--effort", "<effort>", true, once}, {"--ref", "<ref>", true, once}, {"--base", "<commit>", false, once}, {"--tip", "<commit>", false, once},
 		{mutantFlag, "<n>", false, once}},
@@ -98,8 +98,9 @@ func ticket(f form, root, spec string, parsed usage.Result) (string, int) {
 	if code != 0 {
 		return table, code
 	}
-	next := []string{"bench commit -m <msg>", benchcommit.PreflightBuildFlag, slug, benchcommit.BaseFlag, written.Chunk.Base, runs.record}
-	return table + refusalroute.NextField + "=" + strings.Join(next, " ") + "\n", 0
+	chain := []string{benchcommit.PreflightBuildFlag, refusalroute.Arg(refusalroute.FactSlug, slug), benchcommit.BaseFlag, refusalroute.Arg("chunk-base", written.Chunk.Base)}
+	next := refusalroute.ChainCommit(map[string]string{refusalroute.FactChain: strings.Join(chain, " "), refusalroute.FactRecord: runs.record})
+	return table + refusalroute.NextField + "=" + next + "\n", 0
 }
 
 // ownedStages reads the stage of each owed requirement of chunk that has one, by requirement ID.

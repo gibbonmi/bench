@@ -160,6 +160,12 @@ const (
 	// FactTarget is the label of the integration target of a declared build. Its placeholder
 	// is the build grammar's <target>, which a route prints when the ledger does not read.
 	FactTarget = "target"
+	// FactChain is the chained build preflight of a commit: the chain flags of the commit
+	// verb, each value rendered by Arg. The raising site composes it, because the commit verb
+	// owns the flags and imports this package.
+	FactChain = "chain"
+	// FactRecord is the path of the review record that a step commits.
+	FactRecord = "record"
 )
 
 // Arg renders one value of a command that a raising site composes: shell-quoted, or the
@@ -199,6 +205,13 @@ func commitAt(label string) Step { return commitPathsAt(label, Operators("path")
 func commitPathsAt(label string, paths Word) Step {
 	return TreeCommand("bench commit", Fact(label), Text("-m"), Operator("msg"), Text("--"), paths)
 }
+
+// chainCommit commits the review record with the build preflight chained after the commit.
+// The ticket record prints it after its table, so the author's next paste records the ticket.
+var chainCommit = Command(Text("bench commit"), Text("-m"), Operator("msg"), Composed(FactChain), Fact(FactRecord))
+
+// ChainCommit renders the record commit over values: the composed chain and the record path.
+func ChainCommit(values map[string]string) string { return chainCommit.render(factsFill(values)) }
 
 // doctor diagnoses an infrastructure outcome ahead of the caller's re-run.
 var doctor = Command(Text("bench doctor"))

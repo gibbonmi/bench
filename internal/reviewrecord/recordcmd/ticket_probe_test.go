@@ -12,6 +12,7 @@ import (
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -149,7 +150,7 @@ func TestTicketStagesTheRetainedProbe(t *testing.T) {
 				t.Errorf("store files after the write = %q, want %d used stages gone from %q", after, tc.used, stages)
 			}
 			lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
-			next := "next=bench commit -m <msg> --preflight-build " + slug(t) + " --base " + base + " " + recordPath(t)
+			next := "next=bench commit -m <msg> --preflight-build " + sanitize.ShellQuote(slug(t)) + " --base " + sanitize.ShellQuote(base) + " " + sanitize.ShellQuote(recordPath(t))
 			if len(lines) > 10 || lines[len(lines)-1] != next || !strings.HasSuffix(out, "\n") {
 				t.Errorf("ticket output = %q, want at most 10 lines that end with %q", out, next)
 			}
