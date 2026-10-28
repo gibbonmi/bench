@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:9e87e2705bb0e847af9116d1454747c55863e9c721423cc52b99a5b303b5e0aa",
+  "plan_digest": "sha256:abf6ac328eccb2b1383bd642b4377232dfbdea9b4b58cd9098317651ee4d6423",
   "implementation_session": "",
   "chunks": [
     {
@@ -1470,6 +1470,62 @@
           }
         }
       ]
+    },
+    {
+      "id": "BC-C5",
+      "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
+      "tip": "68aa5e4327267d2bc3c2e0ccff86332d5c9287b7",
+      "plan_digest": "sha256:abf6ac328eccb2b1383bd642b4377232dfbdea9b4b58cd9098317651ee4d6423",
+      "source_digest": "2ac054eb0160fa87a543f5a583ece5a8a6854020",
+      "acceptance_rows": [
+        "BC58",
+        "BC59",
+        "BC60",
+        "BC61",
+        "BC62",
+        "BC63",
+        "BC64",
+        "BC65",
+        "BC66",
+        "BC67",
+        "BC68",
+        "BC69",
+        "BC70",
+        "BC73"
+      ],
+      "verification": [
+        {
+          "id": "t10-probe-10",
+          "performer": "claude:bc-t10-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2ac054eb0160fa87a543f5a583ece5a8a6854020",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t10-author-20261028",
+            "digest": "sha256:862cdd7562b2727a80028e88a2c1f880c1fdd6c1df8baa27384863a5899b964f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,TestTreeScopedHelpNamesTheTarget,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeScopedHelpNamesTheTarget,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,328\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeScopedHelpNamesTheTarget,\"tree_scope_test.go:168: root help names no \\\"[--in <label|primary>]\\\" for bench commit\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "68aa5e4327267d2bc3c2e0ccff86332d5c9287b7",
+          "requirement": "probe-10",
+          "command": "bench probe cmd/bench/tree_scope.go --swap 'if definition.Scope != scopeTree {' --with 'if true {' --package ./cmd/bench --run TestTreeScopedHelpNamesTheTarget",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Give no definition the tree-target text. The verb help must then omit --in, so the help test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t10-author-20261028",
+              "digest": "sha256:862cdd7562b2727a80028e88a2c1f880c1fdd6c1df8baa27384863a5899b964f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,TestTreeScopedHelpNamesTheTarget,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeScopedHelpNamesTheTarget,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,328\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeScopedHelpNamesTheTarget,\"tree_scope_test.go:168: root help names no \\\"[--in <label|primary>]\\\" for bench commit\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1693,6 +1749,24 @@
     {
       "from": "sha256:2c43866d2c10f41a0080b01b9a7b57b65c30772fbbcf64f235cf81a4baf82f34",
       "to": "sha256:9e87e2705bb0e847af9116d1454747c55863e9c721423cc52b99a5b303b5e0aa",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ],
+        "BC-C4": [
+          "BC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:9e87e2705bb0e847af9116d1454747c55863e9c721423cc52b99a5b303b5e0aa",
+      "to": "sha256:abf6ac328eccb2b1383bd642b4377232dfbdea9b4b58cd9098317651ee4d6423",
       "chunk_ids": {
         "BC-C1": [
           "BC-C1"
