@@ -10,6 +10,7 @@ Covers: BC41, BC42, BC43, BC44, BC45, BC46, BC47, BC48
 The stage applies the checks of the excerpt form: the bound, the probe import, and `--mutant`. Move those checks into one function in `stage.go` that both forms call, so that the rule has one source.
 
 `bench record ticket` takes `--mutant <n>` with the meaning of the excerpt form. A retained call that is not `bench probe` refuses and names `bench record excerpt`. Two or more unstaged owed requirements keep the current refusal. Each refusal leaves the record bytes unchanged.
+The form's help states the `--base` rule: the first ticket of a chunk passes `--base`, with the main tip for the first chunk and the recorded predecessor tip after that. This rule removes the refused record call that the FT448 build paid, by reviewer direction on 2026-10-28.
 After its table, the verb prints one line: `next=bench commit -m <msg> --preflight-build <slug> --base <chunk-base> reviews/<slug>.md`, with the slug and the chunk base of the written entry. The whole response fits in 10 lines.
 
 The Build section of `.agents/commands/bench-implement-spec.md` replaces the exec preflight sentence with: "After the ticket commit, run the probe, then `bench record ticket`, then the record commit that its `next=` line prints."
@@ -24,4 +25,5 @@ The Land section states that the ticket form stages the last probe response, so 
 - [ ] Two unstaged probe requirements refuse and leave the record unchanged (BC44).
 - [ ] The `next=` line names the record commit with the slug and the chunk base (BC45).
 - [ ] A call that writes three entries prints at most 10 lines (BC46).
+- [ ] `bench record --help` states the `--base` rule for the first ticket of a chunk, and the root help inventory test pins the new text.
 - [ ] The Build section holds the new sequence sentence and no exec preflight step (BC47, BC48).
