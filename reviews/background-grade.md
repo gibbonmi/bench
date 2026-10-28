@@ -984,7 +984,73 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c4-review-standards",
+          "performer": "claude:bg-c4-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6f9348524fcdb85d7e2cb1762598b66df431eb10",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c4-review-20261028",
+            "digest": "sha256:7827c536a3b4c462d37d9665e508f774f9344ba4e9831f0ca76c50225ea29e1c",
+            "excerpt": "Unified BG-C4 review (d78984f50..c05c87a8d), Standards: 3 findings. openBuild re-derives the review-record paths at background_grade.go:152-170 (auto-fix through reviewrecord.RecordPath); mixed && and || at checkpoint.go:78 (auto-fix); blank-line removal at main.go:143 (no-op).\n"
+          },
+          "axis": "Standards",
+          "base": "d78984f50a5a0596f70f19b752e3662e3cc92160",
+          "tip": "c05c87a8d42e7c13e44c8181f2cb43dddd7e1eb7",
+          "finding_ids": [
+            "BG-C4-S1",
+            "BG-C4-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c4-review-spec",
+          "performer": "claude:bg-c4-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6f9348524fcdb85d7e2cb1762598b66df431eb10",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c4-review-20261028",
+            "digest": "sha256:bb8fc804ab9e59eff57ad49c43df348a3decfef9dc0f9ed3573aaf3d784068a8",
+            "excerpt": "Unified BG-C4 review (d78984f50..c05c87a8d), Spec: 2 findings. The Edge line on a tip with no review record (closed by plan commit 13768e962: no open build). BENCH_WRAPPER stripped beyond the ticket text (closed by the same plan commit).\n"
+          },
+          "axis": "Spec",
+          "base": "d78984f50a5a0596f70f19b752e3662e3cc92160",
+          "tip": "c05c87a8d42e7c13e44c8181f2cb43dddd7e1eb7",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c4-review-coverage",
+          "performer": "claude:bg-c4-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6f9348524fcdb85d7e2cb1762598b66df431eb10",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c4-review-20261028",
+            "digest": "sha256:4bbfc03e32c14a5ac36aa4af3720ed8ac4db7cc7f0a888b9fa220c18f6e2f41b",
+            "excerpt": "Unified BG-C4 review (d78984f50..c05c87a8d), Coverage: 3 findings. Worst: no test checks that the run sets BENCH_GATE_WIDTH at background_grade.go:240 (auto-fix, new row BG114). Untested open-build branches and BG24 fixture depth (no-op).\n"
+          },
+          "axis": "Coverage",
+          "base": "d78984f50a5a0596f70f19b752e3662e3cc92160",
+          "tip": "c05c87a8d42e7c13e44c8181f2cb43dddd7e1eb7",
+          "finding_ids": [
+            "BG-C4-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1267,3 +1333,30 @@ The orchestrator ran one coordinator mutant for each row at the repair tip `2b4f
 - BG113: the stop loop did not wait for the exit. `TestStopWaitsForTheOwnerExit/live_claim` failed with `Stop returned before the owner exited`.
 
 The repair session showed the reds of its new tests as first failing runs. These tests are `TestImportClosureHoldsNoOtherGatePackage`, `TestWriteClaimRefusesADirectoryThatIsNotPrivate`, and `TestReadClaimRefusesAClaimOfAnotherKey`.
+
+## BG-C4 review
+
+One unified session reviewed the frozen pair `d78984f50..c05c87a8d`. It found 8 raw findings. Plan commit `13768e962` closed the two Spec findings. It added row BG114 and corrected the Edge line and the ticket text. Three repair targets on ticket 06 go to one combined repair session.
+
+## Standards
+
+Count: 3. Worst issue: a second derivation of the review-record paths.
+
+- BG-C4-S1, auto-fix, confidence 4: `internal/gate/background_grade.go:152` derives the record and spec paths from literals. Derive the record path through `reviewrecord.RecordPath`. Target T2.
+- BG-C4-S2, auto-fix, confidence 4: `internal/gate/checkpoint.go:78` mixes `&&` and `||` without parentheses. Target T3.
+- No-op, confidence 8: `cmd/bench/main.go:143` lost one blank line to hold its budget.
+
+## Spec
+
+Count: 2. Worst issue: the Edge line on a tip with no review record.
+
+- Closed by the plan commit, confidence 6: such a tip holds no open build, so a chunk checkpoint cannot use its grade.
+- Closed by the plan commit, confidence 8: the ticket now names `BENCH_WRAPPER` among the cleared variables.
+
+## Coverage
+
+Count: 3. Worst issue: no test checks that the run sets the width input.
+
+- BG-C4-C1, auto-fix, confidence 8: `internal/gate/background_grade.go:240` sets the width input, and no test fails when the call is gone. Add `TestBackgroundGradeSetsTheWidthInput` for row BG114. Target T1.
+- No-op, confidence 5: three open-build branches have no test. They cover no staged spec, more than one staged spec, and a record that is not a regular file. Later rows BG40 and BG74 own those outcomes.
+- No-op, confidence 4: the BG24 fixture builds a record with no chunk entry, which is the case that the row names.
