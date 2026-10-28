@@ -1,7 +1,7 @@
 # Queue and supersede background grades
 
 Blocked by: 08-start-a-background-grade-after-a-lane-pass.md
-Writes: internal/gate/backgroundstate (new), internal/gate/background_grade.go (new), internal/gate/background_launch.go (new), internal/gate/background_queue_test.go (new), CHANGELOG.md, internal/subprocess/processtest, internal/gate/background_wait.go, internal/gate/background_wait_test.go, internal/gate/background_launch_test.go, internal/gate/background_priority_linux.go, internal/gate/background_priority_other.go, internal/gate/run_failure_outcomes_test.go, internal/commit/background_test.go, internal/worktree/merge_background_test.go
+Writes: internal/gate/backgroundstate (new), internal/gate/background_grade.go (new), internal/gate/background_launch.go (new), internal/gate/background_queue_test.go (new), CHANGELOG.md, internal/subprocess/processtest, internal/gate/background_wait.go, internal/gate/background_wait_test.go, internal/gate/background_launch_test.go, internal/gate/background_priority_linux.go, internal/gate/background_priority_other.go, internal/gate/run_failure_outcomes_test.go, internal/commit/background_test.go, internal/worktree/merge_background_test.go, internal/gate/background_priority_linux_test.go (new), internal/gate/background_priority_other_test.go (new)
 Covers: BG46, BG47, BG48, BG49, BG50, BG51, BG52, BG53, BG54, BG55, BG56, BG83, BG108, BG115, BG116
 
 ## What to build
