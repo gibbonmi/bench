@@ -183,8 +183,8 @@ func TestExcerptKeysAHostileRequirementInsideTheScope(t *testing.T) {
 	requireNoWorktreeWrite(t, f)
 }
 
-// RC48: a chunk requirement whose planned command runs the gate is a plain requirement, so the
-// ticket form refuses at the plan grade and writes no record.
+// A chunk requirement whose planned command runs the gate is a plain requirement, so the ticket
+// form refuses at the plan grade and writes no record.
 func TestTicketRefusesAPlainGateRequirement(t *testing.T) {
 	f, home := recordtest.Staging(t)
 	base, _ := advance(f, "chunk 1")

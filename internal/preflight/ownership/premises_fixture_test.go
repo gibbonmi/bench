@@ -226,7 +226,8 @@ func seedEvidenceCommits(t *testing.T, root string) evidenceCommits {
 		chunk.Verification[0].Probe.NativeRef = recordtest.Native(behavioralExcerpt)
 	})
 	// A real compile-failure probe of the planned mutation records the outcome build-failed; its
-	// excerpt names the subject and red_needle, so only the shared probe-bite predicate refuses it.
+	// excerpt names the subject and red_needle, so the checkpoint refuses it as a probe that did
+	// not bite: the verification requires a successful diagnostic probe.
 	compileExcerpt := "# internal/reused [internal/reused.test]\ninternal/reused/reused_test.go:5:2: undefined: " + evidenceTestFunc
 	commits.compileFailure = saveVariant("record compile failure evidence", func(chunk *rr.Chunk) {
 		chunk.Verification[0].Probe.Outcome = "build-failed"
