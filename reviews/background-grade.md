@@ -2210,7 +2210,76 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c7-review-standards",
+          "performer": "claude:bg-c7-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c7-review-20261028",
+            "digest": "sha256:d1623a7fc8ca6c1db6f812b5746e7810db0fbbb4b77cead7b405722277909207",
+            "excerpt": "Unified BG-C7 review (ae69e6a94..0a0a63827), Standards: 4 findings. Destination identity derived twice (parked learning). Stale ClearForCheckpoint doc and overlong hold doc (auto-fix). Moved git wrappers (no-op). Ruling: the composition move is byte-identical.\n"
+          },
+          "axis": "Standards",
+          "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "tip": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "finding_ids": [
+            "BG-C7-S2",
+            "BG-C7-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c7-review-spec",
+          "performer": "claude:bg-c7-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c7-review-20261028",
+            "digest": "sha256:03e80623463b4dfd1722cfc4637877646807b2b521057087a135c9b8428faa2c",
+            "excerpt": "Unified BG-C7 review (ae69e6a94..0a0a63827), Spec: 2 findings. AwaitLanding has no kit predicate against story 6 (auto-fix). An expired wait still takes the lease and ends with 124 (no-op, as BG60).\n"
+          },
+          "axis": "Spec",
+          "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "tip": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "finding_ids": [
+            "BG-C7-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c7-review-coverage",
+          "performer": "claude:bg-c7-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c7-review-20261028",
+            "digest": "sha256:a22f60a21f6ffb04b8ca4263eca68c044b3f7255a45ae6fc5458cb21e5637f83",
+            "excerpt": "Unified BG-C7 review (ae69e6a94..0a0a63827), Coverage: 4 findings. BG2, BG3, BG72, BG73 hold no mutant red (auto-fix); BG110 accepted. No conflicted-tip test (auto-fix). Expired landing wait and broker-exec fall-through untested (no-op).\n"
+          },
+          "axis": "Coverage",
+          "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "tip": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "finding_ids": [
+            "BG-C7-C1",
+            "BG-C7-C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2845,3 +2914,38 @@ Count: 4. Worst issue: BG66 has no chunk variant.
 - BG-C6-C3, auto-fix, confidence 6: the launch fixtures are keyless stand-ins. The new BG115 and BG116 tests cover the differing executable and the wanted key. Target T2 and T3.
 - Review-owned, confidence 8: BG59 cannot go red on this host.
 - Closed by this record, confidence 5: the paragraph above records the reds of tickets 08 to 10.
+
+## BG-C7 review
+
+One unified session reviewed the frozen pair `ae69e6a94..0a0a63827`, and it found 10 raw findings. It ruled that the composition move is byte-identical for the landing. Plan commit `53732b473` widened ticket 12, so one combined repair session on ticket 12 receives each repair target.
+
+The author witness reds were these:
+
+- Ticket 11: one mutant set bit for BG67 to BG71 and BG74. BG72 and BG73 went red before the wiring.
+- Ticket 12: first failing runs for BG75, BG76, BG77, and BG111, and one mutant set bit for the wait and the clear.
+- BG110 has no red. A mutant of it waits until the timeout, and BG75 pins the same key equality.
+
+## Standards
+
+Count: 4. Worst issue: the landing destination is derived twice.
+
+- Parked, confidence 7: `internal/gate/background_landing.go:52` repeats the destination identity of `internal/worktree/land_identity.go:46`. A learning holds the shared leaf.
+- BG-C7-S2, auto-fix, confidence 6: the doc of `ClearForCheckpoint` names only a chunk checkpoint. Target T1.
+- BG-C7-S3, auto-fix, confidence 5: `internal/gate/background_grade.go:147` holds an overlong doc line. Target T1.
+- No-op, confidence 4: the git wrappers of `published` moved verbatim.
+
+## Spec
+
+Count: 2. Worst issue: the landing wait has no kit predicate.
+
+- BG-C7-P2, auto-fix, confidence 5: `AwaitLanding` runs in a linked repo, and that cost is against story 6. Share one kit predicate between the launch and the wait. Target T2.
+- No-op, confidence 5: an expired wait still takes the lease, and the gate then ends with 124, as BG60 does.
+
+## Coverage
+
+Count: 4. Worst issue: four rows hold no mutant red.
+
+- BG-C7-C1, auto-fix, confidence 7: BG2, BG3, BG72, and BG73 hold no mutant red. Record one mutant set for them. Target T3.
+- BG-C7-C2, auto-fix, confidence 7: no test shows that a lane pass of a conflicted tip queues nothing. Target T4.
+- No-op, confidence 6: no row requires a test of the expired landing wait.
+- No-op, confidence 4: the BG69 test covers the broker entry.
