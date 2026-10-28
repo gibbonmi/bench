@@ -1,30 +1,32 @@
 package backgroundstate_test
 
 import (
-	"os/exec"
 	"path"
 	"strings"
 	"testing"
+
+	"golang.org/x/tools/go/packages"
 )
 
 // TestImportClosureHoldsNoOtherGatePackage pins the leaf boundary. The import closure of
 // backgroundstate holds no internal/gate package other than itself, so a package that
 // internal/gate imports can read and stop a grade without an import cycle.
 func TestImportClosureHoldsNoOtherGatePackage(t *testing.T) {
-	out, err := exec.Command("go", "list", "-buildvcs=false", "-deps", "-f", "{{.ImportPath}}", ".").Output()
+	roots, err := packages.Load(&packages.Config{Mode: packages.NeedName | packages.NeedImports | packages.NeedDeps}, ".")
 	if err != nil {
-		t.Fatalf("go list -deps: %v", err)
+		t.Fatal(err)
 	}
-	// go list -deps prints the closure in dependency order, so the package itself comes last.
-	deps := strings.Fields(string(out))
-	if len(deps) == 0 {
-		t.Fatal("go list -deps printed no package")
+	if len(roots) != 1 {
+		t.Fatalf("the load of this package answered %d packages, want 1", len(roots))
 	}
-	self := deps[len(deps)-1]
+	if errs := roots[0].Errors; len(errs) != 0 {
+		t.Fatalf("the load of this package: %v", errs)
+	}
+	self := roots[0].PkgPath
 	gate := path.Dir(self)
-	for _, dep := range deps {
-		if dep != self && (dep == gate || strings.HasPrefix(dep, gate+"/")) {
-			t.Errorf("the import closure of %s holds %s", self, dep)
+	packages.Visit(roots, nil, func(dep *packages.Package) {
+		if dep.PkgPath != self && (dep.PkgPath == gate || strings.HasPrefix(dep.PkgPath, gate+"/")) {
+			t.Errorf("the import closure of %s holds %s", self, dep.PkgPath)
 		}
-	}
+	})
 }
