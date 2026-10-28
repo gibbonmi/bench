@@ -2070,3 +2070,13 @@ Witness return:
 - `TestMutantSetSuccessOmitsTheReports` (Coverage F3): the set.go swap of `if e.command == 0 {` for `if true {` bit, with `failed_restore` first.
 
 Each mutant compiled, and each subject was restored. probe-08 ran again at the repair commit and bit. `mutantReportHeading` in `internal/probe/set.go` is now the one source of the report heading, which the orchestrator accepts.
+
+## BC-C5 ticket 11 coordinator witness reds (commit dffdef899)
+
+The ticket 11 author showed reds for BC61 and BC62 only, because the base code already gives the verdicts of BC63 to BC65. The orchestrator probed those rows at 791e43368, where no author ran checks.
+
+- BC63: the swap of `return worktreeBuild(dir, append(candidates, call.Running))` for a list that tries the own build after the primary build bit `TestRunReusesAMatchingBuild/BC63_the_own_build_before_the_primary_build`.
+- BC65: the swap of `if freshness.VerifyAt(root, root, candidate) == nil {` for `if candidate != "" {` bit three rows of `TestRunReusesAMatchingBuild`, the refusal row among them.
+- BC64: the same swap bit `TestTreeTargetRefusesStaleKitBuild` in the system suite: `bench status --in alpha` ran and did not refuse.
+
+Each mutant compiled, and each subject was restored.
