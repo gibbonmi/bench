@@ -21,6 +21,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/landing/published"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -57,11 +58,23 @@ func StartBackground(home, kit, root, tip string, stderr io.Writer) {
 // supersedes stops before the queue moves on. A claim that does not read retains its grade, so
 // the pass queues nothing. A pass runs after the verb that published its tip, so a later pass of
 // root can run first: a tip that is not the head of root drops out, and it replaces no grade of a
-// newer tip. A dropped pass still moves the queue on.
+// newer tip. A dropped pass still moves the queue on. A landing subject whose landing plan
+// selects the reader set, and a landing that its composition refuses, queue nothing, because
+// the landing runs no whole gate that a grade could answer.
 func passLane(home, root, tip string) error {
 	key, settled := "", false
-	if _, _, stripped, err := chunkSubjectOf(root, tip); err == nil {
-		evidence := InspectTree(root, stripped)
+	switch subject, derived := backgroundSubjectOf(root, tip); {
+	case errors.As(derived, new(published.ConflictError)):
+		return advanceQueue(home, 0)
+	case derived != nil:
+	case subject.landing != nil:
+		evidence, reader, inspected := subject.landing.inspect(subject.tree)
+		if inspected == nil && reader {
+			return advanceQueue(home, 0)
+		}
+		key, settled = evidence.Grade, evidence.ReusableGreen
+	default:
+		evidence := InspectTree(root, subject.tree)
 		key, settled = evidence.Grade, evidence.ReusableGreen
 	}
 	if key != "" && !settled {

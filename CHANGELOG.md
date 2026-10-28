@@ -6,6 +6,13 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background landing grade
+
+- Added the landing grade to the background grade. A linked kit worktree whose tip holds no open build of a staged spec now grades the tree that its landing would publish from that tip. The grade composes the tip on the destination when it starts, with the composition of `bench worktree land`. A tip that adds exactly one tickets-only folder takes the folder close and the delivery closure. Any other tip is spec-less and takes no transform. A wrong deliverable only causes a lookup miss, because the grade writes its green only under the key that it ran.
+- The landing grade runs in the primary checkout, as the landing does, so its grade key frames the phase schedule of the destination commit.
+- The landing grade and its lane pass run as the authenticated landing broker, so the grade key frames the digest of the installed broker. A broker whose digest differs from its manifest makes the grade record `aborted`, and no oracle runs.
+- The lane pass evaluates the landing plan of the tip against the destination. A plan that selects the reader set queues no grade. A plan that selects the whole gate queues one landing grade, under the same key deduplication as a chunk grade. A composition conflict that the landing would refuse queues no grade.
+
 ### Chunk checkpoint wait on a background grade
 
 - Changed the chunk checkpoint of `bench gate`. A checkpoint that finds no green and finds a live claim on its grade key now waits until that claim ends, before it takes the checkout lock. It then looks up its key again, so a background green answers it with no oracle run of its own. A grade that ends red, or ends with no verdict, makes the checkpoint run its own oracle, with no refusal.
@@ -16,7 +23,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Background grade queue
 
-- Changed the lane pass of `bench commit` and `bench worktree merge`, which now passes the grade of its tip to the machine queue under the Bench home. The grade key of a tip is the key of its chunk subject. A tip with no chunk subject has no key, and its grade records `aborted`.
+- Changed the lane pass of `bench commit` and `bench worktree merge`, which now passes the grade of its tip to the machine queue under the Bench home. The grade key of a tip is the key of its chunk subject or of its landing subject. A tip with neither subject has no key, and its grade records `aborted`.
 - The lane pass runs as the executable that the wrapper of the worktree resolves, so the key that it queues is the key of the grade. A pass whose tip is no longer the head of its worktree queues nothing, so a late pass does not replace the grade of a newer tip.
 - A lane pass queues nothing when a fresh green, a live claim, the running grade, or a queued grade already has its key. Each worktree keeps at most one queued grade, so a newer tip replaces the queued grade of its worktree. A newer tip with a new key also stops the running grade of its worktree. The stop waits for that grade to exit, and the grade then records `stopped` and writes no green. A grade that reached its verdict before the stop keeps it.
 - A grade whose key is the key of the latest tip of another worktree keeps running, or stays queued.

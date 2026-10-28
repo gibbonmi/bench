@@ -1,8 +1,9 @@
 package gate
 
 // The background grade: one grade of one lane-passed tip of a kit worktree. It grades the chunk
-// subject of the open build of the tip, writes its green to the evidence store, and records its
-// outcome in the background record of the worktree. It holds a claim on its grade key in place
+// subject of the open build of the tip, or the landing subject of a tip with no open build, writes
+// its green to the evidence store, and records its outcome in the background record of the
+// worktree. It holds a claim on its grade key in place
 // of the checkout lock, and it writes no gate cache.
 
 import (
@@ -44,14 +45,14 @@ const backgroundQueueEnv = "BENCH_GATE_BACKGROUND_QUEUE"
 // consumes it, so the grade that the pass starts does not inherit it.
 const backgroundPassEnv = "BENCH_GATE_BACKGROUND_PASS"
 
-// backgroundGrade is the state of one background grade: the grade key of the subject that the
-// run accepts, the claim that it holds on that key, the git common directory of that claim, and
-// whether its oracle run reached a verdict. A nil grade is a foreground run, so each method below
-// keeps the foreground behavior for it.
+// backgroundGrade is the state of one background grade: the worktree of the grade, the grade key
+// of the subject that the run accepts, the claim that it holds on that key, the git common
+// directory of that claim, and whether its oracle run reached a verdict. A nil grade is a
+// foreground run, so each method below keeps the foreground behavior for it.
 type backgroundGrade struct {
-	key, common string
-	claim       backgroundstate.Claim
-	verdict     bool
+	worktree, key, common string
+	claim                 backgroundstate.Claim
+	verdict               bool
 }
 
 // reenterImage replaces the image of this process with the program name, run with args and env
@@ -82,6 +83,16 @@ func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 		err := reenterImage(root, filepath.Join(root, "bin", "bench.sh"), append([]string{backgroundVerb}, args...), resolved)
 		fmt.Fprintf(stderr, "bench %s: %v\n", backgroundVerb, err)
 		return 1
+	}
+	// A landing subject runs as the broker that authenticates, so the entry execs that broker
+	// with its own arguments and its markers, and the broker runs the pass or the grade.
+	var moved notBrokerError
+	if _, err := backgroundSubjectOf(root, tip); errors.As(err, &moved) {
+		if err := execBroker(moved.broker, append([]string{backgroundVerb}, args...), os.Environ()); err != nil {
+			fmt.Fprintf(stderr, "bench %s: exec the broker %q: %v\n", backgroundVerb, moved.broker, err)
+		} else {
+			return 0
+		}
 	}
 	home, queued := os.LookupEnv(backgroundQueueEnv)
 	passHome, pass := os.LookupEnv(backgroundPassEnv)
@@ -134,7 +145,7 @@ func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireCon
 		return 1
 	}
 	defer log.Close()
-	grade := &backgroundGrade{}
+	grade := &backgroundGrade{worktree: root}
 	commit, result := grade.run(ctx, root, tip, arm, log)
 	if err := grade.release(); err != nil {
 		fmt.Fprintf(stderr, "background grade: claim release failed: %v\n", err)
@@ -181,41 +192,56 @@ func settleVerdict(ctx context.Context, evaluation executionEvaluation, runtimeR
 	return after, refusal, refused
 }
 
-// run grades tip in root as the chunk subject of the open build of tip. The chunk id comes from
-// the latest chunk entry of the review record at tip, and with no entry the run takes the whole
-// schedule. It answers the commit of tip and the result of the run.
+// run grades tip in root as the subject of tip: the chunk subject of its open build, or with no
+// open build the landing subject, which runs in the primary checkout as a landing runs. The chunk
+// id comes from the latest chunk entry of the review record at tip, and with no entry the run
+// takes the whole schedule. It answers the commit of tip and the result of the run.
 func (g *backgroundGrade) run(ctx context.Context, root, tip string, arm postAcquireContextArm, out io.Writer) (string, Result) {
-	source, spec, stripped, err := chunkSubjectOf(root, tip)
+	subject, err := backgroundSubjectOf(root, tip)
 	if err != nil {
-		return source.tip, operational(root, 0, out, "background grade: "+err.Error())
+		return subject.source.tip, operational(root, 0, out, "background grade: "+err.Error())
 	}
-	ctx = WithCheckpoint(ctx, Checkpoint{Spec: spec, Chunk: latestChunk(root, source.tree, spec), Background: g})
-	return source.tip, executeStrippedSubject(ctx, root, stripped, source, out, out, arm, reuseFreshGreen)
+	if subject.landing != nil {
+		ctx = WithCheckpoint(ctx, Checkpoint{Background: g})
+		return subject.source.tip, executeTreeWithOwner(ctx, subject.landing.primary, subject.tree, out, out, arm, reuseFreshGreen, nil)
+	}
+	ctx = WithCheckpoint(ctx, Checkpoint{Spec: subject.spec, Chunk: latestChunk(root, subject.source.tree, subject.spec), Background: g})
+	return subject.source.tip, executeStrippedSubject(ctx, root, subject.tree, subject.source, out, out, arm, reuseFreshGreen)
 }
 
-// chunkSubjectOf answers the chunk subject of a background grade of tip in root: the source of
-// tip, the spec of the open build of its tree, and the tree without the review record of that
-// spec. The lane pass keys that tree and the grade runs it, so one derivation serves both. A
-// source that it cannot read keeps each part that it resolved.
-func chunkSubjectOf(root, tip string) (chunkSource, string, string, error) {
+// gradeSubject is the subject of a background grade of a tip: the source of the tip, the spec of
+// its open build, the tree that the grade runs, and the landing of a tip with no open build.
+type gradeSubject struct {
+	source     chunkSource
+	spec, tree string
+	landing    *landingSubject
+}
+
+// backgroundSubjectOf answers the subject of a background grade of tip in root. A tip with an
+// open build of a staged spec grades its tree without the review record of that spec. A tip with
+// no open build in a linked worktree grades the tree that its landing publishes. The lane pass
+// keys that tree and the grade runs it, so one derivation serves both. A source that it cannot
+// read keeps each part that it resolved.
+func backgroundSubjectOf(root, tip string) (gradeSubject, error) {
 	commit, err := benchgit.ResolveCommit(root, tip)
 	if err != nil {
-		return chunkSource{}, "", "", fmt.Errorf("tip unavailable: %w", err)
+		return gradeSubject{}, fmt.Errorf("tip unavailable: %w", err)
 	}
 	tree, err := benchgit.Output("-C", root, "rev-parse", "--verify", commit+"^{tree}")
 	if err != nil {
-		return chunkSource{tip: commit}, "", "", fmt.Errorf("tip unavailable: %w", err)
+		return gradeSubject{source: chunkSource{tip: commit}}, fmt.Errorf("tip unavailable: %w", err)
 	}
-	source := chunkSource{tip: commit, tree: tree}
+	subject := gradeSubject{source: chunkSource{tip: commit, tree: tree}}
 	spec, open := openBuild(root, tree)
 	if !open {
-		return source, "", "", errors.New("the tip holds no open build of a staged spec")
+		subject.landing, subject.tree, err = landingSubjectOf(root, subject.source)
+		return subject, err
 	}
-	stripped, err := reviewrecord.SourceDigest(root, tree, spec)
-	if err != nil {
-		return source, spec, "", fmt.Errorf("subject unavailable: %w", err)
+	subject.spec = spec
+	if subject.tree, err = reviewrecord.SourceDigest(root, tree, spec); err != nil {
+		return subject, fmt.Errorf("subject unavailable: %w", err)
 	}
-	return source, spec, stripped, nil
+	return subject, nil
 }
 
 // openBuild answers the spec of the open build of tree: the one spec with a Status: staged line
@@ -288,7 +314,7 @@ func backgroundGradeOf(ctx context.Context) *backgroundGrade {
 }
 
 // hold writes the claim of the grade on the grade key of plan through replacer, in the git common
-// directory of root. The grade keeps that key before the claim, so a claim that fails still
+// directory of root, for the worktree of the grade, or for root when the grade names none. The grade keeps that key before the claim, so a claim that fails still
 // records its outcome under the key. A foreground run holds none.
 func (g *backgroundGrade) hold(replacer durablefile.Replacer, root string, plan subject) error {
 	if g == nil {
@@ -299,7 +325,11 @@ func (g *backgroundGrade) hold(replacer durablefile.Replacer, root string, plan 
 	if err != nil {
 		return err
 	}
-	claim, err := backgroundstate.ClaimFor(g.key, root)
+	worktree := g.worktree
+	if worktree == "" {
+		worktree = root
+	}
+	claim, err := backgroundstate.ClaimFor(g.key, worktree)
 	if err != nil {
 		return err
 	}
