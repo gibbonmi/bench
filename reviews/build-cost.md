@@ -225,6 +225,72 @@
             "F5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bc-c1-standards-2",
+          "performer": "claude:bc-c1-standards-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6fa343b43a2a36bf7ceba8ba6f3c847830e96fb5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c1-standards-c2-20261028",
+            "digest": "sha256:b3a0dcff43701fffd829e38cac4f935015cc3b8f75332d3bbea293dfd7e6d1b4",
+            "excerpt": "axis: Standards (confirming)\nchunk: BC-C1  pair: 77ec3655a..25ffaee66  repair: 8224ff461..25ffaee66\nfindings: 1 new\nworst: The F3 repair removed the last reader of listedPackage.EmbedPatterns, so the field is decoded and never read (N1).\n- F1: closed — .agents/commands/bench-implement-spec.md:25 reads \"runs the development checks and witnesses\".\n- F3: closed — Request.Filtered is gone; internal/testreport/floor.go:11-16 keeps Packages alone with the new doc; the Embed and system-check floor_test cases are removed or rewritten.\n- F4: closed — internal/reviewrecord/recordcmd/stage_test.go:186 has no RC48 tag.\n- F5: closed — completion-plan.md:51-52 is rewrapped.\n- N1 [auto-fix] [confidence 6] internal/testreport/selection.go:32 with :46 — EmbedPatterns has no reader, and the byImport doc still says the map holds its embed patterns — delete the field and reword the :46 comment.\nreads: craft-review; AGENTS.md; BENCH.md; evidence check-current; the repair delta; the round-1 excerpt; floor.go; selection.go:20-47; recordcmd/chunk_test.go:298-307; rg sweeps.\nnot-verified: no test or probe ran.\n"
+          },
+          "axis": "Standards",
+          "base": "77ec3655a4601a57165b33d58c4328bdfdf72d34",
+          "tip": "25ffaee6634c05d754ea8a6e904ffc078fd35951",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c1-standards-1"
+          ]
+        },
+        {
+          "id": "bc-c1-spec-2",
+          "performer": "claude:bc-c1-spec-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6fa343b43a2a36bf7ceba8ba6f3c847830e96fb5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c1-spec-c2-20261028",
+            "digest": "sha256:adc1090d5b217ee4b33ff14a49632e54adcc3a63591244875d90c497e5d24a20",
+            "excerpt": "axis: Spec (confirming)\nchunk: BC-C1  pair: 77ec3655a..25ffaee66  repair: 8224ff461..25ffaee66\nfindings: 1 new\nworst: The repair plan widened ticket 01 by four internal/testreport paths, and no bench learning recorded that widen (non-blocking).\n- F1: closed — .agents/commands/bench-implement-spec.md:25 reads \"The author runs the development checks and witnesses of several packages in one `bench test` call\".\n- F2: closed — specs/build-cost/spec.md:187 states the --in route and says the install does not apply.\n- N1 [auto-fix] [confidence 5] specs/build-cost/tickets/01-accept-probe-only-plans-and-retire-check-floor.md:4 — the testreport widen has no bench learning — the orchestrator records it (done).\nrows: BC23-BC37 still met; the deletions stay inside the approved behavior, because fold.go:68-72 reads only floor.Packages; the narrowed agreement test drops only the system path, which TestWritesFloorSkipsTheSystemSuite grades.\nreads: check-current; the repair diff and its log; bench coverage; spec.md:187-191 and 227-321; tickets 01-03 Writes:; fold.go:55-90; BENCH-reference.md:400-412; craft-review; capture/learnings.md:243-301.\nnot-verified: no test or probe ran; the learning search used rg on three terms.\n"
+          },
+          "axis": "Spec",
+          "base": "77ec3655a4601a57165b33d58c4328bdfdf72d34",
+          "tip": "25ffaee6634c05d754ea8a6e904ffc078fd35951",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c1-spec-1"
+          ]
+        },
+        {
+          "id": "bc-c1-coverage-2",
+          "performer": "claude:bc-c1-coverage-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6fa343b43a2a36bf7ceba8ba6f3c847830e96fb5",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c1-coverage-c2-20261028",
+            "digest": "sha256:ac0a2c63efe63f7b9641130edbb70a8a4d80d2fa8643f96ec1f7b5a40f0a68d4",
+            "excerpt": "axis: Coverage (confirming)\nchunk: BC-C1  pair: 77ec3655a..25ffaee66  repair: 8224ff461..25ffaee66\nfindings: 0 new\nworst: none\n- F1: closed — plan_probe_test.go:52-53 adds the empty and absent final-list cases against plan.go:180-181; the recorded swap bit both.\n- F2: closed — ticket_probe_test.go:20-26 builds the want row through toon.Table.\n- F3: closed — ticket_test.go:94-97 runs Pooled(t, 1, Owing(nil)) and wants \"the ticket form reads a version 2 plan\"; the recorded swap of ticket.go:48 bit it.\n- F5: closed — premises_fixture_test.go:229-230 states the checkpoint refusal of check.go:59-60.\n- Repair test changes: no behavior lost; fold.go:68-72 reads only floor.Packages; TestWritesFloorSkipsTheSystemSuite reds if floor.go:65 admits the system package.\ntests-run: --package ./internal/reviewrecord --package ./internal/reviewrecord/recordcmd --package ./internal/testreport --run 'TestPlanProbeOnlyChunks|TestTicketRefusals|TestTicketFreezesWithoutRequirements|TestWritesFloor' pass (9 + 16 + 13).\nreads: check-current; the repair delta; plan.go, ticket.go, check.go, floor.go, fold.go, floor_test.go, plan_probe_test.go, premises_test.go; recordtest Owing/Pooled.\nnot-verified: no probe ran; the ownership package was not run for the F5 comment change.\n"
+          },
+          "axis": "Coverage",
+          "base": "77ec3655a4601a57165b33d58c4328bdfdf72d34",
+          "tip": "25ffaee6634c05d754ea8a6e904ffc078fd35951",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c1-coverage-1"
+          ]
         }
       ]
     }
@@ -326,3 +392,11 @@ Witness return:
 - `TestTicketRefusals/version_1_plan_with_no_requirement`: the ticket.go swap of `if !plan.Delegated() {` for `if false {` bit (`1,bit,swap,failed,1,TestTicketRefusals/version_1_plan_with_no_requirement,2,1,0,null,yes`).
 
 The repair narrowed `TestWritesFloorAgreesWithChangedSelection` to the package paths, because the floor no longer names the system check; `TestWritesFloorSkipsTheSystemSuite` covers the system path. The orchestrator accepts this narrowing.
+
+## BC-C1 confirming round (pair 77ec3655a..25ffaee66)
+
+All three axes pass. Every round 1 repair finding is closed.
+
+- Standards N1, auto-fix, confidence 6: `internal/testreport/selection.go:32` and `:46` keep `listedPackage.EmbedPatterns`, which has no reader now. The orchestrator defers it to the light-path ticket that removes the unreachable plain-path branches after this build lands. The field has no behavior, and a repair cycle costs a session, a record, and three axes.
+- Spec N1, auto-fix, confidence 5: the ticket 01 testreport widen had no learning. The orchestrator recorded it.
+- Coverage: no new finding.
