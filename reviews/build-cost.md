@@ -711,7 +711,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bc-c3-standards-1",
+          "performer": "claude:bc-c3-standards-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450656de1cf8bb6fb6cb601b724d6d84111c6a76",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-standards-20261028",
+            "digest": "sha256:bf998da1ab5f4f3e3114fef123d608562f96d64549bb9988b91c0c0bde655757",
+            "excerpt": "axis: Standards\nchunk: BC-C3  pair: 884822a21..bd4f2b3cc\nfindings: 6\nworst: F1, ticket.go builds a second copy of the bench commit route outside refusalroute and skips the refusalroute.Arg quoting rule.\n- F1 [ask-user] [confidence 6] internal/reviewrecord/recordcmd/ticket.go:101-102 — the next= line is a second derivation of the commit step that refusalroute owns (registry.go:199-201) — compose it from a refusalroute step plus Arg; ticket 07 dictates the bare literal.\n- F2 [ask-user] [confidence 5] ticket_probe_test.go:142, commit/commit_test.go:103, cmd/bench/commit_chain_test.go:101 — the tests pin literals that the code builds from constants, with no recorded red — record a red for each, or derive the expectation.\n- F3 [ask-user] [confidence 5] .agents/commands/bench-implement-spec.md:66 and .agents/commands/bench-review-implementation.md:230 — the same staging sentence in two docs — one doc states the rule and the other points to it.\n- F4 [auto-fix] [confidence 8] internal/reviewrecord/recordcmd/ticket.go:238 — the local name probe in stagedProbe shadows the imported probe package — rename the local.\n- F5 [auto-fix] [confidence 8] internal/reviewrecord/recordcmd/ticket.go:139 and internal/commit/chain_grammar_test.go:67 — two edited comments are not re-wrapped — re-wrap both.\n- F6 [no-op] [confidence 3] internal/reviewrecord/recordcmd/stage.go:70-71 — the --mutant-needs-a-probe refusal now runs after the planned-call refusals; likely unreachable.\nreads: craft-review; craft-comments; AGENTS.md; BENCH.md; the delta; tickets 06 and 07; ticket.go; refusalroute registry.go and route.go; sanitize.ShellQuote; SeamCommit uses; evidence metadata and consumers (every touched=false row checked); check-current.\nnot-verified: projects/benchkit.md; the implement-spec budget; no gate or test ran; recordcmd to internal/commit layering.\ncommand-contribution: no command change is necessary\n"
+          },
+          "axis": "Standards",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "bd4f2b3cc16aebb6e0fc338702f48cb566295bfd",
+          "finding_ids": [
+            "F3",
+            "F4",
+            "F5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c3-spec-1",
+          "performer": "claude:bc-c3-spec-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450656de1cf8bb6fb6cb601b724d6d84111c6a76",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-spec-20261028",
+            "digest": "sha256:4be951025e576e26220100c0a3d3034f09718f2b0ed7ae734923ce0a072ef2d3",
+            "excerpt": "axis: Spec\nchunk: BC-C3  pair: 884822a21..bd4f2b3cc\nfindings: 1\nworst: none blocking; bench record ticket --mutant is silently ignored when nothing stages from the retained response.\n- F1 [no-op] [confidence 3] internal/reviewrecord/recordcmd/ticket.go:66,169 — the ticket form reads --mutant but uses it only when one unstaged requirement stages; a --mutant call with nothing to stage exits 0 — refuse --mutant when no retained response stages, if the orchestrator wants it.\nGraded decisions: carry-first agrees with stories 28 and 31, spec.md:197, and ticket.go:163-169; the amended probe-07 mutant still turns staging off; the refuse() rerun carries --base, pinned by TestRefusalReRunKeepsTheBase. The BC-C2 marker sentence matches retro_cost.go:103-110. commit.go:34 takes otelrecord.SeamCommit.\nrows: BC38-BC46 and BC48 met; BC47 review-owned met (bench-implement-spec.md:52).\nreads: craft-review; check-current; the code, guidance, and spec diffs; spec.md sections and coverage map; tickets 06 and 07; stage.go, plan.go, retro_cost.go; rg sweeps.\nnot-verified: no tests or probes ran; whether bench record excerpt consumes the retained response.\ncommand-contribution: no command change is necessary\n"
+          },
+          "axis": "Spec",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "bd4f2b3cc16aebb6e0fc338702f48cb566295bfd",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c3-coverage-1",
+          "performer": "claude:bc-c3-coverage-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "450656de1cf8bb6fb6cb601b724d6d84111c6a76",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-coverage-20261028",
+            "digest": "sha256:db42e1e0bef83150bd956dc4d1857a050244c2de98e95236847f566a8f375b2b",
+            "excerpt": "axis: Coverage\nchunk: BC-C3  pair: 884822a21..bd4f2b3cc\nfindings: 3\nworst: F1, no test reaches the NoEmptyValue rule of --base; dropping it lets --base \"\" through, and the chain drops the base without a word.\n- F1 [auto-fix] [confidence 8] internal/commit/grammar.go:32 — with NoEmptyValue removed, bench commit --preflight-build s --base \"\" passes every BC38/BC39 test and the preflight runs on its default base — add a case that expects toon.Usage(grammar.Cmd, usage.EmptyFlagValue(BaseFlag)) at exit 2 with no stdout.\n- F2 [auto-fix] [confidence 7] internal/reviewrecord/recordcmd/ticket.go:169-175 — every staging case retains through f.Retain with Head at the tip and no dirty path; a reorder that stages after the RunBinding and dirty-path checks records a stale or dirty probe at exit 0 — add two refusal cases (Head at the chunk base's parent; Dirty={\"x.go\"}) that expect exit 1 and unchanged record and store bytes, with a Retain variant that takes the head and the dirty paths.\n- F3 [ask-user] [confidence 4] internal/reviewrecord/recordcmd/ticket.go:128,169 — --mutant is ignored when nothing stages; no row decides it.\nExamined with no gap: --base accepted and dropped; the refusal rerun; next= slug and base; staging on another verb; two unstaged; carry-first order; refusal bytes; out-of-range --mutant; a skipped stageRetained; spec-stated literals.\ntests-run: --package ./cmd/bench --package ./internal/commit --package ./internal/reviewrecord/recordcmd with the BC-C3 test names — pass (8 + 10 + 7).\nreads: craft-review; spec rows BC38-BC48; the code delta and tests; recordtest/stage.go Retain; ticket_carry_test.go; verification.go; check-current.\nnot-verified: the hostile-input checklist; the review record; the anchor and guidance edits; the mutants were reasoned, not run.\ncommand-contribution: no command change is necessary\n"
+          },
+          "axis": "Coverage",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "bd4f2b3cc16aebb6e0fc338702f48cb566295bfd",
+          "finding_ids": [
+            "F1",
+            "F2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -974,3 +1042,32 @@ Standards and Spec pass, and every round 1 finding is closed. Coverage keeps one
 - Spec N1: the spec did not state the marker edge. The orchestrator amends `spec.md:162` and ticket 04: the marker compares the printed one-decimal value.
 - Spec N2: no change, because the exit code of BC9 holds at `retro_scaffold.go:33`.
 - Coverage N2, auto-fix, confidence 5: no row rounds up across a limit. A test-only ticket 05 repair adds the rows, and a coordinator probe and `bench record confirmation` close it.
+
+## BC-C3 review, round 1 (pair 884822a21..bd4f2b3cc)
+
+Raw findings: Standards 6, Spec 1, Coverage 3. Repair targets: 5, all routed to one ticket 07 repair session. Four findings are declined or closed without a repair.
+
+## Standards
+
+Findings: 6. Worst: the `next=` line is built outside `refusalroute` (F1).
+
+- F1 ask-user, confidence 6: `internal/reviewrecord/recordcmd/ticket.go:101-102`. Declined. The `refusalroute` commit step has no chain flags. The line takes each flag from the `commit` constants, and each value is a checked token.
+- F2 ask-user, confidence 5: three tests pin literals with no recorded red. Closed without a repair. The BC40 usage line went red on its first run before the production change. The BC45 `next=` assertion went red when the line was removed. BC39's reason text is a spec-stated literal.
+- F3 ask-user, confidence 5: the staging sentence is in `bench-implement-spec.md:66` and `bench-review-implementation.md:230`. Repair: the review guidance points to the build guidance.
+- F4 auto-fix, confidence 8: `internal/reviewrecord/recordcmd/ticket.go:238` shadows the `probe` package. Repair.
+- F5 auto-fix, confidence 8: two edited comments are not re-wrapped. Repair.
+- F6 no-op, confidence 3: the refusal order in `stage.go:70-71` is unreachable.
+
+## Spec
+
+Findings: 1. Every row is met.
+
+- F1 no-op, confidence 3: an unused `--mutant` exits 0. Declined, because no row decides it and no wrong evidence results.
+
+## Coverage
+
+Findings: 3. Worst: no test reaches the empty `--base` refusal (F1).
+
+- F1 auto-fix, confidence 8: `internal/commit/grammar.go:32`; add the empty `--base` case. Repair.
+- F2 auto-fix, confidence 7: `internal/reviewrecord/recordcmd/ticket.go:169-175`; add the stale-head and dirty-path refusal cases. Repair.
+- F3 ask-user, confidence 4: the unused `--mutant`, the same as Spec F1. Declined.
