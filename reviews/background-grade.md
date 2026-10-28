@@ -1771,7 +1771,76 @@
           "exit_code": 0
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bg-c6-review-standards",
+          "performer": "claude:bg-c6-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "98d4815c1e128609c2da7c1d3f8c5ade8e1e8655",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-review-20261028",
+            "digest": "sha256:ba9889ee2314647de71e260a7b822c5181818d6b889ad74c68215220530a1b46",
+            "excerpt": "Unified BG-C6 review (98ba3e5a1..1502fd38d), Standards: 4 findings. Worst: ioClass and ReadSlot are production code that only tests call (auto-fix). clearForRun pre-check, gradeKey half-repeat, and the shortened commit.go comment (no-op).\n"
+          },
+          "axis": "Standards",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "1502fd38d9558a9621f1936faabcabafecc4c6f6",
+          "finding_ids": [
+            "BG-C6-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c6-review-spec",
+          "performer": "claude:bg-c6-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "98d4815c1e128609c2da7c1d3f8c5ade8e1e8655",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-review-20261028",
+            "digest": "sha256:0d21e0af66f5618952f3a7d10cb4ac4069f14a5244575edc2af854481f1da97a",
+            "excerpt": "Unified BG-C6 review (98ba3e5a1..1502fd38d), Spec: 3 findings. The lane-pass key frames the launching executable and is computed inside the verb (stories 8, 17, 26, 35; consultation). The story 29 exception applies at a checkpoint against story 18 (consultation).\n"
+          },
+          "axis": "Spec",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "1502fd38d9558a9621f1936faabcabafecc4c6f6",
+          "finding_ids": [
+            "BG-C6-P1",
+            "BG-C6-P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bg-c6-review-coverage",
+          "performer": "claude:bg-c6-review-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "98d4815c1e128609c2da7c1d3f8c5ade8e1e8655",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c6-review-20261028",
+            "digest": "sha256:17e1d1d946fcfe7c3744b48e86ccb1e4c1c4e5c0b5c730eafb1dbff826f8925d",
+            "excerpt": "Unified BG-C6 review (98ba3e5a1..1502fd38d), Coverage: 4 findings. BG59 cannot go red on this host (review-owned by the orchestrator). BG66 has no chunk variant (auto-fix). No test of a differing verb executable or a wanted key at a checkpoint (auto-fix). Ticket 08-10 reds not in the record (orchestrator records them).\n"
+          },
+          "axis": "Coverage",
+          "base": "98ba3e5a1fbfa75d1e281b6016bf033a8615595f",
+          "tip": "1502fd38d9558a9621f1936faabcabafecc4c6f6",
+          "finding_ids": [
+            "BG-C6-C2",
+            "BG-C6-C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2253,3 +2322,45 @@ Count: 2. Worst issue: no test covers a settle refusal.
 
 - Closed by T4, confidence 4: the T4 test covers the settle refusal. A selection timeout has no row, so it is a no-op.
 - No-op, confidence 3: no row requires a test of the warning path or of the delta reuse in story 56.
+
+## BG-C6 review
+
+One unified session reviewed the frozen pair `98ba3e5a1..1502fd38d`. It found 11 raw findings. Two consultations settled the two Spec questions, and plan commit `2054ab815` added rows BG115 and BG116. One combined repair session on ticket 09 receives every repair target, because ticket 09 now holds every path of the repair.
+
+The author witness reds were these. Ticket 08 showed first failing runs for BG5, BG6, and BG11. It showed reds for BG7 to BG10, BG43, and BG45 against a launch that the author weakened on purpose. A census-row removal probe bit for BG44.
+
+Ticket 09 showed one bitten mutant for each of BG46 to BG56, BG83, and BG108. The test file was compacted after those probes.
+
+Ticket 10 showed first failing runs for BG57, BG58, and BG60 to BG65. One mutant bit for BG61. BG59 cannot go red on this host, because the hard nice limit is 0, so the orchestrator owns that row by review.
+
+## Standards
+
+Count: 4. Worst issue: production code that only tests call.
+
+- BG-C6-S1, auto-fix, confidence 8: `internal/gate/background_priority_linux.go:98` holds `ioClass`, and `internal/gate/backgroundstate/slot.go:24` holds `ReadSlot`. Only tests call them. Move each one into a test file, and give the platform reader a build tag. Target T1.
+- No-op, confidence 4: the check that `clearForRun` makes first states its own fast path.
+- No-op, confidence 5: T2 removes the second key derivation in `gradeKey`.
+- No-op, confidence 3: `internal/commit/commit.go:101` shortened one comment to hold its budget.
+
+## Spec
+
+Count: 3. Worst issue: the verb derives the grade key.
+
+- BG-C6-P1, auto-fix, confidence 7: the launching verb computes the grade key in its own process. That adds a prospective checkout and a foreground stop to each commit, and the key frames the launcher's executable. Target T2:
+  - The verb only detaches through the target worktree's wrapper, with a pass marker.
+  - The detached process computes the key, runs `passLane`, and exits.
+  - A pass of a tip that is no longer the branch head drops out.
+  - Add `TestLanePassKeyFramesTheTargetExecutable` for row BG115.
+- BG-C6-P3, auto-fix, confidence 8: at a checkpoint, `clearForRun` keeps a grade of its own worktree that another worktree wants. Decision 6 and story 18 have no such exception. Target T3:
+  - The checkpoint drops each queued entry of its worktree or of its key.
+  - It stops the running grade of its worktree that holds another key, and it ignores `wanted`.
+  - Add `TestCheckpointStopsAWantedOtherKeyGrade` for row BG116.
+
+## Coverage
+
+Count: 4. Worst issue: BG66 has no chunk variant.
+
+- BG-C6-C2, auto-fix, confidence 6: `internal/gate/run_failure_outcomes_test.go:28` tests BG66 with a whole gate only. Add a chunk checkpoint variant. Target T4.
+- BG-C6-C3, auto-fix, confidence 6: the launch fixtures are keyless stand-ins. The new BG115 and BG116 tests cover the differing executable and the wanted key. Target T2 and T3.
+- Review-owned, confidence 8: BG59 cannot go red on this host.
+- Closed by this record, confidence 5: the paragraph above records the reds of tickets 08 to 10.
