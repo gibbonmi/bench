@@ -75,7 +75,7 @@ func (checkpoint Checkpoint) validate() error {
 	if _, err := reviewrecord.RecordPath(checkpoint.Spec); err != nil {
 		return err
 	}
-	if checkpoint.Background == nil && (checkpoint.Chunk != "") == checkpoint.Complete || hasUnsafeText(checkpoint.Chunk) {
+	if (checkpoint.Background == nil && (checkpoint.Chunk != "") == checkpoint.Complete) || hasUnsafeText(checkpoint.Chunk) {
 		return errors.New("select one checkpoint chunk or complete")
 	}
 	if checkpoint.Prepare && checkpoint.Complete {

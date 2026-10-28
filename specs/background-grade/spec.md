@@ -304,7 +304,7 @@ BG-C1 to BG-C4 each hold a seam that a later chunk consumes, so each review clos
 | BG111 | 17 | A queued grade of the landing's key leaves the queue when the landing starts its own run | planned TestLandingDropsItsQueuedKey in internal/worktree/land_background_test.go | A queued duplicate grades the key again after the landing |
 | BG112 | 18 | No code in `internal/gate/backgroundstate` sends a signal itself | the `process-lifetime-closure` check over the new package | A signal from the leaf package skips the lifetime owner and its descendant teardown |
 | BG113 | 18 | The stop operation returns only after the owner process has exited | `internal/gate/backgroundstate/stop_test.go` (`TestStopWaitsForTheOwnerExit`) | A stop that returns at the signal lets two runs write one delta record |
-| BG114 | 22 | A background chunk grade runs its oracle with the width input set | planned TestBackgroundGradeSetsTheWidthInput in internal/gate/background_grade_test.go | A grade that drops the width input runs at the foreground width and crowds the host |
+| BG114 | 22 | A background chunk grade runs its oracle with the width input set | `internal/gate/background_grade_test.go` (`TestBackgroundGradeSetsTheWidthInput`) | A grade that drops the width input runs at the foreground width and crowds the host |
 
 ### Edge inventory
 

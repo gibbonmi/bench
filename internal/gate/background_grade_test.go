@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // TestChunkCheckpointReusesABackgroundGreen is BG1. After a background grade of the tip, the
@@ -209,6 +210,27 @@ func TestBackgroundRedRecordsRed(t *testing.T) {
 	got := backgroundRecord(t, f)
 	if code != 7 || got.Outcome != backgroundstate.Red || got.Key != strippedEvidence(t, f).Grade || got.Tip != f.Tip() {
 		t.Fatalf("red grade = %d %s, record = %+v; want exit 7 and a red record of the tip", code, out, got)
+	}
+}
+
+// TestBackgroundGradeSetsTheWidthInput is BG114. The fixture gate records the width input of its
+// environment. The foreground run sees that input unset, and the background chunk grade sees it
+// set.
+func TestBackgroundGradeSetsTheWidthInput(t *testing.T) {
+	const witness outcomeWitness = ".gate-width"
+	f := recordtest.Attach(t, outcomeFixture(t, func(_ *testrepo.GateFixture, body string) string {
+		return body + `printf '%s' "${` + widthEnv + `-}" > "$common/` + string(witness) + "\"\n"
+	}), 1)
+	f.AddChunk()
+	f.Save()
+	f.Commit("retain review evidence")
+	seedGateCache(t, f)
+	if got := outcomeRead(t, witness.path(t, f.Root)); len(got) != 0 {
+		t.Fatalf("width input of the foreground oracle = %q; want it unset", got)
+	}
+	requireBackgroundGreen(t, f, nil)
+	if got := outcomeRead(t, witness.path(t, f.Root)); len(got) == 0 {
+		t.Fatalf("width input of the background oracle is unset; want it set")
 	}
 }
 

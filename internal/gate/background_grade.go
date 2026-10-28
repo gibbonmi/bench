@@ -10,9 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/env"
@@ -146,24 +144,27 @@ func (g *backgroundGrade) run(ctx context.Context, root, tip string, arm postAcq
 }
 
 // openBuild answers the spec of the open build of tree: the one spec with a Status: staged line
-// whose review record tree holds. A tree with no such spec, or with more than one, holds no open
-// build. A wrong answer costs only a lookup miss, because a grade records its green under the
-// key that it ran.
+// whose review record tree holds as a regular file. The review record owner names both paths, so
+// a spec is each file of tree that has a record path. A tree with no such spec, or with more than
+// one, holds no open build. A wrong answer costs only a lookup miss, because a grade records its
+// green under the key that it ran.
 func openBuild(root, tree string) (string, bool) {
-	entries, err := benchgit.ListTree(root, tree, "reviews/")
+	entries, err := benchgit.ListTree(root, "-r", tree)
 	if err != nil {
 		return "", false
 	}
+	regular := map[string]bool{}
+	for _, entry := range entries {
+		regular[entry.Path] = entry.IsRegularFile()
+	}
 	var open []string
 	for _, entry := range entries {
-		slug, named := strings.CutSuffix(path.Base(entry.Path), ".md")
-		spec := "specs/" + slug + "/spec.md"
-		if record, err := reviewrecord.RecordPath(spec); !named || err != nil || record != entry.Path || !entry.IsRegularFile() {
+		if record, err := reviewrecord.RecordPath(entry.Path); err != nil || !regular[record] {
 			continue
 		}
-		if data, err := benchgit.ReadTreeFile(root, tree, spec); err == nil {
+		if data, err := benchgit.ReadTreeFile(root, tree, entry.Path); err == nil {
 			if _, err := specdoc.Implemented(data); err == nil {
-				open = append(open, spec)
+				open = append(open, entry.Path)
 			}
 		}
 	}
