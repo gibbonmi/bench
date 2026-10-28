@@ -1,7 +1,7 @@
 # Print a short bitten mutant set
 
 Blocked by: 08-print-a-short-lane-pass.md
-Writes: internal/probe/set.go, internal/probe/set_report_test.go (new), internal/probe/set_test.go, internal/probe/set_cleanup_test.go, internal/reviewrecord/recordcmd/excerpt_short_test.go (new), .bench/BENCH-reference.md
+Writes: internal/probe/set.go, internal/probe/set_report_test.go (new), internal/probe/set_test.go, internal/probe/set_cleanup_test.go, internal/reviewrecord/recordcmd/excerpt_short_test.go (new), .bench/BENCH-reference.md, cmd/bench/record_operations_test.go, internal/reviewrecord/recordcmd/verification_import_test.go, internal/probe/result_test.go, internal/probe/set_input_test.go
 Covers: BC53, BC54, BC55, BC56, BC57
 
 ## What to build
