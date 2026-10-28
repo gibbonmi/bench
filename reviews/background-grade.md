@@ -2354,6 +2354,72 @@
             "BG-C7-C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bg-c7-confirm1-standards",
+          "performer": "claude:bg-c7-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6d900a37fb7f87e5adb18b29d231814e5456a076",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c7-confirm1-20261028",
+            "digest": "sha256:2a002ba2ab99d9277736f8c2f4c407ca7a3c415b6cc1e1b85ee1103a5e60b4f2",
+            "excerpt": "Unified confirming round BG-C7, repair delta 0a0a63827..12d7410d0, Standards axis: T1-T4 closed; a linked-repo landing does no background work; new findings 0.\n"
+          },
+          "axis": "Standards",
+          "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "tip": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c7-review-standards"
+          ]
+        },
+        {
+          "id": "bg-c7-confirm1-spec",
+          "performer": "claude:bg-c7-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6d900a37fb7f87e5adb18b29d231814e5456a076",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c7-confirm1-20261028",
+            "digest": "sha256:b0d4b389319e86c2168a67b5125866637352f5c042df39680514ddb588bef89b",
+            "excerpt": "Unified confirming round BG-C7, repair delta 0a0a63827..12d7410d0, Spec axis: T1-T4 closed; a linked-repo landing does no background work; new findings 0.\n"
+          },
+          "axis": "Spec",
+          "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "tip": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c7-review-spec"
+          ]
+        },
+        {
+          "id": "bg-c7-confirm1-coverage",
+          "performer": "claude:bg-c7-confirm1-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6d900a37fb7f87e5adb18b29d231814e5456a076",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bg-c7-confirm1-20261028",
+            "digest": "sha256:c6703ef79a50859311a76e773b11e9ffd8bae8dfea232ec35bf7b5b72c0dba55",
+            "excerpt": "Unified confirming round BG-C7, repair delta 0a0a63827..12d7410d0, Coverage axis: T1-T4 closed; a linked-repo landing does no background work; new findings 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
+          "tip": "12d7410d014226362ad2e70281c3dedfbe25127c",
+          "finding_ids": [],
+          "supersedes": [
+            "bg-c7-review-coverage"
+          ]
         }
       ]
     }
@@ -3055,3 +3121,13 @@ Count: 4. Worst issue: four rows hold no mutant red.
 - BG-C7-C2, auto-fix, confidence 7: no test shows that a lane pass of a conflicted tip queues nothing. Target T4.
 - No-op, confidence 6: no row requires a test of the expired landing wait.
 - No-op, confidence 4: the BG69 test covers the broker entry.
+
+### BG-C7 repair reds
+
+The repair session recorded these reds at the repair commit `12d7410d0`. The orchestrator accepted BG68 as the witness of BG2, because a landing source on a moved destination must fold first.
+
+- BG2: a key from the raw tip was silent against the BG2 test. The same mutant bit `TestSpecLessLandingGradeHasNoTransform`.
+- BG3: a deliverable of `""` bit `TestTicketsOnlyLandingReusesTheBackgroundGreen`.
+- BG72 and BG73: an inverted reader selection bit `TestReaderSetLandingStartsNoGrade` and `TestWholeGateLandingStartsAGrade`.
+- T2: `TestNonKitLandingDerivesNoSubject` failed on its first run, because the landing outside the kit still waited.
+- T4: a mutant that drops the conflict case bit `TestConflictedLandingStartsNoGrade`.
