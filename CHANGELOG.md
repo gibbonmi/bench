@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### One-landing row admission
+
+- Changed `bench commitment plan` and `bench commitment approve`. A new outcome source reads the checkout HEAD when the current policy names no source at its path and the default-branch tip lacks that path. Thus one landing carries a new roadmap row and its admission. A row that the default-branch tip holds, and a retained row that it deleted, still read the default-branch tip.
+- Changed the known issue for a nested exec spill. The workaround is now `bench <verb> --in <label>`, which bounds the response once, and FT341 owns the retirement.
+
 ### Lean author charge
 
 - Changed the implement phase guidance. Each author and repair charge names the spec sections of its ticket, and it prints the exact grammar of each Bench verb that the author runs. The author sends independent reads in one turn and runs focused tests with `bench test --run`.

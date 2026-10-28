@@ -171,6 +171,25 @@ func namesDeliverable(policy Policy, source SourceBinding) bool {
 	return false
 }
 
+// NewSource reports whether source is an outcome source of proposed at a path that no outcome
+// source of current names. A nil current names no path.
+func NewSource(current *Policy, proposed Policy, source SourceBinding) bool {
+	return namesSource(proposed, func(binding SourceBinding) bool { return binding == source }) &&
+		(current == nil || !namesSource(*current, func(binding SourceBinding) bool { return binding.Path == source.Path }))
+}
+
+// namesSource reports whether an outcome source of policy matches.
+func namesSource(policy Policy, match func(SourceBinding) bool) bool {
+	for _, milestone := range policy.Milestones {
+		for _, outcome := range milestone.Outcomes {
+			if slices.ContainsFunc(outcome.Sources, match) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // settlement holds what the recorded deliveries of one policy settle.
 type settlement struct {
 	satisfied map[string]bool
