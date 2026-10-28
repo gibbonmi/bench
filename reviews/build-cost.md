@@ -808,6 +808,72 @@
             "F2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bc-c3-standards-2",
+          "performer": "claude:bc-c3-standards-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cffd084a89b7a945564f6bb3735c4f10cc8397d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-standards-c2-20261028",
+            "digest": "sha256:754eefd9fd207fb3ff2512daba96fcc09aafb8d7559cb5bd7b2c6c1f826a142b",
+            "excerpt": "axis: Standards (confirming)\nchunk: BC-C3  pair: 884822a21..5f2ba7211  repair: bd4f2b3cc..5f2ba7211\nfindings: 0 new\nworst: none\n- F3: closed — .agents/commands/bench-review-implementation.md:230 points to /bench-implement-spec; the rule has one source at bench-implement-spec.md:66.\n- F4: closed — internal/reviewrecord/recordcmd/ticket.go:238-239 binds the result to imported; no local named probe remains.\n- F5: closed — ticket.go:139-142 and chain_grammar_test.go:77-78 are re-wrapped to the surrounding width.\nreads: the repair delta; the round 1 and repair sections of reviews/build-cost.md; rg sweeps; craft-review.\nnot-verified: no test or probe ran.\n"
+          },
+          "axis": "Standards",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "5f2ba7211acdae7570b96f1f272f068a2df3596f",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c3-standards-1"
+          ]
+        },
+        {
+          "id": "bc-c3-spec-2",
+          "performer": "claude:bc-c3-spec-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cffd084a89b7a945564f6bb3735c4f10cc8397d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-spec-c2-20261028",
+            "digest": "sha256:0b8ef289e5772661409345d6e8f740dd015ef71f65e4ded35afdfa4b84d2c729",
+            "excerpt": "axis: Spec (confirming)\nchunk: BC-C3  pair: 884822a21..5f2ba7211  repair: bd4f2b3cc..5f2ba7211\nfindings: 0 new\nworst: none\nrows: BC38-BC48 still met; no seam cell cited TestCommitChainRefusesEmptySlug, so the rename is safe; the review-guidance pointer at bench-review-implementation.md:230 resolves to bench-implement-spec.md:66; BC47 stands at bench-implement-spec.md:52; the new staging cases add to BC41-BC44 and change no row.\nreads: craft-review; check-current; the repair diff; bench coverage; spec.md:197,229,322-332; tickets 06 and 07; bench-review-implementation.md:222-233; rg sweeps.\nnot-verified: no test, probe, or gate ran; ticket 07 line 17 is stale (known).\n"
+          },
+          "axis": "Spec",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "5f2ba7211acdae7570b96f1f272f068a2df3596f",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c3-spec-1"
+          ]
+        },
+        {
+          "id": "bc-c3-coverage-2",
+          "performer": "claude:bc-c3-coverage-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cffd084a89b7a945564f6bb3735c4f10cc8397d9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c3-coverage-c2-20261028",
+            "digest": "sha256:b937b385f07d3e4546f3beacc0efdc149d8c9154b8f59a5ec591940b53f11647",
+            "excerpt": "axis: Coverage (confirming)\nchunk: BC-C3  pair: 884822a21..5f2ba7211  repair: bd4f2b3cc..5f2ba7211\nfindings: 0 new\nworst: none\n- F1: closed — internal/commit/chain_grammar_test.go:36 adds the base row; it pins NoEmptyValue at grammar.go:32; the witness red is recorded.\n- F2: closed — internal/reviewrecord/recordcmd/ticket_probe_test.go:38-39 adds the stale-head and dirty-path cases through RetainAt (recordtest/stage.go:152-159); a reorder would also turn them red; the witness reds are recorded.\n- Rename: the slug row keeps the old test's argv and its three assertions.\ntests-run: --package ./internal/commit --package ./internal/reviewrecord/recordcmd --run 'TestCommitChainRefusesEmptyValue|TestTicketStagesTheRetainedProbe' pass (3 + 8).\nreads: craft-review; check-current; the repair diff; the repair witness section; ticket.go:120-200; ticket_probe_test.go; grammar.go.\nnot-verified: the witness mutants were not rerun.\n"
+          },
+          "axis": "Coverage",
+          "base": "884822a214c8388c00a056908d831a4a1ceb1d8d",
+          "tip": "5f2ba7211acdae7570b96f1f272f068a2df3596f",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c3-coverage-1"
+          ]
         }
       ]
     }
