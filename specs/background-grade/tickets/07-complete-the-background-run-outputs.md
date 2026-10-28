@@ -1,7 +1,7 @@
 # Complete the background run outputs
 
 Blocked by: 06-grade-a-chunk-subject-in-the-background.md
-Writes: internal/gate/background_grade.go (new), internal/gate/background_outcome_test.go (new), internal/gate/run_transaction.go, internal/gate/run_durability.go, internal/gate/delta_checkpoint.go, internal/gate/reader_hold.go, internal/gate/reader_store.go, internal/gate/backgroundstate (new), CHANGELOG.md, internal/gate/background_priority_linux.go (new), internal/gate/background_priority_other.go (new)
+Writes: internal/gate/background_grade.go (new), internal/gate/background_outcome_test.go (new), internal/gate/run_transaction.go, internal/gate/run_durability.go, internal/gate/delta_checkpoint.go, internal/gate/reader_hold.go, internal/gate/reader_store.go, internal/gate/backgroundstate (new), CHANGELOG.md, internal/gate/background_priority_linux.go (new), internal/gate/background_priority_other.go (new), internal/gate/lifetime_resources_test.go
 Covers: BG25, BG30, BG31, BG36, BG37, BG38, BG39, BG40
 
 ## What to build
