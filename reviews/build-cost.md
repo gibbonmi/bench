@@ -388,7 +388,84 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "bc-c2-standards-1",
+          "performer": "claude:bc-c2-standards-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "92d51e7750e64116f256474f146582132d2f7227",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c2-standards-20261028",
+            "digest": "sha256:e0fda16694a6911202da3dd665b57e708949c1d01aac0833673ef2b9a68e87d1",
+            "excerpt": "axis: Standards\nchunk: BC-C2  pair: 0ab92b502..23911422b\nfindings: 5\nworst: F2, traceSeams keeps an unreconciled third copy of the commit and lane seam names; a renamed seam prints \"commit 0 spans in 0 ms\" as a measurement.\n- F1 [auto-fix] [confidence 8] internal/roadmap/retro_cost.go:67 (caller retro_scaffold.go:54) — costSection resolves the Bench home again through benchhome.Dir() instead of taking the home that scaffoldBody passes to timingsSection — change the signature to costSection(home, root, slug), pass home to traceTimes, drop the benchhome import and the comment sentence at :53.\n- F2 [ask-user] [confidence 8] internal/roadmap/retro_cost.go:49 — {\"commit\",\"commit\"}, {\"lane\",\"lane\"} repeat seam names owned by otelrecord/registry.go:25-26, commit/commit.go:34, and gate/lane.go:202 with no reconciliation — export SeamCommit and SeamLane in internal/otelrecord/reader.go beside SeamLanding and use them in registry.go, retro_cost.go, and retro_cost_test.go.\n- F3 [auto-fix] [confidence 7] internal/roadmap/retro_cost_test.go:214-240 — writeCostRecord spells the OTLP line by hand, a second fixture harness for the shape that otelrecord.Encode owns — rebuild it through tracetest.SpanStub, Encode, and NewWriter as reader_test.go:255-274 does.\n- F4 [no-op] [confidence 5] internal/anchors/registry_build_cost.go:11-12 — the Forbid needles repeat the budget numbers; the spec mandates BC14 — leave as decided.\n- F5 [no-op] [confidence 4] internal/spec/landing.go:21 — Landing builds the path with specPath while its caller uses spec.LiveSpecPath; same behavior today — optionally use LiveSpecPath.\nreads: craft-review; AGENTS.md; BENCH.md; evidence charge, fence, and consumers; the delta; retro_cost.go, retro_cost_test.go, retro_scaffold.go; otelrecord registry.go, encode.go, reader_test.go; spec resolve.go and spec.go.\nnot-verified: the set-equality tests of registry.go:7-9; the F3 rewrite was not compiled.\ncommand-contribution: bench preflight evidence --source spills one long TOON line that the bound cuts; emit each row on its own line.\n"
+          },
+          "axis": "Standards",
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "tip": "23911422b0db3d8e054fffe8cd64dc6f3561581e",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c2-spec-1",
+          "performer": "claude:bc-c2-spec-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "92d51e7750e64116f256474f146582132d2f7227",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c2-spec-20261028",
+            "digest": "sha256:5d684dd961bfa64e45eae00e29427eae3db54f43d6b3d7cc98ce1f15f881fb08",
+            "excerpt": "axis: Spec\nchunk: BC-C2  pair: 0ab92b502..23911422b\nfindings: 2\nworst: F1, the cost renderer resolves the Bench home itself instead of taking it as an argument, against the spec's entry-read rule.\n- F1 [auto-fix] [confidence 8] internal/roadmap/retro_cost.go:55,67 — spec.md:456 says the cost renderer takes the home and the root as arguments, but costSection(root, slug) takes no home and traceTimes reads benchhome.Dir() — change it to costSection(home, root, slug) and pass home from scaffoldSection.\n- F2 [no-op] [confidence 4] internal/roadmap/retro_cost.go:257 — the wall time is cut to whole minutes before the per-ticket division, so FT451 reads 60.2 where spec.md:420-421 states 60.3 — divide the seconds instead if the spec numbers must reproduce.\nrows: BC1-BC21 and BC72 met; BC22 and BC71 review-owned met (bench-drain.md:202-203).\nreads: the whole spec and tickets 04-05; bench coverage; the delta; spec.Landing, AwaitsRetirement, specPath, git.ResolvedDefault, published.go; RecordPath; the otelrecord registry; ValidateImprovementMarkers.\nnot-verified: no tests ran; git --first-parent pathspec behavior for a merge equal to its second parent on the spec path.\ncommand-contribution: the charge names a charge row that --check-current does not print; name the verb that prints it.\n"
+          },
+          "axis": "Spec",
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "tip": "23911422b0db3d8e054fffe8cd64dc6f3561581e",
+          "finding_ids": [
+            "F1",
+            "F2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "bc-c2-coverage-1",
+          "performer": "claude:bc-c2-coverage-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "92d51e7750e64116f256474f146582132d2f7227",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c2-coverage-20261028",
+            "digest": "sha256:d9ededc67dd7c2caa2ad1a31911c9a154807ec269ae0b8d4c210d7734751e633",
+            "excerpt": "axis: Coverage\nchunk: BC-C2  pair: 0ab92b502..23911422b\nfindings: 8\nworst: F1, the transition half of the landing rule has no test; a state-only rule still names L in the fixture.\n- F1 [auto-fix] [confidence 8] internal/spec/landing.go:30 — a pure state rule, a missing parent check, or reading fields[2] all still return L — add a first-parent main commit after L that edits specs/s/spec.md and keeps Status: implemented, and want L.\n- F2 [auto-fix] [confidence 5] internal/spec/landing.go:21 — dropping --first-parent passes — add a slug whose flip is committed on its branch before a --no-ff merge L, and want L.\n- F3 [auto-fix] [confidence 6] internal/roadmap/retro_cost.go:149 — author date equals committer date in the fixture, so %at passes — author the spec commit at -7200 and commit it at 0, and want wall 960 min.\n- F4 [auto-fix] [confidence 7] internal/roadmap/retro_cost.go:163 — no path with a quote or newline, so dropping -z passes — touch specs/s/n\"q\".md in a bookkeeping commit and keep the commits line.\n- F5 [auto-fix] [confidence 6] internal/roadmap/retro_cost.go:107 — nothing tests the tickets > 0 guard; without it the lines print +Inf and NaN as measured — add a zero-ticket TestRetroCostBudget row that wants unknown.\n- F6 [ask-user] [confidence 6] internal/roadmap/retro_cost.go:49 — traceSeams and the fixture spell the seam names again — export seam constants in otelrecord.\n- F7 [no-op] [confidence 4] internal/retros/recommendations_test.go:63 — BC17 and BC18 fence an untouched function; acceptable as a regression fence.\n- F8 [ask-user] [confidence 4] internal/roadmap/retro_cost.go:109 — the marker compares the unrounded value but prints one decimal, so \"7.1 against 7.1, over budget\" can print — no row decides it.\ntests-run: --package ./internal/roadmap --run 'TestRetroCost|TestRetroRejectsABodyWithoutCost|TestRetroScaffoldParses' pass (14); --package ./internal/retros --package ./internal/anchors --run 'TestImprovementMarkersIgnoreTheCostHeading|TestBuildCostAnchors|TestEligibleFixtureKeepsRequiredHeadings' pass (4 + 1).\nreads: craft-review; evidence metadata and consumers; the delta; the spec Cost section, rows, and edge lists; the benchkit checklist; otelrecord reader.go and registry.go; anchor_harness_test.\nnot-verified: each surviving wrong form was traced by hand; ParseTicket's discarded error; longestChain on a cyclic plan.\ncommand-contribution: bench preflight evidence should list each source's direct cursor in the manifest.\n"
+          },
+          "axis": "Coverage",
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "tip": "23911422b0db3d8e054fffe8cd64dc6f3561581e",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5",
+            "F6",
+            "F8"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -531,3 +608,37 @@ All three axes pass. Every round 1 repair finding is closed.
 - Standards N1, auto-fix, confidence 6: `internal/testreport/selection.go:32` and `:46` keep `listedPackage.EmbedPatterns`, which has no reader now. The orchestrator defers it to the light-path ticket that removes the unreachable plain-path branches after this build lands. The field has no behavior, and a repair cycle costs a session, a record, and three axes.
 - Spec N1, auto-fix, confidence 5: the ticket 01 testreport widen had no learning. The orchestrator recorded it.
 - Coverage: no new finding.
+
+## BC-C2 review, round 1 (pair 0ab92b502..23911422b)
+
+Raw findings: Standards 5, Spec 2, Coverage 8. Repair targets after the merge of the duplicates: 11, all routed to one ticket 05 repair session. Two findings are declined.
+
+## Standards
+
+Findings: 5. Worst: `traceSeams` repeats the commit and lane seam names with no reconciliation (F2).
+
+- F1 auto-fix, confidence 8: `internal/roadmap/retro_cost.go:67` resolves the Bench home again. Repair: `costSection(home, root, slug)`.
+- F2 ask-user, confidence 8: `internal/roadmap/retro_cost.go:49` repeats the seam names. Repair: export `SeamCommit` and `SeamLane` in `internal/otelrecord`, under the `--auto-approve` widen.
+- F3 auto-fix, confidence 7: `internal/roadmap/retro_cost_test.go:214-240` writes the OTLP line by hand. Repair: build it through `Encode` and `NewWriter`.
+- F4 no-op, confidence 5: the Forbid needles repeat the budget numbers. Declined, because BC14 mandates them.
+- F5 no-op, confidence 4: `internal/spec/landing.go:21` uses `specPath` beside `LiveSpecPath`. Repair: one helper.
+
+## Spec
+
+Findings: 2. Worst: the cost renderer resolves the home itself (F1, the same fix as Standards F1).
+
+- F1 auto-fix, confidence 8: `internal/roadmap/retro_cost.go:55,67`. Repair with Standards F1.
+- F2 no-op, confidence 4: `internal/roadmap/retro_cost.go:257` rounds to minutes before the division. Repair: divide the seconds.
+
+## Coverage
+
+Findings: 8. Worst: no test decides the transition half of the landing rule (F1).
+
+- F1 auto-fix, confidence 8: `internal/spec/landing.go:30`; add a later main commit that keeps the status. Repair.
+- F2 auto-fix, confidence 5: `internal/spec/landing.go:21`; add a branch flip before a `--no-ff` merge. Repair.
+- F3 auto-fix, confidence 6: `internal/roadmap/retro_cost.go:149`; add an author date that differs from the committer date. Repair.
+- F4 auto-fix, confidence 7: `internal/roadmap/retro_cost.go:163`; add a quoted path. Repair.
+- F5 auto-fix, confidence 6: `internal/roadmap/retro_cost.go:107`; add a zero-ticket row. Repair.
+- F6 ask-user, confidence 6: the seam names, the same fix as Standards F2. Repair.
+- F7 no-op, confidence 4: BC17 and BC18 fence an untouched function. Declined, because the fence is acceptable.
+- F8 ask-user, confidence 4: `internal/roadmap/retro_cost.go:109` marks the unrounded value. Repair: the marker compares the printed value.
