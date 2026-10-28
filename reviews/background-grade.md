@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:c7e36f948e68443db9ffb436986f6f1edd71a420743b6be989ec62f716f749c8",
+  "plan_digest": "sha256:a135acc90942d8f65fc3491b4bffa2de709719e30b20beeea05a338460667f36",
   "implementation_session": "",
   "chunks": [
     {
@@ -2036,9 +2036,9 @@
     {
       "id": "BG-C7",
       "base": "ae69e6a94aeb94b91590829ca91b5a7e9d87e272",
-      "tip": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
-      "plan_digest": "sha256:c7e36f948e68443db9ffb436986f6f1edd71a420743b6be989ec62f716f749c8",
-      "source_digest": "1ee289d9ca0c3250fe34d49d0fbee5a7f24ed6b3",
+      "tip": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+      "plan_digest": "sha256:a135acc90942d8f65fc3491b4bffa2de709719e30b20beeea05a338460667f36",
+      "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
       "acceptance_rows": [
         "BG67",
         "BG68",
@@ -2131,6 +2131,82 @@
           "source_commit": "a76d90481a820e97d7ebd9f38a6f6bc4e834d41b",
           "requirement": "landing",
           "command": "bench test --package ./internal/landing",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t12-worktree",
+          "performer": "claude:bg-t12-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t12-author-20261028",
+            "digest": "sha256:eff43761d621211b4444554520041f3f35c60fca20a3fcfb031b4bb61a25dc11",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,101756,1613\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t12-command",
+          "performer": "claude:bg-t12-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t12-author-20261028",
+            "digest": "sha256:e34d1f070f3135fe3bc4cdc21c2832f590f3527f89acc6eaa286cc9f3b108518",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23802,406\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t12-gate-12",
+          "performer": "claude:bg-t12-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t12-author-20261028",
+            "digest": "sha256:ea932e40ecd45971b7e85e6cfefe91c3c132769248689c36f725e656cdb3e5a4",
+            "excerpt": "packages[5]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,pass,155562,800\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,278,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,721,13\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,49,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,1369,43\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "requirement": "gate-12",
+          "command": "bench test --package ./internal/gate/...",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c7-t12-conformance-12",
+          "performer": "claude:bg-t12-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03e51a7001b38befb0d96c57b4cf9894353a7209",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t12-author-20261028",
+            "digest": "sha256:bec6b148fc05b69beacd7d1117bacad4aa90a19683118fe8c68ed79ce6d1aa38",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,16928,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0a0a638272bd91cd8de92c2e41d595ecb2e34e5c",
+          "requirement": "conformance-12",
+          "command": "bench test --check root-conformance",
           "exit_code": 0
         }
       ],
@@ -2490,6 +2566,36 @@
         ],
         "BG-C6": [
           "BG-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c7e36f948e68443db9ffb436986f6f1edd71a420743b6be989ec62f716f749c8",
+      "to": "sha256:a135acc90942d8f65fc3491b4bffa2de709719e30b20beeea05a338460667f36",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ],
+        "BG-C7": [
+          "BG-C7"
         ]
       }
     }
