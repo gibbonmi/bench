@@ -1436,6 +1436,39 @@
             "bc-c4-coverage-2"
           ]
         }
+      ],
+      "confirmations": [
+        {
+          "id": "bc-c4-confirmation-1",
+          "performer": "claude:bc-orchestrator-20261028",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bf078b1050affecd967b2a7dabc82fbca7b5ac27",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+            "digest": "sha256:364a56befdb72f39be70960a8b9bc96ce08c0e23b7dda11113da1be051120486",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1256,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "bf4e04b9ed0adc7794cdd848f8cd5e878e2b6e09",
+          "reviewed_tip": "fe2be29e506dc13cc5c56425ba93220e128ca104",
+          "repaired_tip": "0164dcb56afc93a39301ddb7a886e497646a0253",
+          "finding_ids": [],
+          "supersedes": [],
+          "probe": {
+            "mutation": "the reports guard of internal/probe/set.go swapped for 'if false {'; the delta from the reviewed tip fe2be29e5 to the refrozen tip 0164dcb56 holds only the ticket 09 session assignment in the plan fence",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-code:orchestrator:bc-orchestrator-20261028",
+              "digest": "sha256:364a56befdb72f39be70960a8b9bc96ce08c0e23b7dda11113da1be051120486",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/probe/set.go,swap,failed,1,TestMutantSetSuccessOmitsTheReports/four_bites,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/probe,TestMutantSetSuccessOmitsTheReports,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,532\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/probe,fail,1256,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/probe,TestMutantSetSuccessOmitsTheReports/four_bites,\"set_report_test.go:54: stdout = (\\\"mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\\\\\\\\n  1,bit,swap,failed,1,TestClampNegative,1,1,0,null,yes\\\\\\\\n  2,bit,swap,failed,1… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
