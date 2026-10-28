@@ -963,6 +963,20 @@
         ]
       }
     }
+  ],
+  "folds": [
+    {
+      "id": "F1",
+      "after": "BG-C3",
+      "from": "f69c762bbd0b7d7becf0f0ede441aa07a273b013",
+      "commit": "d78984f50a5a0596f70f19b752e3662e3cc92160",
+      "incoming": "55c699286edc7e75c4032fcee3a63d3f1080ce11",
+      "source_digest": "f2a94515ff9a22a40ff24cfa5e1ddc7d6efa570b",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [],
+      "reviews": []
+    }
   ]
 }
 ```
