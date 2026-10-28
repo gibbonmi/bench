@@ -494,6 +494,74 @@
             "F8"
           ],
           "supersedes": []
+        },
+        {
+          "id": "bc-c2-standards-2",
+          "performer": "claude:bc-c2-standards-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "68617ffbd24061b554a8abddc200f7aea613f463",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c2-standards-c2-20261028",
+            "digest": "sha256:2c34bad63fdfac91d0c0775f902c6f29b5e6b2b0b9d23fb8d735684793dda105",
+            "excerpt": "axis: Standards (confirming)\nchunk: BC-C2  pair: 0ab92b502..7baeccff5  repair: 23911422b..7baeccff5\nfindings: 1 new\nworst: the new reader.go comment says a renamed seam changes in one place, but the commit and lane openers each state their own copy of the seam name.\n- F1: closed — retro_cost.go:54 takes costSection(home, root, slug); the home resolves once at retro_scaffold.go:33.\n- F2: closed — reader.go:26-30 exports SeamCommit and SeamLane, used by registry.go:25-26, retro_cost.go:49, and retro_cost_test.go:274-282.\n- F3: closed — writeCostRecord builds each line with otelrecord.Encode and NewWriter(home, root).Append.\n- F5: closed — landing.go:20 calls LiveSpecPath(slug).\n- Reader test: not weakened; reader_test.go:164-174 is unchanged and was true by construction before the repair.\n- N1 [ask-user] [confidence 6] internal/otelrecord/reader.go:15-16 — commit/commit.go:34 and gate/lane.go:202 restate the seam values, and no test checks those openers against Registry; gate/telemetry.go:16 has the same gap — set otelCommitSeam = otelrecord.SeamCommit and otelLaneSeam = otelrecord.SeamLane, or correct the comment. The orchestrator routes the constant fix to tickets 06 and 08, which own those files.\nreads: check-current; the repair diff; reviews/build-cost.md; reader.go; registry.go; resolve.go; reader_test.go; worktree/otel_seams_test.go; conformance/otel_seam_test.go; commit.go; gate/lane.go; rg sweeps.\nnot-verified: no test or probe ran.\n"
+          },
+          "axis": "Standards",
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "tip": "7baeccff5af4a661cece464a917deb025a1de0c1",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c2-standards-1"
+          ]
+        },
+        {
+          "id": "bc-c2-spec-2",
+          "performer": "claude:bc-c2-spec-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "68617ffbd24061b554a8abddc200f7aea613f463",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c2-spec-c2-20261028",
+            "digest": "sha256:17672a15cfeb8be8ecc237f9eb98d4217596d42c61242b5804ec73dec6c0c56c",
+            "excerpt": "axis: Spec (confirming)\nchunk: BC-C2  pair: 0ab92b502..7baeccff5  repair: 23911422b..7baeccff5\nfindings: 2 new\nworst: N1, the repair settled the marker edge in code and the spec sentence still says \"above its budget\".\n- F1: closed — costSection(home, root, slug) at internal/roadmap/retro_cost.go:54, home passed at :66 and by retro_scaffold.go:54; agrees with spec.md:456.\n- F2: closed — rangeCost keeps seconds; the per-ticket value is float64(f.wall)/60 (retro_cost.go:26); \"fractional minutes\" reads 60.3 (retro_cost_test.go:206).\n- N1 [ask-user] [confidence 5] internal/roadmap/retro_cost.go:110 against specs/build-cost/spec.md:162 and tickets/04-derive-the-retro-cost-section.md:23 — the marker compares the printed value; no spec sentence decides it — the orchestrator amends spec.md:162 and ticket 04 in the next plan commit.\n- N2 [no-op] [confidence 3] internal/roadmap/retro_cost_test.go:177 — TestRetroCostSection calls scaffoldBody directly, so BC9's exit-0 clause is not asserted at its seam; behavior holds at retro_scaffold.go:33.\nrows: BC1-BC22, BC71, and BC72 still met; BC11-BC13 give the same result under the printed-value compare.\nreads: check-current; the repair delta; the BC-C2 round 1 section; the spec Cost section, rows, edges, and FT451 figures; bench coverage; retro_scaffold.go:11-24; resolve.go:105-125; capture/learnings.md:308-311.\nnot-verified: no tests ran; the new landing_test.go cases were not run.\n"
+          },
+          "axis": "Spec",
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "tip": "7baeccff5af4a661cece464a917deb025a1de0c1",
+          "finding_ids": [],
+          "supersedes": [
+            "bc-c2-spec-1"
+          ]
+        },
+        {
+          "id": "bc-c2-coverage-2",
+          "performer": "claude:bc-c2-coverage-c2-20261028",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "68617ffbd24061b554a8abddc200f7aea613f463",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:bc-c2-coverage-c2-20261028",
+            "digest": "sha256:74aa5d1fe2bec4105b7e66215918ddb2c133fc61241a9ed6ae8b0c4350b4fc68",
+            "excerpt": "axis: Coverage (confirming)\nchunk: BC-C2  pair: 0ab92b502..7baeccff5  repair: 23911422b..7baeccff5\nfindings: 2 new\nworst: N1, the commit span producer still spells its seam as a literal that nothing reconciles with otelrecord.SeamCommit.\n- F1: closed — internal/spec/landing_test.go:34-42; the witness red is recorded.\n- F2: closed — internal/spec/landing_test.go:44-50; the witness red is recorded.\n- F3: closed — retro_cost_test.go:127 with the want at :156; %at reads 990 min.\n- F4: closed — retro_cost_test.go:130; the quoted path loses the specs/s/ prefix without -z.\n- F5: closed — retro_cost_test.go:214; without the guard the lines print +Inf/NaN.\n- F6: closed for the roadmap side; the producer side is open as N1.\n- F8: closed for the 7.14 side, open for the 7.16 side (N2).\n- N1 [ask-user] [confidence 6] internal/commit/commit.go:34 — the producer literal has no reconciliation; lane is pinned only by the literal at gate/lane_record_test.go:237 — use otelrecord.SeamCommit and SeamLane in commit.go:34 and gate/lane.go:202. The orchestrator routes this to tickets 06 and 08.\n- N2 [auto-fix] [confidence 5] internal/roadmap/retro_cost.go:108-110 — a mutant over = per >= limit+0.1 survives every row — add rows 358/50 wanting \"7.2 against 7.1, over budget\" and wall 3003*60 wanting \"60.1 min against 60 min, over budget\".\ntests-run: --package ./internal/roadmap --package ./internal/spec --package ./internal/otelrecord --package ./internal/gate --run 'TestRetroCost|TestLandingIsTheStatusTransitionOfTheDefaultBranch|TestReaderSeamsAreRegisteredSeams|TestLaneRecord' pass (15 + 3 + 1; gate ran 0).\nreads: check-current; the repair delta; the repair section of reviews/build-cost.md; landing.go; retro_cost.go:95-215; otelrecord reader.go, registry.go, reader_test.go; commit.go; gate/lane.go; rg sweeps.\nnot-verified: no mutants ran; lane_record_test.go:237; gate/telemetry.go:16.\n"
+          },
+          "axis": "Coverage",
+          "base": "0ab92b50295dc169e589c2bd4b59847c429578c5",
+          "tip": "7baeccff5af4a661cece464a917deb025a1de0c1",
+          "finding_ids": [
+            "N2"
+          ],
+          "supersedes": [
+            "bc-c2-coverage-1"
+          ]
         }
       ]
     }
@@ -698,3 +766,12 @@ Witness return:
 - `TestRetroCostBudget/zero_tickets` (Coverage F5): the mutant that drops the `tickets > 0` guard bit.
 
 Each mutant compiled, and each subject was restored. probe-05 ran again at the repair commit and bit.
+
+## BC-C2 confirming round (pair 0ab92b502..7baeccff5)
+
+Standards and Spec pass, and every round 1 finding is closed. Coverage keeps one open finding.
+
+- Standards N1 and Coverage N1: the commit and lane producers restate their seam names. The fix goes to tickets 06 and 08, which own `internal/commit` and `internal/gate/lane.go`, after the BC-C2 checkpoint. Those constants then use `otelrecord.SeamCommit` and `otelrecord.SeamLane`.
+- Spec N1: the spec did not state the marker edge. The orchestrator amends `spec.md:162` and ticket 04: the marker compares the printed one-decimal value.
+- Spec N2: no change, because the exit code of BC9 holds at `retro_scaffold.go:33`.
+- Coverage N2, auto-fix, confidence 5: no row rounds up across a limit. A test-only ticket 05 repair adds the rows, and a coordinator probe and `bench record confirmation` close it.
