@@ -22,6 +22,7 @@ func TestEligibleFixtureKeepsRequiredHeadings(t *testing.T) {
 	content := retrotestdata.Eligible()
 	for _, heading := range []string{
 		"## Outcome",
+		"## Cost",
 		"## Gate-stage timings",
 		"## Ticket-versus-spec-slice and delegate performance",
 		"## Coordinator catches",

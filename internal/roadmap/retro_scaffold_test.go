@@ -19,6 +19,7 @@ import (
 // passing a parser that grades order alone.
 var wantScaffoldHeadings = []string{
 	"## Outcome",
+	"## Cost",
 	"## Gate-stage timings",
 	"## Ticket-versus-spec-slice and delegate performance",
 	"## Coordinator catches",

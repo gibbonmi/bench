@@ -1,6 +1,7 @@
 package roadmap
 
 import (
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -49,6 +50,8 @@ func scaffoldBody(home, root, slug string) string {
 // empty, because the delegate writes it from the run it just watched.
 func scaffoldSection(home, root, slug, heading string) string {
 	switch heading {
+	case retros.CostHeading:
+		return costSection(root, slug)
 	case retros.TimingsHeading:
 		return timingsSection(home, root)
 	case retros.DelegateHeading:
@@ -101,7 +104,7 @@ func repairSection(root, slug string) string {
 // unreadable, and a refused tickets directory each give the one unknown row, so a
 // retired folder still leaves the delegate the table's shape.
 func scaffoldTickets(root, slug string) []string {
-	dir := filepath.Join(root, filepath.FromSlash(filepath.Dir(spec.LiveSpecPath(slug))), "tickets")
+	dir := filepath.Join(root, filepath.FromSlash(ticketsDir(slug)))
 	classified := bounds.ClassifyDirNoFollow(dir)
 	if classified.State != bounds.StateParsed {
 		return []string{unknownFact}
@@ -116,6 +119,12 @@ func scaffoldTickets(root, slug string) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+// ticketsDir is the repository-relative tickets directory of slug. The ticket table reads
+// it in the working tree, and the cost section reads it in the tree of the landing.
+func ticketsDir(slug string) string {
+	return path.Join(path.Dir(spec.LiveSpecPath(slug)), "tickets")
 }
 
 func orUnknown(value string) string {

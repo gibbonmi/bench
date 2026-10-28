@@ -29,6 +29,23 @@ func TestRecommendationsIgnoreRepairAttributionHeadingBeforeImprovements(t *test
 	}
 }
 
+// TestImprovementMarkersIgnoreTheCostHeading grades a pending retro written before the
+// Cost section and a retro whose cost lines are over budget. The retro grade reads only the
+// destination markers, so neither raises a diagnostic.
+func TestImprovementMarkersIgnoreTheCostHeading(t *testing.T) {
+	improvements := "## Agent-experience improvements\n\n- Keep it.\n  Feeds: none\n"
+	for name, body := range map[string]string{
+		"pending without Cost": "## Outcome\n\nLanded.\n\n## Gate-stage timings\n\nunknown\n\n" + improvements,
+		"over budget":          "## Outcome\n\nLanded.\n\n## Cost\n\n- wall per ticket: 65.0 min, over budget\n- bookkeeping per ticket: 7.2, over budget\n\n" + improvements,
+	} {
+		t.Run(name, func(t *testing.T) {
+			if diags := ValidateImprovementMarkers(writeRetro(t, "landed.md", body)); len(diags) != 0 {
+				t.Fatalf("retro grade = %q, want no diagnostic", diags)
+			}
+		})
+	}
+}
+
 // TestFeedsMarkerGrammarAcceptsOnlyRowNewOrNone pins RF21: the destination value is a
 // roadmap row ID, `new`, or `none`, and the marker is the unit's last line. The
 // position half is written here rather than only in the driver test, because a check

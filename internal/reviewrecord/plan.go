@@ -65,6 +65,10 @@ func parsePlan(data []byte) (Plan, error) {
 	return plan, err
 }
 
+// DecodePlan is the decode-only plan reader. It applies no grade, so a reader of a landed
+// plan that a later grade refuses still gets the plan's facts. checkPlan grades its answer.
+func DecodePlan(data []byte) (Plan, error) { return parsePlan(data) }
+
 // ticketPath is the repository path of a planned ticket basename beside spec.
 func ticketPath(spec, name string) string {
 	return path.Join(path.Dir(spec), "tickets", name)
