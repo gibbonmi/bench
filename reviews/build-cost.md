@@ -1192,3 +1192,9 @@ Witness return:
 - `TestTicketStagesTheRetainedProbe/dirty_path` (Coverage F2): the swap of `len(dirty) != 0 {` for `len(dirty) != 0 && false {` bit.
 
 Each mutant compiled, and each subject was restored. probe-07 ran again at the repair commit and bit.
+
+## BC-C3 checkpoint red (tip 16ee91c9f)
+
+The chunk checkpoint went red on `TestNoWriteVerbComposesARouteOutsideTheRegistry` at `internal/conformance/refusal_route_bypass_test.go:115`. The fault names `internal/reviewrecord/recordcmd/ticket.go:23`, a help literal that spells `next=` outside the route registry.
+
+The red confirms Standards F1 of round 1, which the orchestrator had declined. F1 is reopened. A second ticket 07 repair composes the `next=` line through `internal/refusalroute` and keeps the help text free of a route literal.

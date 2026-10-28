@@ -1,7 +1,7 @@
 # Stage the retained probe in the ticket record
 
 Blocked by: 01-accept-probe-only-plans-and-retire-check-floor.md, 02-refuse-plain-chunk-requirements.md, 03-state-the-probe-only-rule.md, 06-pass-the-chunk-base-to-the-commit-chain.md
-Writes: internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/stage.go, internal/reviewrecord/recordcmd/ticket_probe_test.go (new), internal/reviewrecord/recordcmd/command_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/reviewrecord/recordcmd/chunk_test.go, internal/reviewrecord/recordcmd/ticket_carry_test.go, internal/commit/chain_grammar_test.go, internal/reviewrecord/recordtest/stage.go
+Writes: internal/reviewrecord/recordcmd/ticket.go, internal/reviewrecord/recordcmd/stage.go, internal/reviewrecord/recordcmd/ticket_probe_test.go (new), internal/reviewrecord/recordcmd/command_test.go, cmd/bench/help_inventory_test.go, cmd/bench/record_operations_test.go, .agents/commands/bench-implement-spec.md, .agents/commands/bench-review-implementation.md, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_chunk_chain_test.go, internal/reviewrecord/recordcmd/chunk_test.go, internal/reviewrecord/recordcmd/ticket_carry_test.go, internal/commit/chain_grammar_test.go, internal/reviewrecord/recordtest/stage.go, internal/refusalroute/registry.go, internal/refusalroute/registry_test.go, internal/refusalroute/command.go, internal/refusalroute/command_test.go
 Covers: BC41, BC42, BC43, BC44, BC45, BC46, BC47, BC48
 
 ## What to build
@@ -14,7 +14,7 @@ The form's help states the `--base` rule: the first ticket of a chunk passes `--
 After its table, the verb prints one line: `next=bench commit -m <msg> --preflight-build <slug> --base <chunk-base> reviews/<slug>.md`, with the slug and the chunk base of the written entry. The whole response fits in 10 lines.
 
 The Build section of `.agents/commands/bench-implement-spec.md` replaces the exec preflight sentence with: "After the ticket commit, run the probe, then `bench record ticket`, then the record commit that its `next=` line prints."
-The Land section states that the ticket form stages the last probe response, so that the author runs `bench record excerpt` only for an earlier probe of the same ticket. `.agents/commands/bench-review-implementation.md` states the same staging rule in its record list. Each edit to `bench-implement-spec.md` stays inside its paragraph, so the file keeps its 97-line budget.
+The Land section states that the ticket form stages the last probe response, so that the author runs `bench record excerpt` only for an earlier probe of the same ticket. `.agents/commands/bench-review-implementation.md` points to that rule in its record list. Each edit to `bench-implement-spec.md` stays inside its paragraph, so the file keeps its 97-line budget.
 `internal/anchors/registry_chunk_chain.go` removes its exec preflight Require entry and adds the Forbid entry of BC48. BC47 is review-owned, because ADR 0012 keeps rule wording out of the anchor registry.
 
 ## Acceptance
