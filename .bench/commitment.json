@@ -1396,6 +1396,18 @@
               "path": "roadmap/FT463.md",
               "identity": "sha256:fd2f24a21313128367e9ce0569147d83e82d5e8a79601b1afa6af580a8315c54"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "build-cost",
+                "path": "specs/build-cost/spec.md",
+                "identity": "sha256:6f89369d1e6567465d31f9f8e90e05ad7dd2dc2f8589f75e12a30657640a34eb"
+              },
+              "obligations": [
+                "FT463"
+              ]
+            }
           ]
         },
         {
