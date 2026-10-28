@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:181d703d312f8cef87041cd43162af23e4bb350832f65a16fdd091a02adced85",
+  "plan_digest": "sha256:fb12fbaa98b7666a5d448d4ad48800461a8a71a1dcb4f513e96563f21bebf48f",
   "implementation_session": "",
   "chunks": [
     {
@@ -2426,15 +2426,16 @@
     {
       "id": "BG-C8",
       "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
-      "tip": "99c62ee7910b949c6abe3743a1c2a2c1bcb44921",
-      "plan_digest": "sha256:181d703d312f8cef87041cd43162af23e4bb350832f65a16fdd091a02adced85",
-      "source_digest": "6c9122ed6bcff8b22abad58c37f81677c70bcee4",
+      "tip": "1263adef5e524f4d393c4aaa47bc2eaefb9dac5a",
+      "plan_digest": "sha256:fb12fbaa98b7666a5d448d4ad48800461a8a71a1dcb4f513e96563f21bebf48f",
+      "source_digest": "4073c7af9267ad6f0a1267357403652205beaf78",
       "acceptance_rows": [
         "BG78",
         "BG79",
         "BG80",
         "BG81",
         "BG82",
+        "BG117",
         "BG84",
         "BG85",
         "BG99",
@@ -2947,6 +2948,82 @@
             "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13688,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "99c62ee7910b949c6abe3743a1c2a2c1bcb44921",
+          "requirement": "conformance",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r3-worktree",
+          "performer": "claude:bg-t13-repair3-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4073c7af9267ad6f0a1267357403652205beaf78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-repair3-20261028",
+            "digest": "sha256:a2ffe0cce2e984f8202a3fe08c0c509e011d3287f4bac11a6b3fb042e05f5ecf",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,91685,1618\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1263adef5e524f4d393c4aaa47bc2eaefb9dac5a",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r3-gocache",
+          "performer": "claude:bg-t13-repair3-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4073c7af9267ad6f0a1267357403652205beaf78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-repair3-20261028",
+            "digest": "sha256:ff3ac98c76872542fac72e3d71c77550fd7975e48e192f1c04848b88b029cc43",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,214,49\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1263adef5e524f4d393c4aaa47bc2eaefb9dac5a",
+          "requirement": "gocache",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r3-command",
+          "performer": "claude:bg-t13-repair3-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4073c7af9267ad6f0a1267357403652205beaf78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-repair3-20261028",
+            "digest": "sha256:fa0c520467688c0cd00d70a2d5fc6257237059b33d304a28967672c4a853f273",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,23337,405\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1263adef5e524f4d393c4aaa47bc2eaefb9dac5a",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r3-conformance",
+          "performer": "claude:bg-t13-repair3-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4073c7af9267ad6f0a1267357403652205beaf78",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bg-t13-repair3-20261028",
+            "digest": "sha256:43e9a735f066c421f57fbfce417014a7721844834d0e762ecae4b625c6c510b4",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,14080,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1263adef5e524f4d393c4aaa47bc2eaefb9dac5a",
           "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
@@ -3771,6 +3848,39 @@
     {
       "from": "sha256:3e3a35c0568addcc3d0c74f8147861f60602f2b0118d9fc70710dd771b309747",
       "to": "sha256:181d703d312f8cef87041cd43162af23e4bb350832f65a16fdd091a02adced85",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ],
+        "BG-C7": [
+          "BG-C7"
+        ],
+        "BG-C8": [
+          "BG-C8"
+        ]
+      }
+    },
+    {
+      "from": "sha256:181d703d312f8cef87041cd43162af23e4bb350832f65a16fdd091a02adced85",
+      "to": "sha256:fb12fbaa98b7666a5d448d4ad48800461a8a71a1dcb4f513e96563f21bebf48f",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
