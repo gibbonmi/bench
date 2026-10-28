@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/background-grade/spec.md",
-  "plan_digest": "sha256:a5097b5f314565418265d487d9d8eadf0e7715fd692e852a5f7de152a39be024",
+  "plan_digest": "sha256:3e3a35c0568addcc3d0c74f8147861f60602f2b0118d9fc70710dd771b309747",
   "implementation_session": "",
   "chunks": [
     {
@@ -2426,9 +2426,9 @@
     {
       "id": "BG-C8",
       "base": "12d7410d014226362ad2e70281c3dedfbe25127c",
-      "tip": "3330d5d51d8926b085b12057119315ed82e96ead",
-      "plan_digest": "sha256:a5097b5f314565418265d487d9d8eadf0e7715fd692e852a5f7de152a39be024",
-      "source_digest": "065c19cde303549456e23fc3b87385c79d56dea2",
+      "tip": "c20009c2381034975e0a159e7a84d931468d8d1d",
+      "plan_digest": "sha256:3e3a35c0568addcc3d0c74f8147861f60602f2b0118d9fc70710dd771b309747",
+      "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
       "acceptance_rows": [
         "BG78",
         "BG79",
@@ -2796,6 +2796,82 @@
           },
           "source_commit": "3330d5d51d8926b085b12057119315ed82e96ead",
           "requirement": "conformance-16",
+          "command": "bench test --check root-conformance",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r1-worktree",
+          "performer": "claude:bg-t13-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t13-repair1-20261028",
+            "digest": "sha256:7680666d1ea39079dad09268f8ab12a37a01d4c43b5323d3df9e8fe643c740de",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,99440,1618\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "requirement": "worktree",
+          "command": "bench test --package ./internal/worktree",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r1-gocache",
+          "performer": "claude:bg-t13-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t13-repair1-20261028",
+            "digest": "sha256:b731296ea7a68e50bfc56bb715910e763fe8268cf0816478f75c53fd125a6b66",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,pass,250,49\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "requirement": "gocache",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r1-command",
+          "performer": "claude:bg-t13-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t13-repair1-20261028",
+            "digest": "sha256:a2807d3ec0f43d333ea02a11440eb552cd1057ea0be4bb6450479d85dc6922d5",
+            "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,24821,405\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "requirement": "command",
+          "command": "bench test --package ./cmd/bench",
+          "exit_code": 0
+        },
+        {
+          "id": "bg-c8-t13-r1-conformance",
+          "performer": "claude:bg-t13-repair1-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6c938c21a6eead5d5025cf3f1052d39416216242",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:bg-t13-repair1-20261028",
+            "digest": "sha256:5167eb9ca41b9f14b9763f3f5283f3d2648a7b8dcbba84ac33a9a13bc12fcec1",
+            "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  root-conformance,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,15898,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c20009c2381034975e0a159e7a84d931468d8d1d",
+          "requirement": "conformance",
           "command": "bench test --check root-conformance",
           "exit_code": 0
         }
@@ -3419,6 +3495,39 @@
     {
       "from": "sha256:6c0c45ae29bebbbac299c59ca4cfe419ca6f99fd9abeba2a328a6ac505443538",
       "to": "sha256:a5097b5f314565418265d487d9d8eadf0e7715fd692e852a5f7de152a39be024",
+      "chunk_ids": {
+        "BG-C0": [
+          "BG-C0"
+        ],
+        "BG-C1": [
+          "BG-C1"
+        ],
+        "BG-C2": [
+          "BG-C2"
+        ],
+        "BG-C3": [
+          "BG-C3"
+        ],
+        "BG-C4": [
+          "BG-C4"
+        ],
+        "BG-C5": [
+          "BG-C5"
+        ],
+        "BG-C6": [
+          "BG-C6"
+        ],
+        "BG-C7": [
+          "BG-C7"
+        ],
+        "BG-C8": [
+          "BG-C8"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a5097b5f314565418265d487d9d8eadf0e7715fd692e852a5f7de152a39be024",
+      "to": "sha256:3e3a35c0568addcc3d0c74f8147861f60602f2b0118d9fc70710dd771b309747",
       "chunk_ids": {
         "BG-C0": [
           "BG-C0"
