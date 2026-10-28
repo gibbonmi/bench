@@ -4154,3 +4154,11 @@ One unified session examined the repair delta `3330d5d51..80b59327c`. It closed 
 The second repair session recorded this red at the repair commit `99c62ee79`.
 
 - R1: the empty-claim mutant in `background_launch.go` bit `TestReapedStoppedGradeRecordsStopped`, because the record named `aborted`.
+
+### Final reconciliation pickup
+
+The final `bench gate` at `292fe98bb` went red in the capability phase only. The checkout guard named `.git/bench-background-grade`, its log, and its running log as changed paths. A refused landing stopped the live grade of this worktree, and that grade wrote its end two minutes later inside the guard window. Story 19 and BG29 let a grade run beside a foreground gate, so the guard must not count the state that a detached grade writes.
+
+Two consultants, on opus and sonnet, each chose to exempt exact paths from one source in `backgroundstate`. A wait before the snapshot breaks BG29 and leaves the race open. The plan commit adds row BG117, and a third repair session on ticket 13 takes target F1.
+
+- F1, target BG117: `internal/gate/checkout_guard.go` allows the exact paths of the record, the logs, the stop marker, and the claims. One `backgroundstate` function answers those paths from the existing names, and no prefix match widens the set. A test shows that a grade state write during the guard window keeps the guard empty, and that another admin write still shows.
