@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/build-cost/spec.md",
-  "plan_digest": "sha256:abf6ac328eccb2b1383bd642b4377232dfbdea9b4b58cd9098317651ee4d6423",
+  "plan_digest": "sha256:227ca9b8dce59f51422f82f9b5a086870e49f7f9e0410187d6caf27d529045f3",
   "implementation_session": "",
   "chunks": [
     {
@@ -1474,9 +1474,9 @@
     {
       "id": "BC-C5",
       "base": "0164dcb56afc93a39301ddb7a886e497646a0253",
-      "tip": "68aa5e4327267d2bc3c2e0ccff86332d5c9287b7",
-      "plan_digest": "sha256:abf6ac328eccb2b1383bd642b4377232dfbdea9b4b58cd9098317651ee4d6423",
-      "source_digest": "2ac054eb0160fa87a543f5a583ece5a8a6854020",
+      "tip": "dffdef8993a34fe24c3c51aab6b7c45e8a5bb8a4",
+      "plan_digest": "sha256:227ca9b8dce59f51422f82f9b5a086870e49f7f9e0410187d6caf27d529045f3",
+      "source_digest": "7be08a780c11dbe1eaa489d784e5264339ecc356",
       "acceptance_rows": [
         "BC58",
         "BC59",
@@ -1521,6 +1521,36 @@
               "ref": "claude-agent:bench-writer-medium:bc-t10-author-20261028",
               "digest": "sha256:862cdd7562b2727a80028e88a2c1f880c1fdd6c1df8baa27384863a5899b964f",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/tree_scope.go,swap,failed,1,TestTreeScopedHelpNamesTheTarget,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestTreeScopedHelpNamesTheTarget,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,328\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestTreeScopedHelpNamesTheTarget,\"tree_scope_test.go:168: root help names no \\\"[--in <label|primary>]\\\" for bench commit\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t11-probe-11",
+          "performer": "claude:bc-t11-author-20261028",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7be08a780c11dbe1eaa489d784e5264339ecc356",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:bc-t11-author-20261028",
+            "digest": "sha256:f149506373a1b18855d71688cb06fdbecc02034665dfbf9ea6ceee0443f98d47",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/treetarget/build.go,swap,failed,2,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunReusesAMatchingBuild,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,893,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,\"build_test.go:209: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_primary_build,\"build_test.go:209: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dffdef8993a34fe24c3c51aab6b7c45e8a5bb8a4",
+          "requirement": "probe-11",
+          "command": "bench probe internal/treetarget/build.go --swap 'if freshness.VerifyAt(root, root, candidate) == nil {' --with 'if candidate == freshness.PublishedExecutable(root) && freshness.VerifyAt(root, root, candidate) == nil {' --package ./internal/treetarget --run TestRunReusesAMatchingBuild",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Accept only the target's own build. A target without its own build must then refuse, so the reuse test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:bc-t11-author-20261028",
+              "digest": "sha256:f149506373a1b18855d71688cb06fdbecc02034665dfbf9ea6ceee0443f98d47",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/treetarget/build.go,swap,failed,2,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/treetarget,TestRunReusesAMatchingBuild,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,821\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,fail,893,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC61_the_primary_build_before_the_running_executable,\"build_test.go:209: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\n  github.com/gibbonmi/bench/internal/treetarget,TestRunReusesAMatchingBuild/BC62_the_running_executable_after_a_changed_primary_build,\"build_test.go:209: status --in alpha = (1, \\\"\\\", \\\"bench status --in: worktree build is missing\\\\\\\\nnext=bench worktree build alpha\\\\\\\\n\\\"), want the child's exit 0 and no parent output\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1779,6 +1809,27 @@
         ],
         "BC-C4": [
           "BC-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:abf6ac328eccb2b1383bd642b4377232dfbdea9b4b58cd9098317651ee4d6423",
+      "to": "sha256:227ca9b8dce59f51422f82f9b5a086870e49f7f9e0410187d6caf27d529045f3",
+      "chunk_ids": {
+        "BC-C1": [
+          "BC-C1"
+        ],
+        "BC-C2": [
+          "BC-C2"
+        ],
+        "BC-C3": [
+          "BC-C3"
+        ],
+        "BC-C4": [
+          "BC-C4"
+        ],
+        "BC-C5": [
+          "BC-C5"
         ]
       }
     }
