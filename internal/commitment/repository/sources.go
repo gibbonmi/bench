@@ -89,12 +89,21 @@ func ticketsOnlyAt(root, revision, path string) bool {
 }
 
 // readTree names the tree that source reads in a transition from current to proposed. A new
-// deliverable source reads tree, which publishes it, and every other source reads revision.
-func readTree(current *commitment.Policy, proposed commitment.Policy, source commitment.SourceBinding, tree, revision string) string {
-	if commitment.NewDeliverable(current, proposed, source) {
+// deliverable source reads tree, which publishes it. A new outcome source whose path revision
+// does not hold reads tree too, so one landing publishes a row and its admission. Every other
+// source reads revision, so a worktree edit of a row that revision holds cannot pass as current.
+func (store Store) readTree(current *commitment.Policy, proposed commitment.Policy, source commitment.SourceBinding, tree, revision string) string {
+	if commitment.NewDeliverable(current, proposed, source) || commitment.NewSource(current, proposed, source) && store.absentAt(revision, source.Path) {
 		return tree
 	}
 	return revision
+}
+
+// absentAt reports that revision holds no entry at path. A read error is no proof of absence,
+// so the source then reads revision and refuses there.
+func (store Store) absentAt(revision, path string) bool {
+	listing, err := git.ListTree(store.Root, revision, "--", path)
+	return err == nil && len(listing) == 0
 }
 
 // checkoutHead resolves the commit that HEAD names in the store root.
@@ -137,7 +146,7 @@ func (store Store) validateDeliverables(current *commitment.Policy, proposed com
 	}
 	_, bindings := commitment.Unsettled(proposed)
 	for _, binding := range bindings {
-		if _, err := store.validateDeliverableAt(readTree(current, proposed, binding.Source, head, revision), binding.Source); err != nil {
+		if _, err := store.validateDeliverableAt(store.readTree(current, proposed, binding.Source, head, revision), binding.Source); err != nil {
 			return err
 		}
 	}
@@ -150,7 +159,7 @@ func (store Store) validateSources(current *commitment.Policy, proposed commitme
 		return err
 	}
 	for _, source := range sources {
-		if err := store.validateSourceAt(readTree(current, proposed, source, head, revision), source); err != nil {
+		if err := store.validateSourceAt(store.readTree(current, proposed, source, head, revision), source); err != nil {
 			return err
 		}
 	}

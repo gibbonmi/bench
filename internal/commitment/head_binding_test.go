@@ -139,9 +139,9 @@ func TestHeadBindingRefusesAnUnheldDeliverable(t *testing.T) {
 	}
 }
 
-// Every source other than a new deliverable reads the default-branch tip. A worktree edit
-// of a row therefore cannot pass as current, and a binding that main added after the
-// worktree's HEAD stays valid there.
+// Every source other than a new deliverable or a new row that main lacks reads the
+// default-branch tip. A worktree edit of a row therefore cannot pass as current, and a
+// binding that main added after the worktree's HEAD stays valid there.
 func TestHeadBindingKeepsTheDefaultTipForEveryOtherSource(t *testing.T) {
 	t.Run("changed-row", func(t *testing.T) {
 		const edited = "**FT1 — A**\n\nAn obligation that the worktree changes.\n"
@@ -212,6 +212,63 @@ func TestHeadBindingReadsEachNewDeliverableAtHEAD(t *testing.T) {
 			t.Fatalf("Plan(a binding of the path that main binds, at the identity that HEAD holds) = %v, want acceptance", err)
 		}
 	})
+}
+
+// A new outcome's source reads HEAD only when the policy names no source at its path and the
+// default-branch tip lacks that path, so one landing carries a new row and its admission. A
+// worktree edit of a row that main holds still reads the default tip, and so does a retained
+// row that main deleted. The plan refuses both.
+func TestHeadBindingReadsANewRowAtHEAD(t *testing.T) {
+	const row, kept = "roadmap/FT9.md", "roadmap/FT8.md"
+	const body, keptBody = "**FT9 — N**\n\nA row that the admitting landing adds.\n", "**FT8 — A**\n\nA row that the policy binds.\n"
+	for _, tc := range []struct {
+		name string
+		hold func(t *testing.T) (root, worktree string)
+		want string
+	}{
+		{name: "row-main-lacks", hold: func(t *testing.T) (string, string) { return headWorktree(t) }},
+		{name: "row-main-holds", want: "changed from", hold: func(t *testing.T) (string, string) {
+			root, worktree := headWorktree(t)
+			commitmenttest.Write(t, root, row, "**FT9 — N**\n\nThe row that main holds.\n")
+			commitmenttest.Commit(t, root, "main holds the row")
+			return root, worktree
+		}},
+		{name: "retained-row-main-deleted", want: "missing or nonregular tree file " + kept, hold: func(t *testing.T) (string, string) {
+			bound := policy([]commitment.Milestone{milestone("M1", headOutcome)}, "M1")
+			bound.Milestones[0].Outcomes[0].Sources = []commitment.SourceBinding{{ID: "FT8", Path: kept, Identity: commitment.Identity([]byte(keptBody))}}
+			root := commitmenttest.Repo(t, bound)
+			commitmenttest.Write(t, root, kept, keptBody)
+			commitmenttest.Commit(t, root, "main adds the bound row")
+			worktree := commitmenttest.Assignment(t, root, headRequest)
+			if err := os.Remove(filepath.Join(root, filepath.FromSlash(kept))); err != nil {
+				t.Fatal(err)
+			}
+			commitmenttest.Commit(t, root, "main deletes the bound row")
+			return root, worktree
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, worktree := tc.hold(t)
+			commitmenttest.Write(t, worktree, row, body)
+			commitmenttest.Commit(t, worktree, "add the row")
+			proposed, _, err := commitrepo.Store{Root: root}.Policy()
+			if err != nil {
+				t.Fatal(err)
+			}
+			proposed.Milestones[0].Outcomes = append(proposed.Milestones[0].Outcomes, commitment.Outcome{
+				ID:       "N",
+				Criteria: []commitment.Criterion{{ID: "N.done", Text: "The outcome is delivered."}},
+				Sources:  []commitment.SourceBinding{{ID: "FT9", Path: row, Identity: commitment.Identity([]byte(body))}},
+			})
+			_, err = (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, proposed))
+			if tc.want == "" && err != nil {
+				t.Fatalf("Plan(a new outcome whose row HEAD adds and main lacks) = %v, want acceptance", err)
+			}
+			if tc.want != "" && (err == nil || !strings.Contains(err.Error(), tc.want)) {
+				t.Fatalf("Plan(a new outcome beside the %s row) = %v, want a refusal naming %q", tc.name, err, tc.want)
+			}
+		})
+	}
 }
 
 // Before the landing, start reads only the default-branch policy. It refuses the spec that

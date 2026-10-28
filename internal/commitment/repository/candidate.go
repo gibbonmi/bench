@@ -208,7 +208,7 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 			continue
 		}
 		for _, source := range expected.Sources {
-			if err := store.validateSourceAt(readTree(current, *candidate, source, tree, revision), source); err != nil {
+			if err := store.validateSourceAt(store.readTree(current, *candidate, source, tree, revision), source); err != nil {
 				return err
 			}
 		}
