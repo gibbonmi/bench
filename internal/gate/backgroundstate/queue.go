@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -74,6 +75,30 @@ func (q *Queue) ClearForCheckpoint(key, worktree string) *Slot {
 		return r
 	}
 	return nil
+}
+
+// Withdraw takes each worktree at dir or under it out of the queue, for a verb that removes that
+// worktree or lands it as a stack member. It drops each queued grade and the latest key of each
+// such worktree, and it answers the running grade of such a worktree, which the caller stops, or
+// nil. A grade runs in its own worktree, so a key that another worktree wants keeps no grade of a
+// withdrawn worktree.
+func (q *Queue) Withdraw(dir string) *Slot {
+	q.Queued = slices.DeleteFunc(q.Queued, func(queued Entry) bool { return within(queued.Worktree, dir) })
+	for worktree := range q.Latest {
+		if within(worktree, dir) {
+			delete(q.Latest, worktree)
+		}
+	}
+	if r := q.Running; r != nil && within(r.Worktree, dir) {
+		return r
+	}
+	return nil
+}
+
+// within reports whether the worktree path is dir or lies under dir.
+func within(path, dir string) bool {
+	dir = filepath.Clean(dir)
+	return path == dir || strings.HasPrefix(path, dir+string(filepath.Separator))
 }
 
 // wanted reports whether a worktree other than except has key as the key of its latest tip.

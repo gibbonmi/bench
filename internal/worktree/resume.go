@@ -165,6 +165,9 @@ func applyCleanupTransaction(j joins, a ambient, root, path, fingerprint string,
 		}
 		return plan, nil
 	}
+	// The release, the clean, and the resume all remove a tree through this transaction, so
+	// each stops the background grades of the tree here, once the plan acts on it.
+	stopGradesOf(a.home, target, a.warnings)
 	releasePersistence, err := lockCleanupPersistence(j, repo, target)
 	if err != nil {
 		return plan, err

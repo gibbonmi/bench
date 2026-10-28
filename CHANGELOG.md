@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Background grade stop when work goes away
+
+- Changed `bench worktree release`, `bench worktree clean`, and `bench worktree reclaim`. Before each of these verbs removes a worktree, it stops the running background grade of that worktree, waits for that grade to exit, and drops the queued grade of that worktree. The reclaim does this for each worktree under each pool key that it removes. The queue then starts its oldest queued grade. A stop that fails prints one `background grade: not stopped` line, and the verb still acts.
+- Changed the stack form of `bench worktree land`. Before the stack grades, it stops the running grade and drops the queued grade of each member worktree.
+- Changed `bench cache clean`. The clean now drops every queued grade and stops the running grade, and waits for that grade to exit, before it takes the cache lock. The clean still refuses under a live run.
+
 ### Landing wait on a background grade
 
 - Changed `bench worktree land`. Before it takes the destination lease, a landing from a worktree that background grades run in now computes the grade key of the tree that it publishes onto the current destination. When a live claim holds that key, the landing waits until the claim ends, with the wait rules of the chunk checkpoint, so the wait blocks no other landing. Under the lease, the landing looks up its key again, so a background green answers it with no oracle run of its own. A destination that moved during the wait gives a new key, and the landing then runs its own oracle. A landing from any other worktree, such as a worktree of a linked repository, computes no key, waits on nothing, and clears no grade.

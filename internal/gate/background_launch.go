@@ -25,14 +25,6 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
-// The windows of the queue steps. A queue holder holds the lock at most for the start of one
-// grade, which the teardown window of a process bounds. A stopped grade cancels its oracle
-// group and then tears down its own resources.
-const (
-	queueLockWindow = 2 * bounds.ProcessFinalWindow
-	gradeStopWindow = bounds.ProcessGroupCancelGrace + bounds.ProcessFinalWindow
-)
-
 // StartBackground starts the lane pass of tip, the commit that a lane pass just published in the
 // worktree root, for the machine queue under the Bench home home. kit is the kit that the verb
 // read. A pass starts only in a background worktree. The verb only detaches the pass, so it
@@ -112,6 +104,32 @@ func passLane(home, root, tip string) error {
 	return errors.Join(stopGrade(*superseded), advanceQueue(home, 0))
 }
 
+// StopWorktreeGrades takes each worktree at dir or under it out of the machine queue under home,
+// for a verb that removes that worktree or lands it as a stack member, before the verb acts. It
+// drops each queued grade of such a worktree, and it stops the running grade of such a worktree
+// and waits for its exit. The queue then starts its oldest queued grade. A queue that holds no
+// grade of dir needs no lock.
+func StopWorktreeGrades(home, dir string) error {
+	// The withdrawal first runs on the queue as read, which it does not write.
+	queue, err := backgroundstate.ReadQueue(home)
+	if queued := len(queue.Queued); err != nil || (queue.Withdraw(dir) == nil && len(queue.Queued) == queued) {
+		return err
+	}
+	var stopped *backgroundstate.Slot
+	err = updateQueue(home, func(queue *backgroundstate.Queue) error {
+		reaped := reapRunning(queue)
+		stopped = queue.Withdraw(dir)
+		return reaped
+	})
+	if err != nil {
+		return err
+	}
+	if stopped != nil {
+		err = stopGrade(*stopped)
+	}
+	return errors.Join(err, advanceQueue(home, 0))
+}
+
 // advanceQueue moves the queue under home on after the grade of process ended ends: it frees
 // the slot of that grade, reaps a running grade whose owner died, and starts the oldest queued
 // grade when the slot is free.
@@ -126,7 +144,7 @@ func advanceQueue(home string, ended int) error {
 
 // updateQueue applies update to the queue under home within the lock window.
 func updateQueue(home string, update func(*backgroundstate.Queue) error) error {
-	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(queueLockWindow))
+	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(backgroundstate.LockWindow))
 	defer cancel()
 	return backgroundstate.UpdateQueue(ctx, durablefile.Native(), home, update)
 }
@@ -154,7 +172,7 @@ func reapRunning(queue *backgroundstate.Queue) error {
 // end before it exits, so the stop then names that end stopped. A grade that reached its verdict
 // before the stop keeps that verdict.
 func stopGrade(slot backgroundstate.Slot) error {
-	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(gradeStopWindow))
+	ctx, cancel := bounds.Context(context.Background(), bounds.FixedWindow(backgroundstate.StopWindow))
 	defer cancel()
 	if err := backgroundstate.Stop(ctx, slot.Claim()); err != nil {
 		return err
