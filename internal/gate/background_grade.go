@@ -28,16 +28,21 @@ const backgroundVerb = "gate-background"
 // backgroundUsage is the grammar of the background grade entry.
 const backgroundUsage = "usage: bench " + backgroundVerb + " <worktree> <tip>"
 
+// backgroundNice is the nice value of a background grade and of each process that it starts.
+const backgroundNice = 19
+
 // backgroundResolvedEnv marks the process that the wrapper of the target worktree resolved. The
 // entry consumes it, so no child of the grade inherits it.
 const backgroundResolvedEnv = "BENCH_GATE_BACKGROUND"
 
-// backgroundGrade is the state of one background grade: the claim that it holds on its grade key
-// once the run accepts its subject, and the git common directory of that claim. A nil grade is a
-// foreground run, so each method below keeps the foreground behavior for it.
+// backgroundGrade is the state of one background grade: the grade key of the subject that the
+// run accepts, the claim that it holds on that key, the git common directory of that claim, and
+// whether its oracle reached its own exit. A nil grade is a foreground run, so each method below
+// keeps the foreground behavior for it.
 type backgroundGrade struct {
-	common string
-	claim  backgroundstate.Claim
+	key, common string
+	claim       backgroundstate.Claim
+	verdict     bool
 }
 
 // reenterImage replaces the image of this process with the program name, run with args and env
@@ -71,13 +76,18 @@ func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "bench %s: %v\n", backgroundVerb, err)
 		return 1
 	}
+	// The grade runs at the lowest priority that the platform allows, so a refused step keeps
+	// the grade at the priority that it has.
+	if err := lowerPriority(); err != nil {
+		fmt.Fprintf(stderr, "bench %s: priority not lowered: %v\n", backgroundVerb, err)
+	}
 	return gradeInBackground(context.Background(), root, tip, notifyGateSignals, stdout, stderr)
 }
 
 // gradeInBackground grades tip in the worktree root as one background grade, and arm runs once
-// the grade holds its claim. The run writes its output to the background log of the worktree. A
-// run that ends green records green, and a run whose oracle refuses the tree records red. The
-// grade then prints its outcome and its log, and it answers the exit of the run.
+// the grade holds its claim. The run writes its output to the background log of the worktree. Once
+// the run knows its grade key, it records its outcome in the background record. The grade then
+// prints its outcome and its log, and it answers the exit of the run.
 func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireContextArm, stdout, stderr io.Writer) int {
 	gitdir, err := benchgit.AdminDir(root)
 	if err != nil {
@@ -97,12 +107,12 @@ func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireCon
 		fmt.Fprintf(stderr, "background grade: claim release failed: %v\n", err)
 		return 1
 	}
-	outcome, verdict := backgroundOutcome(result)
-	if grade.claim.Key == "" || !verdict {
+	if grade.key == "" {
 		fmt.Fprintf(stdout, "background grade: no verdict (log %s)\n", logPath)
 		return result.ActionExit
 	}
-	record := backgroundstate.Record{Outcome: outcome, Key: grade.claim.Key, Tip: commit, Log: logPath}
+	outcome := grade.outcome(result)
+	record := backgroundstate.Record{Outcome: outcome, Key: grade.key, Tip: commit, Log: logPath}
 	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
 		fmt.Fprintf(stderr, "background grade: record persistence failed: %v\n", err)
 		return 1
@@ -111,16 +121,24 @@ func gradeInBackground(ctx context.Context, root, tip string, arm postAcquireCon
 	return result.ActionExit
 }
 
-// backgroundOutcome answers the outcome of a run that reached a verdict: green for a run that
-// ends green, and red for a run whose oracle refuses the tree.
-func backgroundOutcome(result Result) (backgroundstate.Outcome, bool) {
+// outcome answers the outcome of the run of the grade: green for a run that ends green, red for
+// a run whose oracle reached its own exit and refuses the tree, and aborted for each other end.
+// A timeout, an interrupt, and a subject that the grade cannot hold each end with no verdict.
+func (g *backgroundGrade) outcome(result Result) backgroundstate.Outcome {
 	switch {
 	case result.ActionExit == 0:
-		return backgroundstate.Green, true
-	case result.GateExit != 0:
-		return backgroundstate.Red, true
+		return backgroundstate.Green
+	case g.verdict && result.GateExit != 0:
+		return backgroundstate.Red
 	}
-	return "", false
+	return backgroundstate.Aborted
+}
+
+// settle marks that the oracle of the grade reached its own exit. A foreground run marks nothing.
+func (g *backgroundGrade) settle() {
+	if g != nil {
+		g.verdict = true
+	}
 }
 
 // run grades tip in root as the chunk subject of the open build of tip. The chunk id comes from
@@ -208,16 +226,18 @@ func backgroundGradeOf(ctx context.Context) *backgroundGrade {
 }
 
 // hold writes the claim of the grade on the grade key of plan through replacer, in the git common
-// directory of root. A foreground run holds none.
+// directory of root. The grade keeps that key before the claim, so a claim that fails still
+// records its outcome under the key. A foreground run holds none.
 func (g *backgroundGrade) hold(replacer durablefile.Replacer, root string, plan subject) error {
 	if g == nil {
 		return nil
 	}
+	g.key = evidenceName(plan)
 	common, err := benchgit.CommonDir(root)
 	if err != nil {
 		return err
 	}
-	claim, err := backgroundstate.ClaimFor(evidenceName(plan), root)
+	claim, err := backgroundstate.ClaimFor(g.key, root)
 	if err != nil {
 		return err
 	}

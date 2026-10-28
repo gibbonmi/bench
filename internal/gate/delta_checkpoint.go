@@ -205,7 +205,8 @@ func reusableDelta(gitdir string, delta deltaRun) bool {
 
 // interruptedExit classifies an oracle run that a cancel of the gate or the gate timeout ended.
 // A cancel answers the child's code. A timeout prints its line and answers 124. A whole run and
-// a reduced run both read it, so they end alike. interrupted is false when neither ended the run.
+// a reduced run both read it, so they end alike. interrupted is false when neither ended the run,
+// and then the background grade that ctx carries marks that its oracle reached its own exit.
 func interruptedExit(ctx, runCtx context.Context, rc int, stderr io.Writer) (code int, timedOut, interrupted bool) {
 	if ctx.Err() != nil {
 		return rc, false, true
@@ -214,6 +215,7 @@ func interruptedExit(ctx, runCtx context.Context, rc int, stderr io.Writer) (cod
 		fmt.Fprintln(stderr, "gate: timeout")
 		return 124, true, true
 	}
+	backgroundGradeOf(ctx).settle()
 	return rc, false, false
 }
 
