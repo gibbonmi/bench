@@ -238,7 +238,7 @@ At slicing, each chunk also lists the plain floor commands that the current `che
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "BC-C1",
@@ -251,77 +251,95 @@ At slicing, each chunk also lists the plain floor commands that the current `che
         {
           "id": "probe-01",
           "command": "bench probe internal/reviewrecord/plan.go --swap 'if len(items) == 0 && owned == nil {' --with 'if len(items) == 0 {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks",
-          "probe": "Refuse an empty chunk list again. The probe-only plan with an empty chunk list must then refuse, so the plan test fails."
+          "probe": "Refuse an empty chunk list again. The probe-only plan with an empty chunk list must then refuse, so the plan test fails.",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "probe-02",
           "command": "bench probe internal/reviewrecord/plan.go --swap 'if owned != nil && item.Probe == \"\" {' --with 'if false {' --package ./internal/reviewrecord --run TestPlanProbeOnlyChunks",
-          "probe": "Disable the plain chunk requirement refusal. The plan with a plain chunk requirement must then pass, so the plan test fails."
+          "probe": "Disable the plain chunk requirement refusal. The plan with a plain chunk requirement must then pass, so the plan test fails.",
+          "ticket": "02-refuse-plain-chunk-requirements.md"
         },
         {
           "id": "probe-03",
           "command": "bench probe .agents/commands/bench-implement-spec.md --omit 'After the ticket commit, the author runs only the probes of the plan, because the chunk checkpoint grades every other check.' --check docs-currency-workflow",
-          "probe": "Remove the probe-only sentence from the build guidance. Its Require anchor must then fail."
+          "probe": "Remove the probe-only sentence from the build guidance. Its Require anchor must then fail.",
+          "ticket": "03-state-the-probe-only-rule.md"
         },
         {
           "id": "floor-root-conformance",
-          "command": "bench test --check root-conformance"
+          "command": "bench test --check root-conformance",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-conformance",
-          "command": "bench test --package ./internal/conformance"
+          "command": "bench test --package ./internal/conformance",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-preflight",
-          "command": "bench test --package ./internal/preflight"
+          "command": "bench test --package ./internal/preflight",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-reviewrecord",
-          "command": "bench test --package ./internal/reviewrecord"
+          "command": "bench test --package ./internal/reviewrecord",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-reviewrecord-recordcmd",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd"
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-testreport",
-          "command": "bench test --package ./internal/testreport"
+          "command": "bench test --package ./internal/testreport",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-assessment",
-          "command": "bench test --package ./internal/assessment"
+          "command": "bench test --package ./internal/assessment",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-preflight-ownership",
-          "command": "bench test --package ./internal/preflight/ownership"
+          "command": "bench test --package ./internal/preflight/ownership",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-preflight-preflighttest",
-          "command": "bench test --package ./internal/preflight/preflighttest"
+          "command": "bench test --package ./internal/preflight/preflighttest",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-preflight-staleness",
-          "command": "bench test --package ./internal/preflight/staleness"
+          "command": "bench test --package ./internal/preflight/staleness",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-reviewrecord-recordtest",
-          "command": "bench test --package ./internal/reviewrecord/recordtest"
+          "command": "bench test --package ./internal/reviewrecord/recordtest",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-worktree",
-          "command": "bench test --package ./internal/worktree"
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-anchors",
-          "command": "bench test --package ./internal/anchors"
+          "command": "bench test --package ./internal/anchors",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         },
         {
           "id": "floor-internal-gate",
-          "command": "bench test --package ./internal/gate"
+          "command": "bench test --package ./internal/gate",
+          "ticket": "01-accept-probe-only-plans-and-retire-check-floor.md"
         }
       ]
     },
@@ -335,40 +353,49 @@ At slicing, each chunk also lists the plain floor commands that the current `che
         {
           "id": "probe-04",
           "command": "bench probe internal/retros/retros.go --omit 'CostHeading,' --package ./internal/roadmap --run TestRetroRejectsABodyWithoutCost",
-          "probe": "Remove the Cost heading from the canonical heading list. The body without a Cost section must then pass, so the refusal test fails."
+          "probe": "Remove the Cost heading from the canonical heading list. The body without a Cost section must then pass, so the refusal test fails.",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "probe-05",
           "command": "bench probe internal/roadmap/retro_cost.go --swap 'if ids[span.Attributes[otelrecord.AttrAssignmentID]] {' --with 'if true {' --package ./internal/roadmap --run TestRetroCostTraceTimes",
-          "probe": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails."
+          "probe": "Count every span of the record. The span of another assignment must then reach the sums, so the trace test fails.",
+          "ticket": "05-add-trace-times-and-the-drain-rule.md"
         },
         {
           "id": "floor-root-conformance",
-          "command": "bench test --check root-conformance"
+          "command": "bench test --check root-conformance",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "floor-internal-retros",
-          "command": "bench test --package ./internal/retros"
+          "command": "bench test --package ./internal/retros",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "floor-internal-reviewrecord",
-          "command": "bench test --package ./internal/reviewrecord"
+          "command": "bench test --package ./internal/reviewrecord",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "floor-internal-roadmap",
-          "command": "bench test --package ./internal/roadmap"
+          "command": "bench test --package ./internal/roadmap",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "floor-internal-spec",
-          "command": "bench test --package ./internal/spec"
+          "command": "bench test --package ./internal/spec",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "floor-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "04-derive-the-retro-cost-section.md"
         },
         {
           "id": "floor-internal-anchors",
-          "command": "bench test --package ./internal/anchors"
+          "command": "bench test --package ./internal/anchors",
+          "ticket": "04-derive-the-retro-cost-section.md"
         }
       ]
     },
@@ -382,32 +409,39 @@ At slicing, each chunk also lists the plain floor commands that the current `che
         {
           "id": "probe-06",
           "command": "bench probe cmd/bench/commit_chain.go --omit 'args = append(args, evidencecmd.FlagBase, outcome.Base)' --package ./cmd/bench --run TestCommitChainPassesTheBase",
-          "probe": "Drop the base from the chained preflight arguments. The chain test must then see no base."
+          "probe": "Drop the base from the chained preflight arguments. The chain test must then see no base.",
+          "ticket": "06-pass-the-chunk-base-to-the-commit-chain.md"
         },
         {
           "id": "probe-07",
           "command": "bench probe internal/reviewrecord/recordcmd/ticket.go --swap 'if len(unstaged) == 1 && retained.Verb == probe.Verb {' --with 'if false {' --package ./internal/reviewrecord/recordcmd --run TestTicketStagesTheRetainedProbe",
-          "probe": "Disable the staging of the retained probe. The ticket call must then refuse with the excerpt form, so the staging test fails."
+          "probe": "Disable the staging of the retained probe. The ticket call must then refuse with the excerpt form, so the staging test fails.",
+          "ticket": "07-stage-the-probe-in-record-ticket.md"
         },
         {
           "id": "floor-root-conformance",
-          "command": "bench test --check root-conformance"
+          "command": "bench test --check root-conformance",
+          "ticket": "06-pass-the-chunk-base-to-the-commit-chain.md"
         },
         {
           "id": "floor-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "06-pass-the-chunk-base-to-the-commit-chain.md"
         },
         {
           "id": "floor-internal-commit",
-          "command": "bench test --package ./internal/commit"
+          "command": "bench test --package ./internal/commit",
+          "ticket": "06-pass-the-chunk-base-to-the-commit-chain.md"
         },
         {
           "id": "floor-internal-anchors",
-          "command": "bench test --package ./internal/anchors"
+          "command": "bench test --package ./internal/anchors",
+          "ticket": "06-pass-the-chunk-base-to-the-commit-chain.md"
         },
         {
           "id": "floor-internal-reviewrecord-recordcmd",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd"
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "ticket": "06-pass-the-chunk-base-to-the-commit-chain.md"
         }
       ]
     },
@@ -421,44 +455,54 @@ At slicing, each chunk also lists the plain floor commands that the current `che
         {
           "id": "probe-08",
           "command": "bench probe internal/gate/lane.go --swap 'laneWriters(log, log, diagnostics)' --with 'laneWriters(req.Stdout, req.Stderr, diagnostics)' --package ./internal/gate --run TestLanePassPrintsNoCheckReport",
-          "probe": "Stream the check reports to the response again. The pass response must then hold check lines, so the lane test fails."
+          "probe": "Stream the check reports to the response again. The pass response must then hold check lines, so the lane test fails.",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "probe-09",
           "command": "bench probe internal/probe/set.go --swap 'if s.bitten() {' --with 'if false {' --package ./internal/probe --run TestMutantSetSuccessOmitsTheReports",
-          "probe": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails."
+          "probe": "Keep the reports of a bitten set. The answer must then hold a mutant_report table, so the set test fails.",
+          "ticket": "09-print-a-short-bitten-mutant-set.md"
         },
         {
           "id": "floor-root-conformance",
-          "command": "bench test --check root-conformance"
+          "command": "bench test --check root-conformance",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-internal-commit",
-          "command": "bench test --package ./internal/commit"
+          "command": "bench test --package ./internal/commit",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-internal-gate",
-          "command": "bench test --package ./internal/gate"
+          "command": "bench test --package ./internal/gate",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-internal-gate-authorization",
-          "command": "bench test --package ./internal/gate/authorization"
+          "command": "bench test --package ./internal/gate/authorization",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-internal-worktree",
-          "command": "bench test --package ./internal/worktree"
+          "command": "bench test --package ./internal/worktree",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-internal-probe",
-          "command": "bench test --package ./internal/probe"
+          "command": "bench test --package ./internal/probe",
+          "ticket": "08-print-a-short-lane-pass.md"
         },
         {
           "id": "floor-internal-reviewrecord-recordcmd",
-          "command": "bench test --package ./internal/reviewrecord/recordcmd"
+          "command": "bench test --package ./internal/reviewrecord/recordcmd",
+          "ticket": "08-print-a-short-lane-pass.md"
         }
       ]
     },
@@ -473,37 +517,45 @@ At slicing, each chunk also lists the plain floor commands that the current `che
         {
           "id": "probe-10",
           "command": "bench probe cmd/bench/tree_scope.go --swap 'if definition.Scope != scopeTree {' --with 'if true {' --package ./cmd/bench --run TestTreeScopedHelpNamesTheTarget",
-          "probe": "Give no definition the tree-target text. The verb help must then omit --in, so the help test fails."
+          "probe": "Give no definition the tree-target text. The verb help must then omit --in, so the help test fails.",
+          "ticket": "10-name-the-tree-target-in-verb-help.md"
         },
         {
           "id": "probe-11",
           "command": "bench probe internal/treetarget/build.go --swap 'if freshness.VerifyAt(root, root, candidate) == nil {' --with 'if candidate == freshness.PublishedExecutable(root) && freshness.VerifyAt(root, root, candidate) == nil {' --package ./internal/treetarget --run TestRunReusesAMatchingBuild",
-          "probe": "Accept only the target's own build. A target without its own build must then refuse, so the reuse test fails."
+          "probe": "Accept only the target's own build. A target without its own build must then refuse, so the reuse test fails.",
+          "ticket": "11-reuse-a-matching-sealed-build.md"
         },
         {
           "id": "probe-12",
           "command": "bench probe .bench/BENCH.md --omit ' except a `Writes:` widen' --check docs-currency-workflow",
-          "probe": "Restore the learning for every widen. The Require anchor of the widen exception must then fail."
+          "probe": "Restore the learning for every widen. The Require anchor of the widen exception must then fail.",
+          "ticket": "12-name-the-tree-target-forms-in-guidance.md"
         },
         {
           "id": "floor-root-conformance",
-          "command": "bench test --check root-conformance"
+          "command": "bench test --check root-conformance",
+          "ticket": "10-name-the-tree-target-in-verb-help.md"
         },
         {
           "id": "floor-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
+          "command": "bench test --package ./cmd/bench",
+          "ticket": "10-name-the-tree-target-in-verb-help.md"
         },
         {
           "id": "floor-system",
-          "command": "bench test --check system"
+          "command": "bench test --check system",
+          "ticket": "10-name-the-tree-target-in-verb-help.md"
         },
         {
           "id": "floor-internal-treetarget",
-          "command": "bench test --package ./internal/treetarget"
+          "command": "bench test --package ./internal/treetarget",
+          "ticket": "10-name-the-tree-target-in-verb-help.md"
         },
         {
           "id": "floor-internal-anchors",
-          "command": "bench test --package ./internal/anchors"
+          "command": "bench test --package ./internal/anchors",
+          "ticket": "10-name-the-tree-target-in-verb-help.md"
         }
       ]
     }
@@ -517,7 +569,27 @@ At slicing, each chunk also lists the plain floor commands that the current `che
       "id": "coverage",
       "command": "bench coverage --check specs/build-cost/spec.md"
     }
-  ]
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft463-build-cost-full-20261028",
+    "orchestrator_session": "claude:bc-orchestrator-20261028",
+    "author_limit": 3,
+    "assignments": {
+      "01-accept-probe-only-plans-and-retire-check-floor.md": [],
+      "02-refuse-plain-chunk-requirements.md": [],
+      "03-state-the-probe-only-rule.md": [],
+      "04-derive-the-retro-cost-section.md": [],
+      "05-add-trace-times-and-the-drain-rule.md": [],
+      "06-pass-the-chunk-base-to-the-commit-chain.md": [],
+      "07-stage-the-probe-in-record-ticket.md": [],
+      "08-print-a-short-lane-pass.md": [],
+      "09-print-a-short-bitten-mutant-set.md": [],
+      "10-name-the-tree-target-in-verb-help.md": [],
+      "11-reuse-a-matching-sealed-build.md": [],
+      "12-name-the-tree-target-forms-in-guidance.md": []
+    }
+  }
 }
 ```
 
