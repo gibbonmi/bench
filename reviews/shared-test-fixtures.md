@@ -715,6 +715,72 @@
           "tip": "a8a6108eec28c50c398d57a68d5a8d4525d509f6",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "gf-c5a-standards-r2",
+          "performer": "claude:gf-c5a-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "380210fe111f693e2ebef2d299e2925d24e78607",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5a-standards-r2",
+            "digest": "sha256:8f0a4030641e58136269c0223a10ef176decb0cb4b7fbb56dd3507a5f0fef9d6",
+            "excerpt": "Standards confirming round 2, chunk GF-C5A (claude:gf-c5a-standards-r2). Findings: none. R1 closed: runAXIGit and trimmedAXIGit removed, callers on gittest, branchTips raw through OutputBytes. R2 closed: treeRowRepo dates through t.Setenv, commit through gittest.Commit. The repair delta adds no runner, identity copy, or rename-only wrapper.\n"
+          },
+          "axis": "Standards",
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "tip": "b1ea4021967b511f5d799eb1f422a700e634eff2",
+          "finding_ids": [],
+          "supersedes": [
+            "gf-c5a-standards-r1"
+          ]
+        },
+        {
+          "id": "gf-c5a-spec-r2",
+          "performer": "claude:gf-c5a-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "380210fe111f693e2ebef2d299e2925d24e78607",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5a-spec-r2",
+            "digest": "sha256:18b701ec42663240a8ee36acc353b3997d67e48a93f78e48762d1df2a152ea8b",
+            "excerpt": "Spec confirming round 2, chunk GF-C5A (claude:gf-c5a-spec-r2). Findings: none. R1 and R2 closed under Migration boundaries; every migrated call is fixture setup; the widen in 7708c6ff2 stays inside cmd/bench and changes no acceptance row.\n"
+          },
+          "axis": "Spec",
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "tip": "b1ea4021967b511f5d799eb1f422a700e634eff2",
+          "finding_ids": [],
+          "supersedes": [
+            "gf-c5a-spec-r1"
+          ]
+        },
+        {
+          "id": "gf-c5a-coverage-r2",
+          "performer": "claude:gf-c5a-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "380210fe111f693e2ebef2d299e2925d24e78607",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5a-coverage-r2",
+            "digest": "sha256:763c8045d9a113ad0201c238c03ced10b864a88d00910cc919c277a5198230c6",
+            "excerpt": "Coverage confirming round 2, chunk GF-C5A (claude:gf-c5a-coverage-r2). Findings: none. branchTips stays raw; the trimmed reads were trimmed before; no vacuous pass; the repair witness and the coordinator probe grade the inputs.\n"
+          },
+          "axis": "Coverage",
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "tip": "b1ea4021967b511f5d799eb1f422a700e634eff2",
+          "finding_ids": [],
+          "supersedes": [
+            "gf-c5a-coverage-r1"
+          ]
         }
       ]
     }
