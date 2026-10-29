@@ -110,7 +110,7 @@ func TestLandStackResumeProvesEachMember(t *testing.T) {
 		}},
 		{"receipt", "stack member 1: ", func(t *testing.T, f stackFixture, top string) string {
 			m := f.members[0]
-			repo, _, err := cleanupIdentity(f.root, m.creation.Path)
+			repo, _, err := cleanupIdentity(nil, f.root, m.creation.Path)
 			mustNoError(t, err)
 			receipt, found, err := intent.CleanupReceiptFor(f.root, repo, releaseOperation, m.creation.Path, intent.RequestDigest(m.request))
 			if err != nil || !found {

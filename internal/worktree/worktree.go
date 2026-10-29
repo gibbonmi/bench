@@ -28,8 +28,11 @@ func poolAt(home, root string) string { return poolkey.Pool(home, root) }
 
 // LeaseFile returns the absolute path of the repository-specific lease file for path.
 // It returns an error when path is not a worktree whose git administration path resolves.
-func LeaseFile(path string) (string, error) {
-	return git.AdminPath(path, git.BenchLeaseFilename)
+func LeaseFile(path string) (string, error) { return leaseFileIn(nil, path) }
+
+// leaseFileIn is LeaseFile with the administration path read through run.
+func leaseFileIn(run *git.Run, path string) (string, error) {
+	return run.AdminPath(path, git.BenchLeaseFilename)
 }
 func PoolCommand(home string, args []string) (string, int) {
 	var root string
@@ -383,8 +386,8 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	return 0
 }
-func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
-	if assignment, err := assignmentByID(root, receipt.Tracked); err == nil && assignment.State == intent.StateComplete {
+func finishReleaseReceipt(run *git.Run, root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
+	if assignment, err := assignmentByID(run, root, receipt.Tracked); err == nil && assignment.State == intent.StateComplete {
 		if err := intent.DeleteAssignment(root, assignment.ID); err != nil {
 			return 1
 		}
@@ -424,7 +427,7 @@ func releaseAttributed(assignment *string, j joins, a ambient, root string, args
 	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(root, args[2]))
 	if err == nil {
 		*assignment = receipt.Tracked
-		return finishReleaseReceipt(root, stdout, receipt)
+		return finishReleaseReceipt(a.run, root, stdout, receipt)
 	}
 	fmt.Fprintf(stderr, "bench worktree release: %v\n", err)
 	return 1

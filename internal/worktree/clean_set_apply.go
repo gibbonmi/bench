@@ -211,7 +211,7 @@ func preflightExplicitSet(j joins, a ambient, root string, set explicitCleanupSe
 		if !planned.plan.Action.Removes() {
 			continue
 		}
-		if _, err := requalifyExplicitRow(j, root, planned, options); err != nil {
+		if _, err := requalifyExplicitRow(j, a.run, root, planned, options); err != nil {
 			return i, err
 		}
 	}

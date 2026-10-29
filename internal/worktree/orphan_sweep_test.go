@@ -122,10 +122,10 @@ func TestSweepCompactsOrphanedActiveResidue(t *testing.T) {
 
 	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
-	if _, err := assignmentByID(root, residue.Assignment.ID); err == nil {
+	if _, err := assignmentByID(nil, root, residue.Assignment.ID); err == nil {
 		t.Fatal("orphaned residue record survived the sweep")
 	}
-	if _, err := assignmentByID(root, prunable.Assignment.ID); err != nil {
+	if _, err := assignmentByID(nil, root, prunable.Assignment.ID); err != nil {
 		t.Fatalf("orphaned record git still registers was compacted, want the prune path to own it: %v", err)
 	}
 }
@@ -164,7 +164,7 @@ func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
 	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 1,
 		"Reconciled=%d, want 1: the unstamped tree-gone residue was not compacted", result.Reconciled)
-	if _, err := assignmentByID(root, gone.Assignment.ID); err == nil {
+	if _, err := assignmentByID(nil, root, gone.Assignment.ID); err == nil {
 		t.Fatal("the unstamped tree-gone residue record survived the sweep")
 	}
 	requireTest(t, len(result.Orphans) == 1 && result.Orphans[0].ID == present.Assignment.ID,
@@ -208,7 +208,7 @@ func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
 
 	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 0, "Reconciled=%d, want 0: an unstattable tree is unknown, not gone", result.Reconciled)
-	if _, err := assignmentByID(root, unknown.Assignment.ID); err != nil {
+	if _, err := assignmentByID(nil, root, unknown.Assignment.ID); err != nil {
 		t.Fatalf("the sweep compacted a record whose worktree it could not stat: %v", err)
 	}
 	requireTest(t, len(result.Orphans) == 0,
@@ -242,7 +242,7 @@ func TestSweepPurgesRecoveredRecordsWhoseTreeIsGone(t *testing.T) {
 
 	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
-	if _, err := assignmentByID(root, a.ID); err == nil {
+	if _, err := assignmentByID(nil, root, a.ID); err == nil {
 		t.Fatal("a recovered record whose tree is gone survived the reconcile")
 	}
 }

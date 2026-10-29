@@ -99,10 +99,10 @@ func TestOwnershipRefusalTextsUseTheGlossaryTerm(t *testing.T) {
 	journeyStubGit(t, f.root, "fail-git-dir", filepath.Join(t.TempDir(), "argv"))
 
 	want := "checkout administration directory"
-	if _, err := validateOwnerMarker(f.root, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
+	if _, err := validateOwnerMarkerIn(nil, f.root, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("validateOwnerMarker error = %v, want it to hold %q", err, want)
 	}
-	if _, err := markerPath(f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
+	if _, err := markerPath(nil, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("markerPath error = %v, want it to hold %q", err, want)
 	}
 }

@@ -16,7 +16,7 @@ func TestCreateStampsAssignment(t *testing.T) {
 	before := time.Now().UTC().Truncate(time.Second)
 	creation := mustCreate(t, root, home, "stamped", "creation stamp")
 	after := time.Now().UTC()
-	stored, err := assignmentByID(root, creation.Assignment.ID)
+	stored, err := assignmentByID(nil, root, creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, creation.Assignment.CreatedAt != nil && stored.CreatedAt != nil && *stored.CreatedAt == *creation.Assignment.CreatedAt,
 		"created assignment stamp = %v, ledger stamp = %v", creation.Assignment.CreatedAt, stored.CreatedAt)

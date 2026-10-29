@@ -181,10 +181,10 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		}
 		faultedRelease := runVerb(t, verbRelease, o.callWith(faulted, "--request", "landed-release-receipt-order", o.creation.Path))
 		requireTest(t, faultedRelease.exit != 0, "terminal receipt fault unexpectedly succeeded")
-		repo, _, _ := cleanupIdentity(o.root, o.creation.Path)
+		repo, _, _ := cleanupIdentity(nil, o.root, o.creation.Path)
 		receipt, found, err := intent.CleanupReceiptFor(o.root, repo, releaseOperation, o.creation.Path, intent.RequestDigest("landed-release-receipt-order"))
 		requireTest(t, err == nil && found && receipt.Branch == o.creation.Assignment.Branch && receipt.BranchOID == tip, "terminal release receipt = %#v, found=%t error=%v", receipt, found, err)
-		_, err = assignmentByID(o.root, o.creation.Assignment.ID)
+		_, err = assignmentByID(nil, o.root, o.creation.Assignment.ID)
 		requireTest(t, err == nil, "assignment compacted before terminal receipt checkpoint: %v", err)
 		replayed := runVerb(t, verbRelease, o.call("--request", "landed-release-receipt-order", o.creation.Path))
 		requireTest(t, replayed.exit == 0, "terminal receipt replay exit=%d", replayed.exit)
@@ -218,7 +218,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 		requireTest(t, replay.exit == 0 && replay.stdout == first.stdout, "compacted release replay code=%d stdout=%q stderr=%q", replay.exit, replay.stdout, replay.stderr)
 		requireTest(t, runVerb(t, verbRelease, f.call("--request", "changed", f.creation.Path)).exit != 0, "changed request replay was authorized")
 		requireTest(t, runVerb(t, verbRelease, f.call("--request", "landed-concurrent-release", f.root)).exit != 0, "changed path replay was authorized")
-		_, err = assignmentByID(f.root, f.creation.Assignment.ID)
+		_, err = assignmentByID(nil, f.root, f.creation.Assignment.ID)
 		requireTest(t, err != nil, "terminal release did not compact assignment")
 	})
 }
@@ -489,7 +489,7 @@ func crashedInCleanupReceiptWindow(t *testing.T, root, target string, preserving
 
 func cleanupReceiptAt(t *testing.T, root, target, fingerprint string) intent.CleanupReceipt {
 	t.Helper()
-	repo, canonical, err := cleanupIdentity(root, target)
+	repo, canonical, err := cleanupIdentity(nil, root, target)
 	mustNoError(t, err)
 	receipt, found, err := intent.CleanupReceiptFor(root, repo, cleanupOperation, canonical, fingerprint)
 	requireTest(t, err == nil && found, "cleanup receipt for %q found=%t error=%v", canonical, found, err)
@@ -501,7 +501,7 @@ func cleanupReceiptAt(t *testing.T, root, target, fingerprint string) intent.Cle
 // the transaction behind the automatic planner.
 func resumeCleanupTransaction(root, target, fingerprint string) (CleanupPlan, error) {
 	j, a := defaultJoins(), newAmbient(Home(), os.Stderr)
-	planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, a.now) }
+	planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, a.run, root, path, a.now) }
 	return applyCleanupTransaction(j, a, root, target, fingerprint, planner, nil, nil)
 }
 

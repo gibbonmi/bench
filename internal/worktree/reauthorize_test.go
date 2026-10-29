@@ -151,7 +151,7 @@ func TestReauthorizeCommandProvesExactIdentityAndChangesOnlyRequest(t *testing.T
 	if expectedBefore != before {
 		t.Fatalf("reauthorize changed more than request\nbefore=%q\nafter=%q", before, afterSuccess)
 	}
-	assignment, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	assignment, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

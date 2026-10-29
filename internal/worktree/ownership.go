@@ -142,7 +142,7 @@ func lockCreationRequest(j joins, root, digest string) (func(), error) {
 
 func ensureRollbackAttribution(root string, assignment intent.Assignment) error {
 	marker := Marker{Schema: OwnerMarkerSchema, OwnerID: assignment.OwnerID, Path: assignment.Worktree}
-	markerFile, markerErr := markerPath(assignment.Worktree)
+	markerFile, markerErr := markerPath(nil, assignment.Worktree)
 	if markerErr == nil {
 		if data, err := os.ReadFile(markerFile); errors.Is(err, os.ErrNotExist) {
 			markerErr = writeMarker(assignment.Worktree, marker)
@@ -155,15 +155,15 @@ func ensureRollbackAttribution(root string, assignment intent.Assignment) error 
 	recordErr := intent.PutAssignment(root, assignment)
 	return errors.Join(markerErr, recordErr)
 }
-func markerPath(path string) (string, error) {
-	admin, err := git.AdminDir(path)
+func markerPath(run *git.Run, path string) (string, error) {
+	admin, err := run.AdminDir(path)
 	if err != nil {
 		return "", errors.New("resolve checkout administration directory")
 	}
 	return filepath.Join(admin, OwnerMarkerFile), nil
 }
 func writeMarker(path string, marker Marker) error {
-	markerFile, err := markerPath(path)
+	markerFile, err := markerPath(nil, path)
 	if err != nil {
 		return err
 	}
@@ -218,12 +218,12 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}
-	repo, _, err := cleanupIdentity(root, target)
+	repo, _, err := cleanupIdentity(a.run, root, target)
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}
 	request := intent.RequestDigest(requestArg)
-	if receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request); readErr != nil {
+	if receipt, found, readErr := intent.In(a.run, root).CleanupReceiptFor(repo, releaseOperation, target, request); readErr != nil {
 		return intent.CleanupReceipt{}, readErr
 	} else if found && receipt.State == intent.ReceiptComplete {
 		return receipt, nil
@@ -231,7 +231,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	var assignment *intent.Assignment
 	resumeFingerprint := ""
 	if _, statErr := os.Lstat(target); errors.Is(statErr, os.ErrNotExist) {
-		cleanup, found, readErr := intent.CleanupReceiptForRequest(root, repo, cleanupOperation, target, request)
+		cleanup, found, readErr := intent.In(a.run, root).CleanupReceiptForRequest(repo, cleanupOperation, target, request)
 		if readErr != nil {
 			return intent.CleanupReceipt{}, readErr
 		}
@@ -243,13 +243,13 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 			return receipt, intent.PutCleanupReceipt(root, receipt)
 		}
 		if matches && cleanup.State == intent.ReceiptInFlight {
-			current, currentErr := assignmentByID(root, cleanup.Assignment)
+			current, currentErr := assignmentByID(a.run, root, cleanup.Assignment)
 			if currentErr != nil || current.OwnerID != cleanup.Owner || current.Request != request || current.Worktree != target || current.Branch != cleanup.Branch || current.State != intent.StateCleanupPending {
 				return intent.CleanupReceipt{}, errors.New("in-flight cleanup assignment does not match receipt")
 			}
 			assignment, resumeFingerprint = &current, cleanup.Fingerprint
 		} else if found {
-			return reconcileOutOfBand(root, repo, request, target, cleanup)
+			return reconcileOutOfBand(a.run, root, repo, request, target, cleanup)
 		}
 	} else if statErr != nil {
 		return intent.CleanupReceipt{}, statErr
@@ -285,7 +285,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 			return intent.CleanupReceipt{}, err
 		}
 	} else if resumeFingerprint == "" {
-		lease, leaseErr := LeaseFile(target)
+		lease, leaseErr := leaseFileIn(a.run, target)
 		if leaseErr != nil {
 			return intent.CleanupReceipt{}, leaseErr
 		}
@@ -303,7 +303,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 		}
 	}
 	terminal := func(plan CleanupPlan) error {
-		current, readErr := assignmentByID(root, assignment.ID)
+		current, readErr := assignmentByID(a.run, root, assignment.ID)
 		if readErr != nil {
 			return readErr
 		}
@@ -317,7 +317,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	} else if resumeFingerprint == "" {
 		plan, err = applyAutomaticWithTerminal(j, a, root, target, nil, terminal)
 	} else {
-		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, a.now) }
+		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, a.run, root, path, a.now) }
 		plan, err = applyCleanupTransaction(j, a, root, target, resumeFingerprint, planner, nil, terminal)
 	}
 	if err != nil {
@@ -326,7 +326,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	if plan.Action == ActionRetain {
 		return intent.CleanupReceipt{}, retainedReleaseError(plan, targetArg, assignment.ID)
 	}
-	receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request)
+	receipt, found, readErr := intent.In(a.run, root).CleanupReceiptFor(repo, releaseOperation, target, request)
 	if readErr != nil {
 		return intent.CleanupReceipt{}, readErr
 	}
@@ -376,12 +376,12 @@ func residualAssignment(a intent.Assignment) bool { return lifecyclepolicy.Resid
 // reconcile shape (e.g. a request-less `bench worktree clean --discard-ignored --apply`).
 // A residue record is compacted to a terminal release receipt. A record still holding
 // preserved work is left intact, and its recovery command is named.
-func reconcileOutOfBand(root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
+func reconcileOutOfBand(run *git.Run, root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
 	unauthorized := errors.New("cleanup receipt does not authorize release reconciliation")
 	if cleanup.State != intent.ReceiptComplete || !cleanup.Owned || cleanup.Assignment == "" {
 		return intent.CleanupReceipt{}, unauthorized
 	}
-	assignment, err := assignmentByID(root, cleanup.Assignment)
+	assignment, err := assignmentByID(run, root, cleanup.Assignment)
 	if err != nil {
 		// The record was already compacted out of band. Synthesize the terminal receipt
 		// so a replay of this release is idempotent.

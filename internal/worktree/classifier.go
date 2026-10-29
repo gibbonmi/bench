@@ -258,13 +258,13 @@ func orphaned(a intent.Assignment, now time.Time) bool {
 // already made it inapplicable. It calls lifecyclepolicy.DecideAutomatic exactly once,
 // then projects the returned verdict onto the plan.
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
-	return planAutomaticAt(defaultJoins(), root, path, currentTime())
+	return planAutomaticAt(defaultJoins(), &git.Run{}, root, path, currentTime())
 }
 
-// planAutomaticAt is PlanAutomatic with the instant resolved explicitly at the
-// caller's effect boundary; PlanAutomatic is its temporary compatibility form.
-func planAutomaticAt(j joins, root, path string, now time.Time) (CleanupPlan, error) {
-	explicitPlan, explicitErr := planExplicitWith(j, &git.Run{}, root, path, CleanupOptions{})
+// planAutomaticAt is PlanAutomatic with the run value and the instant resolved explicitly
+// at the caller's effect boundary; PlanAutomatic is its temporary compatibility form.
+func planAutomaticAt(j joins, run *git.Run, root, path string, now time.Time) (CleanupPlan, error) {
+	explicitPlan, explicitErr := planExplicitWith(j, run, root, path, CleanupOptions{})
 	facts := lifecyclepolicy.AutomaticFacts{ExplicitErr: explicitErr, Explicit: explicitOutcome(explicitPlan)}
 
 	var missingBranchAssignment *intent.Assignment
@@ -314,8 +314,8 @@ func automaticFingerprint(plan CleanupPlan) CleanupPlan {
 	plan.Fingerprint = fingerprintParts([]byte("bench-automatic/v1"), []byte(plan.Fingerprint), []byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason))
 	return plan
 }
-func foreignRecoveryAssignment(root, target string) *intent.Assignment {
-	assignments, err := intent.Assignments(root)
+func foreignRecoveryAssignment(run *git.Run, root, target string) *intent.Assignment {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return nil
 	}

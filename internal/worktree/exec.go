@@ -92,7 +92,7 @@ func ExecCommandResolving(root, home string, args []string, stdin io.Reader, std
 // active state. It reads the ledger and applies the landing's active check, and it
 // resolves no target. A ledger that cannot be read holds no active assignment.
 func AssignmentActive(root, id string) bool {
-	a, err := assignmentByID(root, id)
+	a, err := assignmentByID(nil, root, id)
 	return err == nil && landingActiveState(a.State)
 }
 

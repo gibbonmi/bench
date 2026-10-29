@@ -17,12 +17,6 @@ type ownerEvidence struct {
 	registration git.Worktree
 }
 
-// validateOwnerMarker is validateOwnerMarkerIn with a fresh run value, for a caller that
-// holds none.
-func validateOwnerMarker(root, path string) (ownerEvidence, error) {
-	return validateOwnerMarkerIn(&git.Run{}, root, path)
-}
-
 // validateOwnerMarkerIn reads the location answers of root and path through run, so one
 // validation under a canonical root starts the common-directory query once.
 func validateOwnerMarkerIn(run *git.Run, root, path string) (ownerEvidence, error) {

@@ -92,7 +92,7 @@ func assertVerdictMatchesPlan(t *testing.T, root, path string, options CleanupOp
 	case lifecyclepolicy.RecoveryLookupForeign:
 		admin, adminErr := git.AdminDir(target)
 		mustNoError(t, adminErr)
-		wantRecovery, err = predictedForeignRef(root, target, admin)
+		wantRecovery, err = predictedForeignRef(nil, root, target, admin)
 		mustNoError(t, err)
 	}
 	if !cleanupOutputSafe(target) {
@@ -134,7 +134,7 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	_, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
 		facts.MarkerPresent = true
-		evidence, markerErr := validateOwnerMarker(root, target)
+		evidence, markerErr := validateOwnerMarkerIn(nil, root, target)
 		if markerErr != nil {
 			facts.MarkerErr = markerErr
 		} else {
@@ -162,7 +162,7 @@ func gatherExplicitFactsForTest(t *testing.T, root, target string, options Clean
 	} else if !errors.Is(markerStatErr, os.ErrNotExist) {
 		t.Fatalf("stat owner marker: %v", markerStatErr)
 	} else if !registration.Locked {
-		facts.ForeignAssignment = foreignRecoveryAssignment(root, target)
+		facts.ForeignAssignment = foreignRecoveryAssignment(nil, root, target)
 	}
 
 	head, err := git.Output("-C", target, "rev-parse", "HEAD")

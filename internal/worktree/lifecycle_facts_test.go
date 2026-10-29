@@ -94,13 +94,13 @@ func TestLifecycleEligibilityFactAdapterTranslatesTrackedState(t *testing.T) {
 func TestLifecycleAgeFactAdapterTranslatesLedgerStamp(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "fa-age")
-	young, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	young, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, young.CreatedAt != nil, "created assignment carries no creation stamp")
 	requireTest(t, !orphaned(young, currentTime()), "fresh assignment reads orphaned")
 
 	backdate(t, f.root, f.creation.Assignment, 8*24*time.Hour)
-	aged, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	aged, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, orphaned(aged, currentTime()), "backdated assignment does not read orphaned")
 }

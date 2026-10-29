@@ -160,7 +160,7 @@ func planExplicitSet(j joins, a ambient, root string, targets []string, options 
 			set.unrecorded = append(set.unrecorded, row)
 			continue
 		}
-		row, planErr := planExplicitCleanupRow(j, root, resolved.assignment, options)
+		row, planErr := planExplicitCleanupRow(j, a.run, root, resolved.assignment, options)
 		if planErr != nil {
 			set.failures = append(set.failures, selectionFailurePlan(target, planErr))
 			continue
@@ -188,8 +188,8 @@ func planExplicitSet(j joins, a ambient, root string, targets []string, options 
 // planExplicitCleanupRow reads one member through the planner the single-target form uses.
 // The set plan and every pre-transaction re-plan call it, so a member cannot become
 // removable through a route the shared fingerprint never described.
-func planExplicitCleanupRow(j joins, root string, assignment intent.Assignment, options CleanupOptions) (explicitCleanupRow, error) {
-	plan, err := planExplicitWith(j, &git.Run{}, root, assignment.Worktree, options)
+func planExplicitCleanupRow(j joins, run *git.Run, root string, assignment intent.Assignment, options CleanupOptions) (explicitCleanupRow, error) {
+	plan, err := planExplicitWith(j, run, root, assignment.Worktree, options)
 	if err != nil {
 		return explicitCleanupRow{}, err
 	}
@@ -305,8 +305,8 @@ func renderExplicitSet(stdout io.Writer, set explicitCleanupSet, options Cleanup
 // requalifyExplicitRow re-plans one member against the repository as it stands now and
 // refuses a member the approved set no longer describes. The preflight and the apply loop
 // read the same proof, so neither can admit a member the other would refuse.
-func requalifyExplicitRow(j joins, root string, planned explicitCleanupRow, options CleanupOptions) (explicitCleanupRow, error) {
-	current, err := planExplicitCleanupRow(j, root, planned.assignment, options)
+func requalifyExplicitRow(j joins, run *git.Run, root string, planned explicitCleanupRow, options CleanupOptions) (explicitCleanupRow, error) {
+	current, err := planExplicitCleanupRow(j, run, root, planned.assignment, options)
 	if err != nil {
 		return current, err
 	}
@@ -339,7 +339,7 @@ func applyExplicitSet(j joins, a ambient, root string, set explicitCleanupSet, o
 			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
 			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
 		}
-		current, err := requalifyExplicitRow(j, root, planned, options)
+		current, err := requalifyExplicitRow(j, a.run, root, planned, options)
 		if err != nil {
 			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
 			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err

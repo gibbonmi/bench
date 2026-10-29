@@ -113,7 +113,7 @@ func otherWorktreePath(target string) string { return target + "-elsewhere" }
 
 func rewriteMarkerOwner(t *testing.T, path, owner string) {
 	t.Helper()
-	markerFile, err := markerPath(path)
+	markerFile, err := markerPath(nil, path)
 	if err != nil {
 		t.Fatal(err)
 	}

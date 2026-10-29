@@ -120,7 +120,7 @@ func resumePublishedSteps(j joins, run *git.Run, root, destination, branch, mark
 }
 
 func terminalResumeReceipt(run *git.Run, root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
-	repo, target, err := cleanupIdentity(root, path)
+	repo, target, err := cleanupIdentity(run, root, path)
 	if err != nil {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}

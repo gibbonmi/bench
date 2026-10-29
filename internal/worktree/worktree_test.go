@@ -276,7 +276,7 @@ func TestReleaseUnknownRequestNamesReauthorizeRecovery(t *testing.T) {
 func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action CleanupAction) {
 	t.Helper()
 	gitRun(t, root, "worktree", "remove", "-f", "-f", a.Worktree)
-	repo, target, err := cleanupIdentity(root, a.Worktree)
+	repo, target, err := cleanupIdentity(nil, root, a.Worktree)
 	mustNoError(t, err)
 	mustNoError(t, intent.PutCleanupReceipt(root, intent.CleanupReceipt{
 		Schema: intent.CleanupReceiptSchema, Repo: repo, Operation: cleanupOperation,
@@ -294,7 +294,7 @@ func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action Clea
 func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "oob-residue")
-	a, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	a, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, len(a.Recovery) == 0, "fixture already holds recovery metadata")
 	removeOutOfBand(t, f.root, a, ActionRemoved)
@@ -302,7 +302,7 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 	call := f.call("--request", "landed-oob-residue", f.creation.Path)
 	first := runVerb(t, verbRelease, call)
 	requireTest(t, first.exit == 0, "residue release exit=%d stderr=%q", first.exit, first.stderr)
-	if _, err := assignmentByID(f.root, a.ID); err == nil {
+	if _, err := assignmentByID(nil, f.root, a.ID); err == nil {
 		t.Fatal("residue record survived reconcile")
 	}
 	replay := runVerb(t, verbRelease, call)
@@ -316,7 +316,7 @@ func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
 func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	t.Parallel()
 	f := newOwnedAssignment(t, "oob-preserved")
-	a, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	a, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
 	a.State, a.Recovery = intent.StateRecovered, []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
@@ -327,7 +327,7 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 	requireTest(t, r.exit != 0, "preserved release exit=%d, want non-zero", r.exit)
 	requireTest(t, strings.Contains(r.stderr, "git show "+ref),
 		"preserved verdict does not hand over the ref: %q", r.stderr)
-	got, err := assignmentByID(f.root, a.ID)
+	got, err := assignmentByID(nil, f.root, a.ID)
 	requireTest(t, err == nil && len(got.Recovery) == 1, "preserved record was mutated or deleted: %v", err)
 }
 
@@ -350,32 +350,32 @@ func TestResumeReconcilesTreeGoneRecordsAndSparesYoungActive(t *testing.T) {
 	activeGone := mustCreate(t, root, home, "landed-sweep-active", "active gone")
 	live := mustCreate(t, root, home, "landed-sweep-live", "live present")
 
-	ra, err := assignmentByID(root, residue.Assignment.ID)
+	ra, err := assignmentByID(nil, root, residue.Assignment.ID)
 	mustNoError(t, err)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", ra.Worktree)
 	ra.State = intent.StateCleanupPending
 	mustNoError(t, intent.PutAssignment(root, ra))
 
-	pa, err := assignmentByID(root, preserved.Assignment.ID)
+	pa, err := assignmentByID(nil, root, preserved.Assignment.ID)
 	mustNoError(t, err)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", pa.Worktree)
 	ref := intent.RecoveryRefPrefix(pa.OwnerID, pa.ID) + "1"
 	pa.State, pa.Recovery = intent.StateRecovered, []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
 	mustNoError(t, intent.PutAssignment(root, pa))
 
-	ag, err := assignmentByID(root, activeGone.Assignment.ID)
+	ag, err := assignmentByID(nil, root, activeGone.Assignment.ID)
 	mustNoError(t, err)
 	gitRun(t, root, "worktree", "remove", "-f", "-f", ag.Worktree) // active, tree gone, unregistered
 
 	result := mustSweep(t, root, home)
 	requireTest(t, result.Reconciled == 2, "Reconciled=%d, want 2", result.Reconciled)
 	for _, dropped := range []string{ra.ID, pa.ID} {
-		if _, err := assignmentByID(root, dropped); err == nil {
+		if _, err := assignmentByID(nil, root, dropped); err == nil {
 			t.Fatalf("tree-gone record %s survived the reconcile", dropped)
 		}
 	}
 	for _, keep := range []string{ag.ID, live.Assignment.ID} {
-		if _, err := assignmentByID(root, keep); err != nil {
+		if _, err := assignmentByID(nil, root, keep); err != nil {
 			t.Fatalf("record %s was dropped but must survive: %v", keep, err)
 		}
 	}

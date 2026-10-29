@@ -243,12 +243,12 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 			gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "default drift")
 		}},
 		{name: "marker bytes", mutate: func(t *testing.T, f fixture) {
-			path, _ := markerPath(f.creation.Path)
+			path, _ := markerPath(nil, f.creation.Path)
 			body, _ := os.ReadFile(path)
 			mustWrite(t, path, append(body, ' '), 0o600)
 		}},
 		{name: "marker mode", mutate: func(t *testing.T, f fixture) {
-			path, _ := markerPath(f.creation.Path)
+			path, _ := markerPath(nil, f.creation.Path)
 			if err := os.Chmod(path, 0o640); err != nil {
 				t.Fatal(err)
 			}
@@ -317,7 +317,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 func explicitDurableState(t *testing.T, root, target string) string {
 	t.Helper()
 	ledger, _ := intent.Address(root)
-	marker, _ := markerPath(target)
+	marker, _ := markerPath(nil, target)
 	lease, _ := LeaseFile(target)
 	var state bytes.Buffer
 	for _, path := range []string{ledger, marker, lease} {

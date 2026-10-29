@@ -63,7 +63,7 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(root, ".bench-home")
 			creation := mustCreate(t, root, home, "marker-"+tc.name, "marker validation")
-			markerFile, err := markerPath(creation.Path)
+			markerFile, err := markerPath(nil, creation.Path)
 			mustNoError(t, err)
 			valid := Marker{Schema: OwnerMarkerSchema, OwnerID: creation.Assignment.OwnerID, Path: creation.Path}
 			tc.mutate(t, creation.Path, markerFile, valid)
