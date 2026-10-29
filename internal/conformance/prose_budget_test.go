@@ -359,7 +359,7 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 			plant: func(t *testing.T, path string) {
 				target := filepath.Join(filepath.Dir(path), "..", "bench-craft-line", "SKILL.md")
 				if err := os.Symlink(target, path); err != nil {
-					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			},
 		},
@@ -368,7 +368,7 @@ func TestGuidanceProseBudgetRefusesNonRegularSubjects(t *testing.T) {
 			want: "prose-budget subject refused: .agents/skills/bench-craft-linked/SKILL.md is not a regular file",
 			plant: func(t *testing.T, path string) {
 				if err := syscall.Mkfifo(path, 0o644); err != nil {
-					capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+					capability.Unavailable(t, capability.Fifo, err.Error())
 				}
 			},
 		},
@@ -411,7 +411,7 @@ func TestGuidanceProseBudgetRefusesASymlinkedSkillDirectory(t *testing.T) {
 	root := writeProseBudgetRoot(t, proseBudgetTable(proseBudgetHeader, proseBudgetRows...), healthyProseBudgetFiles())
 	link := filepath.Join(root, ".agents", "skills", "bench-craft-adapter")
 	if err := os.Symlink(filepath.Join(root, ".agents", "skills", "bench-craft-line"), link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	diags := checkGuidanceProseBudgets(root)
 	if !containsDiagnostic(diags, "prose-budget subject refused: .agents/skills/bench-craft-adapter is a symbolic link, not a regular directory") {
@@ -432,7 +432,7 @@ func TestGuidanceProseBudgetRefusesASymlinkedSkillsRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(filepath.Join(root, "payload", "skills"), filepath.Join(root, ".agents", "skills")); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	diags := checkGuidanceProseBudgets(root)
 	if !containsDiagnostic(diags, "prose-budget subject refused: .agents/skills is a symbolic link, not a regular directory") {

@@ -219,7 +219,7 @@ func TestGuardScanLoopOwnerRefusesASpecialGoFile(t *testing.T) {
 	writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(guardScanOwnerFile)), "package guards\n")
 	rel := guardScanOwnerDir + "/x.go"
 	if err := syscall.Mkfifo(filepath.Join(root, filepath.FromSlash(rel)), 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	result := make(chan []string, 1)
 	go func() { result <- checkGuardScanLoopOwner(root) }()

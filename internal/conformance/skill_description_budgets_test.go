@@ -453,7 +453,7 @@ func TestSkillDescriptionBudgetRefusesNonRegularSubjects(t *testing.T) {
 			kind: "fifo",
 			plant: func(t *testing.T, path string) {
 				if err := syscall.Mkfifo(path, 0o644); err != nil {
-					capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+					capability.Unavailable(t, capability.Fifo, err.Error())
 				}
 			},
 		},
@@ -505,7 +505,7 @@ func TestSkillDescriptionBudgetRefusesALinkedListingEntry(t *testing.T) {
 			root := writeSkillDescriptionRoot(t, healthySkillDescriptionProfile(), files)
 			link := filepath.Join(root, filepath.FromSlash(tc.link))
 			if err := os.Symlink(filepath.Join(root, filepath.FromSlash(tc.target)), link); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 			diags := checkSkillDescriptionBudgets(root)
 			if !containsDiagnostic(diags, "skill-description subject refused: "+tc.link+" is a symbolic link, not a regular directory") {
@@ -548,7 +548,7 @@ func TestSkillDescriptionBudgetRefusesABrokenListingRoot(t *testing.T) {
 					t.Fatal(err)
 				}
 			} else if err := os.Symlink(filepath.Join(root, filepath.FromSlash(tc.payload)), planted); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 			diags := checkSkillDescriptionBudgets(root)
 			if !containsDiagnostic(diags, "skill-description subject refused: "+tc.tree+" "+tc.want) {

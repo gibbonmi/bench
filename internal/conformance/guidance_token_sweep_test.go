@@ -410,7 +410,7 @@ func TestGuidanceSweepRejectsNonRegularEntriesBeforeReading(t *testing.T) {
 	install := map[string]func(t *testing.T, path string){
 		"fifo": func(t *testing.T, path string) {
 			if err := syscall.Mkfifo(path, 0o644); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 		},
 		"socket": func(t *testing.T, path string) {
@@ -418,7 +418,7 @@ func TestGuidanceSweepRejectsNonRegularEntriesBeforeReading(t *testing.T) {
 		},
 		"symlink": func(t *testing.T, path string) {
 			if err := os.Symlink(filepath.Join(filepath.Dir(path), "SKILL.md"), path); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 		},
 		"character device": func(t *testing.T, path string) {

@@ -324,14 +324,14 @@ func TestGuardProjectionOwnerMissingOwner(t *testing.T) {
 		{"unparseable source", git + "verdict.go", guardProjectionUnparsed + git + "verdict.go", func(t *testing.T, path string) error { return os.WriteFile(path, []byte("func ("), 0o644) }},
 		{"unstatable package", "internal/writeguard", "internal/writeguard" + guardProjectionUnreadable, func(t *testing.T, path string) error {
 			if err := os.Symlink("writeguard", path); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 			return nil
 		}},
 		{"unreadable subdirectory", git + "inner", git + "inner" + guardProjectionUnreadable, guardProjectionStrip},
 		{"special source", git + "x.go", git + "x.go" + guardProjectionIrregular, func(t *testing.T, path string) error {
 			if err := syscall.Mkfifo(path, 0o644); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return nil
 		}},

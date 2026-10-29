@@ -317,10 +317,10 @@ func TestBoundsPolicyRejectsSpecialSources(t *testing.T) {
 				target := filepath.Join(t.TempDir(), "target")
 				requireFixtureNoError(t, os.WriteFile(target, []byte("package sample\n"), 0o600))
 				if err := os.Symlink(target, path); err != nil {
-					capability.Capability(t, capability.Symlink, err.Error())
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			} else if err := syscall.Mkfifo(path, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, err.Error())
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			if diagnostics := check.run(root, root, check.tier); !containsDiagnostic(diagnostics, "blocked.go") {
 				t.Fatalf("special source lacks a named refusal: %v", diagnostics)

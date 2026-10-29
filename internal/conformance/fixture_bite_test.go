@@ -458,7 +458,7 @@ func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	target := filepath.Join(kitRoot, "outside", "linked-family")
 	writeCanaryFixture(t, filepath.Join(target, "linked-fixture"))
 	if err := os.Symlink(target, filepath.Join(canaryDir, "symlinked-family")); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 
 	diags := RunConformance(root, kitRoot, registry.Dev, "")

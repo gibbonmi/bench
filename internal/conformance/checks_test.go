@@ -511,7 +511,7 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 var hostileSkillPlanters = map[string]func(*testing.T, string){
 	"fifo": func(t *testing.T, path string) {
 		if err := syscall.Mkfifo(path, 0o644); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 	},
 	"live symlink": func(t *testing.T, path string) {
@@ -520,12 +520,12 @@ var hostileSkillPlanters = map[string]func(*testing.T, string){
 			t.Fatal(err)
 		}
 		if err := os.Symlink(target, path); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 	},
 	"dangling symlink": func(t *testing.T, path string) {
 		if err := os.Symlink(filepath.Join(filepath.Dir(path), "gone.md"), path); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 	},
 	"oversized": func(t *testing.T, path string) {
