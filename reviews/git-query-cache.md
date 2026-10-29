@@ -235,6 +235,72 @@
             "C4"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gq-c1-standards-2",
+          "performer": "claude:gq-c1-standards-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a0dcc1a8b07b80d1a167ccf311371857f81d72d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c1-standards-confirm-20261029",
+            "digest": "sha256:a9c1e1e4ce33b7c32425dd2f4208abdf30ee71d2fb568ed2301ebbf7134237ea",
+            "excerpt": "axis: Standards (confirming round, repair delta 98fabb293..0cc386a93)\nS1: closed. The ADR names the three reads that check again and states that the top-level read does not; it holds no path and no code.\nThe corrected Run.AdminPath comment is accurate. No new finding.\n"
+          },
+          "axis": "Standards",
+          "base": "f979bae6807f82e9bc4a259b78076c3170710597",
+          "tip": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c1-standards-1"
+          ]
+        },
+        {
+          "id": "gq-c1-spec-2",
+          "performer": "claude:gq-c1-spec-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a0dcc1a8b07b80d1a167ccf311371857f81d72d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c1-spec-confirm-20261029",
+            "digest": "sha256:3d39c9ffc23d416bc98629a54fa59c52a50762a276c63bee37c079b89723bad7",
+            "excerpt": "axis: Spec (confirming round, repair delta 98fabb293..0cc386a93)\nP1: closed. The run.go change is comment-only and states the decided rule: every read on a non-nil run checks the parent; a nil run answers as the package form.\nNo new finding; the added cases do not contradict GQ22 or GQ23.\n"
+          },
+          "axis": "Spec",
+          "base": "f979bae6807f82e9bc4a259b78076c3170710597",
+          "tip": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c1-spec-1"
+          ]
+        },
+        {
+          "id": "gq-c1-coverage-2",
+          "performer": "claude:gq-c1-coverage-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a0dcc1a8b07b80d1a167ccf311371857f81d72d2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c1-coverage-confirm-20261029",
+            "digest": "sha256:097e9682ab6692b1459abc8ebda4d1b1e75361e96b300f10b1dc3e0c3cca5058",
+            "excerpt": "axis: Coverage (confirming round, repair delta 98fabb293..0cc386a93)\nC1 closed: a second AdminPath name and the root+\"/.\" spelling each force a start; the root+\"/.\" blob read gives two starts.\nC2 closed: IsAncestor(refs/heads/side, commit) moves from true to false after update-ref.\nC3 closed: the ^{tree} and -r cases cache; the commit-plus-path listing stays live.\nC4 closed: abbreviatedIdentity expands a 7-digit prefix to a 64-digit id.\nNo new finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "f979bae6807f82e9bc4a259b78076c3170710597",
+          "tip": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c1-coverage-1"
+          ]
         }
       ]
     }
