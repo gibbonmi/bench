@@ -144,6 +144,7 @@ The shim log held no short-hex operand and no uppercase id, so the predicate kee
 | `abbreviatedIdentity` (`internal/worktree/land_identity.go:290-292`), a caller of `fullCommitIdentity` | expands a 4- to 39-digit prefix only to a 40-digit id | also expands such a prefix to a 64-digit id; the 39-digit prefix bound stays | flagged addition |
 | `hexIdentity` (`internal/worktree/worktree.go:574`) | a hex prefix that a user types | unchanged; it grades a prefix, not a full id | none |
 | `lowercaseHex` (`internal/worktree/worktree.go:136`) | a Bench sha256 fingerprint | unchanged; it grades a fingerprint, not an object id | none |
+| `fullCommitID` (`internal/git/checkout.go:73-79`) | a lowercase hex line that `rev-parse` answers with the same bytes | unchanged; it grades a merge-head line by a round trip and has no length rule | none |
 
 ### The run reaches every reader
 
@@ -157,6 +158,8 @@ The verb's run is the ambient run that `newAmbient` builds (`internal/worktree/e
 An unexported worktree helper builds no run. A run construction sits only in `newAmbient` or in an exported entry point, which is one command run.
 At base 1d6c96fc1, the package builds 14 runs; 13 sit outside `newAmbient`, and four of those sit in exported functions.
 Each prototype `X` and `XIn` pair of unexported helpers collapses to the run form, and each test calls that form with a run or nil.
+A yes-or-no ancestry check that moves onto the run calls `IsAncestor` and reads an error as no, as `git.OK` does today. The form table gains no yes-or-no form.
+The landed-set cleanup that each landing runs threads with the landing, because the landing row counts its reads.
 
 `Store.policyAt` lists through the run's `ListTree` in place of a raw `git.Output` listing. A malformed listing record then refuses instead of reading as present.
 
@@ -188,11 +191,10 @@ It also corrects `internal/worktree/effects.go:30-36` and `:48-50`, and `interna
 
 GQ-C2 needs GQ-C1, because it calls the new run forms. GQ-C3 needs GQ-C2, because its helpers take the ledger and store run forms.
 GQ-C2 is the first vertical slice that a timing can see, so measurement GQ41 runs after its checkpoint. The slicer may rename the tickets; each probe property stays.
-
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"GQ-C1","tickets":["01-cache-full-object-id-reads.md"],"verification":[{"id":"probe-01-hit","command":"bench probe internal/git/run.go --swap 'if raw, ok := r.objects[key]; ok {' --with 'if raw, ok := r.objects[key]; false && ok {' --package ./internal/git --run TestRunObjectReads","probe":"Never answer an object read from the store. Each second read then starts git, so the object-read test fails."},{"id":"probe-01-live","command":"bench probe internal/git/run.go --swap 'if !FullObjectID(object) {' --with 'if false {' --package ./internal/git --run TestRunObjectReadsStayLive","probe":"Cache a blob read whose operand is a ref. The second read of the moved ref then returns the old bytes, so the live-read test fails."}]},{"id":"GQ-C2","tickets":["02-thread-the-run-through-the-ledger-and-store.md","03-thread-the-landing.md"],"verification":[{"id":"probe-02","command":"bench probe internal/intent/intent.go --swap 'common, err := r.Run.CommonDir(r.Root)' --with 'common, err := git.CommonDir(r.Root)' --package ./internal/intent --run TestRepoReadsTheCommonDirOnce","probe":"Read the ledger address without the run. Two ledger reads then start the common-directory query twice, so the ledger test fails."},{"id":"probe-03","command":"bench probe internal/worktree/land.go --swap 'commitrepo.Store{Root: root, Run: a.run}).AdmitWindow(publication)' --with 'commitrepo.Store{Root: root}).AdmitWindow(publication)' --package ./internal/worktree --run TestLandingReadsTheDestinationCommonDirOnce","probe":"Build the window store without the verb's run. The landing then starts more destination common-directory queries, so the landing test fails."}]},{"id":"GQ-C3","tickets":["04-thread-the-cleanup-and-release-paths.md","05-thread-reset-lifecycle-and-create.md"],"verification":[{"id":"probe-04","command":"bench probe internal/worktree/subshell.go --swap 'ledgerBytes, err := intent.In(run, root).LifecycleEvidence()' --with 'ledgerBytes, err := intent.In(nil, root).LifecycleEvidence()' --package ./internal/worktree --run TestExplicitPlanReadsEachLocationOnce","probe":"Read the lifecycle evidence without the run. The explicit plan then starts the common-directory query twice, so the plan test fails."},{"id":"probe-05","command":"bench probe internal/worktree/reset.go --insert-before 'func planReset(' --with 'func probeFreshRun() *git.Run { return &git.Run{} }; ' --package ./internal/worktree --run TestRunConstructionCensus","probe":"Add an unexported helper that builds its own run. The census then names the helper, so the census test fails."}]}],"final_verification":[{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/git-query-cache/spec.md"}]}
+{"version":1,"chunks":[{"id":"GQ-C1","tickets":["01-cache-full-object-id-reads.md"],"verification":[{"id":"probe-01-hit","command":"bench probe internal/git/run.go --swap 'if raw, ok := r.objects[key]; ok {' --with 'if raw, ok := r.objects[key]; false && ok {' --package ./internal/git --run TestRunObjectReads","probe":"Never answer an object read from the store. Each second read then starts git, so the object-read test fails."},{"id":"probe-01-live","command":"bench probe internal/git/run.go --swap 'if !FullObjectID(object) {' --with 'if false {' --package ./internal/git --run TestRunObjectReadsStayLive","probe":"Cache a blob read whose operand is a ref. The second read of the moved ref then returns the old bytes, so the live-read test fails."}]},{"id":"GQ-C2","tickets":["02-thread-the-run-through-the-ledger-and-store.md","03-thread-the-landing.md"],"verification":[{"id":"probe-02","command":"bench probe internal/intent/intent.go --swap 'common, err := r.Run.CommonDir(r.Root)' --with 'common, err := git.CommonDir(r.Root)' --package ./internal/intent --run TestRepoReadsTheCommonDirOnce","probe":"Read the ledger address without the run. Two ledger reads then start the common-directory query twice, so the ledger test fails."},{"id":"probe-03","command":"bench probe internal/worktree/land.go --swap 'commitrepo.Store{Root: root, Run: a.run}).AdmitWindow(publication)' --with 'commitrepo.Store{Root: root}).AdmitWindow(publication)' --package ./internal/worktree --run TestLandingReadsTheDestinationCommonDirOnce","probe":"Build the window store without the verb's run. The landing then starts more destination common-directory queries, so the landing test fails."}]},{"id":"GQ-C3","tickets":["04-thread-the-cleanup-and-release-paths.md","05-thread-reset-lifecycle-and-create.md"],"verification":[{"id":"probe-04","command":"bench probe internal/worktree/subshell.go --swap 'ledgerBytes, err := intent.In(run, root).LifecycleEvidence()' --with 'ledgerBytes, err := intent.In(nil, root).LifecycleEvidence()' --package ./internal/worktree --run TestExplicitPlanReadsEachLocationOnce","probe":"Read the lifecycle evidence without the run. The explicit plan then starts the common-directory query twice, so the plan test fails."},{"id":"probe-05","command":"bench probe internal/worktree/reset.go --insert-before 'func planReset(run *git.Run, ' --with 'func probeFreshRun() *git.Run { return &git.Run{} }; ' --package ./internal/worktree --run TestRunConstructionCensus","probe":"Add an unexported helper that builds its own run. The census then names the helper, so the census test fails."}]}],"final_verification":[{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/git-query-cache/spec.md"}]}
 ```
 
 Each probe needle quotes the prototype text. When the landed text differs, the author amends the needle in the plan and keeps the probe property.
@@ -201,7 +203,8 @@ Each probe needle quotes the prototype text. When the landed text differs, the a
 
 A good test drives a real repository through the real `git.Run` form or the real verb helper. It counts git starts through the stub log of `gittest.StubGitDir`.
 The stub's `fail-git-path` mode passes every other query to the real git, so it serves the object-read rows in `internal/git` (precedent `internal/worktree/journey_test.go:253`).
-The landing row needs a mode that refuses no query. The stub gains a `log` mode that records each start and runs the real git.
+That mode refuses each `--git-path` query (`internal/gittest/gittest.go:91-96`), so the `AdminPath` rows GQ22 and GQ23 and the landing row need a mode that refuses no query.
+The stub gains a `log` mode that records each start and runs the real git. Ticket 01 adds the mode, and the landing ticket uses it.
 
 - The cache rules attach at `git.Run` in `internal/git`. The precedent is `internal/git/run_cache_test.go`, which counts starts with `gittest.StubGitStarts`.
 - The ledger rows attach at `intent.Repo` in `internal/intent`. The store rows attach at `repository.Store` in `internal/commitment/repository`.
@@ -210,10 +213,12 @@ The landing row needs a mode that refuses no query. The stub gains a `log` mode 
 
 A test that binds `PATH` is serial in `internal/worktree`. The landing row adds one serial test, so `worktreeSerialCeiling` rises from 21 to 22.
 Rows GQ26, GQ34, and GQ38 add three top-level tests, so `worktreeTestCount` rises from 877 to 880. Both pins sit in `internal/worktree/parallel_census_test.go:906` and `:926`.
-Each ticket that adds a test raises the count pin in its own commit. The pin reads 878, 879, and 880 after the three chunks.
+Each ticket that adds a test raises the count pin in its own commit. The pin reads 878 after ticket 01, 879 after ticket 03, and 880 after ticket 05.
 Row GQ45 extends `TestRunReadsRefsLive`, which today reads the ref through the package `ResolveCommit` only.
 The start-count pin at `internal/worktree/journey_test.go:278` reads 3 today and 1 after GQ-C3 (GQ35). The pin at `:257` stays 1.
-The rows in `internal/git`, `internal/intent`, and `internal/commitment/repository` meet no serial or count pin; the research found pins only in `internal/worktree`.
+The rows in `internal/intent` and `internal/commitment/repository` meet no serial or count pin.
+The rows in `internal/git` meet one cap: `internal/conformance/ordinary_build_census_test.go:70-84` allows one repository or process site in the package's test files.
+That one site is `internal/git/testhelpers_test.go:18`. So each new `internal/git` test uses the existing repository helpers and the `gittest` stub, and it starts no command of its own.
 
 The gate observes every row through its package tests. The timing rows are review-owned, and no row adds a gate check.
 
@@ -337,6 +342,7 @@ The build reruns `bench consumers` on each changed function before each charge, 
 - Pin operators: `TestPackageTestCountPin` compares with `<` and `>`, and `TestSerialSetStaysBelowTheCeiling` requires equality. Every start-count row, GQ34 included, compares with `==`.
 - Entry reads: none. The run comes from `newAmbient`, which already owns the ambient reads.
 - Derived expectations: each start count comes from the fixture's own calls. GQ34 pins the threaded landing's observed count, and its test doc records the larger main-tip count as context only.
+  A GQ-C3 ticket that lowers the landing's count sets the GQ34 pin to the new observed count in its own commit.
 - Consolidated rules: the predicate consolidation table above.
 - Quantified obligations: GQ19 covers each cached form of the form table, and GQ38 covers each production file of `internal/worktree`.
 - Workflow-step writes: none. The cache writes no file.
@@ -363,6 +369,7 @@ The build reruns `bench consumers` on each changed function before each charge, 
 - The pin changes `worktreeSerialCeiling` 21 to 22 and `worktreeTestCount` 877 to 880.
 - The `policyAt` listing through `ListTree`. A malformed listing record then refuses instead of reading as present.
 - The build-entry staleness pass reruns the baseline when `internal/git` or `internal/worktree` changed on `main` after 1d6c96fc1.
+- New test files go into directories above their file-count budget: `internal/git`, `internal/intent`, `internal/commitment/repository`, `internal/roadmap`, and `internal/worktree`. The lane grades file growth only, so this debt does not go red.
 
 ### Claims marked uncertain
 
