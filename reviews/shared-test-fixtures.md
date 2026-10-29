@@ -812,6 +812,39 @@
             "gf-c5a-coverage-r1"
           ]
         }
+      ],
+      "confirmations": [
+        {
+          "id": "gf-c5a-confirm-r2",
+          "performer": "claude:gf-orchestrator-20261029",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f9f1c8ab2431d8d681bd4016d5b14ccd862836ae",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:gf-orchestrator-20261029",
+            "digest": "sha256:e2d371f99ebb06814972eb562d5e2717817d7fbb9c6eb859b452986995c3a815",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact_test.go,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,ordinary-build-census,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,470\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,503,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: branch-native census forbids repository at internal/gate/prospectiveartifact/prospectiveartifact_test.go:306\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "reviewed_tip": "b1ea4021967b511f5d799eb1f422a700e634eff2",
+          "repaired_tip": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
+          "finding_ids": [],
+          "supersedes": [],
+          "probe": {
+            "mutation": "swap the raw worktree-list read back to gittest.Output; the census check turns red",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:gf-orchestrator-20261029",
+              "digest": "sha256:e2d371f99ebb06814972eb562d5e2717817d7fbb9c6eb859b452986995c3a815",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/prospectiveartifact/prospectiveartifact_test.go,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,ordinary-build-census,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,470\ncheck[1]{name,kind,tests_run,subjects}:\n  ordinary-build-census,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,503,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:29: gate: branch-native census forbids repository at internal/gate/prospectiveartifact/prospectiveartifact_test.go:306\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -1079,3 +1112,14 @@ The date pin of `treeRowRepo` is an ungraded input.
 
 The coordinator probe omitted the staging step of `newAXIEnvelopeRepo`. `TestSelectedWorktreeCommandRoutes` turned red, and the restore passed.
 The repair consumed one of the two repair cycles of GF-C5A.
+
+### GF-C5A repair cycle 2
+
+The confirming round passed on all three axes. The chunk checkpoint then went red on the branch-native census at `internal/gate/prospectiveartifact/prospectiveartifact_test.go:306`.
+The census reads a `gittest.Output` call with a `worktree` literal as a repository constructor in a gate test. The line was a raw read of the worktree list.
+
+The ticket 05b repair session committed `cc197d6b3`, which reads that text through `gittest.OutputBytes`. It refroze GF-C5A at that tip.
+Its witness ran the census on the unedited tree (red) and after the edit (green).
+
+The coordinator probe swapped the line back. The census check turned red, and the restore passed.
+The repair consumed the second and last repair cycle of GF-C5A.
