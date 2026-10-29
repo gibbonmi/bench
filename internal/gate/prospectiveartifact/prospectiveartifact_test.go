@@ -303,7 +303,7 @@ func TestCloseConfinesRemovalToItsBundle(t *testing.T) {
 // under another spelling of the same path still fails the row.
 func worktreeRegistrations(t *testing.T, repository string) string {
 	t.Helper()
-	return gittest.Output(t, repository, "worktree", "list", "--porcelain")
+	return string(gittest.OutputBytes(t, repository, "worktree", "list", "--porcelain"))
 }
 
 // requireCheckoutUnregistered reports that no registration names checkout's bundle. The
