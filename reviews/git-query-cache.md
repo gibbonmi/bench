@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/git-query-cache/spec.md",
-  "plan_digest": "sha256:8efe8b8ecb27c8ac7599d34e7a97cb2080000afc20578bb0a68f72888bc5e43a",
+  "plan_digest": "sha256:cac0a7744b18caf4938674a6a9c5c9eac577e87a66306503db4d1326eb984c85",
   "implementation_session": "",
   "chunks": [
     {
@@ -521,6 +521,50 @@
           ]
         }
       ]
+    },
+    {
+      "id": "GQ-C2B",
+      "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+      "tip": "13dbab8674bc949a1fd5801a49de76f454d6f044",
+      "plan_digest": "sha256:cac0a7744b18caf4938674a6a9c5c9eac577e87a66306503db4d1326eb984c85",
+      "source_digest": "26f78937f875b16c7ac86d513405eaf12cafefd3",
+      "acceptance_rows": [
+        "GQ34",
+        "GQ41"
+      ],
+      "verification": [
+        {
+          "id": "t03-probe-03",
+          "performer": "claude:gq-t03-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "26f78937f875b16c7ac86d513405eaf12cafefd3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:gq-t03-author-20261029",
+            "digest": "sha256:f47dfda42ac1475b4208a4576f966e5421146cb64547c2b0bfe25608f06b1db4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/land.go,swap,failed,1,TestLandingReadsTheDestinationCommonDirOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandingReadsTheDestinationCommonDirOnce,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,368\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,723,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandingReadsTheDestinationCommonDirOnce,\"land_run_test.go:34: one landing started the destination common-directory query 55 times, want 54\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "13dbab8674bc949a1fd5801a49de76f454d6f044",
+          "requirement": "probe-03",
+          "command": "bench probe internal/worktree/land.go --swap 'commitrepo.Store{Root: root, Run: a.run}).AdmitWindow(publication)' --with 'commitrepo.Store{Root: root}).AdmitWindow(publication)' --package ./internal/worktree --run TestLandingReadsTheDestinationCommonDirOnce",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Build the window store without the verb's run. The landing then starts more destination common-directory queries, so the landing test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:gq-t03-author-20261029",
+              "digest": "sha256:f47dfda42ac1475b4208a4576f966e5421146cb64547c2b0bfe25608f06b1db4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/land.go,swap,failed,1,TestLandingReadsTheDestinationCommonDirOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestLandingReadsTheDestinationCommonDirOnce,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,368\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,723,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandingReadsTheDestinationCommonDirOnce,\"land_run_test.go:34: one landing started the destination common-directory query 55 times, want 54\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -552,6 +596,18 @@
     {
       "from": "sha256:e3db4c3db95e2710475c15f84fca211605a654f3490985a286b20ceebec9fdd1",
       "to": "sha256:8efe8b8ecb27c8ac7599d34e7a97cb2080000afc20578bb0a68f72888bc5e43a",
+      "chunk_ids": {
+        "GQ-C1": [
+          "GQ-C1"
+        ],
+        "GQ-C2A": [
+          "GQ-C2A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8efe8b8ecb27c8ac7599d34e7a97cb2080000afc20578bb0a68f72888bc5e43a",
+      "to": "sha256:cac0a7744b18caf4938674a6a9c5c9eac577e87a66306503db4d1326eb984c85",
       "chunk_ids": {
         "GQ-C1": [
           "GQ-C1"
