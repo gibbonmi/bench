@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:15c922e92fbdf0b1d287370928c19669972477750af95e1a5a1e000f2e67a7b2",
+  "plan_digest": "sha256:faf692b54b3699aa9bfd216ed49ad566258e0330b90102580b97de862be1d5fd",
   "implementation_session": "",
   "chunks": [
     {
@@ -268,6 +268,51 @@
           }
         }
       ]
+    },
+    {
+      "id": "GF-C2",
+      "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+      "tip": "0b272ed6f12cb704c69cc9c2026fc9d608680766",
+      "plan_digest": "sha256:faf692b54b3699aa9bfd216ed49ad566258e0330b90102580b97de862be1d5fd",
+      "source_digest": "b83c32ffed193740ace21dd04a9c5657fd3cc09c",
+      "acceptance_rows": [
+        "GF16",
+        "GF29",
+        "GF30"
+      ],
+      "verification": [
+        {
+          "id": "t02-probe-02",
+          "performer": "claude:gf-t02-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b83c32ffed193740ace21dd04a9c5657fd3cc09c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t02-author-20261029",
+            "digest": "sha256:eba9fb0edf5afadb180933cea13b41e4888329ae96351380619e51b6f26da098",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestReadStagedIndexReportsModesAndOmitsDeletions,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,TestReadStagedIndexReportsModesAndOmitsDeletions,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,15,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestReadStagedIndexReportsModesAndOmitsDeletions,\"staged_test.go:71: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "0b272ed6f12cb704c69cc9c2026fc9d608680766",
+          "requirement": "probe-02",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/git --run TestReadStagedIndexReportsModesAndOmitsDeletions",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t02-author-20261029",
+              "digest": "sha256:eba9fb0edf5afadb180933cea13b41e4888329ae96351380619e51b6f26da098",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestReadStagedIndexReportsModesAndOmitsDeletions,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,TestReadStagedIndexReportsModesAndOmitsDeletions,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,15,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestReadStagedIndexReportsModesAndOmitsDeletions,\"staged_test.go:71: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -281,6 +326,15 @@
     {
       "from": "sha256:dd48d59465866a1c9b1f35f8f9eecee4e98f8e465d8643764328edbea174193f",
       "to": "sha256:15c922e92fbdf0b1d287370928c19669972477750af95e1a5a1e000f2e67a7b2",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:15c922e92fbdf0b1d287370928c19669972477750af95e1a5a1e000f2e67a7b2",
+      "to": "sha256:faf692b54b3699aa9bfd216ed49ad566258e0330b90102580b97de862be1d5fd",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
