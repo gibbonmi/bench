@@ -228,7 +228,7 @@ func TestNamedCheckRunsOnlyRegisteredDevScope(t *testing.T) {
 	}
 
 	timingRoot := t.TempDir()
-	runChangedGit(t, timingRoot, "init", "-q")
+	gittest.MustRun(t, timingRoot, "init", "-q")
 	goDir := t.TempDir()
 	writeGoBoundaryWrapper(t, filepath.Join(goDir, "go"), realGo, timingRoot)
 	t.Setenv("PATH", goDir+string(os.PathListSeparator)+os.Getenv("PATH"))

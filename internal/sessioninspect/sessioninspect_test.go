@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -120,9 +121,7 @@ func TestInspectRecoversAfterTheResumePhase(t *testing.T) {
 		t.Fatalf("resume phase %d, recovery phase %d, want recovery right after resume", resume, recovery)
 	}
 	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	gittest.MustRun(t, root, "init", "-q")
 	t.Setenv("BENCH_HOME", t.TempDir())
 	// A reaped child's process id names no live process.
 	child := exec.Command("true")

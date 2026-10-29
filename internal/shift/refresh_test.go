@@ -3,10 +3,10 @@ package shift
 import (
 	"bytes"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/testrepo"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,30 +16,20 @@ import (
 func TestLoopRefreshResolvesStartAfterFetch(t *testing.T) {
 	root, _ := shiftCollisionFixture(t)
 	remote := filepath.Join(t.TempDir(), "origin.git")
-	run := func(dir string, args ...string) string {
-		t.Helper()
-		cmd := exec.Command("git", args...)
-		cmd.Dir = dir
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("git %v in %s: %v\n%s", args, dir, err, out)
-		}
-		return strings.TrimSpace(string(out))
-	}
-	run(root, "init", "-q", "--bare", "-b", "main", remote)
-	branch := run(root, "branch", "--show-current")
-	run(root, "remote", "add", "origin", remote)
-	run(root, "push", "-q", "-u", "origin", branch)
-	run(root, "remote", "set-head", "origin", "-a")
+	gittest.MustRun(t, root, "init", "-q", "--bare", "-b", "main", remote)
+	branch := gittest.Output(t, root, "branch", "--show-current")
+	gittest.MustRun(t, root, "remote", "add", "origin", remote)
+	gittest.MustRun(t, root, "push", "-q", "-u", "origin", branch)
+	gittest.MustRun(t, root, "remote", "set-head", "origin", "-a")
 	publisher := filepath.Join(t.TempDir(), "publisher")
-	run(root, "clone", "-q", remote, publisher)
+	gittest.MustRun(t, root, "clone", "-q", remote, publisher)
 	if err := os.WriteFile(filepath.Join(publisher, "remote-only"), []byte("refreshed\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	run(publisher, "-c", "user.name=bench", "-c", "user.email=bench@local", "add", "remote-only")
-	run(publisher, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "remote advance")
-	run(publisher, "push", "-q", "origin", branch)
-	remoteHead := run(publisher, "rev-parse", "HEAD")
+	gittest.MustRun(t, publisher, "add", "remote-only")
+	gittest.MustRun(t, publisher, append(gittest.IdentityArgs(), "commit", "-qm", "remote advance")...)
+	gittest.MustRun(t, publisher, "push", "-q", "origin", branch)
+	remoteHead := gittest.Output(t, publisher, "rev-parse", "HEAD")
 
 	var stdout, stderr bytes.Buffer
 	if code := loop("delivery", "refresh start ref", true, &stdout, &stderr); code != 4 {
@@ -57,10 +47,7 @@ func TestCommitmentShiftBeforeEffects(t *testing.T) {
 	if err := os.WriteFile(agent, []byte("#!/bin/sh\nprintf ran > '"+marker+"'\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("git", "-C", root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-am", "mark adapter execution")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("commit: %v %s", err, out)
-	}
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-am", "mark adapter execution")...)
 	var stdout, stderr bytes.Buffer
 	code := Command([]string{"--outcome", "uncommitted", "--refresh", "attempt delivery"}, &stdout, &stderr)
 	ledger, err := intent.Read(root)
@@ -77,15 +64,7 @@ func TestCommitmentShiftBeforeEffects(t *testing.T) {
 func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch string) {
 	t.Helper()
 	tmp = t.TempDir()
-	runGit := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command("git", args...)
-		cmd.Dir = tmp
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v failed: %v\n%s", args, err, out)
-		}
-	}
-	runGit("init", "-q", "-b", "main")
+	gittest.MustRun(t, tmp, "init", "-q", "-b", "main")
 	f := testrepo.NewGateFixture(t.TempDir())
 	if err := f.Write(tmp, f.Command("bash")+" -c 'exit 0'\n", ""); err != nil {
 		t.Fatal(err)
@@ -94,15 +73,15 @@ func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch
 	if err := os.WriteFile(agentPath, []byte("#!/usr/bin/env bash\nexit 0\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "add", "-A")
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
+	gittest.MustRun(t, tmp, "add", "-A")
+	gittest.MustRun(t, tmp, append(gittest.IdentityArgs(), "commit", "-q", "-m", "init")...)
 	admitShiftFixture(t, tmp)
 
 	fixed := time.Date(2026, 7, 4, 9, 30, 0, 0, time.UTC)
 	baseBranch = "bench/shift-" + fixed.Format("20060102-150405")
-	runGit("branch", baseBranch)
+	gittest.MustRun(t, tmp, "branch", baseBranch)
 	for _, suffix := range preExisting {
-		runGit("branch", baseBranch+suffix)
+		gittest.MustRun(t, tmp, "branch", baseBranch+suffix)
 	}
 	oldNow := timeNow
 	timeNow = func() time.Time { return fixed }
@@ -127,12 +106,8 @@ func admitShiftFixture(t *testing.T, root string) {
 	const deliverable = "specs/shift/spec.md"
 	commitmenttest.Write(t, root, deliverable, "# Shift fixture\n\nStatus: staged\n")
 	commitmenttest.SeedAdmission(t, root, deliverable)
-	for _, args := range [][]string{{"add", "specs/shift/spec.md", ".bench/commitment.json"}, {"-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "approve shift fixture"}} {
-		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v %s", args, err, out)
-		}
-	}
+	gittest.MustRun(t, root, "add", "specs/shift/spec.md", ".bench/commitment.json")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "approve shift fixture")...)
 	commitmenttest.Register(t, root, "shift-fixture")
 	commitmenttest.Admit(t, root, "shift-fixture", deliverable)
 }

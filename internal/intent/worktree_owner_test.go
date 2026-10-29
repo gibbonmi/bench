@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // TestAssignmentsOwningAnswersEveryStateInLedgerOrder pins the any-state contract the
@@ -14,7 +16,7 @@ import (
 func TestAssignmentsOwningAnswersEveryStateInLedgerOrder(t *testing.T) {
 	root := newRepo(t)
 	tree := filepath.Join(t.TempDir(), "tree")
-	runGit(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
 	retired := putOwner(t, root, tree, "owning-retired", "0000000000000000000000000000000c", StateCleanupPending)
 	active := putOwner(t, root, tree, "owning-active", "0000000000000000000000000000000d", StateActive)
 
@@ -44,7 +46,7 @@ func TestAssignmentsOwningAnswersEveryStateInLedgerOrder(t *testing.T) {
 func TestAssignmentsOwningResolvesTheRecordedWorktree(t *testing.T) {
 	root := newRepo(t)
 	tree := filepath.Join(t.TempDir(), "tree")
-	runGit(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
 	link := filepath.Join(t.TempDir(), "link")
 	if err := os.Symlink(tree, link); err != nil {
 		t.Fatalf("Symlink: %v", err)

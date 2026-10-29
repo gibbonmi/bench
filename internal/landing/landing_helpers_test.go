@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -13,14 +12,12 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func fixture(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	git(t, root, "init", "-q", "-b", "main")
-	git(t, root, "config", "user.email", "a@b.c")
-	git(t, root, "config", "user.name", "a")
+	root := gittest.RepoOnBranch(t, "main")
 	write(t, root, "named", "base")
 	write(t, root, "foreign", "base")
 	git(t, root, "add", ".")
@@ -60,8 +57,8 @@ func snapshotPaths(t *testing.T, root string, paths ...string) pathSnapshot {
 	statusArgs := append([]string{"status", "--porcelain=v1", "--ignored", "--"}, paths...)
 	indexArgs := append([]string{"ls-files", "--stage", "--"}, paths...)
 	snapshot := pathSnapshot{
-		Status:   gitBytes(t, root, statusArgs...),
-		Index:    gitBytes(t, root, indexArgs...),
+		Status:   gittest.OutputBytes(t, root, statusArgs...),
+		Index:    gittest.OutputBytes(t, root, indexArgs...),
 		Worktree: make(map[string][]byte, len(paths)),
 	}
 	for _, path := range paths {
@@ -90,17 +87,7 @@ func mustRead(t *testing.T, p string) []byte {
 }
 func git(t *testing.T, root string, args ...string) string {
 	t.Helper()
-	return strings.TrimSpace(string(gitBytes(t, root, args...)))
-}
-
-func gitBytes(t *testing.T, root string, args ...string) []byte {
-	t.Helper()
-	c := exec.Command("git", append([]string{"-C", root}, args...)...)
-	b, e := c.CombinedOutput()
-	if e != nil {
-		t.Fatalf("git %v: %v: %s", args, e, b)
-	}
-	return b
+	return gittest.Output(t, root, args...)
 }
 
 func gitMode(t *testing.T, root string, args ...string) string {
@@ -239,8 +226,9 @@ func gitlinkConflict(t *testing.T, root, base string) (string, string) {
 		t.Fatal(err)
 	}
 	git(t, nested, "init", "-q", "-b", "main")
-	git(t, nested, "config", "user.email", "a@b.c")
-	git(t, nested, "config", "user.name", "a")
+	for _, args := range gittest.IdentityConfig() {
+		git(t, nested, args...)
+	}
 	write(t, nested, "inside", "base")
 	git(t, nested, "add", "inside")
 	git(t, nested, "commit", "-qm", "base")
@@ -311,10 +299,10 @@ func compositionState(t *testing.T, root string) compositionSnapshot {
 		t.Fatal(err)
 	}
 	return compositionSnapshot{
-		refs:      string(gitBytes(t, root, "for-each-ref", "--format=%(refname) %(objectname)")),
-		index:     string(gitBytes(t, root, "ls-files", "--stage", "-z")),
-		status:    string(gitBytes(t, root, "status", "--porcelain=v2", "--untracked-files=all")),
-		worktree:  string(gitBytes(t, root, "diff", "--binary", "HEAD")),
+		refs:      string(gittest.OutputBytes(t, root, "for-each-ref", "--format=%(refname) %(objectname)")),
+		index:     string(gittest.OutputBytes(t, root, "ls-files", "--stage", "-z")),
+		status:    string(gittest.OutputBytes(t, root, "status", "--porcelain=v2", "--untracked-files=all")),
+		worktree:  string(gittest.OutputBytes(t, root, "diff", "--binary", "HEAD")),
 		mergeHead: string(mergeHead),
 	}
 }

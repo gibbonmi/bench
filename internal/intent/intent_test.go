@@ -4,19 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestLedgerCommonDirectoryAndSchemaUpsert(t *testing.T) {
 	root := newRepo(t)
 	linked := filepath.Join(t.TempDir(), "linked checkout")
-	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	created := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	entries := []Entry{
 		{Key: "shift-1", Kind: KindShift, CreatedAt: created, Worktree: linked, Branch: "bench/shift-1"},
@@ -151,7 +152,7 @@ func TestSnapshotProofLifecycle(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	runGit(t, root, "branch", "landed")
+	gittest.MustRun(t, root, "branch", "landed")
 	live, err := Snapshot(root)
 	if err != nil {
 		t.Fatal(err)
@@ -181,7 +182,7 @@ func TestUncorrelatedEntriesUseCandidateSet(t *testing.T) {
 	if err := Upsert(root, Entry{Key: "agent-c", Kind: KindClaudeAgent, CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "branch", "worktree-agent-candidate")
+	gittest.MustRun(t, root, "branch", "worktree-agent-candidate")
 	if got, _ := Snapshot(root); len(got) != 3 {
 		t.Fatalf("one candidate live = %#v", got)
 	}
@@ -380,19 +381,11 @@ func activeAssignment() Assignment {
 func newRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
+	gittest.MustRun(t, root, "init", "-q", "-b", "main")
 	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", ".")
-	runGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "init")...)
 	return root
-}
-
-func runGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
 }

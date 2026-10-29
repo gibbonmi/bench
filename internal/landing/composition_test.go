@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/landing/published"
 )
 
@@ -99,8 +100,9 @@ func TestLandRealGitCompositionTable(t *testing.T) {
 				t.Fatal(err)
 			}
 			git(t, nested, "init", "-q", "-b", "main")
-			git(t, nested, "config", "user.email", "a@b.c")
-			git(t, nested, "config", "user.name", "a")
+			for _, args := range gittest.IdentityConfig() {
+				git(t, nested, args...)
+			}
 			write(t, nested, "inside", "nested-base")
 			git(t, nested, "add", "inside")
 			git(t, nested, "commit", "-qm", "nested base")

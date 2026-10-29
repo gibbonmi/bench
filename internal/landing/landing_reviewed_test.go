@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -313,10 +314,7 @@ func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newReviewedLanding(t, tc.baseSpec, tc.destinationSpec, tc.sourceSpec, tc.specMode)
-			o := New()
-			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
-				return authorization.Result{Kind: authorization.Green}
-			}
+			o := greenOwner()
 			got, err := o.LandReviewed(context.Background(), f.request(t, tc.sourceSpec, "land the amended source"))
 			if err != nil {
 				t.Fatal(err)
@@ -325,7 +323,7 @@ func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T
 			if err != nil {
 				t.Fatal(err)
 			}
-			if published := gitBytes(t, f.root, "show", got.Commit+":"+reviewedFixtureSpecPath); !bytes.Equal(published, want) {
+			if published := gittest.OutputBytes(t, f.root, "show", got.Commit+":"+reviewedFixtureSpecPath); !bytes.Equal(published, want) {
 				t.Fatalf("published spec = %q, want %q", published, want)
 			}
 			wantMode := "100644"

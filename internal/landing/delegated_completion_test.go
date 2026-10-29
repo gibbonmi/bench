@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
 )
@@ -73,7 +74,7 @@ func TestDelegatedFinalVerifier(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if got := gitBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
+				if got := gittest.OutputBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
 					t.Fatalf("published status transform = %q", got)
 				}
 				if got := git(t, f.root, "rev-parse", "main"); got != result.Commit {

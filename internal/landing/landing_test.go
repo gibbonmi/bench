@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestLandStreamsProspectiveGateOutputOnce(t *testing.T) {
@@ -102,7 +103,7 @@ func TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation(t *test
 	var authorizedTree string
 	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
 		authorizedTree = tree
-		if got := gitBytes(t, root, "show", tree+":named"); !bytes.Equal(got, authorized) {
+		if got := gittest.OutputBytes(t, root, "show", tree+":named"); !bytes.Equal(got, authorized) {
 			t.Fatalf("authorized named bytes = %q", got)
 		}
 		write(t, root, "named", "mutated-after-authorization\n")
@@ -116,8 +117,8 @@ func TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation(t *test
 		t.Fatal("winning commit did not retain the authorized tree")
 	}
 	for source, content := range map[string][]byte{
-		"commit":   gitBytes(t, root, "show", got.Commit+":named"),
-		"index":    gitBytes(t, root, "show", ":named"),
+		"commit":   gittest.OutputBytes(t, root, "show", got.Commit+":named"),
+		"index":    gittest.OutputBytes(t, root, "show", ":named"),
 		"worktree": mustRead(t, filepath.Join(root, "named")),
 	} {
 		if !bytes.Equal(content, authorized) {
@@ -158,7 +159,7 @@ func TestLandReconcilesLateUntrackedDescendantUnderNamedDirectory(t *testing.T) 
 	}()
 
 	authorizedTree := <-authorizing
-	if content := gitBytes(t, root, "show", authorizedTree+":owned/tracked"); !bytes.Equal(content, []byte("authorized\n")) {
+	if content := gittest.OutputBytes(t, root, "show", authorizedTree+":owned/tracked"); !bytes.Equal(content, []byte("authorized\n")) {
 		t.Fatalf("authorized tracked bytes = %q", content)
 	}
 	if names := git(t, root, "ls-tree", "-r", "--name-only", authorizedTree, "--", "owned"); names != "owned/tracked" {

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -200,7 +201,7 @@ func TestLandingCompletionEvidence(t *testing.T) {
 		}},
 		{"extra spec bytes", "exact status transform", func(t *testing.T, f completionFixture, owner *Owner) {
 			owner.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
-				changed := append(gitBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), []byte("unreviewed acceptance change\n")...)
+				changed := append(gittest.OutputBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), []byte("unreviewed acceptance change\n")...)
 				wrong, err := replaceTreeFile(root, tree, f.evidence.Record.Spec, changed, 0644)
 				if err != nil {
 					t.Fatal(err)
@@ -210,7 +211,7 @@ func TestLandingCompletionEvidence(t *testing.T) {
 		}},
 		{"spec mode change", "exact status transform", func(t *testing.T, f completionFixture, owner *Owner) {
 			owner.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
-				wrong, err := replaceTreeFile(root, tree, f.evidence.Record.Spec, gitBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), 0755)
+				wrong, err := replaceTreeFile(root, tree, f.evidence.Record.Spec, gittest.OutputBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), 0755)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -242,7 +243,7 @@ func TestLandingCompletionEvidence(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if got := gitBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
+				if got := gittest.OutputBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
 					t.Fatalf("published status transform = %q", got)
 				}
 				if got := git(t, f.root, "rev-parse", "main"); got != result.Commit {

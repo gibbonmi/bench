@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -151,18 +151,12 @@ func TestLoopReportsBranchCreationFailureAfterExhaustingRetries(t *testing.T) {
 
 func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	root := t.TempDir()
-	gitCmd := func(args ...string) {
-		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, out)
-		}
-	}
-	gitCmd("init", "-q", "-b", "main")
+	gittest.MustRun(t, root, "init", "-q", "-b", "main")
 	if err := os.WriteFile(filepath.Join(root, "tracked"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitCmd("add", ".")
-	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "init")...)
 	admitShiftFixture(t, root)
 	old, _ := os.Getwd()
 	_ = os.Chdir(root)
@@ -190,20 +184,13 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 // implied by a flag runGate sets on its way out.
 func TestRunGateReportsRed(t *testing.T) {
 	root := t.TempDir()
-	gitCmd := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, out)
-		}
-	}
-	gitCmd("init", "-q")
+	gittest.MustRun(t, root, "init", "-q")
 	f := testrepo.NewGateFixture(t.TempDir())
 	if err := f.Write(root, f.Command("bash")+" -c 'exit 23'\n", ""); err != nil {
 		t.Fatal(err)
 	}
-	gitCmd("add", "-A")
-	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "init")...)
 	s := &session{root: root, stdout: io.Discard, stderr: io.Discard}
 	if rc := s.runGate(t.Context()); rc == 0 {
 		t.Fatal("red gate returned zero")

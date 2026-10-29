@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // mergeNameSetRefusal opens the refusal of a name set that omits a merged path.
@@ -215,7 +216,7 @@ func TestLandPublishesAMergeWithAnUnchangedTree(t *testing.T) {
 		{"ours resolution", func(t *testing.T) (string, string, []string) {
 			root, base := pendingMerge(t)
 			for _, path := range mergeNameSet {
-				write(t, root, path, string(gitBytes(t, root, "show", "HEAD:"+path)))
+				write(t, root, path, string(gittest.OutputBytes(t, root, "show", "HEAD:"+path)))
 			}
 			return root, base, mergeNameSet
 		}},
