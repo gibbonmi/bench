@@ -579,3 +579,13 @@ Findings: 6. Worst issue: C1.
 - GQ32: an empty listing read as present turns `TestStoreReadsAPolicyOnce/absent` red.
 - Malformed record: a listing error read as absence turns `TestStoreReadsAPolicyOnce/malformed_listing` red.
 - GQ33: a revision listing through the package form turns `TestRevisionIndexReadsOnce` red.
+
+## Chunk GQ-C2A repair cycle 1
+
+Repair cycles used: 1 of 2. The repair commit is 01d699aaa, and the refreeze record is 0b8a235bc. The repair added a `gittest` stub mode for a malformed listing (S1). It also passed the run to the inner store of `inheritance` (P1), and it added the cases of C1 and C2.
+
+The repair session reported these witness reds:
+
+- S1: a listing error read as absence turns `TestStoreReadsAPolicyOnce/malformed_listing` red through the new stub mode.
+- C2: a hidden shared run for a store with no run turns `TestStoreReadsAPolicyOnce/ledger_no_run` red.
+- C1: a nil run inside `RevisionDocumentIn` turns `TestRevisionIndexReadsOnce/document` red.
