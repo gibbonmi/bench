@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:8a878c0f6b72f4b296defc18ecec53c329e2fe7e2b0a98f6c4fd60e8ff9b011f",
+  "plan_digest": "sha256:d8576e9f92c8e64e0cf2f9d1954f7d3461fd4629442582ebb6c8f51f0133fd54",
   "implementation_session": "",
   "chunks": [
     {
@@ -1082,6 +1082,51 @@
           }
         }
       ]
+    },
+    {
+      "id": "GF-C6",
+      "base": "fd1234c51eb80f59ff191f3b069ee03f9992f765",
+      "tip": "960823e88f9f78234a8c195d96200b1134b0f688",
+      "plan_digest": "sha256:d8576e9f92c8e64e0cf2f9d1954f7d3461fd4629442582ebb6c8f51f0133fd54",
+      "source_digest": "1f0602aea95b14fe0e71590b6ec8b5e20850ac3f",
+      "acceptance_rows": [
+        "GF17",
+        "GF29",
+        "GF30"
+      ],
+      "verification": [
+        {
+          "id": "t06-probe-06",
+          "performer": "claude:gf-t06-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1f0602aea95b14fe0e71590b6ec8b5e20850ac3f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t06-author-20261029",
+            "digest": "sha256:1cecba3ffe778abee0aa02cc2a00494c7ee932f9ed4aeab3fc6f798c1f6a284d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestWindowAdmitsTheBuildsOwnLanding,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestWindowAdmitsTheBuildsOwnLanding,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,325\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,11,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestWindowAdmitsTheBuildsOwnLanding,\"land_window_test.go:102: git commit -q -m base: exit status 128\",9\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "960823e88f9f78234a8c195d96200b1134b0f688",
+          "requirement": "probe-06",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/worktree --run TestWindowAdmitsTheBuildsOwnLanding",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t06-author-20261029",
+              "digest": "sha256:1cecba3ffe778abee0aa02cc2a00494c7ee932f9ed4aeab3fc6f798c1f6a284d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestWindowAdmitsTheBuildsOwnLanding,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestWindowAdmitsTheBuildsOwnLanding,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,325\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,11,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestWindowAdmitsTheBuildsOwnLanding,\"land_window_test.go:102: git commit -q -m base: exit status 128\",9\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1272,6 +1317,24 @@
     {
       "from": "sha256:95314d621569659d44dade204ac1f040da6f2cf762d7391f2647bf386bf87f2a",
       "to": "sha256:8a878c0f6b72f4b296defc18ecec53c329e2fe7e2b0a98f6c4fd60e8ff9b011f",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8a878c0f6b72f4b296defc18ecec53c329e2fe7e2b0a98f6c4fd60e8ff9b011f",
+      "to": "sha256:d8576e9f92c8e64e0cf2f9d1954f7d3461fd4629442582ebb6c8f51f0133fd54",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
