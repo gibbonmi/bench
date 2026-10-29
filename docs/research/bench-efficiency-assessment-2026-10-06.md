@@ -278,7 +278,7 @@ FT365 overlaps the four shared source visitors in the approved spec.
 Its independent-expectation audit and remaining scans stay open.
 FT360 shares fixture helpers but does not by itself establish lower fixture runtime.
 FT255 should control host contention before any new phase overlap.
-[FT365](../../roadmap/FT365.md:3), [FT360](../../roadmap/FT360.md:3), [FT255](../../roadmap/FT255.md:18).
+[FT365](../../roadmap/FT365.md:3), FT360, [FT255](../../roadmap/FT255.md:18).
 
 FT283 has a specific approved direction for spec-stage lane-only landings.
 Its row explicitly says the whole-project contract remains until the change ships.
@@ -386,7 +386,7 @@ Broader experiments do not block small correctness repairs.
 | 42 | [FT343](../../roadmap/FT343.md:1) | Decide test-hook policy and remove unused hooks with caller evidence. |
 | 43 | FT373 | Use the bounded standard-library duplicate check after concrete correctness and rework fixes. |
 | 44 | [FT365](../../roadmap/FT365.md:1) | Complete remaining scanner and expectation work; avoid duplicating landing-test-efficiency. |
-| 45 | [FT360](../../roadmap/FT360.md:1) | Apply the staged shared-fixture plan where it removes divergent harness knowledge. |
+| 45 | FT360 | Apply the staged shared-fixture plan where it removes divergent harness knowledge. |
 | 46 | [FT363](../../roadmap/FT363.md:1) | Share cleanup-set application while preserving mode-specific decisions and fault behavior. |
 | 47 | [FT302](../../roadmap/FT302.md:1) | Promote only current repeated Git facts; deepen diff policy in a separate slice. |
 | 48 | FT217 | Share adoption decisions with unchanged public behavior and fixture assertions. |
