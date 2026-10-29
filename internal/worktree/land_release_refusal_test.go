@@ -158,7 +158,7 @@ func TestLandingDestinationAllowsUntrackedAndIgnoredFiles(t *testing.T) {
 				mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte(tc.declaration), 0o644)
 			}
 			gitRun(t, root, "add", "-A")
-			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare output")
+			gitRun(t, root, withIdentity("commit", "-qm", "declare output")...)
 			mustMkdirAll(t, filepath.Dir(filepath.Join(root, tc.output)), 0o755)
 			mustWrite(t, filepath.Join(root, tc.output), []byte("output\n"), 0o755)
 			tip, branch, marker, fingerprint, err := landingDestination(root)

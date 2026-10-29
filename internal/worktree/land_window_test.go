@@ -128,7 +128,7 @@ func TestWindowClosesAtCompletion(t *testing.T) {
 	build, light := windowLanding(t, request)
 	requireWindowRefusal(t, runVerb(t, verbLand, light.call(lightLandArgs(request, light)...)), light, commitmenttest.DeliveryOutcome, "its first chunk checkpoint")
 	requireLanded(t, runVerb(t, verbLand, build.call(landArgs(request+"-build", build.base, build.tip, build.creation.Path)...)), "of the build's completion")
-	gitRun(t, light.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "fold the destination", "main")
+	gitRun(t, light.creation.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the destination", "main")...)
 	light.tip = gitOutput(t, light.creation.Path, "rev-parse", "HEAD")
 	requireLanded(t, runVerb(t, verbLand, light.call(lightLandArgs(request, light)...)), "after the build's completion")
 }

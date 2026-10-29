@@ -51,8 +51,7 @@ func foldedLandingFixture(t *testing.T, request string) foldedLanding {
 	t.Helper()
 	f := specLessLandingFixture(t, request)
 	f.base = advanceDestination(t, f.root)
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
-		"merge", "-q", "--no-ff", "-m", "fold the destination", f.base)
+	gitRun(t, f.creation.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the destination", f.base)...)
 	fold := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	commitInWorktree(t, f.creation.Path, "owned.txt", "reviewed bytes after the fold\n", "work after the fold")
 	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
@@ -65,7 +64,7 @@ func advanceDestination(t *testing.T, root string) string {
 	t.Helper()
 	mustWrite(t, filepath.Join(root, "advance.txt"), []byte("destination advance\n"), 0o644)
 	gitRun(t, root, "add", "advance.txt")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
+	gitRun(t, root, withIdentity("commit", "-qm", "destination advance")...)
 	return gitOutput(t, root, "rev-parse", "HEAD")
 }
 
@@ -227,7 +226,7 @@ func commitCannedShapeGate(t *testing.T, root, shape string) (base string) {
 	script := "#!/bin/sh\nprintf '%s' " + sanitize.ShellQuote(shape) + "\nexit 0\n"
 	mustWrite(t, filepath.Join(root, ".bench", "gate-prospective.sh"), []byte(script), 0o755)
 	gitRun(t, root, "add", ".bench/gate-prospective.sh")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "canned bounded gate")
+	gitRun(t, root, withIdentity("commit", "-qm", "canned bounded gate")...)
 	return gitOutput(t, root, "rev-parse", "HEAD")
 }
 
@@ -252,7 +251,7 @@ func commitLandingBuildInputs(t *testing.T, root string) {
 	mustMkdirAll(t, filepath.Dir(manifest), 0o755)
 	mustWrite(t, manifest, []byte(freshness.BuildInputLine("build_script", landingBuildScript)), 0o644)
 	gitRun(t, root, "add", freshness.BuildInputsManifest)
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare go build inputs")
+	gitRun(t, root, withIdentity("commit", "-qm", "declare go build inputs")...)
 }
 
 // landingBuildScript is the build script that commitLandingBuildInputs declares.
@@ -274,7 +273,7 @@ func stageLandSpec(t *testing.T, root, source string) {
 	}
 	mustWrite(t, path, []byte("Status: staged\n"), 0o644)
 	gitRun(t, root, "add", "specs/x/spec.md")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "stage spec")
+	gitRun(t, root, withIdentity("commit", "-qm", "stage spec")...)
 	gitRun(t, source, "rebase", "main")
 }
 
@@ -290,7 +289,7 @@ func ticketsOnlyLandingFixture(t *testing.T, request string) landingFixture {
 func ticketsOnlyFolderFixture(t *testing.T, f landingFixture) landingFixture {
 	t.Helper()
 	commitmenttest.WriteTickets(t, f.root)
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folder")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "tickets-only folder")...)
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	gitRun(t, f.root, "update-ref", "refs/bench/green/main", f.base)
 	gitRun(t, f.creation.Path, "rebase", "main")
@@ -337,7 +336,7 @@ func stackLandingFixture(t *testing.T, prefix string, n int, step func(*testrepo
 		commitmenttest.Write(t, f.root, "specs/"+f.members[i].slug+"/tickets/one.md", commitmenttest.TicketBody("Stack member", []string{f.members[i].file + " (new)"}, "LP1"))
 		gitRun(t, f.root, "add", "specs/"+f.members[i].slug)
 	}
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "tickets-only folders")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "tickets-only folders")...)
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	gitRun(t, f.root, "update-ref", "refs/bench/green/main", f.base)
 	for i := range f.members {

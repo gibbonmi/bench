@@ -154,7 +154,7 @@ func foldLandedStack(t *testing.T, w stackWalk) {
 	mustNoError(t, json.Unmarshal(data, &doc))
 	doc.Members = doc.Members[k:]
 	for i, m := range doc.Members {
-		gitRun(t, m.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "fold the destination", "main")
+		gitRun(t, m.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the destination", "main")...)
 		doc.Members[i].SourceTip = gitOutput(t, m.Path, "rev-parse", "HEAD")
 	}
 	doc.write(t, w.file)

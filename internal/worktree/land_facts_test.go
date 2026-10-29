@@ -29,7 +29,7 @@ func TestLandingResidueFactAdapterTranslatesRealDestination(t *testing.T) {
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("junk/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare ignored dir")
+	gitRun(t, root, withIdentity("commit", "-qm", "declare ignored dir")...)
 	destination := gitOutput(t, root, "rev-parse", "HEAD")
 
 	mustWrite(t, filepath.Join(root, "tracked.txt"), []byte("staged edit\n"), 0o644)
@@ -148,7 +148,7 @@ func TestLandingPublicationFactAdapterTranslatesMergeCommit(t *testing.T) {
 	commitInWorktree(t, root, "owned.txt", "reviewed\n", "reviewed source")
 	tip := gitOutput(t, root, "rev-parse", "HEAD")
 	gitRun(t, root, "checkout", "-q", "main")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "landing", "source")
+	gitRun(t, root, withIdentity("merge", "-q", "--no-ff", "-m", "landing", "source")...)
 	published := gitOutput(t, root, "rev-parse", "HEAD")
 
 	facts, sourceBase, destinationBase := publicationFacts(root, published, published, base, tip, "")

@@ -26,7 +26,7 @@ func brokerChangingLanding(t *testing.T, request string) landingFixture {
 	}
 	mustWrite(t, ticket, withTicketWrite(body, "scripts/go-build.sh"), 0o644)
 	gitRun(t, f.root, "add", ".")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker build inputs")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "broker build inputs")...)
 	gitRun(t, f.creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")

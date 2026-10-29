@@ -94,7 +94,7 @@ func TestCommitmentClosureAdmission(t *testing.T) {
 			mustWrite(t, filepath.Join(f.creation.Path, roadmap.RoadmapFile), index, 0o644)
 			gitRun(t, f.creation.Path, "rm", "-q", detail)
 			gitRun(t, f.creation.Path, "add", roadmap.RoadmapFile)
-			gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "close "+id)
+			gitRun(t, f.creation.Path, withIdentity("commit", "-qm", "close "+id)...)
 			refreshLandingEvidence(t, f.creation.Path, f.base)
 			tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 			r := runVerb(t, verbLand, f.call(row.route.args(request, f, tip)...))

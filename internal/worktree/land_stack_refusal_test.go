@@ -53,7 +53,7 @@ func stackRepairRerun(file string, m stackFixtureMember) string {
 func foldMember(t *testing.T, f *stackFixture, i int) {
 	t.Helper()
 	m := &f.members[i]
-	gitRun(t, m.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "fold the destination", "main")
+	gitRun(t, m.creation.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the destination", "main")...)
 	m.tip = gitOutput(t, m.creation.Path, "rev-parse", "HEAD")
 }
 

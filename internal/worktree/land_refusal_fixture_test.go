@@ -131,7 +131,7 @@ func landingRefusalFixtures() []landingRefusalFixture {
 			},
 			carry: map[int]func(*testing.T, landingFixture){0: func(t *testing.T, f landingFixture) {
 				gitRun(t, f.creation.Path, "rm", "-q", "stray.txt")
-				gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "take the stray path out of the range")
+				gitRun(t, f.creation.Path, withIdentity("commit", "-qm", "take the stray path out of the range")...)
 			}},
 		},
 		{
@@ -237,7 +237,7 @@ func landingRefusalFixtures() []landingRefusalFixture {
 				base := gitOutput(t, root, "rev-parse", "HEAD")
 				commitGateLine(t, root, `IFS= read -r owned < owned.txt
 [ "$owned" = "repaired" ]`)
-				gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "fold the destination", "main")
+				gitRun(t, creation.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the destination", "main")...)
 				refreshLandingEvidence(t, creation.Path, base)
 			},
 			carry: map[int]func(*testing.T, landingFixture){
@@ -299,7 +299,7 @@ func stageHandMerge(t *testing.T, checkout, path, body string) {
 // commitHandMerge records the staged resolution of a hand merge in checkout.
 func commitHandMerge(t *testing.T, checkout string) {
 	t.Helper()
-	gitRun(t, checkout, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "resolve the composition")
+	gitRun(t, checkout, withIdentity("commit", "-qm", "resolve the composition")...)
 }
 
 // plantSourceCommitLane declares a commit lane for the source in an ignored phase
@@ -323,7 +323,7 @@ func commitGateLine(t *testing.T, root, line string) {
 	mustNoError(t, err)
 	mustWrite(t, script, append(body, []byte(line+"\n")...), 0o755)
 	gitRun(t, root, "add", ".bench/gate-prospective.sh")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination gate line")
+	gitRun(t, root, withIdentity("commit", "-qm", "destination gate line")...)
 }
 
 // gateLock is the gate's execution lock for the gate runs that checkout stores.

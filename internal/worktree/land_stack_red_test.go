@@ -47,7 +47,7 @@ func greenDestination(t *testing.T, f *stackFixture) {
 	}
 	mustWrite(t, script, []byte(strings.Replace(string(body), memberLine, "", 1)), 0o755)
 	gitRun(t, f.root, "add", ".bench/gate.sh")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "the destination gate grades the destination alone")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "the destination gate grades the destination alone")...)
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	for i := range f.members {
 		gitRun(t, f.members[i].creation.Path, "rebase", "-q", "main")

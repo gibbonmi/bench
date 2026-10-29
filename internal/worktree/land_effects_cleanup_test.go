@@ -27,8 +27,7 @@ func foldLandingSibling(t *testing.T, root, home, request string, source Creatio
 	sibling := mustCreate(t, root, home, request, "folded sibling")
 	mustMkdirAll(t, filepath.Join(sibling.Path, "reviews"), 0o755)
 	commitInWorktree(t, sibling.Path, siblingReviewPath, "sibling review\n", "sibling review")
-	gitRun(t, source.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
-		"merge", "-q", "--no-ff", "-m", "fold the sibling", strings.TrimPrefix(sibling.Assignment.Branch, "refs/heads/"))
+	gitRun(t, source.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the sibling", strings.TrimPrefix(sibling.Assignment.Branch, "refs/heads/"))...)
 	refreshLandingEvidence(t, source.Path, gitOutput(t, root, "merge-base", "main", source.Assignment.Branch))
 	return foldedSibling{sibling: sibling, tip: gitOutput(t, source.Path, "rev-parse", "HEAD")}
 }

@@ -19,10 +19,9 @@ func TestLandFenceRefusalOverAFoldedSourceKeepsTheCallerBase(t *testing.T) {
 	f := publicLandingFixture(t, request, "", "")
 	mustWrite(t, filepath.Join(f.root, "advance.txt"), []byte("destination advance\n"), 0o644)
 	gitRun(t, f.root, "add", "advance.txt")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination advance")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "destination advance")...)
 	destination := gitOutput(t, f.root, "rev-parse", "HEAD")
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local",
-		"merge", "-q", "--no-ff", "-m", "fold the destination", destination)
+	gitRun(t, f.creation.Path, withIdentity("merge", "-q", "--no-ff", "-m", "fold the destination", destination)...)
 	commitInWorktree(t, f.creation.Path, "stray.txt", "stray\n", "out of fence")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	r := runVerb(t, verbLand, f.call(landArgs(request, f.base, tip, f.creation.Path)...))

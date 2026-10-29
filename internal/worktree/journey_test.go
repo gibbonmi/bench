@@ -179,6 +179,14 @@ func gitRun(t testing.TB, dir string, args ...string) {
 	}
 }
 
+// withIdentity prefixes one git argument list with the shared default fixture identity,
+// so a gitRun or gitOutput child that commits or merges records that identity. It is the
+// one route by which a worktree test outside this harness reaches the gittest identity;
+// the child still starts through descendant.
+func withIdentity(args ...string) []string {
+	return append(gittest.IdentityArgs(), args...)
+}
+
 // --- harness census (coverage row EI1) ---
 
 // journeyHarnessFiles are the files that may start repositories or descendants
