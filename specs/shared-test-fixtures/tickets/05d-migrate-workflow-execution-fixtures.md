@@ -1,7 +1,7 @@
 # Migrate workflow execution fixtures
 
 Blocked by: 05c-migrate-preflight-conformance-fixtures.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/intent/assignment_lookup_test.go, internal/intent/intent_test.go, internal/intent/worktree_owner_test.go, internal/landing/close_test.go, internal/landing/composition_test.go, internal/landing/landing_helpers_test.go, internal/responsebound/responseboundtest/checkout.go, internal/sessioninspect/sessioninspect_test.go, internal/shift/fault_test.go, internal/shift/refresh_test.go, internal/shift/shift_test.go, internal/testreport/check_test.go, internal/testreport/selection_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/intent/assignment_lookup_test.go, internal/intent/intent_test.go, internal/intent/worktree_owner_test.go, internal/landing/close_test.go, internal/landing/composition_test.go, internal/landing/landing_helpers_test.go, internal/responsebound/responseboundtest/checkout.go, internal/sessioninspect/sessioninspect_test.go, internal/shift/fault_test.go, internal/shift/refresh_test.go, internal/shift/shift_test.go, internal/testreport/check_test.go, internal/testreport/selection_test.go, internal/shift/lifetime_test.go, internal/reviewrecord/recordcmd/ticket_test.go
 Covers: GF16, GF19, GF29, GF30
 
 ## What to build

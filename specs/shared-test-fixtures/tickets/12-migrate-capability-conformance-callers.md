@@ -1,7 +1,7 @@
 # Migrate capability callers in conformance and CLI tests
 
 Blocked by: 11-migrate-capability-workflow-callers.md
-Writes: cmd/bench/anchor_help_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/bounds_policy_test.go, internal/conformance/checks_test.go, internal/conformance/claude_agent_definitions_test.go, internal/conformance/fixture_bite_test.go, internal/conformance/guidance_token_sweep_test.go, internal/conformance/harness_record_test.go, internal/conformance/prose_budget_test.go, internal/conformance/skill_description_budgets_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: cmd/bench/anchor_help_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/bounds_policy_test.go, internal/conformance/checks_test.go, internal/conformance/claude_agent_definitions_test.go, internal/conformance/fixture_bite_test.go, internal/conformance/guidance_token_sweep_test.go, internal/conformance/harness_record_test.go, internal/conformance/prose_budget_test.go, internal/conformance/skill_description_budgets_test.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/guard_projection_owner_test.go, internal/conformance/guard_scan_owner_test.go
 Covers: GF22, GF29, GF30
 
 ## What to build

@@ -1,7 +1,7 @@
 # Share generic Git commands and snapshots
 
 Blocked by: none
-Writes: internal/conformance/native_workflow_test.go, internal/conformance/release_probe_fixture_test.go, internal/gittest/commands.go (new), internal/gittest/commands_test.go (new), internal/gittest/gittest.go, internal/gittest/gittest_test.go, internal/gittest/identity.go (new), internal/gittest/snapshot.go (new), internal/gittest/snapshot_test.go (new), internal/reviewrecord/recordtest/fixture.go, internal/testrepo/working_tree.go
+Writes: internal/conformance/native_workflow_test.go, internal/conformance/release_probe_fixture_test.go, internal/gittest/commands.go (new), internal/gittest/commands_test.go (new), internal/gittest/gittest.go, internal/gittest/gittest_test.go, internal/gittest/identity.go (new), internal/gittest/snapshot.go (new), internal/gittest/snapshot_test.go (new), internal/reviewrecord/recordtest/fixture.go, internal/testrepo/working_tree.go, internal/reviewrecord/recordtest/confirmation.go
 Covers: GF1, GF2, GF3, GF4, GF5, GF6, GF7, GF8, GF9, GF11, GF12, GF13, GF14, GF15, GF20, GF32, GF33, GF34, GF35, GF36, GF37
 
 ## What to build
@@ -10,8 +10,9 @@ Move the Git portion of testrepo into gittest and migrate every former export ca
 Preserve exported error-returning Run and existing Output delegation. Add MustRun, OutputBytes, Commit, configuration, and identity-argument contracts from the accepted spec.
 Preserve error-returning snapshot functions and the index-only Commit distinction. Use new files for headroom rather than enlarging gittest.go.
 
-The existing Run definition is `internal/gittest/gittest.go:277`; Output delegates at line 268.
-Keep callers that return Run errors, including `internal/commitment/commitmenttest/repo.go:107`, compatible without editing them.
+The existing Run definition is `internal/gittest/gittest.go:323`; Output delegates at line 312.
+Keep callers that return Run errors, including the private `commit` at `internal/commitment/commitmenttest/repo.go:124`, compatible without editing them.
+The snapshot keeps its `visibletree.Files` enumeration. The review-record confirmation fixture also migrates its inline identity.
 Their error-returning APIs must not become fatal helper calls. Preserve existing root operands, including an empty root passed to Git's `-C` option.
 New helper forms use the accepted current-directory behavior for an empty root.
 

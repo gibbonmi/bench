@@ -14,7 +14,7 @@ Amendment verification: GF-SPEC-R1 independently accepted spec SHA-256 `d8798f21
 
 Ticket amendment: GPT-6.1 Sol/high amended existing tickets only after GF-SPEC-R1 acceptance. Independent GF-TICKETS-R1 accepted the amendment at static confidence 9; implementation approval remains pending.
 
-Implementation approval: pending. This planning phase does not authorize the successor build.
+Implementation approval: the reviewer started the build with `/bench-implement-spec --full shared-test-fixtures` on 2026-10-29 and delegated routine decisions to the consultants.
 
 ## Problem
 
@@ -123,6 +123,7 @@ The error-returning snapshot functions and fatal test wrappers share the private
 `CommitAll` retains its force-add behavior. Its semantics remain distinct from the index-only `Commit` helper.
 
 Preserve the current snapshot membership rule. The source includes tracked files and visible untracked files, including tracked files matched by ignore rules.
+The moved function keeps its `visibletree.Files` enumeration, so the membership rule keeps one owner.
 Preserve regular-file bytes and modes, live symlinks, and dangling symlinks. Ignore source entries deleted after enumeration, as the current function does.
 
 Keep `.git` and ignored untracked files outside the snapshot. Refuse other special source entries before reading their bytes.
@@ -147,7 +148,14 @@ Git failure probes retain their expected nonzero status. Queries that authentica
 
 These are operation-level exceptions. A file containing one exception does not exempt its unrelated fixture setup.
 
-Coordinate overlapping adoption fixtures with landing-test-efficiency. Prefer its minimal payload migration first, then refresh GF-C5A's caller inventory and affected fences.
+Many fixtures write a private default identity, such as `bench` with `bench@local`. Each such copy migrates to the canonical identity.
+The before-and-after comparison then excludes the author and committer values, unless the scenario grades them.
+
+In `internal/worktree`, the serial journey census admits `gittest` references only in the journey harness file.
+Migrated worktree files therefore reach the shared identity through one harness helper in that file.
+
+Coordinate overlapping adoption fixtures with landing-test-efficiency. That spec is still staged, so its minimal payload migration has not landed.
+The ticket 05a author rereads its three shared adoption test files at entry and adds no path for that reason.
 Shared helpers alone establish no measured speed gain.
 
 The ownership check records each retained specialized site by path and enclosing symbol, with its preserved contract.
@@ -171,7 +179,8 @@ Use path, enclosing symbol, and a stable case label to distinguish multiple call
 The checker compares real call sites with that fixture. Missing sites and changed classes fail.
 
 This independent expectation qualifies under ADR 0006 only after the named class-change mutation produces a recorded red.
-The mutation changes the socket case in `clean_landed_hostile_test.go` from FIFO to symlink. The implementation also records restoration.
+The mutation changes the socket class in the shared `testrepo` socket helper from FIFO to symlink. The implementation also records restoration.
+The hostile cleanup socket case now reaches that helper, so the helper is the one socket call site.
 
 The owner tests still exercise the low-level `Capability` API. Other capability families retain their existing reasons in this feature.
 
@@ -192,31 +201,253 @@ Before enablement, intermediate chunks retain all existing checks and add their 
 
 ## Implementation chunks
 
-Each ticket is one serial green checkpoint and one review chunk. Its predecessor supplies an accepted owner or the completed preceding migration batch.
+Each ticket is one serial green commit, and each chunk is one review checkpoint. Its predecessor supplies an accepted owner or the completed preceding migration batch.
 Shared conformance registries make the listed order explicit. A later ticket cannot supply a missing helper to an earlier checkpoint.
 The author rechecks the candidate sites before implementation. Source drift expands only the affected fences through the approved amendment route.
+
+The build entry combined adjacent migration chunks into one review checkpoint each. The tickets, their order, and their efforts stay the same.
+The old-to-new map is GF-C3 and GF-C4 to GF-C2, GF-C5B to GF-C5A, GF-C5D to GF-C5C, GF-C7 to GF-C6, and GF-C11 and GF-C12 to GF-C10.
+A ticket of a formerly harder chunk keeps the declared effort.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | GF-C1 / `01-share-git-fixture-owner.md` | Share generic Git commands and snapshots | GF1, GF2, GF3, GF4, GF5, GF6, GF7, GF8, GF9, GF11, GF12, GF13, GF14, GF15, GF20, GF32, GF33, GF34, GF35, GF36, GF37 | Completion-plan checks | yes |
-| GF-C2 / `02-migrate-raw-git-fixtures.md` | Migrate raw Git fixture callers | GF16, GF29, GF30 | Completion-plan checks | no |
-| GF-C3 / `03-migrate-leaf-fixtures.md` | Migrate leaf command fixtures | GF16, GF29, GF30 | Completion-plan checks | no |
-| GF-C4 / `04-migrate-workflow-readers.md` | Migrate workflow reader fixtures | GF16, GF29, GF30 | Completion-plan checks | no |
-| GF-C5A / `05a-migrate-cli-adopt-fixtures.md` | Migrate CLI and adoption fixtures | GF16, GF19, GF29, GF30 | Completion-plan checks | no |
-| GF-C5B / `05b-migrate-commit-gate-fixtures.md` | Migrate commit and gate fixtures | GF16, GF19, GF29, GF30 | Completion-plan checks | no |
-| GF-C5C / `05c-migrate-preflight-conformance-fixtures.md` | Migrate preflight and conformance fixtures | GF16, GF19, GF29, GF30 | Completion-plan checks | yes |
-| GF-C5D / `05d-migrate-workflow-execution-fixtures.md` | Migrate workflow execution fixtures | GF16, GF19, GF29, GF30 | Completion-plan checks | yes |
-| GF-C6 / `06-share-landing-fixture-identity.md` | Share the landing fixture identity | GF17, GF29, GF30 | Completion-plan checks | yes |
-| GF-C7 / `07-share-worktree-fixture-identity.md` | Share the remaining worktree fixture identity | GF17, GF29, GF30 | Completion-plan checks | yes |
+| GF-C2 / `02-migrate-raw-git-fixtures.md`, `03-migrate-leaf-fixtures.md`, `04-migrate-workflow-readers.md` | Migrate raw Git, leaf command, and workflow reader fixtures | GF16, GF29, GF30 | Completion-plan checks | no |
+| GF-C5A / `05a-migrate-cli-adopt-fixtures.md`, `05b-migrate-commit-gate-fixtures.md` | Migrate CLI, adoption, commit, and gate fixtures | GF16, GF19, GF29, GF30 | Completion-plan checks | no |
+| GF-C5C / `05c-migrate-preflight-conformance-fixtures.md`, `05d-migrate-workflow-execution-fixtures.md` | Migrate preflight, conformance, and workflow execution fixtures | GF16, GF19, GF29, GF30 | Completion-plan checks | yes |
+| GF-C6 / `06-share-landing-fixture-identity.md`, `07-share-worktree-fixture-identity.md` | Share the landing and remaining worktree fixture identity | GF17, GF29, GF30 | Completion-plan checks | yes |
 | GF-C8 / `08-share-system-fixture-identity.md` | Share the system fixture identity | GF18, GF29, GF30 | Completion-plan checks | yes |
 | GF-C9 / `09-own-capability-reasons.md` | Own unavailable-capability reasons | GF21, GF22, GF23, GF30 | Completion-plan checks | no |
-| GF-C10 / `10-migrate-capability-leaf-callers.md` | Migrate capability callers in leaf packages | GF22, GF29, GF30 | Completion-plan checks | no |
-| GF-C11 / `11-migrate-capability-workflow-callers.md` | Migrate capability callers in workflow packages | GF22, GF29, GF30 | Completion-plan checks | no |
-| GF-C12 / `12-migrate-capability-conformance-callers.md` | Migrate capability callers in conformance and CLI tests | GF22, GF29, GF30 | Completion-plan checks | no |
+| GF-C10 / `10-migrate-capability-leaf-callers.md`, `11-migrate-capability-workflow-callers.md`, `12-migrate-capability-conformance-callers.md` | Migrate capability callers in leaf, workflow, conformance, and CLI tests | GF22, GF29, GF30 | Completion-plan checks | no |
 | GF-C13 / `13-enforce-fixture-ownership.md` | Enforce completed fixture ownership | GF10, GF24, GF25, GF26, GF27, GF28, GF31, GF30 | Completion-plan checks | yes |
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"GF-C1","tickets":["01-share-git-fixture-owner.md"],"verification":[{"id":"pkg-internal-gittest","command":"bench test --package ./internal/gittest"},{"id":"pkg-internal-reviewrecord-recordtest","command":"bench test --package ./internal/reviewrecord/recordtest"},{"id":"pkg-internal-testrepo","command":"bench test --package ./internal/testrepo"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C2","tickets":["02-migrate-raw-git-fixtures.md"],"verification":[{"id":"pkg-internal-diff","command":"bench test --package ./internal/diff"},{"id":"pkg-internal-git","command":"bench test --package ./internal/git"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C3","tickets":["03-migrate-leaf-fixtures.md"],"verification":[{"id":"pkg-internal-consumers","command":"bench test --package ./internal/consumers"},{"id":"pkg-internal-gitguard","command":"bench test --package ./internal/gitguard"},{"id":"pkg-internal-guards","command":"bench test --package ./internal/guards"},{"id":"pkg-internal-outline","command":"bench test --package ./internal/outline"},{"id":"pkg-internal-poolkey","command":"bench test --package ./internal/poolkey"},{"id":"pkg-internal-probe","command":"bench test --package ./internal/probe"},{"id":"pkg-internal-skillsindex","command":"bench test --package ./internal/skillsindex"},{"id":"pkg-internal-spec","command":"bench test --package ./internal/spec"},{"id":"pkg-internal-stophook","command":"bench test --package ./internal/stophook"},{"id":"pkg-internal-structure","command":"bench test --package ./internal/structure"},{"id":"pkg-internal-treetarget","command":"bench test --package ./internal/treetarget"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C4","tickets":["04-migrate-workflow-readers.md"],"verification":[{"id":"pkg-internal-handoff","command":"bench test --package ./internal/handoff"},{"id":"pkg-internal-maps","command":"bench test --package ./internal/maps"},{"id":"pkg-internal-roadmap","command":"bench test --package ./internal/roadmap"},{"id":"pkg-internal-roadmapflow","command":"bench test --package ./internal/roadmapflow"},{"id":"pkg-internal-status","command":"bench test --package ./internal/status"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C5A","tickets":["05a-migrate-cli-adopt-fixtures.md"],"verification":[{"id":"pkg-cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"pkg-internal-adopt","command":"bench test --package ./internal/adopt"},{"id":"pkg-internal-adopt-repairtest","command":"bench test --package ./internal/adopt/repairtest"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C5B","tickets":["05b-migrate-commit-gate-fixtures.md"],"verification":[{"id":"pkg-internal-commit","command":"bench test --package ./internal/commit"},{"id":"pkg-internal-gate","command":"bench test --package ./internal/gate"},{"id":"pkg-internal-gate-authorization","command":"bench test --package ./internal/gate/authorization"},{"id":"pkg-internal-gate-greenmarker","command":"bench test --package ./internal/gate/greenmarker"},{"id":"pkg-internal-gate-prospectiveartifact","command":"bench test --package ./internal/gate/prospectiveartifact"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C5C","tickets":["05c-migrate-preflight-conformance-fixtures.md"],"verification":[{"id":"pkg-internal-conformance","command":"bench test --package ./internal/conformance"},{"id":"pkg-internal-env","command":"bench test --package ./internal/env"},{"id":"pkg-internal-preflight-preflighttest","command":"bench test --package ./internal/preflight/preflighttest"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C5D","tickets":["05d-migrate-workflow-execution-fixtures.md"],"verification":[{"id":"pkg-internal-intent","command":"bench test --package ./internal/intent"},{"id":"pkg-internal-landing","command":"bench test --package ./internal/landing"},{"id":"pkg-internal-responsebound-responseboundtest","command":"bench test --package ./internal/responsebound/responseboundtest"},{"id":"pkg-internal-sessioninspect","command":"bench test --package ./internal/sessioninspect"},{"id":"pkg-internal-shift","command":"bench test --package ./internal/shift"},{"id":"pkg-internal-testreport","command":"bench test --package ./internal/testreport"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C6","tickets":["06-share-landing-fixture-identity.md"],"verification":[{"id":"pkg-internal-worktree","command":"bench test --package ./internal/worktree"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C7","tickets":["07-share-worktree-fixture-identity.md"],"verification":[{"id":"pkg-internal-worktree","command":"bench test --package ./internal/worktree"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C8","tickets":["08-share-system-fixture-identity.md"],"verification":[{"id":"system","command":"bench test --check system"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C9","tickets":["09-own-capability-reasons.md"],"verification":[{"id":"pkg-internal-bounds","command":"bench test --package ./internal/bounds"},{"id":"pkg-internal-capability","command":"bench test --package ./internal/capability"},{"id":"pkg-internal-gittest","command":"bench test --package ./internal/gittest"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C10","tickets":["10-migrate-capability-leaf-callers.md"],"verification":[{"id":"pkg-internal-canary","command":"bench test --package ./internal/canary"},{"id":"pkg-internal-census","command":"bench test --package ./internal/census"},{"id":"pkg-internal-env","command":"bench test --package ./internal/env"},{"id":"pkg-internal-git","command":"bench test --package ./internal/git"},{"id":"pkg-internal-guards","command":"bench test --package ./internal/guards"},{"id":"pkg-internal-learnings","command":"bench test --package ./internal/learnings"},{"id":"pkg-internal-outline","command":"bench test --package ./internal/outline"},{"id":"pkg-internal-prose","command":"bench test --package ./internal/prose"},{"id":"pkg-internal-skillsindex","command":"bench test --package ./internal/skillsindex"},{"id":"pkg-internal-spec","command":"bench test --package ./internal/spec"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C11","tickets":["11-migrate-capability-workflow-callers.md"],"verification":[{"id":"pkg-internal-commit","command":"bench test --package ./internal/commit"},{"id":"pkg-internal-gate","command":"bench test --package ./internal/gate"},{"id":"pkg-internal-landing","command":"bench test --package ./internal/landing"},{"id":"pkg-internal-reviewrecord-recordcmd","command":"bench test --package ./internal/reviewrecord/recordcmd"},{"id":"pkg-internal-status","command":"bench test --package ./internal/status"},{"id":"pkg-internal-worktree","command":"bench test --package ./internal/worktree"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C12","tickets":["12-migrate-capability-conformance-callers.md"],"verification":[{"id":"pkg-cmd-bench","command":"bench test --package ./cmd/bench"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]},{"id":"GF-C13","tickets":["13-enforce-fixture-ownership.md"],"verification":[{"id":"git-owner","command":"bench test --check git-plumbing-owner"},{"id":"skip-owner","command":"bench test --check skip-ownership"},{"id":"census","command":"bench test --check ordinary-build-census"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"preservation","command":"bench diff","probe":"Compare the frozen baseline and this ticket over its named fixture family. Record facts, specialized exceptions, and unchanged skip classes in the review pickup."}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/shared-test-fixtures/spec.md"},{"id":"git-owner","command":"bench test --check git-plumbing-owner"},{"id":"skip-owner","command":"bench test --check skip-ownership"},{"id":"system","command":"bench test --check system"},{"id":"census","command":"bench test --check ordinary-build-census"}]}
+{
+  "version": 2,
+  "chunks": [
+    {
+      "id": "GF-C1",
+      "tickets": [
+        "01-share-git-fixture-owner.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-01-run",
+          "command": "bench probe internal/gittest/gittest.go --swap 'return \"\", fmt.Errorf(\"git %s: %w: %s\", strings.Join(args, \" \"), err, out)' --with 'return strings.TrimSpace(string(out)), nil' --package ./internal/gittest --run TestRunFailureReturn",
+          "probe": "Return a failed command as success. The goroutine then receives no error, so the returned-failure test fails.",
+          "ticket": "01-share-git-fixture-owner.md"
+        },
+        {
+          "id": "probe-01-identity",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/gittest --run TestFixtureIdentity",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "01-share-git-fixture-owner.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C2",
+      "tickets": [
+        "02-migrate-raw-git-fixtures.md",
+        "03-migrate-leaf-fixtures.md",
+        "04-migrate-workflow-readers.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-02",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/git --run TestReadStagedIndexReportsModesAndOmitsDeletions",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "02-migrate-raw-git-fixtures.md"
+        },
+        {
+          "id": "probe-03",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/spec --run TestRetireDeletesTheFolderAndExitsZero",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "03-migrate-leaf-fixtures.md"
+        },
+        {
+          "id": "probe-04",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/roadmapflow --run TestFlowCountsDetailFilesOverTheWindow",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "04-migrate-workflow-readers.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C5A",
+      "tickets": [
+        "05a-migrate-cli-adopt-fixtures.md",
+        "05b-migrate-commit-gate-fixtures.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-05a",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./cmd/bench --run TestShellWrapperKitMatchesKitForRoot",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "05a-migrate-cli-adopt-fixtures.md"
+        },
+        {
+          "id": "probe-05b",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/commit --run TestCommitmentLightPathCommit",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "05b-migrate-commit-gate-fixtures.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C5C",
+      "tickets": [
+        "05c-migrate-preflight-conformance-fixtures.md",
+        "05d-migrate-workflow-execution-fixtures.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-05c",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/preflight --run TestEvidenceRequiredSourceStates",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "05c-migrate-preflight-conformance-fixtures.md"
+        },
+        {
+          "id": "probe-05d",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/intent --run TestSnapshotProofLifecycle",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "05d-migrate-workflow-execution-fixtures.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C6",
+      "tickets": [
+        "06-share-landing-fixture-identity.md",
+        "07-share-worktree-fixture-identity.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-06",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/worktree --run TestWindowAdmitsTheBuildsOwnLanding",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "06-share-landing-fixture-identity.md"
+        },
+        {
+          "id": "probe-07",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/worktree --run TestMergeStartsABackgroundGrade",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "07-share-worktree-fixture-identity.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C8",
+      "tickets": [
+        "08-share-system-fixture-identity.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-08",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --check system --run '^TestWorktreeReauthorizeJourney$'",
+          "probe": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+          "ticket": "08-share-system-fixture-identity.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C9",
+      "tickets": [
+        "09-own-capability-reasons.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-09",
+          "command": "bench probe internal/capability/unavailable.go --swap '\" capability unavailable: \"' --with '\" unavailable: \"' --package ./internal/capability --run TestUnavailableReason",
+          "probe": "Drop the capability word from the derived prefix. The reason then differs from the contract, so the reason test fails.",
+          "ticket": "09-own-capability-reasons.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C10",
+      "tickets": [
+        "10-migrate-capability-leaf-callers.md",
+        "11-migrate-capability-workflow-callers.md",
+        "12-migrate-capability-conformance-callers.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-10",
+          "command": "bench probe internal/capability/unavailable.go --swap 'Capability(t, class, ' --with 'Capability(t, Fifo, ' --package ./internal/capability --run TestUnavailableClassification",
+          "probe": "Record every unavailable reason as FIFO. The symlink case then parses with the wrong class, so the classification test fails.",
+          "ticket": "10-migrate-capability-leaf-callers.md"
+        },
+        {
+          "id": "probe-11",
+          "command": "bench probe internal/capability/unavailable.go --insert-before 'Capability(t, class, ' --with 't.SkipNow(); ' --package ./internal/capability --run TestUnavailableWritesBeforeSkip",
+          "probe": "Skip before the record write. The transport then stays empty, so the write-before-skip test fails.",
+          "ticket": "11-migrate-capability-workflow-callers.md"
+        },
+        {
+          "id": "probe-12",
+          "command": "bench probe internal/capability/unavailable.go --swap 'Capability(t, class, ' --with 'Environment(t, ' --package ./internal/capability --run TestUnavailableClassification",
+          "probe": "Record an unavailable capability as an environment skip. The parsed kind then changes, so the classification test fails.",
+          "ticket": "12-migrate-capability-conformance-callers.md"
+        }
+      ]
+    },
+    {
+      "id": "GF-C13",
+      "tickets": [
+        "13-enforce-fixture-ownership.md"
+      ],
+      "verification": [
+        {
+          "id": "probe-13-classes",
+          "command": "bench probe internal/testrepo/socket.go --swap 'capability.Fifo' --with 'capability.Symlink' --package ./internal/conformance --run TestUnavailableCallerClasses",
+          "probe": "Change the socket helper class from FIFO to symlink. The independent class fixture then disagrees, so the caller-class test fails.",
+          "ticket": "13-enforce-fixture-ownership.md"
+        },
+        {
+          "id": "probe-13-runner",
+          "command": "bench probe cmd/bench/wrapper_kit_test.go --insert-before 'func newWrapperKitFixture(' --with 'func plantedGitRunner(dir string) ([]byte, error) { return exec.Command(\"git\", \"-C\", dir, \"status\").Output() }; ' --check git-plumbing-owner",
+          "probe": "Plant a generic Git runner beside an allowed specialized site. The registered check then reports the sibling, so the check fails.",
+          "ticket": "13-enforce-fixture-ownership.md"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "whole-project",
+      "command": "bench gate"
+    },
+    {
+      "id": "coverage",
+      "command": "bench coverage --check specs/shared-test-fixtures/spec.md"
+    }
+  ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft360-shared-fixtures-full-20261029",
+    "orchestrator_session": "claude:gf-orchestrator-20261029",
+    "author_limit": 3,
+    "assignments": {
+      "01-share-git-fixture-owner.md": [],
+      "02-migrate-raw-git-fixtures.md": [],
+      "03-migrate-leaf-fixtures.md": [],
+      "04-migrate-workflow-readers.md": [],
+      "05a-migrate-cli-adopt-fixtures.md": [],
+      "05b-migrate-commit-gate-fixtures.md": [],
+      "05c-migrate-preflight-conformance-fixtures.md": [],
+      "05d-migrate-workflow-execution-fixtures.md": [],
+      "06-share-landing-fixture-identity.md": [],
+      "07-share-worktree-fixture-identity.md": [],
+      "08-share-system-fixture-identity.md": [],
+      "09-own-capability-reasons.md": [],
+      "10-migrate-capability-leaf-callers.md": [],
+      "11-migrate-capability-workflow-callers.md": [],
+      "12-migrate-capability-conformance-callers.md": [],
+      "13-enforce-fixture-ownership.md": []
+    }
+  }
+}
 ```
 
 ## Testing decisions
@@ -322,11 +553,13 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/census/census_fifo_test.go`
 - `internal/census/census_test.go`
 - `internal/commit/chain_grammar_test.go`
+- `internal/commit/commitment_test.go`
 - `internal/commit/deletion_test.go`
 - `internal/commit/dry_run_test.go`
 - `internal/commit/landing_test.go`
 - `internal/commit/lane_structure_test.go`
 - `internal/commit/lane_test.go`
+- `internal/commitment/repository/publication_lock_test.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/bounds_policy_test.go`
 - `internal/conformance/build_contracts_test.go`
@@ -337,6 +570,8 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/conformance/gate_entry_test.go`
 - `internal/conformance/git_fixture_owner_test.go` (new)
 - `internal/conformance/git_plumbing_owner_test.go`
+- `internal/conformance/guard_projection_owner_test.go`
+- `internal/conformance/guard_scan_owner_test.go`
 - `internal/conformance/guidance_token_sweep_test.go`
 - `internal/conformance/handoff_single_source_test.go`
 - `internal/conformance/harness_record_test.go`
@@ -378,6 +613,7 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/gate/lane_select_test.go`
 - `internal/gate/prospective_owner_test.go`
 - `internal/gate/prospectiveartifact/prospectiveartifact_test.go`
+- `internal/gate/review_checkpoint_confirmation_test.go`
 - `internal/gate/run_failure_outcomes_test.go`
 - `internal/gate/run_outcomes_test.go`
 - `internal/gate/verdict_registry_guard_test.go`
@@ -387,6 +623,8 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/git/localnote_test.go`
 - `internal/git/push_destination_test.go`
 - `internal/git/refs_test.go`
+- `internal/git/run_cache_test.go`
+- `internal/git/run_object_test.go`
 - `internal/git/staged_test.go`
 - `internal/git/testhelpers_test.go`
 - `internal/git/worktree_admin_enum_test.go`
@@ -400,6 +638,7 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/gittest/snapshot.go` (new)
 - `internal/gittest/snapshot_test.go` (new)
 - `internal/guards/guards_test.go`
+- `internal/guards/scan_loop_test.go`
 - `internal/handoff/render_test.go`
 - `internal/handoff/sections_test.go`
 - `internal/handoff/state_file_test.go`
@@ -419,24 +658,31 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/preflight/preflighttest/fixture.go`
 - `internal/preflight/preflighttest/reviewfiles.go`
 - `internal/probe/probe_test.go`
+- `internal/probe/subject_check_fixture_test.go`
 - `internal/prose/walk_test.go`
 - `internal/responsebound/responseboundtest/checkout.go`
 - `internal/reviewrecord/recordcmd/excerpt_test.go`
 - `internal/reviewrecord/recordcmd/refusal_test.go`
+- `internal/reviewrecord/recordcmd/ticket_test.go`
+- `internal/reviewrecord/recordtest/confirmation.go`
 - `internal/reviewrecord/recordtest/fixture.go`
 - `internal/roadmap/learning_test.go`
+- `internal/roadmap/retro_cost_test.go`
 - `internal/roadmap/retro_test.go`
 - `internal/roadmap/roadmap_test.go`
 - `internal/roadmapflow/flow_test.go`
 - `internal/sessioninspect/sessioninspect_test.go`
 - `internal/shift/fault_test.go`
+- `internal/shift/lifetime_test.go`
 - `internal/shift/refresh_test.go`
 - `internal/shift/shift_test.go`
 - `internal/skillsindex/command_test.go`
 - `internal/skillsindex/skillsindex_reference_test.go`
 - `internal/spec/history_command_test.go`
 - `internal/spec/history_selected_test.go`
+- `internal/spec/retire_test.go`
 - `internal/spec/spec_test.go`
+- `internal/spec/widen_test.go`
 - `internal/status/handoff_test.go`
 - `internal/status/route_test.go`
 - `internal/status/status_command_test.go`
@@ -452,7 +698,9 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/stophook/stophook_test.go`
 - `internal/structure/structure_test.go`
 - `internal/systemtest/bench_follow_on_test.go`
+- `internal/systemtest/candidate_install_test.go`
 - `internal/systemtest/charge_evidence_test.go`
+- `internal/systemtest/guard_projection_differential_test.go`
 - `internal/systemtest/land_route_test.go`
 - `internal/systemtest/otel_gate_test.go`
 - `internal/systemtest/otel_verbs_test.go`
@@ -461,12 +709,16 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/systemtest/owner_landing_fixture_test.go`
 - `internal/systemtest/owner_selection_test.go`
 - `internal/systemtest/owner_test.go`
+- `internal/systemtest/process_lifetime_callers_test.go`
+- `internal/systemtest/process_lifetime_test.go`
 - `internal/systemtest/status_route_converge_test.go`
+- `internal/testrepo/socket.go`
 - `internal/testrepo/working_tree.go`
 - `internal/testreport/check_test.go`
 - `internal/testreport/selection_test.go`
 - `internal/treetarget/identify_test.go`
 - `internal/treetarget/run_test.go`
+- `internal/worktree/build_install_test.go`
 - `internal/worktree/build_test.go`
 - `internal/worktree/classifier_shape_test.go`
 - `internal/worktree/clean_branch_test.go`
@@ -476,10 +728,12 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/worktree/clean_operand_test.go`
 - `internal/worktree/clean_set_apply_test.go`
 - `internal/worktree/clean_set_test.go`
+- `internal/worktree/commitment_landing_test.go`
 - `internal/worktree/completion_fixture_test.go`
 - `internal/worktree/delegated_integration_test.go`
 - `internal/worktree/eligibility_test.go`
 - `internal/worktree/journey_test.go`
+- `internal/worktree/land_background_test.go`
 - `internal/worktree/land_bench_home_test.go`
 - `internal/worktree/land_broker_notice_test.go`
 - `internal/worktree/land_effects_cleanup_test.go`
@@ -492,26 +746,39 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/worktree/land_journey_test.go`
 - `internal/worktree/land_local_capture_test.go`
 - `internal/worktree/land_prunes_landed_siblings_test.go`
+- `internal/worktree/land_refusal_fixture_test.go`
 - `internal/worktree/land_release_refusal_test.go`
 - `internal/worktree/land_resume_refusal_test.go`
 - `internal/worktree/land_resume_test.go`
+- `internal/worktree/land_reuse_test.go`
 - `internal/worktree/land_specless_test.go`
+- `internal/worktree/land_stack_input_test.go`
+- `internal/worktree/land_stack_red_test.go`
+- `internal/worktree/land_stack_refusal_test.go`
+- `internal/worktree/land_stack_resume_test.go`
+- `internal/worktree/land_stack_route_test.go`
 - `internal/worktree/land_surface_test.go`
 - `internal/worktree/land_tickets_only_test.go`
+- `internal/worktree/land_window_test.go`
 - `internal/worktree/lifecycle_acquire_test.go`
 - `internal/worktree/lifecycle_facts_test.go`
 - `internal/worktree/lifecycle_policy_test.go`
 - `internal/worktree/lifecycle_test.go`
 - `internal/worktree/live_binary_test.go`
+- `internal/worktree/merge_background_test.go`
+- `internal/worktree/merge_target_grade_test.go`
 - `internal/worktree/merge_test.go`
 - `internal/worktree/ownership_test.go`
 - `internal/worktree/parallel_census_test.go`
 - `internal/worktree/pool_reclaim_facts_test.go`
 - `internal/worktree/reauthorize_test.go`
 - `internal/worktree/recovery_retry_test.go`
+- `internal/worktree/refusal_route_follow_test.go`
 - `internal/worktree/resume_test.go`
 - `internal/worktree/show_test.go`
 - `internal/worktree/test_run_test.go`
+- `internal/worktree/tree_target_test.go`
+- `internal/worktree/unlanded_route_test.go`
 - `internal/worktree/worktree_test.go`
 - `tests/canary/injected-ports/unregistered-port`
 - `tests/canary/package-core-guard/reintroduced-bare-skip`
@@ -543,9 +810,9 @@ GF14 uses this reachable input.
 
 No new production import or external dependency is required. ADR 0006 constrains independent expectations to demonstrated omission checks.
 
-The amendment author reread the exported `Run` and `Output` definitions at `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`.
-`internal/gittest/gittest.go:277` owns error-returning `Run`; `Output` delegates at line 268.
-`internal/commitment/commitmenttest/repo.go:107` returns `Run` failures from its private `commit` function.
+The build-entry staleness pass reread the exported `Run` and `Output` definitions at `4138ef1aa0c219c40396a9b799eac8769207b1f8`.
+`internal/gittest/gittest.go:323` owns error-returning `Run`; `Output` delegates at line 312.
+`internal/commitment/commitmenttest/repo.go:124` holds the private `commit` function, which returns `Run` failures.
 Its exported `CommitPolicy` preserves the goroutine-safe error contract documented on that definition.
 
 A whole-tree hidden Go search and `bench consumers gittest.Run gittest.Output --full` enumerated readers without changing them.

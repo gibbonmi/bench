@@ -1,7 +1,7 @@
 # Share the system fixture identity
 
 Blocked by: 07-share-worktree-fixture-identity.md
-Writes: internal/systemtest/bench_follow_on_test.go, internal/systemtest/charge_evidence_test.go, internal/systemtest/land_route_test.go, internal/systemtest/otel_gate_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/owner_artifact_recovery_test.go, internal/systemtest/owner_land_race_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/owner_selection_test.go, internal/systemtest/owner_test.go, internal/systemtest/status_route_converge_test.go
+Writes: internal/systemtest/bench_follow_on_test.go, internal/systemtest/charge_evidence_test.go, internal/systemtest/land_route_test.go, internal/systemtest/otel_gate_test.go, internal/systemtest/otel_verbs_test.go, internal/systemtest/owner_artifact_recovery_test.go, internal/systemtest/owner_land_race_test.go, internal/systemtest/owner_landing_fixture_test.go, internal/systemtest/owner_selection_test.go, internal/systemtest/owner_test.go, internal/systemtest/status_route_converge_test.go, internal/systemtest/candidate_install_test.go, internal/systemtest/guard_projection_differential_test.go, internal/systemtest/process_lifetime_test.go, internal/systemtest/process_lifetime_callers_test.go
 Covers: GF18, GF29, GF30
 
 ## What to build
