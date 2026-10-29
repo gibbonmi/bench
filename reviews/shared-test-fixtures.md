@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:8a52cd552bd41e3d755db776a1c77f5371bd4f1a65e94ee521b32ac05709ba00",
+  "plan_digest": "sha256:ddaff991fc0933258b524e9d31c8ee54634c54b909d173458ecbf743ad44bb67",
   "implementation_session": "",
   "chunks": [
     {
@@ -272,9 +272,9 @@
     {
       "id": "GF-C2",
       "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
-      "tip": "a94afe984816d50c98dbd1a67ae4935fe863721e",
-      "plan_digest": "sha256:8a52cd552bd41e3d755db776a1c77f5371bd4f1a65e94ee521b32ac05709ba00",
-      "source_digest": "80d2541f2df65975277aff4ba750e4c88108df35",
+      "tip": "874d872c35a274eeeca55f7831508b46fb634b2b",
+      "plan_digest": "sha256:ddaff991fc0933258b524e9d31c8ee54634c54b909d173458ecbf743ad44bb67",
+      "source_digest": "93ef6b5139b4f395e2afdd49f2d053ba28ab3bf7",
       "acceptance_rows": [
         "GF16",
         "GF29",
@@ -368,6 +368,36 @@
               "ref": "claude-agent:bench-writer-medium:gf-t04-author-20261029",
               "digest": "sha256:2cf5e79aba42358fa99f72216ff5fe9269c00f45fd4940fd6f8d7773a7016057",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFlowCountsDetailFilesOverTheWindow,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmapflow,TestFlowCountsDetailFilesOverTheWindow,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,357\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmapflow,fail,13,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmapflow,TestFlowCountsDetailFilesOverTheWindow,\"flow_test.go:142: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t04r1-probe-04",
+          "performer": "claude:gf-t04-repair1-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "93ef6b5139b4f395e2afdd49f2d053ba28ab3bf7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t04-repair1-20261029",
+            "digest": "sha256:1a4ae0c42f62b52df921b0c1d98cb26a84d5e1edd5c91d636824f8ac8cc9fc68",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFlowCountsDetailFilesOverTheWindow,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmapflow,TestFlowCountsDetailFilesOverTheWindow,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,357\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmapflow,fail,12,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmapflow,TestFlowCountsDetailFilesOverTheWindow,\"flow_test.go:142: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "requirement": "probe-04",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/roadmapflow --run TestFlowCountsDetailFilesOverTheWindow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t04-repair1-20261029",
+              "digest": "sha256:1a4ae0c42f62b52df921b0c1d98cb26a84d5e1edd5c91d636824f8ac8cc9fc68",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFlowCountsDetailFilesOverTheWindow,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmapflow,TestFlowCountsDetailFilesOverTheWindow,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,357\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmapflow,fail,12,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmapflow,TestFlowCountsDetailFilesOverTheWindow,\"flow_test.go:142: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -487,6 +517,18 @@
     {
       "from": "sha256:811bcf440b2d88ead423909e96ba6728e92ed947bc317f7d06f969e9e21d2ddf",
       "to": "sha256:8a52cd552bd41e3d755db776a1c77f5371bd4f1a65e94ee521b32ac05709ba00",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8a52cd552bd41e3d755db776a1c77f5371bd4f1a65e94ee521b32ac05709ba00",
+      "to": "sha256:ddaff991fc0933258b524e9d31c8ee54634c54b909d173458ecbf743ad44bb67",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
