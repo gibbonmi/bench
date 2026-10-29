@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -92,14 +93,14 @@ func TestRunOutcomeNamesThePublishedCommit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, before := landingRepo(t, tc.gateExit, tc.write)
 			if tc.path == "named" {
-				runGit(t, root, "reset", "-q", "--hard", "HEAD")
+				gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 				namedDir(t, root, "named")
 			}
 			t.Chdir(root)
 			outcome, code := Run([]string{"-m", "m", "--preflight-build", "slug", "--base", "chunk-base", tc.path}, io.Discard, io.Discard)
-			head := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+			head := gittest.Output(t, root, "rev-parse", "HEAD")
 			want := Outcome{
-				Root:           strings.TrimSpace(string(runGit(t, root, "rev-parse", "--show-toplevel"))),
+				Root:           gittest.Output(t, root, "rev-parse", "--show-toplevel"),
 				PreflightBuild: "slug",
 				Base:           "chunk-base",
 			}

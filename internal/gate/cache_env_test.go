@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -180,7 +181,7 @@ func TestLaneRefusesAnUnheldCache(t *testing.T) {
 	home := unwritableCacheHome(t)
 	t.Setenv("HOME", home)
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	var stdout, stderr bytes.Buffer
 
 	result, err := RunLane(context.Background(), LaneRequest{

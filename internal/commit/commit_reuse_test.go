@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -21,7 +22,7 @@ import (
 // answers that tree. With fromPrimary, the primary checkout runs the gate, and otherwise root.
 func gradeComposition(t *testing.T, root, before string, fromPrimary bool) string {
 	t.Helper()
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 	tree, err := landing.CandidateTree(root, before, []string{"a.txt"})
 	if err != nil {
@@ -29,7 +30,7 @@ func gradeComposition(t *testing.T, root, before string, fromPrimary bool) strin
 	}
 	grader := root
 	if fromPrimary {
-		grader = filepath.Dir(strings.TrimSpace(string(runGit(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"))))
+		grader = filepath.Dir(gittest.Output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"))
 	}
 	var stdout, stderr bytes.Buffer
 	if result := gate.ExecuteTree(context.Background(), grader, tree, &stdout, &stderr); result.ActionExit != 0 {

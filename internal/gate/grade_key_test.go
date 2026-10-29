@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -34,9 +35,9 @@ func gradeKeyFixture(t *testing.T) (primary, linked, tree string) {
 `
 	})
 	linked = filepath.Join(t.TempDir(), "linked checkout")
-	outcomeGit(t, primary, "worktree", "add", "-q", "--detach", linked)
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "--detach", linked)
 	writeInspectRecord(t, primary, inspectFullRecord(strings.Repeat("0", 40), strings.Repeat("0", 64), time.Now().UTC()))
-	return primary, linked, outcomeGit(t, primary, "rev-parse", "HEAD^{tree}")
+	return primary, linked, gittest.Output(t, primary, "rev-parse", "HEAD^{tree}")
 }
 
 // gradeKeyRun runs the prospective gate of tree from root in mode, requires action exit want,

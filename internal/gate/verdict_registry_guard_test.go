@@ -10,6 +10,7 @@ import (
 	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestVerdictRecordClassRegistryMatchesExpectation(t *testing.T) {
@@ -93,7 +94,7 @@ func TestVerdictRecordClassesAtInspect(t *testing.T) {
 
 func writeInspectRecord(t *testing.T, root string, data []byte) {
 	t.Helper()
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	if err := os.WriteFile(filepath.Join(gitdir, benchgit.GateCacheFile), append(data, '\n'), 0o600); err != nil {
 		t.Fatal(err)
 	}

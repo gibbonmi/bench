@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 )
 
@@ -66,7 +67,7 @@ func newLaunchFixture(t *testing.T, check string) launchFixture {
 	t.Setenv("BENCH_HOME", f.home)
 	initializeLandingRepo(t, f.primary, 0)
 	linked := filepath.Join(t.TempDir(), "linked work tree")
-	runGit(t, f.primary, "worktree", "add", "-q", "-b", "topic", linked)
+	gittest.MustRun(t, f.primary, "worktree", "add", "-q", "-b", "topic", linked)
 	commitmenttest.Register(t, linked, landingLabel)
 	commitmenttest.Admit(t, linked, landingLabel, "specs/commit-fixture/spec.md")
 	// The record of the stand-ins comes last, so its cleanup ends them before any fixture
@@ -78,7 +79,7 @@ func newLaunchFixture(t *testing.T, check string) launchFixture {
 		mustWrite(t, filepath.Join(root, ".bench", "check.sh"), check, 0o755)
 		mustWrite(t, filepath.Join(root, ".bench", "phases.json"), `{"lane":[{"name":"check","argv":["sh",".bench/check.sh"]}]}`, 0o644)
 	})
-	f.root = strings.TrimSpace(string(runGit(t, linked, "rev-parse", "--show-toplevel")))
+	f.root = gittest.Output(t, linked, "rev-parse", "--show-toplevel")
 	var err error
 	if f.common, err = git.CommonDir(f.root); err != nil {
 		t.Fatal(err)

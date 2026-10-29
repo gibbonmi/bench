@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
@@ -257,7 +258,7 @@ func TestReviewCheckpointConfirmationRefusals(t *testing.T) {
 			return ""
 		}},
 		{"side reviewed tip", "chunk 1: reviewed tip <moved> is not an ancestor of the chunk tip", "review", modifyTest, func(f *recordtest.Fixture, reviewed string) string {
-			return moveReviewed(f, f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", reviewed+"^{tree}", "-p", reviewed, "-m", "side"))
+			return moveReviewed(f, f.Git(append(gittest.IdentityArgs(), "commit-tree", reviewed+"^{tree}", "-p", reviewed, "-m", "side")...))
 		}},
 		{"reviewed tip before base", "chunk 1: reviewed tip <moved> does not descend from the chunk base <base>", "review", modifyTest, func(f *recordtest.Fixture, _ string) string {
 			return moveReviewed(f, f.Git("rev-parse", f.Record.Chunks[0].Base+"^"))

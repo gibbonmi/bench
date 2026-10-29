@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
@@ -34,9 +35,9 @@ func TestBenchkitLaneBuildIgnoresAStrayGitDirAboveTheCheckout(t *testing.T) {
 	root := outcomeFixture(t)
 	outcomeWrite(t, root, "go.mod", "module example.com/x\n\ngo 1.24\n", 0o644)
 	outcomeWrite(t, root, "main.go", "package main\n\nfunc main() {}\n", 0o644)
-	outcomeGit(t, root, "add", "-A")
-	outcomeGit(t, root, "commit", "-q", "-m", "module")
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "module")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 
 	result, err := RunLane(context.Background(), LaneRequest{
 		Root: root, Tree: tree, Checks: []Phase{laneCheck(t, BenchkitLane(root, root), "build")},
@@ -54,7 +55,7 @@ func TestBenchkitLaneBuildIgnoresAStrayGitDirAboveTheCheckout(t *testing.T) {
 // stay in the log, and a lane that hides every report prints nothing here.
 func TestLaneRelaysARedCheckOwnLines(t *testing.T) {
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	var stdout, stderr bytes.Buffer
 	result, err := RunLane(context.Background(), LaneRequest{
 		Root: root, Tree: tree, Stdout: &stdout, Stderr: &stderr,
@@ -88,7 +89,7 @@ func TestLaneRelaysARedCheckOwnLines(t *testing.T) {
 // text starts a line of its own.
 func TestLaneRelaysARedCheckPartialLine(t *testing.T) {
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	var stdout bytes.Buffer
 	result, err := RunLane(context.Background(), LaneRequest{
 		Root: root, Tree: tree, Stdout: &stdout,
@@ -129,7 +130,7 @@ func TestLaneRunHoldsTheCacheLockAcrossItsChecks(t *testing.T) {
 	t.Setenv(cleanprobe.Env, answerPath)
 
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	result, err := RunLane(context.Background(), LaneRequest{
 		Root: root, Tree: tree,
 		Checks: []Phase{{Name: "probe", Argv: probeArgv(t)}},
@@ -149,7 +150,7 @@ func TestFastLanePublishesTheOwnerRecord(t *testing.T) {
 	tempRoot := t.TempDir()
 	t.Setenv("TMPDIR", tempRoot)
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	snapshot := observeProspectiveOwnerRecord(t, root)
 
 	result, err := RunLane(context.Background(), LaneRequest{
@@ -194,11 +195,11 @@ func laneRecordsArgv(t *testing.T, record string) {
 // change selected those three checks and no Go check.
 func TestBenchkitLaneRunsOnlyTheSelectedChecks(t *testing.T) {
 	root := outcomeFixture(t)
-	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	outcomeWrite(t, root, "note.md", "# Note\n", 0o644)
-	outcomeGit(t, root, "add", "-A")
-	outcomeGit(t, root, "commit", "-q", "-m", "note")
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "note")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	changes, err := ComposedChanges(root, base, tree)
 	if err != nil {
 		t.Fatal(err)
@@ -304,10 +305,10 @@ func TestBenchkitLaneRunsTheFixtureBiteTestForAPinnedPath(t *testing.T) {
 	outcomeWrite(t, root, filepath.Join(fixture, "MUTATE.json"), `[{"path":"note.md","old":"a","new":"b"}]`, 0o644)
 	outcomeWrite(t, root, "note.md", "# Note\n\na\n", 0o644)
 	outcomeCommit(t, root, "pinned")
-	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	outcomeWrite(t, root, "note.md", "# Note\n\na reflowed\n", 0o644)
 	outcomeCommit(t, root, "reflow")
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	changes, err := ComposedChanges(root, base, tree)
 	if err != nil {
 		t.Fatal(err)
@@ -335,11 +336,11 @@ func TestBenchkitLaneRunsTheFixtureBiteTestForAPinnedPath(t *testing.T) {
 func TestBenchkitLaneDocumentCheckFailsTheLane(t *testing.T) {
 	const check = "roadmap-detail-integrity"
 	root := outcomeFixture(t)
-	base := outcomeGit(t, root, "rev-parse", "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	outcomeWrite(t, root, "ROADMAP.md", "# Roadmap\n", 0o644)
-	outcomeGit(t, root, "add", "-A")
-	outcomeGit(t, root, "commit", "-q", "-m", "roadmap")
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "roadmap")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	changes, err := ComposedChanges(root, base, tree)
 	if err != nil {
 		t.Fatal(err)

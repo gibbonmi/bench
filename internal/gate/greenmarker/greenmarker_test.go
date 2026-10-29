@@ -4,24 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
-
-func git(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	out, err := benchgit.Output(append([]string{"-C", root}, args...)...)
-	if err != nil {
-		t.Fatalf("git %v: %v", args, err)
-	}
-	return strings.TrimSpace(out)
-}
 
 func repo(t *testing.T) (root, tip string) {
 	t.Helper()
 	root = gittest.RepoOnBranch(t, "main")
-	git(t, root, "commit", "-q", "--allow-empty", "-m", "one")
-	return root, git(t, root, "rev-parse", "HEAD")
+	gittest.Commit(t, root, "one", "--allow-empty")
+	return root, gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 func TestReadAbsentMarkerIsNotPresent(t *testing.T) {
@@ -33,8 +23,8 @@ func TestReadAbsentMarkerIsNotPresent(t *testing.T) {
 
 func TestReadPeelsAnnotatedTagToCommit(t *testing.T) {
 	root, tip := repo(t)
-	git(t, root, "tag", "-a", "-m", "green", "green-tag", tip)
-	git(t, root, "update-ref", Ref("main"), git(t, root, "rev-parse", "green-tag"))
+	gittest.MustRun(t, root, "tag", "-a", "-m", "green", "green-tag", tip)
+	gittest.MustRun(t, root, "update-ref", Ref("main"), gittest.Output(t, root, "rev-parse", "green-tag"))
 	commit, present, err := Read(root, "main")
 	if !present || err != nil || commit != tip {
 		t.Fatalf("Read = (%q, %v, %v), want peeled tip %s", commit, present, err, tip)
@@ -43,7 +33,7 @@ func TestReadPeelsAnnotatedTagToCommit(t *testing.T) {
 
 func TestReadDanglingSymbolicMarkerIsPresentWithError(t *testing.T) {
 	root, _ := repo(t)
-	git(t, root, "symbolic-ref", Ref("main"), "refs/heads/nowhere")
+	gittest.MustRun(t, root, "symbolic-ref", Ref("main"), "refs/heads/nowhere")
 	if _, present, err := Read(root, "main"); !present || err == nil || !strings.Contains(err.Error(), "dangling symbolic ref") {
 		t.Fatalf("Read = (present %v, err %v), want present dangling error", present, err)
 	}
@@ -54,8 +44,8 @@ func TestAdvanceCreatesThenRefusesStaleExpectation(t *testing.T) {
 	if err := Advance(root, "main", tip, ""); err != nil {
 		t.Fatalf("Advance from absent: %v", err)
 	}
-	git(t, root, "commit", "-q", "--allow-empty", "-m", "two")
-	next := git(t, root, "rev-parse", "HEAD")
+	gittest.Commit(t, root, "two", "--allow-empty")
+	next := gittest.Output(t, root, "rev-parse", "HEAD")
 	if err := Advance(root, "main", next, ""); err == nil {
 		t.Fatal("Advance with absent expectation over an existing marker succeeded, want compare-and-swap refusal")
 	}

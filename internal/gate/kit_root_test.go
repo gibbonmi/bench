@@ -14,9 +14,9 @@ import (
 func kitRootRepo(t *testing.T) (primary, linked string) {
 	t.Helper()
 	primary = gittest.RepoOnBranch(t, "main")
-	runGitIn(t, primary, "commit", "-q", "--allow-empty", "-m", "seed")
+	gittest.Commit(t, primary, "seed", "--allow-empty")
 	linked = filepath.Join(t.TempDir(), "with space", "linked")
-	runGitIn(t, primary, "worktree", "add", "-q", "--detach", linked)
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "--detach", linked)
 	return primary, linked
 }
 
@@ -41,7 +41,7 @@ func TestKitForRootNamesALinkedWorktreeOfASiblingKit(t *testing.T) {
 	t.Parallel()
 	primary, linked := kitRootRepo(t)
 	sibling := filepath.Join(t.TempDir(), "sibling")
-	runGitIn(t, primary, "worktree", "add", "-q", "--detach", sibling)
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "--detach", sibling)
 	requireKitForRoot(t, sibling, linked, linked)
 }
 

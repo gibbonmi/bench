@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
@@ -74,7 +75,7 @@ func materializedOwner(t *testing.T, repository, base string) *Owner {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := owner.Materialize(gitOutput(t, repository, "write-tree")); err != nil {
+	if err := owner.Materialize(gittest.Output(t, repository, "write-tree")); err != nil {
 		t.Fatal(err)
 	}
 	return owner
@@ -116,7 +117,7 @@ func TestLegacyRecord(t *testing.T) {
 	if err := Publish(legacy, Record{Schema: LegacySchema, OwnerPID: 42, CommonDir: common}); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(legacy, CheckoutName), "HEAD")
+	gittest.MustRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(legacy, CheckoutName), "HEAD")
 
 	requireSweepRetains(t, repository, base, deadProbe, legacy)
 	requireCheckoutRegistered(t, repository, filepath.Join(legacy, CheckoutName))
@@ -169,7 +170,7 @@ func TestOpenRefusesRecoveryWhenRegistrationRemovalFails(t *testing.T) {
 	}
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, CheckoutName), "HEAD")
+	gittest.MustRun(t, repository, "worktree", "add", "-q", "--detach", filepath.Join(dead, CheckoutName), "HEAD")
 	refusing := Factory{TempRoot: base, Probe: deadProbe, Remove: func(string, string) error { return errors.New("registration refused") }}
 	planted := snapshotPath(t, base)
 	registrations := worktreeRegistrations(t, repository)

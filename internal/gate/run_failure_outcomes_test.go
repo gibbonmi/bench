@@ -14,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/gocache/cleanprobe"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -118,7 +119,7 @@ func TestGateRunCancellationLeavesPendingForRecovery(t *testing.T) {
 
 func TestGateRunRefusesInitialPendingPersistenceWhenCacheIsDirectory(t *testing.T) {
 	root := outcomeFixture(t)
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	cache := filepath.Join(gitdir, "bench-last-gate")
 	if err := os.Mkdir(cache, 0o700); err != nil {
 		t.Fatal(err)
@@ -147,7 +148,7 @@ func TestGateRunRefusesInitialPendingPersistenceWhenCacheIsDirectory(t *testing.
 
 func TestGateRunRefusesOwnerPersistenceWhenOwnerPathIsDirectory(t *testing.T) {
 	root := outcomeFixture(t)
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	if err := os.Mkdir(filepath.Join(gitdir, "bench-gate-owner"), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +176,7 @@ func TestGateRunRejectsGreenWhenEvidenceDirectoryModeChanges(t *testing.T) {
 	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
 		t.Fatalf("green result = %#v", result)
 	}
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	restoreMode(t, filepath.Join(gitdir, "bench-gate-evidence"))
 	outcomeWrite(t, root, ".gate-evidence-0500", "\n", 0o644)
 	var stdout, stderr bytes.Buffer
@@ -196,7 +197,7 @@ func TestGateRunRejectsRedWhenEvidenceInvalidationFails(t *testing.T) {
 	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
 		t.Fatalf("green result = %#v", result)
 	}
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	restoreMode(t, filepath.Join(gitdir, "bench-gate-evidence"))
 	outcomeWrite(t, root, ".gate-evidence-unwritable", "\n", 0o644)
 	outcomeWrite(t, root, ".gate-red", "\n", 0o644)
@@ -218,8 +219,7 @@ func TestGateRunPreservesPendingWhenTerminalReplaceFails(t *testing.T) {
 	if result := Execute(context.Background(), root, &bytes.Buffer{}, &bytes.Buffer{}); result.ActionExit != 0 {
 		t.Fatalf("green result = %#v", result)
 	}
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
-	restoreMode(t, gitdir)
+	restoreMode(t, gittest.Output(t, root, "rev-parse", "--absolute-git-dir"))
 	outcomeWrite(t, root, ".gate-gitdir-0500", "\n", 0o644)
 	var stdout, stderr bytes.Buffer
 	if got := RunCommand([]string{"--fresh", root}, &stdout, &stderr); got != 1 {
@@ -278,7 +278,7 @@ func (holder gateLockHolder) release(t *testing.T) {
 
 func runGateLockHolder(t *testing.T, root, readyPath, releasePath string) {
 	t.Helper()
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	lock, err := os.OpenFile(filepath.Join(gitdir, "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		t.Fatal(err)

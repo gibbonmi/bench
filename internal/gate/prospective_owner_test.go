@@ -291,7 +291,7 @@ func TestCancelledProspectiveProducerLeavesNoBundle(t *testing.T) {
 	t.Setenv("PAR_READY", ready)
 	writeGateFixtureFile(t, root, ".bench/gate-inputs.json", "{\"schema\":1,\"closure\":\"local\",\"environment\":[\"HOME\",\"PAR_READY\"],\"paths\":[],\"tools\":[]}\n", 0o644)
 	outcomeCommit(t, root, "declare cancellation barrier")
-	tree = outcomeGit(t, root, "write-tree")
+	tree = gittest.Output(t, root, "write-tree")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	result := make(chan Result, 1)
@@ -320,7 +320,7 @@ func TestProspectiveBuildRefusalLeavesNoBundle(t *testing.T) {
 	writeGateFixtureFile(t, root, "scripts/go-build.sh", "#!/bin/sh\nexit 0\n", 0o755)
 	writeGateFixtureFile(t, root, benchfreshness.BuildInputsManifest, benchfreshness.BuildInputLine("build_script", "scripts/go-build.sh"), 0o644)
 	outcomeCommit(t, root, "declare prospective build")
-	tree := outcomeGit(t, root, "write-tree")
+	tree := gittest.Output(t, root, "write-tree")
 	old := prospectiveRunBinary
 	prospectiveRunBinary = runbinary.Factory{
 		Build:  func(context.Context, string, string) error { return errors.New("build refused") },
@@ -370,7 +370,7 @@ func prospectiveProducerFixture(t *testing.T, prospectiveScript string) (string,
 	}
 	writeGateFixtureFile(t, root, "tracked.txt", "prospective fixture\n", 0o644)
 	outcomeCommit(t, root, "prospective producer fixture")
-	return root, outcomeGit(t, root, "write-tree"), tempRoot
+	return root, gittest.Output(t, root, "write-tree"), tempRoot
 }
 
 func inertProspectiveSelection(_ context.Context, source string) (*runbinary.Selection, error) {

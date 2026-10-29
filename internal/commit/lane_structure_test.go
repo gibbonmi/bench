@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // structureCheck stands in for `bench structure --growth <base>` the way proseCheck stands
@@ -66,7 +67,7 @@ func TestLaneStructureRefusesACommitThatGrowsAnOverBudgetGoFile(t *testing.T) {
 				mustWrite(t, filepath.Join(root, ".bench", "phases.json"), structureLaneManifest(t), 0o644)
 				mustWrite(t, filepath.Join(root, "big.go"), growthGoFile(12), 0o644)
 			})
-			runGit(t, root, "reset", "-q", "--hard", "HEAD")
+			gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 			mustWrite(t, filepath.Join(root, "big.go"), growthGoFile(tc.lines), 0o644)
 
 			code, stdout, stderr := runCommand(t, root, "-m", "m", "big.go")

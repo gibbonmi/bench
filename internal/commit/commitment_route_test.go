@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -36,7 +37,7 @@ func unboundCommitSet(t *testing.T, label string, gate func(t *testing.T, root s
 	runRouteStep(t, f, "bench worktree create --request "+label+" --label "+label)
 	f.checkout = createdCheckout(t, f, label)
 	prepareLandingCheckout(t, f.checkout, gate)
-	runGit(t, f.checkout, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, f.checkout, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(f.checkout, "a.txt"), "changed\n", 0o644)
 	return f
 }
@@ -91,8 +92,8 @@ func commitmentFaceFixtures(rerun func(label string, flags ...string) string) []
 			prefix:   routetest.ReviewerMarker,
 			contains: "bench commitment plan --input ",
 			carry: map[int]func(*testing.T, commitSet){0: func(t *testing.T, f commitSet) {
-				runGit(t, f.checkout, "rm", "-q", "ROADMAP.md")
-				runGit(t, f.checkout, "commit", "-qm", "withdraw the protected change")
+				gittest.MustRun(t, f.checkout, "rm", "-q", "ROADMAP.md")
+				gittest.Commit(t, f.checkout, "withdraw the protected change")
 			}},
 		},
 		lightPathFixture("", spaced, sanitize.ShellQuote(spaced), rerun),

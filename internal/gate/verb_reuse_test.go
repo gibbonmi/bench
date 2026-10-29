@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -57,7 +58,7 @@ func TestReaderSetLandingReusesAWholeGreen(t *testing.T) {
 	owner := func(context.Context, string) (*runbinary.Selection, error) { return selection, nil }
 	var stdout, stderr bytes.Buffer
 	result := executeSubjectReplacing(f.landing(), f.root, f.root, &stdout, &stderr, nil, reuseFreshGreen, newGateEvaluation(f.root), owner, "", durablefile.Native())
-	tree := outcomeGit(t, f.root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, f.root, "rev-parse", "HEAD^{tree}")
 	if recorded, err := ReaderRecorded(f.root, tree); result.ActionExit != 0 || stdout.String() != reuseLine || recorded || err != nil {
 		t.Fatalf("landing = %+v, recorded %t %v\nstdout:\n%s\nstderr:\n%s\nwant the reuse line and no reader record", result, recorded, err, stdout.String(), stderr.String())
 	}

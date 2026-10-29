@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate/prospectiveartifact"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/gocache"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -210,7 +211,7 @@ func requireLaneRetained(t *testing.T, root, pattern string) {
 	if !errors.As(err, &exit) || exit.ExitCode() != 1 || !strings.Contains(string(out), "stays retained") {
 		t.Fatalf("lane with a nested user = %v; output:\n%s\nwant exit 1 with the retained bundle", err, out)
 	}
-	if _, err := os.Stat(filepath.Join(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"), laneRecordFile)); !errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(gittest.Output(t, root, "rev-parse", "--absolute-git-dir"), laneRecordFile)); !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("lane record after the retained release = %v, want none", err)
 	}
 	if retained, err := filepath.Glob(filepath.Join(tmp, prospectiveartifact.BundlePrefix+"*", pattern)); err != nil || len(retained) != 1 {

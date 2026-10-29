@@ -131,7 +131,7 @@ func TestOpenRecoversARegisteredDeadBundleBeforeItCreatesAnother(t *testing.T) {
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
 	checkout := filepath.Join(dead, CheckoutName)
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
+	gittest.MustRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	run := filepath.Join(dead, "bench-run [*]", "bench")
 	if err := os.MkdirAll(filepath.Dir(run), 0o700); err != nil {
 		t.Fatal(err)
@@ -164,7 +164,7 @@ func TestOpenRecoversARegisteredDeadCheckoutWithoutARunBinary(t *testing.T) {
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
 	checkout := filepath.Join(dead, CheckoutName)
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
+	gittest.MustRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 
 	owner, err := (Factory{TempRoot: base, Probe: func(int) error { return syscall.ESRCH }}).Open(repository)
 	if err != nil {
@@ -188,7 +188,7 @@ func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
 	base := t.TempDir()
 	dead := testBundle(t, base, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
 	checkout := filepath.Join(dead, CheckoutName)
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
+	gittest.MustRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 	if err := os.RemoveAll(checkout); err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +212,7 @@ func TestOpenRecoversAStaleRegistrationWithoutACheckoutPath(t *testing.T) {
 // registration behind, and still deletes the bundle root the registration names.
 func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testing.T) {
 	repository := fixtureRepository(t)
-	tree := gitOutput(t, repository, "write-tree")
+	tree := gittest.Output(t, repository, "write-tree")
 	common, err := CanonicalCommonDir(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -227,7 +227,7 @@ func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testin
 	}
 	dead := testBundle(t, linked, Record{Schema: RecordSchema, OwnerPID: 42, CommonDir: common})
 	checkout := filepath.Join(dead, CheckoutName)
-	gitRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
+	gittest.MustRun(t, repository, "worktree", "add", "-q", "--detach", checkout, "HEAD")
 
 	owner, err := (Factory{TempRoot: linked, Probe: func(int) error { return syscall.ESRCH }}).Open(repository)
 	if err != nil {
@@ -256,7 +256,7 @@ func TestOpenRecoversARegisteredDeadBundleUnderASymbolicallyLinkedRoot(t *testin
 // beside it.
 func TestCloseConfinesRemovalToItsBundle(t *testing.T) {
 	repository := fixtureRepository(t)
-	tree := gitOutput(t, repository, "write-tree")
+	tree := gittest.Output(t, repository, "write-tree")
 	parent := t.TempDir()
 	base := filepath.Join(parent, "temp root [*]")
 	if err := os.Mkdir(base, 0o700); err != nil {
@@ -303,7 +303,7 @@ func TestCloseConfinesRemovalToItsBundle(t *testing.T) {
 // under another spelling of the same path still fails the row.
 func worktreeRegistrations(t *testing.T, repository string) string {
 	t.Helper()
-	return gitOutput(t, repository, "worktree", "list", "--porcelain")
+	return gittest.Output(t, repository, "worktree", "list", "--porcelain")
 }
 
 // requireCheckoutUnregistered reports that no registration names checkout's bundle. The
@@ -327,7 +327,7 @@ func requireCheckoutRegistered(t *testing.T, repository, checkout string) {
 
 func TestCloseRemovesTheRegisteredCheckoutBeforeItsBundle(t *testing.T) {
 	repository := fixtureRepository(t)
-	tree := gitOutput(t, repository, "write-tree")
+	tree := gittest.Output(t, repository, "write-tree")
 	owner, err := (Factory{TempRoot: t.TempDir()}).Open(repository)
 	if err != nil {
 		t.Fatal(err)
@@ -347,22 +347,8 @@ func TestCloseRemovesTheRegisteredCheckoutBeforeItsBundle(t *testing.T) {
 func fixtureRepository(t *testing.T) string {
 	t.Helper()
 	repository := gittest.RepoOnBranch(t, "main")
-	gitRun(t, repository, "commit", "--allow-empty", "-qm", "base")
+	gittest.Commit(t, repository, "base", "--allow-empty")
 	return repository
-}
-
-func gitRun(t *testing.T, repository string, args ...string) {
-	t.Helper()
-	gitOutput(t, repository, args...)
-}
-
-func gitOutput(t *testing.T, repository string, args ...string) string {
-	t.Helper()
-	output, err := benchgit.Output(append([]string{"-C", repository}, args...)...)
-	if err != nil {
-		t.Fatalf("git %v: %v", args, err)
-	}
-	return output
 }
 
 // TestSweepRetainsABundleWithAnUnsupportedRecordSchema is PAR12. The record names this

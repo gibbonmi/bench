@@ -5,6 +5,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -23,7 +24,7 @@ func landingRepo(t *testing.T, gateExit int, write func(t *testing.T, root strin
 	primary := t.TempDir()
 	initializeLandingRepo(t, primary, gateExit)
 	root = filepath.Join(t.TempDir(), "linked")
-	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", root)
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", "topic", root)
 	commitmenttest.Register(t, root, landingLabel)
 	commitmenttest.Admit(t, root, landingLabel, "specs/commit-fixture/spec.md")
 	return prepareLandingCheckout(t, root, write)
@@ -48,28 +49,28 @@ func notTheKitRoot(t *testing.T) {
 
 func initializeLandingRepo(t *testing.T, root string, gateExit int) {
 	t.Helper()
-	git := func(args ...string) { t.Helper(); runGit(t, root, args...) }
-	git("init", "-q", "-b", "main")
-	git("config", "user.email", "a@b.c")
-	git("config", "user.name", "a")
+	gittest.MustRun(t, root, "init", "-q", "-b", "main")
+	for _, args := range gittest.IdentityConfig() {
+		gittest.MustRun(t, root, args...)
+	}
 	mustMkdirAll(t, filepath.Join(root, ".bench"))
 	mustWrite(t, filepath.Join(root, ".bench", "gate.sh"), "#!/bin/sh\nexit "+strconv.Itoa(gateExit)+"\n", 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "gate-inputs.json"), `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`, 0o644)
 	mustWrite(t, filepath.Join(root, "tracked.txt"), "base\n", 0o644)
 	commitmenttest.Write(t, root, "specs/commit-fixture/spec.md", "# Commit fixture\n\nStatus: staged\n")
 	commitmenttest.SeedAdmission(t, root, "specs/commit-fixture/spec.md")
-	git("add", "-A")
-	git("commit", "-qm", "bootstrap")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "bootstrap")
 }
 
 func prepareLandingCheckout(t *testing.T, root string, write func(t *testing.T, root string)) (string, string) {
 	t.Helper()
 	write(t, root)
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "--allow-empty", "-qm", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "base", "--allow-empty")
 	mustWrite(t, filepath.Join(root, "tracked.txt"), "changed\n", 0o644)
-	runGit(t, root, "add", "tracked.txt")
-	return root, strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+	gittest.MustRun(t, root, "add", "tracked.txt")
+	return root, gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 func planningCommitRepo(t *testing.T) string {
@@ -84,13 +85,13 @@ func planningCommitRepo(t *testing.T) string {
 
 func refuseCommit(t *testing.T, root string, paths ...string) string {
 	t.Helper()
-	before := string(runGit(t, root, "rev-parse", "HEAD"))
+	before := gittest.Output(t, root, "rev-parse", "HEAD")
 	args := append([]string{"-m", "candidate", "--"}, paths...)
 	code, out, errOut := runCommand(t, root, args...)
 	if code != 1 || !strings.Contains(errOut, "commitment") {
 		t.Fatalf("commit = %d %s %s", code, out, errOut)
 	}
-	if after := string(runGit(t, root, "rev-parse", "HEAD")); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatal("refused commit moved HEAD")
 	}
 	return errOut
@@ -139,7 +140,7 @@ func TestCommitmentUncommittedAppend(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("append = %d %s %s", code, out, errOut)
 	}
-	if got := string(runGit(t, root, "show", "HEAD:ROADMAP.md")); !strings.Contains(got, "1. A\n2. B") {
+	if got := gittest.Output(t, root, "show", "HEAD:ROADMAP.md"); !strings.Contains(got, "1. A\n2. B") {
 		t.Fatal(got)
 	}
 }

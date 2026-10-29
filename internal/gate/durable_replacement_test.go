@@ -248,7 +248,7 @@ func TestGateDemotionDurabilityFailure(t *testing.T) {
 			name:    "lock unavailable",
 			refusal: "gate lock unavailable",
 			block: func(t *testing.T, root string) {
-				lock := gateLockPath(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"))
+				lock := gateLockPath(gittest.Output(t, root, "rev-parse", "--absolute-git-dir"))
 				if err := os.Remove(lock); err != nil {
 					t.Fatal(err)
 				}
