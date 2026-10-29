@@ -63,9 +63,7 @@ func TestGitPolicyScanRejectsSpecialSources(t *testing.T) {
 			if err := os.WriteFile(path, nil, 0o600); err != nil {
 				t.Fatal(err)
 			}
-			if err := exec.Command("git", "-C", root, "add", "source.go").Run(); err != nil {
-				t.Fatal(err)
-			}
+			gittest.MustRun(t, root, "add", "source.go")
 			if err := os.Remove(path); err != nil {
 				t.Fatal(err)
 			}

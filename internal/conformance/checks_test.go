@@ -22,6 +22,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -487,9 +488,9 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 		return "", func() {}, err
 	}
 	cleanup := func() { os.RemoveAll(dir) }
-	if probe := runAt(dir, "git", "init", "-q"); probe == nil || probe.ExitCode != 0 {
+	if _, err := gittest.Run(dir, "init", "-q"); err != nil {
 		cleanup()
-		return "", func() {}, fmt.Errorf("git init failed")
+		return "", func() {}, fmt.Errorf("git init failed: %w", err)
 	}
 	if err := os.MkdirAll(filepath.Join(dir, ".bench"), 0o755); err != nil {
 		cleanup()

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/status"
@@ -117,7 +118,7 @@ func trackedPaths(root string) []string {
 // second tracked file carrying the text. The third state is an artifact whose Shape body
 // has drifted from the constant.
 func TestHandoffShapeSingleSourcedBites(t *testing.T) {
-	root := t.TempDir()
+	root := gittest.Repo(t)
 	write := func(rel, body string) {
 		t.Helper()
 		path := filepath.Join(root, filepath.FromSlash(rel))
@@ -127,9 +128,8 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		runGit(t, root, "add", "-A")
+		gittest.MustRun(t, root, "add", "-A")
 	}
-	runGit(t, root, "init")
 	// The source file is a presence sentinel. The text the check grades against comes from
 	// the imported constant, never from this tree.
 	write(shapeSourceFile, "package handoff\n")
@@ -146,7 +146,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	if err := os.Remove(filepath.Join(root, "docs", "pinned-shape.md")); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\nRewritten whenever somebody feels like it.\n")
 	if !containsDiagnostic(checkHandoffShape(root), "no longer matches the text bench handoff renders") {
@@ -155,7 +155,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 
 	// An untracked artifact is out of scope: a fresh worktree without the local handoff
 	// must stay green, drifted body and all.
-	runGit(t, root, "rm", "--cached", "-q", status.HandoffFile)
+	gittest.MustRun(t, root, "rm", "--cached", "-q", status.HandoffFile)
 	if diags := checkHandoffShape(root); len(diags) != 0 {
 		t.Fatalf("untracked artifact: want no diagnostics, got %v", diags)
 	}

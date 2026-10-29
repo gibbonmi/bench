@@ -8,7 +8,6 @@ package preflighttest
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
@@ -43,14 +43,11 @@ var ConformantFence = []string{
 }
 
 // RunGit runs one git command in the working directory and returns its trimmed output.
+// It keeps the fixture API that the preflight and gate tests call, and gittest owns the
+// execution.
 func RunGit(t *testing.T, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-	return strings.TrimSpace(string(out))
+	return gittest.Output(t, "", args...)
 }
 
 // MustWriteFile writes body at path, creating its parent directories.
@@ -159,14 +156,11 @@ func specBody(slug string, inventory bool) string {
 }
 
 // StartRepo starts a fresh git repository at t.TempDir(), makes it the working directory,
-// and configures an author identity.
+// and configures the shared fixture identity.
 func StartRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
+	root := gittest.RepoOnBranch(t, "main")
 	t.Chdir(root)
-	RunGit(t, "init", "-q", "-b", "main")
-	RunGit(t, "config", "user.email", "t@example.com")
-	RunGit(t, "config", "user.name", "t")
 	return root
 }
 

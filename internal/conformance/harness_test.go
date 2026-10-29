@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -176,8 +177,7 @@ func TestHarnessUsesBenchConformanceRootAsGradedRoot(t *testing.T) {
 }
 
 func TestHarnessDefaultsToCurrentGitRoot(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	nested := filepath.Join(root, "a", "b")
 	if err := os.MkdirAll(nested, 0o755); err != nil {
 		t.Fatal(err)
@@ -254,14 +254,6 @@ func TestHarnessHelpersOperateAtGradedRoot(t *testing.T) {
 	RequireSubstring(t, probe.Stdout, "probe:"+root, "probe stdout")
 }
 
-func runGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-}
-
 // throwawayRoot is the shared throwaway-tree builder for this package's fixtures. It owns
 // the knowledge every per-check builder used to repeat: a temp root, a write loop that
 // creates each parent directory, and the git init a root needs before a timing file has
@@ -281,7 +273,7 @@ func (spec throwawayRoot) build(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	if spec.gitInit {
-		runGit(t, root, "init", "-q")
+		gittest.MustRun(t, root, "init", "-q")
 	}
 	for rel, content := range spec.files {
 		if err := os.WriteFile(rootFilePath(t, root, rel), []byte(content), 0o644); err != nil {

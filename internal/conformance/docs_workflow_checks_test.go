@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/coverage"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -199,10 +200,10 @@ func TestIntroducedCommandsAllowanceIsNarrow(t *testing.T) {
 }
 
 func TestRenamedDrainAliasKeepsOldHandoffInvocable(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
-	runGit(t, root, "config", "user.email", "t@example.com")
-	runGit(t, root, "config", "user.name", "t")
+	root := gittest.Repo(t)
+	for _, args := range gittest.IdentityConfig() {
+		gittest.MustRun(t, root, args...)
+	}
 	for rel, content := range map[string]string{
 		".agents/commands/bench-what-next.md": "Renamed to /bench-drain.\n",
 		".bench/keep":                         "\n",
@@ -215,8 +216,8 @@ func TestRenamedDrainAliasKeepsOldHandoffInvocable(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "-m", "fixture")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "fixture")
 	t.Chdir(root)
 
 	if out, code := handoff.Command([]string{"--next", "/bench-what-next"}); code != 0 {

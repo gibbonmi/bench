@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
@@ -84,10 +85,7 @@ func checkPackageFiles(root string, tier registry.Tier) []string {
 // strict check. A genuinely missing tracked entry still flags at both tiers, so the
 // exemption stays narrow.
 func TestCheckPackageFilesExemptsGitignoredEntryBelowShipTier(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
