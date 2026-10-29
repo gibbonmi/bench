@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:dd48d59465866a1c9b1f35f8f9eecee4e98f8e465d8643764328edbea174193f",
+  "plan_digest": "sha256:15c922e92fbdf0b1d287370928c19669972477750af95e1a5a1e000f2e67a7b2",
   "implementation_session": "",
   "chunks": [
     {
       "id": "GF-C1",
       "base": "4138ef1aa0c219c40396a9b799eac8769207b1f8",
-      "tip": "63e498366d28674bb6a390f903391e8019bcea5f",
-      "plan_digest": "sha256:dd48d59465866a1c9b1f35f8f9eecee4e98f8e465d8643764328edbea174193f",
-      "source_digest": "46b8be48be138daa2cfc6e7648e239a442c6d0fd",
+      "tip": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+      "plan_digest": "sha256:15c922e92fbdf0b1d287370928c19669972477750af95e1a5a1e000f2e67a7b2",
+      "source_digest": "57762fa392b4a1a6977422e6139578f2372ad26a",
       "acceptance_rows": [
         "GF1",
         "GF2",
@@ -96,6 +96,66 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFixtureIdentity,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestFixtureIdentity,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,337\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,21,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestFixtureIdentity,\"commands_test.go:301: git commit --quiet -m fixture: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t01r1-probe-01-run",
+          "performer": "claude:gf-t01-repair1-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "57762fa392b4a1a6977422e6139578f2372ad26a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t01-repair1-20261029",
+            "digest": "sha256:1980561e3d7c9e9775a239ee6e9bd7691934c89134720298a50b137bff98a22b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/gittest.go,swap,failed,1,TestRunFailureReturn,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestRunFailureReturn,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,16,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestRunFailureReturn,\"commands_test.go:134: Run(absent) = \\\"fatal: Needed a single revision\\\", <nil>; want empty output and the wrapped process error\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "requirement": "probe-01-run",
+          "command": "bench probe internal/gittest/gittest.go --swap 'return \"\", fmt.Errorf(\"git %s: %w: %s\", strings.Join(args, \" \"), err, out)' --with 'return strings.TrimSpace(string(out)), nil' --package ./internal/gittest --run TestRunFailureReturn",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return a failed command as success. The goroutine then receives no error, so the returned-failure test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t01-repair1-20261029",
+              "digest": "sha256:1980561e3d7c9e9775a239ee6e9bd7691934c89134720298a50b137bff98a22b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/gittest.go,swap,failed,1,TestRunFailureReturn,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestRunFailureReturn,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,16,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestRunFailureReturn,\"commands_test.go:134: Run(absent) = \\\"fatal: Needed a single revision\\\", <nil>; want empty output and the wrapped process error\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t01r1-probe-01-identity",
+          "performer": "claude:gf-t01-repair1-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "57762fa392b4a1a6977422e6139578f2372ad26a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t01-repair1-20261029",
+            "digest": "sha256:3addf57d8b02203f8746d8783645421bcbd0c934e0335b4a21ce21adf8c9073c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFixtureIdentity,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestFixtureIdentity,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,337\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,22,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestFixtureIdentity,\"commands_test.go:308: git commit --quiet -m fixture: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "requirement": "probe-01-identity",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/gittest --run TestFixtureIdentity",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t01-repair1-20261029",
+              "digest": "sha256:3addf57d8b02203f8746d8783645421bcbd0c934e0335b4a21ce21adf8c9073c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFixtureIdentity,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestFixtureIdentity,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,337\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,22,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestFixtureIdentity,\"commands_test.go:308: git commit --quiet -m fixture: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -176,7 +236,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:dd48d59465866a1c9b1f35f8f9eecee4e98f8e465d8643764328edbea174193f",
+      "to": "sha256:15c922e92fbdf0b1d287370928c19669972477750af95e1a5a1e000f2e67a7b2",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
