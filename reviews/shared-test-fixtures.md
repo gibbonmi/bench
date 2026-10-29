@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
+  "plan_digest": "sha256:ff68524e6aafc3f79c400ff2582dcf61f6da61f96d2243c123dedf53cd3c3f55",
   "implementation_session": "",
   "chunks": [
     {
@@ -1514,9 +1514,9 @@
     {
       "id": "GF-C10",
       "base": "537a396191d1c655515cedc44fbf2742cd0876dc",
-      "tip": "07c958e2948eacc7fd6101942bc2514206a34201",
-      "plan_digest": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
-      "source_digest": "bcd47984a79e8edcc2b89fc4401704065071b667",
+      "tip": "12937978ffb161bcc4b31869047f2bbae741983f",
+      "plan_digest": "sha256:ff68524e6aafc3f79c400ff2582dcf61f6da61f96d2243c123dedf53cd3c3f55",
+      "source_digest": "8a459a36128107247dc1fb3893a6bd07a54afde6",
       "acceptance_rows": [
         "GF22",
         "GF29",
@@ -1580,6 +1580,36 @@
               "ref": "claude-agent:bench-writer-medium:gf-t11-author-20261029",
               "digest": "sha256:98845964862e29686070115e74e3171fb67a08c20b4ce5b7a75633db00092690",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,insert,failed,1,TestUnavailableWritesBeforeSkip,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableWritesBeforeSkip,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,452\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip,\"unavailable_test.go:95: skip log is empty, so the skip ended the test before the write\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip/skips,reason not emitted\n"
+            }
+          }
+        },
+        {
+          "id": "t12-probe-12",
+          "performer": "claude:gf-t12-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8a459a36128107247dc1fb3893a6bd07a54afde6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t12-author-20261029",
+            "digest": "sha256:447549ce37c42b58a4d8ccf9d526df5511cd9f25e597943c4be41d665752077b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,2,TestUnavailableClassification/fifo,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableClassification,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,945\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/fifo,\"unavailable_test.go:81: Unavailable(fifo) record kind=\\\"environment\\\" class=\\\"\\\", want kind=\\\"capability\\\" class=\\\"fifo\\\"\",1\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink,\"unavailable_test.go:81: Unavailable(symlink) record kind=\\\"environment\\\" class=\\\"\\\", want kind=\\\"capability\\\" class=\\\"symlink\\\"\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable: operation not permitted\"\n"
+          },
+          "source_commit": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "requirement": "probe-12",
+          "command": "bench probe internal/capability/unavailable.go --swap 'Capability(t, class, ' --with 'Environment(t, ' --package ./internal/capability --run TestUnavailableClassification",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Record an unavailable capability as an environment skip. The parsed kind then changes, so the classification test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t12-author-20261029",
+              "digest": "sha256:447549ce37c42b58a4d8ccf9d526df5511cd9f25e597943c4be41d665752077b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,2,TestUnavailableClassification/fifo,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableClassification,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,945\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/fifo,\"unavailable_test.go:81: Unavailable(fifo) record kind=\\\"environment\\\" class=\\\"\\\", want kind=\\\"capability\\\" class=\\\"fifo\\\"\",1\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink,\"unavailable_test.go:81: Unavailable(symlink) record kind=\\\"environment\\\" class=\\\"\\\", want kind=\\\"capability\\\" class=\\\"symlink\\\"\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable: operation not permitted\"\n"
             }
           }
         }
@@ -1931,6 +1961,36 @@
     {
       "from": "sha256:d01e26b84f1063d29e617052a5c1c0283812ae23d2bc27f7819e1add0ebe26c3",
       "to": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C10": [
+          "GF-C10"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ],
+        "GF-C6": [
+          "GF-C6"
+        ],
+        "GF-C8": [
+          "GF-C8"
+        ],
+        "GF-C9": [
+          "GF-C9"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
+      "to": "sha256:ff68524e6aafc3f79c400ff2582dcf61f6da61f96d2243c123dedf53cd3c3f55",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
