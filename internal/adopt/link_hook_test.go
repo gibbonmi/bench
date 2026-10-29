@@ -6,7 +6,6 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -34,7 +33,7 @@ func TestInspectPrePushRecord(t *testing.T) {
 	root := hookTestRepo(t)
 	path := filepath.Join(root, ".git", "hooks", "pre-push")
 	writeHook(t, path, "baked")
-	runHookGit(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/live")
+	gittest.MustRun(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/live")
 
 	live := InspectPrePush(root)
 	wantLive := PrePushHealth{State: PrePushManaged, Path: path, Branch: "live", Provenance: PrePushLive, Currency: PrePushCurrent}
@@ -42,7 +41,7 @@ func TestInspectPrePushRecord(t *testing.T) {
 		t.Fatalf("live record = %#v, want %#v", live, wantLive)
 	}
 
-	runHookGit(t, root, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+	gittest.MustRun(t, root, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
 	baked := InspectPrePush(root)
 	wantBaked := PrePushHealth{State: PrePushManaged, Path: path, Branch: "baked", Provenance: PrePushBaked, Currency: PrePushCurrent}
 	if baked != wantBaked {
@@ -95,7 +94,7 @@ func TestInspectPrePushCurrencyAndStates(t *testing.T) {
 	if err := os.Mkdir(divert, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	runHookGit(t, root, "config", "core.hooksPath", divert)
+	gittest.MustRun(t, root, "config", "core.hooksPath", divert)
 	if got := InspectPrePush(root); got.State != PrePushDiverted || got.Currency != PrePushNotApplicable || got.Path != filepath.Join(divert, "pre-push") {
 		t.Fatalf("diverted record = %#v", got)
 	}
@@ -190,9 +189,7 @@ func TestInspectPrePushAvoidsRemoteGit(t *testing.T) {
 
 func hookTestRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	runHookGit(t, root, "init")
-	return root
+	return gittest.Repo(t)
 }
 
 func writeHook(t *testing.T, path, branch string) {
@@ -200,14 +197,6 @@ func writeHook(t *testing.T, path, branch string) {
 	content := strings.ReplaceAll(prePushTemplate, prePushBranchToken, branch)
 	if err := os.WriteFile(path, []byte(content), 0o755); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func runHookGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	command := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := command.CombinedOutput(); err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
 	}
 }
 
@@ -265,8 +254,7 @@ func TestInspectPrePushReportsAbsentWhenHooksDirectoryIsUnresolved(t *testing.T)
 // root path and the reader's action, before the repair touches the hook state. It
 // is serial because gittest.StubGit binds the process PATH.
 func TestDoctorFixRefusesUnresolvedHooksDirectory(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	t.Setenv("BENCH_KIT", t.TempDir())
 	bin := t.TempDir()
 	target := filepath.Join(bin, "bench-wrapper")
@@ -291,8 +279,7 @@ func TestDoctorFixRefusesUnresolvedHooksDirectory(t *testing.T) {
 // root path and the reader's action, and it leaves the hook in place. It is
 // serial because gittest.StubGit binds the process PATH.
 func TestUnlinkRefusesUnresolvedHooksDirectory(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -329,12 +316,12 @@ func TestPrePushHookAllowProtectedPushConfig(t *testing.T) {
 		t.Fatalf("default hook on a topic branch: %v\n%s", err, out)
 	}
 
-	runHookGit(t, root, "config", "bench.allowProtectedPush", "true")
+	gittest.MustRun(t, root, "config", "bench.allowProtectedPush", "true")
 	if err, out := runPrePushHook(t, root, path, "refs/heads/main"); err != nil {
 		t.Fatalf("allowed hook: %v\n%s", err, out)
 	}
 
-	runHookGit(t, root, "config", "bench.allowProtectedPush", "false")
+	gittest.MustRun(t, root, "config", "bench.allowProtectedPush", "false")
 	if err, _ := runPrePushHook(t, root, path, "refs/heads/main"); err == nil {
 		t.Fatal("bench.allowProtectedPush=false must keep the block")
 	}

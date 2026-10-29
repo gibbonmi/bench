@@ -5,11 +5,12 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // setup_prompt_test.go pins FT76 story 3: one-at-a-time question sequencing at the
@@ -165,11 +166,7 @@ func setupPromptTestRepo(t *testing.T) string {
 // to survive alongside the fail-closed gate stub.
 func setupBareTestRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	cmd := exec.Command("git", "-C", root, "init", "-q")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
+	root := gittest.Repo(t)
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)

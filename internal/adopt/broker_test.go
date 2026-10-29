@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // TestWriteBrokerManifestBindsTheRunningBrokerIdentity pins the published binding:
@@ -132,8 +133,7 @@ func writeSealFixture(t *testing.T, root string) {
 // since changed, so this row must name the mismatch itself and carry the one rebuild
 // sentence, not a generic "stale binary" verdict.
 func TestDoctorSealRowNamesTheSourceDigestMismatch(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -175,8 +175,7 @@ func TestDoctorSealRowNamesTheSourceDigestMismatch(t *testing.T) {
 // that publishes no dist/bench has no seal to grade, and a red row there would refuse
 // every consumer checkout for an artifact it never owned.
 func TestDoctorSealRowStaysQuietWithoutAPublishedBinary(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -288,8 +287,7 @@ func TestDoctorBrokerRowAcceptsAnAuthenticatedBroker(t *testing.T) {
 // publishes beside, and a broker executable. It returns the bin directory and the broker.
 func arrangeBrokerInstall(t *testing.T) (string, string) {
 	t.Helper()
-	repo := t.TempDir()
-	runAdoptGit(t, repo, "init", "-q")
+	repo := gittest.Repo(t)
 	if err := os.Mkdir(filepath.Join(repo, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}

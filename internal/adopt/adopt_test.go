@@ -3,7 +3,6 @@ package adopt
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -218,8 +217,7 @@ func TestLinkOutsideGitRepoNamesGitRepository(t *testing.T) {
 // launcher copy the shim then prefers. The refusal names the kit source checkout and
 // sends the reader to the kit-side route, and it writes no destination file.
 func TestLinkInKitSourceCheckoutRefuses(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	t.Setenv("BENCH_KIT", root)
 	t.Chdir(root)
 
@@ -266,8 +264,7 @@ func TestLinkRelinkStaysGreenInAConsumerRepo(t *testing.T) {
 }
 
 func TestReportDoctorRowsReportsMalformedWorktreeAdmin(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -287,8 +284,7 @@ func TestReportDoctorRowsReportsMalformedWorktreeAdmin(t *testing.T) {
 }
 
 func TestReportDoctorRowsLeavesHealthyWorktreeAdminSilent(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -306,9 +302,7 @@ func TestReportDoctorRowsLeavesHealthyWorktreeAdminSilent(t *testing.T) {
 
 func runAdoptGit(t *testing.T, root string, args ...string) {
 	t.Helper()
-	if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
-	}
+	gittest.MustRun(t, root, args...)
 }
 
 func TestDoctorDirSelectionAndShimRoundTrip(t *testing.T) {
@@ -410,10 +404,7 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 }
 
 func TestInitWritesGuardedCanaryCall(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
+	root := gittest.Repo(t)
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -435,11 +426,7 @@ func TestInitWritesGuardedCanaryCall(t *testing.T) {
 }
 
 func TestInitDoesNotSeedLinkedProof(t *testing.T) {
-	root := t.TempDir()
-	cmd := exec.Command("git", "-C", root, "init", "-q")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
+	root := gittest.Repo(t)
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -466,9 +453,7 @@ func TestInitReentryPreservesProjectInventoryInSpecialPath(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, "tests", "canary", "project", "family", "files"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
+	gittest.MustRun(t, root, "init", "-q")
 	if err := os.WriteFile(filepath.Join(root, "tests", "canary", "project", "family", "EXPECT"), []byte("project check\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -509,10 +494,7 @@ func TestInitReentryPreservesProjectInventoryInSpecialPath(t *testing.T) {
 // Init tests all need this same three-step preamble before they can call Init.
 func initRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	if out, err := exec.Command("git", "-C", root, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
-	}
+	root := gittest.Repo(t)
 	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(mustGetwd(t), "..", "..")))
 	t.Chdir(root)
 	return root
@@ -663,8 +645,7 @@ func TestScaffoldLearningsMirrorsTheParserBoundary(t *testing.T) {
 // shim and broker-manifest writes inside the fixture.
 func doctorGreenRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	for _, dir := range [][]string{{".bench"}, {"projects"}, {".agents", "commands"}} {
 		if err := os.MkdirAll(filepath.Join(append([]string{root}, dir...)...), 0o755); err != nil {
 			t.Fatal(err)
@@ -761,8 +742,7 @@ func TestDoctorKitSourceCheckoutAbsentPrePushRoutesToFix(t *testing.T) {
 // elsewhere keeps every current red row and keeps bench link as the remedy, and --fix
 // still leaves an absent hook alone there.
 func TestDoctorConsumerRepoKeepsLinkRemedies(t *testing.T) {
-	root := t.TempDir()
-	runAdoptGit(t, root, "init", "-q")
+	root := gittest.Repo(t)
 	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}

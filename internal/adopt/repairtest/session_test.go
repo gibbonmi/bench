@@ -76,6 +76,6 @@ func repairID(t *testing.T, output string) string {
 
 func (s session) track(t *testing.T) {
 	t.Helper()
-	gittest.Output(t, s.root, "add", "--all")
-	gittest.Output(t, s.root, "-c", "user.name=Bench fixture", "-c", "user.email=bench@example.invalid", "commit", "-qm", "fixture")
+	gittest.MustRun(t, s.root, "add", "--all")
+	gittest.MustRun(t, s.root, append(gittest.IdentityArgs(), "commit", "-qm", "fixture")...)
 }

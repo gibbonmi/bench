@@ -545,10 +545,7 @@ func TestGuardGitBlockAllow(t *testing.T) {
 }
 
 func TestCaptureClaudeAgentIntentReplayIsByteIdempotent(t *testing.T) {
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	oldWD, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -636,19 +633,12 @@ func gitInitRepo(t *testing.T, dir string) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{
-		{"init", "-q", "-b", "main"},
-		{"config", "user.email", "probe@example.test"},
-		{"config", "user.name", "probe"},
-		{"add", "-A"},
-		{"commit", "-qm", "seed", "--allow-empty"},
-	} {
-		cmd := exec.Command("git", args...)
-		cmd.Dir = dir
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v in %s: %v\n%s", args, dir, err, out)
-		}
+	gittest.MustRun(t, dir, "init", "-q", "-b", "main")
+	for _, args := range gittest.IdentityConfig() {
+		gittest.MustRun(t, dir, args...)
 	}
+	gittest.MustRun(t, dir, "add", "-A")
+	gittest.Commit(t, dir, "seed", "--allow-empty")
 }
 
 // gitlessPATH builds a PATH holding the externals bin/bench.sh needs, with no `git`, so
