@@ -1262,7 +1262,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c8-standards-r1",
+          "performer": "claude:gf-c8-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e5e6818dae5997facd755edf1905684f6cf6a047",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c8-standards-r1",
+            "digest": "sha256:d0ad9fefbbafe8a1fb8d03faa5477e29d45dda0feecbc93a091df462fb5eafc2",
+            "excerpt": "Standards axis, chunk GF-C8 (claude:gf-c8-standards-r1). Findings: none. No private identity remains in internal/systemtest; systemCommitArgs and systemIdentity read only gittest.IdentityArgs and IdentityConfig; neither starts a process; comments match.\n"
+          },
+          "axis": "Standards",
+          "base": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+          "tip": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c8-spec-r1",
+          "performer": "claude:gf-c8-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e5e6818dae5997facd755edf1905684f6cf6a047",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c8-spec-r1",
+            "digest": "sha256:a233ceca9365c276891a35a2a617722962a583a6ace4702af99f7c805f458532",
+            "excerpt": "Spec axis, chunk GF-C8 (claude:gf-c8-spec-r1). Findings: none. Every migrated Git child starts through owner.runAt; the repository budget is untouched; config-form and per-command-form sites keep their form; no test grades the former Route Test identity. Advice: process_lifetime_cache_test.go commits through gittest outside owner.runAt, a pre-existing site outside the fence.\n"
+          },
+          "axis": "Spec",
+          "base": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+          "tip": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c8-coverage-r1",
+          "performer": "claude:gf-c8-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e5e6818dae5997facd755edf1905684f6cf6a047",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c8-coverage-r1",
+            "digest": "sha256:fb1b84e1af77fed2dbc33fc216d0cb0869b04d8cd49b5acd3854a95a5925f112",
+            "excerpt": "Coverage axis, chunk GF-C8 (claude:gf-c8-coverage-r1). Findings: none. No replay depends on identity equality; no form switch; no vacuous pass; the starts ledger is unchanged. Advice: childEnvironment inherits the host Git configuration, so a host global identity would mask an identity migration.\n"
+          },
+          "axis": "Coverage",
+          "base": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+          "tip": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1742,3 +1803,38 @@ The orchestrator made the landing commit explicit with `cherry-pick -x` in `inte
 ### Retained specialized sites
 
 - `internal/worktree/reset_refusal_test.go` (`TestResetRefusesAnAmbiguousCheckpoint`): a raw commit body with fixed input bytes.
+
+## GF-C8 review pickup
+
+All three axes passed with no finding, so the chunk takes no repair cycle.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+### Author witnesses outside the plan probe
+
+- A reduction of `systemCommitArgs` to no identity turned `TestWorktreeReauthorizeJourney` red.
+- A loop of `systemIdentity` over no commands turned `TestStatusRouteExecutesUnclaimedCleanup` red.
+- A swap of the `owner.runAt` call in `systemGit` for a direct process stayed silent across the selected system tests and their censuses.
+
+### Consultant decision on GF18
+
+No gate refuses a direct Git process in `internal/systemtest`, because the ordinary-build census skips that directory. Spec row GF18 claimed that such a bypass fails an owner or census assertion. The gap predates this build.
+
+Two consultants (opus at high effort and sonnet at high effort) both chose to move the GF18 bite into ticket 13. Ticket 13 replaces the census's skip of `internal/systemtest` with an exact list of allowed sites, by file and enclosing function, through the existing architecture scan. The silent `systemGit` bypass mutant is then its recorded red.
+
+The pre-existing `gittest` commits in `process_lifetime_cache_test.go` and `process_lifetime_preservation_test.go` take an explicit classification in that list.
+Until GF-C13, the GF18 route stays checked by reading, as this chunk's axes did.
+
+### Retained specialized sites
+
+None.
