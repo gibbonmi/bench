@@ -2660,3 +2660,39 @@ The Privilege character-device sites stay on the low-level helper, as the spec s
 ### Retained specialized and intentional sites
 
 - `internal/conformance/skip_ownership_test.go`: a diagnostic string that names the low-level helper, which is data.
+
+## GF-C13 review pickup
+
+Three axes reviewed `12937978f..985fadd25`. Two axes found the same GF18 gap, and the orchestrator accepted four repair items.
+
+### Standards
+
+Findings: 2. Worst issue: S1, the `benchSourceRoot` exception was avoidable, because `test_run_test.go` is a journey harness file. S2: the module prefix had two sources.
+
+### Spec
+
+Findings: 1. Worst issue: P1, no test ran `checkOrdinaryBuildCensus` against a systemtest bypass (GF18).
+The orchestrator also accepted one advice item: the `skipOwnershipDiags` message named `Capability` for every class.
+
+### Coverage
+
+Findings: 2. Worst issue: C1, the same wiring gap as P1. A probe that omitted the wiring line was silent.
+C2 is a no-op: the author's report holds the reds of GF10, GF18, and GF25 to GF27 before the commit.
+
+### Author witnesses outside the plan probes
+
+The ticket 13 author ran a `bench probe` before the commit for each of GF10, GF18, and GF24 to GF28. Each test turned red, and each restore passed.
+The GF18 red came from a direct Git process in `systemGit`. The census named `owner_land_race_test.go` in `systemGit`.
+
+### Retained specialized sites
+
+`gitFixtureExceptions` in `internal/conformance/git_fixture_owner_test.go` lists each retained site by file, enclosing function, and kind. `systemProcessSites` lists the 13 allowed system process sites.
+The orchestrator flags two items for veto. The date-only runner `runGitEnv` in `internal/diff/compatibility_test.go` stays an exception. The three scratch repositories of the systemtest process-lifetime tests are new classifications.
+
+### GF-C13 repair cycle 1
+
+The ticket 13 repair session committed `ede4318ee`, which fixes S1, S2, P1, C1, and the message text. It refroze GF-C13 at that tip, and both plan probes turned red again.
+Its witness omitted the `systemProcessDiags` wiring line in `checkOrdinaryBuildCensus`. `TestSystemProcessOwnerBites` turned red, and the restore passed.
+
+The coordinator probe swapped the systemtest site routing for `continue`, which restores the old skip. `TestSystemProcessOwnerBites` turned red, and the restore passed.
+The repair widen of the ticket file makes the delta not test-only, so a confirming round of three axes follows. The repair consumed one of the two repair cycles of GF-C13.
