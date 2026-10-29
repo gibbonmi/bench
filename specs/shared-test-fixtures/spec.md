@@ -449,6 +449,7 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/intent/assignment_lookup_test.go`
 - `internal/intent/intent_test.go`
 - `internal/intent/worktree_owner_test.go`
+- `internal/landing/admission_test.go`
 - `internal/landing/close_test.go`
 - `internal/landing/completion_evidence_test.go`
 - `internal/landing/composition_test.go`
@@ -456,8 +457,13 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/landing/landing_helpers_test.go`
 - `internal/landing/landing_reviewed_test.go`
 - `internal/landing/landing_test.go`
+- `internal/landing/local_capture_test.go`
 - `internal/landing/merge_test.go`
+- `internal/landing/pending_merge_fixture_test.go`
 - `internal/landing/pending_merge_test.go`
+- `internal/landing/reader_publish_test.go`
+- `internal/landing/stack_bisect_test.go`
+- `internal/landing/stack_test.go`
 - `internal/landing/state_test.go`
 - `internal/learnings/learnings_test.go`
 - `internal/maps/freshness_test.go`
