@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:d01e26b84f1063d29e617052a5c1c0283812ae23d2bc27f7819e1add0ebe26c3",
+  "plan_digest": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
   "implementation_session": "",
   "chunks": [
     {
@@ -1514,9 +1514,9 @@
     {
       "id": "GF-C10",
       "base": "537a396191d1c655515cedc44fbf2742cd0876dc",
-      "tip": "3ada7de58ee0484034533f23302ce8f609ccff66",
-      "plan_digest": "sha256:d01e26b84f1063d29e617052a5c1c0283812ae23d2bc27f7819e1add0ebe26c3",
-      "source_digest": "3d6479f4701635c6433a779118c00932ec6c63c0",
+      "tip": "07c958e2948eacc7fd6101942bc2514206a34201",
+      "plan_digest": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
+      "source_digest": "bcd47984a79e8edcc2b89fc4401704065071b667",
       "acceptance_rows": [
         "GF22",
         "GF29",
@@ -1550,6 +1550,36 @@
               "ref": "claude-agent:bench-writer-medium:gf-t10-author-20261029",
               "digest": "sha256:4b9fb139e3323ac249219607b43611acc11f4db580de407e127b072246531282",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,1,TestUnavailableClassification/symlink,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableClassification,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,739\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,3,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink,\"unavailable_test.go:81: Unavailable(symlink) record kind=\\\"capability\\\" class=\\\"fifo\\\", want kind=\\\"capability\\\" class=\\\"symlink\\\"\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable: operation not permitted\"\n"
+            }
+          }
+        },
+        {
+          "id": "t11-probe-11",
+          "performer": "claude:gf-t11-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bcd47984a79e8edcc2b89fc4401704065071b667",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t11-author-20261029",
+            "digest": "sha256:98845964862e29686070115e74e3171fb67a08c20b4ce5b7a75633db00092690",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,insert,failed,1,TestUnavailableWritesBeforeSkip,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableWritesBeforeSkip,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,452\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip,\"unavailable_test.go:95: skip log is empty, so the skip ended the test before the write\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip/skips,reason not emitted\n"
+          },
+          "source_commit": "07c958e2948eacc7fd6101942bc2514206a34201",
+          "requirement": "probe-11",
+          "command": "bench probe internal/capability/unavailable.go --insert-before 'Capability(t, class, ' --with 't.Skip(); ' --package ./internal/capability --run TestUnavailableWritesBeforeSkip",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip before the record write. The transport then stays empty, so the write-before-skip test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t11-author-20261029",
+              "digest": "sha256:98845964862e29686070115e74e3171fb67a08c20b4ce5b7a75633db00092690",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,insert,failed,1,TestUnavailableWritesBeforeSkip,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableWritesBeforeSkip,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,452\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip,\"unavailable_test.go:95: skip log is empty, so the skip ended the test before the write\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip/skips,reason not emitted\n"
             }
           }
         }
@@ -1877,6 +1907,36 @@
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ],
+        "GF-C6": [
+          "GF-C6"
+        ],
+        "GF-C8": [
+          "GF-C8"
+        ],
+        "GF-C9": [
+          "GF-C9"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d01e26b84f1063d29e617052a5c1c0283812ae23d2bc27f7819e1add0ebe26c3",
+      "to": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C10": [
+          "GF-C10"
         ],
         "GF-C2": [
           "GF-C2"
