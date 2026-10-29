@@ -453,6 +453,72 @@
             "C6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gq-c2a-standards-2",
+          "performer": "claude:gq-c2a-standards-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8c88f856f6eaa8102be9eaff1dc2ab985bc04582",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2a-standards-confirm-20261029",
+            "digest": "sha256:c1f546b825b305197c20558d563427fda3e67e8f61ba07524db798ba9b76fac7",
+            "excerpt": "axis: Standards (confirming round, repair delta b6b1276cb..01d699aaa)\nS1: closed. The test calls gittest.StubGit with the malformed-ls-tree mode; its own shim and the os/exec imports are gone; the existing modes are unchanged; the expected error text comes from gittest.MalformedTreeRecord.\nNo new finding.\n"
+          },
+          "axis": "Standards",
+          "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "tip": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c2a-standards-1"
+          ]
+        },
+        {
+          "id": "gq-c2a-spec-2",
+          "performer": "claude:gq-c2a-spec-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8c88f856f6eaa8102be9eaff1dc2ab985bc04582",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2a-spec-confirm-20261029",
+            "digest": "sha256:15f1e52862065578b8975af2ae6b2ea4219d7cc07e527dc6f61e8475a863deab",
+            "excerpt": "axis: Spec (confirming round, repair delta b6b1276cb..01d699aaa)\nP1: closed. readiness.go:111 builds Store{Root: owner.Worktree, Run: store.Run}; the root-only checkCandidate literal stays uncached as ticket 02 states.\nNo new finding: the ledger no-run case and the RevisionDocumentIn counts agree with GQ27-GQ33 and the Won't-handle line.\n"
+          },
+          "axis": "Spec",
+          "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "tip": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c2a-spec-1"
+          ]
+        },
+        {
+          "id": "gq-c2a-coverage-2",
+          "performer": "claude:gq-c2a-coverage-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8c88f856f6eaa8102be9eaff1dc2ab985bc04582",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2a-coverage-confirm-20261029",
+            "digest": "sha256:1d79eae9c632c442e2555a98664f814611cb97b91cd7e1dbf219f9cf9b7b98f7",
+            "excerpt": "axis: Coverage (confirming round, repair delta b6b1276cb..01d699aaa)\nC1 closed: the document case counts ls-tree=2 and cat-file=1; a nil run in the index read or the directory listing raises them.\nC2 closed: the ledger no-run case expects --git-common-dir=2, so a shared run gives 1.\nThe malformed-listing case still asserts an exact refusal through the malformed-ls-tree mode.\nAdvice (orchestrator disposition: optional advice under the bounded repair policy, because each grades only a check of this hardening cycle and meets no blocking condition):\n- the test board has no roadmap/ directory, so a nil run on the loop ReadTreeFile at tree_validation.go:99 survives.\n- no test has an inheritance owner worktree with a run, so dropping Run: store.Run at readiness.go:111 survives.\n"
+          },
+          "axis": "Coverage",
+          "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "tip": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c2a-coverage-1"
+          ]
         }
       ]
     }
