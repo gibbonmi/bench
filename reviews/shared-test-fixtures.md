@@ -951,7 +951,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c5c-standards-r1",
+          "performer": "claude:gf-c5c-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6db3e77342d0220a9794838bccf4f165124a6e73",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5c-standards-r1",
+            "digest": "sha256:f36d0cfe1ecabf4f025fa298aefe29319fe6ecdf9aea4d932e716457bedc13b9",
+            "excerpt": "Standards axis, chunk GF-C5C (claude:gf-c5c-standards-r1). K1 (axis id F1) internal/shift/fault_test.go:72-78 faultFixtureCore re-derives gittest.RepoOnBranch(t, \"main\"), and internal/conformance/docs_workflow_checks_test.go:203-206 uses Repo plus the identity loop before a commit; auto-fix, confidence 6. K2 (axis id F2) internal/landing/pending_merge_fixture_test.go:62-70 pendingMerge keeps a private exec merge and a stale comment, although gittest.Run returns the failure with the combined output; auto-fix, confidence 5. Advice: baseForNested is a lazy element; the nested gitlink setup repeats in two files.\n"
+          },
+          "axis": "Standards",
+          "base": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
+          "tip": "dfe7edd94d504e9a7503f3f7810ff29cace1564c",
+          "finding_ids": [
+            "K1",
+            "K2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c5c-spec-r1",
+          "performer": "claude:gf-c5c-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6db3e77342d0220a9794838bccf4f165124a6e73",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5c-spec-r1",
+            "digest": "sha256:6213300b4c0dd86d01c27a82ab677ccff01c2432f8ee4e1fddcda27011f32a18",
+            "excerpt": "Spec axis, chunk GF-C5C (claude:gf-c5c-spec-r1). Findings: none. Retained sites conform: reviewfiles.go fast-import, pendingMerge, kit_run_test.go child environment, git_policy_test.go production queries, conformance check bodies, literal source data, the landing_reviewed_test.go budget edit. Every private runner is gone; no default identity copy remains in the fence. Advice: TempDir plus init -q repeats gittest.Repo in four tests.\n"
+          },
+          "axis": "Spec",
+          "base": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
+          "tip": "dfe7edd94d504e9a7503f3f7810ff29cace1564c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c5c-coverage-r1",
+          "performer": "claude:gf-c5c-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6db3e77342d0220a9794838bccf4f165124a6e73",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5c-coverage-r1",
+            "digest": "sha256:1965f1dd870ee24a50aa8a2a6ba9bb850ddc8c0b0e233277105c58fa0fa8533b",
+            "excerpt": "Coverage axis, chunk GF-C5C (claude:gf-c5c-coverage-r1). Findings: none. Combined-to-stdout readers read stdout-only data; trimmed readers keep their subject; RawPatch stays raw; the fast-import, kit-run, and pendingMerge probes are intact; tempGitRepoWithLines stays error-returning; no vacuous pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
+          "tip": "dfe7edd94d504e9a7503f3f7810ff29cace1564c",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1280,3 +1344,32 @@ Its witness ran the census on the unedited tree (red) and after the edit (green)
 
 The coordinator probe swapped the line back. The census check turned red, and the restore passed.
 The repair consumed the second and last repair cycle of GF-C5A.
+
+## GF-C5C review pickup
+
+The repair allowance of GF-C5C is two cycles. The first repair cycle starts after this record.
+
+### Standards
+
+Findings: 2. Worst issue: K1.
+
+- K1, `internal/shift/fault_test.go:72`: `faultFixtureCore` repeats the body of `gittest.RepoOnBranch(t, "main")`. The fixture moves to that builder. The docs-workflow fixture keeps the ambient default branch, which is the closed disposition of the maps and status fixtures. Disposition: auto-fix for the shift fixture, no-op for the docs-workflow fixture. Confidence: 6.
+- K2, `internal/landing/pending_merge_fixture_test.go:62`: `pendingMerge` keeps a private merge process, and its comment says the shared owner cannot tolerate the failure. `gittest.Run` returns that failure with the combined output. Disposition: auto-fix. Confidence: 5.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+Repair targets: 2 (K1, K2), both on ticket 05d, in one combined repair charge.
+
+### Retained specialized and intentional sites
+
+- `internal/preflight/preflighttest/reviewfiles.go` (`SeedReviewPair`): the fast-import input stream, the pinned committer, and the pinned times.
+- `internal/env/kit_run_test.go` (`checkKitRunIsolation`): an explicit child environment.
+- `internal/env/git_policy_test.go` (`TestGitPolicyHasOneSource`, `gitPolicyFindings`): production-subject queries.
+- `internal/conformance` check bodies (`trackedPaths`, `checkExecutableGitModes`, `checkGateInputPathsNotIgnored`, `spillProbeOutput`): reads of the graded root.
+- `internal/preflight/preflighttest/fixture.go` (`RunGit`): an exported facade over `gittest` with callers in other packages.
