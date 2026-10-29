@@ -123,10 +123,11 @@ func runConstruction(node ast.Node, gitName string) bool {
 const plantedRunSource = "package worktree\n\nimport %q\n\nfunc Entry() *git.Run { return %s }\n\nfunc plantedHelper() *git.Run { return %s }\n"
 
 // TestRunConstructionCensus proves that an unexported production helper builds no run. A
-// verb's one run comes from newAmbient or from an exported entry, and each helper takes it
-// as a parameter. Each planted case builds one run of its form in plantedHelper and one in
-// an exported function, and the census names the helper's file and line alone. (Coverage
-// rows GQ38, GQ39.)
+// verb's one run comes from newAmbient or from an exported entry, and a helper receives it
+// as a parameter. Each planted file holds one site that the census must name alone: a run of
+// each form in plantedHelper beside an exported function, a run at package scope, a run that
+// an exported method builds, and a run through an aliased import of the git package.
+// (Coverage rows GQ38, GQ39.)
 func TestRunConstructionCensus(t *testing.T) {
 	t.Parallel()
 	sites, err := runConstructionSites(".")
@@ -136,14 +137,20 @@ func TestRunConstructionCensus(t *testing.T) {
 	for _, site := range sites {
 		t.Errorf("%s builds a run outside newAmbient and the exported functions; take the verb's run as a parameter", site)
 	}
-	for _, form := range []string{"&git.Run{}", "new(git.Run)"} {
-		dir := testcensus.Plant(t, map[string]string{"planted.go": fmt.Sprintf(plantedRunSource, gitPackagePath, form, form)})
-		planted, err := runConstructionSites(dir)
+	for _, planted := range []struct{ name, source, want string }{
+		{"literal", fmt.Sprintf(plantedRunSource, gitPackagePath, "&git.Run{}", "&git.Run{}"), "planted.go:7: plantedHelper"},
+		{"new call", fmt.Sprintf(plantedRunSource, gitPackagePath, "new(git.Run)", "new(git.Run)"), "planted.go:7: plantedHelper"},
+		{"package scope", fmt.Sprintf("package worktree\n\nimport %q\n\nvar shared = &git.Run{}\n", gitPackagePath), "planted.go:5: package scope"},
+		{"method", fmt.Sprintf("package worktree\n\nimport %q\n\ntype planted struct{}\n\nfunc (planted) Entry() *git.Run { return &git.Run{} }\n", gitPackagePath), "planted.go:7: Entry"},
+		{"aliased import", fmt.Sprintf("package worktree\n\nimport gitx %q\n\nfunc plantedHelper() *gitx.Run { return &gitx.Run{} }\n", gitPackagePath), "planted.go:5: plantedHelper"},
+	} {
+		dir := testcensus.Plant(t, map[string]string{"planted.go": planted.source})
+		got, err := runConstructionSites(dir)
 		if err != nil {
-			t.Fatalf("census the planted %s: %v", form, err)
+			t.Fatalf("census the planted %s: %v", planted.name, err)
 		}
-		if want := "planted.go:7: plantedHelper"; len(planted) != 1 || planted[0] != want {
-			t.Errorf("census of a planted %s = %q, want exactly [%q]", form, planted, want)
+		if len(got) != 1 || got[0] != planted.want {
+			t.Errorf("census of a planted %s = %q, want exactly [%q]", planted.name, got, planted.want)
 		}
 	}
 }

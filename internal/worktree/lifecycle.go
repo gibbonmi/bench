@@ -189,7 +189,7 @@ func acquireAt(j joins, run *git.Run, root, resetRef, resetMode, home string, no
 		if !isWorktree(d) || !isClean(d) {
 			continue
 		}
-		lease, err := LeaseFile(d)
+		lease, err := leaseFileIn(run, d)
 		if err != nil || !claimAt(j, lease, now, staleLease) {
 			continue
 		}
@@ -208,7 +208,7 @@ func acquireAt(j joins, run *git.Run, root, resetRef, resetMode, home string, no
 		if !worktreeAdd(root, cand, remote) && (remote == "" || !worktreeAdd(root, cand, "")) {
 			break
 		}
-		lease, err := LeaseFile(cand)
+		lease, err := leaseFileIn(run, cand)
 		if err != nil {
 			continue
 		}
@@ -259,7 +259,7 @@ func releaseWith(j joins, run *git.Run, wt string) {
 	if wt == "" {
 		return
 	}
-	lease, err := LeaseFile(wt)
+	lease, err := leaseFileIn(run, wt)
 	if err != nil {
 		return
 	}

@@ -141,7 +141,7 @@ type resetPlan struct {
 }
 
 func planReset(run *git.Run, root, operand, checkpoint, envelope string) (resetPlan, error) {
-	assignments, err := intent.Assignments(root)
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return resetPlan{}, errors.New("assignment ledger is unreadable")
 	}
@@ -294,7 +294,7 @@ func planReset(run *git.Run, root, operand, checkpoint, envelope string) (resetP
 		if err != nil {
 			return resetPlan{}, err
 		}
-		common, err := git.CommonDir(root)
+		common, err := run.CommonDir(root)
 		if err != nil {
 			return resetPlan{}, err
 		}

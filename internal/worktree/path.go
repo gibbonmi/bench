@@ -65,7 +65,7 @@ func resolveAssignment(run *git.Run, root, target string) (intent.Assignment, er
 // resolveAssignmentIn is the same resolution; accepts names the ledger states the calling
 // verb takes, as the identity bundle's own state check does.
 func resolveAssignmentIn(run *git.Run, root, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
-	assignments, err := intent.Assignments(root)
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return intent.Assignment{}, err
 	}

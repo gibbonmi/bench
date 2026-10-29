@@ -91,7 +91,7 @@ func createAt(j joins, run *git.Run, root, home, request, label string, fault Fa
 		return Creation{}, err
 	}
 	defer release()
-	if existing, ok, err := intent.FindAssignmentByRequest(root, digest); err != nil {
+	if existing, ok, err := intent.In(run, root).FindAssignmentByRequest(digest); err != nil {
 		return Creation{}, err
 	} else if ok {
 		if existing.Label != label || existing.State != intent.StateActive {

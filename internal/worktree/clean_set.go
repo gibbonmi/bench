@@ -136,7 +136,7 @@ type explicitCleanupSet struct {
 func planExplicitSet(j joins, a ambient, root string, targets []string, options CleanupOptions) explicitCleanupSet {
 	set := explicitCleanupSet{}
 	selected := make(map[string]bool, len(targets))
-	candidates := discardCandidates{root: root}
+	candidates := discardCandidates{run: a.run, root: root}
 	for _, target := range targets {
 		resolved, err := candidates.resolve(target)
 		if err != nil {

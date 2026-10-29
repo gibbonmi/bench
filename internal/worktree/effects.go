@@ -29,7 +29,7 @@ func baseEnviron() []string { return os.Environ() }
 
 // ambient is the process context of one verb run: the Bench home and the warnings writer
 // that the verb entry received, the kit value, one instant, the git run that caches the
-// pure git answers of the verb run for each reader below the entry, the call directory
+// pure git answers of the verb run for the readers that take it, the call directory
 // that a relative operand joins, or the error of its failed read, and the base environment
 // of the exec children, the doctor child, the subshell, and the gitInput children of the
 // recovery chain. Each other git child starts from the process environment. Each internal
@@ -47,10 +47,11 @@ type ambient struct {
 }
 
 // newAmbient reads the kit value, the clock, the process directory, and the environment
-// once. It builds the one run of the verb. Each helper below the entry takes that run as a
-// parameter and builds no run of its own, so the readers that share it start each pure git
-// query once, and no cached answer outlives the verb run. The git.Run doc names the pure
-// answers. The caller supplies the home and the warnings writer.
+// once. It builds the one run of the verb, and no helper below the entry builds a run of
+// its own. The readers that take that run start each pure git query once between them. A
+// reader below a seam that passes nil in place of the run shares none of its answers. No
+// cached answer outlives the verb run. The git.Run doc names the pure answers. The caller
+// supplies the home and the warnings writer.
 func newAmbient(home string, stderr io.Writer) ambient {
 	dir, dirErr := filepath.Abs(".")
 	return ambient{home: home, kit: gate.KitValue(), now: currentTime(), warnings: stderr, run: &git.Run{}, dir: dir, dirErr: dirErr, environ: baseEnviron()}
