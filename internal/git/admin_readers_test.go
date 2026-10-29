@@ -89,7 +89,7 @@ func symlinkedParentAlias(t *testing.T, repo string) (string, bool) {
 	parent := filepath.Dir(repo)
 	alias := filepath.Join(t.TempDir(), "alias")
 	if err := os.Symlink(parent, alias); err != nil {
-		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 		return "", false
 	}
 	return filepath.Join(alias, filepath.Base(repo)), true
@@ -160,7 +160,7 @@ func symlinkAt(t *testing.T, root, answer string) {
 		t.Fatal("symlinkAt: empty answer path")
 	}
 	if err := os.Symlink(filepath.Join(root, ".git"), answer); err != nil {
-		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 
@@ -198,7 +198,7 @@ func TestAdminPathJoinsRelativeAnswerOntoRoot(t *testing.T) {
 		}
 		jump := filepath.Join(base, "jump")
 		if err := os.Symlink(child, jump); err != nil {
-			capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 		// A lexical filepath.Join would clean "jump/.." away before AdminPath ever
 		// sees it, so the root is built by concatenation to keep the symlinked
@@ -224,7 +224,7 @@ func TestAdminPathKeepsSymlinkPath(t *testing.T) {
 	}
 	lease := filepath.Join(root, ".git", BenchLeaseFilename)
 	if err := os.Symlink(target, lease); err != nil {
-		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	got, err := AdminPath(root, BenchLeaseFilename)
 	if err != nil {

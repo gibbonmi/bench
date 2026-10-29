@@ -1,7 +1,6 @@
 package spec
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -116,7 +115,7 @@ func linkInPlace(t *testing.T, target, link string) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(target, link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 
@@ -289,7 +288,7 @@ func TestSpecWidenRefusesHostileTickets(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := syscall.Mkfifo(ticket, 0o644); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 		t.Chdir(root)
 		type result struct {

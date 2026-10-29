@@ -1,7 +1,6 @@
 package census
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -22,7 +21,7 @@ func TestCountsRefusesAFifoWithoutBlocking(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(filepath.Join(dir, knownID), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	done := make(chan map[string]int, 1)
 	go func() {
@@ -51,7 +50,7 @@ func TestHeadBreakdownRefusesAFifoWithoutBlocking(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(filepath.Join(dir, knownID), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	done := make(chan string, 1)
 	go func() {

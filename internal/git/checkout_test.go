@@ -1,7 +1,6 @@
 package git
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -147,7 +146,7 @@ func TestPendingMergeRefusesUnreadableState(t *testing.T) {
 		{"directory", linked, func(*testing.T) error { return os.Mkdir(mergeHead, 0o755) }},
 		{"fifo", linked, func(t *testing.T) error {
 			if err := syscall.Mkfifo(mergeHead, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return nil
 		}},

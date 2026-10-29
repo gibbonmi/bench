@@ -296,7 +296,7 @@ func TestFactsEnumeratesFolderCandidates(t *testing.T) {
 				}
 				link := filepath.Join(root, "specs", "linked")
 				if err := os.Symlink(target, link); err != nil {
-					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			},
 			want: []Fact{{Slug: "linked", Path: "specs/linked/spec.md", Status: "staged"}},
@@ -355,7 +355,7 @@ func TestFactsRetainsHostileCandidates(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink("missing.md", dangling); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 
 	fifo := filepath.Join(root, "specs", "fifo", "spec.md")
@@ -363,7 +363,7 @@ func TestFactsRetainsHostileCandidates(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 
 	done := make(chan struct {

@@ -362,7 +362,7 @@ func TestGuardRowRejectsFIFOWithoutOpening(t *testing.T) {
 		return
 	}
 	if runtime.GOOS == "windows" {
-		capability.Capability(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
+		capability.Unavailable(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
 	}
 	fifo := filepath.Join(t.TempDir(), "special.sh")
 	if out, err := exec.Command("mkfifo", fifo).CombinedOutput(); err != nil {

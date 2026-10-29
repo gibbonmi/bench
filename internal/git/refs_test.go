@@ -49,7 +49,7 @@ func TestPruneLandedBranchesUsesNeutralDiscoveryFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 
 	_, err = PruneLandedBranches(root, nil)

@@ -2,7 +2,6 @@ package git
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,7 +26,7 @@ func TestWorktreesRefusesMalformedAdminShapes(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 		_, err = worktreesWithin(t, root)
 		requireAdminRefusal(t, err, "worktrees/fifo/gitdir", "fifo")
@@ -46,7 +45,7 @@ func TestWorktreesRefusesMalformedAdminShapes(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := os.Symlink(target, filepath.Join(common, "worktrees", "linked")); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 		_, err = worktreesWithin(t, root)
 		requireAdminRefusal(t, err, "worktrees/linked", "symlink")
@@ -61,7 +60,7 @@ func TestWorktreesRefusesMalformedAdminShapes(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := syscall.Mkfifo(filepath.Join(common, "worktrees", "fifo"), 0o600); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 		_, err = worktreesWithin(t, root)
 		requireAdminRefusal(t, err, "worktrees/fifo", "fifo")
@@ -81,7 +80,7 @@ func TestWorktreesRefusesMalformedAdminShapes(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := os.Symlink(target, filepath.Join(id, "gitdir")); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 		_, err = worktreesWithin(t, root)
 		requireAdminRefusal(t, err, "worktrees/linked-gitdir/gitdir", "symlink")
@@ -97,7 +96,7 @@ func TestWorktreesRefusesMalformedAdminShapes(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := syscall.Mkfifo(filepath.Join(id, "stray"), 0o600); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 		_, err = worktreesWithin(t, root)
 		requireAdminRefusal(t, err, "worktrees/x y*/stray", "fifo")
@@ -206,7 +205,7 @@ func TestWorktreesRefusesMalformedAdminBeforePorcelain(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(filepath.Join(id, "gitdir"), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	done := make(chan error, 1)
 	go func() {
@@ -253,7 +252,7 @@ func assertBadCommonDirRefusal(t *testing.T, mode string, want []string) {
 	commonDir := gittest.StubGit(t, root, mode, logPath)
 	if mode == "symlink-rev-parse" {
 		if err := os.Symlink(filepath.Join(root, ".git"), commonDir); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 	}
 	_, err := Worktrees(root)

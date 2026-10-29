@@ -150,7 +150,7 @@ func TestCommandNamesSizeBinaryAndNonregularSkips(t *testing.T) {
 	writeOutlineFile(t, root, "binary.go", "package x\x00func Hidden() {}\n")
 	writeOutlineFile(t, root, "target.go", "package x\nfunc Target() {}\n")
 	if err := os.Symlink("target.go", filepath.Join(root, "link.go")); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlink unavailable: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	gitAddOutline(t, root)
 	// --full is the row-bearing repository-wide form; skips ride the same envelope.
