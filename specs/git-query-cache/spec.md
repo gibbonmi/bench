@@ -346,7 +346,7 @@ The build reruns `bench consumers` on each changed function before each charge, 
 | source sentence | rows |
 |---|---|
 | Before any code change, a measurement compares the package time with a per-command cache against the recorded spread. | Problem, GQ41, GQ42 |
-| When the measured gain falls outside the spread, a command run caches its pure git queries. | GQ1–GQ40, GQ43–GQ46 |
+| When the measured gain falls outside the spread, a command run caches its pure git queries. | GQ1–GQ10, GQ13–GQ40, GQ43–GQ47 |
 | D2: pure means the location answers plus each read whose revision operands are all full object ids. | GQ1–GQ10, GQ13–GQ25, GQ45, GQ47 |
 | D2: refs, HEAD, the index, status, config, and registrations stay live. | GQ2, GQ4, GQ5, GQ9, GQ15, GQ24, GQ45 |
 | FT402: a faster test keeps its purpose and its failure detection. | GQ35, GQ36, GQ40 |
