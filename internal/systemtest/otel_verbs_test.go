@@ -231,9 +231,7 @@ func scaffoldRecordedPublicationRepo(t *testing.T) recordedPublicationRepo {
 		t.Fatalf("git init = (%d, %q)", result.code, result.stderr)
 	}
 	// Both verbs create their own commits here, so the identity belongs in the config.
-	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
-		systemGit(t, root, "config", identity[0], identity[1])
-	}
+	systemIdentity(t, root)
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
 
@@ -235,7 +236,7 @@ func systemCommit(t *testing.T, root, name, body, message string) {
 		t.Fatal(err)
 	}
 	systemGit(t, root, "add", name)
-	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", message)
+	systemGit(t, root, systemCommitArgs("-qm", message)...)
 }
 
 func systemGit(t *testing.T, root string, args ...string) {
@@ -243,6 +244,22 @@ func systemGit(t *testing.T, root string, args ...string) {
 	result := owner.runAt(root, nil, "git", args...)
 	if result.code != 0 {
 		t.Fatalf("git %q in %q = (%d, %q)", args, root, result.code, result.stderr)
+	}
+}
+
+// systemCommitArgs returns the git argv of one commit by the shared default fixture
+// identity, with options after the subcommand. owner.runAt starts it, through systemGit
+// or a direct call, so the commit joins the owner's starts ledger.
+func systemCommitArgs(options ...string) []string {
+	return append(gittest.IdentityArgs(), append([]string{"commit"}, options...)...)
+}
+
+// systemIdentity writes the shared default fixture identity into the repository config
+// at root through systemGit.
+func systemIdentity(t *testing.T, root string) {
+	t.Helper()
+	for _, args := range gittest.IdentityConfig() {
+		systemGit(t, root, args...)
 	}
 }
 

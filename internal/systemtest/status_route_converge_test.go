@@ -33,8 +33,7 @@ func TestStatusRouteExecutesUnclaimedCleanup(t *testing.T) {
 				}
 			}
 			git("init", "-q", "-b", "main")
-			git("config", "user.email", "route@example.test")
-			git("config", "user.name", "Route Test")
+			systemIdentity(t, repo)
 			git("commit", "--allow-empty", "-qm", "base")
 			branch := intent.AssignmentBranchRef(strings.Repeat("a", 32), strings.Repeat("b", 32))
 			git("branch", strings.TrimPrefix(branch, "refs/heads/"))

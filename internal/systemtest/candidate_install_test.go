@@ -53,9 +53,7 @@ func newCandidateInstall(t *testing.T) candidateInstall {
 	t.Helper()
 	declaration := "Persisted fields: intent-ledger:commitment." + candidateField + ", review-record:" + candidateField + "\n"
 	primary := copyKitRepository(t, "candidate-install [primary]-")
-	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
-		systemGit(t, primary, "config", identity[0], identity[1])
-	}
+	systemIdentity(t, primary)
 	body := landableSpec("Candidate", declaration)
 	recordtest.Prepare(t, primary, 1, candidateSpec, body).SetTicketWrites("source.txt, internal/intent/ledger/commitment.go, internal/reviewrecord/record.go, " + gapChange + " (new)")
 	staged, err := os.ReadFile(filepath.Join(primary, candidateSpec))

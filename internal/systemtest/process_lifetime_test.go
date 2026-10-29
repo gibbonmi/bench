@@ -183,7 +183,7 @@ func TestProcessLifetimeNestedGate(t *testing.T) {
 		boundedWait(f, artifactBarrierWindow) + f.Command("cat") + " \"$LAND_RACE_READY\" > /dev/null\nkill -KILL \"$nested\"\n"
 	f.MustWrite(t, root, gate, gate)
 	systemGit(t, root, "add", ".")
-	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "nested phase gate")
+	systemGit(t, root, systemCommitArgs("-qm", "nested phase gate")...)
 	systemGit(t, root, "update-ref", "refs/bench/green/main", systemGitOutput(t, root, "rev-parse", "HEAD"))
 	evidence := filepath.Join(systemGitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), "bench-gate-evidence")
 	before := evidenceNames(t, evidence)
