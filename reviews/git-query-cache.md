@@ -351,7 +351,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gq-c2a-standards-1",
+          "performer": "claude:gq-c2a-standards-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "1ad021511d104377070112847e04c2af460ee150",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2a-standards-20261029",
+            "digest": "sha256:c92f6a0d4eda86851dc00c4b25e662b7557d48863e94c643acda17acbec6a3cf",
+            "excerpt": "axis: Standards | verdict: findings | 1 | worst: S1\nS1 | ask-user | confidence 4 | internal/commitment/repository/run_test.go:74-86 | The malformed-listing subtest builds its own git shim beside gittest.StubGitDir; AGENTS.md names a pasted fixture harness as a defect. Fix: a gittest mode, after a Writes widen.\nAdvice: several new exported Repo methods carry no doc comment.\n"
+          },
+          "axis": "Standards",
+          "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "tip": "2d4bc88f94616517c99110528d230229cda74665",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c2a-spec-1",
+          "performer": "claude:gq-c2a-spec-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "1ad021511d104377070112847e04c2af460ee150",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2a-spec-20261029",
+            "digest": "sha256:9e61598cfe593181a8b01df203d622bf43e3c1cc25580cd9962407c8f5ef496e",
+            "excerpt": "axis: Spec | verdict: findings | 2 | worst: P1\nP1 | ask-user | confidence 4 | internal/commitment/repository/readiness.go:111 | inheritance builds Store{Root: owner.Worktree} with no Run; the ticket requires store reads through the run.\nP2 | no-op | confidence 3 | internal/roadmap/tree_validation.go:60-91 | the roadmap run forms refuse a malformed listing record; spec line 157 orders the move onto Run.ListTree.\nGQ27-GQ33 each assert the row behavior.\n"
+          },
+          "axis": "Spec",
+          "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "tip": "2d4bc88f94616517c99110528d230229cda74665",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c2a-coverage-1",
+          "performer": "claude:gq-c2a-coverage-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "1ad021511d104377070112847e04c2af460ee150",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2a-coverage-20261029",
+            "digest": "sha256:0d074fce33c0a8a823ec091e22ecb9ae73d8d173d46ea58aaa3089726011a94b",
+            "excerpt": "axis: Coverage | verdict: findings | 6 | worst: C1\nC1 | auto-fix | 8 | internal/roadmap/tree_validation.go:78,85,99 | RevisionDocumentIn has no test; a nil run there survives.\nC2 | auto-fix | 7 | internal/commitment/repository/repository.go:29 | a hidden shared run in ledger() for a nil-run store survives; no nil-run ledger case.\nC3 | auto-fix | 7 | internal/intent/intent.go:355 | r.Run.Worktrees to git.Worktrees survives; only Read is tested through Repo.\nC4 | ask-user | 6 | internal/commitment/repository/lease.go:45,49 | a nil run in the lease survives in this chunk; only GQ34 in GQ-C2B can catch it.\nC5 | ask-user | 5 | internal/roadmap/tree_validation.go:90 | the --name-only listing stays raw; no test pins it.\nC6 | ask-user | 6 | reviews/git-query-cache.md | the record holds only the probe-02 witness; the GQ29-GQ33 reds are not recorded.\n"
+          },
+          "axis": "Coverage",
+          "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
+          "tip": "2d4bc88f94616517c99110528d230229cda74665",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -425,3 +498,42 @@ The repair session reported these witness reds:
 - C4: a 40-digit rule in `abbreviatedIdentity` turns `TestReauthorizeArgAcceptsAFullObjectID` red.
 
 The coordinator probe omitted the stop at the `--` operand in the listing rule. Four cases of `TestRunObjectReads` went red, and `tree_suffix` was one of them.
+
+## Chunk GQ-C2A review pickup
+
+The review read the frozen pair 0cc386a93 to 2d4bc88f9. Repair cycles used: 0 of 2. Four accepted findings fall on ticket 02, so one combined repair charge carries them.
+
+### Standards
+
+Findings: 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 4: the malformed-listing case builds its own git shim beside the shared `gittest` stub (internal/commitment/repository/run_test.go:74-86). The one-source rule names a pasted fixture harness as a defect. The repair adds a `gittest` mode, and the `--auto-approve` default of this run covers the widen.
+
+### Spec
+
+Findings: 2. Worst issue: P1.
+
+- P1, auto-fix, confidence 4: `inheritance` builds an inner store without the run (internal/commitment/repository/readiness.go:111). The ticket requires each store read to go through its run.
+- P2, no-op, confidence 3: the roadmap run forms refuse a malformed listing record. Spec line 157 orders the move onto the run's listing, so the behavior is part of the spec.
+
+### Coverage
+
+Findings: 6. Worst issue: C1.
+
+- C1, auto-fix, confidence 8: no test counts the starts of `RevisionDocumentIn` (internal/roadmap/tree_validation.go:78). The repair adds that count. The store call sites stay with GQ34, which counts the whole landing.
+- C2, auto-fix, confidence 7: no ledger case uses a store with no run (internal/commitment/repository/repository.go:29). So a hidden shared run survives, and the repair adds that case.
+- C3, no-op, confidence 7: each other root form of the ledger is a one-line delegation, and GQ34 counts a lost cache. A test for each form is optional advice.
+- C4, no-op, confidence 6: the spec puts the lease count in the GQ34 landing row of chunk GQ-C2B.
+- C5, no-op, confidence 5: the spec's Won't-handle line keeps the `--name-only` listing live.
+- C6, auto-fix, confidence 6: the record held only the probe-02 witness. The coordinator records the author's other witness reds below, and this change is evidence-only.
+
+### Ticket 02 author witness reds
+
+- GQ27: a ledger address without the run turns `TestRepoReadsTheCommonDirOnce/run` red.
+- GQ28: a root `Read` through a shared run turns `TestRepoReadsTheCommonDirOnce/root` red.
+- GQ29: a policy listing through the package form turns `TestStoreReadsAPolicyOnce` red.
+- GQ30: a store ledger with a nil run turns `TestStoreReadsAPolicyOnce/ledger` red.
+- GQ31: a policy listing through a hidden shared run turns `TestStoreReadsAPolicyOnce/no_run` red.
+- GQ32: an empty listing read as present turns `TestStoreReadsAPolicyOnce/absent` red.
+- Malformed record: a listing error read as absence turns `TestStoreReadsAPolicyOnce/malformed_listing` red.
+- GQ33: a revision listing through the package form turns `TestRevisionIndexReadsOnce` red.
