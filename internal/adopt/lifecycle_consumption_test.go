@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // The ordinary managed assets that the real Link fixtures change: a regular kit file, and
@@ -194,7 +195,7 @@ func TestLifecycleLinkPartitions(t *testing.T) {
 				if err := os.Mkdir(root, 0o755); err != nil {
 					t.Fatal(err)
 				}
-				runAdoptGit(t, root, "init", "-q")
+				gittest.MustRun(t, root, "init", "-q")
 				t.Chdir(root)
 			}
 			path := filepath.Join(root, tc.rel)

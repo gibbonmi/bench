@@ -300,11 +300,6 @@ func TestReportDoctorRowsLeavesHealthyWorktreeAdminSilent(t *testing.T) {
 	}
 }
 
-func runAdoptGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	gittest.MustRun(t, root, args...)
-}
-
 func TestDoctorDirSelectionAndShimRoundTrip(t *testing.T) {
 	home := t.TempDir()
 	nvm := filepath.Join(home, ".nvm")
