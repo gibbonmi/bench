@@ -1469,6 +1469,46 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "gf-c9-confirm-r1",
+          "performer": "claude:gf-orchestrator-20261029",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "27ad82dd290491830fb6695ac5bd4e61bd8982bf",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:gf-orchestrator-20261029",
+            "digest": "sha256:ba12ba7a8cb13a2bde48d122413c86cc4ccf920ccc2a44c24aa63c2d1c7145cc",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,2,TestUnavailableReason/fifo,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableReason,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,943\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/fifo,\"unavailable_test.go:66: Unavailable(fifo) reason = \\\"fifo capability unavailable: \\\", want \\\"fifo capability unavailable: mkfifo a: operation not permitted\\\"\",1\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/symlink,\"unavailable_test.go:66: Unavailable(symlink) reason = \\\"symlink capability unavailable: \\\", want \\\"symlink capability unavailable: symlink a b: operation not permitted\\\"\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable:\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable:\"\n"
+          },
+          "base": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "reviewed_tip": "2c20d8e0a724dd1716d0cdaa059e01e8c1212e78",
+          "repaired_tip": "537a396191d1c655515cedc44fbf2742cd0876dc",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N3",
+            "N4",
+            "N5",
+            "N6"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "drop the detail from the Unavailable reason",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:gf-orchestrator-20261029",
+              "digest": "sha256:ba12ba7a8cb13a2bde48d122413c86cc4ccf920ccc2a44c24aa63c2d1c7145cc",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,2,TestUnavailableReason/fifo,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableReason,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,943\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,5\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/fifo,\"unavailable_test.go:66: Unavailable(fifo) reason = \\\"fifo capability unavailable: \\\", want \\\"fifo capability unavailable: mkfifo a: operation not permitted\\\"\",1\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/symlink,\"unavailable_test.go:66: Unavailable(symlink) reason = \\\"symlink capability unavailable: \\\", want \\\"symlink capability unavailable: symlink a b: operation not permitted\\\"\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable:\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable:\"\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -2062,3 +2102,12 @@ Findings: 3. Worst issue: N4.
 - N6, `specs/shared-test-fixtures/spec.md:302`: no test drives two parallel callers into one skip log. `Unavailable` adds no write path, so the existing single-write transport contract holds. Disposition: no-op. Confidence: 6.
 
 Repair targets: 2 (N1, and N2 with N4), both on ticket 09, in one combined repair charge.
+
+### GF-C9 repair cycle 1
+
+The ticket 09 repair session committed `537a39619`, a test-only repair of N1 and of N2 with N4. It refroze GF-C9 at that tip.
+The reason test now runs over both classes. One `runSkip` helper now carries the file-transport harness of the capability and unavailable tests.
+Its witness hard-coded the symlink prefix, and `TestUnavailableReason/fifo` turned red. The restore passed.
+
+The coordinator probe dropped the detail from the reason. Both class cases of `TestUnavailableReason` turned red, and the restore passed.
+The repair consumed one of the two repair cycles of GF-C9.
