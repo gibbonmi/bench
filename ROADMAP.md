@@ -168,7 +168,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT435 (LOW, decision required) — author and repair returns carry a calibrated claims table.**
 
-**FT437 (MEDIUM, decision required) — a settled decision on a commitment-pinned row reaches its row file.**
+**FT437 (MEDIUM) — a settled decision on a commitment-pinned row reaches its row file.**
 
 **FT441 (MEDIUM, decision required) — the spec author re-reads each cited source and walks each lifecycle, and the spec review grades rows against the tree.**
 
