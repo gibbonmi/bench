@@ -21,7 +21,7 @@ The research of 2026-10-28 cites these sites: `internal/worktree/effects.go:53`,
 The outcome requires a measurement before any code change. The spec stage measured the package at `main` 1d6c96fc1 and with a throwaway prototype cache.
 Each run used `env GOFLAGS="-p=2 -parallel=2" bench test --in <worktree> --package ./internal/worktree` on a quiet host. `TMPDIR` was unset, so the kit run used `/dev/shm`.
 
-The spec reads "-p=2" as the background-grade width `-p=2 -parallel=2`, because the FT451 bound uses the same words for that width. The reviewer can veto this reading.
+The spec reads "-p=2" as the background-grade width `-p=2 -parallel=2` (`internal/gate/width.go:12-22`, `.bench/BENCH-reference.md:794`). The reviewer can veto this reading.
 
 | arm | runs, in ms | range | median |
 |---|---|---|---:|
@@ -40,7 +40,7 @@ A counting shim on `PATH` logged each git start of one baseline run. The table g
 | reads whose revision operands are all full object ids | 79,403 | 54,445 |
 | state: refs, HEAD, index, status, config, registrations | 129,922 | 80,124 |
 
-The largest repeat groups are 34,555 common-directory reads, 14,980 `cat-file` reads, and 19,920 single-tree `ls-tree` reads. The tree reads name `.bench/commitment.json`, `reviews/<slug>.md`, `specs/<slug>/spec.md`, and `ROADMAP.md`.
+The largest repeat groups are 34,555 common-directory reads, 13,515 `cat-file blob` reads, and 16,292 single-path `ls-tree` reads. Those tree reads name `.bench/commitment.json`, `reviews/<slug>.md`, `specs/<slug>/spec.md`, and `ROADMAP.md`.
 The prototype was an uncommitted patch in the worktree `FT402-cache-prototype`, built by an opus/high write delegate. The spec-stage close discards it.
 
 ## Solution
@@ -56,7 +56,7 @@ The build measures again after its first vertical slice and at the end, with the
 ## User stories
 
 Line: opus / xhigh.
-Implementation-line reason: GQ-C2 threads one run across the intent, commitment, roadmap, and worktree owner seams. Its 34 store literals and 66 ledger calls make a repair round expensive. The prototype settles the shape, and the cache rules take exact start-count rows. The prototype probe of the ref guard stayed silent, so the purity rows are new evidence. The scorecard gives xhigh to a code ticket that crosses owner seams.
+Implementation-line reason: GQ-C2 threads one run across the intent, commitment, roadmap, and worktree owner seams. Its 34 store literals and its many ledger callers make a repair round expensive. The prototype settles the shape, and the cache rules take exact start-count rows. The prototype probe of the ref guard stayed silent, so the purity rows are new evidence. The scorecard gives xhigh to a code ticket that crosses owner seams.
 Harder chunks: GQ-C2, GQ-C3.
 
 ### A command run reads each pure answer once
@@ -123,7 +123,6 @@ Harder chunks: GQ-C2, GQ-C3.
 | `ListTree(root, args...)` | exactly one revision operand before `--`, and it is a full id with an optional `^{tree}` | a ref, HEAD, a short id, or two revisions |
 | `ReadTreeFile(root, tree, path)` | through `ListTree` and `ReadControlBlob` | a ref tree lists live, and its blob id caches |
 | `ResolveCommit(root, rev, flags...)` | `rev` is a full id; the key holds the flags | any other operand |
-| `ResolveTree(root, rev, flags...)` | `rev` is a full id; the key holds the flags | any other operand |
 | `IsAncestor(root, a, d)` | both operands are full ids; a yes and a no both store | an error stores nothing |
 | `PrimaryCheckout(root)` | the common directory, through the run | the porcelain starts on every call |
 
@@ -142,6 +141,7 @@ The shim log held no short-hex operand and no uppercase id, so the predicate kee
 |---|---|---|---|
 | prototype `git.FullObjectID` | 40 or 64 lowercase digits | 40 or 64 digits of either case | GQ25 |
 | `fullCommitIdentity` (`internal/worktree/worktree.go:572`) | 40 digits of either case | calls `git.FullObjectID`, so a 64-digit id also passes | GQ26 |
+| `abbreviatedIdentity` (`internal/worktree/land_identity.go:290-292`), a caller of `fullCommitIdentity` | expands a 4- to 39-digit prefix only to a 40-digit id | also expands such a prefix to a 64-digit id; the 39-digit prefix bound stays | flagged addition |
 | `hexIdentity` (`internal/worktree/worktree.go:574`) | a hex prefix that a user types | unchanged; it grades a prefix, not a full id | none |
 | `lowercaseHex` (`internal/worktree/worktree.go:136`) | a Bench sha256 fingerprint | unchanged; it grades a fingerprint, not an object id | none |
 
@@ -149,9 +149,9 @@ The shim log held no short-hex operand and no uppercase id, so the predicate kee
 
 The verb's run is the ambient run that `newAmbient` builds (`internal/worktree/effects.go:51-54`). The build threads it to these owners:
 
-- **Ledger:** `intent` gains a `Repo{Run, Root}` value whose methods are the ledger reads and writes. Each exported root-taking function becomes a one-line delegation with a nil run. The research found 66 worktree and 25 repository ledger calls at base 1d6c96fc1.
+- **Ledger:** `intent` gains a `Repo{Run, Root}` value and its constructor `intent.In(run, root)`. The value's methods are the ledger reads and writes. Each exported root-taking function becomes a one-line delegation with a nil run. The slicer enumerates the ledger callers with `bench consumers` on each exported `intent` function.
 - **Commitment store:** `repository.Store` gains a `Run` field. Its ledger, lease, window, and tree reads go through that run. The 34 production `Store{Root` literals that build no run stay uncached.
-- **Roadmap revision reads:** `RevisionIndex` and `RevisionDocument` gain run forms that the store calls. The root forms delegate with a nil run.
+- **Roadmap revision reads:** `RevisionIndex` and `RevisionDocument` gain run forms that the store calls. The root forms delegate with a nil run. Their raw `git.Output` listings (`internal/roadmap/tree_validation.go:55` and `:73`) move onto `Run.ListTree`, with the argv that `ReadTreeFile` uses.
 - **Worktree verbs:** the landing, release, cleanup, reset, lifecycle, and creation paths pass the verb's run to their helpers. `planExplicitWith` reads the admin directory and the index path through the run that it holds.
 
 An unexported worktree helper builds no run. A run construction sits only in `newAmbient` or in an exported entry point, which is one command run.
@@ -164,7 +164,8 @@ Each prototype `X` and `XIn` pair of unexported helpers collapses to the run for
 
 | seam | `path:line` | research finding |
 |---|---|---|
-| object-read forms on `git.Run` | `internal/git/tree.go:154`, `:224`, `:236` | slice B: `cat-file` and `ls-tree` of full ids repeat 34,900 times |
+| object-read forms on `git.Run` | `internal/git/tree.go:154`, `:224`, `:236` | shim record: `cat-file blob` repeats 13,515 times, and single-path `ls-tree` of full ids repeats 16,292 times |
+| `policyAt` listing through the run | `internal/commitment/repository/repository.go:250` | slices A and B: the policy read lists through a raw `git.Output` call, then reads the file again |
 | `intent.Repo` | `internal/intent/intent.go:34-40` | slice B: each ledger read starts the common-directory query |
 | `Store.Run` | `internal/commitment/repository/repository.go:21` | slices A and B: the store is a root-only value, and its policy reads repeat |
 | roadmap run forms | `internal/roadmap/tree_validation.go:59`, `:87` | prototype report: the store reads revisions through these two readers |
@@ -181,7 +182,7 @@ It also corrects `internal/worktree/effects.go:30-36` and `:48-50`, and `interna
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| GQ-C1 / 01-cache-full-object-id-reads.md | `git.Run` caches the pure reads under one predicate, and one ADR records the rule | GQ1–GQ26, GQ43–GQ45 | TestRunReadsRefsLive, planned TestRunObjectReads, TestRunObjectReadsStayLive, TestRunObjectFailures, TestRunNilCachesNothing, TestFullObjectID, TestRunAdminPathRevalidates, TestReauthorizeArgAcceptsAFullObjectID | no |
+| GQ-C1 / 01-cache-full-object-id-reads.md | `git.Run` caches the pure reads under one predicate, and one ADR records the rule | GQ1–GQ10, GQ13–GQ26, GQ43–GQ45, GQ47 | TestRunReadsRefsLive, planned TestRunObjectReads, TestRunObjectReadsStayLive, TestRunObjectFailures, TestRunNilCachesNothing, TestFullObjectID, TestRunAdminPathRevalidates, TestReauthorizeArgAcceptsAFullObjectID | no |
 | GQ-C2 / 02-thread-the-run-through-the-ledger-and-store.md, 03-thread-the-landing.md | One landing shares its run with the ledger, the store, the roadmap reads, and its helpers | GQ27–GQ34, GQ41 | planned TestRepoReadsTheCommonDirOnce, TestStoreReadsAPolicyOnce, TestRevisionIndexReadsOnce, TestLandingReadsTheDestinationCommonDirOnce | yes |
 | GQ-C3 / 04-thread-the-cleanup-and-release-paths.md, 05-thread-reset-lifecycle-and-create.md | Every worktree verb shares its one run, and no helper builds its own | GQ35–GQ40, GQ42, GQ46 | TestExplicitPlanReadsEachLocationOnce, TestOwnerMarkerReadsTheCommonDirOnce, TestPackageTestCountPin, planned TestRunConstructionCensus | yes |
 
@@ -211,6 +212,7 @@ A test that binds `PATH` is serial in `internal/worktree`. The landing row adds 
 Rows GQ26, GQ34, and GQ38 add three top-level tests, so `worktreeTestCount` rises from 877 to 880. Both pins sit in `internal/worktree/parallel_census_test.go:906` and `:926`.
 Each ticket that adds a test raises the count pin in its own commit. The pin reads 878, 879, and 880 after the three chunks.
 Row GQ45 extends `TestRunReadsRefsLive`, which today reads the ref through the package `ResolveCommit` only.
+The start-count pin at `internal/worktree/journey_test.go:278` reads 3 today and 1 after GQ-C3 (GQ35). The pin at `:257` stays 1.
 The rows in `internal/git`, `internal/intent`, and `internal/commitment/repository` meet no serial or count pin; the research found pins only in `internal/worktree`.
 
 The gate observes every row through its package tests. The timing rows are review-owned, and no row adds a gate check.
@@ -243,8 +245,6 @@ The gate observes every row through its package tests. The timing rows are revie
 | GQ8 | 1, 2 | Two `ResolveCommit` calls with one full commit id and one flag set start `rev-parse` once | planned internal/git/run_object_test.go (`TestRunObjectReads`) | A form that never stores starts two resolutions |
 | GQ9 | 3 | Two `ResolveCommit` calls with a branch name, with an `update-ref` between them, return the moved commit | planned internal/git/run_object_test.go (`TestRunObjectReadsStayLive`) | The guard mutation of the prototype probe returns the old commit |
 | GQ10 | 6 | A `ResolveCommit` call with `--quiet` and one without it, for one full id, start `rev-parse` twice | planned internal/git/run_object_test.go (`TestRunObjectReads`) | A key without the flags answers the second call from the first |
-| GQ11 | 1, 2 | Two `ResolveTree` calls with one full commit id start `rev-parse` once | planned internal/git/run_object_test.go (`TestRunObjectReads`) | A form that never stores starts two resolutions |
-| GQ12 | 3 | Two `ResolveTree` calls with a branch name, with a commit between them, return the new tree | planned internal/git/run_object_test.go (`TestRunObjectReadsStayLive`) | A form that caches a ref operand returns the old tree |
 | GQ13 | 11 | Two `IsAncestor` checks of one ancestor pair of full ids return yes and start `merge-base` once | planned internal/git/run_object_test.go (`TestRunObjectReads`) | A form that never stores a yes starts two checks |
 | GQ14 | 11 | Two `IsAncestor` checks of one non-ancestor pair of full ids return no and start `merge-base` once | planned internal/git/run_object_test.go (`TestRunObjectReads`) | A form that stores only a yes starts two checks |
 | GQ15 | 3 | Two `IsAncestor` checks with a branch operand, with an `update-ref` between them, return the changed answer | planned internal/git/run_object_test.go (`TestRunObjectReadsStayLive`) | A form that caches a ref operand returns the old answer |
@@ -257,7 +257,8 @@ The gate observes every row through its package tests. The timing rows are revie
 | GQ22 | 9 | Two `AdminPath` reads of one name on one run start `--git-path` once | planned internal/git/run_object_test.go (`TestRunAdminPathRevalidates`) | A form that never stores starts two queries |
 | GQ23 | 9 | After the parent directory of an `AdminPath` answer is removed, the second read refuses and starts no query | planned internal/git/run_object_test.go (`TestRunAdminPathRevalidates`) | A form with no revalidation returns the removed path |
 | GQ24 | 10 | Two `PrimaryCheckout` calls on one run start the common-directory query once and the porcelain twice | planned internal/git/run_object_test.go (`TestRunObjectReadsStayLive`) | A form that caches the porcelain starts it once |
-| GQ25 | 12, 13 | `FullObjectID` accepts 40 and 64 digits of either case, and refuses 39, 41, 63, and 65 digits, a non-hex byte, and empty | planned internal/git/run_object_test.go (`TestFullObjectID`) | A 40-only or lowercase-only predicate refuses a valid id |
+| GQ25 | 12, 13 | `FullObjectID` accepts 40 and 64 hexadecimal digits of either case | planned internal/git/run_object_test.go (`TestFullObjectID`) | A 40-only or lowercase-only predicate refuses a valid id |
+| GQ47 | 12 | `FullObjectID` refuses 39, 41, 63, and 65 digits, a value with one non-hex byte, and the empty value | planned internal/git/run_object_test.go (`TestFullObjectID`) | A length-only or prefix-only predicate accepts a short id |
 | GQ26 | 12 | The reauthorize hint quotes a 64-digit full id instead of the placeholder | planned internal/worktree/reauthorize_test.go (`TestReauthorizeArgAcceptsAFullObjectID`) | A surviving 40-only `fullCommitIdentity` copy prints the placeholder |
 | GQ27 | 15 | Two ledger reads through one `intent.Repo` with a run start the common-directory query once | planned internal/intent/repo_test.go (`TestRepoReadsTheCommonDirOnce`) | A ledger address that reads without the run starts twice |
 | GQ28 | 21 | Two root-taking `intent.Read` calls start the common-directory query twice | planned internal/intent/repo_test.go (`TestRepoReadsTheCommonDirOnce`) | A root form that holds a shared run starts once |
@@ -266,8 +267,8 @@ The gate observes every row through its package tests. The timing rows are revie
 | GQ31 | 21 | Two policy reads through a `repository.Store` with no run start `ls-tree` twice | planned internal/commitment/repository/run_test.go (`TestStoreReadsAPolicyOnce`) | A store that builds a hidden run starts once |
 | GQ32 | 16 | A policy read at a tree that lacks `.bench/commitment.json` reports absence through the run's listing | planned internal/commitment/repository/run_test.go (`TestStoreReadsAPolicyOnce`) | A parsed listing that reads empty as present gives a policy |
 | GQ33 | 17 | Two `RevisionIndex` reads through one run at one full tree id start `ls-tree` once | planned internal/roadmap/tree_validation_test.go (`TestRevisionIndexReadsOnce`) | A roadmap read that bypasses the run starts twice |
-| GQ34 | 18 | One in-process landing under the `log` stub starts the destination common-directory query fewer times than the main-tip count in the test doc | planned internal/worktree/land_run_test.go (`TestLandingReadsTheDestinationCommonDirOnce`) | A landing that passes no run keeps the main-tip count |
-| GQ35 | 19 | One explicit plan for an owned target starts the common-directory query once | `internal/worktree/journey_test.go` (`TestExplicitPlanReadsEachLocationOnce`) | A ledger read outside the run raises the count above one |
+| GQ34 | 18 | One in-process landing under the `log` stub starts the destination common-directory query exactly the threaded count that the test pins with `==` | planned internal/worktree/land_run_test.go (`TestLandingReadsTheDestinationCommonDirOnce`) | A landing that drops the run from any one store or helper starts more queries than the pin |
+| GQ35 | 19 | One explicit plan for an owned target starts the common-directory query once, where the pin reads 3 today | `internal/worktree/journey_test.go` (`TestExplicitPlanReadsEachLocationOnce`) | A ledger read outside the run raises the count above one |
 | GQ36 | 19 | One explicit plan for an owned target starts the admin-directory query once for the target | `internal/worktree/journey_test.go` (`TestExplicitPlanReadsEachLocationOnce`) | The package `git.AdminDir` call in `planExplicitWith` starts a second query |
 | GQ37 | 22 | Two verb runs hold two distinct run values | `internal/worktree/journey_test.go` (`TestOwnerMarkerReadsTheCommonDirOnce`) | A run held in a package variable gives one pointer |
 | GQ38 | 20 | A production file of `internal/worktree` builds a run only in `newAmbient` or in an exported function | planned internal/worktree/effect_census_test.go (`TestRunConstructionCensus`) | A surviving helper with `&git.Run{}` is named by the census |
@@ -290,7 +291,7 @@ The hostile-input classes of `projects/benchkit.md` apply as follows.
 
 - A root spelling with spaces, glob bytes, or a symbolic-link component keys as exact bytes. Two spellings of one repository miss each other and start twice, which is correct.
 - A dangling symlink or a special file at a cached directory refuses on the next read. The revalidation of GQ23 and LGP11 runs on each read.
-- A write inside the run that moves a ref, HEAD, or the index stays visible. Each such operand is live (GQ2, GQ4, GQ9, GQ12, GQ15, GQ45).
+- A write inside the run that moves a ref, HEAD, or the index stays visible. Each such operand is live (GQ2, GQ4, GQ9, GQ15, GQ45).
 - An uppercase full id is pure, because git resolves it to the same object (GQ25).
 - An absent file and an empty listing are distinct from a failure: the empty listing stores (GQ6), and the failure stores nothing (GQ16, GQ17).
 - A destructive worktree state, a removed admin entry, refuses on the next `AdminPath` read (GQ23).
@@ -317,7 +318,7 @@ The hostile-input classes of `projects/benchkit.md` apply as follows.
 - The exported construction sites are `Descriptor` and `CheckoutUnprotected` in `internal/worktree/protection.go`, and `PlanExplicit` and `PlanExplicitWithOptions` in `internal/worktree/subshell.go`.
 - The unexported construction sites are `planReset`, `planAutomaticAt`, `identityBundleRefusal`, `planLandedAssignment`, `validateCreationBundle`, `validateOwnerMarker`, `acquireAt`, `releaseWith`, and `planExplicitCleanupRow`.
 - Package-level location calls in `internal/worktree` production files: 22, by `rg 'git\.(CommonDir|AdminDir|AdminPath|RootAt|Root|Worktrees|PrimaryCheckout)\('`.
-- Production `Store{Root` literals: 34. Ledger calls by package: `internal/worktree` 66, `internal/commitment/repository` 25, `internal/commitment/commitmenttest` 10, `internal/status` 3, and one each in `internal/shift`, `internal/preflight/preflighttest`, and `cmd/bench`.
+- Production `Store{Root` literals: 34, by `rg 'Store\{Root' --glob '!*_test.go'`. The ledger callers come from `bench consumers` on each exported `intent` function, which the slicer runs.
 - Start-count readers: `internal/git/run_cache_test.go:36`, `:56`, `:99`, `:129`, `:144`, `:160`; `internal/poolkey/run_test.go:24`; `internal/worktree/journey_test.go:257` and `:278`; `internal/diff/identity_test.go:202-208`.
 - Recorded-argv absence readers: `internal/git/worktree_admin_hostile_test.go:155`, `:229`, `:270`, `:286`; `internal/worktree/clean_landed_hostile_test.go:182`, `:186`; `internal/systemtest/land_route_test.go:51`; `internal/adopt/link_hook_test.go:170-189`. The package functions stay uncached, so these keep their counts.
 - Other enforcement: `internal/conformance/git_plumbing_owner_test.go:23` keeps the location flags inside `internal/git`, and `internal/conformance/bounds_policy_test.go:45` pins two tokens in `internal/git/git.go`.
@@ -326,16 +327,16 @@ The build reruns `bench consumers` on each changed function before each charge, 
 
 ### Pre-review proof checklist
 
-- Cited symbols: each cited symbol resolves at base 1d6c96fc1, except the new run forms, `intent.Repo`, `Store.Run`, the `log` stub mode, and the planned tests.
+- Cited symbols: each cited symbol resolves at base 1d6c96fc1, except the new run forms, `intent.Repo`, `intent.In`, `Store.Run`, `git.FullObjectID`, the `log` stub mode, and the planned tests.
 - Import edges: `internal/intent`, `internal/commitment/repository`, and `internal/roadmap` already import `internal/git`. The build adds no new import edge.
 - Source-row clauses and occurrences: the source-to-row table below.
-- Promised field labels: `Run`, `Repo`, `FullObjectID`, and the stub mode `log`.
+- Promised field labels: `Run`, `Repo`, `In`, `FullObjectID`, and the stub mode `log`.
 - Changed-function callers: the inventory above. The slicer reruns `bench consumers` for each changed function.
 - Copy survival: GQ26 reds a surviving 40-only `fullCommitIdentity`, and GQ38 reds a surviving helper run.
 - Rendered-shape readers: none. No output shape changes.
-- Pin operators: `TestPackageTestCountPin` compares with `<` and `>`, and `TestSerialSetStaysBelowTheCeiling` requires equality. The start-count rows compare with `==`, and GQ34 compares with `<`.
+- Pin operators: `TestPackageTestCountPin` compares with `<` and `>`, and `TestSerialSetStaysBelowTheCeiling` requires equality. Every start-count row, GQ34 included, compares with `==`.
 - Entry reads: none. The run comes from `newAmbient`, which already owns the ambient reads.
-- Derived expectations: each start count comes from the fixture's own calls. GQ34 compares with the main-tip count that the test doc records from a base-tree run.
+- Derived expectations: each start count comes from the fixture's own calls. GQ34 pins the threaded landing's observed count, and its test doc records the larger main-tip count as context only.
 - Consolidated rules: the predicate consolidation table above.
 - Quantified obligations: GQ19 covers each cached form of the form table, and GQ38 covers each production file of `internal/worktree`.
 - Workflow-step writes: none. The cache writes no file.
@@ -346,8 +347,8 @@ The build reruns `bench consumers` on each changed function before each charge, 
 |---|---|
 | Before any code change, a measurement compares the package time with a per-command cache against the recorded spread. | Problem, GQ41, GQ42 |
 | When the measured gain falls outside the spread, a command run caches its pure git queries. | GQ1–GQ40, GQ43–GQ46 |
-| D2: pure means the location answers plus each read whose revision operands are all full object ids. | GQ1–GQ25, GQ45 |
-| D2: refs, HEAD, the index, status, config, and registrations stay live. | GQ2, GQ4, GQ5, GQ9, GQ12, GQ15, GQ24, GQ45 |
+| D2: pure means the location answers plus each read whose revision operands are all full object ids. | GQ1–GQ10, GQ13–GQ25, GQ45, GQ47 |
+| D2: refs, HEAD, the index, status, config, and registrations stay live. | GQ2, GQ4, GQ5, GQ9, GQ15, GQ24, GQ45 |
 | FT402: a faster test keeps its purpose and its failure detection. | GQ35, GQ36, GQ40 |
 | FT402: a timing gain inside the recorded spread counts as no change. | GQ41, GQ42 |
 
@@ -357,6 +358,8 @@ The build reruns `bench consumers` on each changed function before each charge, 
 - The `log` mode of the git stub. The landing row needs a stub that refuses no query.
 - The run-construction census `TestRunConstructionCensus`. It makes the one-run rule red-capable.
 - The 64-digit widening of the reauthorize hint. It follows from the one-predicate consolidation.
+- The 64-digit widening of `abbreviatedIdentity`: a short prefix in a SHA-256 repository now expands to its full id. It follows from the one-predicate consolidation.
+- The parent-directory check of each cached `AdminPath` read. A removed administration entry then refuses, as each cached location answer does.
 - The pin changes `worktreeSerialCeiling` 21 to 22 and `worktreeTestCount` 877 to 880.
 - The `policyAt` listing through `ListTree`. A malformed listing record then refuses instead of reading as present.
 - The build-entry staleness pass reruns the baseline when `internal/git` or `internal/worktree` changed on `main` after 1d6c96fc1.
