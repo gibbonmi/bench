@@ -59,7 +59,7 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	}
 	assignmentID := assignment.ID
 	if !active {
-		receipt, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
+		receipt, err := terminalResumeReceipt(a.run, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
 		if err != nil {
 			return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, false))
 		}
@@ -119,12 +119,12 @@ func resumePublishedSteps(j joins, run *git.Run, root, destination, branch, mark
 	return nil, stepsAfterMarker(j, run, root, destination, published, destinationBase)
 }
 
-func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
+func terminalResumeReceipt(run *git.Run, root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
 	repo, target, err := cleanupIdentity(root, path)
 	if err != nil {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
-	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, intent.RequestDigest(request))
+	receipt, found, err := intent.In(run, root).CleanupReceiptFor(repo, releaseOperation, target, intent.RequestDigest(request))
 	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}

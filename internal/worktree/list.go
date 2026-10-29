@@ -83,7 +83,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		assignedPaths[assignment.Worktree] = true
 		row := listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved), assignmentPath: assignment.Worktree}
 		if row.values[listTreeCell] == "missing" {
-			row.cleanLanded = missingTreeLanded(root, assignment)
+			row.cleanLanded = missingTreeLanded(run, root, assignment)
 		}
 		rows = append(rows, row)
 	}

@@ -110,12 +110,12 @@ func missingTreeRefusal(root string, assignment intent.Assignment) error {
 // A tree that is gone proves nothing, so the landed selector's own proof decides. The
 // refusal and the `list` help row both read it, so neither names a clean that skips the
 // assignment.
-func missingTreeLanded(root string, assignment intent.Assignment) bool {
+func missingTreeLanded(run *git.Run, root string, assignment intent.Assignment) bool {
 	defaultRef, resolved := git.ResolvedDefault(root)
 	if !resolved {
 		return false
 	}
-	leases, err := assignmentLeaseStates(nil, root)
+	leases, err := assignmentLeaseStates(run, root)
 	if err != nil {
 		return false
 	}
@@ -124,13 +124,14 @@ func missingTreeLanded(root string, assignment intent.Assignment) bool {
 }
 
 // missingTreeRoute is the recovery the missing-tree face prints. A value that is not
-// line-safe prints its slot placeholder, so the release keeps its command words.
+// line-safe prints its slot placeholder, so the release keeps its command words. The
+// target resolution that raises the face holds no run, so the landed proof reads live.
 func missingTreeRoute(root string, assignment intent.Assignment) string {
 	request := assignment.RequestToken
 	if !lineSafe(request) {
 		request = "<request>"
 	}
-	route := recoverMissingTree(missingTreeLanded(root, assignment), request, assignment.Worktree)
+	route := recoverMissingTree(missingTreeLanded(nil, root, assignment), request, assignment.Worktree)
 	if route.path == "" || lineSafe(route.path) {
 		return route.line()
 	}

@@ -71,7 +71,7 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 	// Every refusal prints the route of its face, which ends with the caller's own re-run.
 	rerun := mergeRerun(spelling, parsed.Positionals[0])
 	refuse := func(err error) int { return landRefusalError(stdout, mergeFaceRoute(err, rerun)) }
-	assignments, err := intent.Assignments(root)
+	assignments, err := intent.In(a.run, root).Assignments()
 	if err != nil {
 		return refuse(refusalError{refusal{detail: "assignment ledger is unreadable"}})
 	}

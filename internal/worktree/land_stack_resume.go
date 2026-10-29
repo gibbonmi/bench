@@ -68,7 +68,7 @@ func resumeStack(j joins, a ambient, root string, args []string, stdout, stderr 
 	for i := range k {
 		_, live, skipped, err := resumeAssignment(j, a.run, root, route.paths[i], members[i].Request, tips[i], bases[i], landingSlug(members[i].Spec))
 		if err == nil && !live {
-			_, err = terminalResumeReceipt(root, route.paths[i], members[i].Request, tips[i])
+			_, err = terminalResumeReceipt(a.run, root, route.paths[i], members[i].Request, tips[i])
 		}
 		if err != nil {
 			return landRefusalError(stdout, stackMemberRefusal(i, "", landingFaceRoute(err, rerun, skipped)))

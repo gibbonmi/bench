@@ -281,7 +281,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	absent := false
 	if shape, shapeErr := ClassifyPathShape(target); resumeFingerprint == "" && shapeErr == nil && shape == ShapeAbsent {
 		absent = true
-		if err := missingTreeLeaseRefusal(root, targetArg, *assignment); err != nil {
+		if err := missingTreeLeaseRefusal(a.run, root, targetArg, *assignment); err != nil {
 			return intent.CleanupReceipt{}, err
 		}
 	} else if resumeFingerprint == "" {
@@ -339,8 +339,8 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 // missingTreeLeaseRefusal keeps the lease verdicts of a present tree's release for a tree
 // that is gone: an unknown lease and a live lease each retain the assignment. The policy
 // decides the live-lease verdict, so its reason has one source.
-func missingTreeLeaseRefusal(root, targetArg string, assignment intent.Assignment) error {
-	leases, err := assignmentLeaseStates(nil, root)
+func missingTreeLeaseRefusal(run *git.Run, root, targetArg string, assignment intent.Assignment) error {
+	leases, err := assignmentLeaseStates(run, root)
 	if err != nil {
 		return err
 	}
