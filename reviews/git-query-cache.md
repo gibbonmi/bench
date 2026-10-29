@@ -912,6 +912,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gq-c3-standards-2",
+          "performer": "claude:gq-c3-standards-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "90089486fadfbc669ea0443fac0a53eef1d3b4ca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c3-standards-confirm-20261029",
+            "digest": "sha256:ca84cad8b07a7f8aae512710780b972b435f25f317442c0a7cec7e06b8461bbb",
+            "excerpt": "axis: Standards (confirming round, repair delta 51b8334a5..56da04a3b)\nS1: closed. The newAmbient, ambient, and census comments match the code: the readers that take the run share its answers, and a reader below a nil-passing seam shares none. They point to the git.Run doc without copying its list.\nNo new finding.\n"
+          },
+          "axis": "Standards",
+          "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "tip": "56da04a3b712ce1ab198b3970733179b16d5a759",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c3-standards-1"
+          ]
+        },
+        {
+          "id": "gq-c3-spec-2",
+          "performer": "claude:gq-c3-spec-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "90089486fadfbc669ea0443fac0a53eef1d3b4ca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c3-spec-confirm-20261029",
+            "digest": "sha256:515e365abb7e0f1dba6c64cb38f59ed742908d7924c419d09fbe2fa8eb6590af",
+            "excerpt": "axis: Spec (confirming round, repair delta 51b8334a5..56da04a3b)\nP1: closed for the two named reads (ledger and common directory in planReset). P2: closed. P3: closed; ledger writes stay root-only by the tickets.\nGQ34 == 31 matches its row; GQ35-GQ40 show no contradiction.\nAdvice (orchestrator disposition: optional advice under the bounded repair policy, because it loses only a cached answer at a site that no row counts and meets no blocking condition): planReset reads the lease file through the package LeaseFile at reset.go:216; landed.go:84, list.go:303, snapshot.go, and subshell.go:83 do the same.\n"
+          },
+          "axis": "Spec",
+          "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "tip": "56da04a3b712ce1ab198b3970733179b16d5a759",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c3-spec-1"
+          ]
+        },
+        {
+          "id": "gq-c3-coverage-2",
+          "performer": "claude:gq-c3-coverage-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "90089486fadfbc669ea0443fac0a53eef1d3b4ca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c3-coverage-confirm-20261029",
+            "digest": "sha256:5901e6feb04adb01d3d921ce37232bed7c5c37d65a187059c6ce5502ce3ab1e6",
+            "excerpt": "axis: Coverage (confirming round, repair delta 51b8334a5..56da04a3b)\nC1: closed. A census that skips package scope, exempts methods, or hard-codes the import name git names nothing for its planted case, so each new case fails under its mutation.\nNo new finding; no wrong-answer path in the threaded reads.\n"
+          },
+          "axis": "Coverage",
+          "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "tip": "56da04a3b712ce1ab198b3970733179b16d5a759",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c3-coverage-1"
+          ]
         }
       ]
     }
@@ -1222,3 +1288,14 @@ The repair session reported these witness reds:
 - C1: a census that exempts exported methods turns `TestRunConstructionCensus` red.
 - C1: a census that sees only the import name `git` turns `TestRunConstructionCensus` red.
 - P2: a package ledger read in `resolveAssignmentIn` turns `TestLandingReadsTheDestinationCommonDirOnce` red, with 33 starts against the pin of 31.
+
+## GQ42 timing at completion
+
+The coordinator ran the spec command five times on the final source. Then it ran the same command five times at `main` 16eab3331 as a control in the same session.
+
+| arm | package runs, in ms | range | median |
+|---|---|---|---:|
+| final source | 129016, 129867, 129178, 129150, 128588 | 128.6 to 129.9 s | 129.2 s |
+| control at `main` | 142500, 143045, 142318, 143928, 141471 | 141.5 to 143.9 s | 142.5 s |
+
+GQ42 holds in its literal reading. The smallest gain against the recorded baseline is 16.3 s, which is outside the recorded 7.6 s spread. The median gain against the recorded baseline is 19.6 s, which is 13.2 percent. Against the control, the smallest gain is 11.6 s, and the median gain is 13.3 s.
