@@ -71,13 +71,7 @@ func requireRetainedWorktree(t *testing.T, root, stdout string) {
 // fixtures share.
 func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) (root string) {
 	t.Helper()
-	root = t.TempDir()
-	gittest.MustRun(t, root, "init", "-q", "-b", "main")
-	// The shift loop runs its own git commit here, so the identity has to sit in the
-	// repository config. A per-command -c leaves the product's commit without an author.
-	for _, args := range gittest.IdentityConfig() {
-		gittest.MustRun(t, root, args...)
-	}
+	root = gittest.RepoOnBranch(t, "main")
 	f := testrepo.NewGateFixture(t.TempDir())
 	if err := f.Write(root, f.Command("bash")+" -c "+sanitize.ShellQuote(gateScript), ""); err != nil {
 		t.Fatal(err)

@@ -2,7 +2,6 @@ package landing
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -59,13 +58,12 @@ func mergeCheckout(t *testing.T, added ...string) (root, base string) {
 // pendingMerge starts a conflicted merge of the incoming branch in the worktree of
 // mergeCheckout, and it returns the worktree and its HEAD before the merge. The fixture
 // writes the resolution to the worktree file only, so the index keeps the unmerged entries
-// of the conflicted path. gittest.Output fails on the exit 1 of a conflicted merge.
-// The merge therefore runs through its own call, as stageHandMerge in internal/worktree does.
+// of the conflicted path. gittest.Run returns the failure of the conflicted merge.
 func pendingMerge(t *testing.T, added ...string) (root, base string) {
 	t.Helper()
 	root, base = mergeCheckout(t, added...)
-	merge := exec.Command("git", "-C", root, "merge", "--no-commit", mergeIncoming)
-	if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
+	out, err := gittest.Run(root, "merge", "--no-commit", mergeIncoming)
+	if err == nil || !strings.Contains(err.Error(), "CONFLICT") {
 		t.Fatalf("merge = %v, %s; want the conflict", err, out)
 	}
 	write(t, root, mergeConflictPath, mergeResolution)
