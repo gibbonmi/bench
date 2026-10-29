@@ -4,7 +4,9 @@ Status: staged
 
 Decision source: reviewer-confirmed current conversation, 2026-10-28, which holds the FT402-git-cache outcome criteria in `.bench/commitment.json` with `roadmap/FT402.md`, and decisions D1 and D2
 
-Verification log: pending — the spec-stage close writes it
+Verification log: 4 iteration(s) to accept — the spec round took 2, because row GQ34 compared a start count with "fewer than", so its probe could not bite; the ticket round took 2, because ticket 01 left `internal/git/git.go` unfenced and the seam ticket shared a chunk with its consumer.
+
+Implementation approval: approved by the reviewer on 2026-10-28, including the five-ticket breakdown, the chunk split into GQ-C2A and GQ-C2B, and the declared implementation line.
 
 ## Problem
 
