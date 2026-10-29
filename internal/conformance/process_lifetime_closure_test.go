@@ -12,15 +12,15 @@ import (
 	"testing"
 )
 
-// processLifetimeMechanics is the substring prefilter: a file that spells none of these
-// carries no lifetime mechanic and no owner call.
-var processLifetimeMechanics = []string{"Setpgid", "Kill", "Signal", "Wait", "NewLifetime", "RunInherited"}
+// processLifetimePrefilter is the substring prefilter: a file that spells none of the
+// private lifetime mechanics and none of the owner calls carries neither.
+var processLifetimePrefilter = slices.Concat([]string{"Setpgid", "Kill", "Signal", "Wait"}, processLifetimeOwnerCalls)
 
 // processLifetimeFileDiags reports each private lifetime mechanic in one production file and
 // each owner call that no census entry reaches. Comments and strings are not call sites.
 func processLifetimeFileDiags(file, rel string, reached map[string]bool) []string {
 	body := readIfExists(file)
-	if !slices.ContainsFunc(processLifetimeMechanics, func(token string) bool { return strings.Contains(body, token) }) {
+	if !slices.ContainsFunc(processLifetimePrefilter, func(token string) bool { return strings.Contains(body, token) }) {
 		return nil
 	}
 	fset := token.NewFileSet()
