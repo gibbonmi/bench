@@ -227,6 +227,46 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "gf-c1-confirm-r1",
+          "performer": "claude:gf-orchestrator-20261029",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "57762fa392b4a1a6977422e6139578f2372ad26a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:gf-orchestrator-20261029",
+            "digest": "sha256:854aca0f6659235236fe9e4f05dc2c66ef86052d3997572adcec8dd638d13cb7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFixtureIdentity,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestFixtureIdentity,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,443\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,43,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestFixtureIdentity,\"commands_test.go:315: IdentityArgs identity = \\\"bench test <other@example.invalid>|bench test <other@example.invalid>\\\"; want \\\"bench test <bench@example.invalid>|bench test <bench@example.invalid>\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "4138ef1aa0c219c40396a9b799eac8769207b1f8",
+          "reviewed_tip": "63e498366d28674bb6a390f903391e8019bcea5f",
+          "repaired_tip": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "F1",
+            "F2"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "swap the IdentityArgs email option to other@example.invalid",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:gf-orchestrator-20261029",
+              "digest": "sha256:854aca0f6659235236fe9e4f05dc2c66ef86052d3997572adcec8dd638d13cb7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestFixtureIdentity,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gittest,TestFixtureIdentity,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,443\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gittest,fail,43,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gittest,TestFixtureIdentity,\"commands_test.go:315: IdentityArgs identity = \\\"bench test <other@example.invalid>|bench test <other@example.invalid>\\\"; want \\\"bench test <bench@example.invalid>|bench test <bench@example.invalid>\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -278,3 +318,15 @@ Findings: 4. Worst issue: C1.
 - C4, `internal/gittest/snapshot_test.go:40`: GF15 grades only the commit failure. GF15 binds one failed command, and an earlier swallowed step still ends in the returned commit error. Disposition: no-op. Confidence: 5.
 
 Repair targets: 3 (C1, C2, C3), all on ticket 01, in one combined repair charge.
+
+### GF-C1 repair cycle 1
+
+The ticket 01 repair session committed `6002ec0cf`, a test-only repair of C1, C2, and C3. It refroze GF-C1 at that tip.
+Its witness reds each came from one `bench probe` of production code, and each restore passed:
+
+- C1: a swap of the `OutputBytes` fatal call for a log call turned `TestOutputBytesFailure` red.
+- C2: an omission of the name option from `IdentityArgs` turned `TestFixtureIdentity` red.
+- C3: an insertion that skips zero-length files in the snapshot turned `TestKitCopyPreservesTheVisibleWorkingTree` red.
+
+The coordinator probe swapped the email option of `IdentityArgs`, a different kind at a different site. It turned `TestFixtureIdentity` red, and the restore passed.
+The repair consumed one of the two repair cycles of GF-C1.
