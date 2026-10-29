@@ -45,6 +45,10 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 	return commonDir
 }
 
+// MalformedTreeRecord is the ls-tree record that the malformed-ls-tree stub mode answers.
+// It holds no tab, and git never writes such a record.
+const MalformedTreeRecord = "no tab"
+
 // StubGitDir writes the same stub into a fresh directory and returns that
 // directory with the common-directory path. It mutates no environment, so the
 // caller hands the directory to one child on its own PATH.
@@ -56,11 +60,12 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 // file-git-dir answer creates it at root joined with "missing-admin",
 // "symlink-admin", or "file-admin" respectively — the same join the stub uses.
 // The file-query modes are block-git-path, relative-git-path, and
-// fail-git-path. In fail-git-dir, relative-git-path, and fail-git-path mode,
-// every invocation other than the mode's own targeted query passes through to
-// the real git the stub locates with exec.LookPath before the test replaces
-// PATH. The log mode refuses no query: it logs each start and passes every
-// invocation to that real git.
+// fail-git-path. The listing mode malformed-ls-tree answers each ls-tree start
+// with the one record MalformedTreeRecord. In fail-git-dir, relative-git-path,
+// fail-git-path, and malformed-ls-tree mode, every invocation other than the
+// mode's own targeted query passes through to the real git the stub locates
+// with exec.LookPath before the test replaces PATH. The log mode refuses no
+// query: it logs each start and passes every invocation to that real git.
 func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -107,6 +112,12 @@ if [ %[2]q = relative-git-path ]; then
   esac
   exec %[3]q "$@"
 fi
+if [ %[2]q = malformed-ls-tree ]; then
+  case "$*" in
+    *'ls-tree'*) printf '%%s\000' %[9]q; exit 0;;
+  esac
+  exec %[3]q "$@"
+fi
 case "$*" in
   *'--show-toplevel'*) printf '%%s\n' %[4]q;;
   *'--git-common-dir'*)
@@ -134,7 +145,7 @@ case "$*" in
     if [ %[2]q = noisy-list ]; then printf 'worktree %%s\000\000' %[4]q; fi
     exit 0;;
 esac
-`, logPath, mode, realGit, root, commonDir, badAdminDir, symlinkAdminDir, fileAdminDir)
+`, logPath, mode, realGit, root, commonDir, badAdminDir, symlinkAdminDir, fileAdminDir, MalformedTreeRecord)
 	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
 		t.Fatalf("stub git: %v", err)
 	}

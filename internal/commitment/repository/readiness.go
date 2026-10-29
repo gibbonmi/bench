@@ -108,7 +108,7 @@ func (store Store) inheritance(ledger intent.Ledger, assignment string) (*intent
 			if binding.Assignment != assignment {
 				continue
 			}
-			if err := (Store{Root: owner.Worktree}).ready(ledger, binding.Deliverable, ""); err != nil {
+			if err := (Store{Root: owner.Worktree, Run: store.Run}).ready(ledger, binding.Deliverable, ""); err != nil {
 				return nil, err
 			}
 			return &binding, nil

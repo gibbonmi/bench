@@ -2,8 +2,6 @@ package repository_test
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -14,7 +12,7 @@ import (
 )
 
 // TestStoreReadsAPolicyOnce proves that a store with a run starts each pure policy read and
-// its ledger address query once, and that a store with no run lists the policy on each read.
+// its ledger address query once, and that a store with no run starts both on each read.
 // A tree without the policy reads as absent through the run's listing, and a malformed
 // listing record refuses. (Coverage rows GQ29, GQ30, GQ31, and GQ32.)
 func TestStoreReadsAPolicyOnce(t *testing.T) {
@@ -35,7 +33,8 @@ func TestStoreReadsAPolicyOnce(t *testing.T) {
 		return err
 	}
 	// A present policy is listed again by its file read, so a store with no run lists it
-	// twice for each read. The no-run row reads the tree without the policy, which lists once.
+	// twice for each read. The no-run policy row reads the tree without the policy, which lists
+	// once.
 	cases := []struct {
 		name   string
 		root   string
@@ -47,6 +46,7 @@ func TestStoreReadsAPolicyOnce(t *testing.T) {
 		{"ledger", present, new(git.Run), ledger, map[string]int{"--git-common-dir": 1}},
 		{"absent", absent, new(git.Run), policy(false), map[string]int{"ls-tree": 1, "cat-file": 0}},
 		{"no run", absent, nil, policy(false), map[string]int{"ls-tree": 2}},
+		{"ledger no run", present, nil, ledger, map[string]int{"--git-common-dir": 2}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -65,21 +65,11 @@ func TestStoreReadsAPolicyOnce(t *testing.T) {
 			}
 		})
 	}
-	// The git stub has no mode that answers a listing with a record that git never writes,
-	// so this case binds its own shim: each ls-tree answers one record with no tab.
 	t.Run("malformed listing", func(t *testing.T) {
-		realGit, err := exec.LookPath("git")
-		if err != nil {
-			t.Fatal(err)
-		}
-		dir := t.TempDir()
-		shim := fmt.Sprintf("#!/bin/sh\ncase \"$*\" in *ls-tree*) printf 'no tab\\000'; exit 0;; esac\nexec %q \"$@\"\n", realGit)
-		if err := os.WriteFile(filepath.Join(dir, "git"), []byte(shim), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		t.Setenv("PATH", dir)
-		_, _, err = commitrepo.Store{Root: present, Run: new(git.Run)}.Policy()
-		if want := `read commitment policy: git: unreadable tree entry "no tab"`; err == nil || err.Error() != want {
+		gittest.StubGit(t, present, "malformed-ls-tree", filepath.Join(t.TempDir(), "argv"))
+		_, _, err := commitrepo.Store{Root: present, Run: new(git.Run)}.Policy()
+		want := fmt.Sprintf("read commitment policy: git: unreadable tree entry %q", gittest.MalformedTreeRecord)
+		if err == nil || err.Error() != want {
 			t.Fatalf("policy read error = %v, want %s", err, want)
 		}
 	})
