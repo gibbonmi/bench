@@ -560,7 +560,7 @@ func assignmentString(a intent.Assignment) string { return fmt.Sprintf("%s/%s", 
 // home is explicit, so a parallel test keeps its pool private to itself.
 func mustCreate(t *testing.T, root, home, request, label string) Creation {
 	t.Helper()
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, currentTime())
+	creation, err := createAt(defaultJoins(), nil, root, home, request, label, nil, currentTime())
 	mustNoError(t, err)
 	return creation
 }

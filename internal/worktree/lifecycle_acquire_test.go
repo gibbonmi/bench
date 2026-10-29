@@ -20,7 +20,7 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 	t.Cleanup(func() { syscall.Umask(oldUmask) })
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
-	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
+	wt, err := acquireAt(defaultJoins(), nil, root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 		t.Fatalf("fixture default resolved to %q, want no resolvable default", ref)
 	}
 
-	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
+	wt, err := acquireAt(defaultJoins(), nil, root, "", "", home, currentTime())
 
 	if err != nil {
 		t.Fatalf("Acquire with an unresolvable default: %v", err)
@@ -226,7 +226,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 		t.Helper()
 		root := newWorktreeRepo(t)
 		home := filepath.Join(root, ".bench-home")
-		creation, err := createAt(defaultJoins(), root, home, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil, currentTime())
+		creation, err := createAt(defaultJoins(), nil, root, home, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil, currentTime())
 		if err != nil {
 			t.Fatal(err)
 		}

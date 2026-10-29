@@ -25,8 +25,8 @@ var poolRootOperations = []poolRootOperation{
 	{"acquire", func(t *testing.T, j joins, root, home string) error {
 		// The release returns the lease at once, so a re-entry in the same second reuses
 		// the clean entry rather than colliding with its own candidate name.
-		wt, err := acquireAt(j, root, "", "", home, currentTime())
-		releaseWith(j, wt)
+		wt, err := acquireAt(j, nil, root, "", "", home, currentTime())
+		releaseWith(j, nil, wt)
 		return err
 	}},
 	{"create", func(t *testing.T, j joins, root, home string) error {
@@ -34,7 +34,7 @@ var poolRootOperations = []poolRootOperation{
 		if err != nil {
 			t.Fatalf("request id: %v", err)
 		}
-		_, err = createAt(j, root, home, request, "pool-root-"+request[:8], nil, currentTime())
+		_, err = createAt(j, nil, root, home, request, "pool-root-"+request[:8], nil, currentTime())
 		return err
 	}},
 }

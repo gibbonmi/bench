@@ -75,8 +75,8 @@ func restoreResetLayers(path string, manifest recoveryManifest) error {
 	return err
 }
 
-func resetRestoredLayersMatch(root string, environ []string, plan resetPlan) bool {
-	rootOID, _, err := captureLayers(root, environ, plan.assignment.Worktree, true, plan.manifest.Tip)
+func resetRestoredLayersMatch(run *git.Run, root string, environ []string, plan resetPlan) bool {
+	rootOID, _, err := captureLayers(run, root, environ, plan.assignment.Worktree, true, plan.manifest.Tip)
 	if err != nil {
 		return false
 	}

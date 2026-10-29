@@ -67,7 +67,7 @@ func subshellAt(root string, a ambient, shell string, environ []string, args []s
 		fmt.Fprintln(stderr, err)
 		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
 	}
-	creation, err := createAt(defaultJoins(), root, a.home, request, objective, nil, a.now, func() (creationStart, error) { return creationStart{ref: startRef}, nil })
+	creation, err := createAt(defaultJoins(), a.run, root, a.home, request, objective, nil, a.now, func() (creationStart, error) { return creationStart{ref: startRef}, nil })
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)

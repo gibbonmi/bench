@@ -148,7 +148,7 @@ func readStackRoute(a ambient, root string, parsed usage.Result) (route stackRou
 	unresolved = make([]bool, len(input.Members))
 	named := map[string]int{}
 	for i, m := range input.Members {
-		operand := resolveVerbOperand(root, m.Path)
+		operand := resolveVerbOperand(a.run, root, m.Path)
 		path, err := canonicalPathIn(a, operand)
 		if err != nil {
 			route.paths[i], unresolved[i] = operand, true

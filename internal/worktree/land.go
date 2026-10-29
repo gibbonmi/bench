@@ -134,7 +134,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	operand := resolveVerbOperand(root, parsed.Positionals[0])
+	operand := resolveVerbOperand(a.run, root, parsed.Positionals[0])
 	path, err := canonicalPathIn(a, operand)
 	if err != nil {
 		rerun := landingRerun(parsed.Flags["--request"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"], operand, "")

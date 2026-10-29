@@ -8,7 +8,7 @@ import (
 )
 
 func writeResetEnvelope(root string, environ []string, plan resetPlan) (intent.Recovery, error) {
-	rootOID, payloads, err := captureLayers(root, environ, plan.assignment.Worktree, true, plan.tip)
+	rootOID, payloads, err := captureLayers(nil, root, environ, plan.assignment.Worktree, true, plan.tip)
 	if err != nil {
 		return intent.Recovery{}, err
 	}

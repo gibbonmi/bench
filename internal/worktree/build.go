@@ -68,12 +68,12 @@ func buildWith(j joins, a ambient, root string, args []string, stdout, stderr io
 // none.
 func buildAttributed(attributed *string, j joins, a ambient, root string, parsed usage.Result, stdout, stderr io.Writer) int {
 	if _, install := parsed.Flags[installFlag]; install {
-		return installAttributed(attributed, j, root, parsed.Positionals[0], a.environ, stdout, stderr)
+		return installAttributed(attributed, j, a.run, root, parsed.Positionals[0], a.environ, stdout, stderr)
 	}
 	if _, restore := parsed.Flags[restoreFlag]; restore {
 		return restoreAttributed(j, a, root, parsed.Positionals[0], stdout, stderr)
 	}
-	path, assignment, err := resolveBuildTarget(root, parsed.Positionals[0])
+	path, assignment, err := resolveBuildTarget(a.run, root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, err)
 	}
@@ -114,8 +114,8 @@ var buildGrammar = usage.Grammar{
 
 // resolveBuildTarget returns the authorized worktree path and the record the output
 // names. resolveAssignment is the whole authority, and the record it answers carries both.
-func resolveBuildTarget(root, target string) (string, intent.Assignment, error) {
-	assignment, err := resolveAssignment(root, target)
+func resolveBuildTarget(run *git.Run, root, target string) (string, intent.Assignment, error) {
+	assignment, err := resolveAssignment(run, root, target)
 	if err != nil {
 		return "", intent.Assignment{}, err
 	}
@@ -155,8 +155,8 @@ type installTarget struct {
 // the primary checkout's doctor repair, so the broker manifest binds the candidate. Each
 // authority refusal comes before the build, so such a refusal writes no file. A failed
 // repair leaves the published candidate in place, and a rerun repeats both steps.
-func installAttributed(attributed *string, j joins, root, target string, environ []string, stdout, stderr io.Writer) int {
-	authority, err := installAuthority(j, root, target)
+func installAttributed(attributed *string, j joins, run *git.Run, root, target string, environ []string, stdout, stderr io.Writer) int {
+	authority, err := installAuthority(j, run, root, target)
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, err)
 	}
@@ -196,7 +196,7 @@ func primaryWithInputs(root string) (string, error) {
 // inputs, the running executable, the bound assignment, and the default-branch
 // declaration. The running executable is checked before any ledger or spec read, so a
 // candidate that the wrapper selected never reads its own authority.
-func installAuthority(j joins, root, target string) (installTarget, error) {
+func installAuthority(j joins, run *git.Run, root, target string) (installTarget, error) {
 	primary, err := primaryWithInputs(root)
 	if err != nil {
 		return installTarget{}, err
@@ -210,7 +210,7 @@ func installAuthority(j joins, root, target string) (installTarget, error) {
 	if err != nil {
 		return installTarget{}, refusalError{refusal{detail: "the intent ledger does not read: " + err.Error(), next: "bench status"}}
 	}
-	assignment, err := resolveAmong(root, ledger.Assignments, target, landingActiveState)
+	assignment, err := resolveAmong(run, root, ledger.Assignments, target, landingActiveState)
 	if err != nil {
 		return installTarget{}, err
 	}

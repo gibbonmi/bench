@@ -88,7 +88,7 @@ func TestCleanupPlanFingerprintsProtection(t *testing.T) {
 func TestPoolKeepsProtectedCheckout(t *testing.T) {
 	t.Parallel()
 	root, home := newWorktreeRepo(t), t.TempDir()
-	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
+	wt, err := acquireAt(defaultJoins(), nil, root, "", "", home, currentTime())
 	mustNoError(t, err)
 	lease, err := LeaseFile(wt)
 	mustNoError(t, err)
@@ -96,7 +96,7 @@ func TestPoolKeepsProtectedCheckout(t *testing.T) {
 	mustWrite(t, sentinel, []byte("in use\n"), 0o644)
 	protectCheckout(t, wt)
 
-	releaseWith(defaultJoins(), wt)
+	releaseWith(defaultJoins(), nil, wt)
 	_, sentinelErr := os.Stat(sentinel)
 	_, leaseErr := os.Stat(lease)
 	requireTest(t, sentinelErr == nil && leaseErr == nil, "protected release left sentinel %v and lease %v, want both", sentinelErr, leaseErr)
@@ -104,7 +104,7 @@ func TestPoolKeepsProtectedCheckout(t *testing.T) {
 	mustRemove(t, sentinel)
 	mustRemove(t, lease)
 	// A later instant mints a fresh name, because the first mint holds this second's name.
-	next, err := acquireAt(defaultJoins(), root, "", "", home, currentTime().Add(time.Second))
+	next, err := acquireAt(defaultJoins(), nil, root, "", "", home, currentTime().Add(time.Second))
 	mustNoError(t, err)
 	_, leaseErr = os.Stat(lease)
 	requireTest(t, next != wt && os.IsNotExist(leaseErr), "acquire = %s with protected lease %v, want another checkout and no claim", next, leaseErr)

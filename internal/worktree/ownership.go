@@ -111,11 +111,11 @@ func lockReason(assignment intent.Assignment) string {
 		" label=" + textDigest(assignment.Label) +
 		" start=" + assignment.Start
 }
-func relock(root string, assignment intent.Assignment, fault Fault) error {
+func relock(run *git.Run, root string, assignment intent.Assignment, fault Fault) error {
 	if out, err := exec.Command("git", "-C", root, "worktree", "lock", "--reason", lockReason(assignment), assignment.Worktree).CombinedOutput(); err != nil {
 		return fmt.Errorf("HIGH-SEVERITY residual: restore exact Bench lock: %s", strings.TrimSpace(string(out)))
 	}
-	if err := validateCreationBundle(root, assignment); err != nil {
+	if err := validateCreationBundle(run, root, assignment); err != nil {
 		return fmt.Errorf("HIGH-SEVERITY residual: verify restored exact Bench lock: %w", err)
 	}
 	if err := hit(fault, StepRelock); err != nil {
@@ -140,12 +140,12 @@ func lockCreationRequest(j joins, root, digest string) (func(), error) {
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
 
-func ensureRollbackAttribution(root string, assignment intent.Assignment) error {
+func ensureRollbackAttribution(run *git.Run, root string, assignment intent.Assignment) error {
 	marker := Marker{Schema: OwnerMarkerSchema, OwnerID: assignment.OwnerID, Path: assignment.Worktree}
-	markerFile, markerErr := markerPath(nil, assignment.Worktree)
+	markerFile, markerErr := markerPath(run, assignment.Worktree)
 	if markerErr == nil {
 		if data, err := os.ReadFile(markerFile); errors.Is(err, os.ErrNotExist) {
-			markerErr = writeMarker(assignment.Worktree, marker)
+			markerErr = writeMarker(run, assignment.Worktree, marker)
 		} else if err != nil {
 			markerErr = err
 		} else if recorded, err := decodeMarker(data); err != nil || recorded != marker {
@@ -162,8 +162,8 @@ func markerPath(run *git.Run, path string) (string, error) {
 	}
 	return filepath.Join(admin, OwnerMarkerFile), nil
 }
-func writeMarker(path string, marker Marker) error {
-	markerFile, err := markerPath(nil, path)
+func writeMarker(run *git.Run, path string, marker Marker) error {
+	markerFile, err := markerPath(run, path)
 	if err != nil {
 		return err
 	}
@@ -197,11 +197,11 @@ func decodeMarker(data []byte) (Marker, error) {
 // validateCreationBundle names the one identity component the assignment's own records
 // fail. The checked-out branch is the bundle's own predicate, not a registry component,
 // so it keeps its own sentence between the marker read and the recorded evidence.
-func validateCreationBundle(root string, assignment intent.Assignment) error {
+func validateCreationBundle(run *git.Run, root string, assignment intent.Assignment) error {
 	// The marker step runs before the branch check, because the branch check decides
 	// nothing on evidence the marker step has not accepted. The caller already holds the
 	// assignment, so the state component stays the caller's own check.
-	evidence, err := ownerMarkerRefusal(&git.Run{}, root, assignment.Worktree, assignment)
+	evidence, err := ownerMarkerRefusal(run, root, assignment.Worktree, assignment)
 	if err != nil {
 		return err
 	}
@@ -292,7 +292,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 		if _, statErr := os.Lstat(lease); statErr == nil && ProbeLease(lease) == LeaseUnknown {
 			return intent.CleanupReceipt{}, retainedReleaseError(retainedPlan(target, ReasonUncertain, unknownLeaseReason), targetArg, assignment.ID)
 		}
-		if err := validateCreationBundle(root, *assignment); err != nil {
+		if err := validateCreationBundle(a.run, root, *assignment); err != nil {
 			return intent.CleanupReceipt{}, fmt.Errorf("%w; checkout retained", err)
 		}
 	}

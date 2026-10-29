@@ -23,7 +23,7 @@ func PathCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "usage: "+usage.WorktreePath)
 		return 2
 	}
-	path, err := resolvePath(root, args[0])
+	path, err := resolvePath(&git.Run{}, root, args[0])
 	if err != nil {
 		return printTargetRefusal(stderr, "bench worktree path", err)
 	}
@@ -39,16 +39,16 @@ func PathCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func resolvePath(root, target string) (string, error) {
-	path, err := resolveWorktree(root, target)
+func resolvePath(run *git.Run, root, target string) (string, error) {
+	path, err := resolveWorktree(run, root, target)
 	if err != nil {
 		return "", err
 	}
 	return canonicalPath(path)
 }
 
-func resolveWorktree(root, target string) (string, error) {
-	selected, err := resolveAssignment(root, target)
+func resolveWorktree(run *git.Run, root, target string) (string, error) {
+	selected, err := resolveAssignment(run, root, target)
 	if err != nil {
 		return "", err
 	}
@@ -58,24 +58,24 @@ func resolveWorktree(root, target string) (string, error) {
 // resolveAssignment is the one authority every target-taking verb resolves through: it
 // answers the whole record, so a verb that names the assignment in its output reads the
 // ledger once. A verb that needs the path alone composes resolveWorktree.
-func resolveAssignment(root, target string) (intent.Assignment, error) {
-	return resolveAssignmentIn(root, target, landingActiveState)
+func resolveAssignment(run *git.Run, root, target string) (intent.Assignment, error) {
+	return resolveAssignmentIn(run, root, target, landingActiveState)
 }
 
 // resolveAssignmentIn is the same resolution; accepts names the ledger states the calling
 // verb takes, as the identity bundle's own state check does.
-func resolveAssignmentIn(root, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
+func resolveAssignmentIn(run *git.Run, root, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return intent.Assignment{}, err
 	}
-	return resolveAmong(root, assignments, target, accepts)
+	return resolveAmong(run, root, assignments, target, accepts)
 }
 
 // resolveAmong selects target among assignments and proves the selected record: accepts
 // takes its state, its tree exists, and its creation bundle holds. The caller supplies
 // assignments from its own ledger read, strict or tolerant, so each read proves one bundle.
-func resolveAmong(root string, assignments []intent.Assignment, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
+func resolveAmong(run *git.Run, root string, assignments []intent.Assignment, target string, accepts func(intent.AssignmentState) bool) (intent.Assignment, error) {
 	if !lineSafe(target) {
 		return intent.Assignment{}, errTargetControls
 	}
@@ -92,7 +92,7 @@ func resolveAmong(root string, assignments []intent.Assignment, target string, a
 	if _, statErr := os.Stat(selected.Worktree); statErr != nil && errors.Is(statErr, os.ErrNotExist) {
 		return intent.Assignment{}, missingTreeRefusal(root, selected)
 	}
-	if err := validateCreationBundle(root, selected); err != nil {
+	if err := validateCreationBundle(run, root, selected); err != nil {
 		return intent.Assignment{}, err
 	}
 	return selected, nil
@@ -251,8 +251,8 @@ const (
 // assignment id, or an unambiguous 8-12 character prefix of either resolves to the
 // assignment's worktree path. A path-shaped or unresolvable operand returns unchanged,
 // so each verb keeps its own refusal for it.
-func resolveVerbOperand(root, operand string) string {
-	if path, err := resolveWorktree(root, operand); err == nil {
+func resolveVerbOperand(run *git.Run, root, operand string) string {
+	if path, err := resolveWorktree(run, root, operand); err == nil {
 		return path
 	}
 	return operand

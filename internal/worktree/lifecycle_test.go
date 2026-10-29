@@ -156,7 +156,7 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 		claimedMidCleanup = claimAt(j, lease, time.Now(), staleLease)
 		real(wt)
 	}
-	releaseWith(j, dir)
+	releaseWith(j, nil, dir)
 	if claimedMidCleanup {
 		t.Error("entry was claimable mid-cleanup: a concurrent claimant can win while the worktree is dirty and lose its lease to the trailing remove")
 	}

@@ -191,7 +191,7 @@ func TestResetApplyPreservesTheLayersAndMovesTheCheckout(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("staged\n"), 0o644)
 	gitRun(t, f.creation.Path, "add", "README.md")
 	mustWrite(t, filepath.Join(f.creation.Path, "README.md"), []byte("working\n"), 0o644)
-	before, _, err := captureLayers(f.root, os.Environ(), f.creation.Path, true, checkpoint)
+	before, _, err := captureLayers(nil, f.root, os.Environ(), f.creation.Path, true, checkpoint)
 	mustNoError(t, err)
 	expected, ok := readRecoveryManifest(f.root, before)
 	requireTest(t, ok, "fixture envelope is unreadable")

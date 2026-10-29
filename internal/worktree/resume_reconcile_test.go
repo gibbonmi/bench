@@ -126,7 +126,7 @@ func TestCaptureLayersKeepsAnUnchangedWorkingLayer(t *testing.T) {
 	root := newWorktreeRepo(t)
 	head := gitOutput(t, root, "rev-parse", "HEAD")
 	refs := refsUnder(t, root, "refs/")
-	rootOID, payloads, err := captureLayers(root, os.Environ(), root, true, "")
+	rootOID, payloads, err := captureLayers(nil, root, os.Environ(), root, true, "")
 	mustNoError(t, err)
 	manifest, ok := readRecoveryManifest(root, rootOID)
 	requireTest(t, ok && manifest.Base == head, "capture manifest = %#v", manifest)
@@ -146,7 +146,7 @@ func TestCaptureLayersRecordsADifferentTipAsAParent(t *testing.T) {
 	head := gitOutput(t, root, "rev-parse", "HEAD")
 	tip, err := commitTree(root, os.Environ(), gitOutput(t, root, "rev-parse", "HEAD^{tree}"), []string{head}, "assignment tip\n")
 	mustNoError(t, err)
-	rootOID, payloads, err := captureLayers(root, os.Environ(), root, true, tip)
+	rootOID, payloads, err := captureLayers(nil, root, os.Environ(), root, true, tip)
 	mustNoError(t, err)
 	var manifest map[string]any
 	mustNoError(t, json.Unmarshal([]byte(gitOutput(t, root, "show", rootOID+":manifest.json")), &manifest))
@@ -160,7 +160,7 @@ func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	for _, tip := range []string{"", gitOutput(t, root, "rev-parse", "HEAD")} {
-		rootOID, payloads, err := captureLayers(root, os.Environ(), root, true, tip)
+		rootOID, payloads, err := captureLayers(nil, root, os.Environ(), root, true, tip)
 		mustNoError(t, err)
 		manifest, ok := readRecoveryManifest(root, rootOID)
 		requireTest(t, ok && manifest.Tip == tip, "optional tip = %#v, want %q", manifest, tip)
@@ -169,7 +169,7 @@ func TestCaptureLayersRecordsOnlyASuppliedTip(t *testing.T) {
 		requireTest(t, gitOutput(t, root, "show", "-s", "--format=%P", rootOID) == strings.Join(payloads, " "),
 			"absent or equal tip added a root parent")
 	}
-	_, _, err := captureLayers(root, os.Environ(), root, false, "")
+	_, _, err := captureLayers(nil, root, os.Environ(), root, false, "")
 	requireTest(t, err != nil && strings.Contains(err.Error(), "clean assignment"), "flag-off clean capture error = %v", err)
 }
 

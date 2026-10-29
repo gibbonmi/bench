@@ -101,7 +101,7 @@ func (c *discardCandidates) resolve(target string) (explicitTarget, error) {
 	if ref, ok := discardPrefixRef(target); ok {
 		return c.byRef(ref)
 	}
-	assignment, err := resolveAssignmentIn(c.root, target, resumeActiveState)
+	assignment, err := resolveAssignmentIn(nil, c.root, target, resumeActiveState)
 	if !errors.Is(err, errTargetUnassigned) || !intent.ValidIdentity(target) {
 		return explicitTarget{assignment: assignment}, err
 	}
@@ -137,7 +137,7 @@ func (c *discardCandidates) byRef(ref string) (explicitTarget, error) {
 	}
 	for _, assignment := range assignments {
 		if assignment.Branch == ref {
-			selected, err := resolveAssignmentIn(c.root, assignment.ID, resumeActiveState)
+			selected, err := resolveAssignmentIn(nil, c.root, assignment.ID, resumeActiveState)
 			return explicitTarget{assignment: selected}, err
 		}
 	}

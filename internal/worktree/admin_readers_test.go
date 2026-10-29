@@ -31,7 +31,7 @@ func TestLockCleanupRegistrationFallsBackForNonWorktree(t *testing.T) {
 	if err := os.WriteFile(lockPath, nil, 0o600); err != nil {
 		t.Fatalf("plant the repository-level lock file: %v", err)
 	}
-	release, err := lockCleanupRegistration(defaultJoins(), repo, target)
+	release, err := lockCleanupRegistration(defaultJoins(), nil, repo, target)
 	if err != nil {
 		t.Fatalf("lockCleanupRegistration over a non-repository target = %v, want a release function over the repository-level lock file", err)
 	}

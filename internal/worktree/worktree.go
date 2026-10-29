@@ -278,7 +278,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 		return 1
 	}
 	if target != "" {
-		target = resolveVerbOperand(root, target)
+		target = resolveVerbOperand(a.run, root, target)
 		// The plan holds no call directory, so a relative operand joins it here. A home
 		// operand stays, because expandHomeTarget owns its refusal. A failed directory read
 		// refuses here with the plan's own refusal, because the plan would read the process
@@ -424,7 +424,7 @@ func releaseCommandWith(j joins, a ambient, root string, args []string, stdout, 
 // releaseAttributed is the release verb's own work, with the released assignment written
 // to assignment as the receipt names it.
 func releaseAttributed(assignment *string, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
-	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(root, args[2]))
+	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(a.run, root, args[2]))
 	if err == nil {
 		*assignment = receipt.Tracked
 		return finishReleaseReceipt(a.run, root, stdout, receipt)

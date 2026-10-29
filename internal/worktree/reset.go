@@ -63,12 +63,12 @@ func resetWith(j joins, a ambient, root string, args []string, stdout, stderr io
 			return refuse(errors.New(flag + " contains control characters"))
 		}
 	}
-	plan, err := planReset(root, parsed.Positionals[0], parsed.Flags["--to"], parsed.Flags["--restore"])
+	plan, err := planReset(a.run, root, parsed.Positionals[0], parsed.Flags["--to"], parsed.Flags["--restore"])
 	if err != nil {
 		return refuse(err)
 	}
 	if fingerprint, apply := parsed.Flags["--apply"]; apply {
-		return applyReset(j, root, a.home, a.environ, plan, fingerprint, stdout, refuse)
+		return applyReset(j, a.run, root, a.home, a.environ, plan, fingerprint, stdout, refuse)
 	}
 	next := ""
 	if plan.action != "none" {
@@ -140,7 +140,7 @@ type resetPlan struct {
 	manifest                                     recoveryManifest
 }
 
-func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
+func planReset(run *git.Run, root, operand, checkpoint, envelope string) (resetPlan, error) {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return resetPlan{}, errors.New("assignment ledger is unreadable")
@@ -155,7 +155,7 @@ func planReset(root, operand, checkpoint, envelope string) (resetPlan, error) {
 	if _, err := os.Stat(selected.Worktree); os.IsNotExist(err) {
 		return resetPlan{}, missingTreeRefusal(root, selected)
 	}
-	evidence, err := ownerMarkerRefusal(&git.Run{}, root, selected.Worktree, selected)
+	evidence, err := ownerMarkerRefusal(run, root, selected.Worktree, selected)
 	if err != nil {
 		return resetPlan{}, err
 	}

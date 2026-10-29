@@ -11,7 +11,7 @@ import (
 // landingDestinationCommonDirStarts is the observed number of destination common-directory
 // starts of one landing. The readers that share the verb's run start the query once between
 // them, and each reader that does not share it starts the query on its own.
-const landingDestinationCommonDirStarts = 36
+const landingDestinationCommonDirStarts = 33
 
 // TestLandingReadsTheDestinationCommonDirOnce proves that one in-process landing starts the
 // destination common-directory query exactly landingDestinationCommonDirStarts times. The log

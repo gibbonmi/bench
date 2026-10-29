@@ -113,7 +113,7 @@ func applyCleanupTransaction(j joins, a ambient, root, path, fingerprint string,
 	if found && receipt.State == intent.ReceiptComplete {
 		return planFromReceipt(receipt), nil
 	}
-	release, err := lockCleanupRegistration(j, repo, target)
+	release, err := lockCleanupRegistration(j, a.run, repo, target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}

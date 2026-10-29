@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -50,7 +51,7 @@ func TreeTarget(root, label string) (string, error) {
 	}
 	// The id is the one address that names exactly this record, so the shared resolver
 	// applies its checks to the record that the label selected.
-	selected, err := resolveAssignmentIn(root, labeled[0].ID, landingActiveState)
+	selected, err := resolveAssignmentIn(&git.Run{}, root, labeled[0].ID, landingActiveState)
 	if err != nil {
 		return "", err
 	}
@@ -128,14 +129,14 @@ func CreateCommand(root, home string, args []string, stdout, stderr io.Writer) i
 	// opens once the repository is known: a grammar answer creates nothing to record.
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelCreateSeam)
-	exit := createAttributed(&assignment, parsed, root, home, currentTime(), args, stdout, stderr)
+	exit := createAttributed(&git.Run{}, &assignment, parsed, root, home, currentTime(), args, stdout, stderr)
 	finishSpan(exit, assignment)
 	return exit
 }
 
-// createAttributed is the create verb's own work at the entry's instant, with the
+// createAttributed is the create verb's own work with the entry's run and instant, with the
 // assignment the record names written to assignment once the creation resolves it.
-func createAttributed(assignment *string, parsed usage.Result, root, home string, now time.Time, args []string, stdout, stderr io.Writer) int {
+func createAttributed(run *git.Run, assignment *string, parsed usage.Result, root, home string, now time.Time, args []string, stdout, stderr io.Writer) int {
 	from := parsed.Flags["--from"]
 	// The two flags name two starts, so the pair refuses before the refresh runs: a fetch
 	// that moved the default branch would already have taken effect by the refusal.
@@ -164,7 +165,7 @@ func createAttributed(assignment *string, parsed usage.Result, root, home string
 		}
 	}
 	request, label := parsed.Flags["--request"], parsed.Flags["--label"]
-	creation, err := createAt(defaultJoins(), root, home, request, label, nil, now, resolveStart)
+	creation, err := createAt(defaultJoins(), run, root, home, request, label, nil, now, resolveStart)
 	// A failed creation returns the zero Creation, so its empty ID leaves the record unnamed.
 	*assignment = creation.Assignment.ID
 	if err != nil {
