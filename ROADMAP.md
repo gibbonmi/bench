@@ -390,3 +390,12 @@ recommended table is sequencing advice.
 10. FT358-block-reader
 11. FT365-conformance
 12. FT414-preconditions
+13. FT437-pinned-rows
+14. FT439-comment-correction
+15. FT354-shell-args
+16. FT343-seam-policy
+17. FT446-cache-store
+18. FT369-charge-slicing
+19. FT341-in-only
+20. FT420-concurrent-chunks
+21. FT387-overflow

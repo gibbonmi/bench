@@ -1694,6 +1694,150 @@
               "identity": "sha256:de3916872764dfd7d0519d93f954c961e4296399283c5defffa43718b66d6f46"
             }
           ]
+        },
+        {
+          "id": "FT437-pinned-rows",
+          "criteria": [
+            {
+              "id": "FT437-pinned-rows.done",
+              "text": "An approved plan that carries a pinned row's new identity, together with the row edit, records the decision in one plan and one commit, and a pinned-row edit with no exact approved plan still refuses."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT437",
+              "path": "roadmap/FT437.md",
+              "identity": "sha256:ed986b1d5df9ff39b3f63d5a4c23c5c7100ac4a116a129a5fb94bced2f91cb80"
+            }
+          ]
+        },
+        {
+          "id": "FT439-comment-correction",
+          "criteria": [
+            {
+              "id": "FT439-comment-correction.done",
+              "text": "A comment-only correction after a chunk freeze keeps its verifications and its review chain."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT439",
+              "path": "roadmap/FT439.md",
+              "identity": "sha256:8bd6b4fe1bfaa7193b00715fed1d003cb2212467a025a1b13bd5da9bdc6600d9"
+            }
+          ]
+        },
+        {
+          "id": "FT354-shell-args",
+          "criteria": [
+            {
+              "id": "FT354-shell-args.done",
+              "text": "Shell quoting has one owner, and every caller quotes through it."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT354",
+              "path": "roadmap/FT354.md",
+              "identity": "sha256:08a9689d0b5a09eb6b8dcf1280eda6b3db39af86ee08b3b1777a6cbddfdaf9a1"
+            }
+          ]
+        },
+        {
+          "id": "FT343-seam-policy",
+          "criteria": [
+            {
+              "id": "FT343-seam-policy.done",
+              "text": "Production test seams have one decided policy that the injected-port audit enforces."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT343",
+              "path": "roadmap/FT343.md",
+              "identity": "sha256:8c3cc393a7090caace7ba6e649e8498c5c48630e8658c8c7df204ed2279aa0ed"
+            }
+          ]
+        },
+        {
+          "id": "FT446-cache-store",
+          "criteria": [
+            {
+              "id": "FT446-cache-store.done",
+              "text": "A retired cache store leaves with its cache, and inherited registration has one owner."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT446",
+              "path": "roadmap/FT446.md",
+              "identity": "sha256:cc4554566d89791bba4e369f8e60f7aa38abe1a93fbe2de313f803550cda22f5"
+            }
+          ]
+        },
+        {
+          "id": "FT369-charge-slicing",
+          "criteria": [
+            {
+              "id": "FT369-charge-slicing.done",
+              "text": "The delegate charge and the slicing checks close the fence and venue gaps that the row records."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT369",
+              "path": "roadmap/FT369.md",
+              "identity": "sha256:1bdad28bf7b7da8d4fb63ecb56c16df82caf2344fce142f85798126f71ca080f"
+            }
+          ]
+        },
+        {
+          "id": "FT341-in-only",
+          "criteria": [
+            {
+              "id": "FT341-in-only.done",
+              "text": "A Bench verb reaches a worktree only through --in: exec refuses a Bench child, and directory inference ends."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT341",
+              "path": "roadmap/FT341.md",
+              "identity": "sha256:8298f26deef5fc21be5bbc70b22930bf748cb7115548573ced77a98bca06ea88"
+            }
+          ]
+        },
+        {
+          "id": "FT420-concurrent-chunks",
+          "criteria": [
+            {
+              "id": "FT420-concurrent-chunks.done",
+              "text": "The review record and the author charge support the concurrent chunks of a delegated full run, and the run dispatches every eligible ticket up to the author limit."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT420",
+              "path": "roadmap/FT420.md",
+              "identity": "sha256:c738be5061f2ffd983f15f986308caa70a8f00f8f84bd43e9a91a09a1aebc60e"
+            }
+          ]
+        },
+        {
+          "id": "FT387-overflow",
+          "criteria": [
+            {
+              "id": "FT387-overflow.done",
+              "text": "A verified harness path preserves complete tool output before it returns a bounded replacement."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT387",
+              "path": "roadmap/FT387.md",
+              "identity": "sha256:edffa87bfc252ea5864aca4276e23b97730f4e202dec663d4f5fdbbf34ce9019"
+            }
+          ]
         }
       ]
     }
@@ -1710,6 +1854,12 @@
       "outcomes": [
         "FT342-FT253",
         "FT354-durable-replace"
+      ]
+    },
+    {
+      "outcomes": [
+        "FT411",
+        "FT437-pinned-rows"
       ]
     }
   ],
