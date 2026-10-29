@@ -22,7 +22,13 @@ const gitAdapterHarness = "internal/gittest"
 // gitPlumbingFlags are the four Git administration flags the adapter alone may spell.
 var gitPlumbingFlags = []string{"--git-dir", "--absolute-git-dir", "--git-path", "--git-common-dir"}
 
-// checkGitPlumbingOwner grades the single-source rule for the two repository facts the
+// checkGitPlumbingOwner grades the two Git ownership rules: the production administration
+// flags that the adapter owns, and the generic fixture runner and identity that gittest owns.
+func checkGitPlumbingOwner(root string) []string {
+	return uniqueSorted(append(gitAdministrationFlagDiags(root), gitFixtureOwnershipDiags(root)...))
+}
+
+// gitAdministrationFlagDiags grades the single-source rule for the two repository facts the
 // Git adapter owns: the checkout administration directory, and a named file inside it. A
 // production function outside internal/git that spells one of the four flags inside a
 // `rev-parse` call re-derives that spelling beside the owner, and the two copies drift on
@@ -33,7 +39,7 @@ var gitPlumbingFlags = []string{"--git-dir", "--absolute-git-dir", "--git-path",
 // The unit is the call expression, not the file, so a file that spells the flag once
 // inside a rev-parse call and once inside an unrelated call is graded on each occurrence
 // independently.
-func checkGitPlumbingOwner(root string) []string {
+func gitAdministrationFlagDiags(root string) []string {
 	var diags []string
 	for _, top := range []string{"cmd", "internal"} {
 		base := filepath.Join(root, top)
@@ -201,8 +207,9 @@ func TestGitPlumbingOwnerRedsARetypedFlag(t *testing.T) {
 
 // TestGitPlumbingOwnerSkipsTestsAndTheAdapter is GR28. A rev-parse call with
 // --git-common-dir in a _test.go file, in a file under internal/git, and in a file under
-// internal/gittest, produces no diagnostic. A check that grades every Go file would red
-// the adapter or the harness.
+// internal/gittest, produces no administration-flag diagnostic. A check that grades every
+// Go file would red the adapter or the harness. The test file's Git process is the fixture
+// rule's subject, so this control reads the administration rule alone.
 func TestGitPlumbingOwnerSkipsTestsAndTheAdapter(t *testing.T) {
 	snippet := gitPlumbingProductionSnippet("--git-common-dir")
 	root := throwawayRoot{
@@ -212,7 +219,7 @@ func TestGitPlumbingOwnerSkipsTestsAndTheAdapter(t *testing.T) {
 			"internal/gittest/gittest_extra.go":    snippet,
 		},
 	}.build(t)
-	if diags := checkGitPlumbingOwner(root); len(diags) != 0 {
+	if diags := gitAdministrationFlagDiags(root); len(diags) != 0 {
 		t.Fatalf("diagnostics = %v, want none", diags)
 	}
 }

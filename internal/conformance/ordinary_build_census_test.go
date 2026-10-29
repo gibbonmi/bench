@@ -18,9 +18,8 @@ import (
 )
 
 type architectureSite struct {
-	path string
-	line int
-	kind string
+	path, kind, symbol string
+	line               int
 }
 
 func checkOrdinaryBuildCensus(root string) []string {
@@ -59,12 +58,14 @@ func checkOrdinaryBuildCensus(root string) []string {
 		return append(diags, "branch-native architecture census unavailable: "+err.Error())
 	}
 	gitRepos, gateProcesses := 0, 0
+	var systemSites []architectureSite
 	for _, site := range sites {
 		if site.kind == "retired-entry" {
 			diags = append(diags, site.diagnostic())
 			continue
 		}
 		if strings.HasPrefix(site.path, "internal/systemtest/") {
+			systemSites = append(systemSites, site)
 			continue
 		}
 		if (site.kind == "repository" || site.kind == "process") && strings.HasPrefix(site.path, "internal/git/") && strings.HasSuffix(site.path, "_test.go") {
@@ -79,6 +80,7 @@ func checkOrdinaryBuildCensus(root string) []string {
 			diags = append(diags, site.diagnostic())
 		}
 	}
+	diags = append(diags, systemProcessDiags(systemSites)...)
 	if gitRepos > 1 {
 		diags = append(diags, fmt.Sprintf("internal/git repository constructors = %d, want at most 1", gitRepos))
 	}
@@ -230,28 +232,30 @@ func scanArchitectureGo(rel string, data []byte) ([]architectureSite, error) {
 			sites = append(sites, architectureSite{path: rel, line: fset.Position(fn.Pos()).Line, kind: "retired-entry"})
 		}
 	}
-	ast.Inspect(file, func(node ast.Node) bool {
+	inspectDecls(file, func(symbol string, node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
 			return true
 		}
-		line := fset.Position(call.Pos()).Line
+		site := architectureSite{path: rel, line: fset.Position(call.Pos()).Line, symbol: symbol}
 		name, qualifier := callName(call.Fun)
 		if importedPackage(file, qualifier) == "os/exec" && (name == "Command" || name == "CommandContext") {
-			kind := "process"
+			site.kind = "process"
 			literals := callLiterals(call)
 			if containsSequence(literals, "go", "test") {
-				kind = "nested-go-test"
+				site.kind = "nested-go-test"
 			} else if containsSequence(literals, "go", "run") {
-				kind = "nested-go-run"
+				site.kind = "nested-go-run"
 			} else if containsSequence(literals, "git", "init") || containsSequence(literals, "git", "clone") || containsSequence(literals, "git", "worktree") {
-				kind = "repository"
+				site.kind = "repository"
 			}
-			sites = append(sites, architectureSite{path: rel, line: line, kind: kind})
-			return true
+		} else if isRepositoryCall(name, callLiterals(call)) {
+			site.kind = "repository"
+		} else if guardProjectionImported(file, call, benchModule+gitAdapterHarness) != "" {
+			site.kind = "gittest"
 		}
-		if isRepositoryCall(name, callLiterals(call)) {
-			sites = append(sites, architectureSite{path: rel, line: line, kind: "repository"})
+		if site.kind != "" {
+			sites = append(sites, site)
 		}
 		return true
 	})
@@ -275,6 +279,8 @@ func callName(expr ast.Expr) (name, qualifier string) {
 	}
 }
 
+// callLiterals lists the string literals of call's arguments outside a closure argument, whose
+// own calls the scan visits, so a t.Run whose body builds a repository is no repository site.
 func callLiterals(call *ast.CallExpr) []string {
 	var literals []string
 	for _, arg := range call.Args {
@@ -284,7 +290,8 @@ func callLiterals(call *ast.CallExpr) []string {
 				value, _ := strconv.Unquote(literal.Value)
 				literals = append(literals, value)
 			}
-			return true
+			_, closure := node.(*ast.FuncLit)
+			return !closure
 		})
 	}
 	return literals
@@ -338,6 +345,27 @@ func TestOrdinaryBuildCensusRequiresTheTracedTestArgv(t *testing.T) {
 	} {
 		if tracedTestArgvDiagnostic(argv) == "" {
 			t.Errorf("census accepts the %s test argv %q", name, argv)
+		}
+	}
+}
+
+// TestSystemProcessOwnerBites is GF18. A direct Git process in systemGit, which bypasses
+// owner.runAt, fails the census, and so does a systemProcessSites entry whose site is gone.
+func TestSystemProcessOwnerBites(t *testing.T) {
+	var sites []architectureSite
+	for entry := range systemProcessSites {
+		sites = append(sites, architectureSite{path: entry.path, symbol: entry.symbol, kind: entry.kind})
+	}
+	bypass, err := scanArchitectureGo("internal/systemtest/owner_land_race_test.go", []byte("package systemtest\n\nimport \"os/exec\"\n\nfunc systemGit(root string, args ...string) {\n\t_ = exec.Command(\"git\", append([]string{\"-C\", root}, args...)...).Run()\n}\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for want, graded := range map[string][]architectureSite{
+		"owner_land_race_test.go:6 in systemGit":                append(slices.Clone(sites), bypass...),
+		"runInterruptChild (process), which holds no such site": slices.DeleteFunc(slices.Clone(sites), func(site architectureSite) bool { return site.symbol == "runInterruptChild" }),
+	} {
+		if diags := systemProcessDiags(graded); len(diags) != 1 || !strings.Contains(diags[0], want) {
+			t.Errorf("diagnostics = %v, want one that holds %q", diags, want)
 		}
 	}
 }

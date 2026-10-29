@@ -22,7 +22,8 @@ const skipOwnerDir = "internal/capability"
 // through a differently named variable. An allowlist a rename can evade is no allowlist.
 var skipMethods = map[string]bool{"Skip": true, "Skipf": true, "SkipNow": true}
 
-// checkSkipOwnership reports every skip call outside skipOwnerDir. It reads the module's own
+// checkSkipOwnership reports every skip call outside skipOwnerDir, and every low-level FIFO or
+// symlink Capability call there that bypasses capability.Unavailable. It reads the module's own
 // Go source through the AST, not by text search. A forbidden call spelled inside a string
 // literal is data, never a violation. This covers this check's own diagnostic, its bite
 // proof's synthetic sources, and the canary fixture that reintroduces one. Only a real call
@@ -35,6 +36,7 @@ func checkSkipOwnership(root string) []string {
 			continue
 		}
 		diags = append(diags, skipOwnershipDiags(rel, path)...)
+		diags = append(diags, unavailableOwnershipDiags(rel, path)...)
 	}
 	return uniqueSorted(diags)
 }
