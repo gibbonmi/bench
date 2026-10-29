@@ -579,6 +579,7 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/worktree/land_surface_test.go`
 - `internal/worktree/land_tickets_only_test.go`
 - `internal/worktree/land_window_test.go`
+- `internal/worktree/landed_test.go`
 - `internal/worktree/lifecycle_acquire_test.go`
 - `internal/worktree/lifecycle_facts_test.go`
 - `internal/worktree/lifecycle_policy_test.go`
