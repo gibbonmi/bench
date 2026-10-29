@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/git-query-cache/spec.md",
-  "plan_digest": "sha256:e3db4c3db95e2710475c15f84fca211605a654f3490985a286b20ceebec9fdd1",
+  "plan_digest": "sha256:8efe8b8ecb27c8ac7599d34e7a97cb2080000afc20578bb0a68f72888bc5e43a",
   "implementation_session": "",
   "chunks": [
     {
@@ -307,9 +307,9 @@
     {
       "id": "GQ-C2A",
       "base": "0cc386a93fed6a55bbc47e31648557aa2f8532b0",
-      "tip": "2d4bc88f94616517c99110528d230229cda74665",
-      "plan_digest": "sha256:e3db4c3db95e2710475c15f84fca211605a654f3490985a286b20ceebec9fdd1",
-      "source_digest": "1ad021511d104377070112847e04c2af460ee150",
+      "tip": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+      "plan_digest": "sha256:8efe8b8ecb27c8ac7599d34e7a97cb2080000afc20578bb0a68f72888bc5e43a",
+      "source_digest": "8c88f856f6eaa8102be9eaff1dc2ab985bc04582",
       "acceptance_rows": [
         "GQ27",
         "GQ28",
@@ -345,6 +345,36 @@
             "restore": "pass",
             "native_ref": {
               "ref": "claude-agent:bench-writer-xhigh:gq-t02-author-20261029",
+              "digest": "sha256:e9dd7b70a306f91ca0f8755538db66d5c58889b8d8beed76bb3885c6b5ca8e47",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,TestRepoReadsTheCommonDirOnce/run,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,TestRepoReadsTheCommonDirOnce,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,308\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,11,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestRepoReadsTheCommonDirOnce/run,\"repo_test.go:33: common-directory starts = 2, want 1\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t02r1-probe-02",
+          "performer": "claude:gq-t02-repair1-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "8c88f856f6eaa8102be9eaff1dc2ab985bc04582",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:gq-t02-repair1-20261029",
+            "digest": "sha256:e9dd7b70a306f91ca0f8755538db66d5c58889b8d8beed76bb3885c6b5ca8e47",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,TestRepoReadsTheCommonDirOnce/run,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,TestRepoReadsTheCommonDirOnce,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,308\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,11,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestRepoReadsTheCommonDirOnce/run,\"repo_test.go:33: common-directory starts = 2, want 1\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "requirement": "probe-02",
+          "command": "bench probe internal/intent/intent.go --swap 'common, err := r.Run.CommonDir(r.Root)' --with 'common, err := git.CommonDir(r.Root)' --package ./internal/intent --run TestRepoReadsTheCommonDirOnce",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Read the ledger address without the run. Two ledger reads then start the common-directory query twice, so the ledger test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:gq-t02-repair1-20261029",
               "digest": "sha256:e9dd7b70a306f91ca0f8755538db66d5c58889b8d8beed76bb3885c6b5ca8e47",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/intent/intent.go,swap,failed,1,TestRepoReadsTheCommonDirOnce/run,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,TestRepoReadsTheCommonDirOnce,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,308\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,11,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestRepoReadsTheCommonDirOnce/run,\"repo_test.go:33: common-directory starts = 2, want 1\",1\nskips[0]{package,test,reason}:\n"
             }
@@ -450,6 +480,18 @@
       "chunk_ids": {
         "GQ-C1": [
           "GQ-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e3db4c3db95e2710475c15f84fca211605a654f3490985a286b20ceebec9fdd1",
+      "to": "sha256:8efe8b8ecb27c8ac7599d34e7a97cb2080000afc20578bb0a68f72888bc5e43a",
+      "chunk_ids": {
+        "GQ-C1": [
+          "GQ-C1"
+        ],
+        "GQ-C2A": [
+          "GQ-C2A"
         ]
       }
     }
