@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:f53e416b2780300479d1e14e50b208cc60fe0103991607ebcf4320c09c6ed09f",
+  "plan_digest": "sha256:04a91e4d096c18351fae0e348f695e53ba82310e2510eec52a90a71c4fc94d33",
   "implementation_session": "",
   "chunks": [
     {
@@ -846,6 +846,52 @@
           }
         }
       ]
+    },
+    {
+      "id": "GF-C5C",
+      "base": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
+      "tip": "ebc37cf4ce0a71cd74127eccd2348738e9049871",
+      "plan_digest": "sha256:04a91e4d096c18351fae0e348f695e53ba82310e2510eec52a90a71c4fc94d33",
+      "source_digest": "795c28978221db70ba68d483183c76e2a2f1a963",
+      "acceptance_rows": [
+        "GF16",
+        "GF19",
+        "GF29",
+        "GF30"
+      ],
+      "verification": [
+        {
+          "id": "t05c-probe-05c",
+          "performer": "claude:gf-t05c-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "795c28978221db70ba68d483183c76e2a2f1a963",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t05c-author-20261029",
+            "digest": "sha256:75b6e74c120707ce46d90fddd0b366c1eb7d0fd1f407f5c231e7f57e2dead463",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,6,TestEvidenceRequiredSourceStates/CE41_absent,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,TestEvidenceRequiredSourceStates,passed,10\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1309\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,47,10\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE41_absent,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE42_empty,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE43_symlink,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE47_directory,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE48_control_byte,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE48_invalid_UTF-8,\"charge_evidence_test.go:47: git commit -q -m c0: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ebc37cf4ce0a71cd74127eccd2348738e9049871",
+          "requirement": "probe-05c",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/preflight --run TestEvidenceRequiredSourceStates",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t05c-author-20261029",
+              "digest": "sha256:75b6e74c120707ce46d90fddd0b366c1eb7d0fd1f407f5c231e7f57e2dead463",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,6,TestEvidenceRequiredSourceStates/CE41_absent,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,TestEvidenceRequiredSourceStates,passed,10\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1309\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,47,10\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE41_absent,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE42_empty,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE43_symlink,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE47_directory,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE48_control_byte,\"charge_evidence_test.go:37: git commit -q -m c0: exit status 128: Author identity unknown\",8\n  github.com/gibbonmi/bench/internal/preflight,TestEvidenceRequiredSourceStates/CE48_invalid_UTF-8,\"charge_evidence_test.go:47: git commit -q -m c0: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -970,6 +1016,21 @@
     {
       "from": "sha256:9124d52d6f85b93eb8c64e15419a727788dffa7fc80ebcedadd00cd795641e22",
       "to": "sha256:f53e416b2780300479d1e14e50b208cc60fe0103991607ebcf4320c09c6ed09f",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f53e416b2780300479d1e14e50b208cc60fe0103991607ebcf4320c09c6ed09f",
+      "to": "sha256:04a91e4d096c18351fae0e348f695e53ba82310e2510eec52a90a71c4fc94d33",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
