@@ -12,13 +12,14 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // writeBackgroundRecord installs a background record with outcome in the git directory of the
 // checkout root, and it answers the log path that the record names.
 func writeBackgroundRecord(t *testing.T, root string, outcome backgroundstate.Outcome) string {
 	t.Helper()
-	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	log := backgroundstate.LogPath(gitdir)
 	record := backgroundstate.Record{Outcome: outcome, Key: "key-" + string(outcome), Tip: strings.Repeat("c", 40), Log: log}
 	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
@@ -46,9 +47,9 @@ func TestStatusShowsTheBackgroundOutcome(t *testing.T) {
 	for _, outcome := range []backgroundstate.Outcome{backgroundstate.Green, backgroundstate.Red, backgroundstate.Aborted, backgroundstate.Stopped} {
 		t.Run(string(outcome), func(t *testing.T) {
 			primary := initRepo(t)
-			gitRun(t, primary, "commit", "-q", "--allow-empty", "-m", "base")
+			gittest.MustRun(t, primary, "commit", "-q", "--allow-empty", "-m", "base")
 			linked := filepath.Join(t.TempDir(), "linked")
-			gitRun(t, primary, "worktree", "add", "-q", "-b", "topic", linked)
+			gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", "topic", linked)
 			other := backgroundstate.Green
 			if outcome == backgroundstate.Green {
 				other = backgroundstate.Red
@@ -98,7 +99,7 @@ func TestStatusShowsNoBackgroundRowWithoutARecord(t *testing.T) {
 func TestStatusShowsAnUnreadableBackgroundRecord(t *testing.T) {
 	t.Setenv("BENCH_HOME", t.TempDir())
 	root := initRepo(t)
-	path := backgroundstate.RecordPath(gitRun(t, root, "rev-parse", "--absolute-git-dir"))
+	path := backgroundstate.RecordPath(gittest.Output(t, root, "rev-parse", "--absolute-git-dir"))
 	if err := os.WriteFile(path, []byte("{\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +124,7 @@ func TestStatusKeepsTheGateVerdictBesideABackgroundRed(t *testing.T) {
 		t.Run(tc.gate+" gate", func(t *testing.T) {
 			root := initRepo(t)
 			tree := treeOf(t, root, map[string]string{"f.txt": "x\n"})
-			gitRun(t, root, "commit", "-q", "--allow-empty", "-m", "base")
+			gittest.MustRun(t, root, "commit", "-q", "--allow-empty", "-m", "base")
 			writeFullGateCache(t, root, tree, tc.gate)
 			verdict, board := GateVerdict(root), Signals(root)
 			if !verdict.Present || verdict.Status != tc.gate {

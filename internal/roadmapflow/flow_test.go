@@ -3,7 +3,6 @@ package roadmapflow
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -19,15 +18,6 @@ type change struct {
 	add, modify, remove []string
 }
 
-func runGit(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).Output()
-	if err != nil {
-		t.Fatalf("git %v: %v", args, err)
-	}
-	return strings.TrimSpace(string(out))
-}
-
 // newFlowRepo returns a repository holding one commit that touches no detail file, so
 // every fixture starts from a history whose flow is empty.
 func newFlowRepo(t *testing.T) string {
@@ -36,8 +26,8 @@ func newFlowRepo(t *testing.T) string {
 	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("fixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "-q", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "base")
 	return root
 }
 
@@ -61,9 +51,9 @@ func commitChange(t *testing.T, root string, c change) string {
 			t.Fatal(err)
 		}
 	}
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "-q", "-m", c.subject)
-	return runGit(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, c.subject)
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 func commitChanges(t *testing.T, root string, changes ...change) []string {

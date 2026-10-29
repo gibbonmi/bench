@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate/greenmarker"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // readerLandings builds a repository whose green marker names its base commit and whose
@@ -24,19 +25,19 @@ func readerLandings(t *testing.T, recorded ...int) string {
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
-	gitRun(t, root, "branch", "-M", "main")
-	base := gitRun(t, root, "rev-parse", "HEAD")
-	gitRun(t, root, "update-ref", greenmarker.Ref("main"), base)
-	writeFullGateCache(t, root, gitRun(t, root, "rev-parse", "HEAD^{tree}"), "green")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "branch", "-M", "main")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "update-ref", greenmarker.Ref("main"), base)
+	writeFullGateCache(t, root, gittest.Output(t, root, "rev-parse", "HEAD^{tree}"), "green")
 	for landing := range 3 {
 		if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte(fmt.Sprintf("landing %d\n", landing)), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		gitRun(t, root, "commit", "-am", fmt.Sprintf("landing %d", landing))
+		gittest.MustRun(t, root, "commit", "-am", fmt.Sprintf("landing %d", landing))
 		if slices.Contains(recorded, landing) {
-			writeReaderRecord(t, root, gitRun(t, root, "rev-parse", "HEAD^{tree}"), base)
+			writeReaderRecord(t, root, gittest.Output(t, root, "rev-parse", "HEAD^{tree}"), base)
 		}
 	}
 	return root
@@ -47,7 +48,7 @@ func readerLandings(t *testing.T, recorded ...int) string {
 // loader requires of the reader class.
 func writeReaderRecord(t *testing.T, root, tree, marker string) {
 	t.Helper()
-	store := filepath.Join(gitRun(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), git.ReaderRecordDir)
+	store := filepath.Join(gittest.Output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), git.ReaderRecordDir)
 	record, err := json.Marshal(map[string]any{
 		"schema": 1, "tree": tree, "recorded_at": time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339),
 		"run_binary": strings.Repeat("d", 64), "reader_set": `{"packages":["./internal/conformance"],"race":false}`,
@@ -111,8 +112,8 @@ func TestGateRowKeepsTheStaleRowWithoutAReaderRecord(t *testing.T) {
 		{"no reader record on the tip", func(t *testing.T) string { return readerLandings(t, 0, 1) }},
 		{"a green marker that is not an ancestor of the tip", func(t *testing.T) string {
 			root := readerLandings(t, 1, 2)
-			side := gitRun(t, root, "commit-tree", "-p", "HEAD~3", "-m", "side", "HEAD~3^{tree}")
-			gitRun(t, root, "update-ref", greenmarker.Ref("main"), side)
+			side := gittest.Output(t, root, "commit-tree", "-p", "HEAD~3", "-m", "side", "HEAD~3^{tree}")
+			gittest.MustRun(t, root, "update-ref", greenmarker.Ref("main"), side)
 			return root
 		}},
 	} {

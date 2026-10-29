@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
@@ -128,9 +129,9 @@ func ticketsOnlyRepo(t *testing.T, files map[string]string) string {
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "fixture")
-	gitRun(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "fixture")
+	gittest.MustRun(t, root, "branch", "-M", "main")
 	return root
 }
 

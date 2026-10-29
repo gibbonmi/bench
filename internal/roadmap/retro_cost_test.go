@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/retros"
 	"go.opentelemetry.io/otel/attribute"
@@ -103,10 +104,7 @@ func costTicket(blocker string) string {
 //   - the retirement of slug s, which deletes its folder.
 func newCostRepo(t *testing.T) (costRepo, string) {
 	t.Helper()
-	r := costRepo{t: t, root: t.TempDir()}
-	r.git(-7200, "init", "-q", "-b", "main")
-	r.git(-7200, "config", "user.email", "a@b.c")
-	r.git(-7200, "config", "user.name", "a")
+	r := costRepo{t: t, root: gittest.RepoOnBranch(t, "main")}
 	r.commit(-7200, "base", map[string]string{"README.md": "base\n"})
 	r.git(-7200, "branch", "build")
 	r.commit(-3600, "fold source", map[string]string{"main.txt": "fold\n"})

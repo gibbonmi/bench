@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/maps"
 )
 
@@ -82,12 +83,12 @@ func TestCommandRoutePrintsLeadAndRunnersUp(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nexit 7\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "tracked.txt")
+	gittest.MustRun(t, root, "add", "tracked.txt")
 	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
 		t.Fatalf("gate exit = %d, want red 7", result.ActionExit)
 	}
@@ -125,8 +126,8 @@ func TestCommandRouteEscapesControlBytesInProducerPaths(t *testing.T) {
 	writeFile(".bench/gate.sh", "#!/bin/sh\nexit 7\n", 0o755)
 	writeFile("specs/my [draft]\x1b/spec.md", "Status: staged\n", 0o644)
 	writeDecisionMap(t, root, "decisions/my * map\x07.md", readyMapIndex())
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 7 {
 		t.Fatalf("gate exit = %d, want red 7", result.ActionExit)
 	}
@@ -178,8 +179,8 @@ func assertLeadControlRoute(t *testing.T, write func(*testing.T, string), want s
 	t.Helper()
 	root := initRepo(t)
 	write(t, root)
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	oldWD, err := os.Getwd()
 	if err != nil {
@@ -201,8 +202,8 @@ func TestCommandRoutePrintsTheCodexPhaseForm(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "capture", "IDEAS.md"), []byte("- 2026-08-18 pending\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	oldWD, err := os.Getwd()
 	if err != nil {

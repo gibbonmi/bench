@@ -2,11 +2,11 @@ package roadmap
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/retros"
 	retrotestdata "github.com/gibbonmi/bench/internal/retros/testdata"
 )
@@ -105,12 +105,8 @@ func TestRetroIgnoredDirectoryWritesToPrimaryCheckout(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(primary, ".gitignore"), []byte(retros.Directory+"/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if out, err := exec.Command("git", "-C", primary, "add", ".gitignore").CombinedOutput(); err != nil {
-		t.Fatalf("git add: %v: %s", err, out)
-	}
-	if out, err := exec.Command("git", "-C", primary, "commit", "-q", "-m", "ignore retros").CombinedOutput(); err != nil {
-		t.Fatalf("git commit: %v: %s", err, out)
-	}
+	gittest.MustRun(t, primary, "add", ".gitignore")
+	gittest.Commit(t, primary, "ignore retros")
 	linked := newLinkedWorktree(t, primary)
 	t.Chdir(linked)
 	if out, code := RetroCommand([]string{"primary-local", "--body", eligibleRetro(t)}); code != 0 || out != "captured: primary-local\n" {

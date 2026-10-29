@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/learnings"
 )
 
@@ -21,8 +22,8 @@ func TestSignalsRendersDrainLearningsUnknownForALostDatedLine(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, learnings.JournalPath), []byte(journal), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 	want := "0 idea(s), unknown (capture/learnings.md is malformed), 0 pending retro(s)"
 	for _, s := range Signals(root) {
 		if s.Name == "drain" {
@@ -49,8 +50,8 @@ func TestSignalsDrainLearningsCountAgreesWithTheAXIReaderForAWriterProducedEntry
 	if err := os.WriteFile(filepath.Join(root, learnings.JournalPath), []byte(journal), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	data, err := os.ReadFile(filepath.Join(root, learnings.JournalPath))
 	if err != nil {

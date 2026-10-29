@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
 )
@@ -59,8 +60,8 @@ func TestAppendDeliveryRoutesStagedSpecsToAdoptionBeforeRetirement(t *testing.T)
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	adoption := row{4, "commitment", "adoption-required", commandActionWithArgument(commitmentAction, "plan --input <file>")}
 	rows := appendDelivery(nil, root)
@@ -153,8 +154,8 @@ func TestSignalsOrderStagedSpecAdoptionAfterGuardsBeforeDrain(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	var names []string
 	for _, signal := range Signals(root) {
@@ -181,8 +182,8 @@ func TestRenderedBoardAndRouteForStagedSpecWithReviewPickup(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	wantBoard := "▶ bench commitment plan --input <file>  (commitment)\n" +
 		"  commitment adoption-required              → bench commitment plan --input <file>\n"
@@ -198,11 +199,11 @@ func TestRenderedBoardAndRouteForStagedSpecWithReviewPickup(t *testing.T) {
 func TestSignalsRenderDirtyAndUnpushedTogether(t *testing.T) {
 	root := initRepo(t)
 	commitFile(t, root, "tracked.txt")
-	gitRun(t, root, "branch", "-M", "main")
-	gitRun(t, root, "remote", "add", "origin", root)
-	gitRun(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
-	gitRun(t, root, "config", "branch.main.remote", "origin")
-	gitRun(t, root, "config", "branch.main.merge", "refs/heads/main")
+	gittest.MustRun(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "remote", "add", "origin", root)
+	gittest.MustRun(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	gittest.MustRun(t, root, "config", "branch.main.remote", "origin")
+	gittest.MustRun(t, root, "config", "branch.main.merge", "refs/heads/main")
 	commitFile(t, root, "ahead.txt")
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("dirty\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -217,12 +218,12 @@ func TestSignalsRenderDirtyAndUnpushedTogether(t *testing.T) {
 func TestRouteForLeavesClaimedAssignmentBranchToItsOwner(t *testing.T) {
 	root := initRepo(t)
 	start := commitFile(t, root, "base.txt")
-	gitRun(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "branch", "-M", "main")
 	ownerID, assignmentID := strings.Repeat("a", 32), strings.Repeat("b", 32)
 	branch := intent.AssignmentBranchRef(ownerID, assignmentID)
-	gitRun(t, root, "checkout", "-b", strings.TrimPrefix(branch, "refs/heads/"))
+	gittest.MustRun(t, root, "checkout", "-b", strings.TrimPrefix(branch, "refs/heads/"))
 	commitFile(t, root, "assigned.txt")
-	gitRun(t, root, "checkout", "main")
+	gittest.MustRun(t, root, "checkout", "main")
 	if err := intent.PutAssignment(root, intent.Assignment{
 		Schema:   intent.AssignmentRecordSchema,
 		ID:       assignmentID,
@@ -257,14 +258,12 @@ func TestRouteForLeadsSpacedStagedSpecAdoptionAheadOfDrain(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	want := RouteResult{
-		Lead: testSignal(4, "commitment", "adoption-required", "bench commitment plan --input <file>"),
-		RunnersUp: []Signal{
-			testSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain"),
-		},
+		Lead:      testSignal(4, "commitment", "adoption-required", "bench commitment plan --input <file>"),
+		RunnersUp: []Signal{testSignal(4, "drain", "1 idea(s), 0 open learning(s), 0 pending retro(s)", "/bench-drain")},
 	}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {
 		t.Fatalf("spaced staged-spec adoption route = %#v, want %#v", got, want)
@@ -274,8 +273,8 @@ func TestRouteForLeadsSpacedStagedSpecAdoptionAheadOfDrain(t *testing.T) {
 func TestRouteForInvokesReadyMapWhosePathContainsSpaces(t *testing.T) {
 	root := initRepo(t)
 	writeDecisionMap(t, root, "decisions/my map.md", readyMapIndex())
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	want := RouteResult{Lead: testSignal(6, "decisions", "1 ready map(s)", "/bench-write-spec decisions/my map.md")}
 	if got := RouteFor(root, Signals(root), HarnessClaude); !reflect.DeepEqual(got, want) {

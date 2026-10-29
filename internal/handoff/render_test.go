@@ -2,7 +2,6 @@ package handoff
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/status"
@@ -62,7 +62,7 @@ func TestSectionRendersTheAssignmentPins(t *testing.T) {
 	a := activeAssignment(t, root, token, "hs-resolve")
 	write(t, filepath.Join(a.Worktree, "specs", "alpha", "spec.md"), "# Alpha\n\nStatus: staged\n")
 	commitIn(t, a.Worktree, "worktree commit")
-	tip := gitOut(t, a.Worktree, "rev-parse", "HEAD")
+	tip := gittest.Output(t, a.Worktree, "rev-parse", "HEAD")
 
 	runIn(t, a.Worktree, nil)
 	got := sectionBytes(t, filepath.Join(root, status.HandoffFile), a.Request)
@@ -190,8 +190,8 @@ func TestSectionRendersAnUnavailableBinding(t *testing.T) {
 	t.Run("SB44 no default branch resolves", func(t *testing.T) {
 		root := benchRepo(t)
 		commitBinding(t, root, alpha)
-		gitRun(t, root, "branch", "-m", "main", "trunk")
-		gitRun(t, root, "branch", "other")
+		gittest.MustRun(t, root, "branch", "-m", "main", "trunk")
+		gittest.MustRun(t, root, "branch", "other")
 		runIn(t, root, []string{"--next", "bench status"})
 		requireSpecBinding(t, root, handoffdoc.MainKey, alpha, unbound)
 	})
@@ -204,8 +204,8 @@ func TestHeaderPinsTheMainHeadAndNotTheWorktreeHead(t *testing.T) {
 	root := benchRepo(t)
 	a := activeAssignment(t, root, "hs-header", "hs-header")
 	commitIn(t, a.Worktree, "worktree only")
-	mainHead := status.Short(gitOut(t, root, "rev-parse", "HEAD"))
-	worktreeHead := status.Short(gitOut(t, a.Worktree, "rev-parse", "HEAD"))
+	mainHead := status.Short(gittest.Output(t, root, "rev-parse", "HEAD"))
+	worktreeHead := status.Short(gittest.Output(t, a.Worktree, "rev-parse", "HEAD"))
 
 	runIn(t, a.Worktree, nil)
 	document := read(t, filepath.Join(root, status.HandoffFile))
@@ -244,16 +244,10 @@ func TestCommandUsesCodexRouteForPhase(t *testing.T) {
 func TestCommandUsesShellRouteForNoHarness(t *testing.T) {
 	root := benchRepo(t)
 	remote := filepath.Join(t.TempDir(), "remote.git")
-	for _, args := range [][]string{
-		{"init", "-q", "--bare", remote},
-		{"-C", root, "remote", "add", "origin", remote},
-		{"-C", root, "push", "-q", "-u", "origin", "HEAD"},
-		{"-C", root, "commit", "-q", "--allow-empty", "-m", "ahead"},
-	} {
-		if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, out)
-		}
-	}
+	gittest.MustRun(t, root, "init", "-q", "--bare", remote)
+	gittest.MustRun(t, root, "remote", "add", "origin", remote)
+	gittest.MustRun(t, root, "push", "-q", "-u", "origin", "HEAD")
+	gittest.Commit(t, root, "ahead", "--allow-empty")
 	runIn(t, root, nil)
 	assertNextCommand(t, root, "`git push`")
 }
@@ -352,6 +346,6 @@ func requireSpecBinding(t *testing.T, root, key, path, want string) {
 func commitIn(t *testing.T, dir, message string) {
 	t.Helper()
 	write(t, filepath.Join(dir, "note.md"), message+"\n")
-	gitRun(t, dir, "add", "-A")
-	gitRun(t, dir, "-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", message)
+	gittest.MustRun(t, dir, "add", "-A")
+	gittest.MustRun(t, dir, append(gittest.IdentityArgs(), "commit", "-qm", message)...)
 }

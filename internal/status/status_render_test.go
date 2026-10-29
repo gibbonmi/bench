@@ -20,8 +20,8 @@ func TestRenderClean(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	out := render(root, false)
 	if out != "bench: clean — nothing pending\n" {
@@ -35,8 +35,8 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 	// Make the tree dirty (uncommitted change) so the git signal fires.
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("y\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -63,8 +63,8 @@ func TestRenderWorkingRoadmapAloneIsClean(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	if out := render(root, false); out != "bench: clean — nothing pending\n" {
 		t.Errorf("roadmap-only render = %q, want clean board", out)
@@ -76,9 +76,9 @@ func TestAppendWorktreeIgnoresUnownedBranchPrefix(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
-	gitRun(t, root, "branch", "worktree-agent-orphan")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "branch", "worktree-agent-orphan")
 
 	if rows := appendWorktree(nil, root); len(rows) != 0 {
 		t.Fatalf("branch prefix created worktree status without ownership evidence: %#v", rows)
@@ -93,8 +93,8 @@ func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	gitDir := filepath.Join(root, ".git")
 	if err := os.Chmod(gitDir, 0o000); err != nil {

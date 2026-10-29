@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // OG20: a lane run writes its own record class and never the gate cache, so the gate row
@@ -16,7 +17,7 @@ func TestGateRowKeepsTheLastGateVerdictAfterALaneRun(t *testing.T) {
 	root := initRepo(t)
 	tree := treeOf(t, root, map[string]string{"f.txt": "x\n"})
 	// The lane materializes the graded tree beside HEAD, so the fixture needs a commit.
-	gitRun(t, root, "commit", "-q", "--allow-empty", "-m", "base")
+	gittest.MustRun(t, root, "commit", "-q", "--allow-empty", "-m", "base")
 	writeFullGateCache(t, root, tree, "green")
 	before := GateVerdict(root)
 	if !before.Present || before.Status != "green" {

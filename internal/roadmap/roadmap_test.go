@@ -2,7 +2,6 @@ package roadmap
 
 import (
 	"fmt"
-	"github.com/gibbonmi/bench/internal/usage"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +9,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/usage"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -37,17 +39,8 @@ func newRepo(t *testing.T) string {
 // linked worktree can branch from it.
 func newPrimaryRepo(t *testing.T) string {
 	t.Helper()
-	primary := t.TempDir()
-	for _, args := range [][]string{
-		{"init", "-q", "-b", "main"},
-		{"config", "user.email", "a@b.c"},
-		{"config", "user.name", "a"},
-		{"commit", "-q", "--allow-empty", "-m", "root"},
-	} {
-		if out, err := exec.Command("git", append([]string{"-C", primary}, args...)...).CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, out)
-		}
-	}
+	primary := gittest.RepoOnBranch(t, "main")
+	gittest.Commit(t, primary, "root", "--allow-empty")
 	return primary
 }
 
@@ -57,19 +50,13 @@ func newPrimaryRepo(t *testing.T) string {
 func newLinkedWorktree(t *testing.T, primary string) string {
 	t.Helper()
 	root := filepath.Join(t.TempDir(), "linked")
-	if out, err := exec.Command("git", "-C", primary, "worktree", "add", "-q", "-b", "topic", root).CombinedOutput(); err != nil {
-		t.Fatalf("git worktree add: %v: %s", err, out)
-	}
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", "topic", root)
 	return resolvedToplevel(t, root)
 }
 
 func resolvedToplevel(t *testing.T, root string) string {
 	t.Helper()
-	out, err := exec.Command("git", "-C", root, "rev-parse", "--show-toplevel").Output()
-	if err != nil {
-		t.Fatalf("rev-parse: %v", err)
-	}
-	return string(out[:len(out)-1])
+	return gittest.Output(t, root, "rev-parse", "--show-toplevel")
 }
 
 func roadmapPath(t *testing.T, root string) string {
@@ -133,11 +120,8 @@ func TestIdeaIgnoredInboxRedirectsWorktreeWrite(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(primary, ".gitignore"), []byte("capture/IDEAS.md\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"add", ".gitignore"}, {"commit", "-q", "-m", "ignore inbox"}} {
-		if out, err := exec.Command("git", append([]string{"-C", primary}, args...)...).CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, out)
-		}
-	}
+	gittest.MustRun(t, primary, "add", ".gitignore")
+	gittest.Commit(t, primary, "ignore inbox")
 	linked := newLinkedWorktree(t, primary)
 	t.Chdir(linked)
 	out, code := IdeaCommand([]string{"ship", "dark", "mode"})
@@ -257,12 +241,8 @@ func TestIdeaOwnedOccurrence(t *testing.T) {
 func TestIdeaHistoricalOwnerAbsentFromCurrentRoadmapRefuses(t *testing.T) {
 	root := newRepo(t)
 	writeBoard(t, root, Row{"**FT98 — retired history.**", "Occurrences: baseline-01\n"})
-	if out, err := exec.Command("git", "-C", root, "add", RoadmapFile, RoadmapDir).CombinedOutput(); err != nil {
-		t.Fatalf("stage history: %v: %s", err, out)
-	}
-	if out, err := exec.Command("git", "-C", root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "retire FT98").CombinedOutput(); err != nil {
-		t.Fatalf("commit history: %v: %s", err, out)
-	}
+	gittest.MustRun(t, root, "add", RoadmapFile, RoadmapDir)
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "retire FT98")...)
 	if err := os.Remove(filepath.Join(root, RoadmapDir, "FT98.md")); err != nil {
 		t.Fatal(err)
 	}

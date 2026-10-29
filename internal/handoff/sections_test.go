@@ -3,11 +3,11 @@ package handoff
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/status"
@@ -72,15 +72,12 @@ func TestCommandRefusesACheckoutThatOwnsNoSection(t *testing.T) {
 // writes there rather than into its own tree.
 func benchRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	gitRun(t, root, "init", "-q", "-b", "main")
-	gitRun(t, root, "config", "user.email", "t@example.com")
-	gitRun(t, root, "config", "user.name", "t")
+	root := gittest.RepoOnBranch(t, "main")
 	write(t, filepath.Join(root, ".gitignore"), "capture/\n")
 	write(t, filepath.Join(root, ".bench", "keep"), "\n")
 	write(t, filepath.Join(root, "ROADMAP.md"), "# Roadmap\n")
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-qm", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "base")
 	return root
 }
 
@@ -104,7 +101,7 @@ func activeAssignment(t *testing.T, root, token, label string) intent.Assignment
 		Request:      intent.RequestDigest(token),
 		RequestToken: token,
 		Label:        label,
-		Start:        gitOut(t, root, "rev-parse", "HEAD"),
+		Start:        gittest.Output(t, root, "rev-parse", "HEAD"),
 		Branch:       branch,
 		Worktree:     linkedWorktree(t, root, strings.TrimPrefix(branch, "refs/heads/")),
 		State:        intent.StateActive,
@@ -120,7 +117,7 @@ func activeAssignment(t *testing.T, root, token, label string) intent.Assignment
 func linkedWorktree(t *testing.T, root, branch string) string {
 	t.Helper()
 	path := filepath.Clean(filepath.Join(t.TempDir(), "tree"))
-	gitRun(t, root, "worktree", "add", "-q", "-b", branch, path, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "-b", branch, path, "HEAD")
 	return path
 }
 
@@ -179,20 +176,4 @@ func write(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func gitRun(t *testing.T, root string, args ...string) {
-	t.Helper()
-	if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-}
-
-func gitOut(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).Output()
-	if err != nil {
-		t.Fatalf("git %v: %v", args, err)
-	}
-	return strings.TrimSpace(string(out))
 }
