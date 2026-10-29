@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:5b4a8983e799c7e785028a7d2173239eb8a005409c5672be0154d929501628b0",
+  "plan_digest": "sha256:1a14401f8264a19fe71ffd7de3b0ee308d915f2540baaa80cdb2e8d2ac381d8c",
   "implementation_session": "",
   "chunks": [
     {
@@ -1324,6 +1324,52 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "GF-C9",
+      "base": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+      "tip": "2c20d8e0a724dd1716d0cdaa059e01e8c1212e78",
+      "plan_digest": "sha256:1a14401f8264a19fe71ffd7de3b0ee308d915f2540baaa80cdb2e8d2ac381d8c",
+      "source_digest": "0b057c9ea23f58bea3a292fbb06c08a890126d3d",
+      "acceptance_rows": [
+        "GF21",
+        "GF22",
+        "GF23",
+        "GF30"
+      ],
+      "verification": [
+        {
+          "id": "t09-probe-09",
+          "performer": "claude:gf-t09-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0b057c9ea23f58bea3a292fbb06c08a890126d3d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t09-author-20261029",
+            "digest": "sha256:e71ed2927acb4235500b1b3f47c9be2ccc39e44d58f18209620948d9c9a69a93",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,1,TestUnavailableReason,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableReason,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,596\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason,\"unavailable_test.go:52: Unavailable reason = \\\"symlink unavailable: symlink a b: operation not permitted\\\", want \\\"symlink capability unavailable: symlink a b: operation not permitted\\\"\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/skips,\"unavailable_test.go:20: symlink unavailable: symlink a b: operation not permitted\"\n"
+          },
+          "source_commit": "2c20d8e0a724dd1716d0cdaa059e01e8c1212e78",
+          "requirement": "probe-09",
+          "command": "bench probe internal/capability/unavailable.go --swap '\" capability unavailable: \"' --with '\" unavailable: \"' --package ./internal/capability --run TestUnavailableReason",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the capability word from the derived prefix. The reason then differs from the contract, so the reason test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t09-author-20261029",
+              "digest": "sha256:e71ed2927acb4235500b1b3f47c9be2ccc39e44d58f18209620948d9c9a69a93",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/capability/unavailable.go,swap,failed,1,TestUnavailableReason,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/capability,TestUnavailableReason,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,596\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/capability,fail,2,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason,\"unavailable_test.go:52: Unavailable reason = \\\"symlink unavailable: symlink a b: operation not permitted\\\", want \\\"symlink capability unavailable: symlink a b: operation not permitted\\\"\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/skips,\"unavailable_test.go:20: symlink unavailable: symlink a b: operation not permitted\"\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1586,6 +1632,30 @@
         ],
         "GF-C6": [
           "GF-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5b4a8983e799c7e785028a7d2173239eb8a005409c5672be0154d929501628b0",
+      "to": "sha256:1a14401f8264a19fe71ffd7de3b0ee308d915f2540baaa80cdb2e8d2ac381d8c",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ],
+        "GF-C6": [
+          "GF-C6"
+        ],
+        "GF-C8": [
+          "GF-C8"
         ]
       }
     }
