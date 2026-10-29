@@ -68,7 +68,7 @@ func symlinkAt(t *testing.T, root, path string) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink("target", full); err != nil {
-		capability.Capability(t, capability.Symlink, err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 

@@ -57,7 +57,7 @@ func TestRecordRefusesALinkedExcerpt(t *testing.T) {
 func TestRecordRefusesASpecialExcerpt(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "fifo")
 	if err := syscall.Mkfifo(path, 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, "FIFOs unavailable on this filesystem: "+err.Error())
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	f, edit := excerpted(t, path)
 	type result struct {

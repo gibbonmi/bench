@@ -349,7 +349,7 @@ func TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns(t *testing.T) {
 	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	fifo := filepath.Join(root, "fifo")
 	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, "FIFOs unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "fifo")

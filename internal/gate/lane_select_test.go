@@ -94,7 +94,7 @@ func TestComposedChangesRepresentsARenameAsDeletionAndAddition(t *testing.T) {
 func TestComposedChangesCarriesTheSymlinkMode(t *testing.T) {
 	root, base := composedFixture(t, map[string]string{"target.go": "package fixture\n"})
 	if err := os.Symlink("target.go", filepath.Join(root, "link.go")); err != nil {
-		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	stageAndCommitComposed(t, root, "graded")
 	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")

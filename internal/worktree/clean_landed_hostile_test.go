@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -84,12 +83,12 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 	}{
 		{name: "fifo", shape: "non-directory", make: func(t *testing.T, path string) {
 			if err := syscall.Mkfifo(path, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 		}},
 		{name: "dangling symlink", shape: "dangling-symlink", make: func(t *testing.T, path string) {
 			if err := os.Symlink(path+"-missing", path); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 		}},
 		{name: "socket", shape: "non-directory", make: func(t *testing.T, path string) {
@@ -97,10 +96,10 @@ func TestCleanLandedSpecialPathsRetainedWithoutOpening(t *testing.T) {
 		}},
 		{name: "device", shape: "non-directory", make: func(t *testing.T, path string) {
 			if info, err := os.Lstat("/dev/null"); err != nil || info.Mode()&os.ModeDevice == 0 {
-				capability.Capability(t, capability.Fifo, "no /dev/null device node")
+				capability.Unavailable(t, capability.Fifo, "no /dev/null device node")
 			}
 			if err := os.Symlink("/dev/null", path); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 		}},
 	} {
@@ -137,7 +136,7 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 	}{
 		{name: "fifo", make: func(t *testing.T, path string) {
 			if err := syscall.Mkfifo(path, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 		}},
 		{name: "socket", make: func(t *testing.T, path string) {
@@ -145,7 +144,7 @@ func TestLandedConsumersRejectSpecialGitMetadataBeforePlanning(t *testing.T) {
 		}},
 		{name: "symlink", make: func(t *testing.T, path string) {
 			if err := os.Symlink(path+"-target", path); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 		}},
 	} {

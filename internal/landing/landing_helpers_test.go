@@ -210,7 +210,7 @@ func symlinkConflict(t *testing.T, root, base string) (string, string) {
 			t.Fatal(err)
 		}
 		if err := os.Symlink("destination-target", filepath.Join(root, "named")); err != nil {
-			capability.Capability(t, capability.Symlink, err.Error())
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 	}, func() { write(t, root, "named", "source") })
 }

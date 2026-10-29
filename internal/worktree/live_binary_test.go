@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -110,7 +109,7 @@ func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 	mustWrite(t, real, []byte("binary\n"), 0o755)
 	link := filepath.Join(dir, "bench-link")
 	if err := os.Symlink(real, link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("cannot create a symlink: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	if !isRunningBinary(stubbedLiveBinaryJoins(link), real) {
 		t.Error("isRunningBinary = false for the target of the resolved symlink, want true")

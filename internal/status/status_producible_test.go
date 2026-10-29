@@ -330,7 +330,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		{name: "map scan failure", signal: "decisions", detail: "unknown", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			if err := syscall.Mkfifo(filepath.Join(root, "decisions"), 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return root, Query{}
 		}, exact: []Signal{testSignal(6, "decisions", "unknown (decisions is wrong-type)", "bench maps")}},
@@ -361,7 +361,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		{name: "roadmap scan failure", signal: "roadmap", detail: "unknown", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			if err := syscall.Mkfifo(filepath.Join(root, roadmap.RoadmapFile), 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return root, Query{}
 		}},

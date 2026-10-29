@@ -118,7 +118,7 @@ func TestStackReaderAcceptsSixteenMembers(t *testing.T) {
 		{name: "symlink to a regular file", members: 3, locate: func(t *testing.T, dir string) (string, string) {
 			linkDir := t.TempDir()
 			if err := os.Symlink(filepath.Join(dir, "stack.json"), filepath.Join(linkDir, "stack.json")); err != nil {
-				capability.Capability(t, capability.Symlink, "cannot create a symlink: "+err.Error())
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 			return "stack.json", linkDir
 		}},
@@ -184,7 +184,7 @@ func TestStackReaderRefusesASpecialFile(t *testing.T) {
 	dir := t.TempDir()
 	fifo := filepath.Join(dir, "stack.json")
 	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	for _, tc := range []struct {
 		name   string
@@ -198,7 +198,7 @@ func TestStackReaderRefusesASpecialFile(t *testing.T) {
 			t.Parallel()
 			if tc.link {
 				if err := os.Symlink(fifo, tc.target); err != nil {
-					capability.Capability(t, capability.Symlink, "cannot create a symlink: "+err.Error())
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			}
 			type result struct {

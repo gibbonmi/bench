@@ -64,7 +64,7 @@ func TestLandPreAuthorizationRefusalTable(t *testing.T) {
 		{"symlink-to-special-without-traversal", func(t *testing.T, root string) []string {
 			requireLandingFIFO(t, filepath.Join(root, "fifo-target"))
 			if err := os.Symlink("fifo-target", filepath.Join(root, "fifo-link")); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 			gittest.MustRun(t, root, "add", "--", "fifo-link")
 			gittest.MustRun(t, root, "commit", "-qm", "tracked symlink")
@@ -146,7 +146,7 @@ func requireLandingFIFO(t *testing.T, path string) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(path, 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 }
 

@@ -2,7 +2,6 @@ package landing
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -87,7 +86,7 @@ func TestLandRealGitCompositionTable(t *testing.T) {
 		{"symlink-entry-without-target-traversal", func(t *testing.T, root string) compositionExpectation {
 			write(t, root, "symlink-target/foreign", "must stay untracked")
 			if err := os.Symlink("symlink-target", filepath.Join(root, "link")); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 			got := compositionResult([]string{"link"}, []string{"foreign", "link", "named"}, map[string]string{"foreign": "base", "link": "symlink-target", "named": "base"})
 			got.wantMode = map[string]string{"link": "120000"}
@@ -113,7 +112,7 @@ func TestLandRealGitCompositionTable(t *testing.T) {
 			gittest.MustRun(t, nested, "commit", "-qm", "nested next")
 			write(t, nested, "inside", "nested dirt")
 			if err := syscall.Mkfifo(filepath.Join(nested, "nested-fifo"), 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			got := compositionResult([]string{"nested"}, []string{"foreign", "named", "nested"}, map[string]string{"foreign": "base", "named": "base"})
 			got.wantMode = map[string]string{"nested": "160000"}
