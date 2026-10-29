@@ -473,6 +473,47 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "gf-c2-confirm-r1",
+          "performer": "claude:gf-orchestrator-20261029",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "93ef6b5139b4f395e2afdd49f2d053ba28ab3bf7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:gf-orchestrator-20261029",
+            "digest": "sha256:8089e9e1a7032797161571ec9b3e14342ce881a5f0d6b0eec537acc4a256dcd5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/freshness_test.go,insert,failed,1,TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex/asset_after_index,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/maps,TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,584\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/maps,fail,34,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/maps,TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex/asset_after_index,\"freshness_test.go:79: Command(nil) = (exit 0, \\\"maps[1]{map,title,type,state,blockers,path}:\\\\\\\\n  alpha,Which parser owns the map?,Research,frontier,\\\\\\\\\\\"\\\\\\\\\\\",decisions/alpha/tickets/1.md\\\\\\\\nhelp[1]{cmd,why}:\\\\\\\\n  /bench-shape-idea,\\\\\\\\\\\"shape alpha: Which… (587 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "reviewed_tip": "a94afe984816d50c98dbd1a67ae4935fe863721e",
+          "repaired_tip": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "P1",
+            "P2",
+            "V1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "insert a fixed committer date before the shared commit in commitAt",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:gf-orchestrator-20261029",
+              "digest": "sha256:8089e9e1a7032797161571ec9b3e14342ce881a5f0d6b0eec537acc4a256dcd5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/freshness_test.go,insert,failed,1,TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex/asset_after_index,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/maps,TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,584\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/maps,fail,34,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/maps,TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex/asset_after_index,\"freshness_test.go:79: Command(nil) = (exit 0, \\\"maps[1]{map,title,type,state,blockers,path}:\\\\\\\\n  alpha,Which parser owns the map?,Research,frontier,\\\\\\\\\\\"\\\\\\\\\\\",decisions/alpha/tickets/1.md\\\\\\\\nhelp[1]{cmd,why}:\\\\\\\\n  /bench-shape-idea,\\\\\\\\\\\"shape alpha: Which… (587 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -615,5 +656,17 @@ Repair targets: 2 (S2, P2), both on ticket 04, in one combined repair charge.
 - `internal/diff/command_test.go` and `internal/diff/matrix_test.go` (`rawNoIndexPatch` and the `diff --check` probe): an expected nonzero exit.
 - `internal/diff/compatibility_test.go` (`seedCompatibilityRepo`): an intentional subject, because pinned commit ids grade its identity and dates.
 - `internal/handoff/state_scan_test.go` (`writeBlob`): custom standard input.
-- `internal/roadmap/retro_cost_test.go` (`gitAuthored`): distinct author and committer times that the fixture grades.
+- `internal/roadmap/retro_cost_test.go` (`gitAuthored`): deliberate author and committer times. The fixture grades the committer times, and it keeps the ungraded author offset as an input.
 - `internal/structure/structure_test.go` (`run`): a stdout-only output shape over `gittest.OutputBytes`.
+
+### GF-C2 repair cycle 1
+
+The ticket 04 repair session committed `874d872c3`, a test-only repair of S2 and P2. It refroze GF-C2 at that tip.
+Its witnesses each came from one `bench probe`, and each restore passed:
+
+- P2: an omission of the committer date in `commitAt` turned the freshness test red.
+- S2: a swap of the retro-cost committer stamp turned `TestRetroCostSection` red.
+- A swap of the retro-cost author offset stayed silent. Thus the classification above names that offset as an ungraded input.
+
+The coordinator probe inserted a fixed committer date before the shared commit in `commitAt`. It turned the freshness test red, and the restore passed.
+The repair consumed one of the two repair cycles of GF-C2.
