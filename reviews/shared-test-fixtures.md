@@ -1045,6 +1045,42 @@
           "finding_ids": [],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "gf-c5c-confirm-r1",
+          "performer": "claude:gf-orchestrator-20261029",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a440eb60a9d37dee59b931229c6fa4b7682561a6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:gf-orchestrator-20261029",
+            "digest": "sha256:90c6346b50581d1afcfaf41a2ce4333f8d6193ca1e8a3364a1139922eaacae34",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/shift/fault_test.go,swap,failed,1,TestLoopRetainsAndLocksDirtyWorktree,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/shift,TestLoopRetainsAndLocksDirtyWorktree,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,343\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shift,fail,8,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shift,TestLoopRetainsAndLocksDirtyWorktree,\"fault_test.go:214: git commit --quiet -m init: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
+          "reviewed_tip": "dfe7edd94d504e9a7503f3f7810ff29cace1564c",
+          "repaired_tip": "fd1234c51eb80f59ff191f3b069ee03f9992f765",
+          "finding_ids": [
+            "K1",
+            "K2"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "swap gittest.RepoOnBranch for gittest.Repo in faultFixtureCore",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:gf-orchestrator-20261029",
+              "digest": "sha256:90c6346b50581d1afcfaf41a2ce4333f8d6193ca1e8a3364a1139922eaacae34",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/shift/fault_test.go,swap,failed,1,TestLoopRetainsAndLocksDirtyWorktree,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/shift,TestLoopRetainsAndLocksDirtyWorktree,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,343\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shift,fail,8,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shift,TestLoopRetainsAndLocksDirtyWorktree,\"fault_test.go:214: git commit --quiet -m init: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -1421,3 +1457,11 @@ Repair targets: 2 (K1, K2), both on ticket 05d, in one combined repair charge.
 - `internal/env/git_policy_test.go` (`TestGitPolicyHasOneSource`, `gitPolicyFindings`): production-subject queries.
 - `internal/conformance` check bodies (`trackedPaths`, `checkExecutableGitModes`, `checkGateInputPathsNotIgnored`, `spillProbeOutput`): reads of the graded root.
 - `internal/preflight/preflighttest/fixture.go` (`RunGit`): an exported facade over `gittest` with callers in other packages.
+
+### GF-C5C repair cycle 1
+
+The ticket 05d repair session committed `fd1234c51`, a test-only repair of K1 and K2, and refroze GF-C5C at that tip.
+The session returned no report, so the coordinator verified the repair diff against the charge and the record commit `63f33948d`.
+
+The coordinator probe swapped `gittest.RepoOnBranch` for `gittest.Repo` in `faultFixtureCore`. `TestLoopRetainsAndLocksDirtyWorktree` turned red on a missing author identity, and the restore passed.
+The repair consumed one of the two repair cycles of GF-C5C.
