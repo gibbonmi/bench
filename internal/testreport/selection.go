@@ -29,7 +29,6 @@ type listedPackage struct {
 	Imports         []string
 	TestImports     []string
 	XTestImports    []string
-	EmbedPatterns   []string
 	EmbedFiles      []string
 	TestEmbedFiles  []string
 	XTestEmbedFiles []string
@@ -43,7 +42,7 @@ type packageIndex struct {
 	// byEmbed maps a slash-spelled embed file of any class, relative to the root, to the
 	// import path of its owner.
 	byEmbed map[string]string
-	// byImport maps an import path to its package, which holds its embed patterns.
+	// byImport maps an import path to its package.
 	byImport map[string]listedPackage
 	// system is the import path of the system-suite package, or empty when the index does
 	// not hold it.
