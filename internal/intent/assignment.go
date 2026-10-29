@@ -10,8 +10,13 @@ import (
 	"github.com/gibbonmi/bench/internal/intent/admissionpolicy"
 )
 
+// CleanupReceiptFor is Repo.CleanupReceiptFor with a nil run.
 func CleanupReceiptFor(root, repo, operation, target, fingerprint string) (CleanupReceipt, bool, error) {
-	ledger, err := Read(root)
+	return In(nil, root).CleanupReceiptFor(repo, operation, target, fingerprint)
+}
+
+func (r Repo) CleanupReceiptFor(repo, operation, target, fingerprint string) (CleanupReceipt, bool, error) {
+	ledger, err := r.Read()
 	if err != nil {
 		return CleanupReceipt{}, false, err
 	}
@@ -23,8 +28,13 @@ func CleanupReceiptFor(root, repo, operation, target, fingerprint string) (Clean
 	return CleanupReceipt{}, false, nil
 }
 
+// CleanupReceiptForRequest is Repo.CleanupReceiptForRequest with a nil run.
 func CleanupReceiptForRequest(root, repo, operation, target, request string) (CleanupReceipt, bool, error) {
-	ledger, err := Read(root)
+	return In(nil, root).CleanupReceiptForRequest(repo, operation, target, request)
+}
+
+func (r Repo) CleanupReceiptForRequest(repo, operation, target, request string) (CleanupReceipt, bool, error) {
+	ledger, err := r.Read()
 	if err != nil {
 		return CleanupReceipt{}, false, err
 	}
@@ -45,19 +55,27 @@ func CleanupReceiptForRequest(root, repo, operation, target, request string) (Cl
 	return *found, true, nil
 }
 
+// PutCleanupReceipt is Repo.PutCleanupReceipt with a nil run.
+func PutCleanupReceipt(root string, receipt CleanupReceipt) error {
+	return In(nil, root).PutCleanupReceipt(receipt)
+}
+
 // PutCleanupReceipt records one cleanup receipt and holds the completed receipts to
 // their retention window. The rule validates the receipt, so this adapter does not.
-func PutCleanupReceipt(root string, receipt CleanupReceipt) error {
-	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+func (r Repo) PutCleanupReceipt(receipt CleanupReceipt) error {
+	return r.Transact(StrictRead, func(current Ledger) (Ledger, bool, error) {
 		return admissionpolicy.PutCleanupReceipt(current, receipt)
 	}, nil)
 }
 
+// LifecycleEvidence is Repo.LifecycleEvidence with a nil run.
+func LifecycleEvidence(root string) ([]byte, error) { return In(nil, root).LifecycleEvidence() }
+
 // LifecycleEvidence returns the exact persisted schema and assignment JSON values.
 // Cleanup receipts deliberately live in the same ledger but outside this evidence:
 // recording an apply transaction must not make its already-approved plan stale.
-func LifecycleEvidence(root string) ([]byte, error) {
-	path, err := Address(root)
+func (r Repo) LifecycleEvidence() ([]byte, error) {
+	path, err := r.Address()
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +109,13 @@ func lifecycleEvidenceValues(schema, assignments []byte) []byte {
 	return []byte(fmt.Sprintf("%d:%s%d:%s", len(schema), schema, len(assignments), assignments))
 }
 
+// FindAssignmentByRequest is Repo.FindAssignmentByRequest with a nil run.
 func FindAssignmentByRequest(root, requestDigest string) (Assignment, bool, error) {
-	ledger, err := Read(root)
+	return In(nil, root).FindAssignmentByRequest(requestDigest)
+}
+
+func (r Repo) FindAssignmentByRequest(requestDigest string) (Assignment, bool, error) {
+	ledger, err := r.Read()
 	if err != nil {
 		return Assignment{}, false, err
 	}
@@ -104,13 +127,23 @@ func FindAssignmentByRequest(root, requestDigest string) (Assignment, bool, erro
 	return Assignment{}, false, nil
 }
 
-// FindAssignmentForRequest resolves an opaque caller token through the ledger's
-// request-digest owner. Lifecycle commands never compare caller tokens directly.
+// FindAssignmentForRequest is Repo.FindAssignmentForRequest with a nil run.
 func FindAssignmentForRequest(root, request string) (Assignment, bool, error) {
-	return FindAssignmentByRequest(root, RequestDigest(request))
+	return In(nil, root).FindAssignmentForRequest(request)
 }
 
-// AssignmentForWorktree returns the active assignment that owns the tree at path,
+// FindAssignmentForRequest resolves an opaque caller token through the ledger's
+// request-digest owner. Lifecycle commands never compare caller tokens directly.
+func (r Repo) FindAssignmentForRequest(request string) (Assignment, bool, error) {
+	return r.FindAssignmentByRequest(RequestDigest(request))
+}
+
+// AssignmentForWorktree is Repo.AssignmentForWorktree with a nil run, for the tree at path.
+func AssignmentForWorktree(path string) (Assignment, bool) {
+	return In(nil, path).AssignmentForWorktree()
+}
+
+// AssignmentForWorktree returns the active assignment that owns the tree at the root of r,
 // and reports whether one does. The tree is matched by canonical path, because the
 // ledger records a resolved path while a caller's root can arrive through a symlink.
 // An unreadable ledger and an unresolvable path both answer no owner, which is the
@@ -121,12 +154,12 @@ func FindAssignmentForRequest(root, request string) (Assignment, bool, error) {
 // assignment in its stale-base remedy, and `bench handoff` resolves the section it
 // owns from it. A second lookup would let the two disagree about which assignment
 // owns a tree.
-func AssignmentForWorktree(path string) (Assignment, bool) {
-	assignments, err := Assignments(path)
+func (r Repo) AssignmentForWorktree() (Assignment, bool) {
+	assignments, err := r.Assignments()
 	if err != nil {
 		return Assignment{}, false
 	}
-	for _, a := range AssignmentsOwning(assignments, path) {
+	for _, a := range AssignmentsOwning(assignments, r.Root) {
 		if a.State == StateActive {
 			return a, true
 		}
@@ -134,38 +167,51 @@ func AssignmentForWorktree(path string) (Assignment, bool) {
 	return Assignment{}, false
 }
 
-func Assignments(root string) ([]Assignment, error) {
-	ledger, err := Read(root)
+// Assignments is Repo.Assignments with a nil run.
+func Assignments(root string) ([]Assignment, error) { return In(nil, root).Assignments() }
+
+func (r Repo) Assignments() ([]Assignment, error) {
+	ledger, err := r.Read()
 	if err != nil {
 		return nil, err
 	}
 	return append([]Assignment(nil), ledger.Assignments...), nil
 }
 
+// PutAssignment is Repo.PutAssignment with a nil run.
+func PutAssignment(root string, assignment Assignment) error {
+	return In(nil, root).PutAssignment(assignment)
+}
+
 // PutAssignment atomically inserts or updates one assignment ID. A request digest
 // can name only one assignment, and an identical write preserves the ledger bytes.
-func PutAssignment(root string, assignment Assignment) error {
+func (r Repo) PutAssignment(assignment Assignment) error {
 	if err := ValidateAssignment(assignment); err != nil {
 		return err
 	}
-	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+	return r.Transact(StrictRead, func(current Ledger) (Ledger, bool, error) {
 		return admissionpolicy.PutAssignment(current, assignment)
 	}, nil)
+}
+
+// ReauthorizeAssignment is Repo.ReauthorizeAssignment with a nil run.
+func ReauthorizeAssignment(root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
+	return In(nil, root).ReauthorizeAssignment(id, request, verify, transition, beforeCAS)
 }
 
 // ReauthorizeAssignment swaps one request digest only after its caller's reversible
 // external transition succeeds. The rollback keeps that derived state coherent when
 // the expected-old write cannot commit.
-func ReauthorizeAssignment(root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
-	return reauthorizeAssignment(durablefile.Native(), root, id, request, verify, transition, beforeCAS)
+func (r Repo) ReauthorizeAssignment(id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
+	return r.reauthorizeAssignment(durablefile.Native(), id, request, verify, transition, beforeCAS)
 }
 
 // reauthorizeAssignment takes the replacer so that a test can fail the ledger write after
 // the real request transition.
-func reauthorizeAssignment(replacer durablefile.Replacer, root, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
+func (r Repo) reauthorizeAssignment(replacer durablefile.Replacer, id, request string, verify func(Assignment) error, transition func(Assignment, Assignment) (func(), error), beforeCAS func(*Assignment)) (Assignment, error) {
 	var previous Assignment
 	var rollback func()
-	err := TransactWithReplacer(replacer, root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+	err := r.TransactWithReplacer(replacer, StrictRead, func(current Ledger) (Ledger, bool, error) {
 		index := -1
 		for i := range current.Assignments {
 			if current.Assignments[i].ID == id {
@@ -214,6 +260,11 @@ func reauthorizeAssignment(replacer durablefile.Replacer, root, id, request stri
 	return previous, nil
 }
 
+// PurgeAssignments is Repo.PurgeAssignments with a nil run.
+func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
+	return In(nil, root).PurgeAssignments(keep)
+}
+
 // PurgeAssignments drops every assignment record keep rejects, plus every record this
 // build can no longer read at all, and reports how many it dropped. Read is strict
 // because a record it cannot account for must not authorize anything. The purge is
@@ -221,8 +272,8 @@ func reauthorizeAssignment(replacer durablefile.Replacer, root, id, request stri
 // standing cleaner is the only thing able to clear it. Refusing there would leave every
 // later command reading the same unreadable file. A purge that drops nothing leaves the
 // file's bytes untouched, so a re-run over converged state is a no-op.
-func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
-	path, err := Address(root)
+func (r Repo) PurgeAssignments(keep func(Assignment) bool) (int, error) {
+	path, err := r.Address()
 	if err != nil {
 		return 0, err
 	}
@@ -232,7 +283,7 @@ func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 		return 0, fmt.Errorf("purge intent ledger: %w", err)
 	}
 	dropped := 0
-	err = transact(durablefile.Native(), root, TolerantRead, func(current Ledger, records int) (Ledger, bool, error) {
+	err = r.transact(durablefile.Native(), TolerantRead, func(current Ledger, records int) (Ledger, bool, error) {
 		next, count, changed, err := admissionpolicy.PurgeAssignments(current, records, keep)
 		dropped = count
 		return next, changed, err
@@ -243,8 +294,11 @@ func PurgeAssignments(root string, keep func(Assignment) bool) (int, error) {
 	return dropped, nil
 }
 
-func DeleteAssignment(root, id string) error {
-	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+// DeleteAssignment is Repo.DeleteAssignment with a nil run.
+func DeleteAssignment(root, id string) error { return In(nil, root).DeleteAssignment(id) }
+
+func (r Repo) DeleteAssignment(id string) error {
+	return r.Transact(StrictRead, func(current Ledger) (Ledger, bool, error) {
 		return admissionpolicy.DeleteAssignment(current, id)
 	}, nil)
 }

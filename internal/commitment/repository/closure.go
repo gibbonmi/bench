@@ -37,7 +37,8 @@ func (store Store) Delivered(policy commitment.Policy, delivery Delivery) (commi
 
 func (store Store) completionEvidence(delivery Delivery) (string, error) {
 	if ticketsOnlyAt(store.Root, delivery.Source, delivery.Spec) {
-		return SourceIdentity(store.Root, delivery.Source, delivery.Spec)
+		identity, _, err := sourceAt(store.Run, store.Root, delivery.Source, delivery.Spec)
+		return identity, err
 	}
 	record, err := reviewrecord.RecordPath(delivery.Spec)
 	if err != nil {
@@ -76,7 +77,7 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 			edits = append(edits, Edit{Path: source.Path, Delete: true})
 		}
 	}
-	index, present, err := roadmap.RevisionIndex(store.Root, tree)
+	index, present, err := roadmap.RevisionIndexIn(store.Run, store.Root, tree)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (store Store) ReconcileDelivered() error {
 		remaining[outcome] = true
 	}
 	open := func(milestone, outcome string) bool { return milestone != policy.ActiveMilestone || remaining[outcome] }
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		state := runtimeState(ledger)
 		next := state
 		next.Claims = nil

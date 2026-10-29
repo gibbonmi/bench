@@ -19,7 +19,7 @@ import (
 
 // AuthorizeCandidate grades the complete proposed tree against current default-branch authority.
 func (store Store) AuthorizeCandidate(tree string) error {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return err
 	}
@@ -240,16 +240,16 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 	if policy == nil {
 		return nil
 	}
-	before, err := roadmap.RevisionDocument(store.Root, revision)
+	before, err := roadmap.RevisionDocumentIn(store.Run, store.Root, revision)
 	if err != nil {
 		return err
 	}
-	after, err := roadmap.RevisionDocument(store.Root, tree)
+	after, err := roadmap.RevisionDocumentIn(store.Run, store.Root, tree)
 	if err != nil {
 		return err
 	}
 	// A revision with no board has no sequence to project, so its candidate keeps none.
-	_, board, err := roadmap.RevisionIndex(store.Root, revision)
+	_, board, err := roadmap.RevisionIndexIn(store.Run, store.Root, revision)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (store Store) planningPromotions(tree string, changes []git.TreeChange) ([]
 		if !strings.HasPrefix(change.Path, "specs/") && !strings.HasPrefix(change.Path, "decisions/") {
 			continue
 		}
-		data, err := git.ReadTreeFile(store.Root, tree, change.Path)
+		data, err := store.Run.ReadTreeFile(store.Root, tree, change.Path)
 		if err != nil {
 			return nil, err
 		}

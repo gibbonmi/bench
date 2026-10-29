@@ -2,10 +2,15 @@ package intent
 
 import "github.com/gibbonmi/bench/internal/git"
 
+// PruneUnclaimedLandedBranches is Repo.PruneUnclaimedLandedBranches with a nil run.
+func PruneUnclaimedLandedBranches(root string) (int, error) {
+	return In(nil, root).PruneUnclaimedLandedBranches()
+}
+
 // PruneUnclaimedLandedBranches protects every recorded assignment branch while
 // delegating landedness and exact ref deletion to the Git owner.
-func PruneUnclaimedLandedBranches(root string) (int, error) {
-	assignments, err := Assignments(root)
+func (r Repo) PruneUnclaimedLandedBranches() (int, error) {
+	assignments, err := r.Assignments()
 	if err != nil {
 		return 0, err
 	}
@@ -13,5 +18,5 @@ func PruneUnclaimedLandedBranches(root string) (int, error) {
 	for _, assignment := range assignments {
 		protected = append(protected, assignment.Branch)
 	}
-	return git.PruneLandedBranches(root, protected)
+	return git.PruneLandedBranches(r.Root, protected)
 }

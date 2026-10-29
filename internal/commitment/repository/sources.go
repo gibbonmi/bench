@@ -14,14 +14,16 @@ import (
 
 // SourceIdentity binds a regular file's bytes or a complete tickets-only tree.
 func SourceIdentity(root, revision, path string) (string, error) {
-	identity, _, err := sourceAt(root, revision, path)
+	identity, _, err := sourceAt(nil, root, revision, path)
 	return identity, err
 }
 
 // TreeIdentity is the identity of a tickets-only folder whose Git tree is object.
 func TreeIdentity(object string) string { return "git-tree:" + object }
 
-func sourceAt(root, revision, path string) (string, []byte, error) {
+// sourceAt is the identity and the bytes of the source at path in revision. It reads a
+// regular file through run.
+func sourceAt(run *git.Run, root, revision, path string) (string, []byte, error) {
 	if ticketsOnlyAt(root, revision, path) {
 		object, err := git.Output("-C", root, "rev-parse", "--verify", revision+":"+path)
 		if err != nil {
@@ -29,7 +31,7 @@ func sourceAt(root, revision, path string) (string, []byte, error) {
 		}
 		return TreeIdentity(strings.TrimSpace(object)), nil, nil
 	}
-	data, err := git.ReadTreeFile(root, revision, path)
+	data, err := run.ReadTreeFile(root, revision, path)
 	if err != nil {
 		return "", nil, err
 	}
@@ -55,7 +57,7 @@ func (store Store) stagedSpecs(revision string) ([]InventoryItem, error) {
 	})
 	var items []InventoryItem
 	for _, path := range paths {
-		identity, data, err := sourceAt(store.Root, revision, path)
+		identity, data, err := sourceAt(store.Run, store.Root, revision, path)
 		if err != nil {
 			return nil, fmt.Errorf("commitment inventory refused: deliverable %s: %w", path, err)
 		}
@@ -76,7 +78,7 @@ func (store Store) DefaultDeclaration(path string) ([]spec.PersistedField, error
 	if err != nil {
 		return nil, err
 	}
-	_, data, err := sourceAt(store.Root, revision, path)
+	_, data, err := sourceAt(store.Run, store.Root, revision, path)
 	if err != nil {
 		return nil, fmt.Errorf("default-branch copy of %s: %w", path, err)
 	}
@@ -102,7 +104,7 @@ func (store Store) readTree(current *commitment.Policy, proposed commitment.Poli
 // absentAt reports that revision holds no entry at path. A read error is no proof of absence,
 // so the source then reads revision and refuses there.
 func (store Store) absentAt(revision, path string) bool {
-	listing, err := git.ListTree(store.Root, revision, "--", path)
+	listing, err := store.Run.ListTree(store.Root, revision, "--", path)
 	return err == nil && len(listing) == 0
 }
 
@@ -127,7 +129,7 @@ func (store Store) validateDeliverableAt(revision string, source commitment.Sour
 	if !isSpec && !ticketsOnlyAt(store.Root, revision, source.Path) {
 		return false, fmt.Errorf("deliverable %q is not an approved spec or tickets-only folder", source.Path)
 	}
-	identity, data, err := sourceAt(store.Root, revision, source.Path)
+	identity, data, err := sourceAt(store.Run, store.Root, revision, source.Path)
 	if err != nil {
 		return false, fmt.Errorf("commitment source %q refused: %w", source.ID, err)
 	}
@@ -182,7 +184,7 @@ func (store Store) defaultRevision() (string, string, error) {
 }
 
 func (store Store) validateSourceAt(revision string, source commitment.SourceBinding) error {
-	got, err := SourceIdentity(store.Root, revision, source.Path)
+	got, _, err := sourceAt(store.Run, store.Root, revision, source.Path)
 	if err != nil {
 		return fmt.Errorf("commitment source %q refused: %w", source.ID, err)
 	}

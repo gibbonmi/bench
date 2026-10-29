@@ -49,32 +49,44 @@ func RequirementBytes(name string, data []byte) ([]byte, error) {
 	return []byte(strings.Join(kept, "\n")), nil
 }
 
-// RevisionIndex reads the board index of an immutable revision. present is false when the
-// revision has no index, and an index that is not a regular file is an error.
+// RevisionIndex is RevisionIndexIn with a nil run.
 func RevisionIndex(root, revision string) (data []byte, present bool, err error) {
-	listing, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapFile)
-	if err != nil || listing == "" {
+	return RevisionIndexIn(nil, root, revision)
+}
+
+// RevisionIndexIn reads the board index of an immutable revision through run. present is
+// false when the revision has no index, and an index that is not a regular file is an error.
+func RevisionIndexIn(run *git.Run, root, revision string) (data []byte, present bool, err error) {
+	listing, err := run.ListTree(root, revision, "--", RoadmapFile)
+	if err != nil || len(listing) == 0 {
 		return nil, false, err
 	}
-	data, err = git.ReadTreeFile(root, revision, RoadmapFile)
+	data, err = run.ReadTreeFile(root, revision, RoadmapFile)
 	return data, err == nil, err
 }
 
-// RevisionDocument parses an immutable roadmap through the canonical split-board parser.
+// RevisionDocument is RevisionDocumentIn with a nil run.
 func RevisionDocument(root, revision string) (Document, error) {
+	return RevisionDocumentIn(nil, root, revision)
+}
+
+// RevisionDocumentIn parses an immutable roadmap through the canonical split-board parser.
+// Its path listings and file reads go through run. The name listing of the board directory
+// starts on every call.
+func RevisionDocumentIn(run *git.Run, root, revision string) (Document, error) {
 	tree := Tree{Index: bounds.Classified{State: bounds.StateAbsent}, DirState: bounds.StateAbsent}
-	data, present, err := RevisionIndex(root, revision)
+	data, present, err := RevisionIndexIn(run, root, revision)
 	if err != nil {
 		return Document{}, err
 	}
 	if present {
 		tree.Index = bounds.Classified{State: bounds.StateParsed, Data: data}
 	}
-	directory, err := git.Output("-C", root, "ls-tree", "-z", revision, "--", RoadmapDir)
+	directory, err := run.ListTree(root, revision, "--", RoadmapDir)
 	if err != nil {
 		return Document{}, err
 	}
-	if directory != "" {
+	if len(directory) != 0 {
 		names, err := git.Output("-C", root, "ls-tree", "--name-only", "-z", revision+":"+RoadmapDir)
 		if err != nil {
 			return Document{}, err
@@ -84,7 +96,7 @@ func RevisionDocument(root, revision string) (Document, error) {
 			if name == "" {
 				continue
 			}
-			data, err := git.ReadTreeFile(root, revision, RoadmapDir+"/"+name)
+			data, err := run.ReadTreeFile(root, revision, RoadmapDir+"/"+name)
 			if err != nil {
 				return Document{}, err
 			}

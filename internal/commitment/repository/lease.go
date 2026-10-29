@@ -17,7 +17,7 @@ import (
 // Lease is one landing's hold on its destination ref. It is the ledger record that names
 // the landing's assignment, and the record lock that proves that the landing is alive.
 type Lease struct {
-	root   string
+	ledger intent.Repo
 	record intent.LandingLease
 	holder *gocache.Holder
 }
@@ -25,7 +25,12 @@ type Lease struct {
 // LeaseLockPath is the lock file of destination's lease. It lives in the common Git
 // directory, so every checkout of the repository locks the same file, and no step removes it.
 func LeaseLockPath(root, destination string) (string, error) {
-	common, err := git.CommonDir(root)
+	return leaseLockPath(nil, root, destination)
+}
+
+// leaseLockPath is LeaseLockPath with the common directory read through run.
+func leaseLockPath(run *git.Run, root, destination string) (string, error) {
+	common, err := run.CommonDir(root)
 	if err != nil {
 		return "", err
 	}
@@ -37,12 +42,12 @@ func LeaseLockPath(root, destination string) (string, error) {
 // under the intent lock. A record whose lock has no holder belongs to a dead landing, so
 // the new record replaces it. The compensation releases the lock when the write fails.
 func (store Store) AcquireLease(destination, assignment string) (*Lease, error) {
-	path, err := LeaseLockPath(store.Root, destination)
+	path, err := leaseLockPath(store.Run, store.Root, destination)
 	if err != nil {
 		return nil, leaseUnavailable(err)
 	}
-	lease := &Lease{root: store.Root, record: intent.LandingLease{Destination: destination, Assignment: assignment}}
-	err = intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	lease := &Lease{ledger: store.ledger(), record: intent.LandingLease{Destination: destination, Assignment: assignment}}
+	err = lease.ledger.Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		holder, err := gocache.HoldExclusive(path)
 		if errors.Is(err, gocache.ErrHeld) {
 			return ledger, false, leaseHeld(ledger, destination)
@@ -70,7 +75,7 @@ func (lease *Lease) Release() {
 	if lease == nil {
 		return
 	}
-	_ = intent.Transact(lease.root, intent.StrictRead, lease.drop, nil)
+	_ = lease.ledger.Transact(intent.StrictRead, lease.drop, nil)
 	lease.unlock()
 }
 

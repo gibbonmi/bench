@@ -12,7 +12,7 @@ import (
 
 // Ready verifies the owned assignment against current delivery authority without creating a claim.
 func (store Store) Ready(deliverable string) error {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ var errUnbound = errors.New("assignment has no current delivery binding")
 
 // Inheritance checks the source assignment before a sibling acquires its worktree.
 func (store Store) Inheritance(assignment string) (*intent.DeliveryBinding, error) {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (store Store) RegisterSibling(assignment intent.Assignment, expected intent
 	if err := intent.ValidateAssignment(assignment); err != nil {
 		return err
 	}
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		inherited, err := store.inheritance(ledger, expected.Assignment)
 		if err != nil {
 			return ledger, false, err
@@ -151,7 +151,7 @@ func (store Store) RegisterSibling(assignment intent.Assignment, expected intent
 
 // RollbackSibling removes only the failed creation's records and retains its outcome claim.
 func (store Store) RollbackSibling(assignment intent.Assignment) error {
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		for _, current := range ledger.Assignments {
 			if current.ID == assignment.ID && current.Request != assignment.Request {
 				return ledger, false, fmt.Errorf("failed sibling request changed")
@@ -175,7 +175,7 @@ func (store Store) ReadyOutcome(outcome string) error {
 	if outcome == "" {
 		return fmt.Errorf("shift requires --outcome <id>")
 	}
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (store Store) ReadyOutcome(outcome string) error {
 
 // LegacyScope returns only the current assignment's exact approved continuation scope.
 func (store Store) LegacyScope(request string) ([]string, error) {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return nil, err
 	}

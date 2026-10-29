@@ -167,7 +167,7 @@ func declaredBuildsOverlap(builds []openBuild) error {
 // readOpenBuilds derives the open builds from one strict read of the ledger at the store
 // root.
 func (store Store) readOpenBuilds() ([]openBuild, error) {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (store Store) readOpenBuilds() ([]openBuild, error) {
 // AdmitWindow decides the build window for source from one ledger read. The landing asks it
 // before the lease, and PublishAdmitted decides again under the intent lock.
 func (store Store) AdmitWindow(source Publication) error {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return err
 	}

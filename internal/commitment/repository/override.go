@@ -23,7 +23,7 @@ func (store Store) OverrideTarget(assignment string) (OverrideTarget, error) {
 	if !intent.ValidIdentity(assignment) {
 		return OverrideTarget{}, notOverridable(assignment)
 	}
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return OverrideTarget{}, err
 	}
@@ -54,7 +54,7 @@ func (store Store) Override(assignment, reason string) error {
 	if err := commitment.ValidReason(reason); err != nil {
 		return err
 	}
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		if _, active := activeByID(ledger, assignment); !active {
 			return ledger, false, notOverridable(assignment)
 		}

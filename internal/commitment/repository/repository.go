@@ -17,8 +17,16 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
-// Store addresses one repository's tracked policy and local receipts.
-type Store struct{ Root string }
+// Store addresses one repository's tracked policy and local receipts. Its ledger, lease,
+// window, and tree reads go through Run, the run of the command that builds the store. A
+// store with no run starts each read and caches nothing.
+type Store struct {
+	Root string
+	Run  *git.Run
+}
+
+// ledger is the intent ledger of the store root, read through the store's run.
+func (store Store) ledger() intent.Repo { return intent.In(store.Run, store.Root) }
 
 // InventoryItem is one source available to an adoption proposal. Identity is the identity that
 // plan binds, or a run's request. Scope is a row's detail owner, a spec's row, or a run's scope.
@@ -45,13 +53,13 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	document, err := roadmap.RevisionDocument(store.Root, revision)
+	document, err := roadmap.RevisionDocumentIn(store.Run, store.Root, revision)
 	if err != nil {
 		return nil, fmt.Errorf("commitment inventory refused: %w", err)
 	}
 	items := make([]InventoryItem, 0, len(document.Rows))
 	for _, row := range document.Rows {
-		identity, err := SourceIdentity(store.Root, revision, roadmap.RowFilePath(row.ID))
+		identity, _, err := sourceAt(store.Run, store.Root, revision, roadmap.RowFilePath(row.ID))
 		if err != nil {
 			return nil, fmt.Errorf("commitment inventory refused: roadmap row %s: %w", row.ID, err)
 		}
@@ -66,7 +74,7 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 		return nil, err
 	}
 	items = append(items, specs...)
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +131,7 @@ func (store Store) Plan(input []byte) (commitment.Plan, error) {
 	if err != nil {
 		return commitment.Plan{}, fmt.Errorf("encode commitment plan: %w", err)
 	}
-	err = intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	err = store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		if err := verifiedCompletions(ledger, current, plan.Predecessor, proposed); err != nil {
 			return ledger, false, err
 		}
@@ -163,7 +171,7 @@ func (store Store) approve(replacer durablefile.Replacer, planID, decision strin
 	var restore func() error
 	// The Compensation callback returns nothing, so its restore failure travels here.
 	var restoreErr error
-	err := intent.TransactWithReplacer(replacer, store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	err := store.ledger().TransactWithReplacer(replacer, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		for i := range ledger.CommitmentReceipts {
 			receipt := &ledger.CommitmentReceipts[i]
 			if receipt.Plan != planID {
@@ -245,16 +253,19 @@ func (store Store) defaultPolicy() (*commitment.Policy, string, error) {
 	return store.policyAt(revision)
 }
 
+// policyAt reads the policy at branch through the store's run. Keep the listing argv equal
+// to the argv of the file read's own listing, so that a run starts one listing for both. An
+// empty listing reads as absent, and a malformed listing record refuses.
 func (store Store) policyAt(branch string) (*commitment.Policy, string, error) {
 	const path = commitment.PolicyPath
-	listing, err := git.Output("-C", store.Root, "ls-tree", "-z", branch, "--", path)
+	listing, err := store.Run.ListTree(store.Root, branch, "--", path)
 	if err != nil {
 		return nil, "", fmt.Errorf("read commitment policy: %w", err)
 	}
-	if strings.TrimSuffix(listing, "\x00") == "" {
+	if len(listing) == 0 {
 		return nil, "absent", nil
 	}
-	data, err := git.ReadTreeFile(store.Root, branch, path)
+	data, err := store.Run.ReadTreeFile(store.Root, branch, path)
 	if err != nil {
 		return nil, "", fmt.Errorf("read commitment policy: %w", err)
 	}

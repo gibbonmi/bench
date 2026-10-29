@@ -29,19 +29,36 @@ import (
 // re-exports; the address, the locking, and the file effects stay here.
 const Filename = "bench-intent.json"
 
+// Repo is the ledger of the repository at Root. Each read and write resolves the ledger
+// address through Run, so a command run that passes its one run starts the
+// common-directory query once for a root. A nil run starts the query on every read.
+type Repo struct {
+	Run  *git.Run
+	Root string
+}
+
+// In is the ledger of the repository at root, read through run.
+func In(run *git.Run, root string) Repo { return Repo{Run: run, Root: root} }
+
+// Address is Repo.Address with a nil run.
+func Address(root string) (string, error) { return In(nil, root).Address() }
+
 // Address resolves the ledger through git's absolute common-directory query, so
 // the primary checkout and every linked worktree share one file.
-func Address(root string) (string, error) {
-	common, err := git.CommonDir(root)
+func (r Repo) Address() (string, error) {
+	common, err := r.Run.CommonDir(r.Root)
 	if err != nil || common == "" {
 		return "", fmt.Errorf("resolve git common directory: %w", err)
 	}
 	return filepath.Join(common, Filename), nil
 }
 
+// LockPath is Repo.LockPath with a nil run.
+func LockPath(root string) (string, error) { return In(nil, root).LockPath() }
+
 // LockPath resolves the lock file that every ledger transaction holds.
-func LockPath(root string) (string, error) {
-	path, err := Address(root)
+func (r Repo) LockPath() (string, error) {
+	path, err := r.Address()
 	if err != nil {
 		return "", err
 	}
@@ -50,8 +67,11 @@ func LockPath(root string) (string, error) {
 
 func lockOf(address string) string { return address + ".lock" }
 
-func Read(root string) (Ledger, error) {
-	path, err := Address(root)
+// Read is Repo.Read with a nil run.
+func Read(root string) (Ledger, error) { return In(nil, root).Read() }
+
+func (r Repo) Read() (Ledger, error) {
+	path, err := r.Address()
 	if err != nil {
 		return Ledger{}, err
 	}
@@ -176,13 +196,16 @@ func KeyOwner(kind Kind, key string) (int, bool) {
 	return int(pid), true
 }
 
+// Upsert is Repo.Upsert with a nil run.
+func Upsert(root string, entry Entry) error { return In(nil, root).Upsert(entry) }
+
 // Upsert inserts or enriches one stable writer key. An identical upsert does not
 // replace the file, preserving exact bytes and mtime.
-func Upsert(root string, entry Entry) error {
+func (r Repo) Upsert(entry Entry) error {
 	if err := validEntry(entry); err != nil {
 		return err
 	}
-	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
+	return r.Transact(StrictRead, func(current Ledger) (Ledger, bool, error) {
 		return admissionpolicy.Upsert(current, entry)
 	}, nil)
 }
@@ -281,13 +304,16 @@ func staleLock(lock string) bool {
 	return process.Signal(syscall.Signal(0)) != nil
 }
 
+// Snapshot is Repo.Snapshot with a nil run.
+func Snapshot(root string) ([]Entry, error) { return In(nil, root).Snapshot() }
+
 // Snapshot returns proof-live entries without mutating the ledger.
-func Snapshot(root string) ([]Entry, error) {
-	ledger, err := Read(root)
+func (r Repo) Snapshot() ([]Entry, error) {
+	ledger, err := r.Read()
 	if err != nil {
 		return nil, err
 	}
-	facts, err := livenessFacts(root, ledger.Entries)
+	facts, err := r.livenessFacts(ledger.Entries)
 	if err != nil {
 		return nil, err
 	}
@@ -299,8 +325,8 @@ func Snapshot(root string) ([]Entry, error) {
 // resolves them, so the snapshot and the compaction judge one set of proofs. A
 // worktree the stat cannot prove absent counts as present, because only a proven
 // absence retires an entry.
-func livenessFacts(root string, entries []Entry) (admissionpolicy.LivenessFacts, error) {
-	candidates, err := claudeCandidates(root)
+func (r Repo) livenessFacts(entries []Entry) (admissionpolicy.LivenessFacts, error) {
+	candidates, err := r.claudeCandidates()
 	if err != nil {
 		return admissionpolicy.LivenessFacts{}, err
 	}
@@ -309,7 +335,7 @@ func livenessFacts(root string, entries []Entry) (admissionpolicy.LivenessFacts,
 		WorktreeExists: map[string]bool{},
 		Landed:         map[string]bool{},
 	}
-	def, defOK := git.ResolvedDefault(root)
+	def, defOK := git.ResolvedDefault(r.Root)
 	for _, entry := range entries {
 		if entry.Worktree != "" {
 			if _, err := os.Stat(entry.Worktree); !errors.Is(err, os.ErrNotExist) {
@@ -317,7 +343,7 @@ func livenessFacts(root string, entries []Entry) (admissionpolicy.LivenessFacts,
 			}
 		}
 		if entry.Branch != "" && defOK {
-			if landed, _, err := git.LandedInDefault(root, entry.Branch, def); err == nil && landed {
+			if landed, _, err := git.LandedInDefault(r.Root, entry.Branch, def); err == nil && landed {
 				facts.Landed[entry.Branch] = true
 			}
 		}
@@ -325,8 +351,8 @@ func livenessFacts(root string, entries []Entry) (admissionpolicy.LivenessFacts,
 	return facts, nil
 }
 
-func claudeCandidates(root string) (bool, error) {
-	worktrees, err := git.Worktrees(root)
+func (r Repo) claudeCandidates() (bool, error) {
+	worktrees, err := r.Run.Worktrees(r.Root)
 	if err != nil {
 		return false, fmt.Errorf("classify intent worktrees: %w", err)
 	}
@@ -335,7 +361,7 @@ func claudeCandidates(root string) (bool, error) {
 			return true, nil
 		}
 	}
-	branches, err := git.LocalBranches(root)
+	branches, err := git.LocalBranches(r.Root)
 	if err != nil {
 		return false, fmt.Errorf("classify intent branches: %w", err)
 	}
@@ -347,10 +373,13 @@ func claudeCandidates(root string) (bool, error) {
 	return false, nil
 }
 
+// Compact is Repo.Compact with a nil run.
+func Compact(root string) error { return In(nil, root).Compact() }
+
 // Compact atomically removes only entries Snapshot has proven done.
-func Compact(root string) error {
-	return Transact(root, StrictRead, func(current Ledger) (Ledger, bool, error) {
-		facts, err := livenessFacts(root, current.Entries)
+func (r Repo) Compact() error {
+	return r.Transact(StrictRead, func(current Ledger) (Ledger, bool, error) {
+		facts, err := r.livenessFacts(current.Entries)
 		if err != nil {
 			return current, false, err
 		}
