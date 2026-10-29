@@ -1955,11 +1955,86 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "f257b0f449d5f87b28eae1eabd29b92bc638fd28",
+    "performer": "claude:gf-orchestrator-20261029",
+    "reconciliation": {
+      "GF1": "covered",
+      "GF10": "covered",
+      "GF11": "covered",
+      "GF12": "covered",
+      "GF13": "covered",
+      "GF14": "covered",
+      "GF15": "covered",
+      "GF16": "covered",
+      "GF17": "covered",
+      "GF18": "covered",
+      "GF19": "covered",
+      "GF2": "covered",
+      "GF20": "covered",
+      "GF21": "covered",
+      "GF22": "covered",
+      "GF23": "covered",
+      "GF24": "covered",
+      "GF25": "covered",
+      "GF26": "covered",
+      "GF27": "covered",
+      "GF28": "covered",
+      "GF29": "covered",
+      "GF3": "covered",
+      "GF30": "covered",
+      "GF31": "covered",
+      "GF32": "covered",
+      "GF33": "covered",
+      "GF34": "covered",
+      "GF35": "covered",
+      "GF36": "covered",
+      "GF37": "covered",
+      "GF4": "covered",
+      "GF5": "covered",
+      "GF6": "covered",
+      "GF7": "covered",
+      "GF8": "covered",
+      "GF9": "covered"
+    },
+    "verification": [
+      {
+        "id": "gf-final-gate",
+        "performer": "claude:gf-orchestrator-20261029",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "f257b0f449d5f87b28eae1eabd29b92bc638fd28",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:orchestrator:gf-final-gate",
+          "digest": "sha256:bfa6fda5c6fa94467a3dc6a602856ddeda83677733497925aed4773b2babf042",
+          "excerpt": "bench gate at 984fdf028: gofmt green, system green (49462 ms), shellcheck green, all six phases green; capability-skips 6 (privilege=6); gate: green\n"
+        },
+        "requirement": "whole-project",
+        "command": "bench gate",
+        "exit_code": 0
+      },
+      {
+        "id": "gf-final-coverage",
+        "performer": "claude:gf-orchestrator-20261029",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "f257b0f449d5f87b28eae1eabd29b92bc638fd28",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-agent:orchestrator:gf-final-coverage",
+          "digest": "sha256:4f322537ee726ae5b85c583ff898fea0b859d83d42022da07ee21c3f92156bd6",
+          "excerpt": "bench coverage --check specs/shared-test-fixtures/spec.md at 984fdf028: ok: coverage map valid — 37 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/shared-test-fixtures/spec.md",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
