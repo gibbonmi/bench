@@ -22,7 +22,8 @@ An ancestry check stores a yes and a no, but an ancestry error stores nothing.
 The live set stays outside the cache.
 The live set holds each ref, HEAD, a short object id, the index, the status, the configuration, the default branch, and the worktree registrations.
 A write inside the run can change each of these answers, so the run starts git for each read of them.
-Each location read checks the stored directory again on the filesystem, so a directory that a write removed or replaced still refuses.
+Each read of the common directory, the administration directory, or an administration path checks the stored directory again on the filesystem, so a directory that a write removed or replaced still refuses.
+A read of the top level does not check the stored answer again.
 
 The cache scope is one command run.
 A command creates one run at its entry and gives that run to each reader in the command.

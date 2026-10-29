@@ -46,7 +46,9 @@ func requireStarts(t *testing.T, logPath string, want map[string]int) {
 }
 
 // TestRunObjectReads proves that one run starts each pure object read once, returns a copy
-// of each stored answer, and keys a resolution by its flags. Two run values share nothing.
+// of each stored answer, and keys a read by its root spelling and a resolution by its flags.
+// A listing stays cached with a "^{tree}" suffix or a flag operand. Two run values share
+// nothing.
 // (Coverage rows GQ1, GQ3, GQ6, GQ7, GQ8, GQ10, GQ13, GQ14, GQ18, and GQ21.)
 func TestRunObjectReads(t *testing.T) {
 	f := newObjectRepo(t)
@@ -66,6 +68,16 @@ func TestRunObjectReads(t *testing.T) {
 			again, err := run.ReadControlBlob(f.root, f.blob)
 			return string(again), err
 		}, "hello\n", map[string]int{blobRead: 1}},
+		{"root spellings", func(run *Run, call int) (string, error) {
+			data, err := run.ReadControlBlob([]string{f.root, f.root + "/."}[call], f.blob)
+			return string(data), err
+		}, "hello\n", map[string]int{blobRead: 2}},
+		{"tree suffix", func(run *Run, _ int) (string, error) {
+			return listing(run.ListTree(f.root, f.tree+"^{tree}", "--", "a.txt"))
+		}, "100644 blob " + f.blob + "\ta.txt", map[string]int{"ls-tree -z " + f.tree + "^{tree}": 1}},
+		{"flag operand", func(run *Run, _ int) (string, error) {
+			return listing(run.ListTree(f.root, "-r", f.tree))
+		}, "100644 blob " + f.blob + "\ta.txt", map[string]int{"ls-tree -z -r " + f.tree: 1}},
 		{"tree path", func(run *Run, _ int) (string, error) {
 			return listing(run.ListTree(f.root, f.tree, "--", "a.txt"))
 		}, "100644 blob " + f.blob + "\ta.txt", map[string]int{"ls-tree -z " + f.tree: 1}},
@@ -113,7 +125,8 @@ func TestRunObjectReads(t *testing.T) {
 }
 
 // TestRunObjectReadsStayLive proves that one run reads a ref, HEAD, or short-id operand
-// live, and that its primary-checkout read starts the porcelain on every call.
+// live, in either ancestry position, and a listing of two revisions live. It also proves
+// that the primary-checkout read starts the porcelain on every call.
 // (Coverage rows GQ2, GQ4, GQ5, GQ9, GQ15, and GQ24.)
 func TestRunObjectReadsStayLive(t *testing.T) {
 	f := newObjectRepo(t)
@@ -149,7 +162,11 @@ func TestRunObjectReadsStayLive(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		return strings.Join([]string{string(blob), tree, tip, strconv.FormatBool(ancestor)}, "|")
+		descendant, err := run.IsAncestor(f.root, "refs/heads/side", f.commit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return strings.Join([]string{string(blob), tree, tip, strconv.FormatBool(ancestor), strconv.FormatBool(descendant)}, "|")
 	}
 	before := reads()
 	if err := os.WriteFile(filepath.Join(f.root, "a.txt"), []byte("next\n"), 0o644); err != nil {
@@ -162,7 +179,7 @@ func TestRunObjectReadsStayLive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want, got := strings.Join([]string{"next\n", nextTree, head, "true"}, "|"), reads(); got != want || got == before {
+	if want, got := strings.Join([]string{"next\n", nextTree, head, "true", "false"}, "|"), reads(); got != want || got == before {
 		t.Fatalf("reads after the commit and the update-ref = %q, want %q, apart from %q", got, want, before)
 	}
 
@@ -171,8 +188,12 @@ func TestRunObjectReadsStayLive(t *testing.T) {
 		if _, err := run.ListTree(f.root, short); err != nil {
 			t.Fatalf("run.ListTree(%s): %v", short, err)
 		}
+		// With no "--", the path operand counts as a second revision, so the listing is live.
+		if _, err := run.ListTree(f.root, f.commit, "a.txt"); err != nil {
+			t.Fatalf("run.ListTree(%s, a.txt): %v", f.commit, err)
+		}
 	}
-	requireStarts(t, logPath, map[string]int{"ls-tree -z " + short: 2})
+	requireStarts(t, logPath, map[string]int{"ls-tree -z " + short: 2, "ls-tree -z " + f.commit + " a.txt": 2})
 }
 
 // TestRunObjectFailures proves that a failed object read stores nothing, so each read of a
@@ -252,7 +273,7 @@ func TestFullObjectID(t *testing.T) {
 }
 
 // TestRunAdminPathRevalidates proves that one run starts the administration-path query
-// once for a root and a name, and that a read after the removal of the answer's parent
+// once for each root spelling and name, and that a read after the removal of the answer's parent
 // directory refuses with no new start. (Coverage rows GQ22 and GQ23.)
 func TestRunAdminPathRevalidates(t *testing.T) {
 	root := newRepo(t)
@@ -269,6 +290,13 @@ func TestRunAdminPathRevalidates(t *testing.T) {
 	if second, err := run.AdminPath(root, "bench-scratch/file"); err != nil || second != first {
 		t.Fatalf("second read = %q, %v, want %q, nil", second, err, first)
 	}
+	if other, err := run.AdminPath(root, "bench-scratch/other"); err != nil || other != filepath.Join(filepath.Dir(first), "other") {
+		t.Fatalf("read of a second name = %q, %v, want its own path beside %q", other, err, first)
+	}
+	if _, err := run.AdminPath(root+"/.", "bench-scratch/file"); err != nil {
+		t.Fatalf("read of a second root spelling: %v", err)
+	}
+	requireStarts(t, logPath, map[string]int{"--git-path bench-scratch/file": 2, "--git-path bench-scratch/other": 1})
 	if err := os.Remove(parent); err != nil {
 		t.Fatal(err)
 	}
@@ -277,5 +305,5 @@ func TestRunAdminPathRevalidates(t *testing.T) {
 	if !errors.As(err, &resolution) || resolution.Path != filepath.Dir(first) {
 		t.Fatalf("read after the removal = %v, want the refusal of %q", err, filepath.Dir(first))
 	}
-	requireStarts(t, logPath, map[string]int{"--git-path": 1})
+	requireStarts(t, logPath, map[string]int{"--git-path": 3})
 }

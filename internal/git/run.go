@@ -76,9 +76,10 @@ func (r *Run) RootAt(dir string) (string, error) {
 	return r.answer(runQuery{location: topLevelLocation, root: dir}, func() (string, error) { return RootAt(dir) })
 }
 
-// AdminPath answers as the package AdminPath does, and it starts git once for each root
-// spelling and name in the run. Each read checks the parent directory of the answer again,
-// as the directory reads do.
+// AdminPath starts git once for each root spelling and name in the run. On a non-nil run,
+// each read checks the parent directory of the answer, the first read included, so a
+// missing parent refuses where the package AdminPath answers. A nil run answers as the
+// package AdminPath does.
 func (r *Run) AdminPath(root, name string) (string, error) {
 	if r == nil {
 		return AdminPath(root, name)

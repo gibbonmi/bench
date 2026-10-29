@@ -66,14 +66,17 @@ func TestReauthorizeCommandRequiredFlagsKeepDeclaredHelp(t *testing.T) {
 }
 
 // TestReauthorizeArgAcceptsAFullObjectID proves that the reauthorize hint quotes a 64-digit
-// full object id for the base and the source tip, instead of their placeholders.
-// (Coverage row GQ26.)
+// full object id for the base and the source tip, instead of their placeholders, and that an
+// abbreviated identity expands to a 64-digit full id. (Coverage row GQ26.)
 func TestReauthorizeArgAcceptsAFullObjectID(t *testing.T) {
 	t.Parallel()
 	base, tip := strings.Repeat("ab", 32), strings.Repeat("CD", 32)
 	next := reauthorizeRecoveryNext("assignment", "/pool/target", base, tip)
 	if !strings.Contains(next, base) || !strings.Contains(next, tip) || strings.Contains(next, "<full-") {
 		t.Fatalf("reauthorize hint = %q, want the 64-digit base %s and tip %s, with no placeholder", next, base, tip)
+	}
+	if !abbreviatedIdentity("cdcdcdc", tip) {
+		t.Fatalf("abbreviatedIdentity(cdcdcdc, %s) = false, want the 64-digit expansion", tip)
 	}
 }
 
