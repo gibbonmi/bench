@@ -314,6 +314,10 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main_test.go`
 - `cmd/bench/otel_hook_seams_test.go`
+- `cmd/bench/preflight_version_test.go`
+- `cmd/bench/selected_queries_test.go`
+- `cmd/bench/spec_retire_listing_test.go`
+- `cmd/bench/tree_scope_test.go`
 - `internal/adopt/adopt_test.go`
 - `internal/adopt/broker_test.go`
 - `internal/adopt/link_hook_test.go`

@@ -1,7 +1,7 @@
 # Migrate CLI and adoption fixtures
 
 Blocked by: 04-migrate-workflow-readers.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main_test.go, cmd/bench/otel_hook_seams_test.go, internal/adopt/adopt_test.go, internal/adopt/broker_test.go, internal/adopt/link_hook_test.go, internal/adopt/link_transaction_test.go, internal/adopt/repairtest/session_test.go, internal/adopt/setup_prompt_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/adopt/lifecycle_special_test.go, internal/adopt/lifecycle_consumption_test.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, cmd/bench/main_test.go, cmd/bench/otel_hook_seams_test.go, internal/adopt/adopt_test.go, internal/adopt/broker_test.go, internal/adopt/link_hook_test.go, internal/adopt/link_transaction_test.go, internal/adopt/repairtest/session_test.go, internal/adopt/setup_prompt_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/adopt/lifecycle_special_test.go, internal/adopt/lifecycle_consumption_test.go, cmd/bench/preflight_version_test.go, cmd/bench/selected_queries_test.go, cmd/bench/spec_retire_listing_test.go, cmd/bench/tree_scope_test.go
 Covers: GF16, GF19, GF29, GF30
 
 ## What to build
