@@ -196,6 +196,13 @@ func TestOutputBytesContract(t *testing.T) {
 	}
 }
 
+func TestOutputBytesFailure(t *testing.T) {
+	root := RepoOnBranch(t, "main")
+	requireFailed(t, "OutputBytes(absent)", observe(t, func(tb testing.TB) { OutputBytes(tb, root, absent...) }))
+	withoutGit(t)
+	requireFailed(t, "OutputBytes without git", observe(t, func(tb testing.TB) { OutputBytes(tb, root, "status") }))
+}
+
 func TestCommandArgv(t *testing.T) {
 	parent := t.TempDir()
 	root := filepath.Join(parent, `repo with spaces; touch sentinel $(touch sentinel) 'q" *`)
@@ -299,9 +306,11 @@ func TestFixtureIdentity(t *testing.T) {
 	writeKitCopyFile(t, root, "tracked", "tracked bytes", 0o644)
 	MustRun(t, root, "add", "tracked")
 	Commit(t, root, "fixture")
+	unconfigured := Repo(t)
+	MustRun(t, unconfigured, append(IdentityArgs(), "commit", "--quiet", "--allow-empty", "-m", "identity arguments")...)
 	canonical := IdentityName + " <" + IdentityEmail + ">"
 	want := canonical + "|" + canonical
-	for name, repository := range map[string]string{"RepoOnBranch": root, "snapshot": KitCopy(t, root)} {
+	for name, repository := range map[string]string{"RepoOnBranch": root, "snapshot": KitCopy(t, root), "IdentityArgs": unconfigured} {
 		if got := identities(t, repository); got != want {
 			t.Fatalf("%s identity = %q; want %q", name, got, want)
 		}
