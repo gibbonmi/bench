@@ -285,3 +285,19 @@ Findings: 4. Worst issue: C1.
 - C2, auto-fix, confidence 8: no test reads a ref ancestor with a full-id descendant (internal/git/run.go:273; row GQ15). So a guard without the ancestor term survives.
 - C3, auto-fix, confidence 8: no test lists a full id with the `^{tree}` suffix, a flag operand, or two revisions (internal/git/run.go:237). So a listing rule without the suffix trim or the flag skip survives.
 - C4, auto-fix, confidence 6: no test expands a prefix to a 64-digit id through `abbreviatedIdentity`, so a 40-digit rule there survives (internal/worktree/land_identity.go:291; a flagged addition).
+
+## Chunk GQ-C1 repair cycle 1
+
+Repair cycles used: 1 of 2. The repair commit is 0cc386a93, and the refreeze record is e31006c59. The repair corrected the ADR sentence (S1) and the `Run.AdminPath` doc comment (P1), and it added the cases of C1 to C4.
+
+The repair session reported these witness reds:
+
+- C1: an `AdminPath` key without the name turns `TestRunAdminPathRevalidates` red.
+- C1: an `AdminPath` key without the root spelling turns `TestRunAdminPathRevalidates` red.
+- C1: an object key without the root spelling turns `TestRunObjectReads/root_spellings` red.
+- C2: an `IsAncestor` guard without the ancestor term turns `TestRunObjectReadsStayLive` red.
+- C3: a listing rule without the `^{tree}` trim turns `TestRunObjectReads/tree_suffix` red.
+- C3: a listing rule without the flag skip turns `TestRunObjectReads/flag_operand` red.
+- C4: a 40-digit rule in `abbreviatedIdentity` turns `TestReauthorizeArgAcceptsAFullObjectID` red.
+
+The coordinator probe omitted the stop at the `--` operand in the listing rule. Four cases of `TestRunObjectReads` went red, and `tree_suffix` was one of them.
