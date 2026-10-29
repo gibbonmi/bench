@@ -1,7 +1,7 @@
 # Migrate capability callers in leaf packages
 
 Blocked by: 09-own-capability-reasons.md
-Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/canary/mutation_test.go, internal/census/census_fifo_test.go, internal/census/census_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/env/git_policy_test.go, internal/git/admin_readers_test.go, internal/git/refs_test.go, internal/git/worktree_admin_enum_test.go, internal/git/worktree_admin_hostile_test.go, internal/guards/guards_test.go, internal/learnings/learnings_test.go, internal/outline/outline_test.go, internal/prose/walk_test.go, internal/skillsindex/skillsindex_reference_test.go, internal/spec/spec_test.go, internal/guards/scan_loop_test.go, internal/spec/widen_test.go, internal/testrepo/socket.go
+Writes: cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/canary/mutation_test.go, internal/census/census_fifo_test.go, internal/census/census_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/env/git_policy_test.go, internal/git/admin_readers_test.go, internal/git/refs_test.go, internal/git/worktree_admin_enum_test.go, internal/git/worktree_admin_hostile_test.go, internal/guards/guards_test.go, internal/learnings/learnings_test.go, internal/outline/outline_test.go, internal/prose/walk_test.go, internal/skillsindex/skillsindex_reference_test.go, internal/spec/spec_test.go, internal/guards/scan_loop_test.go, internal/spec/widen_test.go, internal/testrepo/socket.go, internal/git/checkout_test.go
 Covers: GF22, GF29, GF30
 
 ## What to build
