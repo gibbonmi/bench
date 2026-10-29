@@ -40,13 +40,13 @@ Use craft-spec and craft-seams for the amendment.
 - Path: `roadmap/FT360.md`
   Supports: the staged owner and acknowledged Run collision.
   Drift: a change to the row or helper contract.
-- Path: `specs/shared-test-fixtures/spec.md`
-  Supports: the existing migration and capability requirements.
-  Drift: an approved spec amendment.
+- Path: `internal/conformance/git_fixture_owner_test.go`
+  Supports: the landed fixture ownership rule and its exact exceptions.
+  Drift: a change to the rule or an exception.
 - Path: `internal/gittest/gittest.go`
   Supports: the current Output and error-returning Run forms.
   Drift: a change to those exported forms.
-- Path: `internal/testrepo/working_tree.go`
-  Supports: the second snapshot and identity implementation.
+- Path: `internal/gittest/snapshot.go`
+  Supports: the one snapshot implementation.
   Drift: a change to snapshot behavior.
 
