@@ -24,7 +24,7 @@ func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
 	t.Parallel()
 	f := removableSetFixture(t, 2)
 	j := defaultJoins()
-	set, planErr := planLandedSet(j, f.root, CleanupOptions{}, "")
+	set, planErr := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
 	mustNoError(t, planErr)
 	if len(set.rows) != 2 {
 		t.Fatalf("landed set = %#v, want two applicable members", set.rows)
@@ -90,7 +90,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set, planErr := planLandedSet(j, f.root, CleanupOptions{}, "")
+		set, planErr := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
 		mustNoError(t, planErr)
 		if len(set.rows) != 2 {
 			t.Fatalf("landed set = %#v, want two applicable members", set.rows)
@@ -115,7 +115,7 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set, planErr := planLandedSet(j, f.root, CleanupOptions{}, "")
+		set, planErr := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
 		mustNoError(t, planErr)
 		if len(set.rows) != 2 {
 			t.Fatalf("landed set = %#v, want two applicable members", set.rows)
@@ -144,7 +144,7 @@ func TestCleanSetPreflightFaultOnLaterMember(t *testing.T) {
 	t.Parallel()
 	f := removableSetFixture(t, 2)
 	j := defaultJoins()
-	ordered, planErr := planLandedSet(j, f.root, CleanupOptions{}, "")
+	ordered, planErr := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
 	mustNoError(t, planErr)
 	if len(ordered.rows) != 2 {
 		t.Fatalf("landed set = %#v, want two members", ordered.rows)
@@ -153,7 +153,7 @@ func TestCleanSetPreflightFaultOnLaterMember(t *testing.T) {
 	// skips it. The fault then lands on the member at index one. The drift names that member's
 	// own tracked file, so a rename of the fixture scheme cannot make this pass by accident.
 	driftTracked(t, f.files, ordered.rows[0].assignment.ID)
-	set, replanErr := planLandedSet(j, f.root, CleanupOptions{}, "")
+	set, replanErr := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
 	mustNoError(t, replanErr)
 	if len(set.rows) != 2 || set.rows[0].plan.Action.Removes() || !set.rows[1].plan.Action.Removes() {
 		t.Fatalf("landed set = %#v, want a retained row ahead of a removable one", set.rows)

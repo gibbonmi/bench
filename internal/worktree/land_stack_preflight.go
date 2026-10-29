@@ -10,6 +10,7 @@ import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/landing/stackpolicy"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 )
@@ -19,11 +20,11 @@ import (
 // its landing transitions that spec or closes that deliverable. A member whose tip lacks the
 // destination tip folds the destination first. The first fault stops the rest. An empty
 // destination is one that its own proofs refused, so no ancestry proof runs over it.
-func stackMemberProofs(root, destination, branch string, l stackMemberLanding) error {
+func stackMemberProofs(run *git.Run, root, destination, branch string, l stackMemberLanding) error {
 	if l.source.specPath != "" {
 		return stackAloneRefusal("its spec is a staged spec")
 	}
-	bound, err := commitrepo.Store{Root: root}.HoldsDeliveryBinding(l.assignment.ID)
+	bound, err := commitrepo.Store{Root: root, Run: run}.HoldsDeliveryBinding(l.assignment.ID)
 	if err != nil {
 		return err
 	}
@@ -108,10 +109,10 @@ func stackOverlaps(root, destination string, route stackRoute, landings []stackM
 
 // stackWindow decides the build window for each member on its own before the lease, as for
 // one landing. Each member that the window refuses refuses with its index.
-func stackWindow(root string, route stackRoute, landings []stackMemberLanding, publications []commitrepo.Publication) []error {
+func stackWindow(run *git.Run, root string, route stackRoute, landings []stackMemberLanding, publications []commitrepo.Publication) []error {
 	var refusals []error
 	for i, l := range landings {
-		if err := (commitrepo.Store{Root: root}).AdmitWindow(publications[i]); err != nil {
+		if err := (commitrepo.Store{Root: root, Run: run}).AdmitWindow(publications[i]); err != nil {
 			refusals = append(refusals, stackMemberRefusal(l.index, l.assignment.Label, landingFaceRoute(err, route.rerun(stackRefusedBy(l.index, err)), false)))
 		}
 	}

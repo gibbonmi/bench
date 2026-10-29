@@ -432,7 +432,7 @@ func conservativeCleanupAt(j joins, a ambient, root string) (ResumeResult, error
 		}
 		result.Removed++
 	}
-	if err := sweepOrphanAssignments(j, root, &result, a.now); err != nil {
+	if err := sweepOrphanAssignments(j, a.run, root, &result, a.now); err != nil {
 		return result, err
 	}
 	result.PrunedBranches, err = intent.PruneUnclaimedLandedBranches(root)
@@ -455,7 +455,7 @@ func conservativeCleanupAt(j joins, a ambient, root string) (ResumeResult, error
 // which ones the pool still answers for.
 // The instant is the caller's explicit boundary resolution: one instant for the whole
 // pass, so two records of the same age cannot straddle the window and disagree.
-func sweepOrphanAssignments(j joins, root string, result *ResumeResult, now time.Time) error {
+func sweepOrphanAssignments(j joins, run *git.Run, root string, result *ResumeResult, now time.Time) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return err
@@ -465,7 +465,7 @@ func sweepOrphanAssignments(j joins, root string, result *ResumeResult, now time
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
-			if plan := planLandedAssignment(j, root, a, CleanupOptions{}); assignmentLanded(root, a, plan) {
+			if plan := planLandedAssignment(j, run, root, a, CleanupOptions{}); assignmentLanded(root, a, plan) {
 				continue
 			}
 			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})

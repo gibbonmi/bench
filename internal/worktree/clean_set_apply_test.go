@@ -150,7 +150,7 @@ func TestCleanSetPreflightAllRows(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)
 		j := defaultJoins()
-		set, planErr := planLandedSet(j, f.root, CleanupOptions{}, "")
+		set, planErr := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
 		if planErr != nil || len(set.rows) != 2 {
 			t.Fatalf("landed set = %#v, %v; want two applicable members", set, planErr)
 		}

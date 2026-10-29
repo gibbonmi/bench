@@ -304,7 +304,7 @@ func TestRefreshHoldsAnInstalledCandidate(t *testing.T) {
 			})
 			var stderr strings.Builder
 
-			got := refreshBroker(j, f.root, &stderr)
+			got := refreshBroker(j, nil, f.root, &stderr)
 			requireTest(t, got == row.want, "refresh = %q (%q), want %q", got, stderr.String(), row.want)
 			if row.want == effectHeld {
 				after := fixtureFileText(t, primary) + fixtureFileText(t, manifest)
@@ -321,7 +321,7 @@ func TestRefreshHoldsAnInstalledCandidate(t *testing.T) {
 		request := "land-refresh-held"
 		f := brokerChangingLanding(t, request)
 		j, calls := refreshJoins(nil)
-		j.heldInstall = func(string) bool { return true }
+		j.heldInstall = func(commitrepo.Store) bool { return true }
 		call := f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...)
 		call.kit = f.root
 

@@ -323,7 +323,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 		return 0
 	}
 	if landed {
-		set, planErr := planLandedSet(j, root, options, "")
+		set, planErr := planLandedSet(j, a.run, root, options, "")
 		if planErr != nil {
 			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
 			return 1
@@ -513,23 +513,23 @@ const retainedSuffix = "; checkout retained"
 
 // assignmentForRequest keeps opaque-token resolution in intent. Only an unmatched
 // token permits path-derived recovery discovery.
-func assignmentForRequest(root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
-	assignment, found, err := intent.FindAssignmentForRequest(root, request)
+func assignmentForRequest(run *git.Run, root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
+	assignment, found, err := intent.In(run, root).FindAssignmentForRequest(request)
 	if err != nil {
 		return intent.Assignment{}, err
 	}
 	if found {
 		return assignment, nil
 	}
-	recovery, _, err := unmatchedRequestRecovery(root, recoveryContext)
+	recovery, _, err := unmatchedRequestRecovery(run, root, recoveryContext)
 	if err != nil {
 		return intent.Assignment{}, err
 	}
 	return intent.Assignment{}, refusalError{recovery}
 }
 
-func unmatchedRequestRecovery(root string, recoveryContext assignmentRecoveryContext) (refusal, bool, error) {
-	assignments, err := intent.Assignments(root)
+func unmatchedRequestRecovery(run *git.Run, root string, recoveryContext assignmentRecoveryContext) (refusal, bool, error) {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return refusal{}, false, err
 	}

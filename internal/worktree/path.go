@@ -115,7 +115,7 @@ func missingTreeLanded(root string, assignment intent.Assignment) bool {
 	if !resolved {
 		return false
 	}
-	leases, err := assignmentLeaseStates(root)
+	leases, err := assignmentLeaseStates(nil, root)
 	if err != nil {
 		return false
 	}

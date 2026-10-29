@@ -255,7 +255,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 		return intent.CleanupReceipt{}, statErr
 	}
 	if assignment == nil {
-		foundAssignment, findErr := assignmentForRequest(root, requestArg, assignmentRecoveryContext{
+		foundAssignment, findErr := assignmentForRequest(a.run, root, requestArg, assignmentRecoveryContext{
 			target: target,
 			suffix: retainedSuffix,
 		})
@@ -340,7 +340,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 // that is gone: an unknown lease and a live lease each retain the assignment. The policy
 // decides the live-lease verdict, so its reason has one source.
 func missingTreeLeaseRefusal(root, targetArg string, assignment intent.Assignment) error {
-	leases, err := assignmentLeaseStates(root)
+	leases, err := assignmentLeaseStates(nil, root)
 	if err != nil {
 		return err
 	}

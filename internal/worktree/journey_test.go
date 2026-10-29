@@ -71,6 +71,13 @@ func journeyStubGit(t testing.TB, root, mode, logPath string) string {
 	return commonDir
 }
 
+// journeyStubGitStarts counts the starts that a journeyStubGit stub logged at logPath with
+// flag among their arguments.
+func journeyStubGitStarts(t testing.TB, logPath, flag string) int {
+	t.Helper()
+	return gittest.StubGitStarts(t, logPath, flag)
+}
+
 func journeyFIFOWorktreeAdmin(t testing.TB, root, id string) string {
 	t.Helper()
 	recordJourneyEffect(t, "repository", "fifo worktree admin "+id)

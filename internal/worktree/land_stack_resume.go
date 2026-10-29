@@ -66,7 +66,7 @@ func resumeStack(j joins, a ambient, root string, args []string, stdout, stderr 
 	stackBase := merge
 	var active []int
 	for i := range k {
-		_, live, skipped, err := resumeAssignment(j, root, route.paths[i], members[i].Request, tips[i], bases[i], landingSlug(members[i].Spec))
+		_, live, skipped, err := resumeAssignment(j, a.run, root, route.paths[i], members[i].Request, tips[i], bases[i], landingSlug(members[i].Spec))
 		if err == nil && !live {
 			_, err = terminalResumeReceipt(root, route.paths[i], members[i].Request, tips[i])
 		}
@@ -78,7 +78,7 @@ func resumeStack(j joins, a ambient, root string, args []string, stdout, stderr 
 		}
 	}
 	end := stackEnd{destinationBase: stackBase, published: published, landed: k}
-	refused, step := resumePublishedSteps(j, root, destination, branch, marker, published, stackBase, rerun)
+	refused, step := resumePublishedSteps(j, a.run, root, destination, branch, marker, published, stackBase, rerun)
 	if refused != nil {
 		return landRefusalError(stdout, refused)
 	}

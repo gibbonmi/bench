@@ -75,12 +75,12 @@ func mergeAttributed(assignment *string, a ambient, root string, parsed usage.Re
 	if err != nil {
 		return refuse(refusalError{refusal{detail: "assignment ledger is unreadable"}})
 	}
-	target, err := mergeTarget(root, assignments, parsed.Positionals[0])
+	target, err := mergeTarget(a.run, root, assignments, parsed.Positionals[0])
 	if err != nil {
 		return refuse(err)
 	}
 	*assignment = target.ID
-	incoming, err := mergeIncoming(root, assignments, target, spelling)
+	incoming, err := mergeIncoming(a.run, root, assignments, target, spelling)
 	if err != nil {
 		return refuse(err)
 	}
@@ -166,7 +166,7 @@ func mergeOnAssignmentBranch(a intent.Assignment, detail string) error {
 // mergeTarget resolves the operand to the assignment record the verb needs: the id for
 // the record, the label for the subject, and the branch for the compare-and-swap. The
 // identity bundle is this verb's whole authority, so it is proved before anything moves.
-func mergeTarget(root string, assignments []intent.Assignment, operand string) (intent.Assignment, error) {
+func mergeTarget(run *git.Run, root string, assignments []intent.Assignment, operand string) (intent.Assignment, error) {
 	if !lineSafe(operand) {
 		return intent.Assignment{}, refusalError{refusal{detail: "target contains control characters"}}
 	}
@@ -177,7 +177,7 @@ func mergeTarget(root string, assignments []intent.Assignment, operand string) (
 	if err := mergeOnAssignmentBranch(selected, "merge target is not on its assignment branch"); err != nil {
 		return intent.Assignment{}, err
 	}
-	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
+	if err := identityBundleRefusal(run, root, selected.Worktree, selected, landingActiveState); err != nil {
 		return intent.Assignment{}, err
 	}
 	return selected, nil
@@ -217,7 +217,7 @@ func fromRepresentable(from string) error {
 // the commit lookup answer is ambiguous, because a first-match resolver would merge
 // whichever lookup happened to run first. The sha route runs last, so a fresh sibling that
 // sits at the default-branch tip does not shadow the ordinary fold.
-func mergeIncoming(root string, assignments []intent.Assignment, target intent.Assignment, from string) (string, error) {
+func mergeIncoming(run *git.Run, root string, assignments []intent.Assignment, target intent.Assignment, from string) (string, error) {
 	if err := fromRepresentable(from); err != nil {
 		return "", err
 	}
@@ -239,7 +239,7 @@ func mergeIncoming(root string, assignments []intent.Assignment, target intent.A
 	case owned:
 		return commit, nil
 	case resolved:
-		return siblingByTipSha(root, activeAssignments(assignments), target.ID, commit)
+		return siblingByTipSha(run, root, activeAssignments(assignments), target.ID, commit)
 	}
 	return "", refusalError{refusal{detail: "--from names no assignment and no commit", observed: from}}
 }
@@ -253,7 +253,7 @@ const fromIsTheTargetDetail = "--from resolves to the target itself"
 // the sha the handoff names. It owns the refusal for a commit no route claims, because
 // zero matches here means every lookup has now answered. A commit two or more siblings
 // share names no one sibling, so it refuses rather than fold a first match.
-func siblingByTipSha(root string, active []intent.Assignment, targetID, commit string) (string, error) {
+func siblingByTipSha(run *git.Run, root string, active []intent.Assignment, targetID, commit string) (string, error) {
 	var matched []intent.Assignment
 	var ids []string
 	for _, a := range active {
@@ -268,7 +268,7 @@ func siblingByTipSha(root string, active []intent.Assignment, targetID, commit s
 		ids = append(ids, a.ID)
 	}
 	if len(matched) == 1 {
-		return siblingContribution(root, matched[0], commit)
+		return siblingContribution(run, root, matched[0], commit)
 	}
 	if len(matched) > 1 {
 		return "", refusalError{refusal{detail: "--from is the branch tip of more than one sibling", observed: commit, wanted: strings.Join(ids, " or ")}}
@@ -295,11 +295,11 @@ func activeAssignments(assignments []intent.Assignment) []intent.Assignment {
 // `bench commit` stays the one snapshot composer, so a detached or dirty sibling refuses
 // rather than have its uncommitted work silently dropped. tip is the branch tip the
 // caller read to select the sibling, and is empty for a caller that read none.
-func siblingContribution(root string, selected intent.Assignment, tip string) (string, error) {
+func siblingContribution(run *git.Run, root string, selected intent.Assignment, tip string) (string, error) {
 	if err := mergeOnAssignmentBranch(selected, "sibling is not on its assignment branch"); err != nil {
 		return "", err
 	}
-	if err := identityBundleRefusal(root, selected.Worktree, selected, landingActiveState); err != nil {
+	if err := identityBundleRefusal(run, root, selected.Worktree, selected, landingActiveState); err != nil {
 		return "", err
 	}
 	if tip == "" {
@@ -342,7 +342,7 @@ func siblingTip(root string, assignments []intent.Assignment, exclude, from stri
 	if exclude != "" && selected.ID == exclude {
 		return "", "", false, refusalError{refusal{detail: fromIsTheTargetDetail, observed: selected.ID}}
 	}
-	tip, err = siblingContribution(root, selected, "")
+	tip, err = siblingContribution(nil, root, selected, "")
 	if err != nil {
 		return "", "", false, err
 	}

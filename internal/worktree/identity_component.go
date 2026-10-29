@@ -92,14 +92,14 @@ func registrationRefusal(evidence ownerEvidence, a intent.Assignment) error {
 // identityBundleRefusal names the first component the assignment's own records fail, in
 // registry order. active decides which ledger states the calling verb accepts: a first
 // landing takes `active` alone, and a resume also takes `cleanup-pending`.
-func identityBundleRefusal(root, target string, a intent.Assignment, active func(intent.AssignmentState) bool) error {
+func identityBundleRefusal(run *git.Run, root, target string, a intent.Assignment, active func(intent.AssignmentState) bool) error {
 	if !active(a.State) {
 		return componentRefusal(componentAssignmentState, a.ID, string(a.State), string(intent.StateActive))
 	}
 	if a.Worktree != target {
 		return componentRefusal(componentAssignmentPath, a.ID, a.Worktree, target)
 	}
-	evidence, err := ownerMarkerRefusal(&git.Run{}, root, target, a)
+	evidence, err := ownerMarkerRefusal(run, root, target, a)
 	if err != nil {
 		return err
 	}

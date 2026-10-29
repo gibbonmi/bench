@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -62,7 +63,7 @@ func landedAfterEffects(j joins, a ambient, root string, result landing.Reviewed
 // It answers the empty name when no effect failed. A first run, a resume, and a stack all
 // run the effects through it.
 func runLandedEffects(j joins, a ambient, root, destinationBase string, brokerChanged bool, stdout, stderr io.Writer) string {
-	refresh := refreshBroker(j, root, stderr)
+	refresh := refreshBroker(j, a.run, root, stderr)
 	// A failed effect stops every later effect, so the cleanup never starts and never
 	// touches a checkout. It reports pending, which is the word for an effect that has
 	// not run rather than one that ran and did nothing.
@@ -92,11 +93,11 @@ func runLandedEffects(j joins, a ambient, root, destinationBase string, brokerCh
 // advance, then the steps after the marker. It answers the name of the step that failed,
 // or the empty name. A first run and a stack both run these steps once for the commit that
 // they published.
-func publishedSteps(j joins, root, branch string, result landing.ReviewedResult, priorMarker string) string {
+func publishedSteps(j joins, run *git.Run, root, branch string, result landing.ReviewedResult, priorMarker string) string {
 	if err := advanceLandedMarker(root, branch, result, priorMarker); err != nil {
 		return "marker"
 	}
-	return stepsAfterMarker(j, root, result.Commit, result.Commit, result.DestinationBase)
+	return stepsAfterMarker(j, run, root, result.Commit, result.Commit, result.DestinationBase)
 }
 
 // stepsAfterMarker runs the steps that follow the marker step for the publication of
@@ -104,14 +105,14 @@ func publishedSteps(j joins, root, branch string, result landing.ReviewedResult,
 // to destination, and the branch prune. destination is the destination tip now. It answers
 // the name of the step that failed, or the empty name. Every landing and every resume runs
 // these steps through it.
-func stepsAfterMarker(j joins, root, destination, published, destinationBase string) string {
-	if err := j.reconcileCommitment(root); err != nil {
+func stepsAfterMarker(j joins, run *git.Run, root, destination, published, destinationBase string) string {
+	if err := j.reconcileCommitment(commitrepo.Store{Root: root, Run: run}); err != nil {
 		return "commitment"
 	}
 	if err := reconcileLandingDestination(j, root, destination, published, destinationBase); err != nil {
 		return "reconcile"
 	}
-	if _, err := intent.PruneUnclaimedLandedBranches(root); err != nil {
+	if _, err := intent.In(run, root).PruneUnclaimedLandedBranches(); err != nil {
 		return "prune"
 	}
 	return ""
@@ -144,11 +145,11 @@ func releaseLanded(j joins, a ambient, root, request, path string, stderr io.Wri
 // An installed candidate never verifies against the destination's sources, so a rebuild
 // would replace it with an executable that refuses its build's ledger. The refresh therefore
 // reads the held-install predicate first, and a held refresh writes nothing.
-func refreshBroker(j joins, root string, stderr io.Writer) string {
+func refreshBroker(j joins, run *git.Run, root string, stderr io.Writer) string {
 	if !freshness.DeclaresBuildInputs(root) {
 		return effectNotApplicable
 	}
-	if j.heldInstall(root) {
+	if j.heldInstall(commitrepo.Store{Root: root, Run: run}) {
 		return effectHeld
 	}
 	executable := freshness.PublishedExecutable(root)
@@ -172,16 +173,16 @@ func refreshBroker(j joins, root string, stderr io.Writer) string {
 	return effectComplete
 }
 
-// readHeldInstall is the held-install predicate at root. It holds while a declared build is
-// open and the broker manifest beside root's wrapper binds the digest of root's published
-// executable. It also holds when the open builds do not read, so the refresh never
-// rebuilds over a ledger that it cannot read.
-func readHeldInstall(root string) bool {
-	_, declared, err := commitrepo.Store{Root: root}.DeclaredBuild()
+// readHeldInstall is the held-install predicate at the store's root. It holds while a
+// declared build is open and the broker manifest beside the root's wrapper binds the digest
+// of the root's published executable. It also holds when the open builds do not read, so the
+// refresh never rebuilds over a ledger that it cannot read.
+func readHeldInstall(store commitrepo.Store) bool {
+	_, declared, err := store.DeclaredBuild()
 	if err != nil {
 		return true
 	}
-	return declared && manifestBindsExecutable(root)
+	return declared && manifestBindsExecutable(store.Root)
 }
 
 // manifestBindsExecutable reports whether the broker manifest beside root's wrapper binds
@@ -211,7 +212,7 @@ func cleanLandedSiblings(j joins, a ambient, root, base string, stderr io.Writer
 		return effectComplete
 	}
 	options := CleanupOptions{}
-	set, err := planLandedSet(j, root, options, base)
+	set, err := planLandedSet(j, a.run, root, options, base)
 	if err != nil {
 		fmt.Fprintln(stderr, "landing cleanup plan failed: "+sanitize.Controls(err.Error()))
 		return effectFailed

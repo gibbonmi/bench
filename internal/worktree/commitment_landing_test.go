@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -207,9 +208,9 @@ func TestCommitmentClosureResume(t *testing.T) {
 			t.Cleanup(func() { _ = os.Chmod(dir, info.Mode().Perm()) })
 			broken := defaultJoins()
 			reconcile := broken.reconcileCommitment
-			broken.reconcileCommitment = func(root string) error {
+			broken.reconcileCommitment = func(store commitrepo.Store) error {
 				mustNoError(t, os.Chmod(dir, 0o500))
-				err := reconcile(root)
+				err := reconcile(store)
 				mustNoError(t, os.Chmod(dir, info.Mode().Perm()))
 				if err == nil {
 					t.Error("reconciliation wrote an unwritable intent ledger")

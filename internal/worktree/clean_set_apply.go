@@ -15,6 +15,7 @@ import (
 	"io"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // ActionNotAttempted is the outcome of a member a stopped set apply never started. Only an
@@ -225,12 +226,12 @@ func preflightExplicitSet(j joins, a ambient, root string, set explicitCleanupSe
 	return -1, nil
 }
 
-func preflightLandedSet(j joins, root string, set landedCleanupSet, options CleanupOptions, scope string) (int, error) {
+func preflightLandedSet(j joins, run *git.Run, root string, set landedCleanupSet, options CleanupOptions, scope string) (int, error) {
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {
 			continue
 		}
-		if _, err := requalifyLandedRow(j, root, planned, options, scope); err != nil {
+		if _, err := requalifyLandedRow(j, run, root, planned, options, scope); err != nil {
 			return i, err
 		}
 	}

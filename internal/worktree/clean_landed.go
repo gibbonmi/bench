@@ -34,8 +34,8 @@ type landedCleanupSet struct {
 // scope is the whole repository, which is what `bench worktree clean --landed` asks for.
 // A non-empty scope is one landing's destination base, which narrows the set to the
 // assignments whose work that landing carries.
-func planLandedSet(j joins, root string, options CleanupOptions, scope string) (landedCleanupSet, error) {
-	assignments, err := intent.Assignments(root)
+func planLandedSet(j joins, run *git.Run, root string, options CleanupOptions, scope string) (landedCleanupSet, error) {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return landedCleanupSet{}, err
 	}
@@ -44,7 +44,7 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 	if !ok {
 		return landedCleanupSet{}, nil
 	}
-	leases, err := assignmentLeaseStates(root)
+	leases, err := assignmentLeaseStates(run, root)
 	if err != nil {
 		return landedCleanupSet{}, err
 	}
@@ -52,7 +52,7 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 	set := landedCleanupSet{rows: make([]landedCleanupRow, 0, len(assignments))}
 	for _, assignment := range assignments {
 		lease := leases[assignment.OwnerID]
-		if row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, lease, options, scope); selected {
+		if row, selected := selectLandedCleanupRow(j, run, root, assignment, defaultRef, lease, options, scope); selected {
 			set.rows = append(set.rows, row)
 		}
 	}
@@ -75,7 +75,7 @@ func planLandedSet(j joins, root string, options CleanupOptions, scope string) (
 // has to be unlanded at the destination base this landing composed against. An assignment
 // landed before this landing, or with no own commit, belongs to no landing's own set. A
 // fast-forward merge of the default branch adds no own commit.
-func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
+func selectLandedCleanupRow(j joins, run *git.Run, root string, assignment intent.Assignment, defaultRef, lease string, options CleanupOptions, scope string) (landedCleanupRow, bool) {
 	headOID, landed := landedSelected(root, assignment, defaultRef, lease)
 	if !landed {
 		return landedCleanupRow{}, false
@@ -91,7 +91,7 @@ func selectLandedCleanupRow(j joins, root string, assignment intent.Assignment, 
 	if lease == "" {
 		lease = "none"
 	}
-	plan := planLandedAssignment(j, root, assignment, options)
+	plan := planLandedAssignment(j, run, root, assignment, options)
 	plan.Assignment = assignment.ID
 	return landedCleanupRow{assignment: assignment, plan: plan, headOID: headOID, lease: lease}, true
 }
@@ -120,7 +120,7 @@ func landedSelected(root string, assignment intent.Assignment, defaultRef, lease
 
 // planLandedAssignment plans one assignment's retirement. Its precondition is a landed proof:
 // the plan of a gone tree deletes the branch and claims no landedness for a caller to read.
-func planLandedAssignment(j joins, root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
+func planLandedAssignment(j joins, run *git.Run, root string, assignment intent.Assignment, options CleanupOptions) CleanupPlan {
 	// Only the checkout shape licenses the explicit planner. It invokes git against the
 	// target, which can block forever when a ledger path has decayed into a FIFO or socket.
 	shape, shapeErr := ClassifyPathShape(assignment.Worktree)
@@ -142,7 +142,7 @@ func planLandedAssignment(j joins, root string, assignment intent.Assignment, op
 		plan.assignment, plan.owned = &assignment, true
 		return plan
 	}
-	plan, err := planExplicitWith(j, &git.Run{}, root, assignment.Worktree, options)
+	plan, err := planExplicitWith(j, run, root, assignment.Worktree, options)
 	if err != nil {
 		plan = retainedPlan(assignment.Worktree, ReasonUncertain, err.Error())
 		plan.Assignment, plan.Recovery, plan.Tracked, plan.ignoredSummary = assignment.ID, "none", "unknown", "unknown"
@@ -185,8 +185,8 @@ func retainForLandedPreservation(plan CleanupPlan) CleanupPlan {
 
 // assignmentLeaseStates reads leases through the shared administration directory so
 // selector classification never asks a decayed assignment path to resolve its gitdir.
-func assignmentLeaseStates(root string) (map[string]string, error) {
-	common, err := git.CommonDir(root)
+func assignmentLeaseStates(run *git.Run, root string) (map[string]string, error) {
+	common, err := run.CommonDir(root)
 	if err != nil {
 		return nil, err
 	}
@@ -317,8 +317,8 @@ func sameLandedCleanupTuple(a, b landedCleanupRow) bool {
 		a.lease == b.lease
 }
 
-func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupOptions, scope string) (landedCleanupRow, bool, error) {
-	assignments, err := intent.Assignments(root)
+func replanLandedCleanupRow(j joins, run *git.Run, root, assignmentID string, options CleanupOptions, scope string) (landedCleanupRow, bool, error) {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return landedCleanupRow{}, false, err
 	}
@@ -326,13 +326,13 @@ func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupO
 	if !ok {
 		return landedCleanupRow{}, false, nil
 	}
-	leases, err := assignmentLeaseStates(root)
+	leases, err := assignmentLeaseStates(run, root)
 	if err != nil {
 		return landedCleanupRow{}, false, err
 	}
 	for _, assignment := range assignments {
 		if assignment.ID == assignmentID {
-			row, selected := selectLandedCleanupRow(j, root, assignment, defaultRef, leases[assignment.OwnerID], options, scope)
+			row, selected := selectLandedCleanupRow(j, run, root, assignment, defaultRef, leases[assignment.OwnerID], options, scope)
 			return row, selected, nil
 		}
 	}
@@ -341,8 +341,8 @@ func replanLandedCleanupRow(j joins, root, assignmentID string, options CleanupO
 
 // requalifyLandedRow re-plans one member against the repository as it stands now and
 // refuses a member the approved set no longer describes.
-func requalifyLandedRow(j joins, root string, planned landedCleanupRow, options CleanupOptions, scope string) (landedCleanupRow, error) {
-	current, selected, err := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
+func requalifyLandedRow(j joins, run *git.Run, root string, planned landedCleanupRow, options CleanupOptions, scope string) (landedCleanupRow, error) {
+	current, selected, err := replanLandedCleanupRow(j, run, root, planned.assignment.ID, options, scope)
 	if err != nil {
 		return planned, err
 	}
@@ -360,7 +360,7 @@ func requalifyLandedRow(j joins, root string, planned landedCleanupRow, options 
 // reports its own unstarted outcome.
 func applyLandedSet(j joins, a ambient, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
-	if offender, err := preflightLandedSet(j, root, set, options, scope); err != nil {
+	if offender, err := preflightLandedSet(j, a.run, root, set, options, scope); err != nil {
 		return preflightOutcomes(plans, landedRowPlans(set.rows), offender, err), err
 	}
 	for i, planned := range set.rows {
@@ -372,13 +372,13 @@ func applyLandedSet(j joins, a ambient, root string, set landedCleanupSet, optio
 			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
 			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
 		}
-		current, err := requalifyLandedRow(j, root, planned, options, scope)
+		current, err := requalifyLandedRow(j, a.run, root, planned, options, scope)
 		if err != nil {
 			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
 			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
 		}
 		planner := func(string) (CleanupPlan, error) {
-			fresh, stillSelected, planErr := replanLandedCleanupRow(j, root, planned.assignment.ID, options, scope)
+			fresh, stillSelected, planErr := replanLandedCleanupRow(j, a.run, root, planned.assignment.ID, options, scope)
 			if planErr != nil {
 				return CleanupPlan{}, planErr
 			}

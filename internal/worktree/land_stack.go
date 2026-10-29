@@ -12,6 +12,7 @@ import (
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -66,7 +67,7 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	if err != nil {
 		return stackUsageRefusal(stderr, stackLandGrammar, err)
 	}
-	destination, branch, priorMarker, destinationFingerprint, landings, refusals := stackPreflight(j, root, route, unresolved)
+	destination, branch, priorMarker, destinationFingerprint, landings, refusals := stackPreflight(j, a.run, root, route, unresolved)
 	if len(refusals) > 0 {
 		for _, err := range refusals {
 			landRefusalError(stdout, err)
@@ -88,13 +89,13 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 		request.Members = append(request.Members, member)
 	}
 	// The window decides before the lease, so a stack never waits for a lease and then for a gap.
-	if refusals := stackWindow(root, route, landings, publications); len(refusals) > 0 {
+	if refusals := stackWindow(a.run, root, route, landings, publications); len(refusals) > 0 {
 		for _, err := range refusals {
 			landRefusalError(stdout, err)
 		}
 		return 1
 	}
-	lease, err := commitrepo.Store{Root: root}.AcquireLease(request.Destination, landings[0].assignment.ID)
+	lease, err := commitrepo.Store{Root: root, Run: a.run}.AcquireLease(request.Destination, landings[0].assignment.ID)
 	if err != nil {
 		return landRefusalError(stdout, landingFaceRoute(err, route.rerun(stackUnattributed), false))
 	}
@@ -103,7 +104,7 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	for _, l := range landings {
 		stopGradesOf(a.home, l.path, stderr)
 	}
-	result, err := j.landStack(ctx, request, stackAdmission{store: commitrepo.Store{Root: root}, members: publications, gap: j.publicationGap})
+	result, err := j.landStack(ctx, request, stackAdmission{store: commitrepo.Store{Root: root, Run: a.run}, members: publications, gap: j.publicationGap})
 	if err != nil {
 		lease.Release()
 	}
@@ -185,7 +186,7 @@ func stackUsageRefusal(stderr io.Writer, g usage.Grammar, err error) int {
 // tip the assignment and source proofs of one landing and then the stack proofs. The owner
 // rule then runs over the members that cleared their proofs. It answers every refusal of
 // these groups, and each member refusal names its member index and label.
-func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (destination, branch, priorMarker, fingerprint string, landings []stackMemberLanding, refusals []error) {
+func stackPreflight(j joins, run *git.Run, root string, route stackRoute, unresolved []bool) (destination, branch, priorMarker, fingerprint string, landings []stackMemberLanding, refusals []error) {
 	destination, branch, priorMarker, fingerprint, err := landingDestination(root)
 	if err != nil {
 		refusals = append(refusals, landingFaceRoute(err, route.rerun(stackUnattributed), false))
@@ -196,25 +197,25 @@ func stackPreflight(j joins, root string, route stackRoute, unresolved []bool) (
 			continue
 		}
 		base, tip := expandIdentity(root, m.Base), expandIdentity(root, m.EffectiveTip)
-		assignment, err := landingAssignment(j, root, route.paths[i], m.Request, base, tip)
+		assignment, err := landingAssignment(j, run, root, route.paths[i], m.Request, base, tip)
 		if err != nil {
 			// A later assignment proof can refuse a request that resolved, and the refusal
 			// then names the label of that assignment.
 			label := ""
-			if resolved, found, _ := intent.FindAssignmentForRequest(root, m.Request); found {
+			if resolved, found, _ := intent.In(run, root).FindAssignmentForRequest(m.Request); found {
 				label = resolved.Label
 			}
 			refusals = append(refusals, stackMemberRefusal(i, label, landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), true)))
 			continue
 		}
 		route.assignments[i] = assignment.ID
-		source, err := landingSourceProofs(j, root, assignment, base, tip, m.Spec, destination)
+		source, err := landingSourceProofs(j, run, root, assignment, base, tip, m.Spec, destination)
 		if err != nil {
 			refusals = append(refusals, stackMemberRefusal(i, assignment.Label, landingFaceRoute(err, route.rerun(stackRefusedBy(i, err)), false)))
 			continue
 		}
 		l := stackMemberLanding{index: i, member: m, path: route.paths[i], assignment: assignment, source: source}
-		if err := stackMemberProofs(root, destination, branch, l); err != nil {
+		if err := stackMemberProofs(run, root, destination, branch, l); err != nil {
 			refusals = append(refusals, stackRaisedRefusal(route, i, assignment.Label, err, stackRefusedBy(i, err)))
 			continue
 		}
@@ -314,7 +315,7 @@ func stackMovedRefusals(root, branch string, route stackRoute, landings []stackM
 // merge. It then releases each published member in file order and runs the two landing
 // effects once. It answers the name of the step that stopped, or the empty name.
 func stackAfterPublication(j joins, a ambient, root, branch string, result landing.ReviewedResult, priorMarker string, landings []stackMemberLanding, brokerChanged bool, stdout, stderr io.Writer) string {
-	if step := publishedSteps(j, root, branch, result, priorMarker); step != "" {
+	if step := publishedSteps(j, a.run, root, branch, result, priorMarker); step != "" {
 		return step
 	}
 	for _, l := range landings {
