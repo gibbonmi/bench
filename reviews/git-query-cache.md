@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/git-query-cache/spec.md",
-  "plan_digest": "sha256:ed774055e86acecb49bd3a3ee827887a78139b6fc317d7d528d146912783f6f3",
+  "plan_digest": "sha256:c47a5bddceb490984b6fd575b1550028b3026b7e62fbc02aae8dadb8e2b362aa",
   "implementation_session": "",
   "chunks": [
     {
@@ -734,6 +734,56 @@
           ]
         }
       ]
+    },
+    {
+      "id": "GQ-C3",
+      "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+      "tip": "e3f013a5ee24e245833287273a885096a87cd349",
+      "plan_digest": "sha256:c47a5bddceb490984b6fd575b1550028b3026b7e62fbc02aae8dadb8e2b362aa",
+      "source_digest": "7e6b99784e6a4d8578f1123d2507333529f5ccf1",
+      "acceptance_rows": [
+        "GQ35",
+        "GQ36",
+        "GQ37",
+        "GQ38",
+        "GQ39",
+        "GQ40",
+        "GQ42",
+        "GQ46"
+      ],
+      "verification": [
+        {
+          "id": "t04-probe-04",
+          "performer": "claude:gq-t04-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "7e6b99784e6a4d8578f1123d2507333529f5ccf1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:gq-t04-author-20261029",
+            "digest": "sha256:7317cd140ba45b940fe76edb7830b98811fc0b0d5b906ea500f7f6ad88f86e28",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestExplicitPlanReadsEachLocationOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestExplicitPlanReadsEachLocationOnce,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,353\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,42,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestExplicitPlanReadsEachLocationOnce,\"journey_test.go:287: one explicit plan started the common-directory query 2 times, want 1\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e3f013a5ee24e245833287273a885096a87cd349",
+          "requirement": "probe-04",
+          "command": "bench probe internal/worktree/subshell.go --swap 'ledgerBytes, err := intent.In(run, root).LifecycleEvidence()' --with 'ledgerBytes, err := intent.In(nil, root).LifecycleEvidence()' --package ./internal/worktree --run TestExplicitPlanReadsEachLocationOnce",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Read the lifecycle evidence without the run. The explicit plan then starts the common-directory query twice, so the plan test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:gq-t04-author-20261029",
+              "digest": "sha256:7317cd140ba45b940fe76edb7830b98811fc0b0d5b906ea500f7f6ad88f86e28",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/subshell.go,swap,failed,1,TestExplicitPlanReadsEachLocationOnce,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestExplicitPlanReadsEachLocationOnce,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,353\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,42,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestExplicitPlanReadsEachLocationOnce,\"journey_test.go:287: one explicit plan started the common-directory query 2 times, want 1\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -789,6 +839,21 @@
     {
       "from": "sha256:cac0a7744b18caf4938674a6a9c5c9eac577e87a66306503db4d1326eb984c85",
       "to": "sha256:ed774055e86acecb49bd3a3ee827887a78139b6fc317d7d528d146912783f6f3",
+      "chunk_ids": {
+        "GQ-C1": [
+          "GQ-C1"
+        ],
+        "GQ-C2A": [
+          "GQ-C2A"
+        ],
+        "GQ-C2B": [
+          "GQ-C2B"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ed774055e86acecb49bd3a3ee827887a78139b6fc317d7d528d146912783f6f3",
+      "to": "sha256:c47a5bddceb490984b6fd575b1550028b3026b7e62fbc02aae8dadb8e2b362aa",
       "chunk_ids": {
         "GQ-C1": [
           "GQ-C1"
