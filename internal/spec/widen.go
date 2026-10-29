@@ -40,7 +40,8 @@ var widenGrammar = usage.Grammar{
 // comes from the default-branch tip, so a build cannot widen the scope that grades its own
 // widening. An entry the ticket already covers reports current. An entry outside the scope
 // refuses unless --decision admits it after the reviewer decides; the verb stores no
-// reference. Any refusal writes nothing for the whole request.
+// reference. A new-marked entry that the ticket does not cover and whose path the checkout
+// HEAD holds refuses, because the ticket edits that path. Any refusal writes nothing for the whole request.
 func widenCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(widenGrammar, args)
 	if line != "" {
@@ -89,9 +90,19 @@ func widenCommand(args []string) (string, int) {
 		covered = append(covered, p)
 	}
 	var rows [][]string
-	var added, refused []string
+	var added, refused, tracked []string
 	for _, entry := range entries {
-		p, _ := tickets.WritesPath(entry)
+		p, isNew := tickets.WritesPath(entry)
+		if isNew && !coveredBy(covered, p) {
+			held, err := headTracks(base, p)
+			if err != nil {
+				return toon.Errorf("checkout HEAD is unreadable", err.Error()) + "\n", 1
+			}
+			if held {
+				tracked = append(tracked, p)
+				continue
+			}
+		}
 		state := widenAdded
 		switch {
 		case coveredBy(covered, p):
@@ -108,6 +119,10 @@ func widenCommand(args []string) (string, int) {
 			covered = append(covered, p)
 		}
 		rows = append(rows, []string{rel, entry, state})
+	}
+	if len(tracked) > 0 {
+		return toon.Errorf(trackedNew+": "+strings.Join(tracked, maps.FieldSeparator),
+			"drop the "+tickets.NewMarker+" marker from each named entry and rerun, because the ticket edits a path that exists") + "\n", 1
 	}
 	if len(refused) > 0 {
 		rerun := []string{widenCmd, axi.ShellQuote(slug), "--ticket", axi.ShellQuote(basename), "--decision", "<reference>"}
@@ -148,6 +163,9 @@ const (
 // outsideScope opens the refusal of an entry outside the signed-off scope.
 const outsideScope = "outside the signed-off scope"
 
+// trackedNew opens the refusal of a new-marked entry whose path the checkout HEAD holds.
+const trackedNew = "git tracks the path of a " + tickets.NewMarker + " entry"
+
 // pathSegment reports whether name is one representable path element below a folder.
 func pathSegment(name string) bool {
 	return tickets.RepositoryPath(name) && !strings.Contains(name, "/") && toon.Representable(name)
@@ -174,6 +192,15 @@ func hostileEntry(entry string) string {
 // coveredBy reports whether one of the entry paths covers p.
 func coveredBy(entries []string, p string) bool {
 	return slices.ContainsFunc(entries, func(entry string) bool { return tickets.Covers(entry, p) })
+}
+
+// headTracks reports whether the checkout HEAD holds p as a file or a directory.
+func headTracks(root, p string) (bool, error) {
+	listing, err := git.ListTree(root, "HEAD", "--", ":(literal)"+p)
+	if err != nil {
+		return false, err
+	}
+	return slices.ContainsFunc(listing, func(held git.TreeEntry) bool { return held.Path == p }), nil
 }
 
 // signedOffScope reads the directory prefix of every Writes: entry of the slug's tickets

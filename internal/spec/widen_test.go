@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -150,6 +151,31 @@ func TestSpecWidenAdmitsADecidedEntry(t *testing.T) {
 	out, code := runWiden(t, root, "--decision", "r1", "internal/x/w.go", "internal/other/z.go")
 	want := widenTable(t, []string{widenTicketPath, "internal/x/w.go", "added"}, []string{widenTicketPath, "internal/other/z.go", "decided"})
 	requireWidened(t, root, out, code, want, widenTicket("internal/x/y.go, internal/x/w.go, internal/other/z.go"))
+}
+
+func TestSpecWidenRefusesANewEntryThatGitTracks(t *testing.T) {
+	for _, tc := range []struct {
+		name, entry, path string
+	}{
+		{"a tracked file", "internal/x/z.go (new)", "internal/x/z.go"},
+		{"a tracked directory", "internal/x/ (new)", "internal/x"},
+		{"a file that only the worktree branch tracks", "internal/x/b.go (new)", "internal/x/b.go"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := widenRepo(t, "internal/x/y.go", "internal/x/y.go", "internal/x/z.go")
+			writeTicket(t, root, "internal/x/b.go", "x\n")
+			gittest.Output(t, root, "add", "-A")
+			gittest.Output(t, root, "commit", "-qm", "branch file")
+			before := readTicket(t, root)
+			out, code := runWiden(t, root, "internal/x/w.go", tc.entry)
+			requireRefusal(t, root, before, out, code, trackedNew+": "+tc.path+" —", "drop the "+tickets.NewMarker+" marker")
+		})
+	}
+	// An untracked working file is no tracked path, so its (new) entry widens.
+	root := widenRepo(t, "internal/x/y.go", "internal/x/y.go")
+	writeTicket(t, root, "internal/x/w.go", "x\n")
+	out, code := runWiden(t, root, "internal/x/w.go (new)")
+	requireWidened(t, root, out, code, widenTable(t, []string{widenTicketPath, "internal/x/w.go (new)", "added"}), widenTicket("internal/x/y.go, internal/x/w.go (new)"))
 }
 
 func TestSpecWidenUsage(t *testing.T) {

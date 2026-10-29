@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-// newMarker declares a `Writes:` entry as a path the ticket creates. An entry
+// NewMarker declares a `Writes:` entry as a path the ticket creates. An entry
 // carrying it is green whether or not the tree already holds the path, because
 // a blocker ticket may land the file first.
-const newMarker = "(new)"
+const NewMarker = "(new)"
 
 // deletedMarker declares a `Writes:` entry as one exact file that the ticket removes. The
 // file must be tracked at the source base; the tip may hold it or not.
@@ -43,7 +43,7 @@ func ParseWrite(entry string) (Write, error) {
 	markers := []struct {
 		text string
 		kind WriteKind
-	}{{newMarker, WriteNew}, {deletedMarker, WriteDeleted}}
+	}{{NewMarker, WriteNew}, {deletedMarker, WriteDeleted}}
 	for i, marker := range markers {
 		rest, found := strings.CutSuffix(write.Path, marker.text)
 		if !found {
@@ -51,7 +51,7 @@ func ParseWrite(entry string) (Write, error) {
 		}
 		write.Path, write.Kind = strings.TrimSpace(rest), marker.kind
 		if strings.HasSuffix(write.Path, markers[1-i].text) {
-			return Write{}, errors.New("an entry cannot carry both the " + newMarker + " and the " + deletedMarker + " marker")
+			return Write{}, errors.New("an entry cannot carry both the " + NewMarker + " and the " + deletedMarker + " marker")
 		}
 		break
 	}
