@@ -813,7 +813,77 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gq-c3-standards-1",
+          "performer": "claude:gq-c3-standards-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ad635bdd0ea2d2f1169400f15b085b2ac8517f47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c3-standards-20261029",
+            "digest": "sha256:bee0eb36898f4864a2c747703b75277d4b5c7cfbe642154acb600e478eb3c8f4",
+            "excerpt": "axis: Standards | verdict: findings | 1 | worst: S1\nS1 | ask-user | confidence 5 | internal/worktree/effects.go:48-50 | the newAmbient comment says each helper below the entry takes the run, but the discard resolver (clean_discard.go:104,140) and writeResetEnvelope (reset_envelope.go:11) pass nil.\nGQ46 passes otherwise.\n"
+          },
+          "axis": "Standards",
+          "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "tip": "0cd3a189c0866b79b0229b07c3d4d35c5cf9a805",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c3-spec-1",
+          "performer": "claude:gq-c3-spec-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ad635bdd0ea2d2f1169400f15b085b2ac8517f47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c3-spec-20261029",
+            "digest": "sha256:6b0782f4786d272e939924f16a1d519cc35638de9c3fcd10b0f11367ecbf840d",
+            "excerpt": "axis: Spec | verdict: findings | 3 | worst: P1\nP1 | auto-fix | confidence 6 | internal/worktree/reset.go:144,297 | planReset holds the run but reads intent.Assignments(root) and git.CommonDir(root) live; stories 15 and 19.\nP2 | auto-fix | confidence 6 | internal/worktree/path.go:68 | resolveAssignmentIn reads intent.Assignments(root) live; clean_discard.go passes nil though clean_set.go:139 holds a.run.\nP3 | ask-user | confidence 4 | internal/worktree/lifecycle.go:192,211,262; pool_root.go:94 | acquireAt, releaseWith, and createAt hold the run but call LeaseFile and intent.FindAssignmentByRequest(root).\nRows GQ34-GQ40 and GQ46 hold by static audit.\n"
+          },
+          "axis": "Spec",
+          "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "tip": "0cd3a189c0866b79b0229b07c3d4d35c5cf9a805",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c3-coverage-1",
+          "performer": "claude:gq-c3-coverage-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ad635bdd0ea2d2f1169400f15b085b2ac8517f47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c3-coverage-20261029",
+            "digest": "sha256:93a26aa8228df8413af276b25727b98989be53f405a99b280bb27ba2c01635c1",
+            "excerpt": "axis: Coverage | verdict: findings | 2 | worst: C1\nC1 | ask-user | confidence 6 | internal/worktree/effect_census_test.go:81-96,139-148 | a census that skips package scope, an aliased import, or methods survives; the planted cases cover only an unexported function.\nC2 | ask-user | confidence 5 | internal/worktree/effect_census_test.go:102-119 | a zero-value var, a dot import, or a type alias builds a run that the census does not see; GQ38 names only two forms.\nRows GQ34-GQ40 trace correctly in test code.\n"
+          },
+          "axis": "Coverage",
+          "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "tip": "0cd3a189c0866b79b0229b07c3d4d35c5cf9a805",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1058,3 +1128,38 @@ The coordinator ran the spec command five times on the GQ-C2B tip. Then it ran t
 The row is not met in its literal reading. The smallest gain against the recorded baseline is 6.6 s, which is inside the recorded 7.6 s spread. The control shows 4.6 s of host drift between the two days. Every slice run sits below every control run. The smallest gain against the control is 3.2 s, outside the control's 2.2 s spread, and the median gain is 6.8 s.
 
 The reviewer deferred this decision to the consultants. Opus/high chose a return to the spec, and sonnet/high chose to continue. The fable/high tiebreak chose to continue. So the build continues as a deviation that the reviewer can veto, and GQ42 must meet the recorded spread literally at completion.
+
+## Chunk GQ-C3 review pickup
+
+The review read the frozen pair dad72c788 to 0cd3a189c. Repair cycles used: 0 of 2. The accepted findings fall on ticket 05 paths and on `clean_set.go`. The plan widens ticket 05 with `clean_set.go`, so one combined repair charge carries them.
+
+### Standards
+
+Findings: 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 5: the `newAmbient` comment says that each helper below the entry takes the run (internal/worktree/effects.go:48-50). The discard resolver passes nil, so the repair carries the verb's run into it. The `writeResetEnvelope` seam keeps nil, so the repair narrows the comment for that seam.
+
+### Spec
+
+Findings: 3. Worst issue: P1.
+
+- P1, auto-fix, confidence 6: `planReset` holds the run but reads the ledger and the common directory live (internal/worktree/reset.go:144 and :297). Stories 15 and 19 say that each verb passes its one run to the ledger.
+- P2, auto-fix, confidence 6: `resolveAssignmentIn` reads the ledger live (internal/worktree/path.go:68), and the discard resolver passes nil. The repair merges P2 with S1.
+- P3, auto-fix, confidence 4: `acquireAt`, `releaseWith`, and `createAt` hold the run but read the lease file and the ledger without it (internal/worktree/lifecycle.go:192, :211, :262; pool_root.go:94). Stories 15 and 19 apply.
+
+### Coverage
+
+Findings: 2. Worst issue: C1.
+
+- C1, auto-fix, confidence 6: the census has no planted case at package scope, with an aliased import, or in a method (internal/worktree/effect_census_test.go:81-96). A package-scope run is the exact hazard of story 20 and GQ37.
+- C2, no-op, confidence 5: GQ38 defines a run construction as the two forms `&git.Run{}` and `new(git.Run)`. A zero-value declaration, a dot import, and a type alias are outside the approved rule.
+
+### Ticket 04 and ticket 05 author witness reds
+
+- GQ35: a lifecycle-evidence read without the run turns `TestExplicitPlanReadsEachLocationOnce` red, which is probe-04.
+- GQ36: the package `AdminDir` in place of the run's read turns `TestExplicitPlanReadsEachLocationOnce` red.
+- GQ37: a shared package-level run in `newAmbient` turns `TestOwnerMarkerReadsTheCommonDirOnce` red.
+- GQ38: before the production edit, `TestRunConstructionCensus` named the four helper sites.
+- GQ39: an exemption for every function, a census that sees no literal, and a census that sees no `new` call each turn `TestRunConstructionCensus` red.
+- GQ40: the count pin left at 879 turns `TestPackageTestCountPin` red.
+- probe-05: a planted helper that builds a run turns `TestRunConstructionCensus` red.
