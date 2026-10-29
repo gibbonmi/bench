@@ -620,7 +620,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c5a-standards-r1",
+          "performer": "claude:gf-c5a-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "49e4928b94431a2a9d8478c16bdb95150f8f0541",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5a-standards-r1",
+            "digest": "sha256:96a8b440583982d72fe7e9e624ec0d16cfde203a9268d67e5016e5bdfca0ee0a",
+            "excerpt": "Standards axis, chunk GF-C5A (claude:gf-c5a-standards-r1). H1 (axis id F1) internal/adopt/link_hook_test.go:190 hookTestRepo is a one-line alias of gittest.Repo with 11 callers; auto-fix, confidence 6. Clean: runAdoptGit, runHookGit, outcomeGit, runGitIn removed; no literal identity in cmd/bench, internal/adopt, internal/commit, internal/gate tests; merge_parent_test.go:53 expected conflict kept. Advice: an initialize-in-directory gittest seam for gitInitRepo and initializeLandingRepo.\n"
+          },
+          "axis": "Standards",
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "tip": "a8a6108eec28c50c398d57a68d5a8d4525d509f6",
+          "finding_ids": [
+            "H1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c5a-spec-r1",
+          "performer": "claude:gf-c5a-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "49e4928b94431a2a9d8478c16bdb95150f8f0541",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5a-spec-r1",
+            "digest": "sha256:050ccc7dcaba51d7d74f2dbf713aa5b342458340263df1e55e4305b1caac7778",
+            "excerpt": "Spec axis, chunk GF-C5A (claude:gf-c5a-spec-r1). R1 (axis id S1) cmd/bench/command_registry_test.go:399 runAXIGit and preflight_version_test.go:146 trimmedAXIGit are generic fatal wrappers over production git.Raw that stay unmigrated; callers in command_registry_test.go, help_inventory_test.go, selected_queries_test.go, spec_retire_listing_test.go, preflight_version_test.go, tree_scope_test.go; auto-fix, confidence 7. R2 (axis id S2) cmd/bench/tree_scope_test.go:83-87 treeRowRepo commits a dated commit through runAXIGit; auto-fix, confidence 7. Conforming: internal/commit, internal/gate, internal/adopt classifications and retained sites. Advice: name the wrapper_kit_test.go worktree-add site in the pickup.\n"
+          },
+          "axis": "Spec",
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "tip": "a8a6108eec28c50c398d57a68d5a8d4525d509f6",
+          "finding_ids": [
+            "R1",
+            "R2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c5a-coverage-r1",
+          "performer": "claude:gf-c5a-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "49e4928b94431a2a9d8478c16bdb95150f8f0541",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c5a-coverage-r1",
+            "digest": "sha256:6fb7ae438ba4c76b55619d7ffa451216e04343d48cc15fe4b317696086c3cb42",
+            "excerpt": "Coverage axis, chunk GF-C5A (claude:gf-c5a-coverage-r1). Findings: none. Stdout-only readers moved to combined output parse silent-stderr queries; headPaths kept raw bytes; merge --no-commit and the PATH stubs kept; no vacuous pass. Advice: the GF29 captures record only whether an identity is set.\n"
+          },
+          "axis": "Coverage",
+          "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
+          "tip": "a8a6108eec28c50c398d57a68d5a8d4525d509f6",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -818,3 +884,32 @@ Its witnesses each came from one `bench probe`, and each restore passed:
 
 The coordinator probe inserted a fixed committer date before the shared commit in `commitAt`. It turned the freshness test red, and the restore passed.
 The repair consumed one of the two repair cycles of GF-C2.
+
+## GF-C5A review pickup
+
+The repair allowance of GF-C5A is two cycles. The first repair cycle starts after this record.
+
+### Standards
+
+Findings: 1. Worst issue: H1.
+
+- H1, `internal/adopt/link_hook_test.go:190`: `hookTestRepo` is a one-line alias of `gittest.Repo`. The spec's rename rule names only the execution helpers, and the alias holds no execution or identity policy. Disposition: no-op. Confidence: 6.
+
+### Spec
+
+Findings: 2. Worst issue: R1.
+
+- R1, `cmd/bench/command_registry_test.go:399`: `runAXIGit` and `trimmedAXIGit` build fixture repositories through the production adapter. The spec forbids that use, so both wrappers leave and their callers move to `gittest`. Disposition: auto-fix. Confidence: 7.
+- R2, `cmd/bench/tree_scope_test.go:83`: `treeRowRepo` commits its dated commit through `runAXIGit`. A dated commit uses `t.Setenv` and then a `gittest` commit. Disposition: auto-fix. Confidence: 7.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+Repair targets: 2 (R1, R2), both on ticket 05a, in one combined repair charge.
+
+### Retained specialized and intentional sites
+
+- `internal/commit/merge_parent_test.go` (`startPendingMerge`): an expected merge conflict with a nonzero exit.
+- `internal/adopt/link_hook_test.go` (the recorder and the failing stub tests): a stub Git on the path and an expected failure.
+- `cmd/bench/wrapper_kit_test.go` (`newWrapperKitFixture`): a linked worktree that the wrapper resolution grades. The plan probe of ticket 13 plants a sibling runner beside this site.
