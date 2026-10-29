@@ -51,14 +51,14 @@ Build it.
 	} {
 		writeAXIFixture(t, filepath.Join(root, filepath.FromSlash(path)), body)
 	}
-	runAXIGit(t, "-C", root, "add", ".")
-	runAXIGit(t, "-C", root, "commit", "-q", "-m", "base")
-	base := trimmedAXIGit(t, root, "rev-parse", "HEAD")
-	runAXIGit(t, "-C", root, "checkout", "-q", "-b", "feature")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "base")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "checkout", "-q", "-b", "feature")
 	writeAXIFixture(t, filepath.Join(root, "target/target.go"), "package target\n\nfunc Changed() int { return 1 }\n")
-	runAXIGit(t, "-C", root, "add", "target/target.go")
-	runAXIGit(t, "-C", root, "commit", "-q", "-m", "source")
-	tip := trimmedAXIGit(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "target/target.go")
+	gittest.Commit(t, root, "source")
+	tip := gittest.Output(t, root, "rev-parse", "HEAD")
 	const assignment = "00000000000000000000000000000001"
 	err := intent.PutAssignment(root, intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: assignment,
@@ -141,12 +141,6 @@ func readManifestStream(t *testing.T, identity string) string {
 	}
 	t.Fatal("manifest traversal did not end")
 	return ""
-}
-
-func trimmedAXIGit(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	all := append([]string{"-C", root}, args...)
-	return string(bytes.TrimSpace([]byte(runAXIGit(t, all...))))
 }
 
 func decodeVersionTOON(t *testing.T, output string) map[string]any {

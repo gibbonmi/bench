@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/assessment"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/refusalroute"
@@ -308,7 +309,7 @@ func TestRepairPilotRoute(t *testing.T) {
 	t.Run("worktrees", func(t *testing.T) {
 		root := newAXIEnvelopeRepo(t)
 		linked := filepath.Join(t.TempDir(), "linked")
-		runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "repair-pilot-linked", linked)
+		gittest.MustRun(t, root, "worktree", "add", "-q", "-b", "repair-pilot-linked", linked)
 		home := t.TempDir()
 		t.Setenv("BENCH_HOME", home)
 		t.Setenv("BENCH_KIT", linked)

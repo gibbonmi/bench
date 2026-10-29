@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
-	gitpkg "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
@@ -292,10 +291,10 @@ func newAXIEnvelopeRepo(t *testing.T) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
 	writeAXIFixture(t, filepath.Join(root, "nested", "deep", ".keep"), "fixture\n")
-	runAXIGit(t, "-C", root, "add", ".")
-	runAXIGit(t, "-C", root, "commit", "-q", "-m", "fixture base")
-	base := strings.TrimSpace(runAXIGit(t, "-C", root, "rev-parse", "HEAD"))
-	runAXIGit(t, "-C", root, "config", "branch.main.benchBase", base)
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "fixture base")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "config", "branch.main.benchBase", base)
 	return root
 }
 
@@ -378,7 +377,7 @@ func setupAXIEmptyConsumers(t *testing.T, root string) {
 
 func setupAXIWorktree(t *testing.T, root string) {
 	linked := filepath.Join(t.TempDir(), "linked")
-	runAXIGit(t, "-C", root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
+	gittest.MustRun(t, root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
 }
 
 func setupAXIRoadmap(t *testing.T, root string) {
@@ -394,15 +393,6 @@ func writeAXIFixture(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write fixture %s: %v", path, err)
 	}
-}
-
-func runAXIGit(t *testing.T, args ...string) string {
-	t.Helper()
-	out, err := gitpkg.Raw(args...)
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-	return string(out)
 }
 
 // TestWorktreeLandNeverConsultsTheInvokedExecutable drives the real dispatcher in a
