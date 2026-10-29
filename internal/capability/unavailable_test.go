@@ -7,24 +7,30 @@ import (
 	"testing"
 )
 
-// runUnavailable drives the exported Unavailable entry point in a subtest over the
-// file transport. It returns the raw skip log, the emitting subtest's name, and
-// whether that subtest reported a skip.
-func runUnavailable(t *testing.T, class Class, detail string) (log, name string, skipped bool) {
+// runSkip drives call in a subtest over the file transport. call is the skip entry
+// point under test, and it must end the subtest's goroutine. runSkip returns the raw
+// skip log, the emitting subtest's name, and whether that subtest reported a skip.
+func runSkip(t *testing.T, call func(t *testing.T)) (log, name string, skipped bool) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "skip.log")
 	t.Setenv(LogEnv, path)
 	t.Run("skips", func(t *testing.T) {
 		name = t.Name()
 		t.Cleanup(func() { skipped = t.Skipped() })
-		Unavailable(t, class, detail)
-		t.Fatal("unreachable: Unavailable must end this goroutine")
+		call(t)
+		t.Fatal("unreachable: the skip entry point must end this goroutine")
 	})
 	got, err := os.ReadFile(path)
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatalf("read skip log: %v", err)
 	}
 	return string(got), name, skipped
+}
+
+// runUnavailable drives the exported Unavailable entry point through runSkip.
+func runUnavailable(t *testing.T, class Class, detail string) (log, name string, skipped bool) {
+	t.Helper()
+	return runSkip(t, func(t *testing.T) { Unavailable(t, class, detail) })
 }
 
 // parseOne reads the one skip record that the log must hold.
@@ -41,15 +47,25 @@ func parseOne(t *testing.T, log string) Skip {
 	return skip
 }
 
-// TestUnavailableReason pins the one reason shape: the class token, the fixed
-// prefix, and the caller's operation detail verbatim. A caller-specific prefix, or
-// a prefix that drops the word capability, turns this test red.
+// TestUnavailableReason pins the one reason shape for each migrated class: the class
+// token, the fixed prefix, and the caller's operation detail verbatim. A
+// caller-specific prefix, a prefix fixed to one class token, or a prefix that drops
+// the word capability turns this test red.
 func TestUnavailableReason(t *testing.T) {
-	log, _, _ := runUnavailable(t, Symlink, "symlink a b: operation not permitted")
-	got := parseOne(t, log).Reason
-	want := "symlink capability unavailable: symlink a b: operation not permitted"
-	if got != want {
-		t.Fatalf("Unavailable reason = %q, want %q", got, want)
+	for _, tc := range []struct {
+		class  Class
+		detail string
+		want   string
+	}{
+		{Fifo, "mkfifo a: operation not permitted", "fifo capability unavailable: mkfifo a: operation not permitted"},
+		{Symlink, "symlink a b: operation not permitted", "symlink capability unavailable: symlink a b: operation not permitted"},
+	} {
+		t.Run(string(tc.class), func(t *testing.T) {
+			log, _, _ := runUnavailable(t, tc.class, tc.detail)
+			if got := parseOne(t, log).Reason; got != tc.want {
+				t.Fatalf("Unavailable(%s) reason = %q, want %q", tc.class, got, tc.want)
+			}
+		})
 	}
 }
 

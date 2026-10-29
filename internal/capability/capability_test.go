@@ -112,22 +112,11 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 	}
 
 	t.Run("file transport", func(t *testing.T) {
-		path := filepath.Join(t.TempDir(), "skip.log")
-		t.Setenv(LogEnv, path)
-		var skipped bool
-		t.Run("skips", func(t *testing.T) {
-			t.Cleanup(func() { skipped = t.Skipped() })
-			Capability(t, Fifo, "requires a host fifo")
-			t.Fatal("unreachable: t.Skip must stop this goroutine")
-		})
+		got, _, skipped := runSkip(t, func(t *testing.T) { Capability(t, Fifo, "requires a host fifo") })
 		if !skipped {
 			t.Fatal("subtest did not report a skip")
 		}
-		got, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatalf("read skip log: %v", err)
-		}
-		if string(got) != want(t) {
+		if got != want(t) {
 			t.Fatalf("skip log contents = %q, want %q", got, want(t))
 		}
 	})
@@ -157,23 +146,12 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 // non-capability kind. It drives the real exported Environment entry point. The file
 // transport carries the same load-bearing write-then-skip contract.
 func TestEnvironmentWritesLineBeforeSkip(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "skip.log")
-	t.Setenv(LogEnv, path)
-	var skipped bool
-	t.Run("skips", func(t *testing.T) {
-		t.Cleanup(func() { skipped = t.Skipped() })
-		Environment(t, "subject root has no bin/bench.sh")
-		t.Fatal("unreachable: t.Skip must stop this goroutine")
-	})
+	got, _, skipped := runSkip(t, func(t *testing.T) { Environment(t, "subject root has no bin/bench.sh") })
 	if !skipped {
 		t.Fatal("subtest did not report a skip")
 	}
 	want := "bench-skip kind=environment name=" + t.Name() + "/skips reason=subject root has no bin/bench.sh\n"
-	got, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read skip log: %v", err)
-	}
-	if string(got) != want {
+	if got != want {
 		t.Fatalf("skip log contents = %q, want %q", got, want)
 	}
 }
