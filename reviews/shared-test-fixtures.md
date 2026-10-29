@@ -1369,7 +1369,77 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c9-standards-r1",
+          "performer": "claude:gf-c9-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0b057c9ea23f58bea3a292fbb06c08a890126d3d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c9-standards-r1",
+            "digest": "sha256:0edd74cdc21abf9e08f640041829178ea7e99fc06063cf6731569d75f5d3eba9",
+            "excerpt": "Standards axis, chunk GF-C9 (claude:gf-c9-standards-r1). N1 (axis id F1) internal/capability/unavailable_test.go:13-28 runUnavailable is a third copy of the subtest-over-file-transport harness inlined at capability_test.go:114-133 and :159-178; proposed no-op, confidence 3. Clean: one source of the prefix at unavailable.go:11; no FIFO or symlink caller in the fence writes its own prefix; the independent reason literal has a recorded omission red; no comment drift.\n"
+          },
+          "axis": "Standards",
+          "base": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "tip": "2c20d8e0a724dd1716d0cdaa059e01e8c1212e78",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c9-spec-r1",
+          "performer": "claude:gf-c9-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0b057c9ea23f58bea3a292fbb06c08a890126d3d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c9-spec-r1",
+            "digest": "sha256:36e5d7a6cf92988170494b19885f561e4d369569e24c5ce086f03865b9688a0a",
+            "excerpt": "Spec axis, chunk GF-C9 (claude:gf-c9-spec-r1). N2 (axis id F1) unavailable_test.go:119-126 TestUnavailableReason exercises only Symlink, so a hard-coded class token in the prefix survives; GF21 binds derivation from the class; auto-fix, confidence 6. N3 (axis id F2) the GF18 plan commit (spec GF18 row, GF-C13 row, ticket 13) sits in this range outside ticket 09; ask-user to confirm the plan expansion was recorded, confidence 4. GF22, GF23, the contract, the six migrated classes, and the Privilege calls conform.\n"
+          },
+          "axis": "Spec",
+          "base": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "tip": "2c20d8e0a724dd1716d0cdaa059e01e8c1212e78",
+          "finding_ids": [
+            "N2",
+            "N3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c9-coverage-r1",
+          "performer": "claude:gf-c9-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "0b057c9ea23f58bea3a292fbb06c08a890126d3d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c9-coverage-r1",
+            "digest": "sha256:9e605d9bfb8ea1767f2a9c1f3f22594c4065687544939ea8183495a4e4b21740",
+            "excerpt": "Coverage axis, chunk GF-C9 (claude:gf-c9-coverage-r1). N4 (axis id C9-COV-1) unavailable_test.go:47-53 a hard-coded class token in the prefix survives because only Symlink grades the reason; auto-fix, confidence 9. N5 (C9-COV-2) detail TrimSpace or ToLower mutants survive; no-op, confidence 5. N6 (C9-COV-3) no parallel transport case; Unavailable adds no write path; no-op, confidence 6.\n"
+          },
+          "axis": "Coverage",
+          "base": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "tip": "2c20d8e0a724dd1716d0cdaa059e01e8c1212e78",
+          "finding_ids": [
+            "N4",
+            "N5",
+            "N6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1908,3 +1978,30 @@ Until GF-C13, the GF18 route stays checked by reading, as this chunk's axes did.
 ### Retained specialized sites
 
 None.
+
+## GF-C9 review pickup
+
+The repair allowance of GF-C9 is two cycles. The first repair cycle starts after this record.
+
+### Standards
+
+Findings: 1. Worst issue: N1.
+
+- N1, `internal/capability/unavailable_test.go:13`: `runUnavailable` is a third copy of the file-transport skip harness that `capability_test.go` inlines twice. AGENTS.md names a pasted fixture harness as a defect, and both files are in the fence. The two older copies reuse the one helper. Disposition: auto-fix. Confidence: 3.
+
+### Spec
+
+Findings: 2. Worst issue: N2.
+
+- N2, `internal/capability/unavailable_test.go:119`: the reason test grades only the symlink class, so a hard-coded class token in the prefix survives. GF21 binds the derivation of the prefix from the class. Disposition: auto-fix. Confidence: 6.
+- N3, `specs/shared-test-fixtures/spec.md`: the GF18 plan commit sits in this range. It came from the GF-C8 consultant decision, and the plan-expansion learning was captured before the commit. Disposition: no-op. Confidence: 4.
+
+### Coverage
+
+Findings: 3. Worst issue: N4.
+
+- N4, `internal/capability/unavailable_test.go:47`: the same gap as N2. Disposition: auto-fix. Confidence: 9.
+- N5, `internal/capability/unavailable_test.go:47`: a trim or case mutant of the detail survives. No row grades the detail's spacing or case. Disposition: no-op. Confidence: 5.
+- N6, `specs/shared-test-fixtures/spec.md:302`: no test drives two parallel callers into one skip log. `Unavailable` adds no write path, so the existing single-write transport contract holds. Disposition: no-op. Confidence: 6.
+
+Repair targets: 2 (N1, and N2 with N4), both on ticket 09, in one combined repair charge.
