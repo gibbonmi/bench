@@ -98,7 +98,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c1-standards-r1",
+          "performer": "claude:gf-c1-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "46b8be48be138daa2cfc6e7648e239a442c6d0fd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c1-standards-r1",
+            "digest": "sha256:c190c618ad15a7041e43007c9e7f7ead6bc8a61ee3a7c0107416b87708894aa0",
+            "excerpt": "Standards axis, chunk GF-C1 (claude:gf-c1-standards-r1). Result: no findings. Identity single source at internal/gittest/identity.go:7-8; command at commands.go:14 is the one git process; testrepo snapshot exports removed; no dependency added. Advice: shared failure formatter (commands.go:34, gittest.go:321); init-plus-IdentityConfig loop repeat (snapshot.go:52, gittest.go:177); commit -qm through MustRun where Commit exists; working_tree.go holds only the package doc.\n"
+          },
+          "axis": "Standards",
+          "base": "4138ef1aa0c219c40396a9b799eac8769207b1f8",
+          "tip": "63e498366d28674bb6a390f903391e8019bcea5f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c1-spec-r1",
+          "performer": "claude:gf-c1-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "46b8be48be138daa2cfc6e7648e239a442c6d0fd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c1-spec-r1",
+            "digest": "sha256:69943a751284e83f3ac04f5f3692e4f3d4f3eacec1245e3df6b202a1d4371408",
+            "excerpt": "Spec axis, chunk GF-C1 (claude:gf-c1-spec-r1). Result: no binding finding; rows GF1-GF9, GF11-GF15, GF20, GF32-GF37 each have an implementation and an observing test. F1 commands.go:91-101 OutputBytes runs its own Output call beside Run; behavior matches GF3; no-op, confidence 3. F2 internal/testrepo/working_tree.go:1-3 holds only the package doc; no-op, confidence 2. Advice: recordcmd/ticket_test.go:121 restates bench@local for a later ticket.\n"
+          },
+          "axis": "Spec",
+          "base": "4138ef1aa0c219c40396a9b799eac8769207b1f8",
+          "tip": "63e498366d28674bb6a390f903391e8019bcea5f",
+          "finding_ids": [
+            "F1",
+            "F2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c1-coverage-r1",
+          "performer": "claude:gf-c1-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "46b8be48be138daa2cfc6e7648e239a442c6d0fd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c1-coverage-r1",
+            "digest": "sha256:44c3443d5bbb2a807230e88f67e5dd61567395ac0641362b8dba9cbe7e252234",
+            "excerpt": "Coverage axis, chunk GF-C1 (claude:gf-c1-coverage-r1). C1 commands.go:28-35 no test makes OutputBytes fail on nonzero exit or missing Git; auto-fix, confidence 8. C2 identity.go:20-22 nothing grades IdentityArgs content; auto-fix, confidence 7. C3 gittest_test.go:12-21 and snapshot.go:44-47 no empty tracked file for the empty-versus-absent edge; auto-fix, confidence 7. C4 snapshot_test.go:40-50 GF15 grades only the commit failure; auto-fix or no-op, confidence 5. Advice: no newline-in-path case in TestCommandArgv.\n"
+          },
+          "axis": "Coverage",
+          "base": "4138ef1aa0c219c40396a9b799eac8769207b1f8",
+          "tip": "63e498366d28674bb6a390f903391e8019bcea5f",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -110,3 +179,31 @@
   }
 }
 ```
+
+## GF-C1 review pickup
+
+The repair allowance of GF-C1 is two cycles. The first repair cycle starts after this record.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+Advice: share the failure formatter and the identity configuration loop. Use `Commit` in place of `commit -qm` through `MustRun`. Rename the file that holds only the package doc.
+
+### Spec
+
+Findings: 2. Worst issue: F1.
+
+- F1, `internal/gittest/commands.go:91`: `OutputBytes` runs its own output call beside `Run`. The behavior matches GF3. Disposition: no-op. Confidence: 3.
+- F2, `internal/testrepo/working_tree.go:1`: the file holds only the package doc, and the `Writes:` line names it. Disposition: no-op. Confidence: 2.
+
+### Coverage
+
+Findings: 4. Worst issue: C1.
+
+- C1, `internal/gittest/commands.go:28`: no test makes `OutputBytes` fail on a nonzero exit or a missing Git. The edge inventory requires fatal wrappers to fail. Disposition: auto-fix. Confidence: 8.
+- C2, `internal/gittest/identity.go:20`: no test grades the content of `IdentityArgs`, which later migrations use. Disposition: auto-fix. Confidence: 7.
+- C3, `internal/gittest/gittest_test.go:12`: the snapshot fixture holds no empty tracked file, and the edge inventory names GF11 for the empty-versus-absent edge. Disposition: auto-fix. Confidence: 7.
+- C4, `internal/gittest/snapshot_test.go:40`: GF15 grades only the commit failure. GF15 binds one failed command, and an earlier swallowed step still ends in the returned commit error. Disposition: no-op. Confidence: 5.
+
+Repair targets: 3 (C1, C2, C3), all on ticket 01, in one combined repair charge.
