@@ -101,13 +101,18 @@ func TestRunRevalidatesACachedCommonDir(t *testing.T) {
 	}
 }
 
-// TestRunReadsRefsLive proves that a branch that update-ref moves inside one run reads
-// its new commit, while the run still answers its location reads from the cache.
-// (Coverage row LGP12.)
+// TestRunReadsRefsLive proves that the default branch that update-ref moves inside one run
+// reads its new commit through ResolvedDefault, the package ResolveCommit, and the run's
+// ResolveCommit, while the run still answers its location reads from the cache.
+// (Coverage rows LGP12 and GQ45.)
 func TestRunReadsRefsLive(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "topic")
-	old := strings.TrimSpace(runGit(t, root, "rev-parse", "topic"))
+	def, ok := ResolvedDefault(root)
+	if !ok {
+		t.Fatalf("ResolvedDefault(%s) found no default branch", root)
+	}
+	ref := "refs/heads/" + def
+	old := strings.TrimSpace(runGit(t, root, "rev-parse", ref))
 	next := strings.TrimSpace(runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", "-p", old, "-m", "next", old+"^{tree}"))
 	_, logPath := loggedStub(t, root, "fail-git-path")
 	run := new(Run)
@@ -119,12 +124,19 @@ func TestRunReadsRefsLive(t *testing.T) {
 		if _, err := run.RootAt(root); err != nil {
 			t.Fatalf("run.RootAt: %v", err)
 		}
-		if got, err := ResolveCommit(root, "refs/heads/topic"); err != nil || got != want {
-			t.Fatalf("topic = %q, %v, want %q", got, err, want)
+		branch, ok := ResolvedDefault(root)
+		if !ok || branch != def {
+			t.Fatalf("ResolvedDefault = %q, %v, want %q", branch, ok, def)
+		}
+		if got, err := ResolveCommit(root, "refs/heads/"+branch); err != nil || got != want {
+			t.Fatalf("%s = %q, %v, want %q", branch, got, err, want)
+		}
+		if got, err := run.ResolveCommit(root, "refs/heads/"+branch); err != nil || got != want {
+			t.Fatalf("run %s = %q, %v, want %q", branch, got, err, want)
 		}
 	}
 	readInRun(old)
-	runGit(t, root, "update-ref", "refs/heads/topic", next, old)
+	runGit(t, root, "update-ref", ref, next, old)
 	readInRun(next)
 	if got := gittest.StubGitStarts(t, logPath, "--git-common-dir"); got != 1 {
 		t.Fatalf("common-directory starts = %d, want 1 inside the run", got)

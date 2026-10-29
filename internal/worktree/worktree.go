@@ -563,13 +563,11 @@ func reauthorizeRecoveryNext(assignment, target, base, tip string) string {
 }
 
 func reauthorizeIdentityArg(value, placeholder string) string {
-	if !fullCommitIdentity(value) {
+	if !git.FullObjectID(value) {
 		return placeholder
 	}
 	return sanitize.ShellQuote(value)
 }
-
-func fullCommitIdentity(value string) bool { return len(value) == 40 && hexIdentity(value) }
 
 func hexIdentity(value string) bool {
 	for _, b := range []byte(value) {

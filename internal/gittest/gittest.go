@@ -59,7 +59,8 @@ func StubGit(t testing.TB, root, mode, logPath string) string {
 // fail-git-path. In fail-git-dir, relative-git-path, and fail-git-path mode,
 // every invocation other than the mode's own targeted query passes through to
 // the real git the stub locates with exec.LookPath before the test replaces
-// PATH.
+// PATH. The log mode refuses no query: it logs each start and passes every
+// invocation to that real git.
 func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -82,6 +83,9 @@ func StubGitDir(t testing.TB, root, mode, logPath string) (string, string) {
 	}
 	body := fmt.Sprintf(`#!/bin/sh
 printf '%%s\n' "$*" >> %[1]q
+if [ %[2]q = log ]; then
+  exec %[3]q "$@"
+fi
 if [ %[2]q = fail-git-dir ]; then
   case "$*" in
     *'--git-dir'*) exit 1;;

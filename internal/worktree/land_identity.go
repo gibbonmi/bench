@@ -288,7 +288,7 @@ func expandIdentity(repository, value string) string {
 }
 
 func abbreviatedIdentity(value, full string) bool {
-	if len(value) < 4 || len(value) > 39 || !fullCommitIdentity(full) {
+	if len(value) < 4 || len(value) > 39 || !git.FullObjectID(full) {
 		return false
 	}
 	if !hexIdentity(value) {
