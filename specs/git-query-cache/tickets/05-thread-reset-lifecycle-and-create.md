@@ -37,7 +37,7 @@ The spec-stage close binds the commitment, so this ticket names `.bench/commitme
 ## Acceptance
 
 - [ ] A production file of `internal/worktree` builds a run only in `newAmbient` or in an exported function (GQ38).
-- [ ] The census names the file and line of a planted run construction in an unexported function (GQ39).
+- [ ] The census names the file and line of a planted run construction of each form in an unexported function (GQ39).
 - [ ] At the checkpoint, `worktreeTestCount` reads 880 and `worktreeSerialCeiling` reads 22 (GQ40).
 - [ ] At completion, five timed runs with the spec command give a smallest gain outside the baseline spread (GQ42, review-owned).
 - [ ] The named `internal/worktree` comments state the run's current cache scope (GQ46, review-owned).
