@@ -1,7 +1,7 @@
 # Thread the verb's run through one landing and its landed-set cleanup
 
 Blocked by: 02-thread-the-run-through-the-ledger-and-store.md
-Writes: internal/gittest/gittest.go, internal/worktree/clean_landed.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/identity_component.go, internal/worktree/joins.go, internal/worktree/land.go, internal/worktree/land_effects.go, internal/worktree/land_empty_sibling_test.go, internal/worktree/land_identity.go, internal/worktree/land_journey_test.go, internal/worktree/land_lease.go, internal/worktree/land_resume.go, internal/worktree/land_run_test.go (new), internal/worktree/land_stack.go, internal/worktree/land_stack_preflight.go, internal/worktree/land_stack_resume.go, internal/worktree/list.go, internal/worktree/merge.go, internal/worktree/ownership.go, internal/worktree/parallel_census_test.go, internal/worktree/path.go, internal/worktree/resume.go, internal/worktree/worktree.go
+Writes: internal/gittest/gittest.go, internal/worktree/clean_landed.go, internal/worktree/clean_landed_plan.go (new), internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/identity_component.go, internal/worktree/joins.go, internal/worktree/land.go, internal/worktree/land_effects.go, internal/worktree/land_empty_sibling_test.go, internal/worktree/land_identity.go, internal/worktree/land_journey_test.go, internal/worktree/land_lease.go, internal/worktree/land_resume.go, internal/worktree/land_run_test.go (new), internal/worktree/land_stack.go, internal/worktree/land_stack_preflight.go, internal/worktree/land_stack_resume.go, internal/worktree/list.go, internal/worktree/merge.go, internal/worktree/ownership.go, internal/worktree/parallel_census_test.go, internal/worktree/path.go, internal/worktree/resume.go, internal/worktree/worktree.go
 Covers: GQ34, GQ41
 
 ## What to build
@@ -24,7 +24,8 @@ Remove the construction at `clean_landed.go:145`. The callers outside `clean_lan
 Each test caller passes a run or nil: `clean_landed_apply_test.go:157`, `clean_set_apply_test.go:153`, `clean_set_refusal_test.go:27`, `:93`, `:118`, `:147`, `:156`, and `land_empty_sibling_test.go:54`, `:72`, `:85`, `:88`.
 
 Each helper takes the run as its first parameter after any `joins` value. Each collapsed pair keeps one form, and no `XIn` wrapper is left.
-`land.go` has 6 lines of headroom, `land_stack.go` 7, and `clean_landed.go` none. A change that grows one of them past 400 lines moves a function to a new file in this ticket. The orchestrator widens `Writes:` for that file first.
+`land.go` has 6 lines of headroom, `land_stack.go` 7, and `clean_landed.go` none. A change that grows one of them past 400 lines moves a function to a new file in this ticket.
+For `clean_landed.go`, that destination is `clean_landed_plan.go`. For `land.go` and `land_stack.go`, the orchestrator widens `Writes:` for a new file first.
 `land_journey_test.go` and `parallel_census_test.go` are over their budgets. Change them in place and add no line.
 
 Add the serial test `TestLandingReadsTheDestinationCommonDirOnce` in the new file `land_run_test.go`. It drives the in-process landing of `land_journey_test.go` with the `log` stub on `PATH`.

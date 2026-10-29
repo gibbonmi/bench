@@ -1,7 +1,7 @@
 # Cache the full-id reads and the administration path on the run
 
 Blocked by: none
-Writes: docs/adr/0033-a-command-run-caches-its-pure-git-queries.md (new), internal/git/run.go, internal/git/run_cache_test.go, internal/git/run_object_test.go (new), internal/git/tree.go, internal/git/worktree_admin.go, internal/gittest/gittest.go, internal/worktree/land_identity.go, internal/worktree/parallel_census_test.go, internal/worktree/reauthorize_test.go, internal/worktree/worktree.go
+Writes: docs/adr/0033-a-command-run-caches-its-pure-git-queries.md (new), internal/git/git.go, internal/git/run.go, internal/git/run_cache_test.go, internal/git/run_object_test.go (new), internal/git/tree.go, internal/git/worktree_admin.go, internal/gittest/gittest.go, internal/worktree/land_identity.go, internal/worktree/parallel_census_test.go, internal/worktree/reauthorize_test.go, internal/worktree/worktree.go
 Covers: GQ1, GQ2, GQ3, GQ4, GQ5, GQ6, GQ7, GQ8, GQ9, GQ10, GQ13, GQ14, GQ15, GQ16, GQ17, GQ18, GQ19, GQ20, GQ21, GQ22, GQ23, GQ24, GQ25, GQ26, GQ43, GQ44, GQ45, GQ47
 
 ## What to build
@@ -18,6 +18,8 @@ Make each run form safe on a nil `*Run`. A nil run starts the query on every cal
 `ReadTreeFile` composes the run's `ListTree` and `ReadControlBlob` in sequence, so no form locks the run's mutex twice.
 
 Split the record parser of `ListTree` in `internal/git/tree.go`, so that the run form and the package form share it. Keep each error text byte for byte.
+Split the argv builders of `ResolveCommit` and `IsAncestor` in `internal/git/git.go` the same way, so that each run form keys by the package form's argv.
+Keep the two `bounds.VerdictWindow` tokens in `git.go` that `internal/conformance/bounds_policy_test.go:45` pins.
 Three tests quote the `ReadTreeFile` refusal text: `internal/commitment/head_binding_test.go:236`, `internal/preflight/charge_test.go:363`, and `internal/gate/checkpoint_prepare_test.go:148`.
 
 Add a `log` mode to the stub in `internal/gittest/gittest.go`. It records each start and passes every query to the real git. Ticket 03 uses it.

@@ -26,7 +26,8 @@ Keep `bounds.LeaseStale` in `lifecycle.go` for the pin at `internal/conformance/
 `ownership_test.go`, `resume_test.go`, `lifecycle_test.go`, and `parallel_census_test.go` are over their budgets. Change them in place and add no line.
 
 Add `TestRunConstructionCensus` to `effect_census_test.go`. It reads each production file of the package with `go/ast` and names each run construction outside `newAmbient` and the exported functions.
-The census reports the file and the line of each such construction. One case plants a construction in an unexported function and expects the census to name it.
+A run construction is a `&git.Run{}` literal or a `new(git.Run)` call. The base holds both forms.
+The census reports the file and the line of each such construction. Two cases plant one construction of each form in an unexported function, and the census names each one.
 At the base this census names 9 sites. Tickets 03 and 04 remove 5 of them, and this ticket removes the last 4.
 Raise `worktreeTestCount` from 879 to 880. `worktreeSerialCeiling` stays 22.
 
