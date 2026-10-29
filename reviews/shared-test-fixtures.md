@@ -1614,7 +1614,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c10-standards-r1",
+          "performer": "claude:gf-c10-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8a459a36128107247dc1fb3893a6bd07a54afde6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c10-standards-r1",
+            "digest": "sha256:8bbbd26fdf85d705efa0cf90f4f320a2fae742c13d23201172e603565c9a55bf",
+            "excerpt": "Standards axis, chunk GF-C10 (claude:gf-c10-standards-r1). Findings: none. No FIFO or symlink Capability call remains; no caller writes a second prefix; every class is kept; the 15 removed fmt imports leave no use; no comment drift. Full code diff read.\n"
+          },
+          "axis": "Standards",
+          "base": "537a396191d1c655515cedc44fbf2742cd0876dc",
+          "tip": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c10-spec-r1",
+          "performer": "claude:gf-c10-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8a459a36128107247dc1fb3893a6bd07a54afde6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c10-spec-r1",
+            "digest": "sha256:e90c7c7be3d62769fe3af650e441b4c1dc8883f8d1d209abe77ce6fe86950764",
+            "excerpt": "Spec axis, chunk GF-C10 (claude:gf-c10-spec-r1). Findings: none. Every real FIFO and symlink call in the three fences moved to Unavailable; no example-source literal changed; socket and device fixtures keep Fifo; details carry only the operation error or the host limitation; skip conditions unchanged; other classes stay on Capability.\n"
+          },
+          "axis": "Spec",
+          "base": "537a396191d1c655515cedc44fbf2742cd0876dc",
+          "tip": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c10-coverage-r1",
+          "performer": "claude:gf-c10-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "8a459a36128107247dc1fb3893a6bd07a54afde6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c10-coverage-r1",
+            "digest": "sha256:6b8c637582f49f8e380cea3d3a8a3d745838e1d13c24f345bc9779fdadcb7ff2",
+            "excerpt": "Coverage axis, chunk GF-C10 (claude:gf-c10-coverage-r1). Findings: none. 91 removed Capability lines match 91 added Unavailable lines (44 Fifo, 47 Symlink); no skip guard changed; no operation error lost; no site missed. Advice: ticket 13 should say whether the Privilege character-device sites belong to its class table.\n"
+          },
+          "axis": "Coverage",
+          "base": "537a396191d1c655515cedc44fbf2742cd0876dc",
+          "tip": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2303,3 +2364,26 @@ Its witness hard-coded the symlink prefix, and `TestUnavailableReason/fifo` turn
 
 The coordinator probe dropped the detail from the reason. Both class cases of `TestUnavailableReason` turned red, and the restore passed.
 The repair consumed one of the two repair cycles of GF-C9.
+
+## GF-C10 review pickup
+
+All three axes passed with no finding, so the chunk takes no repair cycle.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+The chunk moves 91 FIFO and symlink calls (44 FIFO, 47 symlink) to `capability.Unavailable`. Each class and each skip guard is unchanged.
+The Privilege character-device sites stay on the low-level helper, as the spec scopes the migration to the FIFO and symlink family.
+
+### Retained specialized and intentional sites
+
+- `internal/conformance/skip_ownership_test.go`: a diagnostic string that names the low-level helper, which is data.
