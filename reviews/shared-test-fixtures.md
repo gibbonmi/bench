@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:faf692b54b3699aa9bfd216ed49ad566258e0330b90102580b97de862be1d5fd",
+  "plan_digest": "sha256:811bcf440b2d88ead423909e96ba6728e92ed947bc317f7d06f969e9e21d2ddf",
   "implementation_session": "",
   "chunks": [
     {
@@ -272,9 +272,9 @@
     {
       "id": "GF-C2",
       "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
-      "tip": "0b272ed6f12cb704c69cc9c2026fc9d608680766",
-      "plan_digest": "sha256:faf692b54b3699aa9bfd216ed49ad566258e0330b90102580b97de862be1d5fd",
-      "source_digest": "b83c32ffed193740ace21dd04a9c5657fd3cc09c",
+      "tip": "d225e88cf9c2091efc2ebfaa62a7b29987642005",
+      "plan_digest": "sha256:811bcf440b2d88ead423909e96ba6728e92ed947bc317f7d06f969e9e21d2ddf",
+      "source_digest": "c755650ecc36f64f986c63224be4cb3aa3804231",
       "acceptance_rows": [
         "GF16",
         "GF29",
@@ -310,6 +310,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestReadStagedIndexReportsModesAndOmitsDeletions,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/git,TestReadStagedIndexReportsModesAndOmitsDeletions,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/git,fail,15,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/git,TestReadStagedIndexReportsModesAndOmitsDeletions,\"staged_test.go:71: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t03-probe-03",
+          "performer": "claude:gf-t03-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c755650ecc36f64f986c63224be4cb3aa3804231",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t03-author-20261029",
+            "digest": "sha256:c2194f7f886af2ad60e8f3308af534f25b0543c9648feb09513c6ab528b3d2b0",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestRetireDeletesTheFolderAndExitsZero,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestRetireDeletesTheFolderAndExitsZero,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,344\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,9,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestRetireDeletesTheFolderAndExitsZero,\"retire_test.go:176: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d225e88cf9c2091efc2ebfaa62a7b29987642005",
+          "requirement": "probe-03",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/spec --run TestRetireDeletesTheFolderAndExitsZero",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t03-author-20261029",
+              "digest": "sha256:c2194f7f886af2ad60e8f3308af534f25b0543c9648feb09513c6ab528b3d2b0",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestRetireDeletesTheFolderAndExitsZero,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestRetireDeletesTheFolderAndExitsZero,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,344\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,9,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestRetireDeletesTheFolderAndExitsZero,\"retire_test.go:176: git commit --quiet -m base: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -338,6 +368,18 @@
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:faf692b54b3699aa9bfd216ed49ad566258e0330b90102580b97de862be1d5fd",
+      "to": "sha256:811bcf440b2d88ead423909e96ba6728e92ed947bc317f7d06f969e9e21d2ddf",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
         ]
       }
     }
