@@ -299,7 +299,7 @@ FT365 overlaps the four shared source visitors in the approved spec.
 Its independent-expectation audit and remaining scans stay open.
 FT360 shares fixture helpers but does not by itself establish lower fixture runtime.
 FT255 should control host contention before any new phase overlap.
-[FT365](../roadmap/FT365.md:3), [FT360](../roadmap/FT360.md:3), [FT255](../roadmap/FT255.md:18).
+[FT365](../roadmap/FT365.md:3), FT360, [FT255](../roadmap/FT255.md:18).
 
 FT283 has a specific approved direction for spec-stage lane-only landings.
 Its row explicitly says the whole-project contract remains until the change ships.
@@ -374,7 +374,7 @@ Broader experiments do not block small correctness repairs.
 | Rank | Owner | Next action and reason |
 |---|---|---|
 | 14 | [FT358](../roadmap/FT358.md:1) | Use the staged block-reader spec to remove correctness drift across grammar modules; recheck current consumers (C01). |
-| 15 | [FT360](../roadmap/FT360.md:1) | Use the amended [shared-test-fixtures plan](../specs/shared-test-fixtures/spec.md), preserving Run and MustRun outcomes; coordinate with LTE fixture writes (C04). |
+| 15 | FT360 | Use the amended shared-test-fixtures plan, preserving Run and MustRun outcomes; coordinate with LTE fixture writes (C04). |
 | 16 | [FT363](../roadmap/FT363.md:1) | Use the reviewed [cleanup traversal plan](../specs/cleanup-member-traversal/spec.md), preserving conditional recovery and each mode’s authority (C05). |
 | 17 | [FT217](../roadmap/FT217.md:1) | Make preview and execution consume the existing lifecycle decision; preserve public test logic (C06). |
 | 18 | [FT343](../roadmap/FT343.md:1) | Use the reviewed [test-seam plan](../specs/production-test-seam-policy/spec.md), with actual consumers and complete input ownership at first use (C09). |

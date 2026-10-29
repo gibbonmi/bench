@@ -25,7 +25,7 @@ The active FT290 commitment and all existing roadmap dependencies remain unchang
 | C01: authored Markdown | [Markdown spec](../specs/markdown-block-reader/spec.md) | FT358; markdown-block-reader | Accepted spec and ticket amendment |
 | C02: process lifetime | [Process lifetime](../specs/process-lifetime/decisions/ft362-process-lifetime.md) | FT362 | Accepted spec and thirteen tickets; integrated |
 | C03: source observations | [Observations](../decisions/architecture-observations.md) | landing-test-efficiency; residual FT365 | Three reviewed plans are integrated |
-| C04: generic Git fixtures | [Fixtures](../decisions/architecture-fixtures.md) | FT360; shared-test-fixtures | Accepted spec and ticket amendment |
+| C04: generic Git fixtures | Fixtures | FT360; shared-test-fixtures | Accepted spec and ticket amendment |
 | C05: cleanup traversal | [Cleanup](../specs/cleanup-member-traversal/decisions/architecture-cleanup.md) | FT363 | Accepted spec and four implementation tickets |
 | C06: lifecycle decision consumption | Adoption; retired with its spec | FT217 | None; the four tickets landed and the spec is retired |
 | C07: shared guard grammar | [Guards](../decisions/architecture-guards.md) | FT366 | Accepted projection and scan plans; integrated |

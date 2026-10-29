@@ -49,7 +49,7 @@ and review cost that recent builds paid.
 ## Quality survey (2026-09-29)
 
 The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure. Its
-light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 06, and 07
+light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 05, 06, and 07
 and the small cuts. The rows below hold the rest.
 
 **FT366 (MEDIUM) — a PreToolUse guard refuses a pathless `rg` call through the shared command projection.**
@@ -59,8 +59,6 @@ and the small cuts. The rows below hold the rest.
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
 **FT358 (MEDIUM) — authored Markdown has one line reader for fences, frontmatter, comments, and sections.**
-
-**FT360 (MEDIUM) — `gittest` exports one git runner and one commit identity.**
 
 **FT363 (MEDIUM) — the clean modes share one member-set applier.**
 
@@ -110,7 +108,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT425 (LOW) — a Bench write verb prints the tree state after it runs.**
 
-**FT462 (LOW) — `bench worktree merge --plan` discloses the merge kind and the projected grade.**
+**FT462 (MEDIUM, decision required) — `bench worktree merge --plan` discloses the merge kind and the projected grade, and a tree-neutral fold records a pass.**
 
 ## Planning, ownership, and review integrity
 
@@ -176,7 +174,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
 
-**FT447 (MEDIUM) — the bounded repair policy states the three repair-cost rules of the FT445 build.**
+**FT447 (MEDIUM) — the bounded repair policy states the repair-cost rules of the FT445 and FT463 builds.**
 
 **FT453 (LOW) — the Claude line binding names Haiku as a reviewer-allowed model, and the agent-line guard accepts it.**
 
@@ -193,6 +191,16 @@ and the small cuts. The rows below hold the rest.
 **FT459 (LOW) — a build's docs ticket receives each spec-versus-code divergence that the build settled.**
 
 **FT461 (MEDIUM, decision required) — an outcome's phase-close commits fold into its build landing, so one outcome pays one landing gate.**
+
+**FT469 (LOW, decision required) — `craft-spec` plans a broker-first landing for a relaxed evidence rule and grades a timing row against a same-session control.**
+
+**FT470 (LOW) — each mutation that a ticket names becomes a plan probe on the registered check.**
+
+**FT471 (LOW) — the implement-spec charges name the chunk base for the first ticket record, and each checkpoint reports its cost.**
+
+**FT472 (LOW) — probe-only plans keep no plain-requirement branch, and the evidence reader reads the one pass predicate.**
+
+**FT473 (LOW, decision required) — the staleness pass can be omitted for an audit whose only diagnostic is metadata and whose drift list is empty.**
 
 ## Evidence, diagnostics, and maintenance
 
@@ -227,6 +235,12 @@ and the small cuts. The rows below hold the rest.
 **FT444 (LOW) — each retro improvement item names its fix lever.**
 
 **FT460 (LOW) — the retro scaffold reports the gate-stage times of the run whose green a landing reuses.**
+
+**FT464 (LOW) — the serial worktree tests that bind the working directory or the child environment move into the parallel phase.**
+
+**FT467 (LOW) — `bench anchors --help` names the check that grades a row against the live kit files.**
+
+**FT474 (LOW, decision required) — the private-directory rule, the wrapper path of a root, and the landing destination identity each have one leaf owner.**
 
 ## Release qualification
 
@@ -296,6 +310,10 @@ qualification requirements are met.
 **FT432 (MEDIUM, parked pending a repro) — one line-ending rule serves every spec reader.**
 
 **FT434 (MEDIUM, parked pending a repro) — the landing range of a build never holds a commit from `main`.**
+
+**FT465 (LOW, parked pending a linked-repo request) — a linked repository with a declared lane can opt in to the background grade.**
+
+**FT476 (LOW, parked pending a repro) — the checkout guard ignores the temporary file of a background record write.**
 
 ## Release and bank reassessment gate
 
