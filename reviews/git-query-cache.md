@@ -564,7 +564,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gq-c2b-standards-1",
+          "performer": "claude:gq-c2b-standards-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "26f78937f875b16c7ac86d513405eaf12cafefd3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2b-standards-20261029",
+            "digest": "sha256:a83b4cc05362527fa7cc6c5d834919cfc48bcdef7d560204b6ddc3d3cee0da1a",
+            "excerpt": "axis: Standards | verdict: findings | 2 | worst: S2\nS1 | auto-fix | confidence 6 | internal/worktree/journey_test.go:74-79 | journeyStubGitStarts only forwards to gittest.StubGitStarts.\nS2 | ask-user | confidence 5 | internal/worktree/ownership.go:343, path.go:118, merge.go:345 | production callers pass a nil run where the verb holds a run; resume.go:438 and :459 read the ledger without the run.\nAdvice: the test name says Once but pins 54; the store literal repeats as the ticket prescribes; land_run_test.go binds PATH twice.\n"
+          },
+          "axis": "Standards",
+          "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "tip": "13dbab8674bc949a1fd5801a49de76f454d6f044",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c2b-spec-1",
+          "performer": "claude:gq-c2b-spec-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "26f78937f875b16c7ac86d513405eaf12cafefd3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2b-spec-20261029",
+            "digest": "sha256:7aabb3a3858b416e5051deb0575dc374f53fae35b96f1cc9d27d44201bea1246",
+            "excerpt": "axis: Spec | verdict: findings | 2 | worst: P1\nP1 | auto-fix | confidence 6 | internal/worktree/ownership.go:343, path.go:118, list.go:86 | production callers drop the run where one is in scope; the ticket allows nil only for test callers; no later ticket threads them.\nP2 | auto-fix | confidence 5 | internal/worktree/land_resume.go:127 | terminalResumeReceipt reads the cleanup receipt without the run; ticket 03 requires that a resume and a first landing share one cache.\nGQ34 pin 54 with == and the base 65 as context match the spec.\n"
+          },
+          "axis": "Spec",
+          "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "tip": "13dbab8674bc949a1fd5801a49de76f454d6f044",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c2b-coverage-1",
+          "performer": "claude:gq-c2b-coverage-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "26f78937f875b16c7ac86d513405eaf12cafefd3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2b-coverage-20261029",
+            "digest": "sha256:2aa83496fb5fe774eaebc5654872e1967d2c9ad1b38d4883e30efbe2f1ac54f8",
+            "excerpt": "axis: Coverage | verdict: findings | 5 | worst: C1\nC1 | auto-fix | confidence 8 | internal/worktree/land_effects.go:152 | the fixture declares no build inputs, so a held-install store without the run survives.\nC2 | ask-user | confidence 8 | land_resume.go:56,76; land_stack_resume.go:69,81 | the resume path is unreached by GQ34.\nC3 | ask-user | confidence 8 | land_stack.go, land_stack_preflight.go | the stack path is unreached by GQ34.\nC4 | ask-user | confidence 7 | merge.go, worktree.go:326, resume.go:458, clean_set_apply.go:232 | merge, clean --landed, and the resume sweep are unreached.\nC5 | ask-user | confidence 6 | land.go:273,279 | the pin counts only the common-directory query, so a package IsAncestor survives.\nAdvice: the GQ34 row text overstates its reach.\n"
+          },
+          "axis": "Coverage",
+          "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "tip": "13dbab8674bc949a1fd5801a49de76f454d6f044",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -711,3 +784,40 @@ The repair session reported these witness reds:
 - S1: a listing error read as absence turns `TestStoreReadsAPolicyOnce/malformed_listing` red through the new stub mode.
 - C2: a hidden shared run for a store with no run turns `TestStoreReadsAPolicyOnce/ledger_no_run` red.
 - C1: a nil run inside `RevisionDocumentIn` turns `TestRevisionIndexReadsOnce/document` red.
+
+## Chunk GQ-C2B review pickup
+
+The review read the frozen pair 01d699aaa to 13dbab867. Repair cycles used: 0 of 2. The accepted findings fall on ticket 03, so one combined repair charge carries them.
+
+### Standards
+
+Findings: 2. Worst issue: S2.
+
+- S1, no-op, confidence 6: the census `TestSerialJourneyHarnessCensus` admits the stub harness only in the journey test file. So the wrapper in that file is required, not a second derivation.
+- S2, auto-fix, confidence 5: production callers pass a nil run where the verb holds a run. The repair merges S2 with Spec P1.
+
+### Spec
+
+Findings: 2. Worst issue: P1.
+
+- P1, auto-fix, confidence 6: `ownership.go:343`, `list.go:86`, and `path.go:118` drop the run where a run is in scope. The ticket allows a nil run only for test callers. The repair also threads the ledger read at `merge.go:74`, because ticket 03 owns that file. The reads in `resume.go` stay with ticket 04.
+- P2, auto-fix, confidence 5: the landing resume reads its cleanup receipt without the run (`land_resume.go:127`). Ticket 03 requires that a resume and a first landing share one cache.
+
+### Coverage
+
+Findings: 5. Worst issue: C1.
+
+- C1 to C5, no-op, confidence 6 to 8: each names a threaded site that the GQ34 landing does not reach. These are the held install, the resume, the stack, the merge, and the ancestry checks. GQ34 is the one approved count row of this chunk. A dropped run at such a site loses only cache, because a nil run answers live. A count test for each path would add a hardening cycle of new serial tests beyond the approved rows. The spec now states that GQ34 grades only the sites that its fixture reaches.
+
+### Ticket 03 author witness reds
+
+Each mutation below turns `TestLandingReadsTheDestinationCommonDirOnce` red, and the pin reads 54:
+
+- The window store without the run, which is the plan probe.
+- The landing lease with a nil run.
+- The admission store without the run.
+- The published steps with a nil run.
+- `assignmentForRequest` with a nil run.
+- `identityBundleRefusal` with a nil run.
+- `planLandedSet` with a nil run.
+- The commitment reconcile store without the run.
