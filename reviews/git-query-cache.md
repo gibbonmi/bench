@@ -1211,3 +1211,14 @@ Findings: 2. Worst issue: C1.
 - GQ39: an exemption for every function, a census that sees no literal, and a census that sees no `new` call each turn `TestRunConstructionCensus` red.
 - GQ40: the count pin left at 879 turns `TestPackageTestCountPin` red.
 - probe-05: a planted helper that builds a run turns `TestRunConstructionCensus` red.
+
+## Chunk GQ-C3 repair cycle 1
+
+Repair cycles used: 1 of 2. The repair commit is 56da04a3b, and the refreeze record is 857ebca3a. The GQ34 pin now reads 31.
+
+The repair session reported these witness reds:
+
+- C1: a census that skips package scope turns `TestRunConstructionCensus` red.
+- C1: a census that exempts exported methods turns `TestRunConstructionCensus` red.
+- C1: a census that sees only the import name `git` turns `TestRunConstructionCensus` red.
+- P2: a package ledger read in `resolveAssignmentIn` turns `TestLandingReadsTheDestinationCommonDirOnce` red, with 33 starts against the pin of 31.
