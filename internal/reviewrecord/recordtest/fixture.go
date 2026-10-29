@@ -12,7 +12,6 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
-	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 const Spec = "specs/example/spec.md"
@@ -242,7 +241,7 @@ func RetainSingleChunk(t testing.TB, root, spec, base string) {
 		t.Fatal(err)
 	}
 	f.Git("add", "--", ":(literal)"+path)
-	f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "retain fixture completion")
+	f.Git(append(gittest.IdentityArgs(), "commit", "-qm", "retain fixture completion")...)
 }
 
 func (f *Fixture) Write(path, data string) {
@@ -268,7 +267,7 @@ func (f *Fixture) Tip() string  { return f.Git("rev-parse", "HEAD") }
 func (f *Fixture) Tree() string { return f.Git("rev-parse", "HEAD^{tree}") }
 func (f *Fixture) Commit(message string) {
 	f.T.Helper()
-	if err := testrepo.CommitAll(f.Root, message); err != nil {
+	if err := gittest.CommitAll(f.Root, message); err != nil {
 		f.T.Fatal(err)
 	}
 }

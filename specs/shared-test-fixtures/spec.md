@@ -247,21 +247,21 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| GF1 | 1 | MustRun fails its calling test on a failed Git command | planned TestMustRunFailure in internal/gittest/commands_test.go | Ignoring the process error leaves the negative fixture green. |
-| GF2 | 2 | Output preserves trimmed combined output | planned TestOutputContract in internal/gittest/commands_test.go | A changed stream or trim rule changes the observed bytes. |
-| GF3 | 3 | OutputBytes preserves raw stdout with trailing whitespace and NUL bytes | planned TestOutputBytesContract in internal/gittest/commands_test.go | A TrimSpace or combined-output substitution changes the expected bytes. |
-| GF4 | 4 | A root with spaces and shell metacharacters reaches the intended repository | planned TestCommandArgv in internal/gittest/commands_test.go | Shell interpolation changes the target or creates a sentinel. |
-| GF5 | 5 | Missing Git makes MustRun fail the calling test | planned TestMustRunMissingGit in internal/gittest/commands_test.go | A skip or empty success cannot satisfy the failure observation. |
-| GF6 | 6 | Commit preserves the supplied message and explicit empty-commit option | planned TestCommitContract in internal/gittest/commands_test.go | Dropping an argv element changes the repository result. |
-| GF7 | 7 | Commit leaves an unstaged sentinel outside the new commit | planned TestCommitDoesNotStage in internal/gittest/commands_test.go | Implicit add absorbs the sentinel. |
-| GF8 | 8 | RepoOnBranch and snapshots use the same canonical identity | planned TestFixtureIdentity in internal/gittest/commands_test.go | A second identity or personal global fallback differs. |
-| GF9 | 9 | An explicit identity override survives migration | planned TestFixtureIdentityOverride in internal/gittest/commands_test.go | An unconditional helper override changes the commit author. |
+| GF1 | 1 | MustRun fails its calling test on a failed Git command | `internal/gittest/commands_test.go` (`TestMustRunFailure`) | Ignoring the process error leaves the negative fixture green. |
+| GF2 | 2 | Output preserves trimmed combined output | `internal/gittest/commands_test.go` (`TestOutputContract`) | A changed stream or trim rule changes the observed bytes. |
+| GF3 | 3 | OutputBytes preserves raw stdout with trailing whitespace and NUL bytes | `internal/gittest/commands_test.go` (`TestOutputBytesContract`) | A TrimSpace or combined-output substitution changes the expected bytes. |
+| GF4 | 4 | A root with spaces and shell metacharacters reaches the intended repository | `internal/gittest/commands_test.go` (`TestCommandArgv`) | Shell interpolation changes the target or creates a sentinel. |
+| GF5 | 5 | Missing Git makes MustRun fail the calling test | `internal/gittest/commands_test.go` (`TestMustRunMissingGit`) | A skip or empty success cannot satisfy the failure observation. |
+| GF6 | 6 | Commit preserves the supplied message and explicit empty-commit option | `internal/gittest/commands_test.go` (`TestCommitContract`) | Dropping an argv element changes the repository result. |
+| GF7 | 7 | Commit leaves an unstaged sentinel outside the new commit | `internal/gittest/commands_test.go` (`TestCommitDoesNotStage`) | Implicit add absorbs the sentinel. |
+| GF8 | 8 | RepoOnBranch and snapshots use the same canonical identity | `internal/gittest/commands_test.go` (`TestFixtureIdentity`) | A second identity or personal global fallback differs. |
+| GF9 | 9 | An explicit identity override survives migration | `internal/gittest/commands_test.go` (`TestFixtureIdentityOverride`) | An unconditional helper override changes the commit author. |
 | GF10 | 10 | Every former testrepo Git export caller reaches gittest | planned TestGitFixtureOwnership in internal/conformance/git_fixture_owner_test.go | A retained definition or import edge triggers a diagnostic. |
 | GF11 | 11 | The snapshot preserves visible file bytes and modes | `internal/gittest/gittest_test.go` (`TestKitCopyPreservesTheVisibleWorkingTree`) | Omitting the untracked file or executable mode fails the existing fixture. |
 | GF12 | 11 | The snapshot preserves live and dangling symlink targets | `internal/gittest/gittest_test.go` (`TestKitCopyPreservesTheVisibleWorkingTree`) | Dereferencing either link changes the link assertion. |
 | GF13 | 12 | The snapshot excludes ignored untracked files and source Git metadata | `internal/gittest/gittest_test.go` (`TestKitCopyPreservesTheVisibleWorkingTree`) | Copying the entire source introduces forbidden entries. |
-| GF14 | 13 | A special source entry returns an error before a blocking read | planned TestSnapshotSpecialEntry in internal/gittest/snapshot_test.go | A tracked regular file replaced by a FIFO reaches the refusal before a blocking read. |
-| GF15 | 13 | A failed snapshot Git command returns its process error | planned TestSnapshotCommandFailure in internal/gittest/snapshot_test.go | Swallowing the error or calling Fatal changes the caller contract. |
+| GF14 | 13 | A special source entry returns an error before a blocking read | `internal/gittest/snapshot_test.go` (`TestSnapshotSpecialEntry`) | A tracked regular file replaced by a FIFO reaches the refusal before a blocking read. |
+| GF15 | 13 | A failed snapshot Git command returns its process error | `internal/gittest/snapshot_test.go` (`TestSnapshotCommandFailure`) | Swallowing the error or calling Fatal changes the caller contract. |
 | GF16 | 14 | Generic helper callers retain their fixture results | review-owned: each migration ticket compares its named fixture family before and after the change | The same input family produces different repository facts after migration. |
 | GF17 | 15 | Worktree Git children retain descendant cleanup and census effects | review-owned: existing worktree journey harness checks plus focused lifecycle evidence | Replacing descendant with an ordinary process loses its recorded effect or cleanup. |
 | GF18 | 15 | System Git children retain owner.runAt and its repository budget | review-owned: bench test --check system and ordinary-build-census | A direct process bypass fails the owner or census assertions. |
@@ -278,12 +278,12 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 | GF29 | 23 | The same fixture input family has equivalent repository facts before and after migration | review-owned: frozen baseline and candidate differential evidence | Package green alone cannot prove facts the old suite never asserted. |
 | GF30 | 24 | Each migration chunk passes without its successor implementation | review-owned: frozen chunk verification plan and three-axis review | A missing future helper is observable at the chunk checkpoint. |
 | GF31 | 19 | Every migrated capability caller retains its baseline class | planned TestUnavailableCallerClasses in internal/conformance/skip_reason_owner_test.go | Changing a socket caller from FIFO to symlink fails the independent site expectation. |
-| GF32 | 6 | Commit without an empty-commit option fails on an unchanged index | planned TestCommitNoChanges in internal/gittest/commands_test.go | An injected allow-empty option makes the negative fixture succeed. |
-| GF33 | 7 | A refused no-change Commit preserves HEAD | planned TestCommitNoChanges in internal/gittest/commands_test.go | Creating an empty commit moves the observed ref. |
-| GF34 | 2 | Run retains root operands and returns trimmed combined output on success without a testing handle | planned TestRunOutputContract in internal/gittest/commands_test.go | A changed stream, trim rule, signature, or existing root operand behavior breaks the observed contract. |
-| GF35 | 1 | Run returns empty output and its wrapped command error to a calling goroutine | planned TestRunFailureReturn in internal/gittest/commands_test.go | Swallowing the error, losing command diagnostics, or terminating the goroutine prevents the channel result. |
-| GF36 | 5 | Missing Git makes Run return an error and empty output | planned TestRunMissingGit in internal/gittest/commands_test.go | A fatal call, skip, or empty success cannot return the required error. |
-| GF37 | 1 | Output delegates to Run and fails its calling test on nonzero exit or missing Git | planned TestOutputFailure in internal/gittest/commands_test.go | Swallowing a returned error leaves the negative fixture green. |
+| GF32 | 6 | Commit without an empty-commit option fails on an unchanged index | `internal/gittest/commands_test.go` (`TestCommitNoChanges`) | An injected allow-empty option makes the negative fixture succeed. |
+| GF33 | 7 | A refused no-change Commit preserves HEAD | `internal/gittest/commands_test.go` (`TestCommitNoChanges`) | Creating an empty commit moves the observed ref. |
+| GF34 | 2 | Run retains root operands and returns trimmed combined output on success without a testing handle | `internal/gittest/commands_test.go` (`TestRunOutputContract`) | A changed stream, trim rule, signature, or existing root operand behavior breaks the observed contract. |
+| GF35 | 1 | Run returns empty output and its wrapped command error to a calling goroutine | `internal/gittest/commands_test.go` (`TestRunFailureReturn`) | Swallowing the error, losing command diagnostics, or terminating the goroutine prevents the channel result. |
+| GF36 | 5 | Missing Git makes Run return an error and empty output | `internal/gittest/commands_test.go` (`TestRunMissingGit`) | A fatal call, skip, or empty success cannot return the required error. |
+| GF37 | 1 | Output delegates to Run and fails its calling test on nonzero exit or missing Git | `internal/gittest/commands_test.go` (`TestOutputFailure`) | Swallowing a returned error leaves the negative fixture green. |
 
 ### Edge inventory
 

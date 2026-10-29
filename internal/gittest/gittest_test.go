@@ -22,8 +22,8 @@ func TestKitCopyPreservesTheVisibleWorkingTree(t *testing.T) {
 	for name, file := range visible {
 		writeKitCopyFile(t, root, name, file.body, file.mode)
 	}
-	run(t, root, "add", "-f", ".gitignore", "tracked", "tracked.ignored", "bin/tool")
-	run(t, root, "commit", "-qm", "fixture")
+	MustRun(t, root, "add", "-f", ".gitignore", "tracked", "tracked.ignored", "bin/tool")
+	MustRun(t, root, "commit", "-qm", "fixture")
 	ignored := []string{"dist/generated", "bin/bench-broker.manifest", "secret.ignored", ".git/operator-record"}
 	for _, name := range ignored {
 		writeKitCopyFile(t, root, name, "operator bytes", 0o600)

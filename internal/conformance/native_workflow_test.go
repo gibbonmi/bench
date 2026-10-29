@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
-	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 type requirementRecord struct {
@@ -224,7 +224,7 @@ func main() {
 		if err := os.WriteFile(probeMain, []byte(source), 0o644); err != nil {
 			return []string{"release evidence probe could not prepare preflight command"}
 		}
-		if err := testrepo.CommitAll(root, "release preflight probe command"); err != nil {
+		if err := gittest.CommitAll(root, "release preflight probe command"); err != nil {
 			return []string{"release evidence probe could not authenticate preflight command"}
 		}
 		defer func() {
@@ -326,10 +326,9 @@ func main() {
 	}
 	cmd := exec.Command("bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--mode", "verify")
 	cmd.Dir, cmd.Env = root, env
-	if output, err := exec.Command("git", "-C", root, "rev-parse", "--verify", "HEAD").CombinedOutput(); err != nil || strings.TrimSpace(string(output)) == "" {
-		commit := exec.Command("git", "-C", root, "-c", "user.name=release-evidence-probe", "-c", "user.email=release-evidence-probe@example.invalid", "commit", "--quiet", "--allow-empty", "-m", "release-evidence-probe")
-		if output, err := commit.CombinedOutput(); err != nil {
-			return []string{"release evidence probe could not establish source HEAD: " + strings.TrimSpace(string(output))}
+	if head, err := gittest.Run(root, "rev-parse", "--verify", "HEAD"); err != nil || head == "" {
+		if _, err := gittest.Run(root, append(gittest.IdentityArgs(), "commit", "--quiet", "--allow-empty", "-m", "release-evidence-probe")...); err != nil {
+			return []string{"release evidence probe could not establish source HEAD: " + err.Error()}
 		}
 	}
 	if output, err := cmd.CombinedOutput(); err != nil {
