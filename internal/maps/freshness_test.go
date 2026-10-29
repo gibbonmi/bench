@@ -3,7 +3,6 @@ package maps
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -53,11 +52,9 @@ func writeAsset(t *testing.T, root, body string) {
 func commitAt(t *testing.T, root, date string, paths ...string) {
 	t.Helper()
 	gittest.MustRun(t, root, append([]string{"add", "--"}, paths...)...)
-	cmd := exec.Command("git", "-C", root, "commit", "-q", "-m", date)
-	cmd.Env = append(os.Environ(), "GIT_AUTHOR_DATE="+date, "GIT_COMMITTER_DATE="+date)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git commit %s: %v: %s", date, err, out)
-	}
+	t.Setenv("GIT_AUTHOR_DATE", date)
+	t.Setenv("GIT_COMMITTER_DATE", date)
+	gittest.Commit(t, root, date)
 }
 
 func TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex(t *testing.T) {
