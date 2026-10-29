@@ -1156,7 +1156,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c6-standards-r1",
+          "performer": "claude:gf-c6-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "08dc59cabcc9e1259bbe4259f6cd167e32d93744",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c6-standards-r1",
+            "digest": "sha256:5826dcd8dad6c6c5fd8157d2e5b207c24fdd62f228b5f13ed862d67893eeb774",
+            "excerpt": "Standards axis, chunk GF-C6 (claude:gf-c6-standards-r1). No defect. Two items the axis itself dispositioned no-op: reset_refusal_test.go:132 raw commit headers feed a hash-prefix collision search (retained specialized site); bare commit calls in merge_test.go, clean_landed_apply_test.go, clean_set_apply_test.go read the same identity through IdentityConfig. withIdentity is the one consumer of IdentityArgs; comments match the code. Advice: ticket 06 wording names one harness file where the census admits three.\n"
+          },
+          "axis": "Standards",
+          "base": "fd1234c51eb80f59ff191f3b069ee03f9992f765",
+          "tip": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c6-spec-r1",
+          "performer": "claude:gf-c6-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "08dc59cabcc9e1259bbe4259f6cd167e32d93744",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c6-spec-r1",
+            "digest": "sha256:388c8fda60f162dda733065bf27a139c379554d1629c3e7dd4ff03511daf245d",
+            "excerpt": "Spec axis, chunk GF-C6 (claude:gf-c6-spec-r1). Findings: none. Every migrated child starts through gitRun, gitOutput, or descendant; no private default identity remains in the fences except the specialized reset_refusal_test.go:132 site and production clean.go; the landAssignment cherry-pick -x change stays inside the approved behavior; leasedRepo needs no repository-config identity. Advice: leasedRepo could use journeyRepo.\n"
+          },
+          "axis": "Spec",
+          "base": "fd1234c51eb80f59ff191f3b069ee03f9992f765",
+          "tip": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c6-coverage-r1",
+          "performer": "claude:gf-c6-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "08dc59cabcc9e1259bbe4259f6cd167e32d93744",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c6-coverage-r1",
+            "digest": "sha256:4057fd211d438742b272a94c095f689122892dbf404443a43dc1bba161597444",
+            "excerpt": "Coverage axis, chunk GF-C6 (claude:gf-c6-coverage-r1). The plan probes probe-06 and probe-07 turn red at a repository-config identity that predates the chunk, so they do not grade the migration; the axis's own probe (withIdentity body reduced to return args) turned TestReleaseOwnerRestoresCleanAndUnleases red at lifecycle_test.go:94 and restored; proposed ask-user or no-op, confidence 5. No GF17 bypass found; the census guards it; no-op, confidence 4. Clean hunts: no other identical-object replay, leasedRepo has no later product commit, no vacuous pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "fd1234c51eb80f59ff191f3b069ee03f9992f765",
+          "tip": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1579,3 +1640,39 @@ The session returned no report, so the coordinator verified the repair diff agai
 
 The coordinator probe swapped `gittest.RepoOnBranch` for `gittest.Repo` in `faultFixtureCore`. `TestLoopRetainsAndLocksDirtyWorktree` turned red on a missing author identity, and the restore passed.
 The repair consumed one of the two repair cycles of GF-C5C.
+
+## GF-C6 review pickup
+
+All three axes passed. The axes dispositioned each item they raised as no-op, so the chunk takes no repair cycle.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+- The raw commit headers at `internal/worktree/reset_refusal_test.go:132` feed a hash-prefix collision search. They stay a specialized site, and ticket 13 must list them as an exact exception.
+- The bare `commit` calls in the worktree tests read the same identity constants through `gittest.IdentityConfig`.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+The plan probes `probe-06` and `probe-07` turn red at a repository-config identity that predates this chunk, so they do not grade the migration.
+The Coverage axis reduced `withIdentity` to `return args`. `TestReleaseOwnerRestoresCleanAndUnleases` turned red at the `leasedRepo` commit, and the restore passed. That probe is the discriminating evidence of the identity migration.
+
+### Author witnesses outside the plan probes
+
+- Ticket 06: a swap of a migrated `gitRun` call for an ordinary process turned `TestSerialJourneyHarnessCensus` red, so the census grades the `descendant` route.
+- Ticket 07: a swap of `commitInWorktree` for a direct `gittest` commit turned `TestSerialJourneyHarnessCensus` red. An omission of `-x` in `landAssignment` turned `TestDirtyAssignmentWithoutOwnCommitIsNotLanded` red.
+
+### Orchestrator decision for veto
+
+Under the shared identity, the cherry-pick in `landAssignment` can rebuild the branch commit byte for byte within one second. The landed fixture then loses its separate landing commit, and eleven tests fail.
+The orchestrator made the landing commit explicit with `cherry-pick -x` in `internal/worktree/landed_test.go`. The patch stays the same, and the product reads no part of the added trailer. The rejected option kept the old private identity, which hid the timing dependence.
+
+### Retained specialized sites
+
+- `internal/worktree/reset_refusal_test.go` (`TestResetRefusesAnAmbiguousCheckpoint`): a raw commit body with fixed input bytes.
