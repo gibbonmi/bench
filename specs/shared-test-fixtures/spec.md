@@ -460,12 +460,14 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/spec/widen_test.go`
 - `internal/status/handoff_test.go`
 - `internal/status/route_test.go`
+- `internal/status/status_background_test.go`
 - `internal/status/status_command_test.go`
 - `internal/status/status_counters_test.go`
 - `internal/status/status_drain_learnings_test.go`
 - `internal/status/status_fixtures_test.go`
 - `internal/status/status_gatecache_test.go`
 - `internal/status/status_producible_test.go`
+- `internal/status/status_reader_test.go`
 - `internal/status/status_render_test.go`
 - `internal/status/status_signals_test.go`
 - `internal/status/status_spec_count_test.go`
