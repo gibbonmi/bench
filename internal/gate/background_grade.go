@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/env"
@@ -80,7 +79,7 @@ func BackgroundCommand(args []string, stdout, stderr io.Writer) int {
 	root, tip := args[0], args[1]
 	if os.Getenv(backgroundResolvedEnv) == "" {
 		resolved := append(env.WithoutWrapperRouting(os.Environ(), runbinary.Env, backgroundResolvedEnv), backgroundResolvedEnv+"=1")
-		err := reenterImage(root, filepath.Join(root, "bin", "bench.sh"), append([]string{backgroundVerb}, args...), resolved)
+		err := reenterImage(root, backgroundWrapper(root), append([]string{backgroundVerb}, args...), resolved)
 		fmt.Fprintf(stderr, "bench %s: %v\n", backgroundVerb, err)
 		return 1
 	}
