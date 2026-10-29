@@ -1428,6 +1428,18 @@
               "path": "roadmap/FT402.md",
               "identity": "sha256:f16e8d6a4bbf1597652651dd71bd50419a88de7eb9b9b20ca47825c75d0a9d21"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "git-query-cache",
+                "path": "specs/git-query-cache/spec.md",
+                "identity": "sha256:2935d6a4573a7c7abf3dc7a631b6988cddc691f525f439f2642984ce57b10708"
+              },
+              "obligations": [
+                "FT402"
+              ]
+            }
           ]
         },
         {
