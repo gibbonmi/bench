@@ -75,7 +75,7 @@ func TestCommitmentSiblingBinding(t *testing.T) {
 	policy.ParallelGrants = []commitment.ParallelGrant{{Outcomes: []string{"delivery", "B"}}}
 	commitmenttest.WritePolicy(t, f.root, policy)
 	gitRun(t, f.root, "add", ".bench/commitment.json")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "approve B in parallel")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "approve B in parallel")...)
 	result := runVerb(t, verbCreate, verbCall{root: f.root, home: f.home, args: []string{"--request", "ticket", "--label", "ticket", "--from", f.creation.Assignment.ID}})
 	if result.exit != 0 {
 		t.Fatalf("create = %d: %s", result.exit, result.stderr)

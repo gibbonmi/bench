@@ -28,7 +28,7 @@ func commitWholeGate(t *testing.T, dir, script string) {
 	t.Helper()
 	landingGateFixture(t).MustWrite(t, dir, script+"\n", script+"\n")
 	gitRun(t, dir, "add", ".bench")
-	gitRun(t, dir, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the whole gate")
+	gitRun(t, dir, withIdentity("commit", "-qm", "declare the whole gate")...)
 }
 
 // namedLaneTarget gives the set's first target namedRedLane, and a whole gate whose body is

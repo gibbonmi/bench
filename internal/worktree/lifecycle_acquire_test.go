@@ -240,7 +240,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 		{name: "default ref oid", mutate: func(t *testing.T, f fixture) {
 			mustWrite(t, filepath.Join(f.root, "default-drift.txt"), []byte("drift\n"), 0o644)
 			gitRun(t, f.root, "add", "default-drift.txt")
-			gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "default drift")
+			gitRun(t, f.root, withIdentity("commit", "-qm", "default drift")...)
 		}},
 		{name: "marker bytes", mutate: func(t *testing.T, f fixture) {
 			path, _ := markerPath(nil, f.creation.Path)
@@ -268,7 +268,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 			}
 		}},
 		{name: "head and branch ref", mutate: func(t *testing.T, f fixture) {
-			gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "--allow-empty", "-qm", "head drift")
+			gitRun(t, f.creation.Path, withIdentity("commit", "--allow-empty", "-qm", "head drift")...)
 		}},
 		{name: "index", mutate: func(t *testing.T, f fixture) {
 			gitRun(t, f.creation.Path, "update-index", "--chmod=+x", "README.md")

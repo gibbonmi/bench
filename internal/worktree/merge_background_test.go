@@ -30,7 +30,7 @@ func launchMergeSet(t *testing.T) (mergeSet, Creation, *processtest.Launches) {
 		t.Fatalf("write the wrapper: %v, %s", err, out)
 	}
 	gitRun(t, target.Path, "add", "bin/bench.sh")
-	gitRun(t, target.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "wrapper")
+	gitRun(t, target.Path, withIdentity("commit", "-qm", "wrapper")...)
 	return f, target, launches
 }
 

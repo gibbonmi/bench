@@ -13,10 +13,13 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
+// landAssignment commits one file on the assignment branch and lands the same patch on the
+// default branch as a separate commit. The -x trailer makes the landing commit differ from
+// the branch commit even when both carry one identity in one second.
 func landAssignment(t *testing.T, root string, creation Creation, name string) {
 	t.Helper()
 	commitInWorktree(t, creation.Path, name, "landed\n", "landed")
-	gitRun(t, root, "cherry-pick", strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/"))
+	gitRun(t, root, "cherry-pick", "-x", strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/"))
 }
 
 func TestResumeSummaryCountsLandedAssignments(t *testing.T) {

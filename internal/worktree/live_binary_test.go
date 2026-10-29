@@ -22,7 +22,7 @@ func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
+	gitRun(t, root, withIdentity("commit", "-qm", "ignore build output")...)
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
 	home := filepath.Join(root, ".bench-home")

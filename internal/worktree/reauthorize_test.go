@@ -288,7 +288,7 @@ func reauthorizeFixture(t *testing.T) reauthorizeSet {
 		t.Fatal(err)
 	}
 	gitRun(t, root, "add", "reviewed.txt")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "reviewed source")
+	gitRun(t, root, withIdentity("commit", "-qm", "reviewed source")...)
 	creation := mustCreate(t, root, home, "lost-request", "reauthorize fixture")
 	tip := gitOutput(t, creation.Path, "rev-parse", "HEAD")
 	if creation.Assignment.Start != tip {

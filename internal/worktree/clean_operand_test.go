@@ -36,7 +36,7 @@ func TestCleanCommandReportsAResolvedRetainVerdictAsSuccess(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "residual.log"), []byte("x\n"), 0o644)
 	mustWrite(t, filepath.Join(f.creation.Path, ".gitignore"), []byte("residual.log\n"), 0o644)
 	gitRun(t, f.creation.Path, "add", ".gitignore")
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore residual")
+	gitRun(t, f.creation.Path, withIdentity("commit", "-qm", "ignore residual")...)
 	result := runVerb(t, verbClean, f.call(f.creation.Path))
 	if result.exit != 0 {
 		t.Fatalf("resolved retain code=%d stdout=%q stderr=%q", result.exit, result.stdout, result.stderr)

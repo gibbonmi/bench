@@ -268,7 +268,7 @@ func commitCapture(t *testing.T, dir, name, body string, mode os.FileMode, messa
 	mustMkdirAll(t, filepath.Dir(filepath.Join(dir, name)), 0o755)
 	mustWrite(t, filepath.Join(dir, name), []byte(body), mode)
 	gitRun(t, dir, "add", name)
-	gitRun(t, dir, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", message)
+	gitRun(t, dir, withIdentity("commit", "-qm", message)...)
 }
 
 // requireMergeRefusal pins the refusal surface every pre-publication refusal shares: exit

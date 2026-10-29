@@ -81,7 +81,7 @@ func delegatedJourneyFixture(t *testing.T) *delegatedJourney {
 		t.Fatal(err)
 	}
 	gitRun(t, root, "add", ".bench")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the journey gate")
+	gitRun(t, root, withIdentity("commit", "-qm", "declare the journey gate")...)
 
 	// The merge set commits its lane before the base, so the reviewed range holds no lane.
 	journey := &delegatedJourney{root: root, home: home, merges: mergeSetAt(t, root, home), authors: map[string]Creation{}}

@@ -24,10 +24,10 @@ func unprovableLandedAssignment(t *testing.T, request string) ownedAssignment {
 	if err := os.Chmod(filepath.Join(f.creation.Path, "tracked.txt"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-a", "-m", "make tracked executable")
+	gitRun(t, f.creation.Path, withIdentity("commit", "-q", "-a", "-m", "make tracked executable")...)
 	short := strings.TrimPrefix(f.creation.Assignment.Branch, "refs/heads/")
 	gitRun(t, f.root, "cherry-pick", "--no-commit", f.creation.Assignment.Start+".."+short)
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "squashed")...)
 	markPending(t, f.root, f.creation.Assignment)
 	return f
 }
