@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -167,7 +168,7 @@ func worktreeState(t *testing.T, root string, entry intent.Entry) string {
 // locked reports whether git lists wt as locked.
 func locked(t *testing.T, root, wt string) bool {
 	t.Helper()
-	listing := runGitOutput(t, root, "worktree", "list", "--porcelain")
+	listing := string(gittest.OutputBytes(t, root, "worktree", "list", "--porcelain"))
 	block, _, _ := strings.Cut(listing[strings.Index(listing, "worktree "+wt):], "\n\n")
 	return strings.Contains(block, "\nlocked")
 }
@@ -366,7 +367,7 @@ func TestRecoverFinishesAnInterruptedRecovery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, entry := recoveredBeforeTheAct(t, tc.dirty)
 			if tc.locked {
-				runGitOutput(t, root, "worktree", "lock", entry.Worktree)
+				gittest.MustRun(t, root, "worktree", "lock", entry.Worktree)
 			}
 			Recover(root, io.Discard)
 			lease, _ := worktree.LeaseFile(entry.Worktree)

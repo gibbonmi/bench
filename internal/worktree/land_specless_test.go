@@ -58,7 +58,7 @@ func TestLandCommandSpecLessGateRefusalPublishesNothing(t *testing.T) {
 	f := specLessLandingFixture(t, request)
 	mustWrite(t, filepath.Join(f.root, ".bench", "gate-prospective.sh"), []byte("#!/bin/sh\nset -eu\nruntime=$1\nprintf g >> '"+f.tally+"'\nexit 1\n"), 0o755)
 	gitRun(t, f.root, "add", ".bench/gate-prospective.sh")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "red prospective gate")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "red prospective gate")...)
 	base := gitOutput(t, f.root, "rev-parse", "HEAD")
 	gitRun(t, f.creation.Path, "rebase", "main")
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
@@ -336,7 +336,7 @@ func TestCommitmentProtectedRename(t *testing.T) {
 	mustWrite(t, filepath.Join(f.creation.Path, "roadmap", "FT9.md"), []byte("**FT9 — A**\n\nKeep the A obligation.\n"), 0o644)
 	mustRemove(t, filepath.Join(f.creation.Path, "roadmap", "FT1.md"))
 	gitRun(t, f.creation.Path, "add", "-A")
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "rename the protected row")
+	gitRun(t, f.creation.Path, withIdentity("commit", "-qm", "rename the protected row")...)
 	refusePlanningLanding(t, f, "planning", "candidate changes protected commitment")
 }
 

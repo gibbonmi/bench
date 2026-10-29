@@ -311,7 +311,7 @@ func TestProcessLifetimeBuilderDifferential(t *testing.T) {
 			if err := os.WriteFile(script, append(stub, shapeScript(shape, sleep, mv, mark)...), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			systemGit(t, fixture.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qam", "shaped builder")
+			systemGit(t, fixture.root, systemCommitArgs("-qam", "shaped builder")...)
 			fakeGo(t, dir, map[string]string{goTestPattern: "printf '%s' '" + goEvents([]string{"landingrace"}, "landingrace") + "'\n"})
 			result := systemSelected(t, fixture.root, kitRootEnv(fixture.home, fixture.root, dir, t.TempDir()), "test", "--package", "./...")
 			out := result.stdout + result.stderr

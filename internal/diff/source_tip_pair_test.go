@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // The explicit pair is immutable: it reports base-to-tip and nothing from the live
@@ -54,9 +56,9 @@ func TestChangedSubjectExplicitLiveAndFrozenPair(t *testing.T) {
 
 func TestResolveSourceRangeCollectsExactCommittedDeletions(t *testing.T) {
 	root, base, _ := seedCompatibilityRepo(t)
-	runGit(t, "rm", "-q", "delete.txt")
-	runGit(t, "commit", "-q", "-m", "delete tracked path")
-	tip := runGit(t, "rev-parse", "HEAD")
+	gittest.MustRun(t, "", "rm", "-q", "delete.txt")
+	gittest.Commit(t, "", "delete tracked path")
+	tip := gittest.Output(t, "", "rev-parse", "HEAD")
 
 	source, kind, hint := ResolveSourceRange(root, base, tip)
 	if kind != "" {

@@ -114,7 +114,7 @@ func TestLandReusesACheckpointGreenOfAGoChange(t *testing.T) {
 	mustWrite(t, filepath.Join(f.root, landingBuildScript), []byte("#!/bin/sh\nexit 1\n"), 0o755)
 	commitInWorktree(t, f.root, runBinaryMain, "package main\n\nfunc main() {}\n", "declare the run binary source")
 	gitRun(t, f.root, "add", "go.mod", landingBuildScript)
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the Go module")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "declare the Go module")...)
 	base := gitOutput(t, f.root, "rev-parse", "HEAD")
 	gitRun(t, f.creation.Path, "rebase", "main")
 	commitInWorktree(t, f.creation.Path, runBinaryMain, "package main\n\nfunc main() { println() }\n", "change a build input")

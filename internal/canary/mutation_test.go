@@ -85,7 +85,7 @@ func TestRestoreMutationFixtureRefusesSymlinkedRootSpelling(t *testing.T) {
 	root, fixture := refusalSubject(t)
 	link := filepath.Join(t.TempDir(), "root-link")
 	if err := os.Symlink(root, link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symbolic links unavailable: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	assertRefusedAndRootIntact(t, link, fixture, root)
 	assertRefusedAndRootIntact(t, root, fixture, link)

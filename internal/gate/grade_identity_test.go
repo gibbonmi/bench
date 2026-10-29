@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // GR1, GR2: two checkouts with equal content, one of them under a path with a space, give
@@ -49,7 +50,7 @@ func TestGradeIdentityLeavesOutTheCheckoutPath(t *testing.T) {
 func TestReaderPlanAdmitsATableOfASiblingCheckout(t *testing.T) {
 	f := newLandingFixture(t, nil)
 	sibling := filepath.Join(t.TempDir(), "sibling checkout")
-	outcomeGit(t, f.root, "worktree", "add", "-q", "--detach", sibling, f.marker)
+	gittest.MustRun(t, f.root, "worktree", "add", "-q", "--detach", sibling, f.marker)
 	f.storeTable(currentSubject(t, sibling).Identity)
 	f.selects(docsChange)
 }

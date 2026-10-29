@@ -14,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -81,12 +82,12 @@ func noWrite(t *testing.T, root string) {}
 // headTree is the tree the branch ref's commit points at.
 func headTree(t *testing.T, root string) string {
 	t.Helper()
-	return strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD^{tree}")))
+	return gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 }
 
 func head(t *testing.T, root string) string {
 	t.Helper()
-	return strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // OG01, OG12, OG03: a declared lane grades the commit. The stdout states the lane's
@@ -94,7 +95,7 @@ func head(t *testing.T, root string) string {
 // ref moves to a commit whose tree is the composed snapshot.
 func TestLanePassStatesItsOutcomeAndPublishesTheComposedSnapshot(t *testing.T) {
 	root, before := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
@@ -126,7 +127,7 @@ func TestLanePassStatesItsOutcomeAndPublishesTheComposedSnapshot(t *testing.T) {
 // never reaches the lane's build check.
 func TestLaneIgnoresAnUnnamedCompileError(t *testing.T) {
 	root, _ := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 	mustWrite(t, filepath.Join(root, "broken.go"), "package fixture\nfunc (\n", 0o644)
 
@@ -143,7 +144,7 @@ func TestLaneIgnoresAnUnnamedCompileError(t *testing.T) {
 // first diagnostic line, and leaves the branch ref where it was.
 func TestLaneFailRefusesNamingTheCheckAndItsFirstDiagnostic(t *testing.T) {
 	root, before := laneRepo(t, 1, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
@@ -173,7 +174,7 @@ func TestLaneProseGradesOnlyTheNamedMarkdown(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root, _ := laneRepo(t, 0, noWrite)
-			runGit(t, root, "reset", "-q", "--hard", "HEAD")
+			gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 			mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 			mustWrite(t, filepath.Join(root, "note.md"), "# Note\n\n"+longSentence, 0o644)
 
@@ -205,7 +206,7 @@ func TestLaneProseGradesOnlyTheNamedMarkdown(t *testing.T) {
 // check grades the rewritten bytes and passes.
 func TestLaneGofmtPassesOnAGoFileTheCommitRewrote(t *testing.T) {
 	root, _ := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "y.go"), "package fixture\nfunc  Y( ) {\n}\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "y.go")
@@ -223,7 +224,7 @@ func TestLaneGofmtPassesOnAGoFileTheCommitRewrote(t *testing.T) {
 // OG10, OG11: a dry run takes the same authority and stops before publication.
 func TestLaneDryRunStatesTheOutcomeAndPublishesNothing(t *testing.T) {
 	root, before := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "--dry-run", "-m", "m", "a.txt")
@@ -252,7 +253,7 @@ func TestLaneDryRunStatesTheOutcomeAndPublishesNothing(t *testing.T) {
 // failing check exits 1, names the check, and leaves the branch ref unchanged.
 func TestLaneDryRunFailRefusesNamingTheCheckAndLeavesTheRefUnchanged(t *testing.T) {
 	root, before := laneRepo(t, 1, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "--dry-run", "-m", "m", "a.txt")
@@ -278,7 +279,7 @@ func TestNoDeclaredLaneKeepsTheGateCommit(t *testing.T) {
 		mustWrite(t, filepath.Join(root, ".bench", "gate.sh"),
 			"#!/bin/sh\nprintf g >> "+sanitize.ShellQuote(tally)+"\nexit 0\n", 0o755)
 	})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
@@ -304,7 +305,7 @@ func TestMalformedLaneEntryRefusesNamingTheDefect(t *testing.T) {
 		mustWrite(t, filepath.Join(root, ".bench", "phases.json"),
 			`{"phases":[{"name":"build","argv":["go","build","./..."]}],"lane":[{"name":"fmt","argv":[]}]}`, 0o644)
 	})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
@@ -324,7 +325,7 @@ func TestMalformedLaneEntryRefusesNamingTheDefect(t *testing.T) {
 // directory and lets the long sentence through.
 func TestLaneProseGradesAMarkdownFileUnderANamedDirectory(t *testing.T) {
 	root, _ := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustMkdirAll(t, filepath.Join(root, "docs"))
 	mustWrite(t, filepath.Join(root, "docs", "note.md"), "# Note\n\n"+longSentence, 0o644)
 
@@ -345,10 +346,10 @@ func TestLaneProseGradesAMarkdownFileUnderANamedDirectory(t *testing.T) {
 // the FIFO or block on it, and it would leave a record either way.
 func TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns(t *testing.T) {
 	root, before := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	fifo := filepath.Join(root, "fifo")
 	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, "FIFOs unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "fifo")
@@ -358,7 +359,7 @@ func TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns(t *testing.T) {
 	if !strings.Contains(stderr, `special file "fifo" is not attributable`) {
 		t.Fatalf("stderr = %q, want the attribution refusal naming the special file", stderr)
 	}
-	record := filepath.Join(strings.TrimSpace(string(runGit(t, root, "rev-parse", "--absolute-git-dir"))), "bench-last-lane")
+	record := filepath.Join(gittest.Output(t, root, "rev-parse", "--absolute-git-dir"), "bench-last-lane")
 	if _, err := os.Stat(record); !os.IsNotExist(err) {
 		t.Fatalf("lane record at %s: err = %v, want it absent because no check ran", record, err)
 	}
@@ -373,7 +374,7 @@ func TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns(t *testing.T) {
 // names match the kit's.
 func TestManifestLaneRunsAsDeclared(t *testing.T) {
 	root, _ := laneRepo(t, 0, noWrite)
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "note.md"), "# Note\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "note.md")

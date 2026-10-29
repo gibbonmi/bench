@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/compatibility"
 	"github.com/gibbonmi/bench/internal/compatibility/compatibilitytest"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // lifecycleSeed is the Setup seed that the seed fixtures arrange.
@@ -115,7 +116,7 @@ func TestLifecycleHardRefusalOrder(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
-			runAdoptGit(t, root, "init", "-q")
+			gittest.MustRun(t, root, "init", "-q")
 			writeFixtureFile(t, filepath.Join(root, "AGENTS.md"), "# Project rules\n", 0o644)
 			writeFixtureFile(t, filepath.Join(root, "CLAUDE.md"), "Project notes.\n", 0o644)
 			plantSymlinkParent(t, root)
@@ -263,7 +264,7 @@ func hookRepo(t *testing.T, root string, diverted bool) (string, string) {
 		if err := os.MkdirAll(hooks, 0o755); err != nil {
 			t.Fatal(err)
 		}
-		runAdoptGit(t, root, "config", "core.hooksPath", hooks)
+		gittest.MustRun(t, root, "config", "core.hooksPath", hooks)
 	}
 	return root, filepath.Join(hooks, "pre-push")
 }

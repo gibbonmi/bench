@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // short guards the [:7] tree-prefix slice against a short or "none" hash.
@@ -51,7 +52,7 @@ func TestStaleGateDetailActionNamesTheGateReason(t *testing.T) {
 func TestLegacyReducedCacheReadsAsInvalid(t *testing.T) {
 	root := initRepo(t)
 	tree := treeOf(t, root, map[string]string{"capture/IDEAS.md": "- an idea\n"})
-	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
 	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"reduced":true,"phases":["conformance"],"ancestor":%q,"ancestor_recorded_at":%q}`+"\n",
 		tree, strings.Repeat("0", 64), recorded, strings.Repeat("a", 40), recorded)
@@ -147,7 +148,7 @@ func treeOf(t *testing.T, root string, files map[string]string) string {
 			t.Fatal(err)
 		}
 	}
-	gitRun(t, root, "read-tree", "--empty")
-	gitRun(t, root, "add", "-A")
-	return gitRun(t, root, "write-tree")
+	gittest.MustRun(t, root, "read-tree", "--empty")
+	gittest.MustRun(t, root, "add", "-A")
+	return gittest.Output(t, root, "write-tree")
 }

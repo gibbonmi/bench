@@ -32,7 +32,7 @@ func seedCaptureBase(t *testing.T, root, source string, files map[string]string)
 		mustWrite(t, filepath.Join(root, filepath.FromSlash(name)), []byte(body), 0o644)
 	}
 	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "seed capture")
+	gitRun(t, root, withIdentity("commit", "-qm", "seed capture")...)
 	gitRun(t, source, "rebase", "main")
 	return gitOutput(t, root, "rev-parse", "HEAD")
 }

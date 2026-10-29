@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestTransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent(t *testing.T) {
@@ -21,8 +23,7 @@ func TestTransactionalLinkAdoptsUnownedAdapterThroughSymlinkParent(t *testing.T)
 		{name: "foreign-identical", content: "same\n", target: "../adapter-mirror", wantCode: 1, wantAbsent: "accepted.txt"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := t.TempDir()
-			runAdoptGit(t, root, "init", "-q")
+			root := gittest.Repo(t)
 			if err := os.MkdirAll(filepath.Join(root, ".agents", "commands"), 0o755); err != nil {
 				t.Fatal(err)
 			}
@@ -84,7 +85,7 @@ func consumerRepo(t *testing.T) string {
 // consumerRepoAt makes the existing directory root a consumerRepo.
 func consumerRepoAt(t *testing.T, root string) string {
 	t.Helper()
-	runAdoptGit(t, root, "init", "-q")
+	gittest.MustRun(t, root, "init", "-q")
 	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(mustGetwd(t), "..", "..")))
 	t.Chdir(root)
 	return root

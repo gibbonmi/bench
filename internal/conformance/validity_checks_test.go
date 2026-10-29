@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func checkLoadValidityMetadata(root string) []string {
@@ -285,8 +286,7 @@ func checkSharedRuleSingleSource(root string) []string {
 }
 
 func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	assertStructuredPhaseDiags := func(label string, diags []string) {
 		t.Helper()
 		if !containsDiagnostic(diags, structuredPhaseUnavailable) {

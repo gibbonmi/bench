@@ -167,13 +167,13 @@ var familyS = []familyMember{
 		plantFiles(t, root, map[string]string{".bench/hooks/full.sh": manifest("full-guard")})
 		for link, target := range map[string]string{"link.sh": "full.sh", "missing.sh": "absent-target.sh"} {
 			if err := os.Symlink(target, filepath.Join(root, ".bench", "hooks", link)); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 		}
 	}),
 	realMember("fifo-header", func(t *testing.T, root string) {
 		if runtime.GOOS == "windows" {
-			capability.Capability(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
+			capability.Unavailable(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
 		}
 		hooks := filepath.Join(root, ".bench", "hooks")
 		if err := os.MkdirAll(hooks, 0o755); err != nil {

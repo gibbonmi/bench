@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // gitOpError pins the exact stderr message shape Command writes on a git-query failure:
@@ -26,20 +26,18 @@ func TestGitOpErrorShape(t *testing.T) {
 // commits don't error.
 func initRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	run(t, root, "init")
-	run(t, root, "config", "user.email", "t@example.com")
-	run(t, root, "config", "user.name", "t")
+	root := gittest.Repo(t)
+	for _, args := range gittest.IdentityConfig() {
+		gittest.MustRun(t, root, args...)
+	}
 	return root
 }
 
+// run runs git in root and returns its stdout without the trailing newlines, the output
+// shape that the growth and touched-path tests compare.
 func run(t *testing.T, root string, args ...string) string {
 	t.Helper()
-	out, err := git.Output(append([]string{"-C", root}, args...)...)
-	if err != nil {
-		t.Fatalf("git %v: %v (%s)", args, err, out)
-	}
-	return out
+	return strings.TrimRight(string(gittest.OutputBytes(t, root, args...)), "\n")
 }
 
 func write(t *testing.T, root, rel, body string) {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -65,7 +66,7 @@ func TestReaderPlanRunsWholeUnderAHold(t *testing.T) {
 // marker leaves the reader set selectable.
 func TestReaderPlanIgnoresAHoldOfAnOlderMarker(t *testing.T) {
 	f := newLandingFixture(t, nil)
-	f.hold(outcomeGit(t, f.root, "rev-parse", f.marker+"~1"))
+	f.hold(gittest.Output(t, f.root, "rev-parse", f.marker+"~1"))
 	f.selects(docsChange)
 }
 
@@ -75,7 +76,7 @@ func TestReaderPlanIgnoresAHoldOfAnOlderMarker(t *testing.T) {
 func TestRedWholeLandingListsTheSuspects(t *testing.T) {
 	f := newLandingFixture(t, nil)
 	f.chain(3, 0)
-	want := []string{outcomeGit(t, f.root, "rev-parse", f.destination+"~1"), f.destination}
+	want := []string{gittest.Output(t, f.root, "rev-parse", f.destination+"~1"), f.destination}
 	if got := f.redWholeLanding().Suspects; !slices.Equal(got, want) {
 		t.Fatalf("suspects = %q; want the reader landings %q", got, want)
 	}

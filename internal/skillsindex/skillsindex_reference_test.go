@@ -100,7 +100,7 @@ func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 			name: "fifo",
 			plant: func(t *testing.T, path string) {
 				if err := syscall.Mkfifo(path, 0o644); err != nil {
-					capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+					capability.Unavailable(t, capability.Fifo, err.Error())
 				}
 			},
 			refusal: true,
@@ -111,7 +111,7 @@ func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 				target := filepath.Join(filepath.Dir(path), "elsewhere.md")
 				writeAt(t, target, reference(""))
 				if err := os.Symlink(target, path); err != nil {
-					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			},
 			refusal: true,
@@ -120,7 +120,7 @@ func TestReferenceProducerStatesStayDistinctAndBlockWrite(t *testing.T) {
 			name: "dangling symlink",
 			plant: func(t *testing.T, path string) {
 				if err := os.Symlink(filepath.Join(filepath.Dir(path), "gone.md"), path); err != nil {
-					capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			},
 			refusal: true,

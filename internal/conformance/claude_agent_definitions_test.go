@@ -1,7 +1,6 @@
 package conformance
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -210,7 +209,7 @@ func TestClaudeAgentDefinitionsRefuseANonRegularSubject(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(t.TempDir(), filepath.Join(root, ".claude", "agents")); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	diagnostics := strings.Join(checkClaudeAgentDefinitions(root), "\n")
 	if !strings.Contains(diagnostics, "claude-agent subject refused: "+claudeAgentsDir+" is a symbolic link") {
@@ -272,7 +271,7 @@ func TestClaudeAgentDefinitionsRefuseALinkedAgentFile(t *testing.T) {
 	writeClaudeAgentFixture(t, root, "bench-writer.md", "---\nname: bench-writer\ntools: Read, Bash\n---\n")
 	link := filepath.Join(root, filepath.FromSlash(claudeAgentsDir), "bench-reviewer.md")
 	if err := os.Symlink(filepath.Join(root, "elsewhere.md"), link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`, and the write runs as `bench-writer`.\n")
 
@@ -290,7 +289,7 @@ func TestClaudeAgentDefinitionsRefuseASpecialAgentFile(t *testing.T) {
 	writeClaudeAgentFixture(t, root, "bench-writer.md", "---\nname: bench-writer\ntools: Read, Bash\n---\n")
 	fifo := filepath.Join(root, filepath.FromSlash(claudeAgentsDir), "bench-reviewer.md")
 	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	writeClaudeAgentSkill(t, root, "The axis runs as `bench-reviewer`, and the write runs as `bench-writer`.\n")
 

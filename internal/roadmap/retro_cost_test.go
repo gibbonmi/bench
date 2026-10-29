@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/retros"
 	"go.opentelemetry.io/otel/attribute"
@@ -63,7 +64,7 @@ func (r costRepo) write(files map[string]string) {
 func (r costRepo) commit(at int, subject string, files map[string]string) {
 	r.t.Helper()
 	r.write(files)
-	r.git(at, "add", "-A")
+	gittest.MustRun(r.t, r.root, "add", "-A")
 	r.git(at, "commit", "-q", "--allow-empty", "-m", subject)
 }
 
@@ -71,7 +72,7 @@ func (r costRepo) commit(at int, subject string, files map[string]string) {
 // and returns the landing commit.
 func (r costRepo) land(at int, branch, slug string) string {
 	r.t.Helper()
-	r.git(at, "checkout", "-q", "main")
+	gittest.MustRun(r.t, r.root, "checkout", "-q", "main")
 	r.git(at, "merge", "-q", "--no-ff", "--no-commit", branch)
 	path := filepath.Join(r.root, "specs", slug, "spec.md")
 	data, err := os.ReadFile(path)
@@ -79,9 +80,9 @@ func (r costRepo) land(at int, branch, slug string) string {
 		r.t.Fatal(err)
 	}
 	r.write(map[string]string{"specs/" + slug + "/spec.md": strings.Replace(string(data), "Status: staged", "Status: implemented", 1)})
-	r.git(at, "add", "-A")
+	gittest.MustRun(r.t, r.root, "add", "-A")
 	r.git(at, "commit", "-q", "-m", "land "+branch)
-	return r.git(at, "rev-parse", "HEAD")
+	return gittest.Output(r.t, r.root, "rev-parse", "HEAD")
 }
 
 func costSpec(plan string) string {
@@ -103,14 +104,11 @@ func costTicket(blocker string) string {
 //   - the retirement of slug s, which deletes its folder.
 func newCostRepo(t *testing.T) (costRepo, string) {
 	t.Helper()
-	r := costRepo{t: t, root: t.TempDir()}
-	r.git(-7200, "init", "-q", "-b", "main")
-	r.git(-7200, "config", "user.email", "a@b.c")
-	r.git(-7200, "config", "user.name", "a")
+	r := costRepo{t: t, root: gittest.RepoOnBranch(t, "main")}
 	r.commit(-7200, "base", map[string]string{"README.md": "base\n"})
 	r.git(-7200, "branch", "build")
 	r.commit(-3600, "fold source", map[string]string{"main.txt": "fold\n"})
-	r.git(0, "checkout", "-q", "build")
+	gittest.MustRun(r.t, r.root, "checkout", "-q", "build")
 	plan := `{"version":2,"execution":{"mode":"delegate","run_id":"r","orchestrator_session":"o","author_limit":1,"assignments":{` +
 		`"a.md":[{"session":"a1","assignment":"asg-a"},{"session":"a2","assignment":"asg-a","predecessor":"a1"}],` +
 		`"b.md":[{"session":"b1","assignment":"asg-b"}],"c.md":[{"session":"c1"},{"session":"c2","predecessor":"c1"}],"d.md":[]}},` +
@@ -123,7 +121,7 @@ func newCostRepo(t *testing.T) (costRepo, string) {
 		"specs/s/tickets/c.md": costTicket("b.md"),
 		"specs/s/tickets/d.md": costTicket("none"),
 	})
-	r.git(0, "add", "-A")
+	gittest.MustRun(r.t, r.root, "add", "-A")
 	r.gitAuthored(-1800, 0, "commit", "-q", "-m", "spec")
 	r.commit(600, "change", map[string]string{"internal/x.go": "package x\n"})
 	r.git(1200, "merge", "-q", "--no-ff", "-m", "fold main", "main")
@@ -132,7 +130,7 @@ func newCostRepo(t *testing.T) (costRepo, string) {
 	r.commit(3000, "ticket", map[string]string{"specs/s/tickets/a.md": costTicket("none") + "More.\n"})
 	landing := r.land(960*60, "build", "s")
 
-	r.git(960*60+60, "checkout", "-q", "-b", "other")
+	gittest.MustRun(r.t, r.root, "checkout", "-q", "-b", "other")
 	r.commit(960*60+120, "other spec", map[string]string{
 		"specs/o/spec.md":      costSpec(`{"version":1,"chunks":[{"id":"V","tickets":["e.md"]}],"final_verification":[{"id":"g","command":"bench gate"}]}`),
 		"specs/o/tickets/e.md": costTicket("none"),

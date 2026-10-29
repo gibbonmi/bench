@@ -1,7 +1,6 @@
 package learnings
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -98,7 +97,7 @@ func TestRefusalEvidencePreservesPrimaryAndDisclosesOnlyRepairableMalformed(t *t
 				t.Fatal(err)
 			}
 			if err := os.Symlink(filepath.Join(root, "capture", "vanished.md"), filepath.Join(root, JournalPath)); err != nil {
-				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+				capability.Unavailable(t, capability.Symlink, err.Error())
 			}
 		}, resolve: journalAbsPath, code: 1},
 		{name: "wrong-type", pre: "pre-disclosure-wrong-type.stdout", candidate: "candidate-wrong-type.stdout", setup: func(t *testing.T, root string) {

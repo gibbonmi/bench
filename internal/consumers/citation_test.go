@@ -26,9 +26,7 @@ const citationHeader = "citation[1]{sha,state,version,cmd,hash}:\n"
 func citationRepo(t *testing.T) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
-	if _, err := git.Output("-C", root, "commit", "-q", "--allow-empty", "-m", "one"); err != nil {
-		t.Fatalf("seed commit: %v", err)
-	}
+	gittest.Commit(t, root, "one", "--allow-empty")
 	t.Chdir(root)
 	return root
 }
@@ -156,10 +154,7 @@ func TestCitationNamesHeadVersionAndReplaySpelling(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; out=%q", code, out)
 	}
-	head, err := git.Output("-C", root, "rev-parse", "HEAD")
-	if err != nil {
-		t.Fatalf("read HEAD: %v", err)
-	}
+	head := gittest.Output(t, root, "rev-parse", "HEAD")
 	cells, _ := citationCells(t, out)
 	if cells[0] != head {
 		t.Fatalf("sha = %q, want HEAD %q", cells[0], head)
@@ -195,9 +190,7 @@ func TestCitationCmdRoundTripsThroughAPOSIXShellSplit(t *testing.T) {
 		t.Fatalf("git root: %v", err)
 	}
 	const ref = "feature;echo"
-	if _, err := git.Output("-C", root, "branch", ref, base); err != nil {
-		t.Fatalf("create the fixture ref: %v", err)
-	}
+	gittest.MustRun(t, root, "branch", ref, base)
 	args := []string{"--changed", "--base", ref, "--source-tip", head(t), "--full"}
 	out, code := run(t, args...)
 	if code != 0 {

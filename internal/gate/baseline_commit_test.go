@@ -31,7 +31,7 @@ func committedChunkIdentity(t *testing.T, write func(root string)) string {
 	if err := os.Remove(filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath))); err != nil {
 		t.Fatal(err)
 	}
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	artifacts, err := openProspectiveArtifacts(root, tree)
 	if err != nil {
 		t.Fatal(err)

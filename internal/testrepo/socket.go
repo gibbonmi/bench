@@ -2,7 +2,6 @@ package testrepo
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -65,7 +64,7 @@ func RequireSocket(t testing.TB, path string) {
 // bind failed with err.
 func skipWithoutSockets(t testing.TB, err error) {
 	t.Helper()
-	capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable: %v", err))
+	capability.Unavailable(t, capability.Fifo, err.Error())
 }
 
 // bindShortSocket binds and closes a listener at a short path. It shares no step with

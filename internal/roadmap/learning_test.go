@@ -3,12 +3,12 @@ package roadmap
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capturetx"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -160,11 +160,7 @@ func TestLearningTwoEntriesStayApart(t *testing.T) {
 // headCommit returns the full ID of HEAD in the fixture checkout.
 func headCommit(t *testing.T, root string) string {
 	t.Helper()
-	out, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
-	if err != nil {
-		t.Fatalf("rev-parse HEAD: %v", err)
-	}
-	return strings.TrimSpace(string(out))
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // TestLearningResolvesLinksTheNamedOpenEntry covers the link verb: an abbreviated commit
@@ -246,9 +242,7 @@ func TestLearningResolveRefusesACommitOffTheDefaultBranch(t *testing.T) {
 	if out, code := LearningCommand([]string{"open lesson", "--what", "it failed", "--right", "read the map"}); code != 0 {
 		t.Fatalf("seed = %q/%d", out, code)
 	}
-	if out, err := exec.Command("git", "-C", root, "commit", "-q", "--allow-empty", "-m", "topic only").CombinedOutput(); err != nil {
-		t.Fatalf("topic commit: %v: %s", err, out)
-	}
+	gittest.Commit(t, root, "topic only", "--allow-empty")
 	offMain := headCommit(t, root)
 	before, err := os.ReadFile(journalPath(t, root))
 	if err != nil {
@@ -373,11 +367,8 @@ func TestLearningIgnoredJournalRedirectsWorktreeWrite(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(primary, ".gitignore"), []byte(learnings.JournalPath+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"add", ".gitignore"}, {"commit", "-q", "-m", "ignore journal"}} {
-		if out, err := exec.Command("git", append([]string{"-C", primary}, args...)...).CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, out)
-		}
-	}
+	gittest.MustRun(t, primary, "add", ".gitignore")
+	gittest.Commit(t, primary, "ignore journal")
 	linked := newLinkedWorktree(t, primary)
 	t.Chdir(linked)
 	if out, code := LearningCommand(learningArgs); code != 0 {

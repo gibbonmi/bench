@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -38,17 +39,17 @@ const mergeNameSetRefusal = "error: pending merge changed paths that the commit 
 // its own call, as stageHandMerge in internal/worktree does.
 func startPendingMerge(t *testing.T, checkout string, added ...string) string {
 	t.Helper()
-	runGit(t, checkout, "reset", "-q", "--hard", "HEAD")
-	runGit(t, checkout, "checkout", "-q", "-b", mergeIncoming)
+	gittest.MustRun(t, checkout, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, checkout, "checkout", "-q", "-b", mergeIncoming)
 	for _, path := range append([]string{"tracked.txt", mergeConflictPath}, added...) {
 		mustWrite(t, filepath.Join(checkout, path), "incoming\n", 0o644)
 	}
-	runGit(t, checkout, "add", "-A")
-	runGit(t, checkout, "commit", "-qm", "incoming")
-	runGit(t, checkout, "checkout", "-q", "-")
+	gittest.MustRun(t, checkout, "add", "-A")
+	gittest.Commit(t, checkout, "incoming")
+	gittest.MustRun(t, checkout, "checkout", "-q", "-")
 	mustWrite(t, filepath.Join(checkout, mergeConflictPath), "ours\n", 0o644)
-	runGit(t, checkout, "add", mergeConflictPath)
-	runGit(t, checkout, "commit", "-qm", "ours")
+	gittest.MustRun(t, checkout, "add", mergeConflictPath)
+	gittest.Commit(t, checkout, "ours")
 	merge := exec.Command("git", "-C", checkout, "merge", "--no-commit", mergeIncoming)
 	if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
 		t.Fatalf("merge = %v, %s; want the conflict", err, out)
@@ -163,9 +164,9 @@ func TestCommitRecordsTheMergeParent(t *testing.T) {
 	root, _ := landingRepo(t, 0, func(*testing.T, string) {})
 	before := startPendingMerge(t, root)
 	headParents := func() string {
-		return strings.TrimSpace(string(runGit(t, root, "rev-list", "--parents", "-n", "1", "HEAD")))
+		return gittest.Output(t, root, "rev-list", "--parents", "-n", "1", "HEAD")
 	}
-	incoming := strings.TrimSpace(string(runGit(t, root, "rev-parse", mergeIncoming)))
+	incoming := gittest.Output(t, root, "rev-parse", mergeIncoming)
 	mustWrite(t, filepath.Join(root, mergeConflictPath), "resolution\n", 0o644)
 	code, stdout, stderr := runCommand(t, root, append([]string{"-m", "merge", "--"}, mergeNameSet...)...)
 	if code != 0 {
@@ -181,7 +182,7 @@ func TestCommitRecordsTheMergeParent(t *testing.T) {
 		fields["published_commit"] != merge || fields["path_count"] != strconv.Itoa(len(mergeNameSet)) {
 		t.Fatalf("stdout = %q, want committed{published_commit=%s,path_count=%d}", stdout, merge, len(mergeNameSet))
 	}
-	if status := string(runGit(t, root, "status", "--porcelain=v1")); status != "" {
+	if status := gittest.Output(t, root, "status", "--porcelain=v1"); status != "" {
 		t.Fatalf("status after the merge commit = %q, want a clean worktree", status)
 	}
 	mustWrite(t, filepath.Join(root, "a.txt"), "after the merge\n", 0o644)

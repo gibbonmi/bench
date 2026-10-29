@@ -133,7 +133,7 @@ func admittedMergeFixture(t *testing.T, labels ...string) mergeSet {
 	mustWrite(t, filepath.Join(root, closureSpec), []byte("# x\n\nStatus: staged\n"), 0o644)
 	commitmenttest.SeedAdmission(t, root, closureSpec)
 	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "approve the merge fixture delivery")
+	gitRun(t, root, withIdentity("commit", "-qm", "approve the merge fixture delivery")...)
 	f := mergeSetAt(t, root, filepath.Join(t.TempDir(), "bench-home"))
 	for _, label := range labels {
 		created := mustCreate(t, f.root, f.home, "merge-"+label, label)

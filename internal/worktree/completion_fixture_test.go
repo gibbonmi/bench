@@ -20,7 +20,7 @@ func foldCompletionComposition(t *testing.T, root, source, base, tip, destinatio
 	if err != nil || result.Tree == "" {
 		t.Fatalf("compose fixture source: %+v, %v", result, err)
 	}
-	folded := gitOutput(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", result.Tree, "-p", tip, "-p", destination, "-m", "review composed capture")
+	folded := gitOutput(t, root, withIdentity("commit-tree", result.Tree, "-p", tip, "-p", destination, "-m", "review composed capture")...)
 	gitRun(t, source, "reset", "--hard", folded)
 	refreshLandingEvidence(t, source, base)
 	return gitOutput(t, source, "rev-parse", "HEAD")

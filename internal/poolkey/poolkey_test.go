@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // cksumGolden pins POSIX cksum(root+newline), including a spaced path.
@@ -101,23 +102,14 @@ func repositoryWithLinkedWorktree(t *testing.T) (string, string) {
 	if err := os.Mkdir(primary, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	run := func(dir string, args ...string) {
-		t.Helper()
-		cmd := exec.Command("git", args...)
-		cmd.Dir = dir
-		cmd.Env = append(os.Environ(), "GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@example.com", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@example.com")
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, out)
-		}
-	}
-	run(primary, "init", "--quiet", ".")
+	gittest.MustRun(t, primary, "init", "--quiet", ".")
 	if err := os.WriteFile(filepath.Join(primary, "seed"), []byte("seed\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	run(primary, "add", "seed")
-	run(primary, "commit", "--quiet", "-m", "seed")
+	gittest.MustRun(t, primary, "add", "seed")
+	gittest.MustRun(t, primary, append(gittest.IdentityArgs(), "commit", "--quiet", "-m", "seed")...)
 	linked := filepath.Join(base, "linked")
-	run(primary, "worktree", "add", "--quiet", "--detach", linked)
+	gittest.MustRun(t, primary, "worktree", "add", "--quiet", "--detach", linked)
 	return primary, linked
 }
 

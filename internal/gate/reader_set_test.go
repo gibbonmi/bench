@@ -94,7 +94,7 @@ func TestReaderGreenWritesOnlyTheReaderRecord(t *testing.T) {
 	if after := gateStoreBytes(t, root); len(after) == 0 || !maps.Equal(before, after) {
 		t.Fatalf("verdict cache and evidence after a reader green = %q; want the bytes %q", after, before)
 	}
-	entries, err := os.ReadDir(filepath.Join(outcomeGit(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), benchgit.ReaderRecordDir))
+	entries, err := os.ReadDir(filepath.Join(gittest.Output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), benchgit.ReaderRecordDir))
 	if err != nil || len(entries) != 1 || entries[0].Name() != tree {
 		t.Fatalf("reader records = %v, %v; want the one record of %s", entries, err, tree)
 	}
@@ -227,7 +227,7 @@ func runReaderOn(t *testing.T, root string) (Result, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	run := newReaderRun(plan, readerSchedule{Packages: []string{"./reader"}}, outcomeGit(t, root, "rev-parse", "HEAD^{tree}"), outcomeGit(t, root, "rev-parse", "HEAD"))
+	run := newReaderRun(plan, readerSchedule{Packages: []string{"./reader"}}, gittest.Output(t, root, "rev-parse", "HEAD^{tree}"), gittest.Output(t, root, "rev-parse", "HEAD"))
 	ctx := context.Background()
 	release := func() error { return nil }
 	result := runReader(ctx, ctx, root, root, nil, run, evaluation, nil, stubSelection(t, ""), release, durablefile.Native(), &bytes.Buffer{}, &bytes.Buffer{})
@@ -259,8 +259,8 @@ func readerRecordBytes(t *testing.T, tree string) []byte {
 // keyed by path.
 func gateStoreBytes(t *testing.T, root string) map[string]string {
 	t.Helper()
-	common := outcomeGit(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
-	paths := []string{filepath.Join(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"), benchgit.GateCacheFile)}
+	common := gittest.Output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	paths := []string{filepath.Join(gittest.Output(t, root, "rev-parse", "--absolute-git-dir"), benchgit.GateCacheFile)}
 	evidence, err := filepath.Glob(filepath.Join(filepath.Dir(evidencePath(common, subject{})), "*"))
 	if err != nil {
 		t.Fatal(err)

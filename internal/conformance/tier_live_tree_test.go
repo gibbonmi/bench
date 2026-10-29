@@ -70,6 +70,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestSpecTicketHandoffWorkflowFixturesAreComplete":             true,
 	"TestStdlibReimplementationBites":                              true,
 	"TestTimingOrderStable":                                        true,
+	"TestUnavailableCallerClasses":                                 true,
 	"TestUnknownScopeIsRedAndRunsNothing":                          true,
 }
 

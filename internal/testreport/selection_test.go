@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -145,9 +146,9 @@ func TestChangedSpaceAndGlobPathsReachResolverAndCommand(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	runChangedGit(t, root, "add", ".")
-	runChangedGit(t, root, "commit", "-m", "add space and glob inputs")
-	tip := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "add space and glob inputs")
+	tip := gittest.Output(t, root, "rev-parse", "HEAD")
 	subject, kind, hint := diff.ResolveChangedSubject(root, base, tip)
 	if kind != "" {
 		t.Fatalf("changed subject = (%q, %q)", kind, hint)
@@ -196,9 +197,9 @@ func TestChangedPackageRunPattern(t *testing.T) {
 	if err := os.WriteFile(other, []byte("package other\n\nimport \"testing\"\n\nfunc TestSelected(t *testing.T) {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runChangedGit(t, root, "add", "other/other_test.go")
-	runChangedGit(t, root, "commit", "-m", "second changed package")
-	tip = strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, root, "add", "other/other_test.go")
+	gittest.Commit(t, root, "second changed package")
+	tip = gittest.Output(t, root, "rev-parse", "HEAD")
 	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
 		return os.WriteFile(output, []byte("selected"), 0o755)
 	}, Verify: func(string, string) error { return nil }})
@@ -222,9 +223,9 @@ func TestChangedRenameHalvesSelectIndependently(t *testing.T) {
 	if err := os.WriteFile(newPath, []byte("package changed\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runChangedGit(t, root, "add", "changed/new.go")
-	runChangedGit(t, root, "commit", "-m", "add renamed path")
-	tip = strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, root, "add", "changed/new.go")
+	gittest.Commit(t, root, "add renamed path")
+	tip = gittest.Output(t, root, "rev-parse", "HEAD")
 	subject, kind, hint := diff.ResolveChangedSubject(root, base, tip)
 	if kind != "" {
 		t.Fatalf("changed subject = (%q, %q)", kind, hint)
@@ -446,12 +447,13 @@ func TestSelected(t *testing.T) {
 	if basePath != "" {
 		write(basePath, baseSource)
 	}
-	runChangedGit(t, root, "init")
-	runChangedGit(t, root, "config", "user.email", "test@example.com")
-	runChangedGit(t, root, "config", "user.name", "Test")
-	runChangedGit(t, root, "add", ".")
-	runChangedGit(t, root, "commit", "-m", "base")
-	base := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, root, "init")
+	for _, args := range gittest.IdentityConfig() {
+		gittest.MustRun(t, root, args...)
+	}
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "base")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	if changedSource == "" {
 		if err := os.Remove(filepath.Join(root, changedPath)); err != nil {
 			t.Fatal(err)
@@ -459,9 +461,9 @@ func TestSelected(t *testing.T) {
 	} else {
 		write(changedPath, changedSource)
 	}
-	runChangedGit(t, root, "add", ".")
-	runChangedGit(t, root, "commit", "-m", "changed")
-	tip := strings.TrimSpace(runChangedGit(t, root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "changed")
+	tip := gittest.Output(t, root, "rev-parse", "HEAD")
 	return root, base, tip
 }
 
@@ -491,16 +493,6 @@ func writeListingGo(t *testing.T, path, marker string) {
 	}
 	writeCheckGo(t, path+"-recording", marker)
 	writeGoStub(t, path, "#!/usr/bin/env bash\nif [ \"$1\" = list ]; then exec "+sanitize.ShellQuote(realGo)+" \"$@\"; fi\nexec "+sanitize.ShellQuote(path+"-recording")+" \"$@\"\n")
-}
-
-func runChangedGit(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, output)
-	}
-	return string(output)
 }
 
 func changedSelectionGraph(root string) []listedPackage {

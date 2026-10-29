@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate"
-	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -19,26 +18,15 @@ import (
 func laneFixture(t *testing.T) (root, tree string) {
 	t.Helper()
 	root = gittest.RepoOnBranch(t, "main")
-	if out, err := benchgit.Raw("-C", root, "commit", "-q", "--allow-empty", "-m", "base"); err != nil {
-		t.Fatalf("commit the fixture base: %v\n%s", err, out)
-	}
-	return root, laneRev(t, root, "HEAD^{tree}")
-}
-
-func laneRev(t *testing.T, root, revision string) string {
-	t.Helper()
-	resolved, err := benchgit.Output("-C", root, "rev-parse", revision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resolved
+	gittest.Commit(t, root, "base", "--allow-empty")
+	return root, gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 }
 
 // A lane whose checks all pass attributes a lane pass, states the outcome with its check
 // names, and carries no evidence: a lane pass authorizes one commit and nothing else.
 func TestLaneAuthorityAttributesAPass(t *testing.T) {
 	root, tree := laneFixture(t)
-	base := laneRev(t, root, "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	var stdout, stderr bytes.Buffer
 	authority := LaneAuthority{Base: base, Checks: []gate.Phase{
 		{Name: "first", Argv: []string{"true"}},
@@ -64,7 +52,7 @@ func TestLaneAuthorityAttributesAPass(t *testing.T) {
 // so the caller refuses without re-reading the stream.
 func TestLaneAuthorityAttributesAFailWithTheFirstDiagnostic(t *testing.T) {
 	root, tree := laneFixture(t)
-	base := laneRev(t, root, "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	var stdout, stderr bytes.Buffer
 	authority := LaneAuthority{Base: base, Checks: []gate.Phase{
 		{Name: "unit", Argv: []string{"sh", "-c", "echo the first line; echo a later line; exit 2"}},
@@ -86,7 +74,7 @@ func TestLaneAuthorityAttributesAFailWithTheFirstDiagnostic(t *testing.T) {
 // authority attributes a fail rather than an unearned pass.
 func TestLaneAuthorityRefusesAnUnrunnableLane(t *testing.T) {
 	root, tree := laneFixture(t)
-	base := laneRev(t, root, "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	var stdout, stderr bytes.Buffer
 
 	got := LaneAuthority{Base: base}.Authorize(context.Background(), root, tree, &stdout, &stderr)
@@ -107,12 +95,12 @@ func TestLaneAuthorityRefusesAnUnrunnableLane(t *testing.T) {
 func TestLaneAuthorityDerivesTheProseSubjectFromTheBase(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	commitFiles(t, root, "base", map[string]string{"kept.md": "kept\n", "changed.md": "before\n", "gone.md": "gone\n"})
-	base := laneRev(t, root, "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	if err := os.Remove(filepath.Join(root, "gone.md")); err != nil {
 		t.Fatal(err)
 	}
 	commitFiles(t, root, "graded", map[string]string{"changed.md": "after\n", "added.md": "added\n", "notes.txt": "prose is not this\n"})
-	tree := laneRev(t, root, "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	argv := filepath.Join(t.TempDir(), "prose-argv")
 	var stdout, stderr bytes.Buffer
 	authority := LaneAuthority{
@@ -146,12 +134,8 @@ func commitFiles(t *testing.T, root, message string, files map[string]string) {
 			t.Fatal(err)
 		}
 	}
-	if out, err := benchgit.Raw("-C", root, "add", "-A"); err != nil {
-		t.Fatalf("stage %s: %v\n%s", message, err, out)
-	}
-	if out, err := benchgit.Raw("-C", root, "commit", "-q", "-m", message); err != nil {
-		t.Fatalf("commit %s: %v\n%s", message, err, out)
-	}
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, message)
 }
 
 // PL5, WM36: the prose subject is framed with `-z` and split on NUL, so a path with a
@@ -161,9 +145,9 @@ func commitFiles(t *testing.T, root, message string, files map[string]string) {
 func TestLaneAuthorityCarriesANonASCIIProsePathVerbatim(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	commitFiles(t, root, "base", map[string]string{"kept.md": "kept\n"})
-	base := laneRev(t, root, "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	commitFiles(t, root, "graded", map[string]string{"café notes.md": "prose\n"})
-	tree := laneRev(t, root, "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	argv := filepath.Join(t.TempDir(), "prose-argv")
 	var stdout, stderr bytes.Buffer
 	authority := LaneAuthority{
@@ -190,9 +174,9 @@ func TestLaneAuthorityCarriesANonASCIIProsePathVerbatim(t *testing.T) {
 func TestLaneAuthorityNamesTheSelectedChecksAndClasses(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	commitFiles(t, root, "base", map[string]string{"kept.md": "kept\n"})
-	base := laneRev(t, root, "HEAD^{commit}")
+	base := gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 	commitFiles(t, root, "graded", map[string]string{"note.md": "note\n"})
-	tree := laneRev(t, root, "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	var stdout, stderr bytes.Buffer
 	authority := LaneAuthority{Base: base, Selective: true, Checks: []gate.Phase{
 		{Name: "gofmt", Argv: []string{"true"}},

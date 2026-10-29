@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/status"
 )
 
@@ -61,7 +62,7 @@ func TestCommandAcceptsHexShapedEnglishInState(t *testing.T) {
 func TestCommandRefusesAStateNamingATreeHash(t *testing.T) {
 	root := benchRepo(t)
 	document := filepath.Join(root, status.HandoffFile)
-	tree := gitOut(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	seedState(t, document, "The tree is `"+tree+"`.")
 
 	out, code := runAt(t, root, nil)
@@ -218,7 +219,7 @@ func offAncestryCommit(t *testing.T, root string) string {
 	t.Helper()
 	a := activeAssignment(t, root, "hs-off-ancestry", "hs-off-ancestry")
 	commitIn(t, a.Worktree, "off the ancestry")
-	return gitOut(t, a.Worktree, "rev-parse", "HEAD")
+	return gittest.Output(t, a.Worktree, "rev-parse", "HEAD")
 }
 
 // assertNamesLine checks that a parser refusal points the reader at the document and the

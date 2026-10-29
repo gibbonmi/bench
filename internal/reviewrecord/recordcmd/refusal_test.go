@@ -42,7 +42,7 @@ func placed(t *testing.T, f *recordtest.Fixture) string {
 func symlink(t *testing.T, target, path string) {
 	t.Helper()
 	if err := os.Symlink(target, path); err != nil {
-		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 
@@ -72,7 +72,7 @@ func TestRecordRefusesALiveRecordLink(t *testing.T) {
 func TestRecordRefusesASpecialRecordFile(t *testing.T) {
 	f := linked(t, 1)
 	if err := syscall.Mkfifo(placed(t, f), 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, "FIFOs unavailable on this filesystem: "+err.Error())
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	base, tip := advance(f, "chunk 1")
 	args, exit := chunkArgs(t, "1", base, tip), make(chan int, 1)

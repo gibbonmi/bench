@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
@@ -45,10 +45,7 @@ func TestHookSeamsMatchTheHookDispatchRows(t *testing.T) {
 // claude columns, and moves the test into it.
 func routedRepo(t *testing.T) {
 	t.Helper()
-	root := t.TempDir()
-	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}

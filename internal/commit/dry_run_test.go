@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -15,7 +16,7 @@ import (
 // commit: the same compose-and-authorize half a landing runs, then a full stop.
 func TestDryRunReportsGreenAndMovesNothing(t *testing.T) {
 	root, before := landingRepo(t, 0, func(t *testing.T, root string) {})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "prospective\n", 0o644)
 	code, stdout, stderr := runCommand(t, root, "--dry-run", "-m", "m", "a.txt")
 	if code != 0 {
@@ -24,7 +25,7 @@ func TestDryRunReportsGreenAndMovesNothing(t *testing.T) {
 	if !strings.Contains(stdout, "nothing committed") {
 		t.Fatalf("stdout = %q, want the dry-run verdict line", stdout)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatal("dry run moved HEAD")
 	}
 	if headHasPrefix(t, root, "a.txt") {
@@ -35,7 +36,7 @@ func TestDryRunReportsGreenAndMovesNothing(t *testing.T) {
 // A red composed set reports the refusal as the diagnosis and still moves nothing.
 func TestDryRunRedReportsRefusalAndMovesNothing(t *testing.T) {
 	root, before := landingRepo(t, 1, func(t *testing.T, root string) {})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "prospective\n", 0o644)
 	code, stdout, stderr := runCommand(t, root, "--dry-run", "-m", "m", "a.txt")
 	if code != 1 {
@@ -45,7 +46,7 @@ func TestDryRunRedReportsRefusalAndMovesNothing(t *testing.T) {
 	if !strings.Contains(stderr, want) {
 		t.Fatalf("stderr = %q, want the operator-facing inherited refusal %q", stderr, want)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatal("red dry run moved HEAD")
 	}
 }
@@ -89,7 +90,7 @@ func unownedCommitSet(t *testing.T) commitSet {
 	t.Helper()
 	f := primaryCommitSet(t)
 	f.checkout = filepath.Join(t.TempDir(), "linked")
-	runGit(t, f.primary, "worktree", "add", "-q", "-b", "topic", f.checkout)
+	gittest.MustRun(t, f.primary, "worktree", "add", "-q", "-b", "topic", f.checkout)
 	return f
 }
 

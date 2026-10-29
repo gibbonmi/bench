@@ -43,7 +43,7 @@ func TestLandCommandTicketsOnlySpecLandsWhenTheDestinationAlreadyRemovedTheFolde
 	request := "tickets-only-already-removed"
 	f := ticketsOnlyLandingFixture(t, request)
 	gitRun(t, f.root, "rm", "-r", "-q", "specs/t")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "destination closed the folder")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "destination closed the folder")...)
 	gitRun(t, f.root, "update-ref", "refs/bench/green/main", gitOutput(t, f.root, "rev-parse", "HEAD"))
 	r := runVerb(t, verbLand, f.call(ticketsOnlyLandArgs(request, f.base, f.tip, "t", f.creation.Path)...))
 	published := gitOutput(t, f.root, "rev-parse", "main")

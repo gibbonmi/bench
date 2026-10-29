@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -213,7 +212,7 @@ func TestGateRunRetainsSubjectConstructionCause(t *testing.T) {
 func TestGateRunReloadsDeadOwnerPendingRecord(t *testing.T) {
 	root := outcomeFixture(t)
 	before := Inspect(root)
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 	pending := fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":%q,"started_at":%q,"owner_pid":999999}`+"\n", before.CurrentTree, strings.Repeat("0", 64), time.Now().UTC().Add(-time.Minute).Truncate(time.Second).Format(time.RFC3339))
 	if err := os.WriteFile(filepath.Join(gitdir, "bench-last-gate"), []byte(pending), 0o600); err != nil {
 		t.Fatal(err)
@@ -280,17 +279,8 @@ if [ -e .gate-gitdir-0500 ]; then ` + chmod + ` 500 "$common"; fi
 
 func outcomeCommit(t *testing.T, root, message string) {
 	t.Helper()
-	outcomeGit(t, root, "add", ".")
-	outcomeGit(t, root, "commit", "-qm", message)
-}
-
-func outcomeGit(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	output, err := benchgit.Output(append([]string{"-C", root}, args...)...)
-	if err != nil {
-		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
-	}
-	return strings.TrimSpace(output)
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, message)
 }
 
 func outcomeWrite(t *testing.T, root, path, value string, mode os.FileMode) {
@@ -320,7 +310,7 @@ func outcomeRecord(t *testing.T, root string) []byte {
 
 func outcomeCachePath(t *testing.T, root string) string {
 	t.Helper()
-	return filepath.Join(outcomeGit(t, root, "rev-parse", "--absolute-git-dir"), "bench-last-gate")
+	return filepath.Join(gittest.Output(t, root, "rev-parse", "--absolute-git-dir"), "bench-last-gate")
 }
 
 func outcomeRuns(t *testing.T, root string) int {
@@ -344,5 +334,5 @@ const (
 
 func (w outcomeWitness) path(t *testing.T, root string) string {
 	t.Helper()
-	return filepath.Join(outcomeGit(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), string(w))
+	return filepath.Join(gittest.Output(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir"), string(w))
 }

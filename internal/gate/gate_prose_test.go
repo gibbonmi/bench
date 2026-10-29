@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -217,7 +218,7 @@ func TestGateProseStagedMarksAnExcludedPath(t *testing.T) {
 	root := policyRepo(t, "")
 	write(t, root, ".bench/prose-exclusions", "docs/skip.md a staged reason\n")
 	write(t, root, "docs/skip.md", words(27))
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 0 {

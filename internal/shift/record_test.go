@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
@@ -74,8 +74,8 @@ func withDonePredicate(t *testing.T, root string) {
 	if err := os.WriteFile(done, []byte("#!/usr/bin/env bash\nexit 0\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	runGitOutput(t, root, "add", "-A")
-	runGitOutput(t, root, "commit", "-q", "-m", "done predicate")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "done predicate")
 }
 
 func requireAttr(t *testing.T, span otelrecord.Span, key, want string) {
@@ -225,7 +225,7 @@ func TestACommittedShiftCarriesTheBranchHead(t *testing.T) {
 	root := faultFixture(t, "#!/usr/bin/env bash\nexit 0\n")
 	withDonePredicate(t, root)
 	span, _, stdout := runRecordedShift(t, 0)
-	head := strings.TrimSpace(runGitOutput(t, root, "rev-parse", shiftBranchName(t, stdout)))
+	head := gittest.Output(t, root, "rev-parse", shiftBranchName(t, stdout))
 	requireAttr(t, span, otelrecord.AttrSubjectID, head)
 }
 

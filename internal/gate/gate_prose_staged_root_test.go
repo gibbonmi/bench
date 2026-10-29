@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // TestGateProseStagedAcceptsARelativeRoot is DG40: a relative root that names a
@@ -18,7 +19,7 @@ import (
 func TestGateProseStagedAcceptsARelativeRoot(t *testing.T) {
 	root := policyRepo(t, "")
 	write(t, root, "docs/notes.md", "Short prose.\n")
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	absoluteCode, absoluteOut := gradeStaged(t, root)
 	t.Chdir(root)
@@ -55,7 +56,7 @@ func TestGateProseStagedRefusesAnUnboundedBlob(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := policyRepo(t, tc.policy)
 			write(t, root, "docs/notes.md", tc.subject)
-			runGitIn(t, root, "add", "-A")
+			gittest.MustRun(t, root, "add", "-A")
 
 			code, out := gradeStaged(t, root)
 			if code != 1 {
@@ -79,7 +80,7 @@ func TestGateProseStagedRefusesAnUnboundedBlob(t *testing.T) {
 func TestGateProseStagedRefusesAControlBytePath(t *testing.T) {
 	root := policyRepo(t, "")
 	write(t, root, "docs/esc\x1b.md", "Short prose.\n")
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 1 {

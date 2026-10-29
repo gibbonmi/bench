@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/testrepo"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func verifyAuthoritativeNativeProofMutations(root, proofPath string, env []string) []string {
@@ -82,7 +82,7 @@ func materializeAuthenticatedReleaseProbe(source string) (string, func(), error)
 		return "", func() {}, err
 	}
 	cleanup := func() { _ = os.RemoveAll(root) }
-	if err := testrepo.CommitWorkingTree(source, root); err != nil {
+	if err := gittest.CommitWorkingTree(source, root); err != nil {
 		cleanup()
 		return "", func() {}, err
 	}

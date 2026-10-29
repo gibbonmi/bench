@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/status"
 )
@@ -60,7 +61,7 @@ func TestHandoffStateFileRefusesANonCommitPin(t *testing.T) {
 	root := benchRepo(t)
 	document := filepath.Join(root, status.HandoffFile)
 	seedState(t, document, "The reviewer's own words.")
-	file := stateFile(t, "The tree is `"+gitOut(t, root, "rev-parse", "HEAD^{tree}")+"`.\n")
+	file := stateFile(t, "The tree is `"+gittest.Output(t, root, "rev-parse", "HEAD^{tree}")+"`.\n")
 
 	out, code := runAt(t, root, []string{"--state-file", file})
 	if code != 1 {

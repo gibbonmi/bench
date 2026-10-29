@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/benchhome"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -37,8 +38,8 @@ func TestRunLaneRecordsItsOwnFileOnly(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := outcomeFixture(t)
-			tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
-			gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+			tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
+			gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 
 			// PL24: the run selects, and the record's schema is unchanged by it. The
 			// changed path is in no class, so the unknown class selects the one check.
@@ -84,8 +85,8 @@ func TestRunLaneRecordsItsOwnFileOnly(t *testing.T) {
 // record: a record of a partial run would carry an outcome no check ever reached.
 func TestRunLaneTimeoutWritesNoRecord(t *testing.T) {
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
-	gitdir := outcomeGit(t, root, "rev-parse", "--absolute-git-dir")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
+	gitdir := gittest.Output(t, root, "rev-parse", "--absolute-git-dir")
 
 	previousTimeout := gateTimeout
 	gateTimeout = 100 * time.Millisecond
@@ -173,7 +174,7 @@ func TestRunLaneSpanCarriesTheFailingCheck(t *testing.T) {
 			home := t.TempDir()
 			t.Setenv(benchhome.Env, home)
 			root := outcomeFixture(t)
-			tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+			tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 
 			if _, err := RunLane(context.Background(), LaneRequest{
 				Root: root, Tree: tree, Lane: "benchkit", Checks: []Phase{tc.check},
@@ -257,7 +258,7 @@ func laneSpanAttributes(t *testing.T, home, root string) map[string]string {
 func TestDeltaGreenLeavesTheGateCacheUntouched(t *testing.T) {
 	var base string
 	f := deltaFixture(t, graded(t, func(f *recordtest.Fixture) { base = strippedSubject(t, f); modifyTest(f) }))
-	cache := filepath.Join(outcomeGit(t, f.Root, "rev-parse", "--absolute-git-dir"), benchgit.GateCacheFile)
+	cache := filepath.Join(gittest.Output(t, f.Root, "rev-parse", "--absolute-git-dir"), benchgit.GateCacheFile)
 	before := outcomeRead(t, cache)
 	requireDelta(t, f, 0, "./.")
 	requireDeltaGreen(t, f, base)
@@ -389,5 +390,5 @@ func requireDeltaGreen(t *testing.T, f *recordtest.Fixture, base string) {
 // deltaRecordPath is the path of the delta record in the Git dir of f.
 func deltaRecordPath(t *testing.T, f *recordtest.Fixture) string {
 	t.Helper()
-	return filepath.Join(outcomeGit(t, f.Root, "rev-parse", "--absolute-git-dir"), benchgit.DeltaCacheFile)
+	return filepath.Join(gittest.Output(t, f.Root, "rev-parse", "--absolute-git-dir"), benchgit.DeltaCacheFile)
 }

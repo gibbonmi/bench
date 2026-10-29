@@ -10,22 +10,13 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // hostilePaths are the framing-sensitive names the index must carry whole. Every non-`-z`
 // git form C-quotes each of them, so a reader that split on whitespace or trusted the
 // quoting would lose or corrupt every one.
 var hostilePaths = []string{"docs/a b.md", "docs/new\nline.md", "docs/q\"uote.md", "docs/tab\t.md"}
-
-// initRepo makes an empty repository with a commit identity and no commit.
-func initRepo(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
-	runGit(t, root, "config", "user.email", "bench@example.invalid")
-	runGit(t, root, "config", "user.name", "bench test")
-	return root
-}
 
 // plant writes a fixture at the repository-relative path rel and makes its parents.
 func plant(t *testing.T, root, rel, body string) {
@@ -50,12 +41,12 @@ func stagedPaths(index StagedIndex) []string {
 // TestReadStagedIndexFramesHostilePaths proves the NUL framing: a space, a newline, a
 // double quote, and a tab in a staged path survive the listing whole.
 func TestReadStagedIndexFramesHostilePaths(t *testing.T) {
-	root := initRepo(t)
-	runGit(t, root, "commit", "-q", "--allow-empty", "-m", "base")
+	root := gittest.RepoOnBranch(t, "main")
+	gittest.Commit(t, root, "base", "--allow-empty")
 	for _, rel := range hostilePaths {
 		plant(t, root, rel, "body\n")
 	}
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	index, err := ReadStagedIndex(root)
 	if err != nil {
@@ -73,16 +64,16 @@ func TestReadStagedIndexFramesHostilePaths(t *testing.T) {
 // `--diff-filter=ACMRT` selection: a symbolic link carries mode 120000, and a staged
 // deletion is no entry at all.
 func TestReadStagedIndexReportsModesAndOmitsDeletions(t *testing.T) {
-	root := initRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	plant(t, root, "docs/gone.md", "gone\n")
 	plant(t, root, "docs/kept.md", "kept\n")
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "-q", "-m", "base")
-	runGit(t, root, "rm", "-q", "docs/gone.md")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "base")
+	gittest.MustRun(t, root, "rm", "-q", "docs/gone.md")
 	if err := os.Symlink("kept.md", filepath.Join(root, "docs", "link.md")); err != nil {
 		t.Fatalf("plant a symbolic link: %v", err)
 	}
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	index, err := ReadStagedIndex(root)
 	if err != nil {
@@ -108,10 +99,10 @@ func TestReadStagedIndexReportsModesAndOmitsDeletions(t *testing.T) {
 // TestReadStagedIndexStagesEveryEntryOnAnUnbornBranch proves the unborn rule: with no HEAD
 // to diff against, every index entry is staged.
 func TestReadStagedIndexStagesEveryEntryOnAnUnbornBranch(t *testing.T) {
-	root := initRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	plant(t, root, "docs/one.md", "one\n")
 	plant(t, root, "docs/two.md", "two\n")
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	index, err := ReadStagedIndex(root)
 	if err != nil {
@@ -129,9 +120,9 @@ func TestReadStagedIndexRefusesAnyRootThatIsNotAWorkingTreeTop(t *testing.T) {
 	if _, err := ReadStagedIndex(t.TempDir()); err == nil {
 		t.Fatal("ReadStagedIndex accepted a plain directory")
 	}
-	root := initRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	plant(t, root, "docs/one.md", "one\n")
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 	if _, err := ReadStagedIndex(filepath.Join(root, "docs")); err == nil {
 		t.Fatal("ReadStagedIndex accepted a subdirectory as the root")
 	}
@@ -145,9 +136,9 @@ func TestReadStagedIndexRefusesAnyRootThatIsNotAWorkingTreeTop(t *testing.T) {
 // answers an absolute top, so a comparison against the operand as spelled refuses every
 // relative root.
 func TestIsWorkTreeTopAcceptsARelativeRoot(t *testing.T) {
-	root := initRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	plant(t, root, "docs/one.md", "one\n")
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	t.Run("the top itself", func(t *testing.T) {
 		t.Chdir(root)
@@ -191,11 +182,11 @@ func indexBlobBytes(t *testing.T, root, path string) ([]byte, error) {
 // bytes for an ordinary path and for a framing-sensitive one, and that a path the index
 // does not hold refuses under the `git show :<path> in <root>` text every caller reports.
 func TestIndexBlobReadsTheIndexNotTheWorkingFile(t *testing.T) {
-	root := initRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	const hostile = "docs/new\nline.md"
 	plant(t, root, "docs/one.md", "staged\n")
 	plant(t, root, hostile, "staged hostile\n")
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 	plant(t, root, "docs/one.md", "working\n")
 	plant(t, root, hostile, "working hostile\n")
 
@@ -225,9 +216,9 @@ func TestIndexBlobReadsTheIndexNotTheWorkingFile(t *testing.T) {
 // and the close returns rather than leaving the child git writing into the pipe. A form
 // that buffered the whole blob first would hold every byte before the bound applied.
 func TestIndexBlobReaderBoundsAnOversizedBlob(t *testing.T) {
-	root := initRepo(t)
+	root := gittest.RepoOnBranch(t, "main")
 	plant(t, root, "docs/big.md", strings.Repeat("a", int(bounds.ControlRecordLimit*3)))
-	runGit(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	stream, err := IndexBlobReader(root, "docs/big.md")
 	if err != nil {

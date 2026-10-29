@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // TestLanePassPrintsNoCheckReport is BC49, BC50, and BC52. Each run is a pass over a
@@ -21,7 +22,7 @@ import (
 // than the second, so a log that the second run does not truncate keeps a tail of the first.
 func TestLanePassPrintsNoCheckReport(t *testing.T) {
 	root := outcomeFixture(t)
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	gitdir, err := benchgit.AdminDir(root)
 	if err != nil {
 		t.Fatal(err)

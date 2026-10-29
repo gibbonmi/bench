@@ -3,6 +3,8 @@ package landing
 import (
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestLocalCapturePathRecognizesTheBuildLog(t *testing.T) {
@@ -40,8 +42,8 @@ func ignoredWriteFingerprints(t *testing.T, ignore, path string) (before, after 
 	t.Helper()
 	root := fixture(t)
 	write(t, root, ".gitignore", ignore+"\n")
-	git(t, root, "add", ".gitignore")
-	git(t, root, "commit", "-qm", "ignore "+ignore)
+	gittest.MustRun(t, root, "add", ".gitignore")
+	gittest.MustRun(t, root, "commit", "-qm", "ignore "+ignore)
 	before, err = CheckoutFingerprint(root)
 	if err != nil {
 		t.Fatal(err)

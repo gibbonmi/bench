@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/chargeevidence"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 )
 
@@ -188,11 +189,7 @@ func DiffArgs(reviewArgs []string) []string {
 func RawPatch(t *testing.T, reviewArgs []string, pathspecs ...string) string {
 	t.Helper()
 	args := append([]string{"--literal-pathspecs", "diff", reviewArgs[4], reviewArgs[6], "--"}, pathspecs...)
-	out, err := exec.Command("git", args...).Output()
-	if err != nil {
-		t.Fatalf("git %v: %v", args, err)
-	}
-	return string(out)
+	return string(gittest.OutputBytes(t, "", args...))
 }
 
 // IdentifiedPack reads the published artifact of identity through the strict reader when the

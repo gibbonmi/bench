@@ -39,7 +39,7 @@ func TestClassifyPathShapeUnknownSelfSymlink(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "self-loop")
 	if err := os.Symlink(path, path); err != nil {
-		capability.Capability(t, capability.Symlink, "cannot create a symlink: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 
 	shape, err := ClassifyPathShape(path)

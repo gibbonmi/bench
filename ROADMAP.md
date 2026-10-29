@@ -360,16 +360,15 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT360-shared-fixtures
-2. FT411
-3. FT125-exact-readers
-4. FT375-residual
-5. FT344-remedy
-6. FT406-rebuild
-7. FT366-rg-guard
-8. FT380-residual
-9. FT354-strict-json
-10. FT363-member-set
-11. FT358-block-reader
-12. FT365-conformance
-13. FT414-preconditions
+1. FT411
+2. FT125-exact-readers
+3. FT375-residual
+4. FT344-remedy
+5. FT406-rebuild
+6. FT366-rg-guard
+7. FT380-residual
+8. FT354-strict-json
+9. FT363-member-set
+10. FT358-block-reader
+11. FT365-conformance
+12. FT414-preconditions

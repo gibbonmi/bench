@@ -160,7 +160,7 @@ func TestWholeGreenLandingPersistsTheReaderTable(t *testing.T) {
 	outcomeWrite(t, root, prospectiveGatePath, "#!/bin/sh\nexec \"$1/.bench/gate.sh\"\n", 0o755)
 	outcomeWrite(t, root, "scripts/go-build.sh", "#!/bin/sh\n", 0o755)
 	outcomeCommit(t, root, "prospective gate")
-	tree := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	// The prospective gate selects its executable from the checkout, so the kit is the checkout.
 	owner := func(_ context.Context, source string) (*runbinary.Selection, error) {
 		return fixtureSelection(source), nil
@@ -180,7 +180,7 @@ func TestWholeGreenLandingPersistsTheReaderTable(t *testing.T) {
 func TestOpenWholeGreenPersistsNoReaderTable(t *testing.T) {
 	root := readerFixture(t)
 	writeWitnessLog(t, root)
-	outcomeGit(t, root, "rm", "-q", ".bench/gate-inputs.json")
+	gittest.MustRun(t, root, "rm", "-q", ".bench/gate-inputs.json")
 	outcomeCommit(t, root, "open the subject")
 	if plan := currentSubject(t, root); plan.Closed {
 		t.Fatalf("subject without its manifest = %+v; want open", plan)
@@ -259,10 +259,10 @@ func TestReaderTableStoreBoundsItsTables(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	outcomeWrite(t, root, "tracked.txt", "tracked\n", 0o644)
 	outcomeCommit(t, root, "fixture")
-	if err := greenmarker.Advance(root, "main", outcomeGit(t, root, "rev-parse", "HEAD"), ""); err != nil {
+	if err := greenmarker.Advance(root, "main", gittest.Output(t, root, "rev-parse", "HEAD"), ""); err != nil {
 		t.Fatal(err)
 	}
-	marker := outcomeGit(t, root, "rev-parse", "HEAD^{tree}")
+	marker := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 	store := func(tree string) string {
 		t.Helper()
 		path, err := storeReaderTable(durablefile.Native(), root, readerTableRecord{Schema: readerTableSchema, Tree: tree, Identity: strings.Repeat("a", 64), Readers: readerTable{}})

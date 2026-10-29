@@ -119,7 +119,7 @@ func newLandedDirtyAssignment(t *testing.T, request string) ownedAssignment {
 	t.Helper()
 	f := newOwnedAssignment(t, request)
 	commitInWorktree(t, f.creation.Path, "own-commit.txt", "landed\n", "landed")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "merge", "-q", "--no-ff", "-m", "land", f.creation.Assignment.Branch)
+	gitRun(t, f.root, withIdentity("merge", "-q", "--no-ff", "-m", "land", f.creation.Assignment.Branch)...)
 	mustWrite(t, filepath.Join(f.creation.Path, "extra.txt"), []byte("output\n"), 0o644)
 	return f
 }

@@ -42,11 +42,7 @@ func systemLandingRaceFixture(t *testing.T) (root, home, tally, trees, ready, re
 	}
 	// The landing creates its own commit in this repository, so the identity belongs in
 	// the config. A per-command -c leaves the product's commit without an author.
-	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
-		if result := owner.runAt(root, nil, "git", "config", identity[0], identity[1]); result.code != 0 {
-			t.Fatalf("git config %s = (%d, %q)", identity[0], result.code, result.stderr)
-		}
-	}
+	systemIdentity(t, root)
 	home, err = os.MkdirTemp(owner.root, "landing-race [home]-")
 	if err != nil {
 		t.Fatal(err)
@@ -107,9 +103,7 @@ type linkedProject struct {
 func newLinkedProject(t *testing.T) linkedProject {
 	t.Helper()
 	root := journeyRepo(t, "linked-adoption [project]-")
-	for _, identity := range [][]string{{"user.email", "bench@local"}, {"user.name", "bench"}} {
-		systemGit(t, root, "config", identity[0], identity[1])
-	}
+	systemIdentity(t, root)
 	home, err := os.MkdirTemp(owner.root, "linked-adoption [home]-")
 	if err != nil {
 		t.Fatal(err)
@@ -292,7 +286,7 @@ func configureArtifactLandingFixture(t *testing.T, root string) {
 		t.Fatal(err)
 	}
 	systemGit(t, root, "add", ".")
-	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "artifact recovery fixture")
+	systemGit(t, root, systemCommitArgs("-qm", "artifact recovery fixture")...)
 	base := systemGitOutput(t, root, "rev-parse", "HEAD")
 	systemGit(t, root, "update-ref", "refs/bench/green/main", base)
 }

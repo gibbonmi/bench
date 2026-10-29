@@ -10,23 +10,24 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
 func TestLandReviewedPublishesExactSourceParentAndProspectiveSpec(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
-	git(t, root, "add", "specs/x/spec.md")
-	git(t, root, "commit", "-qm", "stage spec")
-	destination := git(t, root, "rev-parse", "HEAD")
-	git(t, root, "switch", "-q", "-c", "reviewed-source")
+	gittest.MustRun(t, root, "add", "specs/x/spec.md")
+	gittest.MustRun(t, root, "commit", "-qm", "stage spec")
+	destination := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "switch", "-q", "-c", "reviewed-source")
 	write(t, root, "reviewed", "source bytes\n")
-	git(t, root, "add", "reviewed")
-	git(t, root, "commit", "-qm", "reviewed work")
-	source := git(t, root, "rev-parse", "HEAD")
-	git(t, root, "switch", "-q", "main")
+	gittest.MustRun(t, root, "add", "reviewed")
+	gittest.MustRun(t, root, "commit", "-qm", "reviewed work")
+	source := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "switch", "-q", "main")
 	sourceWorktree := filepath.Join(t.TempDir(), "source")
-	git(t, root, "worktree", "add", "-q", sourceWorktree, "reviewed-source")
+	gittest.MustRun(t, root, "worktree", "add", "-q", sourceWorktree, "reviewed-source")
 	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +39,7 @@ func TestLandReviewedPublishesExactSourceParentAndProspectiveSpec(t *testing.T) 
 
 	o := New()
 	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
-		if got := git(t, root, "show", tree+":specs/x/spec.md"); got != "Status: implemented\nbody" {
+		if got := gittest.Output(t, root, "show", tree+":specs/x/spec.md"); got != "Status: implemented\nbody" {
 			t.Fatalf("authorized spec = %q", got)
 		}
 		return authorization.Result{Kind: authorization.Green}
@@ -53,10 +54,10 @@ func TestLandReviewedPublishesExactSourceParentAndProspectiveSpec(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.SourceTip != source || got.DestinationBase != destination || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+destination+" "+source {
+	if got.SourceTip != source || got.DestinationBase != destination || gittest.Output(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+destination+" "+source {
 		t.Fatalf("published identity = %+v", got)
 	}
-	if got.Tree != git(t, root, "rev-parse", got.Commit+"^{tree}") || git(t, root, "show", got.Commit+":specs/x/spec.md") != "Status: implemented\nbody" {
+	if got.Tree != gittest.Output(t, root, "rev-parse", got.Commit+"^{tree}") || gittest.Output(t, root, "show", got.Commit+":specs/x/spec.md") != "Status: implemented\nbody" {
 		t.Fatalf("published prospective tree was lost: %+v", got)
 	}
 }
@@ -66,15 +67,15 @@ func TestLandReviewedPublishesExactSourceParentAndProspectiveSpec(t *testing.T) 
 func TestLandReviewedWithoutASpecPublishesTheCompositionUntransitioned(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
-	git(t, root, "add", "specs/x/spec.md")
-	git(t, root, "commit", "-qm", "stage spec")
-	destination := git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "specs/x/spec.md")
+	gittest.MustRun(t, root, "commit", "-qm", "stage spec")
+	destination := gittest.Output(t, root, "rev-parse", "HEAD")
 	sourceWorktree := filepath.Join(t.TempDir(), "source")
-	git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+	gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 	write(t, sourceWorktree, "reviewed", "source bytes\n")
-	git(t, sourceWorktree, "add", "reviewed")
-	git(t, sourceWorktree, "commit", "-qm", "reviewed work")
-	source := git(t, sourceWorktree, "rev-parse", "HEAD")
+	gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+	gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed work")
+	source := gittest.Output(t, sourceWorktree, "rev-parse", "HEAD")
 	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
 	if err != nil {
 		t.Fatal(err)
@@ -99,13 +100,13 @@ func TestLandReviewedWithoutASpecPublishesTheCompositionUntransitioned(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Tree != authorized || got.Tree != git(t, root, "rev-parse", source+"^{tree}") {
-		t.Fatalf("published tree = %q, authorized %q, want the composition %q", got.Tree, authorized, git(t, root, "rev-parse", source+"^{tree}"))
+	if got.Tree != authorized || got.Tree != gittest.Output(t, root, "rev-parse", source+"^{tree}") {
+		t.Fatalf("published tree = %q, authorized %q, want the composition %q", got.Tree, authorized, gittest.Output(t, root, "rev-parse", source+"^{tree}"))
 	}
-	if git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+destination+" "+source {
-		t.Fatalf("published parents = %q", git(t, root, "rev-list", "--parents", "-n", "1", got.Commit))
+	if gittest.Output(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+destination+" "+source {
+		t.Fatalf("published parents = %q", gittest.Output(t, root, "rev-list", "--parents", "-n", "1", got.Commit))
 	}
-	if published := git(t, root, "show", got.Commit+":specs/x/spec.md"); published != "Status: staged\nbody" {
+	if published := gittest.Output(t, root, "show", got.Commit+":specs/x/spec.md"); published != "Status: staged\nbody" {
 		t.Fatalf("spec-less landing transitioned the spec: %q", published)
 	}
 }
@@ -117,15 +118,15 @@ func TestLandReviewedClosePathPublishesATreeWithoutTheFolder(t *testing.T) {
 	const closed = "specs/ft900 tickets [x]*"
 	root := fixture(t)
 	write(t, root, closed+"/tickets/one.md", "# One\n")
-	git(t, root, "add", "--", closed)
-	git(t, root, "commit", "-qm", "stage tickets")
-	destination := git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "--", closed)
+	gittest.MustRun(t, root, "commit", "-qm", "stage tickets")
+	destination := gittest.Output(t, root, "rev-parse", "HEAD")
 	sourceWorktree := filepath.Join(t.TempDir(), "source")
-	git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+	gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 	write(t, sourceWorktree, "reviewed", "source bytes\n")
-	git(t, sourceWorktree, "add", "reviewed")
-	git(t, sourceWorktree, "commit", "-qm", "reviewed work")
-	source := git(t, sourceWorktree, "rev-parse", "HEAD")
+	gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+	gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed work")
+	source := gittest.Output(t, sourceWorktree, "rev-parse", "HEAD")
 	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
 	if err != nil {
 		t.Fatal(err)
@@ -134,7 +135,7 @@ func TestLandReviewedClosePathPublishesATreeWithoutTheFolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if git(t, root, "ls-tree", "-r", "--name-only", source, "--", closed) == "" {
+	if gittest.Output(t, root, "ls-tree", "-r", "--name-only", source, "--", closed) == "" {
 		t.Fatal("fixture folder is untracked; the assertion below could not distinguish a close step")
 	}
 
@@ -151,10 +152,10 @@ func TestLandReviewedClosePathPublishesATreeWithoutTheFolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if listed := git(t, root, "ls-tree", "-r", "--name-only", got.Commit, "--", closed); listed != "" {
+	if listed := gittest.Output(t, root, "ls-tree", "-r", "--name-only", got.Commit, "--", closed); listed != "" {
 		t.Fatalf("published tree still carries the closed folder: %q", listed)
 	}
-	if git(t, root, "show", got.Commit+":reviewed") != "source bytes" {
+	if gittest.Output(t, root, "show", got.Commit+":reviewed") != "source bytes" {
 		t.Fatal("the close dropped the reviewed source content")
 	}
 }
@@ -162,18 +163,18 @@ func TestLandReviewedClosePathPublishesATreeWithoutTheFolder(t *testing.T) {
 func TestLandReviewedRefusesTreeEquivalentMovedSourceTip(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "specs/x/spec.md", "Status: staged\n")
-	git(t, root, "add", "specs/x/spec.md")
-	git(t, root, "commit", "-qm", "stage spec")
-	destination := git(t, root, "rev-parse", "HEAD")
-	git(t, root, "switch", "-q", "-c", "reviewed-source")
+	gittest.MustRun(t, root, "add", "specs/x/spec.md")
+	gittest.MustRun(t, root, "commit", "-qm", "stage spec")
+	destination := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "switch", "-q", "-c", "reviewed-source")
 	write(t, root, "reviewed", "source bytes\n")
-	git(t, root, "add", "reviewed")
-	git(t, root, "commit", "-qm", "reviewed work")
-	reviewed := git(t, root, "rev-parse", "HEAD")
-	git(t, root, "commit", "--allow-empty", "-qm", "tree-equivalent drift")
-	git(t, root, "switch", "-q", "main")
+	gittest.MustRun(t, root, "add", "reviewed")
+	gittest.MustRun(t, root, "commit", "-qm", "reviewed work")
+	reviewed := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "commit", "--allow-empty", "-qm", "tree-equivalent drift")
+	gittest.MustRun(t, root, "switch", "-q", "main")
 	sourceWorktree := filepath.Join(t.TempDir(), "source")
-	git(t, root, "worktree", "add", "-q", sourceWorktree, "reviewed-source")
+	gittest.MustRun(t, root, "worktree", "add", "-q", sourceWorktree, "reviewed-source")
 	sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
 	if err != nil {
 		t.Fatal(err)
@@ -196,7 +197,7 @@ func TestLandReviewedRefusesTreeEquivalentMovedSourceTip(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "source tip moved") {
 		t.Fatalf("tree-equivalent moved source = %v", err)
 	}
-	if got := git(t, root, "rev-parse", "refs/heads/main"); got != destination {
+	if got := gittest.Output(t, root, "rev-parse", "refs/heads/main"); got != destination {
 		t.Fatalf("destination moved to %s", got)
 	}
 }
@@ -205,15 +206,15 @@ func TestLandReviewedAuthorizationKindTablePreservesState(t *testing.T) {
 		t.Run(string(kind), func(t *testing.T) {
 			root := fixture(t)
 			write(t, root, "specs/x/spec.md", "Status: staged\n")
-			git(t, root, "add", "specs/x/spec.md")
-			git(t, root, "commit", "-qm", "stage spec")
-			destination := git(t, root, "rev-parse", "HEAD")
+			gittest.MustRun(t, root, "add", "specs/x/spec.md")
+			gittest.MustRun(t, root, "commit", "-qm", "stage spec")
+			destination := gittest.Output(t, root, "rev-parse", "HEAD")
 			sourceWorktree := filepath.Join(t.TempDir(), "source")
-			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 			write(t, sourceWorktree, "reviewed", "source bytes\n")
-			git(t, sourceWorktree, "add", "reviewed")
-			git(t, sourceWorktree, "commit", "-qm", "reviewed")
-			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+			gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed")
+			source := gittest.Output(t, sourceWorktree, "rev-parse", "HEAD")
 			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
 			destinationFingerprint, _ := CheckoutFingerprint(root)
 			o := New()
@@ -235,7 +236,7 @@ func TestLandReviewedAuthorizationKindTablePreservesState(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), string(kind)) {
 				t.Fatalf("%s authorization error = %v", kind, err)
 			}
-			if git(t, root, "rev-parse", "main") != destination || git(t, root, "status", "--porcelain=v1") != "" || git(t, sourceWorktree, "status", "--porcelain=v1") != "" {
+			if gittest.Output(t, root, "rev-parse", "main") != destination || gittest.Output(t, root, "status", "--porcelain=v1") != "" || gittest.Output(t, sourceWorktree, "status", "--porcelain=v1") != "" {
 				t.Fatalf("%s authorization changed repository state", kind)
 			}
 		})
@@ -245,18 +246,18 @@ func TestLandReviewedAuthorizationKindTablePreservesState(t *testing.T) {
 func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "specs/x/spec.md", "Status: staged\n")
-	git(t, root, "add", "specs/x/spec.md")
-	git(t, root, "commit", "-qm", "stage spec")
-	destination := git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "specs/x/spec.md")
+	gittest.MustRun(t, root, "commit", "-qm", "stage spec")
+	destination := gittest.Output(t, root, "rev-parse", "HEAD")
 	sourceWorktree := filepath.Join(t.TempDir(), "source")
-	git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+	gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 	write(t, sourceWorktree, "reviewed", "source bytes\n")
-	git(t, sourceWorktree, "add", "reviewed")
-	git(t, sourceWorktree, "commit", "-qm", "reviewed")
-	source := git(t, sourceWorktree, "rev-parse", "HEAD")
+	gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+	gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed")
+	source := gittest.Output(t, sourceWorktree, "rev-parse", "HEAD")
 
-	winnerTree := git(t, root, "rev-parse", destination+"^{tree}")
-	winner := git(t, root, "commit-tree", winnerTree, "-p", destination, "-m", "winner")
+	winnerTree := gittest.Output(t, root, "rev-parse", destination+"^{tree}")
+	winner := gittest.Output(t, root, "commit-tree", winnerTree, "-p", destination, "-m", "winner")
 	calls := 0
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
@@ -265,7 +266,7 @@ func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
 	}
 	o.updateRef = func(gotRoot, ref, next, expected string) error {
 		if calls == 1 {
-			git(t, gotRoot, "update-ref", ref, winner, expected)
+			gittest.MustRun(t, gotRoot, "update-ref", ref, winner, expected)
 		}
 		return updateRef(gotRoot, ref, next, expected)
 	}
@@ -282,10 +283,10 @@ func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
 	if _, err := o.LandReviewed(context.Background(), request(destination)); err == nil || !strings.Contains(err.Error(), "compare-and-swap") {
 		t.Fatalf("CAS loser error = %v", err)
 	}
-	if got := git(t, root, "rev-parse", "main"); got != winner {
+	if got := gittest.Output(t, root, "rev-parse", "main"); got != winner {
 		t.Fatalf("winner was overwritten: %s", got)
 	}
-	git(t, root, "reset", "--hard", winner)
+	gittest.MustRun(t, root, "reset", "--hard", winner)
 	o.updateRef = func(string, string, string, string) error { return os.ErrPermission }
 	if _, err := o.LandReviewed(context.Background(), request(winner)); err == nil || strings.Contains(err.Error(), "compare-and-swap") || !strings.Contains(err.Error(), os.ErrPermission.Error()) {
 		t.Fatalf("unchanged destination update error = %v", err)
@@ -295,7 +296,7 @@ func TestLandReviewedDestinationCASLossThenRecomposition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if calls != 3 || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+winner+" "+source {
+	if calls != 3 || gittest.Output(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+winner+" "+source {
 		t.Fatalf("recomposition = %+v, authorization calls=%d", got, calls)
 	}
 }
@@ -313,10 +314,7 @@ func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newReviewedLanding(t, tc.baseSpec, tc.destinationSpec, tc.sourceSpec, tc.specMode)
-			o := New()
-			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
-				return authorization.Result{Kind: authorization.Green}
-			}
+			o := greenOwner()
 			got, err := o.LandReviewed(context.Background(), f.request(t, tc.sourceSpec, "land the amended source"))
 			if err != nil {
 				t.Fatal(err)
@@ -325,7 +323,7 @@ func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T
 			if err != nil {
 				t.Fatal(err)
 			}
-			if published := gitBytes(t, f.root, "show", got.Commit+":"+reviewedFixtureSpecPath); !bytes.Equal(published, want) {
+			if published := gittest.OutputBytes(t, f.root, "show", got.Commit+":"+reviewedFixtureSpecPath); !bytes.Equal(published, want) {
 				t.Fatalf("published spec = %q, want %q", published, want)
 			}
 			wantMode := "100644"
@@ -338,7 +336,7 @@ func TestLandReviewedPublishesSourceSpecBytesOverAnyDestinationCopy(t *testing.T
 			if got.DestinationBase != f.destination {
 				t.Fatalf("destination base = %s, want the real destination %s", got.DestinationBase, f.destination)
 			}
-			if parents := git(t, f.root, "rev-list", "--parents", "-n", "1", got.Commit); parents != got.Commit+" "+f.destination+" "+f.source {
+			if parents := gittest.Output(t, f.root, "rev-list", "--parents", "-n", "1", got.Commit); parents != got.Commit+" "+f.destination+" "+f.source {
 				t.Fatalf("published parents = %q, want %s and %s", parents, f.destination, f.source)
 			}
 		})
@@ -368,7 +366,7 @@ func TestLandReviewedSpecStateTableRefusesBeforeAuthorization(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("spec state %s = %v, want %q", tc.name, err, tc.want)
 			}
-			if calls != 0 || git(t, f.root, "rev-parse", "main") != f.destination {
+			if calls != 0 || gittest.Output(t, f.root, "rev-parse", "main") != f.destination {
 				t.Fatalf("spec state %s authorized %d times or moved the destination", tc.name, calls)
 			}
 		})
@@ -411,14 +409,14 @@ func TestMergeAndComposedRefusalsRenderTheSameLine(t *testing.T) {
 
 	composedRoot := fixture(t)
 	write(t, composedRoot, "named", "changed")
-	base := git(t, composedRoot, "rev-parse", "HEAD")
+	base := gittest.Output(t, composedRoot, "rev-parse", "HEAD")
 	o := New()
 	o.authorize = authorize
 	_, composedErr := o.Land(context.Background(), Request{Root: composedRoot, Destination: "refs/heads/main", Expected: base, Message: "x", Paths: []string{"named"}})
 
 	mergeRoot := fixture(t)
 	previous, incoming := linearPair(t, mergeRoot)
-	git(t, mergeRoot, "checkout", "-q", "destination")
+	gittest.MustRun(t, mergeRoot, "checkout", "-q", "destination")
 	owner := New()
 	owner.authorize = authorize
 	owner.updateRef = func(string, string, string, string) error {

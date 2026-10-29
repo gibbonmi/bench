@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestLandStreamsProspectiveGateOutputOnce(t *testing.T) {
@@ -21,10 +22,10 @@ func TestLandStreamsProspectiveGateOutputOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	write(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	git(t, root, "add", ".bench")
-	git(t, root, "commit", "-qm", "gate")
+	gittest.MustRun(t, root, "add", ".bench")
+	gittest.MustRun(t, root, "commit", "-qm", "gate")
 	write(t, root, "named", "changed")
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	var stdout, stderr bytes.Buffer
 
 	if _, err := New().Land(t.Context(), Request{
@@ -70,8 +71,8 @@ func TestLandComposesOnlyNamedPathsAndCASesExpectedBase(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
 	write(t, root, "foreign", "staged")
-	git(t, root, "add", "foreign")
-	base := git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "foreign")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 		return authorization.Result{Kind: authorization.Green}
@@ -80,13 +81,13 @@ func TestLandComposesOnlyNamedPathsAndCASesExpectedBase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Tree != git(t, root, "rev-parse", got.Commit+"^{tree}") {
+	if got.Tree != gittest.Output(t, root, "rev-parse", got.Commit+"^{tree}") {
 		t.Fatal("landing commit did not use authorized tree")
 	}
-	if git(t, root, "show", got.Commit+":foreign") != "base" {
+	if gittest.Output(t, root, "show", got.Commit+":foreign") != "base" {
 		t.Fatal("foreign staged content entered landing")
 	}
-	if git(t, root, "show", ":foreign") != "staged" {
+	if gittest.Output(t, root, "show", ":foreign") != "staged" {
 		t.Fatal("foreign index content was not preserved")
 	}
 }
@@ -96,13 +97,13 @@ func TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation(t *test
 	authorized := []byte("authorized\n")
 	write(t, root, "named", string(authorized))
 	unnamed, before := dirtyUnnamedState(t, root)
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 
 	o := New()
 	var authorizedTree string
 	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
 		authorizedTree = tree
-		if got := gitBytes(t, root, "show", tree+":named"); !bytes.Equal(got, authorized) {
+		if got := gittest.OutputBytes(t, root, "show", tree+":named"); !bytes.Equal(got, authorized) {
 			t.Fatalf("authorized named bytes = %q", got)
 		}
 		write(t, root, "named", "mutated-after-authorization\n")
@@ -112,19 +113,19 @@ func TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Tree != authorizedTree || git(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
+	if got.Tree != authorizedTree || gittest.Output(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
 		t.Fatal("winning commit did not retain the authorized tree")
 	}
 	for source, content := range map[string][]byte{
-		"commit":   gitBytes(t, root, "show", got.Commit+":named"),
-		"index":    gitBytes(t, root, "show", ":named"),
+		"commit":   gittest.OutputBytes(t, root, "show", got.Commit+":named"),
+		"index":    gittest.OutputBytes(t, root, "show", ":named"),
 		"worktree": mustRead(t, filepath.Join(root, "named")),
 	} {
 		if !bytes.Equal(content, authorized) {
 			t.Errorf("%s named bytes = %q", source, content)
 		}
 	}
-	if status := git(t, root, "status", "--porcelain=v1", "--", "named"); status != "" {
+	if status := gittest.Output(t, root, "status", "--porcelain=v1", "--", "named"); status != "" {
 		t.Fatalf("named status = %q", status)
 	}
 	if after := snapshotPaths(t, root, unnamed...); !reflect.DeepEqual(after, before) {
@@ -135,11 +136,11 @@ func TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation(t *test
 func TestLandReconcilesLateUntrackedDescendantUnderNamedDirectory(t *testing.T) {
 	root := raceFixture(t)
 	write(t, root, "owned/tracked", "base\n")
-	git(t, root, "add", "owned/tracked")
-	git(t, root, "commit", "-qm", "directory base")
+	gittest.MustRun(t, root, "add", "owned/tracked")
+	gittest.MustRun(t, root, "commit", "-qm", "directory base")
 	write(t, root, "owned/tracked", "authorized\n")
 	unnamed, before := dirtyUnnamedState(t, root)
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 
 	authorizing := make(chan string, 1)
 	green := make(chan struct{})
@@ -158,10 +159,10 @@ func TestLandReconcilesLateUntrackedDescendantUnderNamedDirectory(t *testing.T) 
 	}()
 
 	authorizedTree := <-authorizing
-	if content := gitBytes(t, root, "show", authorizedTree+":owned/tracked"); !bytes.Equal(content, []byte("authorized\n")) {
+	if content := gittest.OutputBytes(t, root, "show", authorizedTree+":owned/tracked"); !bytes.Equal(content, []byte("authorized\n")) {
 		t.Fatalf("authorized tracked bytes = %q", content)
 	}
-	if names := git(t, root, "ls-tree", "-r", "--name-only", authorizedTree, "--", "owned"); names != "owned/tracked" {
+	if names := gittest.Output(t, root, "ls-tree", "-r", "--name-only", authorizedTree, "--", "owned"); names != "owned/tracked" {
 		t.Fatalf("authorized directory entries = %q", names)
 	}
 	latePath := filepath.Join(root, "owned", "late")
@@ -172,15 +173,15 @@ func TestLandReconcilesLateUntrackedDescendantUnderNamedDirectory(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Tree != authorizedTree || git(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
+	if got.Tree != authorizedTree || gittest.Output(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
 		t.Fatal("winning commit did not retain the authorized tree")
 	}
 	if _, statErr := os.Lstat(latePath); !os.IsNotExist(statErr) {
 		t.Fatalf("late descendant remains: %v", statErr)
 	}
-	git(t, root, "diff", "--quiet", "--cached", got.Commit, "--", "owned")
-	git(t, root, "diff", "--quiet", got.Commit, "--", "owned")
-	if status := git(t, root, "status", "--porcelain=v1", "--", "owned"); status != "" {
+	gittest.MustRun(t, root, "diff", "--quiet", "--cached", got.Commit, "--", "owned")
+	gittest.MustRun(t, root, "diff", "--quiet", got.Commit, "--", "owned")
+	if status := gittest.Output(t, root, "status", "--porcelain=v1", "--", "owned"); status != "" {
 		t.Fatalf("named directory status = %q", status)
 	}
 	if after := snapshotPaths(t, root, unnamed...); !reflect.DeepEqual(after, before) {
@@ -191,21 +192,21 @@ func TestLandReconcilesLateUntrackedDescendantUnderNamedDirectory(t *testing.T) 
 func TestLandPreservesWinnerOnCASLoss(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
-	base := git(t, root, "rev-parse", "HEAD")
-	winner := git(t, root, "commit-tree", git(t, root, "rev-parse", base+"^{tree}"), "-p", base, "-m", "winner")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
+	winner := gittest.Output(t, root, "commit-tree", gittest.Output(t, root, "rev-parse", base+"^{tree}"), "-p", base, "-m", "winner")
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 		return authorization.Result{Kind: authorization.Green}
 	}
 	o.updateRef = func(root, ref, new, old string) error {
-		git(t, root, "update-ref", ref, winner, old)
+		gittest.MustRun(t, root, "update-ref", ref, winner, old)
 		return updateRef(root, ref, new, old)
 	}
 	_, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "loser", Paths: []string{"named"}})
 	if err == nil || !strings.Contains(err.Error(), "compare-and-swap") {
 		t.Fatalf("CAS loss = %v", err)
 	}
-	if git(t, root, "rev-parse", "HEAD") != winner {
+	if gittest.Output(t, root, "rev-parse", "HEAD") != winner {
 		t.Fatal("loser overwrote winner")
 	}
 	if string(mustRead(t, filepath.Join(root, "named"))) != "changed" {
@@ -216,7 +217,7 @@ func TestLandPreservesWinnerOnCASLoss(t *testing.T) {
 func TestLandRetainsInfrastructureRefUpdateFailureWhenDestinationIsUnchanged(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 		return authorization.Result{Kind: authorization.Green}
@@ -227,7 +228,7 @@ func TestLandRetainsInfrastructureRefUpdateFailureWhenDestinationIsUnchanged(t *
 	if err == nil || strings.Contains(err.Error(), "compare-and-swap") || !strings.Contains(err.Error(), os.ErrPermission.Error()) {
 		t.Fatalf("unchanged destination update error = %v", err)
 	}
-	if got := git(t, root, "rev-parse", "HEAD"); got != base {
+	if got := gittest.Output(t, root, "rev-parse", "HEAD"); got != base {
 		t.Fatalf("destination changed to %s", got)
 	}
 }
@@ -235,7 +236,7 @@ func TestLandRetainsInfrastructureRefUpdateFailureWhenDestinationIsUnchanged(t *
 func TestLandClassifiesHeldDestinationRefLockAsInfrastructure(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	lock := filepath.Join(root, ".git", "refs", "heads", "main.lock")
 	if err := os.WriteFile(lock, nil, 0o600); err != nil {
 		t.Fatal(err)
@@ -250,7 +251,7 @@ func TestLandClassifiesHeldDestinationRefLockAsInfrastructure(t *testing.T) {
 	if err == nil || strings.Contains(err.Error(), "compare-and-swap") {
 		t.Fatalf("held destination ref lock error = %v", err)
 	}
-	if got := git(t, root, "rev-parse", "HEAD"); got != base {
+	if got := gittest.Output(t, root, "rev-parse", "HEAD"); got != base {
 		t.Fatalf("destination changed to %s", got)
 	}
 }
@@ -260,8 +261,8 @@ func TestLandRefusesEveryNonGreenAuthorizationWithoutMutation(t *testing.T) {
 		t.Run(string(kind), func(t *testing.T) {
 			root := fixture(t)
 			write(t, root, "named", "changed")
-			base := git(t, root, "rev-parse", "HEAD")
-			before := git(t, root, "status", "--porcelain=v1")
+			base := gittest.Output(t, root, "rev-parse", "HEAD")
+			before := gittest.Output(t, root, "status", "--porcelain=v1")
 			o := New()
 			calls := 0
 			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
@@ -271,7 +272,7 @@ func TestLandRefusesEveryNonGreenAuthorizationWithoutMutation(t *testing.T) {
 			if _, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "x", Paths: []string{"named"}}); err == nil {
 				t.Fatal("Land succeeded")
 			}
-			if calls != 1 || git(t, root, "rev-parse", "HEAD") != base || git(t, root, "status", "--porcelain=v1") != before {
+			if calls != 1 || gittest.Output(t, root, "rev-parse", "HEAD") != base || gittest.Output(t, root, "status", "--porcelain=v1") != before {
 				t.Fatal("authorization refusal mutated checkout")
 			}
 		})
@@ -281,7 +282,7 @@ func TestLandRefusesEveryNonGreenAuthorizationWithoutMutation(t *testing.T) {
 func TestLandReportsPublishedCommitWhenReconciliationFails(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 		return authorization.Result{Kind: authorization.Green}
@@ -292,7 +293,7 @@ func TestLandReportsPublishedCommitWhenReconciliationFails(t *testing.T) {
 	if !errors.As(err, &remainder) || !strings.Contains(err.Error(), "landed-but-checkout-incomplete") || !errors.Is(err, os.ErrPermission) {
 		t.Fatalf("err = %v", err)
 	}
-	if got.Base != base || got.Commit == "" || got.Tree == "" || git(t, root, "rev-parse", "HEAD") != got.Commit {
+	if got.Base != base || got.Commit == "" || got.Tree == "" || gittest.Output(t, root, "rev-parse", "HEAD") != got.Commit {
 		t.Fatal("published identity was not retained")
 	}
 	if remainder.Commit != got.Commit {
@@ -307,7 +308,7 @@ func TestPublicationBoundaryNamesThePathTheReconcileFailedOn(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "a-first", "changed")
 	write(t, root, "b-second", "changed")
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 		return authorization.Result{Kind: authorization.Green}
@@ -335,8 +336,8 @@ func TestPublicationBoundaryNamesThePathTheReconcileFailedOn(t *testing.T) {
 
 func TestLandDetachedHEADHasOneExpectedParent(t *testing.T) {
 	root := fixture(t)
-	base := git(t, root, "rev-parse", "HEAD")
-	git(t, root, "checkout", "--detach", "-q")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "checkout", "--detach", "-q")
 	write(t, root, "named", "changed")
 	o := New()
 	var authorized string
@@ -345,7 +346,7 @@ func TestLandDetachedHEADHasOneExpectedParent(t *testing.T) {
 		return authorization.Result{Kind: authorization.Green}
 	}
 	got, err := o.Land(context.Background(), Request{Root: root, Destination: "HEAD", Expected: base, Message: "detached", Paths: []string{"named"}})
-	if err != nil || got.Base != base || got.Tree != authorized || git(t, root, "rev-parse", "HEAD") != got.Commit || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+base {
+	if err != nil || got.Base != base || got.Tree != authorized || gittest.Output(t, root, "rev-parse", "HEAD") != got.Commit || gittest.Output(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+base {
 		t.Fatalf("detached result %+v %v", got, err)
 	}
 }
@@ -354,14 +355,14 @@ func TestLandPreservesCompleteUnnamedState(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "named", "changed")
 	write(t, root, "foreign", "staged")
-	git(t, root, "add", "foreign")
+	gittest.MustRun(t, root, "add", "foreign")
 	write(t, root, "foreign", "staged-plus-unstaged")
 	write(t, root, "other", "unstaged")
 	write(t, root, "new", "untracked")
 	write(t, root, ".gitignore", "ignored\n")
 	write(t, root, "ignored", "ignored")
-	blob := git(t, root, "show", ":foreign")
-	base := git(t, root, "rev-parse", "HEAD")
+	blob := gittest.Output(t, root, "show", ":foreign")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	o := New()
 	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
 		return authorization.Result{Kind: authorization.Green}
@@ -369,7 +370,7 @@ func TestLandPreservesCompleteUnnamedState(t *testing.T) {
 	if _, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "named", Paths: []string{"named"}}); err != nil {
 		t.Fatal(err)
 	}
-	if git(t, root, "show", ":foreign") != blob || string(mustRead(t, filepath.Join(root, "foreign"))) != "staged-plus-unstaged" || string(mustRead(t, filepath.Join(root, "other"))) != "unstaged" || string(mustRead(t, filepath.Join(root, "new"))) != "untracked" || string(mustRead(t, filepath.Join(root, "ignored"))) != "ignored" {
+	if gittest.Output(t, root, "show", ":foreign") != blob || string(mustRead(t, filepath.Join(root, "foreign"))) != "staged-plus-unstaged" || string(mustRead(t, filepath.Join(root, "other"))) != "unstaged" || string(mustRead(t, filepath.Join(root, "new"))) != "untracked" || string(mustRead(t, filepath.Join(root, "ignored"))) != "ignored" {
 		t.Fatal("unnamed state changed")
 	}
 }

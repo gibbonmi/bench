@@ -10,19 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
-
-// runGitIn runs one git command in root through the adapter form and fails the test on a
-// nonzero exit. The staged form's subject is the index, so every fixture below is a real
-// repository rather than a plain directory.
-func runGitIn(t *testing.T, root string, args ...string) {
-	t.Helper()
-	if _, err := benchgit.Output(append([]string{"-C", root}, args...)...); err != nil {
-		t.Fatalf("git %v in %s: %v", args, root, err)
-	}
-}
 
 // policyRepo makes a repository whose one commit carries the exclusion file with body, so
 // the index holds a policy before the test stages anything else.
@@ -30,8 +19,8 @@ func policyRepo(t *testing.T, body string) string {
 	t.Helper()
 	root := gittest.RepoOnBranch(t, "main")
 	write(t, root, ".bench/prose-exclusions", body)
-	runGitIn(t, root, "add", "-A")
-	runGitIn(t, root, "commit", "-q", "-m", "policy")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "policy")
 	return root
 }
 
@@ -53,7 +42,7 @@ func gradeStaged(t *testing.T, root string) (int, string) {
 func TestGateProseStagedGradesTheIndex(t *testing.T) {
 	root := policyRepo(t, "")
 	write(t, root, "docs/notes.md", "Short prose.\n")
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 0 {
@@ -64,7 +53,7 @@ func TestGateProseStagedGradesTheIndex(t *testing.T) {
 	}
 
 	write(t, root, "docs/notes.md", words(27))
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 	code, out = gradeStaged(t, root)
 	if code != 1 {
 		t.Fatalf("exit = %d on a staged over-long sentence, want 1; stdout=%q", code, out)
@@ -79,7 +68,7 @@ func TestGateProseStagedGradesTheIndex(t *testing.T) {
 func TestGateProseStagedIgnoresTheWorkingFile(t *testing.T) {
 	long := policyRepo(t, "")
 	write(t, long, "docs/notes.md", words(27))
-	runGitIn(t, long, "add", "-A")
+	gittest.MustRun(t, long, "add", "-A")
 	write(t, long, "docs/notes.md", "Short prose.\n")
 
 	code, out := gradeStaged(t, long)
@@ -92,7 +81,7 @@ func TestGateProseStagedIgnoresTheWorkingFile(t *testing.T) {
 
 	short := policyRepo(t, "")
 	write(t, short, "docs/notes.md", "Short prose.\n")
-	runGitIn(t, short, "add", "-A")
+	gittest.MustRun(t, short, "add", "-A")
 	write(t, short, "docs/notes.md", words(27))
 
 	code, out = gradeStaged(t, short)
@@ -111,7 +100,7 @@ func TestGateProseStagedReadsTheStagedPolicy(t *testing.T) {
 	excluding := policyRepo(t, "")
 	write(t, excluding, "docs/notes.md", words(27))
 	write(t, excluding, ".bench/prose-exclusions", "docs/notes.md a staged reason\n")
-	runGitIn(t, excluding, "add", "-A")
+	gittest.MustRun(t, excluding, "add", "-A")
 	write(t, excluding, ".bench/prose-exclusions", "")
 
 	code, out := gradeStaged(t, excluding)
@@ -121,7 +110,7 @@ func TestGateProseStagedReadsTheStagedPolicy(t *testing.T) {
 
 	including := policyRepo(t, "")
 	write(t, including, "docs/notes.md", words(27))
-	runGitIn(t, including, "add", "-A")
+	gittest.MustRun(t, including, "add", "-A")
 	write(t, including, ".bench/prose-exclusions", "docs/notes.md a working reason\n")
 
 	code, out = gradeStaged(t, including)
@@ -139,14 +128,14 @@ func TestGateProseStagedReadsTheStagedPolicy(t *testing.T) {
 func TestGateProseStagedSkipsDeletionsAndLinks(t *testing.T) {
 	root := policyRepo(t, "")
 	write(t, root, "docs/gone.md", "Short prose.\n")
-	runGitIn(t, root, "add", "-A")
-	runGitIn(t, root, "commit", "-q", "-m", "subjects")
-	runGitIn(t, root, "rm", "-q", "docs/gone.md")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "subjects")
+	gittest.MustRun(t, root, "rm", "-q", "docs/gone.md")
 	write(t, root, "docs/kept.md", "Short prose.\n")
 	if err := os.Symlink("kept.md", filepath.Join(root, "docs", "link.md")); err != nil {
 		t.Fatalf("plant a symbolic link: %v", err)
 	}
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 0 {
@@ -157,7 +146,7 @@ func TestGateProseStagedSkipsDeletionsAndLinks(t *testing.T) {
 	}
 
 	write(t, root, "docs/kept.md", words(27))
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 	code, out = gradeStaged(t, root)
 	if code != 1 {
 		t.Fatalf("exit = %d on the long regular file, want 1; stdout=%q", code, out)
@@ -177,7 +166,7 @@ func TestGateProseStagedHostilePaths(t *testing.T) {
 	for _, rel := range paths {
 		write(t, root, rel, "Short prose.\n")
 	}
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 0 {
@@ -207,7 +196,7 @@ func TestGateProseStagedEmptyIndex(t *testing.T) {
 func TestGateProseStagedRefusesAPathList(t *testing.T) {
 	root := policyRepo(t, "")
 	write(t, root, "docs/notes.md", words(27))
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	for _, args := range [][]string{
 		{root, "--staged", "docs/notes.md"},
@@ -255,7 +244,7 @@ func TestGateProseStagedValidatesTargetsAgainstTheIndex(t *testing.T) {
 	honored := policyRepo(t, "")
 	write(t, honored, "docs/notes.md", words(27))
 	write(t, honored, ".bench/prose-exclusions", "docs/notes.md an index-only target\n")
-	runGitIn(t, honored, "add", "-A")
+	gittest.MustRun(t, honored, "add", "-A")
 	if err := os.Remove(filepath.Join(honored, "docs", "notes.md")); err != nil {
 		t.Fatalf("remove the working file: %v", err)
 	}
@@ -268,7 +257,7 @@ func TestGateProseStagedValidatesTargetsAgainstTheIndex(t *testing.T) {
 	directory := policyRepo(t, "")
 	write(t, directory, "docs/notes.md", words(27))
 	write(t, directory, ".bench/prose-exclusions", "docs/ an index directory prefix\n")
-	runGitIn(t, directory, "add", "-A")
+	gittest.MustRun(t, directory, "add", "-A")
 	if err := os.RemoveAll(filepath.Join(directory, "docs")); err != nil {
 		t.Fatalf("remove the working directory: %v", err)
 	}
@@ -281,7 +270,7 @@ func TestGateProseStagedValidatesTargetsAgainstTheIndex(t *testing.T) {
 	absent := policyRepo(t, "")
 	write(t, absent, "docs/notes.md", "Short prose.\n")
 	write(t, absent, ".bench/prose-exclusions", "docs/working-only.md a working-tree target\n")
-	runGitIn(t, absent, "add", "-A")
+	gittest.MustRun(t, absent, "add", "-A")
 	write(t, absent, "docs/working-only.md", "Short prose.\n")
 
 	code, out = gradeStaged(t, absent)
@@ -299,7 +288,7 @@ func TestGateProseStagedUnbornBranch(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	write(t, root, ".bench/prose-exclusions", "")
 	write(t, root, "docs/notes.md", "Short prose.\n")
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 0 {
@@ -310,7 +299,7 @@ func TestGateProseStagedUnbornBranch(t *testing.T) {
 	}
 
 	write(t, root, "docs/notes.md", words(27))
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 	code, out = gradeStaged(t, root)
 	if code != 1 {
 		t.Fatalf("exit = %d on an unborn branch with a long subject, want 1; stdout=%q", code, out)
@@ -325,9 +314,9 @@ func TestGateProseStagedUnbornBranch(t *testing.T) {
 // pass here.
 func TestGateProseStagedAbsentPolicy(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
-	runGitIn(t, root, "commit", "-q", "--allow-empty", "-m", "base")
+	gittest.Commit(t, root, "base", "--allow-empty")
 	write(t, root, "docs/notes.md", "Short prose.\n")
-	runGitIn(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 
 	code, out := gradeStaged(t, root)
 	if code != 1 {

@@ -310,14 +310,14 @@ func dropFixtureLines(body string, drop ...string) string {
 func requireAnchorSymlink(t *testing.T, target, link string) {
 	t.Helper()
 	if err := os.Symlink(target, link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 
 func requireAnchorFifo(t *testing.T, path string) {
 	t.Helper()
 	if err := syscall.Mkfifo(path, 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 }
 

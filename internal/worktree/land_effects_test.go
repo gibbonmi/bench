@@ -73,7 +73,7 @@ func brokerDestinationFixture(t *testing.T, request string) landingFixture {
 	}
 	writeGoMainFixture(t, f.root)
 	gitRun(t, f.root, "add", ".")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "broker sources")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "broker sources")...)
 	commitLandingBuildInputs(t, f.root)
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	gitRun(t, f.creation.Path, "rebase", "main")

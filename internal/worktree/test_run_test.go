@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -58,11 +58,11 @@ func (s *testRunSelector) close() {
 }
 
 func benchSourceRoot() (string, error) {
-	out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+	out, err := gittest.Run("", "rev-parse", "--show-toplevel")
 	if err != nil {
 		return "", fmt.Errorf("resolve Bench source root: %w", err)
 	}
-	return strings.TrimSpace(string(out)), nil
+	return out, nil
 }
 
 // packageRunBinary is the package-wide owner. Every journey that starts a real Bench

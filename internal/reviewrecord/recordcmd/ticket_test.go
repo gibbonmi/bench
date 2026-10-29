@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordcmd"
@@ -118,7 +119,7 @@ func TestTicketRefusals(t *testing.T) {
 			base, tip := advance(f, "chunk 1")
 			stageOwed(f, home, "1", "1.md")
 			run := f.Run(0, "ok\n")
-			run.Head = f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", tip+"^{tree}", "-p", base, "-m", "off the chunk line")
+			run.Head = f.Git(append(gittest.IdentityArgs(), "commit-tree", tip+"^{tree}", "-p", base, "-m", "off the chunk line")...)
 			f.Stage(home, "1", "additional", run)
 			return f, home, ticketArgs(t, "1", "1.md", "p", "--base", base), "requirement additional: the staged run at " + run.Head + " is not on the chunk line " + base + ".." + tip
 		}},

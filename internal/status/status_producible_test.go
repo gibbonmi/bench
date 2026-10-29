@@ -39,23 +39,23 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 	}
 	commit := func(t *testing.T, root string) {
 		t.Helper()
-		gitRun(t, root, "add", "-A")
-		gitRun(t, root, "commit", "-m", "fixture")
+		gittest.MustRun(t, root, "add", "-A")
+		gittest.MustRun(t, root, "commit", "-m", "fixture")
 	}
 	cleanRepo := func(t *testing.T) string {
 		t.Helper()
 		root := initRepo(t)
 		write(t, root, "tracked.txt", "base\n", 0o644)
 		commit(t, root)
-		gitRun(t, root, "branch", "-M", "main")
+		gittest.MustRun(t, root, "branch", "-M", "main")
 		return root
 	}
-	gitDir := func(t *testing.T, root string) string { return gitRun(t, root, "rev-parse", "--absolute-git-dir") }
+	gitDir := func(t *testing.T, r string) string { return gittest.Output(t, r, "rev-parse", "--absolute-git-dir") }
 	gateCache := func(t *testing.T, root string) string { return filepath.Join(gitDir(t, root), git.GateCacheFile) }
 	writePendingGate := func(t *testing.T, root string) {
 		t.Helper()
 		record := fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":%q,"started_at":%q,"owner_pid":999999}`+"\n",
-			gitRun(t, root, "write-tree"), strings.Repeat("0", 64), time.Now().UTC().Add(-time.Minute).Truncate(time.Second).Format(time.RFC3339))
+			gittest.Output(t, root, "write-tree"), strings.Repeat("0", 64), time.Now().UTC().Add(-time.Minute).Truncate(time.Second).Format(time.RFC3339))
 		if err := os.WriteFile(gateCache(t, root), []byte(record), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -107,7 +107,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 	plan := "bench worktree clean --discard-branch --unclaimed"
 	unreadableLedger := func(t *testing.T, root string) { write(t, gitDir(t, root), intent.Filename, "", 0o600) }
 	blobTipRef := func(t *testing.T, root string) {
-		write(t, gitDir(t, root), "refs/heads/bench/assign/orphan/blob", gitRun(t, root, "hash-object", "-w", "tracked.txt")+"\n", 0o644)
+		write(t, gitDir(t, root), "refs/heads/bench/assign/orphan/blob", gittest.Output(t, root, "hash-object", "-w", "tracked.txt")+"\n", 0o644)
 	}
 	cases := []fixture{
 		{name: "setup", signal: "setup", detail: "no .bench/", setup: func(t *testing.T) (string, Query) {
@@ -137,9 +137,9 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		}},
 		{name: "gate drifted", signal: "gate", detail: "stale (gated tree", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
-			writeFullGateCache(t, root, gitRun(t, root, "write-tree"), "green")
+			writeFullGateCache(t, root, gittest.Output(t, root, "write-tree"), "green")
 			write(t, root, "tracked.txt", "moved\n", 0o644)
-			gitRun(t, root, "add", "tracked.txt")
+			gittest.MustRun(t, root, "add", "tracked.txt")
 			return root, Query{}
 		}},
 		{name: "gate interrupted", signal: "gate", detail: "interrupted-pending", setup: func(t *testing.T) (string, Query) {
@@ -190,42 +190,42 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			return root, Query{}
 		}},
 		gitRow("git unpushed", "1 unpushed commit", "git push", func(t *testing.T, root string) {
-			branch := gitRun(t, root, "rev-parse", "--abbrev-ref", "HEAD")
-			gitRun(t, root, "remote", "add", "origin", root)
-			gitRun(t, root, "update-ref", "refs/remotes/origin/"+branch, "HEAD")
-			gitRun(t, root, "config", "branch."+branch+".remote", "origin")
-			gitRun(t, root, "config", "branch."+branch+".merge", "refs/heads/"+branch)
+			branch := gittest.Output(t, root, "rev-parse", "--abbrev-ref", "HEAD")
+			gittest.MustRun(t, root, "remote", "add", "origin", root)
+			gittest.MustRun(t, root, "update-ref", "refs/remotes/origin/"+branch, "HEAD")
+			gittest.MustRun(t, root, "config", "branch."+branch+".remote", "origin")
+			gittest.MustRun(t, root, "config", "branch."+branch+".merge", "refs/heads/"+branch)
 			write(t, root, "ahead.txt", "ahead\n", 0o644)
 			commit(t, root)
 		}),
 		gitRow("git unique branch", "1 unique branch", "git push", func(t *testing.T, root string) {
-			gitRun(t, root, "checkout", "-b", "feature")
+			gittest.MustRun(t, root, "checkout", "-b", "feature")
 			commitFile(t, root, "feature.txt")
 		}),
 		gitRow("git landed subsumed and unique refs", "1 landed ref, 1 subsumed ref, 1 unique ref", plan, func(t *testing.T, root string) {
-			gitRun(t, root, "branch", "bench/assign/orphan/landed")
-			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/subsumed")
+			gittest.MustRun(t, root, "branch", "bench/assign/orphan/landed")
+			gittest.MustRun(t, root, "checkout", "-b", "bench/assign/orphan/subsumed")
 			commitFile(t, root, "orphan.txt")
-			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/unique")
+			gittest.MustRun(t, root, "checkout", "-b", "bench/assign/orphan/unique")
 			commitFile(t, root, "unique.txt")
-			gitRun(t, root, "checkout", "main")
+			gittest.MustRun(t, root, "checkout", "main")
 		}),
 		gitRow("git dirty path and unique ref", "1 dirty path, 1 unique ref", plan, func(t *testing.T, root string) {
-			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/dirty")
+			gittest.MustRun(t, root, "checkout", "-b", "bench/assign/orphan/dirty")
 			write(t, root, "orphan.txt", "orphan\n", 0o644)
 			commit(t, root)
-			gitRun(t, root, "checkout", "main")
+			gittest.MustRun(t, root, "checkout", "main")
 			write(t, root, "tracked.txt", "dirty\n", 0o644)
 		}),
 		gitRow("git unique ref, its symref, and a feature branch", "1 unique ref, 1 faulted ref, 1 unique branch", plan, func(t *testing.T, root string) { // RI88, RI89
-			gitRun(t, root, "checkout", "-b", "bench/assign/orphan/mixed")
+			gittest.MustRun(t, root, "checkout", "-b", "bench/assign/orphan/mixed")
 			commitFile(t, root, "orphan-mixed.txt")
-			gitRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/bench/assign/orphan/mixed")
-			gitRun(t, root, "checkout", "-b", "feature-mixed", "main")
+			gittest.MustRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/bench/assign/orphan/mixed")
+			gittest.MustRun(t, root, "checkout", "-b", "feature-mixed", "main")
 			commitFile(t, root, "feature-mixed.txt")
 		}),
 		gitRow("git faulted symref to main", "1 faulted ref", plan, func(t *testing.T, root string) { // RI91
-			gitRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
+			gittest.MustRun(t, root, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
 		}),
 		gitRow("git unreadable ledger", "unclaimed refs unavailable", plan, unreadableLedger), // RI90
 		gitRow("git blob-tip ref", "git state unavailable, 1 faulted ref", plan, blobTipRef),  // D4
@@ -238,7 +238,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 			if err := os.MkdirAll(filepath.Dir(leased), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			gitRun(t, root, "worktree", "add", "-q", "--detach", leased, "HEAD")
+			gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", leased, "HEAD")
 			lease, err := worktree.LeaseFile(leased)
 			if err != nil {
 				t.Fatal(err)
@@ -247,7 +247,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 				t.Fatal(err)
 			}
 			outside := filepath.Join(t.TempDir(), "outside")
-			gitRun(t, root, "worktree", "add", "-q", "--detach", outside, "HEAD")
+			gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", outside, "HEAD")
 			return root, Query{}
 		}, exact: []Signal{
 			testSignal(2, "worktree", "1 out-of-pool worktree", "bench worktree clean <path>"),
@@ -330,7 +330,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		{name: "map scan failure", signal: "decisions", detail: "unknown", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			if err := syscall.Mkfifo(filepath.Join(root, "decisions"), 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return root, Query{}
 		}, exact: []Signal{testSignal(6, "decisions", "unknown (decisions is wrong-type)", "bench maps")}},
@@ -361,7 +361,7 @@ func TestAllProducibleBoardActionsAreInvocableOrEmpty(t *testing.T) {
 		{name: "roadmap scan failure", signal: "roadmap", detail: "unknown", setup: func(t *testing.T) (string, Query) {
 			root := cleanRepo(t)
 			if err := syscall.Mkfifo(filepath.Join(root, roadmap.RoadmapFile), 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return root, Query{}
 		}},

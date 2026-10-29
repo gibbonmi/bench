@@ -115,7 +115,7 @@ func TestLifecycleIgnoredFactAdapterTranslatesDeclaration(t *testing.T) {
 	gitRun(t, root, "branch", "-M", "main")
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
+	gitRun(t, root, withIdentity("commit", "-qm", "ignore build output")...)
 	home := filepath.Join(root, ".bench-home")
 	creation := mustCreate(t, root, home, "fa-ignored", "ignored declaration")
 	mustMkdirAll(t, filepath.Join(creation.Path, "dist"), 0o755)

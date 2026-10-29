@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/harnesses"
 )
 
@@ -153,8 +154,8 @@ func TestProducedDrainRoutesFromItsConstruction(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "capture/IDEAS.md"), []byte("- 2026-08-18  pending\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "base")
 
 	got := RouteFor(root, SignalsWith(root, Query{}), HarnessClaude)
 	if got.NoCommand || got.Lead.Name != "drain" || got.Lead.Action != "/bench-drain" {

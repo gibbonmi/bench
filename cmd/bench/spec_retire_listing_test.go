@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -21,8 +22,8 @@ func retireListingRepo(t *testing.T, hostRequest string) (string, worktree.Creat
 	t.Helper()
 	_, repo, host := censusAssignment(t, hostRequest)
 	writeAXIFixture(t, filepath.Join(host.Path, "specs", retireSlug, "spec.md"), "# Alpha\n\nStatus: implemented\n\nRoadmap: FT7\n")
-	runAXIGit(t, "-C", host.Path, "add", ".")
-	runAXIGit(t, "-C", host.Path, "commit", "-q", "-m", "implement alpha")
+	gittest.MustRun(t, host.Path, "add", ".")
+	gittest.Commit(t, host.Path, "implement alpha")
 	t.Chdir(host.Path)
 	return repo, host
 }
@@ -42,11 +43,11 @@ func plantAssignment(t *testing.T, repo, request, label string) intent.Assignmen
 func plantUniqueShiftBranch(t *testing.T, repo, name string) {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), name)
-	runAXIGit(t, "-C", repo, "worktree", "add", "-q", "-b", strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/")+name, dir, "main")
+	gittest.MustRun(t, repo, "worktree", "add", "-q", "-b", strings.TrimPrefix(intent.ShiftBranchPrefix(), "refs/heads/")+name, dir, "main")
 	writeAXIFixture(t, filepath.Join(dir, name+".txt"), name+"\n")
-	runAXIGit(t, "-C", dir, "add", ".")
-	runAXIGit(t, "-C", dir, "commit", "-q", "-m", name)
-	runAXIGit(t, "-C", repo, "worktree", "remove", "--force", dir)
+	gittest.MustRun(t, dir, "add", ".")
+	gittest.Commit(t, dir, name)
+	gittest.MustRun(t, repo, "worktree", "remove", "--force", dir)
 }
 
 func candidateLine(a intent.Assignment) string {
@@ -65,7 +66,7 @@ func candidateLines(out string) []string {
 
 func branchTips(t *testing.T, repo string) string {
 	t.Helper()
-	return runAXIGit(t, "-C", repo, "for-each-ref", "refs/heads", "--format=%(refname) %(objectname)")
+	return string(gittest.OutputBytes(t, repo, "for-each-ref", "refs/heads", "--format=%(refname) %(objectname)"))
 }
 
 const zeroUniqueLine = "unique refs: 0 — bench worktree clean --discard-branch --unclaimed"
@@ -163,11 +164,11 @@ func TestRetireCountsUniqueRefs(t *testing.T) {
 			plantUniqueShiftBranch(t, repo, "two")
 		}, "unique refs: 2 — bench worktree clean --discard-branch --unclaimed"},
 		{"a symref to main and a blob tip", func(t *testing.T, repo string) {
-			runAXIGit(t, "-C", repo, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
+			gittest.MustRun(t, repo, "symbolic-ref", "refs/heads/bench/assign/orphan/symref", "refs/heads/main")
 			content := filepath.Join(t.TempDir(), "blob.txt")
 			writeAXIFixture(t, content, "blob\n")
-			blob := strings.TrimSpace(runAXIGit(t, "-C", repo, "hash-object", "-w", "--", content))
-			gitDir := strings.TrimSpace(runAXIGit(t, "-C", repo, "rev-parse", "--absolute-git-dir"))
+			blob := gittest.Output(t, repo, "hash-object", "-w", "--", content)
+			gitDir := gittest.Output(t, repo, "rev-parse", "--absolute-git-dir")
 			writeAXIFixture(t, filepath.Join(gitDir, "refs", "heads", "bench", "assign", "orphan", "blob"), blob+"\n")
 		}, "unique refs: 0, 2 faulted — bench worktree clean --discard-branch --unclaimed"},
 	}

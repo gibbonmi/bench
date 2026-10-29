@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // The help text names the deletion route, so an author deletes a tracked path through
@@ -30,7 +32,7 @@ func TestNamedDeletedPathsPublishAsDeletions(t *testing.T) {
 		mustWrite(t, filepath.Join(root, "gone.txt"), "gone\n", 0o644)
 		namedDir(t, root, "gone dir")
 	})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	if err := os.Remove(filepath.Join(root, "gone.txt")); err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +43,7 @@ func TestNamedDeletedPathsPublishAsDeletions(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after == before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after == before {
 		t.Fatal("HEAD did not move")
 	}
 	if headHasPrefix(t, root, "gone.txt") || headHasPrefix(t, root, "gone dir/") {
@@ -50,7 +52,7 @@ func TestNamedDeletedPathsPublishAsDeletions(t *testing.T) {
 	if !headHasPrefix(t, root, "tracked.txt") {
 		t.Fatalf("published commit lost an unnamed path: %v", headPaths(t, root))
 	}
-	if status := string(runGit(t, root, "status", "--porcelain")); status != "" {
+	if status := gittest.Output(t, root, "status", "--porcelain"); status != "" {
 		t.Fatalf("checkout is not clean: %q", status)
 	}
 }

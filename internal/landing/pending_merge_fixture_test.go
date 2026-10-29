@@ -2,12 +2,13 @@ package landing
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // The paths and the branches of every pending merge fixture: both sides change
@@ -37,33 +38,32 @@ func mergeCheckout(t *testing.T, added ...string) (root, base string) {
 	primary := fixture(t)
 	write(t, primary, mergeConflictPath, "base\n")
 	write(t, primary, mergeDeletedPath, "base\n")
-	git(t, primary, "add", ".")
-	git(t, primary, "commit", "-qm", "merge base")
-	git(t, primary, "checkout", "-qb", mergeIncoming)
+	gittest.MustRun(t, primary, "add", ".")
+	gittest.MustRun(t, primary, "commit", "-qm", "merge base")
+	gittest.MustRun(t, primary, "checkout", "-qb", mergeIncoming)
 	write(t, primary, mergeConflictPath, "incoming\n")
 	for _, path := range added {
 		write(t, primary, path, "incoming\n")
 	}
-	git(t, primary, "rm", "-q", mergeDeletedPath)
-	git(t, primary, "add", "-A")
-	git(t, primary, "commit", "-qm", "incoming")
+	gittest.MustRun(t, primary, "rm", "-q", mergeDeletedPath)
+	gittest.MustRun(t, primary, "add", "-A")
+	gittest.MustRun(t, primary, "commit", "-qm", "incoming")
 	root = filepath.Join(t.TempDir(), "linked")
-	git(t, primary, "worktree", "add", "-q", "-b", mergeTopic, root, "main")
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", mergeTopic, root, "main")
 	write(t, root, mergeConflictPath, "ours\n")
-	git(t, root, "commit", "-qam", "ours")
-	return root, git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "commit", "-qam", "ours")
+	return root, gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // pendingMerge starts a conflicted merge of the incoming branch in the worktree of
 // mergeCheckout, and it returns the worktree and its HEAD before the merge. The fixture
 // writes the resolution to the worktree file only, so the index keeps the unmerged entries
-// of the conflicted path. The landing helper git fails on the exit 1 of a conflicted merge.
-// The merge therefore runs through its own call, as stageHandMerge in internal/worktree does.
+// of the conflicted path. gittest.Run returns the failure of the conflicted merge.
 func pendingMerge(t *testing.T, added ...string) (root, base string) {
 	t.Helper()
 	root, base = mergeCheckout(t, added...)
-	merge := exec.Command("git", "-C", root, "merge", "--no-commit", mergeIncoming)
-	if out, err := merge.CombinedOutput(); err == nil || !strings.Contains(string(out), "CONFLICT") {
+	out, err := gittest.Run(root, "merge", "--no-commit", mergeIncoming)
+	if err == nil || !strings.Contains(err.Error(), "CONFLICT") {
 		t.Fatalf("merge = %v, %s; want the conflict", err, out)
 	}
 	write(t, root, mergeConflictPath, mergeResolution)
@@ -79,14 +79,14 @@ func octopusMerge(t *testing.T) (root, base string, heads, added []string) {
 	root, base = mergeCheckout(t)
 	added = []string{"side-a", "side-b"}
 	for _, side := range added {
-		git(t, root, "checkout", "-q", "-b", side, base)
+		gittest.MustRun(t, root, "checkout", "-q", "-b", side, base)
 		write(t, root, side, "side\n")
-		git(t, root, "add", side)
-		git(t, root, "commit", "-qm", side)
-		heads = append(heads, git(t, root, "rev-parse", "HEAD"))
+		gittest.MustRun(t, root, "add", side)
+		gittest.MustRun(t, root, "commit", "-qm", side)
+		heads = append(heads, gittest.Output(t, root, "rev-parse", "HEAD"))
 	}
-	git(t, root, "checkout", "-q", mergeTopic)
-	git(t, root, append([]string{"merge", "--no-commit", "--no-ff"}, added...)...)
+	gittest.MustRun(t, root, "checkout", "-q", mergeTopic)
+	gittest.MustRun(t, root, append([]string{"merge", "--no-commit", "--no-ff"}, added...)...)
 	return root, base, heads, added
 }
 

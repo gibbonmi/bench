@@ -22,6 +22,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -487,9 +488,9 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 		return "", func() {}, err
 	}
 	cleanup := func() { os.RemoveAll(dir) }
-	if probe := runAt(dir, "git", "init", "-q"); probe == nil || probe.ExitCode != 0 {
+	if _, err := gittest.Run(dir, "init", "-q"); err != nil {
 		cleanup()
-		return "", func() {}, fmt.Errorf("git init failed")
+		return "", func() {}, fmt.Errorf("git init failed: %w", err)
 	}
 	if err := os.MkdirAll(filepath.Join(dir, ".bench"), 0o755); err != nil {
 		cleanup()
@@ -510,7 +511,7 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 var hostileSkillPlanters = map[string]func(*testing.T, string){
 	"fifo": func(t *testing.T, path string) {
 		if err := syscall.Mkfifo(path, 0o644); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 	},
 	"live symlink": func(t *testing.T, path string) {
@@ -519,12 +520,12 @@ var hostileSkillPlanters = map[string]func(*testing.T, string){
 			t.Fatal(err)
 		}
 		if err := os.Symlink(target, path); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 	},
 	"dangling symlink": func(t *testing.T, path string) {
 		if err := os.Symlink(filepath.Join(filepath.Dir(path), "gone.md"), path); err != nil {
-			capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+			capability.Unavailable(t, capability.Symlink, err.Error())
 		}
 	},
 	"oversized": func(t *testing.T, path string) {

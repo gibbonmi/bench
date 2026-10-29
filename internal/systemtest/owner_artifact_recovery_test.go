@@ -75,7 +75,7 @@ func TestProspectiveArtifactRecoveryAfterKilledLanding(t *testing.T) {
 	if _, err := os.Stat(marker); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("recovery executed old candidate bytes: %v", err)
 	}
-	systemGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "--allow-empty", "-qm", "same-tree destination move")
+	systemGit(t, root, systemCommitArgs("--allow-empty", "-qm", "same-tree destination move")...)
 	releaseArtifactBarrier(t, release)
 	if code := systemExitCode(<-freshDone); code != 1 || !strings.Contains(freshOut.String(), "landing destination checkout changed") {
 		t.Fatalf("same-tree moved destination = (%d, %q, %q)", code, freshOut.String(), freshErr.String())

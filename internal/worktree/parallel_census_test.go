@@ -834,7 +834,7 @@ func TestQuiet(t *testing.T) {
 }
 `})
 	if err := syscall.Mkfifo(filepath.Join(dir, "fifo_test.go"), 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	if reports := censusOf(t, dir); len(reports) != 0 {
 		t.Fatalf("census = %q, want no report", reports)

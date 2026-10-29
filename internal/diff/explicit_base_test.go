@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestExplicitBaseReportsPinnedSourceAndCompleteLiveSnapshot(t *testing.T) {
@@ -43,7 +45,7 @@ func gitState(t *testing.T, root string) ([]byte, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return config, runGit(t, "show-ref", "--head")
+	return config, gittest.Output(t, "", "show-ref", "--head")
 }
 
 func assertGitState(t *testing.T, root string, config []byte, refs string) {
@@ -52,20 +54,20 @@ func assertGitState(t *testing.T, root string, config []byte, refs string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(after) != string(config) || runGit(t, "show-ref", "--head") != refs {
+	if string(after) != string(config) || gittest.Output(t, "", "show-ref", "--head") != refs {
 		t.Fatal("explicit-base operation changed Git config or refs")
 	}
 }
 
 func unrelatedCommit(t *testing.T, root string) string {
 	t.Helper()
-	runGit(t, "checkout", "-q", "--orphan", "unrelated")
-	runGit(t, "rm", "-q", "-rf", ".")
+	gittest.MustRun(t, "", "checkout", "-q", "--orphan", "unrelated")
+	gittest.MustRun(t, "", "rm", "-q", "-rf", ".")
 	mustWriteFile(t, "unrelated.txt", "unrelated\n")
-	runGit(t, "add", ".")
-	runGit(t, "commit", "-q", "-m", "unrelated")
-	sha := runGit(t, "rev-parse", "HEAD")
-	runGit(t, "checkout", "-q", "feature")
+	gittest.MustRun(t, "", "add", ".")
+	gittest.Commit(t, "", "unrelated")
+	sha := gittest.Output(t, "", "rev-parse", "HEAD")
+	gittest.MustRun(t, "", "checkout", "-q", "feature")
 	return sha
 }
 
@@ -79,10 +81,10 @@ func ambiguousObjectPrefix(t *testing.T, root string) string {
 	for i := 0; i < 4096; i++ {
 		path := filepath.Join(objects, strconv.Itoa(i))
 		mustWriteFile(t, path, strconv.Itoa(i))
-		sha := runGit(t, "hash-object", "-w", path)
+		sha := gittest.Output(t, "", "hash-object", "-w", path)
 		prefix := sha[:4]
 		if previous, ok := seen[prefix]; ok && previous != sha {
-			if len(strings.Fields(runGit(t, "rev-parse", "--disambiguate="+prefix))) >= 2 {
+			if len(strings.Fields(gittest.Output(t, "", "rev-parse", "--disambiguate="+prefix))) >= 2 {
 				return prefix
 			}
 		}
@@ -118,7 +120,7 @@ func TestExplicitBaseRetriesThenRefusesMovement(t *testing.T) {
 func TestChangedSubjectDefaultLiveComposition(t *testing.T) {
 	root, base, _ := seedCompatibilityRepo(t)
 	mustWriteFile(t, "staged-only.txt", "staged\n")
-	runGit(t, "add", "staged-only.txt")
+	gittest.MustRun(t, "", "add", "staged-only.txt")
 	mustWriteFile(t, "worktree-only.txt", "worktree\n")
 	subject, kind, hint := ResolveChangedSubject(root, "", "")
 	if kind != "" {

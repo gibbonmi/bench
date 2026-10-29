@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 // Repo initializes an empty repository in a fresh temporary directory. It returns that
@@ -28,7 +27,7 @@ func Repo(t testing.TB) string {
 func KitCopy(t testing.TB, root string) string {
 	t.Helper()
 	copyRoot := t.TempDir()
-	if err := testrepo.CommitWorkingTree(root, copyRoot); err != nil {
+	if err := CommitWorkingTree(root, copyRoot); err != nil {
 		t.Fatalf("copy kit: %v", err)
 	}
 	return copyRoot
@@ -175,8 +174,9 @@ func StubGitStarts(t testing.TB, logPath, flag string) int {
 func RepoOnBranch(t testing.TB, branch string) string {
 	t.Helper()
 	root := initialize(t, "-b", branch)
-	run(t, root, "config", "user.email", "bench@example.invalid")
-	run(t, root, "config", "user.name", "bench test")
+	for _, args := range IdentityConfig() {
+		MustRun(t, root, args...)
+	}
 	return root
 }
 
@@ -189,8 +189,8 @@ func RepoIgnoring(t testing.TB, patterns ...string) string {
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte(strings.Join(patterns, "\n")+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	run(t, root, "add", ".gitignore")
-	run(t, root, "commit", "-qm", "ignore rules")
+	MustRun(t, root, "add", ".gitignore")
+	MustRun(t, root, "commit", "-qm", "ignore rules")
 	return root
 }
 
@@ -202,12 +202,12 @@ func RepoIgnoring(t testing.TB, patterns ...string) string {
 func TopicTrackingRepo(t testing.TB) string {
 	t.Helper()
 	root := RepoOnBranch(t, "main")
-	run(t, root, "commit", "-qm", "initial", "--allow-empty")
-	run(t, root, "checkout", "-q", "-b", "topic")
-	run(t, root, "remote", "add", "origin", "https://example.invalid/r.git")
-	run(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
-	run(t, root, "config", "branch.topic.remote", "origin")
-	run(t, root, "config", "branch.topic.merge", "refs/heads/main")
+	MustRun(t, root, "commit", "-qm", "initial", "--allow-empty")
+	MustRun(t, root, "checkout", "-q", "-b", "topic")
+	MustRun(t, root, "remote", "add", "origin", "https://example.invalid/r.git")
+	MustRun(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	MustRun(t, root, "config", "branch.topic.remote", "origin")
+	MustRun(t, root, "config", "branch.topic.merge", "refs/heads/main")
 	return root
 }
 
@@ -221,7 +221,7 @@ func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
 	}
 	gitDir := filepath.Join(worktreeDir, "gitdir")
 	if err := syscall.Mkfifo(gitDir, 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	return gitDir
 }
@@ -233,16 +233,16 @@ func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
 func MaintenanceProbe(t testing.TB) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "maintenance-probe")
-	body := `#!/bin/sh
+	body := fmt.Sprintf(`#!/bin/sh
 set -eu
 dir=$(mktemp -d)
 trap 'rm -rf "$dir"' EXIT
 git -C "$dir" init -q
-trace=$(GIT_TRACE=1 git -C "$dir" -c user.email=probe@example.invalid -c user.name=probe commit -q --allow-empty -m probe 2>&1)
+trace=$(GIT_TRACE=1 git -C "$dir" -c %q -c %q commit -q --allow-empty -m probe 2>&1)
 case "$trace" in
   *'maintenance run'*) echo 'commit started git auto-maintenance'; exit 3;;
 esac
-`
+`, "user.name="+IdentityName, "user.email="+IdentityEmail)
 	if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
 		t.Fatalf("maintenance probe: %v", err)
 	}
@@ -298,13 +298,8 @@ exec "$4"
 func initialize(t testing.TB, options ...string) string {
 	t.Helper()
 	root := t.TempDir()
-	run(t, root, append([]string{"init", "-q"}, options...)...)
+	MustRun(t, root, append([]string{"init", "-q"}, options...)...)
 	return root
-}
-
-func run(t testing.TB, root string, args ...string) {
-	t.Helper()
-	_ = Output(t, root, args...)
 }
 
 // Output runs git with args in root and returns its trimmed combined output. It fails
@@ -321,7 +316,7 @@ func Output(t testing.TB, root string, args ...string) string {
 // Run runs git with args in root and returns its trimmed combined output. It returns
 // the failure instead of failing a test, so a goroutine can call it.
 func Run(root string, args ...string) (string, error) {
-	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
+	out, err := command(root, args...).CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, out)
 	}

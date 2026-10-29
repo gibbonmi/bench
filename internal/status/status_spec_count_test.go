@@ -1,7 +1,6 @@
 package status
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -35,7 +34,7 @@ func TestStagedSpecCountUsesFactsStatusReader(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	if got := stagedSpecCount(root); got != 1 {
 		t.Fatalf("stagedSpecCount = %d, want 1", got)
@@ -43,7 +42,7 @@ func TestStagedSpecCountUsesFactsStatusReader(t *testing.T) {
 
 	fifoRoot := t.TempDir()
 	if err := syscall.Mkfifo(filepath.Join(fifoRoot, "specs"), 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	done := make(chan int, 1)
 	go func() {

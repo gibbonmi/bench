@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -194,10 +195,7 @@ func gateEntryRefusal(t *testing.T, dir string, env []string, gatePath string) s
 // the script path.
 func newGateEntryFixture(t *testing.T, h Harness) (root, kit, nested, gatePath string) {
 	t.Helper()
-	root = t.TempDir()
-	if probe := runAt(root, "git", "init", "-q"); probe == nil || probe.ExitCode != 0 {
-		t.Fatalf("git init failed: %+v", probe)
-	}
+	root = gittest.Repo(t)
 	nested = filepath.Join(root, "nested [*] path")
 	if err := os.MkdirAll(nested, 0o755); err != nil {
 		t.Fatalf("mkdir nested gate cwd: %v", err)

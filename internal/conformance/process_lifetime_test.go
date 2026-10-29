@@ -18,7 +18,7 @@ import (
 const processLifetimeOwner = "internal/subprocess"
 
 // processLifetimeOwnerImport is the import path that the owner calls resolve through.
-const processLifetimeOwnerImport = "github.com/gibbonmi/bench/" + processLifetimeOwner
+const processLifetimeOwnerImport = benchModule + processLifetimeOwner
 
 // processLifetimeOwnerCalls are the shared owner entries that a census caller must reach.
 var processLifetimeOwnerCalls = []string{"NewLifetime", "RunInherited"}

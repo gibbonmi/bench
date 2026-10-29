@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // probeLogName is the spill target for full probe output. It sits beside the gate cache
@@ -145,8 +147,7 @@ func TestFormatProbeFailureLabelsMissingOutput(t *testing.T) {
 }
 
 func TestFormatProbeFailureSpillsFullOutputToGitDirLog(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	stale := filepath.Join(root, ".git", probeLogName)
 	if err := os.WriteFile(stale, []byte("stale previous-run entry\n"), 0o644); err != nil {
 		t.Fatal(err)

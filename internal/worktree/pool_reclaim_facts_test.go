@@ -90,7 +90,7 @@ func TestReclaimFactAdapterTranslatesHostileShapesUnopened(t *testing.T) {
 	child := filepath.Join(f.pool, "fifo-git", "wt")
 	mustMkdirAll(t, child, 0o755)
 	if err := syscall.Mkfifo(filepath.Join(child, ".git"), 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, "FIFOs unavailable on this filesystem: "+err.Error())
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	fifo := gatherPoolKeyFacts(filepath.Join(f.pool, "fifo-git"), "fifo-git")
 	pointer := fifo.Children[0].Pointer

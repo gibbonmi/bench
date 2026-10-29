@@ -16,6 +16,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -45,24 +46,6 @@ func shiftWorktreePath(t *testing.T, output string) string {
 	return m[1]
 }
 
-func runGitCmd(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-}
-
-func runGitOutput(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-	return string(out)
-}
-
 // requireRetainedWorktree asserts the shift named its charged worktree as the recovery
 // pointer and left the tree locked in place with its dirty work on disk.
 func requireRetainedWorktree(t *testing.T, root, stdout string) {
@@ -71,7 +54,7 @@ func requireRetainedWorktree(t *testing.T, root, stdout string) {
 	if !strings.Contains(stdout, "worktree:"+wt) {
 		t.Fatalf("stdout did not name the retained worktree as the recovery pointer:\n%s", stdout)
 	}
-	porcelain := runGitOutput(t, root, "worktree", "list", "--porcelain")
+	porcelain := string(gittest.OutputBytes(t, root, "worktree", "list", "--porcelain"))
 	if !strings.Contains(porcelain, "worktree "+wt) || !strings.Contains(porcelain, "locked") {
 		t.Fatalf("worktree was not retained and locked:\n%s", porcelain)
 	}
@@ -88,19 +71,7 @@ func requireRetainedWorktree(t *testing.T, root, stdout string) {
 // fixtures share.
 func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) (root string) {
 	t.Helper()
-	root = t.TempDir()
-	runGit := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v failed: %v\n%s", args, err, out)
-		}
-	}
-	runGit("init", "-q", "-b", "main")
-	// The shift loop runs its own git commit here, so the identity has to sit in the
-	// repository config. A per-command -c leaves the product's commit without an author.
-	runGit("config", "user.email", "bench@local")
-	runGit("config", "user.name", "bench")
+	root = gittest.RepoOnBranch(t, "main")
 	f := testrepo.NewGateFixture(t.TempDir())
 	if err := f.Write(root, f.Command("bash")+" -c "+sanitize.ShellQuote(gateScript), ""); err != nil {
 		t.Fatal(err)
@@ -108,8 +79,8 @@ func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) 
 	if extra != nil {
 		extra(root)
 	}
-	runGit("add", "-A")
-	runGit("commit", "-q", "-m", "init")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "init")
 	admitShiftFixture(t, root)
 
 	oldWD, err := os.Getwd()
@@ -170,8 +141,8 @@ func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
 	branch := shiftBranchName(t, stdout.String())
-	if out, err := exec.Command("git", "-C", root, "rev-list", "--count", "HEAD.."+branch).CombinedOutput(); err != nil || string(bytes.TrimSpace(out)) != "0" {
-		t.Fatalf("staging-fault shift committed a partial tree: count=%q err=%v", out, err)
+	if count := gittest.Output(t, root, "rev-list", "--count", "HEAD.."+branch); count != "0" {
+		t.Fatalf("staging-fault shift committed a partial tree: count=%q", count)
 	}
 	requireRetainedWorktree(t, root, stdout.String())
 }
@@ -249,7 +220,7 @@ func TestLoopRetainsAndLocksDirtyWorktree(t *testing.T) {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
 	requireRetainedWorktree(t, root, stdout.String())
-	if refs := runGitOutput(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); strings.TrimSpace(refs) != "" {
+	if refs := gittest.Output(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); refs != "" {
 		t.Fatalf("a preserving failure authored recovery refs:\n%s", refs)
 	}
 	leaseFound := false

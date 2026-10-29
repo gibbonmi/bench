@@ -443,7 +443,7 @@ func copyKitRepository(t *testing.T, pattern string) string {
 		}
 	}
 	systemGit(t, repo, "add", "-A")
-	systemGit(t, repo, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "kit copy")
+	systemGit(t, repo, systemCommitArgs("-qm", "kit copy")...)
 	return repo
 }
 

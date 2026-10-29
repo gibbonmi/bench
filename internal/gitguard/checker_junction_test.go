@@ -2,7 +2,6 @@ package gitguard
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -71,18 +70,18 @@ func pushCompositionCases() []struct {
 	)
 	onMain := func(t *testing.T) string {
 		root := topicRepo(t)
-		runGit(t, root, "checkout", "-q", "main")
+		gittest.MustRun(t, root, "checkout", "-q", "main")
 		return root
 	}
 	detached := func(t *testing.T) string {
 		root := topicRepo(t)
-		runGit(t, root, "checkout", "-q", "--detach", "HEAD")
+		gittest.MustRun(t, root, "checkout", "-q", "--detach", "HEAD")
 		return root
 	}
 	mode := func(name string) func(t *testing.T) string {
 		return func(t *testing.T) string {
 			root := topicRepo(t)
-			runGit(t, root, "config", "push.default", name)
+			gittest.MustRun(t, root, "config", "push.default", name)
 			return root
 		}
 	}
@@ -94,7 +93,7 @@ func pushCompositionCases() []struct {
 	}{
 		{"allowProtectedPush does not lift the default-branch rule", func(t *testing.T) string {
 			root := onMain(t)
-			runGit(t, root, "config", "bench.allowProtectedPush", "true")
+			gittest.MustRun(t, root, "config", "bench.allowProtectedPush", "true")
 			return root
 		}, "git push origin main", toDefault},
 		{"bare push on a topic branch with push.default unset allows", topicRepo, "git push", ""},
@@ -147,20 +146,16 @@ func TestClassifyRealCheckerTimeoutComposition(t *testing.T) {
 	}
 }
 
-// gc1Repo builds a temp repo with one commit on "main" and one branch "feature",
-// exercising the exec-git-in-test idiom.
+// gc1Repo builds a temp repo with one commit on "main" and one branch "feature".
 func gc1Repo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
-	runGit(t, root, "config", "user.email", "test@example.invalid")
-	runGit(t, root, "config", "user.name", "Test")
+	root := gittest.RepoOnBranch(t, "main")
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", ".")
-	runGit(t, root, "commit", "-qm", "initial")
-	runGit(t, root, "branch", "feature")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "initial")
+	gittest.MustRun(t, root, "branch", "feature")
 	return root
 }
 
@@ -174,14 +169,6 @@ func realChecker() Checker {
 		DefaultBranch:   func() (string, bool) { return git.ResolvedDefault(".") },
 		CheckedOut:      func() (string, bool) { return git.CheckedOutName(".") },
 		BareDestination: func() (string, bool) { return git.BarePushDestination(".") },
-	}
-}
-
-func runGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
 }
 

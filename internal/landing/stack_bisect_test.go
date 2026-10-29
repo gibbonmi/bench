@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 const (
@@ -79,7 +80,7 @@ func (run bisectRun) assertPublishedPrefix(t *testing.T, attributed, k int) {
 	if want := []string{"refs/heads/main " + run.f.base + " " + merge}; !slices.Equal(run.record.updates, want) {
 		t.Fatalf("ref updates = %q, want %q", run.record.updates, want)
 	}
-	if parents := git(t, run.f.root, "rev-list", "--parents", "-n", "1", merge); !strings.HasSuffix(parents, " "+run.f.members[k-1].tip) {
+	if parents := gittest.Output(t, run.f.root, "rev-list", "--parents", "-n", "1", merge); !strings.HasSuffix(parents, " "+run.f.members[k-1].tip) {
 		t.Fatalf("published merge %s has parents %q, want the merge of member %d", merge, parents, k)
 	}
 }
@@ -134,7 +135,7 @@ func TestLandStackBisectsToTheRedMember(t *testing.T) {
 	moveDuringPrefix3 := func(member int) func(stackLanding, int) {
 		return func(f stackLanding, p int) {
 			if p == 3 {
-				git(t, f.members[member-1].worktree, "commit", "--allow-empty", "-qm", "moved during the grade")
+				gittest.MustRun(t, f.members[member-1].worktree, "commit", "--allow-empty", "-qm", "moved during the grade")
 			}
 		}
 	}

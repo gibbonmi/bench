@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,7 +21,7 @@ func newResidueGuardFixture(t *testing.T, request string) ownedAssignment {
 	root := newWorktreeRepo(t)
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("dist/\n"), 0o644)
 	gitRun(t, root, "add", ".gitignore")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore build output")
+	gitRun(t, root, withIdentity("commit", "-qm", "ignore build output")...)
 	mustMkdirAll(t, filepath.Join(root, ".bench"), 0o755)
 	mustWrite(t, filepath.Join(root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"dist/\"]}\n"), 0o644)
 	home := filepath.Join(root, ".bench-home")
@@ -110,7 +109,7 @@ func TestIsRunningBinaryResolvesThroughASymlink(t *testing.T) {
 	mustWrite(t, real, []byte("binary\n"), 0o755)
 	link := filepath.Join(dir, "bench-link")
 	if err := os.Symlink(real, link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("cannot create a symlink: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	if !isRunningBinary(stubbedLiveBinaryJoins(link), real) {
 		t.Error("isRunningBinary = false for the target of the resolved symlink, want true")

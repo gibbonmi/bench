@@ -3,7 +3,6 @@ package maps
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -29,8 +28,9 @@ var citingIndex = strings.Replace(splitIndex, "## Sources\n",
 func freshnessRepo(t *testing.T) string {
 	t.Helper()
 	root := gittest.Repo(t)
-	commitGit(t, root, "config", "user.email", "fixture@example.invalid")
-	commitGit(t, root, "config", "user.name", "Fixture")
+	for _, args := range gittest.IdentityConfig() {
+		gittest.MustRun(t, root, args...)
+	}
 	writeSplitMap(t, root, "decisions/alpha.md", citingIndex, map[string]string{"1.md": splitTicket})
 	writeAsset(t, root, "first\n")
 	return root
@@ -47,24 +47,14 @@ func writeAsset(t *testing.T, root, body string) {
 	}
 }
 
-func commitGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %s: %v: %s", strings.Join(args, " "), err, out)
-	}
-}
-
 // commitAt commits the named paths at a fixed date. The dates are fixed because two
 // commits made in the same second would leave the compare with nothing to order.
 func commitAt(t *testing.T, root, date string, paths ...string) {
 	t.Helper()
-	commitGit(t, root, append([]string{"add", "--"}, paths...)...)
-	cmd := exec.Command("git", "-C", root, "commit", "-q", "-m", date)
-	cmd.Env = append(os.Environ(), "GIT_AUTHOR_DATE="+date, "GIT_COMMITTER_DATE="+date)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git commit %s: %v: %s", date, err, out)
-	}
+	gittest.MustRun(t, root, append([]string{"add", "--"}, paths...)...)
+	t.Setenv("GIT_AUTHOR_DATE", date)
+	t.Setenv("GIT_COMMITTER_DATE", date)
+	gittest.Commit(t, root, date)
 }
 
 func TestCommandProjectsTheStaleRowOnlyWhenTheAssetIsCommittedAfterTheIndex(t *testing.T) {

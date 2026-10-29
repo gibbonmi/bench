@@ -238,7 +238,7 @@ func TestBuildWritesOnlyUnderDist(t *testing.T) {
 	f := newOwnedAssignment(t, "build-writes-under-dist")
 	plantBuildScript(t, f.creation.Path, "declared-output")
 	gitRun(t, f.creation.Path, "add", "scripts/go-build.sh")
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "add the build script")
+	gitRun(t, f.creation.Path, withIdentity("commit", "-qm", "add the build script")...)
 	r := runVerb(t, verbBuild, repoHome{f.root, Home()}.callWith(defaultJoins(), f.creation.Assignment.Label))
 	requireTest(t, r.exit == 0, "build exit = %d, stderr %q", r.exit, r.stderr)
 	listing, err := descendant(t, "git", "-C", f.creation.Path, "status", "--porcelain", "--untracked-files=all").Output()

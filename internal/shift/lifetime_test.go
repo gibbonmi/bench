@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
@@ -147,13 +148,13 @@ func TestCheckpointTeardownFaultKeepsResponse(t *testing.T) {
 // can still change stay. Once the user resolves, the rollback discards both.
 func TestProtectedRollback(t *testing.T) {
 	root := t.TempDir()
-	runGitCmd(t, root, "init", "-q", "-b", "main")
+	gittest.MustRun(t, root, "init", "-q", "-b", "main")
 	tracked, sentinel := filepath.Join(root, "tracked.txt"), filepath.Join(root, "sentinel")
 	if err := os.WriteFile(tracked, []byte("base\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGitCmd(t, root, "add", "tracked.txt")
-	runGitCmd(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "base")
+	gittest.MustRun(t, root, "add", "tracked.txt")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "base")...)
 	for path, body := range map[string]string{tracked: "changed\n", sentinel: "child output\n"} {
 		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 			t.Fatal(err)

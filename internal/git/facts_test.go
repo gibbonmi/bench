@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestWorktreeDirty(t *testing.T) {
@@ -27,11 +29,11 @@ func TestWorktreeDirty(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertDirty(true)
-	runGit(t, root, "config", "status.showUntrackedFiles", "no")
+	gittest.MustRun(t, root, "config", "status.showUntrackedFiles", "no")
 	assertDirty(false)
-	runGit(t, root, "add", "--", path)
+	gittest.MustRun(t, root, "add", "--", path)
 	assertDirty(true)
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "stage fixture")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "stage fixture")...)
 	assertDirty(false)
 	if err := os.WriteFile(path, []byte("changed\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -53,7 +55,7 @@ func TestWorktreeDirty(t *testing.T) {
 // clean working tree hashes to HEAD's tree object.
 func TestTreeHashCleanTreeMatchesHEAD(t *testing.T) {
 	root := newRepo(t)
-	want := runGit(t, root, "rev-parse", "HEAD^{tree}")
+	want := string(gittest.OutputBytes(t, root, "rev-parse", "HEAD^{tree}"))
 	want = want[:len(want)-1] // strip trailing newline
 	got := TreeHash(root)
 	if got != want {
@@ -89,10 +91,7 @@ func TestTreeHashDirtyTreeDiffers(t *testing.T) {
 }
 
 func TestAllFilesFactsExpandsWithoutChangingFacts(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init", "-q", "-b", "main")
-	runGit(t, root, "config", "user.email", "t@example.com")
-	runGit(t, root, "config", "user.name", "t")
+	root := gittest.RepoOnBranch(t, "main")
 	if err := os.MkdirAll(filepath.Join(root, "nested", "new"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -120,8 +119,8 @@ func TestTreeHashExcludesIgnoredContent(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored/\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", ".gitignore")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ignore fixture")
+	gittest.MustRun(t, root, "add", ".gitignore")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "ignore fixture")...)
 	clean := TreeHash(root)
 	if err := os.MkdirAll(filepath.Join(root, "ignored"), 0o755); err != nil {
 		t.Fatal(err)
@@ -147,7 +146,7 @@ func TestTreeHashNonRepoReturnsNone(t *testing.T) {
 func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	root := newRepo(t)
 	before := listDir(t, root)
-	index := runGit(t, root, "write-tree")
+	index := string(gittest.OutputBytes(t, root, "write-tree"))
 	_ = TreeHash(root)
 	after := listDir(t, root)
 
@@ -157,7 +156,7 @@ func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	if len(after) != len(before) {
 		t.Fatalf("TreeHash changed the working tree: before %v, after %v", before, after)
 	}
-	if got := runGit(t, root, "write-tree"); got != index {
+	if got := string(gittest.OutputBytes(t, root, "write-tree")); got != index {
 		t.Fatalf("TreeHash changed the real index from %q to %q", index, got)
 	}
 }
@@ -177,24 +176,24 @@ func listDir(t *testing.T, dir string) []string {
 
 func TestLandedStateCountsDirtyPathsOnlyInNamedCheckout(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "main")
-	runGit(t, root, "remote", "add", "origin", root)
-	runGit(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	gittest.MustRun(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "remote", "add", "origin", root)
+	gittest.MustRun(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
 	linked := filepath.Join(t.TempDir(), "feature worktree")
-	runGit(t, root, "worktree", "add", "-q", "-b", "feature", linked, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "-b", "feature", linked, "HEAD")
 	if err := os.WriteFile(filepath.Join(linked, "a.txt"), []byte("dirty\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "checkout", "-q", "-b", "ahead")
+	gittest.MustRun(t, root, "checkout", "-q", "-b", "ahead")
 	if err := os.WriteFile(filepath.Join(root, "b.txt"), []byte("ahead\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "b.txt")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ahead")
-	runGit(t, root, "branch", "ahead-copy")
+	gittest.MustRun(t, root, "add", "b.txt")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "ahead")...)
+	gittest.MustRun(t, root, "branch", "ahead-copy")
 	for _, branch := range []string{"ahead", "ahead-copy"} {
-		runGit(t, root, "config", "branch."+branch+".remote", "origin")
-		runGit(t, root, "config", "branch."+branch+".merge", "refs/heads/main")
+		gittest.MustRun(t, root, "config", "branch."+branch+".remote", "origin")
+		gittest.MustRun(t, root, "config", "branch."+branch+".merge", "refs/heads/main")
 	}
 	if err := os.WriteFile(filepath.Join(root, "a.txt"), []byte("root dirty\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -225,16 +224,16 @@ func TestLandedStateCountsDirtyPathsOnlyInNamedCheckout(t *testing.T) {
 
 func TestLandedStateCountsDefaultBranchUpstreamAhead(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "main")
-	runGit(t, root, "remote", "add", "origin", root)
-	runGit(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
-	runGit(t, root, "config", "branch.main.remote", "origin")
-	runGit(t, root, "config", "branch.main.merge", "refs/heads/main")
+	gittest.MustRun(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "remote", "add", "origin", root)
+	gittest.MustRun(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	gittest.MustRun(t, root, "config", "branch.main.remote", "origin")
+	gittest.MustRun(t, root, "config", "branch.main.merge", "refs/heads/main")
 	if err := os.WriteFile(filepath.Join(root, "ahead.txt"), []byte("ahead\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "ahead.txt")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ahead")
+	gittest.MustRun(t, root, "add", "ahead.txt")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "ahead")...)
 
 	state, err := LandedState(root)
 	if err != nil {
@@ -247,9 +246,9 @@ func TestLandedStateCountsDefaultBranchUpstreamAhead(t *testing.T) {
 
 func TestLandedStateIgnoresDirtySiblingWithNewlinePath(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "branch", "-M", "main")
 	linked := filepath.Join(t.TempDir(), "linked\nworktree")
-	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	if err := os.WriteFile(filepath.Join(linked, "a.txt"), []byte("dirty\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -265,9 +264,9 @@ func TestLandedStateIgnoresDirtySiblingWithNewlinePath(t *testing.T) {
 
 func TestLandedStateIgnoresUnreadableSibling(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "main")
+	gittest.MustRun(t, root, "branch", "-M", "main")
 	linked := filepath.Join(t.TempDir(), "missing-worktree")
-	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	if err := os.RemoveAll(linked); err != nil {
 		t.Fatal(err)
 	}

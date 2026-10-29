@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // TestAssignmentForWorktreeMatchesThroughASymlink covers the hostile-path row: a tree
@@ -13,7 +15,7 @@ import (
 func TestAssignmentForWorktreeMatchesThroughASymlink(t *testing.T) {
 	root := newRepo(t)
 	tree := filepath.Join(t.TempDir(), "tree")
-	runGit(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
 	want := putActive(t, root, tree, "lookup-symlink")
 
 	link := filepath.Join(t.TempDir(), "link")
@@ -32,7 +34,7 @@ func TestAssignmentForWorktreeMatchesThroughASymlink(t *testing.T) {
 func TestAssignmentForWorktreeIgnoresARetiredAssignment(t *testing.T) {
 	root := newRepo(t)
 	tree := filepath.Join(t.TempDir(), "tree")
-	runGit(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", tree, "HEAD")
 	retired := putActive(t, root, tree, "lookup-retired")
 	retired.State = StateCleanupPending
 	if err := PutAssignment(root, retired); err != nil {

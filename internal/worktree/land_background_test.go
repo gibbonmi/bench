@@ -188,7 +188,7 @@ func backgroundLightLanding(t *testing.T, f landingFixture, request string) land
 	mustMkdirAll(t, filepath.Dir(wrapper), 0o755)
 	mustWrite(t, wrapper, []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	gitRun(t, f.root, "add", "bin/bench.sh")
-	gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "wrapper")
+	gitRun(t, f.root, withIdentity("commit", "-qm", "wrapper")...)
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
 	return lightLandingOn(t, f, request)
 }

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // mergeNameSetRefusal opens the refusal of a name set that omits a merged path.
@@ -20,7 +21,7 @@ const mergeNameSetRefusal = "pending merge changed paths that the commit does no
 func assertParents(t *testing.T, root, commit string, want ...string) {
 	t.Helper()
 	line := strings.Join(append([]string{commit}, want...), " ")
-	if got := git(t, root, "rev-list", "--parents", "-n", "1", commit); got != line {
+	if got := gittest.Output(t, root, "rev-list", "--parents", "-n", "1", commit); got != line {
 		t.Fatalf("commit and parents = %q, want %q", got, line)
 	}
 }
@@ -35,7 +36,7 @@ func TestLandRefusesAnUnreadableMergeState(t *testing.T) {
 	if err == nil || errors.As(err, new(NamedPathError)) || !strings.HasPrefix(err.Error(), "read pending merge:") {
 		t.Fatalf("Land error = %v, want a plain read pending merge refusal", err)
 	}
-	if head := git(t, root, "rev-parse", "HEAD"); head != base {
+	if head := gittest.Output(t, root, "rev-parse", "HEAD"); head != base {
 		t.Fatalf("HEAD moved from %s to %s", base, head)
 	}
 }
@@ -102,7 +103,7 @@ func TestLandRecordsEachMergeHeadAsAParent(t *testing.T) {
 	}{
 		{"one merge head", func(t *testing.T) (string, string, []string, []string) {
 			root, base := pendingMerge(t)
-			return root, base, []string{git(t, root, "rev-parse", mergeIncoming)}, mergeNameSet
+			return root, base, []string{gittest.Output(t, root, "rev-parse", mergeIncoming)}, mergeNameSet
 		}},
 		{"octopus merge", octopusMerge},
 	} {
@@ -126,7 +127,7 @@ func TestComposeAfterMergeCommitReadsTheMergedBase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	incoming := git(t, root, "rev-parse", mergeIncoming)
+	incoming := gittest.Output(t, root, "rev-parse", mergeIncoming)
 	composition, err := greenOwner().Compose(CompositionRequest{Root: root, Destination: incoming, Source: got.Commit})
 	if err != nil || composition.Conflict.Kind != "" || composition.Base != incoming {
 		t.Fatalf("Compose = %+v, %v; want no conflict over the merge base %s", composition, err, incoming)
@@ -147,7 +148,7 @@ func TestLandRefusesAMergeStateChangeDuringAuthorization(t *testing.T) {
 		}
 	}
 	plant := func(t *testing.T, root, mergeHead string) {
-		plantHeads(t, mergeHead, git(t, root, "rev-parse", "main"))
+		plantHeads(t, mergeHead, gittest.Output(t, root, "rev-parse", "main"))
 	}
 	reverse := func(t *testing.T, _, mergeHead string) {
 		heads := strings.Fields(string(mustRead(t, mergeHead)))
@@ -196,7 +197,7 @@ func TestLandRefusesAMergeStateChangeDuringAuthorization(t *testing.T) {
 			if err == nil || errors.As(err, new(NamedPathError)) || !strings.HasPrefix(err.Error(), row.want) {
 				t.Fatalf("Land error = %v, want the plain refusal %q", err, row.want)
 			}
-			if head := git(t, root, "rev-parse", "HEAD"); head != base {
+			if head := gittest.Output(t, root, "rev-parse", "HEAD"); head != base {
 				t.Fatalf("HEAD moved from %s to %s", base, head)
 			}
 		})
@@ -215,13 +216,13 @@ func TestLandPublishesAMergeWithAnUnchangedTree(t *testing.T) {
 		{"ours resolution", func(t *testing.T) (string, string, []string) {
 			root, base := pendingMerge(t)
 			for _, path := range mergeNameSet {
-				write(t, root, path, string(gitBytes(t, root, "show", "HEAD:"+path)))
+				write(t, root, path, string(gittest.OutputBytes(t, root, "show", "HEAD:"+path)))
 			}
 			return root, base, mergeNameSet
 		}},
 		{"no merged path", func(t *testing.T) (string, string, []string) {
 			root, base := mergeCheckout(t)
-			git(t, root, "merge", "--no-commit", "--no-ff", "-s", "ours", mergeIncoming)
+			gittest.MustRun(t, root, "merge", "--no-commit", "--no-ff", "-s", "ours", mergeIncoming)
 			return root, base, []string{"named"}
 		}},
 	} {
@@ -231,10 +232,10 @@ func TestLandPublishesAMergeWithAnUnchangedTree(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Land error = %v, want a publication", err)
 			}
-			if tree, want := git(t, root, "rev-parse", got.Commit+"^{tree}"), git(t, root, "rev-parse", base+"^{tree}"); tree != want {
+			if tree, want := gittest.Output(t, root, "rev-parse", got.Commit+"^{tree}"), gittest.Output(t, root, "rev-parse", base+"^{tree}"); tree != want {
 				t.Fatalf("published tree = %s, want the base tree %s", tree, want)
 			}
-			assertParents(t, root, got.Commit, base, git(t, root, "rev-parse", mergeIncoming))
+			assertParents(t, root, got.Commit, base, gittest.Output(t, root, "rev-parse", mergeIncoming))
 		})
 	}
 }
@@ -252,7 +253,7 @@ func TestLandEndsThePendingMerge(t *testing.T) {
 	if _, err := greenOwner().Land(context.Background(), topicLanding(root, base, mergeNameSet...)); err != nil {
 		t.Fatal(err)
 	}
-	if unmerged := git(t, root, "ls-files", "-u"); unmerged != "" {
+	if unmerged := gittest.Output(t, root, "ls-files", "-u"); unmerged != "" {
 		t.Errorf("unmerged entries after the merge commit = %q", unmerged)
 	}
 	for _, name := range mergeStateFiles {
@@ -271,10 +272,10 @@ func TestLandReportsPublishedMergeWhenReconciliationFails(t *testing.T) {
 	o.reconcile = func(Request, []string, composedSnapshot) error { return os.ErrPermission }
 	got, err := o.Land(context.Background(), topicLanding(root, base, mergeNameSet...))
 	var remainder *PublishedUnreconciledError
-	if !errors.As(err, &remainder) || !errors.Is(err, os.ErrPermission) || remainder.Commit != got.Commit || git(t, root, "rev-parse", "HEAD") != got.Commit {
+	if !errors.As(err, &remainder) || !errors.Is(err, os.ErrPermission) || remainder.Commit != got.Commit || gittest.Output(t, root, "rev-parse", "HEAD") != got.Commit {
 		t.Fatalf("Land = %+v, %v; want the remainder of the published commit", got, err)
 	}
-	assertParents(t, root, got.Commit, base, git(t, root, "rev-parse", mergeIncoming))
+	assertParents(t, root, got.Commit, base, gittest.Output(t, root, "rev-parse", mergeIncoming))
 	if mergeStatePresent(t, root, "MERGE_HEAD") {
 		t.Fatal("MERGE_HEAD remains after the reconcile failure")
 	}

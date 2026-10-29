@@ -289,9 +289,7 @@ func TestSourceTipThatIsNotHeadRefusesAndNamesBothCommits(t *testing.T) {
 	if err != nil {
 		t.Fatalf("git root: %v", err)
 	}
-	if _, err := git.Output("-C", root, "checkout", "--detach", base); err != nil {
-		t.Fatalf("detach at the base: %v", err)
-	}
+	gittest.MustRun(t, root, "checkout", "--detach", base)
 	out, code := run(t, "--changed", "--base", base, "--source-tip", tip, "--full")
 	if code != 1 {
 		t.Fatalf("exit = %d, want 1; out=%q", code, out)

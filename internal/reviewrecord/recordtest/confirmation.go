@@ -1,6 +1,7 @@
 package recordtest
 
 import (
+	"github.com/gibbonmi/bench/internal/gittest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
@@ -58,7 +59,7 @@ func (f *Fixture) Bind(entry *rr.Verification, commit string) {
 func (f *Fixture) OffLine() string {
 	f.T.Helper()
 	chunk := f.Record.Chunks[len(f.Record.Chunks)-1]
-	return f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", chunk.Tip+"^{tree}", "-p", chunk.Base, "-m", "off the chunk line")
+	return f.Git(append(gittest.IdentityArgs(), "commit-tree", chunk.Tip+"^{tree}", "-p", chunk.Base, "-m", "off the chunk line")...)
 }
 
 // digestAt is the source digest of the tree of commit.

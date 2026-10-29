@@ -3,13 +3,13 @@ package commit
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
@@ -36,7 +36,7 @@ func runCommand(t *testing.T, root string, args ...string) (code int, stdout, st
 // headPaths lists every path the commit at HEAD tracks.
 func headPaths(t *testing.T, root string) []string {
 	t.Helper()
-	raw := runGit(t, root, "ls-tree", "-r", "--name-only", "-z", "HEAD")
+	raw := gittest.OutputBytes(t, root, "ls-tree", "-r", "--name-only", "-z", "HEAD")
 	var paths []string
 	for _, p := range strings.Split(string(raw), "\x00") {
 		if p != "" {
@@ -75,7 +75,7 @@ func TestSpecFlagIsAGrammarError(t *testing.T) {
 	if !strings.HasPrefix(stderr, "usage: bench commit") || !strings.Contains(stderr, "--spec") {
 		t.Fatalf("stderr = %q, want the usage line naming the unknown argument", stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 }
@@ -102,13 +102,13 @@ func TestHelpAdvertisesNoSpecFlag(t *testing.T) {
 // line is the committed record that names the published commit, so no caller asks git.
 func TestGreenLandingPublishesTheNamedPath(t *testing.T) {
 	root, before := landingRepo(t, 0, func(t *testing.T, root string) {})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+	after := gittest.Output(t, root, "rev-parse", "HEAD")
 	if after == before {
 		t.Fatal("HEAD did not move")
 	}
@@ -125,7 +125,7 @@ func TestGreenLandingPublishesTheNamedPath(t *testing.T) {
 
 func TestPrimaryCheckoutRefusesBeforePublication(t *testing.T) {
 	root, before := primaryLandingRepo(t, 0, func(t *testing.T, root string) {})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "must stay uncommitted\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
@@ -135,7 +135,7 @@ func TestPrimaryCheckoutRefusesBeforePublication(t *testing.T) {
 	if !strings.Contains(stderr, "bench worktree create") {
 		t.Fatalf("stderr = %q, want the worktree creation action", stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 }
@@ -144,31 +144,23 @@ func TestPrimaryCheckoutRefusesBeforePublication(t *testing.T) {
 // a path publishes its files and reconciles, so the checkout is clean afterwards.
 func TestGreenLandingPublishesATicketsOnlyFolderNamedAsAPath(t *testing.T) {
 	root, before := landingRepo(t, 0, func(t *testing.T, root string) {})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	writeTicketsOnly(t, root, ticketsSlug)
 	code, stdout, stderr := runCommand(t, root, "-m", "m", filepath.Join("specs", ticketsSlug))
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after == before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after == before {
 		t.Fatal("HEAD did not move")
 	}
 	if !headHasPrefix(t, root, "specs/"+ticketsSlug+"/tickets/one.md") {
 		t.Fatalf("published commit does not track the folder's files: %v", headPaths(t, root))
 	}
-	if status := string(runGit(t, root, "status", "--porcelain")); status != "" {
+	if status := gittest.Output(t, root, "status", "--porcelain"); status != "" {
 		t.Fatalf("checkout is not clean: %q", status)
 	}
 }
 
-func runGit(t *testing.T, root string, args ...string) []byte {
-	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-	return out
-}
 func mustMkdirAll(t *testing.T, dir string) {
 	t.Helper()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -237,11 +229,11 @@ func recordFields(t *testing.T, stdout string) (name string, fields map[string]s
 func publishedUnreconciled(t *testing.T, dir string) (root, stdout, published string) {
 	t.Helper()
 	root, before := landingRepo(t, 0, unreconcilableGate(dir))
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	namedDir(t, root, dir)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", dir)
-	published = strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD")))
+	published = gittest.Output(t, root, "rev-parse", "HEAD")
 	if code != 3 || published == before || stderr != "" {
 		t.Fatalf("exit = %d with HEAD %s from %s, want exit 3 past a publication and an empty stderr; stdout=%q stderr=%q", code, published, before, stdout, stderr)
 	}
@@ -317,7 +309,7 @@ func tipMovedFixture(rerun string) commitFaceFixture {
 // re-rendered the table would lose the one account of what failed.
 func TestCommitRelaysTheBoundedRedShapeThenItsRefusalRecord(t *testing.T) {
 	root, before := landingRepo(t, 0, cannedShapeGate(cannedRedShape, 1))
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
@@ -331,7 +323,7 @@ func TestCommitRelaysTheBoundedRedShapeThenItsRefusalRecord(t *testing.T) {
 	if !strings.Contains(stderr, "error: ") {
 		t.Errorf("stderr = %q, want the refusal record", stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Errorf("HEAD moved from %s to %s", before, after)
 	}
 }
@@ -339,7 +331,7 @@ func TestCommitRelaysTheBoundedRedShapeThenItsRefusalRecord(t *testing.T) {
 // FB5: a refusal before publication keeps exit 1 with the error: prefix and moves no ref.
 func TestRedGateRefusesWithExitOneAndMovesNoRef(t *testing.T) {
 	root, before := landingRepo(t, 1, func(t *testing.T, root string) {})
-	runGit(t, root, "reset", "-q", "--hard", "HEAD")
+	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	mustWrite(t, filepath.Join(root, "a.txt"), "landed\n", 0o644)
 	code, stdout, stderr := runCommand(t, root, "-m", "m", "a.txt")
 	if code != 1 {
@@ -348,7 +340,7 @@ func TestRedGateRefusesWithExitOneAndMovesNoRef(t *testing.T) {
 	if !strings.Contains(stderr, "error: ") {
 		t.Fatalf("stderr = %q, want the error: prefix", stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 }
@@ -363,7 +355,7 @@ func TestMissingMessageIsAGrammarError(t *testing.T) {
 	if !strings.Contains(stderr, "-m <msg> is required") {
 		t.Fatalf("stderr = %q, want the missing -m usage error", stderr)
 	}
-	if after := strings.TrimSpace(string(runGit(t, root, "rev-parse", "HEAD"))); after != before {
+	if after := gittest.Output(t, root, "rev-parse", "HEAD"); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 }

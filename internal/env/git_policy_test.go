@@ -63,9 +63,7 @@ func TestGitPolicyScanRejectsSpecialSources(t *testing.T) {
 			if err := os.WriteFile(path, nil, 0o600); err != nil {
 				t.Fatal(err)
 			}
-			if err := exec.Command("git", "-C", root, "add", "source.go").Run(); err != nil {
-				t.Fatal(err)
-			}
+			gittest.MustRun(t, root, "add", "source.go")
 			if err := os.Remove(path); err != nil {
 				t.Fatal(err)
 			}
@@ -75,10 +73,10 @@ func TestGitPolicyScanRejectsSpecialSources(t *testing.T) {
 					t.Fatal(err)
 				}
 				if err := os.Symlink(target, path); err != nil {
-					capability.Capability(t, capability.Symlink, err.Error())
+					capability.Unavailable(t, capability.Symlink, err.Error())
 				}
 			} else if err := syscall.Mkfifo(path, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, err.Error())
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			if _, err := gitPolicyFindings(root); err == nil || !strings.Contains(err.Error(), "source.go") {
 				t.Fatalf("special source refusal = %v, want an error naming source.go", err)

@@ -1,8 +1,8 @@
 # Enforce completed fixture ownership
 
 Blocked by: 12-migrate-capability-conformance-callers.md
-Writes: internal/conformance/checks_test.go, internal/conformance/git_fixture_owner_test.go (new), internal/conformance/git_plumbing_owner_test.go, internal/conformance/ordinary_build_census_test.go, internal/conformance/registry/checks.go, internal/conformance/skip_ownership_test.go, internal/conformance/skip_reason_owner_test.go (new), internal/conformance/testdata/fixture-skip-classes.json (new), internal/conformance/tier_test.go
-Covers: GF10, GF24, GF25, GF26, GF27, GF28, GF31, GF30
+Writes: internal/conformance/checks_test.go, internal/conformance/git_fixture_owner_test.go (new), internal/conformance/git_plumbing_owner_test.go, internal/conformance/ordinary_build_census_test.go, internal/conformance/registry/checks.go, internal/conformance/skip_ownership_test.go, internal/conformance/skip_reason_owner_test.go (new), internal/conformance/testdata/fixture-skip-classes.json (new), internal/conformance/tier_test.go, internal/conformance/tier_live_tree_test.go, internal/conformance/process_lifetime_test.go, internal/worktree/test_run_test.go
+Covers: GF10, GF18, GF24, GF25, GF26, GF27, GF28, GF31, GF30
 
 ## What to build
 
@@ -10,9 +10,13 @@ Extend the existing Git and skip ownership checks after all migrations pass. Reu
 
 Plant one generic Git runner outside gittest. The registered ownership check fails. Restore it, then repeat with a duplicate identity and an unconverted capability caller.
 
+The ordinary-build census skips every `internal/systemtest` site today, so no gate refuses a Git process that bypasses `owner.runAt`. Replace that skip with an exact list of allowed sites, by file and enclosing function, through the existing architecture scan.
+Classify the non-Git system processes and the existing `gittest` commits in the process-lifetime cache and preservation tests in that list. Then swap the `owner.runAt` call in `systemGit` for a direct process, and show the census red (GF18).
+
 ## Acceptance
 
 - [ ] Every former testrepo Git export caller reaches gittest (GF10).
+- [ ] A system Git process that bypasses owner.runAt fails the ordinary-build census (GF18).
 - [ ] A planted generic Git runner outside gittest fails the registered check (GF24).
 - [ ] A planted default identity outside gittest fails the registered check (GF25).
 - [ ] A planted direct FIFO or symlink skip caller fails the registered check (GF26).

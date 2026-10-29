@@ -159,7 +159,7 @@ func TestLandCommandHostileSourceInputsRefuseBoundedly(t *testing.T) {
 				t.Fatal(err)
 			}
 			if err := syscall.Mkfifo(path, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 		}},
 	} {

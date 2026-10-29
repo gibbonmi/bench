@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"syscall"
@@ -70,7 +69,7 @@ func TestPublishAdmittedDecidesUnderTheLock(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := syscall.Mkfifo(lock+".fifo", 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	if err := os.Rename(lock+".fifo", lock); err != nil {
 		t.Fatal(err)

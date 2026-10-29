@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -23,7 +24,7 @@ func putSelectedAssignment(t *testing.T, root, id, owner string) intent.Assignme
 	assignment := intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: id, OwnerID: owner,
 		Request: intent.RequestDigest("selected-route-" + id), RequestToken: "selected-route-" + id,
-		Label: "selected route " + id[:1], Start: strings.TrimSpace(runAXIGit(t, "-C", root, "rev-parse", "HEAD")),
+		Label: "selected route " + id[:1], Start: gittest.Output(t, root, "rev-parse", "HEAD"),
 		Branch: intent.AssignmentBranchRef(owner, id), Worktree: filepath.Join(root, "missing tree "+id[:1]), State: intent.StateComplete,
 	}
 	if err := intent.PutAssignment(root, assignment); err != nil {
@@ -102,7 +103,7 @@ func retireSpecs(t *testing.T, root string, count int, slugs ...string) {
 	t.Helper()
 	for _, slug := range slugs {
 		for i := 0; i < count; i++ {
-			runAXIGit(t, "-C", root, "commit", "--allow-empty", "-qm", "spec-retire: "+slug)
+			gittest.Commit(t, root, "spec-retire: "+slug, "--allow-empty")
 		}
 	}
 }

@@ -23,7 +23,7 @@ func addLocalCaptureIgnore(t *testing.T, root string, foreign string) (string, s
 	}
 	mustWrite(t, filepath.Join(root, ".gitignore"), []byte(ignore), 0o644)
 	gitRun(t, root, "add", ".gitignore")
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "ignore local capture")
+	gitRun(t, root, withIdentity("commit", "-qm", "ignore local capture")...)
 	return gitOutput(t, root, "rev-parse", "HEAD"), ignore
 }
 

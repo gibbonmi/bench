@@ -82,9 +82,9 @@ func treeRowRepo(t *testing.T) string {
 	root := gittest.RepoOnBranch(t, "main")
 	t.Setenv("GIT_AUTHOR_DATE", "2026-01-01T00:00:00Z")
 	t.Setenv("GIT_COMMITTER_DATE", "2026-01-01T00:00:00Z")
-	runAXIGit(t, "-C", root, "commit", "--allow-empty", "-qm", "base")
+	gittest.Commit(t, root, "base", "--allow-empty")
 	t.Chdir(root)
-	return treeRowHeader + "  primary," + strings.TrimSpace(runAXIGit(t, "-C", root, "rev-parse", "HEAD")) + ",false\n"
+	return treeRowHeader + "  primary," + gittest.Output(t, root, "rev-parse", "HEAD") + ",false\n"
 }
 
 // runTreeCall runs argv through the production dispatcher and answers both streams.

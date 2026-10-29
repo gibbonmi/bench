@@ -3,7 +3,6 @@ package treetarget
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,16 +15,6 @@ import (
 // `unassigned`, `none`, `unknown`, and a bare bool for the dirty cell. A fallback that
 // prints another word, or an empty cell, reds these rows.
 
-// gitIn runs git in root and answers its trimmed output.
-func gitIn(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-	return strings.TrimSpace(string(out))
-}
-
 // committedRepo answers a primary checkout whose one commit tracks tracked.txt.
 func committedRepo(t *testing.T) string {
 	t.Helper()
@@ -33,8 +22,8 @@ func committedRepo(t *testing.T) string {
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitIn(t, root, "add", "tracked.txt")
-	gitIn(t, root, "commit", "-qm", "base")
+	gittest.MustRun(t, root, "add", "tracked.txt")
+	gittest.Commit(t, root, "base")
 	return root
 }
 
@@ -43,7 +32,7 @@ func committedRepo(t *testing.T) string {
 func linkedWorktree(t *testing.T, root string) string {
 	t.Helper()
 	linked := filepath.Join(t.TempDir(), "pool-dir-7f3a")
-	gitIn(t, root, "worktree", "add", "-q", "-b", "linked", linked)
+	gittest.MustRun(t, root, "worktree", "add", "-q", "-b", "linked", linked)
 	return linked
 }
 
@@ -53,7 +42,7 @@ func putAssignment(t *testing.T, root, path, label string, state intent.Assignme
 	id, owner := strings.Repeat("a", 32), strings.Repeat("b", 32)
 	err := intent.PutAssignment(root, intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: id, OwnerID: owner, Request: intent.RequestDigest("tree-target-" + label),
-		Label: label, Start: gitIn(t, root, "rev-parse", "HEAD"), Branch: intent.AssignmentBranchRef(owner, id),
+		Label: label, Start: gittest.Output(t, root, "rev-parse", "HEAD"), Branch: intent.AssignmentBranchRef(owner, id),
 		Worktree: path, State: state,
 	})
 	if err != nil {

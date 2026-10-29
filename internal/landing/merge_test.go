@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // mergeRequest binds one target checkout's observed fingerprint to the pair under test,
@@ -31,20 +32,20 @@ func mergeRequest(t *testing.T, root, branch, previous, incoming string) MergeRe
 // so the pair is linear and the caller chooses which end is the target.
 func linearPair(t *testing.T, root string) (base, tip string) {
 	t.Helper()
-	base = git(t, root, "rev-parse", "HEAD")
-	git(t, root, "checkout", "-qb", "source", base)
+	base = gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "checkout", "-qb", "source", base)
 	write(t, root, "added-by-source", "source\n")
-	git(t, root, "add", "-A")
-	git(t, root, "commit", "-qm", "source")
-	git(t, root, "branch", "destination", base)
-	return base, git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-qm", "source")
+	gittest.MustRun(t, root, "branch", "destination", base)
+	return base, gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // divergedPair commits one edit on each side of base and checks the target out.
 func divergedPair(t *testing.T, root string, destinationChange, sourceChange func()) (destination, source string) {
 	t.Helper()
-	destination, source = commitSides(t, root, git(t, root, "rev-parse", "HEAD"), destinationChange, sourceChange)
-	git(t, root, "checkout", "-q", "destination")
+	destination, source = commitSides(t, root, gittest.Output(t, root, "rev-parse", "HEAD"), destinationChange, sourceChange)
+	gittest.MustRun(t, root, "checkout", "-q", "destination")
 	return destination, source
 }
 
@@ -55,9 +56,9 @@ func captureBase(t *testing.T, root string, files map[string]string) string {
 	for path, content := range files {
 		write(t, root, path, content)
 	}
-	git(t, root, "add", "-A")
-	git(t, root, "commit", "-qm", "capture base")
-	return git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-qm", "capture base")
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // symlinkAt replaces a tracked file with a symlink, so that side carries a non-regular mode.
@@ -67,7 +68,7 @@ func symlinkAt(t *testing.T, root, path string) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink("target", full); err != nil {
-		capability.Capability(t, capability.Symlink, err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 
@@ -133,16 +134,16 @@ func TestMergePublishesPreviousTipAsFirstParent(t *testing.T) {
 	if got.Kind != MergeKindMerge {
 		t.Fatalf("kind = %q, want %q", got.Kind, MergeKindMerge)
 	}
-	if first := git(t, root, "rev-parse", got.Tip+"^1"); first != destination {
+	if first := gittest.Output(t, root, "rev-parse", got.Tip+"^1"); first != destination {
 		t.Fatalf("first parent = %s, want the previous tip %s", first, destination)
 	}
-	if second := git(t, root, "rev-parse", got.Tip+"^2"); second != source {
+	if second := gittest.Output(t, root, "rev-parse", got.Tip+"^2"); second != source {
 		t.Fatalf("second parent = %s, want the incoming commit %s", second, source)
 	}
-	if tip := git(t, root, "rev-parse", "refs/heads/destination"); tip != got.Tip {
+	if tip := gittest.Output(t, root, "rev-parse", "refs/heads/destination"); tip != got.Tip {
 		t.Fatalf("branch tip = %s, want the published commit %s", tip, got.Tip)
 	}
-	if tree := git(t, root, "rev-parse", got.Tip+"^{tree}"); tree != got.Tree {
+	if tree := gittest.Output(t, root, "rev-parse", got.Tip+"^{tree}"); tree != got.Tree {
 		t.Fatalf("published tree = %s, want the authorized tree %s", tree, got.Tree)
 	}
 	if got.PreviousTip != destination {
@@ -160,7 +161,7 @@ func TestMergeRefusesWhenTheBranchTipMovesUnderTheRefUpdate(t *testing.T) {
 	// The concurrent commit lands between the fingerprint recheck and the update, so the
 	// compare-and-swap alone can refuse it.
 	owner.updateRef = func(root, ref, new, old string) error {
-		git(t, root, "update-ref", ref, source, destination)
+		gittest.MustRun(t, root, "update-ref", ref, source, destination)
 		return real(root, ref, new, old)
 	}
 	_, err := owner.Merge(context.Background(), mergeRequest(t, root, "destination", destination, source))
@@ -170,7 +171,7 @@ func TestMergeRefusesWhenTheBranchTipMovesUnderTheRefUpdate(t *testing.T) {
 	if !strings.Contains(err.Error(), "compare-and-swap refused") {
 		t.Fatalf("error = %v, want the destination compare-and-swap refusal", err)
 	}
-	if tip := git(t, root, "rev-parse", "refs/heads/destination"); tip != source {
+	if tip := gittest.Output(t, root, "rev-parse", "refs/heads/destination"); tip != source {
 		t.Fatalf("branch tip = %s, want the moved tip %s", tip, source)
 	}
 }
@@ -178,7 +179,7 @@ func TestMergeRefusesWhenTheBranchTipMovesUnderTheRefUpdate(t *testing.T) {
 func TestMergeFastForwardsWithoutANewObject(t *testing.T) {
 	root := fixture(t)
 	base, tip := linearPair(t, root)
-	git(t, root, "checkout", "-q", "destination")
+	gittest.MustRun(t, root, "checkout", "-q", "destination")
 	got, err := greenOwner().Merge(context.Background(), mergeRequest(t, root, "destination", base, tip))
 	if err != nil {
 		t.Fatal(err)
@@ -189,10 +190,10 @@ func TestMergeFastForwardsWithoutANewObject(t *testing.T) {
 	if got.Tip != tip {
 		t.Fatalf("tip = %s, want the incoming commit %s with no new object", got.Tip, tip)
 	}
-	if got.Tree != git(t, root, "rev-parse", tip+"^{tree}") {
+	if got.Tree != gittest.Output(t, root, "rev-parse", tip+"^{tree}") {
 		t.Fatalf("tree = %s, want the incoming commit's tree", got.Tree)
 	}
-	if branch := git(t, root, "rev-parse", "refs/heads/destination"); branch != tip {
+	if branch := gittest.Output(t, root, "rev-parse", "refs/heads/destination"); branch != tip {
 		t.Fatalf("branch tip = %s, want %s", branch, tip)
 	}
 }
@@ -219,7 +220,7 @@ func TestMergeReportsCurrentWithoutAuthorizingOrUpdating(t *testing.T) {
 	if got.Tip != tip || got.PreviousTip != tip {
 		t.Fatalf("tip = %s, previous = %s, want both at %s", got.Tip, got.PreviousTip, tip)
 	}
-	if branch := git(t, root, "rev-parse", "refs/heads/source"); branch != tip {
+	if branch := gittest.Output(t, root, "rev-parse", "refs/heads/source"); branch != tip {
 		t.Fatalf("branch tip = %s, want the unchanged tip %s", branch, tip)
 	}
 }
@@ -229,7 +230,7 @@ func TestMergeRefusesAConflictOutsideTheCaptureTable(t *testing.T) {
 	destination, _ := divergedPair(t, root,
 		func() { write(t, root, "named", "destination\n") },
 		func() { write(t, root, "named", "source\n") })
-	source := git(t, root, "rev-parse", "refs/heads/source")
+	source := gittest.Output(t, root, "rev-parse", "refs/heads/source")
 	_, err := greenOwner().Merge(context.Background(), mergeRequest(t, root, "destination", destination, source))
 	var conflict ConflictError
 	if !errors.As(err, &conflict) {
@@ -238,7 +239,7 @@ func TestMergeRefusesAConflictOutsideTheCaptureTable(t *testing.T) {
 	if conflict.Kind != "textual" || strings.Join(conflict.Paths, ",") != "named" {
 		t.Fatalf("conflict = %q %v, want textual at named", conflict.Kind, conflict.Paths)
 	}
-	if tip := git(t, root, "rev-parse", "refs/heads/destination"); tip != destination {
+	if tip := gittest.Output(t, root, "rev-parse", "refs/heads/destination"); tip != destination {
 		t.Fatalf("branch tip = %s, want the unchanged tip %s", tip, destination)
 	}
 }
@@ -246,8 +247,8 @@ func TestMergeRefusesAConflictOutsideTheCaptureTable(t *testing.T) {
 func TestMergeResolvesAConflictedLearningsJournalAsAUnion(t *testing.T) {
 	root := fixture(t)
 	write(t, root, "capture/learnings.md", "shared\n")
-	git(t, root, "add", "-A")
-	git(t, root, "commit", "-qm", "capture base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-qm", "capture base")
 	destination, source := divergedPair(t, root,
 		func() { write(t, root, "capture/learnings.md", "shared\ndestination\n") },
 		func() { write(t, root, "capture/learnings.md", "shared\nsource\n") })
@@ -258,7 +259,7 @@ func TestMergeResolvesAConflictedLearningsJournalAsAUnion(t *testing.T) {
 	if strings.Join(got.Resolved, ",") != "capture/learnings.md:union" {
 		t.Fatalf("resolved = %v, want the union of the learnings journal", got.Resolved)
 	}
-	content := git(t, root, "show", got.Tip+":capture/learnings.md")
+	content := gittest.Output(t, root, "show", got.Tip+":capture/learnings.md")
 	if !strings.Contains(content, "destination") || !strings.Contains(content, "source") {
 		t.Fatalf("published journal = %q, want both sides", content)
 	}
@@ -268,7 +269,7 @@ func TestMergeResolvesAConflictedLearningsJournalAsAUnion(t *testing.T) {
 // Composition writes trees and blobs, so only this count isolates a minted commit.
 func commitObjectCount(t *testing.T, root string) int {
 	t.Helper()
-	types := git(t, root, "cat-file", "--batch-all-objects", "--batch-check=%(objecttype)")
+	types := gittest.Output(t, root, "cat-file", "--batch-all-objects", "--batch-check=%(objecttype)")
 	count := 0
 	for _, line := range strings.Fields(types) {
 		if line == "commit" {
@@ -293,7 +294,7 @@ func TestMergeRefusesAnUnauthorizedTree(t *testing.T) {
 		}},
 		{name: "fast-forward", setup: func(t *testing.T, root string) (string, string, string) {
 			base, tip := linearPair(t, root)
-			git(t, root, "checkout", "-q", "destination")
+			gittest.MustRun(t, root, "checkout", "-q", "destination")
 			return "destination", base, tip
 		}},
 	}
@@ -317,7 +318,7 @@ func TestMergeRefusesAnUnauthorizedTree(t *testing.T) {
 			if !strings.Contains(err.Error(), string(authorization.LaneFail)) {
 				t.Fatalf("error = %v, want the refused authorization kind", err)
 			}
-			if tip := git(t, root, "rev-parse", "refs/heads/"+branch); tip != previous {
+			if tip := gittest.Output(t, root, "rev-parse", "refs/heads/"+branch); tip != previous {
 				t.Fatalf("branch tip = %s, want the unchanged tip %s", tip, previous)
 			}
 			if got := commitObjectCount(t, root); got != commits {

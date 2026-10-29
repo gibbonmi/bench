@@ -14,7 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -24,7 +23,7 @@ func composedFixture(t *testing.T, files map[string]string) (root, base string) 
 	t.Helper()
 	root = gittest.RepoOnBranch(t, "main")
 	commitComposed(t, root, "base", files)
-	return root, composedRev(t, root, "HEAD^{commit}")
+	return root, gittest.Output(t, root, "rev-parse", "HEAD^{commit}")
 }
 
 // commitComposed writes and commits one set of files, so a row states the two trees its
@@ -45,21 +44,8 @@ func commitComposed(t *testing.T, root, message string, files map[string]string)
 
 func stageAndCommitComposed(t *testing.T, root, message string) {
 	t.Helper()
-	if out, err := benchgit.Raw("-C", root, "add", "-A"); err != nil {
-		t.Fatalf("stage %s: %v\n%s", message, err, out)
-	}
-	if out, err := benchgit.Raw("-C", root, "commit", "-q", "-m", message); err != nil {
-		t.Fatalf("commit %s: %v\n%s", message, err, out)
-	}
-}
-
-func composedRev(t *testing.T, root, revision string) string {
-	t.Helper()
-	resolved, err := benchgit.Output("-C", root, "rev-parse", revision)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resolved
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, message)
 }
 
 // PL1: the list is the tree-to-tree diff, so a commit that names the directory `docs`
@@ -67,7 +53,7 @@ func composedRev(t *testing.T, root, revision string) string {
 func TestComposedChangesExpandsANamedDirectory(t *testing.T) {
 	root, base := composedFixture(t, map[string]string{"docs/a.md": "before\n", "docs/b.go": "package docs\n"})
 	commitComposed(t, root, "graded", map[string]string{"docs/a.md": "after\n", "docs/b.go": "package docs // after\n"})
-	tree := composedRev(t, root, "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 
 	changes, err := ComposedChanges(root, base, tree)
 	if err != nil {
@@ -86,11 +72,9 @@ func TestComposedChangesExpandsANamedDirectory(t *testing.T) {
 // entry names two paths in one row, and no class reader expects that shape.
 func TestComposedChangesRepresentsARenameAsDeletionAndAddition(t *testing.T) {
 	root, base := composedFixture(t, map[string]string{"docs/old.md": "prose that is long enough to match\n"})
-	if out, err := benchgit.Raw("-C", root, "mv", "docs/old.md", "docs/new.md"); err != nil {
-		t.Fatalf("rename the file: %v\n%s", err, out)
-	}
+	gittest.MustRun(t, root, "mv", "docs/old.md", "docs/new.md")
 	stageAndCommitComposed(t, root, "graded")
-	tree := composedRev(t, root, "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 
 	changes, err := ComposedChanges(root, base, tree)
 	if err != nil {
@@ -110,10 +94,10 @@ func TestComposedChangesRepresentsARenameAsDeletionAndAddition(t *testing.T) {
 func TestComposedChangesCarriesTheSymlinkMode(t *testing.T) {
 	root, base := composedFixture(t, map[string]string{"target.go": "package fixture\n"})
 	if err := os.Symlink("target.go", filepath.Join(root, "link.go")); err != nil {
-		capability.Capability(t, capability.Symlink, "symlinks unavailable: "+err.Error())
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	stageAndCommitComposed(t, root, "graded")
-	tree := composedRev(t, root, "HEAD^{tree}")
+	tree := gittest.Output(t, root, "rev-parse", "HEAD^{tree}")
 
 	changes, err := ComposedChanges(root, base, tree)
 	if err != nil {

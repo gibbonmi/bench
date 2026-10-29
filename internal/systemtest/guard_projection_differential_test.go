@@ -238,7 +238,7 @@ func differentialPrimary(t *testing.T) string {
 		t.Fatal(err)
 	}
 	systemGit(t, primary, "add", "README.md")
-	systemGit(t, primary, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "readme")
+	systemGit(t, primary, systemCommitArgs("-qm", "readme")...)
 	installWrapper(t, primary)
 	if err := os.Symlink(filepath.Join(primary, "bin", "bench.sh"), filepath.Join(primary, "kit-command")); err != nil {
 		t.Fatal(err)

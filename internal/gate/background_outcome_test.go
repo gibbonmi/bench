@@ -18,6 +18,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
@@ -74,7 +75,7 @@ func TestBackgroundOracleRunsInTheIdleClass(t *testing.T) {
 // reader hold of its marker, and the same red as a background run writes none.
 func TestBackgroundRedWritesNoHold(t *testing.T) {
 	root := outcomeFixture(t)
-	marker := outcomeGit(t, root, "rev-parse", "HEAD")
+	marker := gittest.Output(t, root, "rev-parse", "HEAD")
 	outcomeWrite(t, root, ".gate-red", "\n", 0o644)
 	if result := runBackgroundSubject(t, WithLanding(context.Background(), marker, marker), root, nil); result.ActionExit != 7 {
 		t.Fatalf("background landing run = %+v; want the planted red", result)
@@ -144,7 +145,7 @@ func TestRefusedGradeRecordsAborted(t *testing.T) {
 // tip that does not resolve.
 func TestKeylessGradeRecordsAborted(t *testing.T) {
 	root := outcomeFixture(t)
-	head := outcomeGit(t, root, "rev-parse", "HEAD")
+	head := gittest.Output(t, root, "rev-parse", "HEAD")
 	for _, tip := range []string{head, "no-such-tip"} {
 		var out bytes.Buffer
 		code := gradeInBackground(context.Background(), root, tip, nil, &out, &out)

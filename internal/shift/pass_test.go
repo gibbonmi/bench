@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 )
 
@@ -85,7 +86,7 @@ func TestEachPassParentsOneGateSpan(t *testing.T) {
 // LE43: each pass that committed names the commit the branch gained in that pass.
 func TestACommittedPassCarriesItsCommit(t *testing.T) {
 	_, passes, _, root, stdout := twoPassShift(t)
-	commits := strings.Fields(runGitOutput(t, root, "rev-list", "--reverse", "main.."+shiftBranchName(t, stdout)))
+	commits := strings.Fields(gittest.Output(t, root, "rev-list", "--reverse", "main.."+shiftBranchName(t, stdout)))
 	if len(passes) != 2 || len(commits) != 2 {
 		t.Fatalf("got %d passes and %d commits, want 2 and 2", len(passes), len(commits))
 	}

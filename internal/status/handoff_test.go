@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -17,9 +18,9 @@ func commitFile(t *testing.T, root, name string) string {
 	if err := os.WriteFile(filepath.Join(root, name), []byte(name+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", name)
-	return gitRun(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", name)
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // commitHandoff writes and commits the handoff with distinct body text, returning the
@@ -29,9 +30,9 @@ func commitHandoff(t *testing.T, root, body string) string {
 	if err := os.WriteFile(filepath.Join(root, "capture/session-handoff.md"), []byte("# Session handoff\n\n"+body+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
-	gitRun(t, root, "commit", "-m", "handoff")
-	return gitRun(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "commit", "-m", "handoff")
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // A repo with no handoff produces no row: not every repo keeps one, and absence is a
@@ -145,13 +146,13 @@ func commitFileAt(t *testing.T, root, name string, at time.Time) {
 	if err := os.WriteFile(filepath.Join(root, name), []byte(name+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	gitRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, "add", "-A")
 	stamp := at.Format(time.RFC3339)
 	t.Setenv("GIT_AUTHOR_DATE", stamp)
 	t.Setenv("GIT_COMMITTER_DATE", stamp)
 	defer os.Unsetenv("GIT_AUTHOR_DATE")
 	defer os.Unsetenv("GIT_COMMITTER_DATE")
-	gitRun(t, root, "commit", "-m", name)
+	gittest.MustRun(t, root, "commit", "-m", name)
 }
 
 // An ignored handoff is a local file with no commit of its own, so its age comes from
@@ -222,7 +223,7 @@ func ignoreHandoff(t *testing.T, root string) {
 func seedBranchAssignment(t *testing.T, root, id, tip string) string {
 	t.Helper()
 	seedAssignment(t, root, id, id, intent.StateActive)
-	gitRun(t, root, "update-ref", intent.AssignmentBranchRef(censusOwnerID, id), tip)
+	gittest.MustRun(t, root, "update-ref", intent.AssignmentBranchRef(censusOwnerID, id), tip)
 	return intent.RequestDigest("request-" + id)
 }
 
@@ -249,7 +250,7 @@ func twoSectionRepo(t *testing.T) (root, behind, fresh string) {
 	root = initRepo(t)
 	commitFile(t, root, "base.txt")
 	ignoreHandoff(t, root)
-	base := gitRun(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	commitFile(t, root, "one.txt")
 	commitFile(t, root, "two.txt")
 	head := commitFile(t, root, "three.txt")
@@ -305,7 +306,7 @@ func TestAppendHandoffSectionOmitsTheUnresolvedSection(t *testing.T) {
 	root, behind, _ := twoSectionRepo(t)
 	// A key no assignment names: the section stays in the document, and the ledger has
 	// nothing to join it to.
-	seedHandoffSection(t, root, strings.Repeat("a", 32), gitRun(t, root, "rev-parse", "HEAD"), "orphan")
+	seedHandoffSection(t, root, strings.Repeat("a", 32), gittest.Output(t, root, "rev-parse", "HEAD"), "orphan")
 
 	for _, view := range []struct {
 		name string
@@ -346,7 +347,7 @@ func TestAppendHandoffSectionRewriteLeavesTheDistance(t *testing.T) {
 	root, _, fresh := twoSectionRepo(t)
 	before := behindRow(t, appendHandoff(nil, root))
 
-	head := gitRun(t, root, "rev-parse", "HEAD")
+	head := gittest.Output(t, root, "rev-parse", "HEAD")
 	seedHandoffSection(t, root, fresh, head, "rewritten")
 
 	if after := behindRow(t, appendHandoff(nil, root)); after.detail != before.detail {

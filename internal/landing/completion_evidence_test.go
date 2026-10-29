@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -67,7 +68,7 @@ func (f completionFixture) request(t *testing.T) ReviewedRequest {
 		t.Fatal(err)
 	}
 	return ReviewedRequest{
-		Root: f.root, Destination: "refs/heads/main", DestinationBase: git(t, f.root, "rev-parse", "main"),
+		Root: f.root, Destination: "refs/heads/main", DestinationBase: gittest.Output(t, f.root, "rev-parse", "main"),
 		Source: "refs/heads/evidence-source", SourceTip: f.evidence.Tip(), ReviewBase: f.base,
 		SourceWorktree: f.evidence.Root, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
 		SpecPath: f.evidence.Record.Spec, SpecBytes: mustRead(t, filepath.Join(f.evidence.Root, f.evidence.Record.Spec)), SpecMode: 0644,
@@ -94,14 +95,14 @@ func TestLandingTicketsOnlyCompletion(t *testing.T) {
 			if err := g.Write(root, "exit 0\n", ""); err != nil {
 				t.Fatal(err)
 			}
-			git(t, root, "add", ".")
-			git(t, root, "commit", "-qm", "stage tickets and the landing oracle")
-			destination := git(t, root, "rev-parse", "HEAD")
+			gittest.MustRun(t, root, "add", ".")
+			gittest.MustRun(t, root, "commit", "-qm", "stage tickets and the landing oracle")
+			destination := gittest.Output(t, root, "rev-parse", "HEAD")
 			sourceWorktree := filepath.Join(t.TempDir(), "source")
-			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 			write(t, sourceWorktree, "reviewed", "source bytes\n")
-			git(t, sourceWorktree, "add", "reviewed")
-			git(t, sourceWorktree, "commit", "-qm", "reviewed work")
+			gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+			gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed work")
 			sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
 			if err != nil {
 				t.Fatal(err)
@@ -122,12 +123,12 @@ func TestLandingTicketsOnlyCompletion(t *testing.T) {
 			}
 			_, err = owner.LandReviewed(t.Context(), ReviewedRequest{
 				Root: root, Destination: "refs/heads/main", DestinationBase: destination,
-				Source: "refs/heads/reviewed-source", SourceTip: git(t, sourceWorktree, "rev-parse", "HEAD"), ReviewBase: destination,
+				Source: "refs/heads/reviewed-source", SourceTip: gittest.Output(t, sourceWorktree, "rev-parse", "HEAD"), ReviewBase: destination,
 				SourceWorktree: sourceWorktree, SourceFingerprint: sourceFingerprint, DestinationFingerprint: destinationFingerprint,
 				ClosePath: closed, Message: "land the tickets-only close", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{},
 			})
 			if row.reason == "" {
-				if err != nil || git(t, root, "rev-parse", "main") == destination {
+				if err != nil || gittest.Output(t, root, "rev-parse", "main") == destination {
 					t.Fatalf("exact tickets-only close = %v, want a publication", err)
 				}
 				return
@@ -135,7 +136,7 @@ func TestLandingTicketsOnlyCompletion(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), row.reason) {
 				t.Fatalf("kept folder = %v, want a refusal naming %q", err, row.reason)
 			}
-			if got := git(t, root, "rev-parse", "main"); got != destination {
+			if got := gittest.Output(t, root, "rev-parse", "main"); got != destination {
 				t.Fatalf("refused close moved main to %s", got)
 			}
 		})
@@ -191,16 +192,16 @@ func TestLandingCompletionEvidence(t *testing.T) {
 		}},
 		{"destination addition", "completion composition changes added.txt", func(t *testing.T, f completionFixture, _ *Owner) {
 			write(t, f.root, "added.txt", "unreviewed destination content\n")
-			git(t, f.root, "add", "added.txt")
-			git(t, f.root, "commit", "-qm", "destination changed")
+			gittest.MustRun(t, f.root, "add", "added.txt")
+			gittest.MustRun(t, f.root, "commit", "-qm", "destination changed")
 		}},
 		{"destination deletion", "completion composition changes foreign", func(t *testing.T, f completionFixture, _ *Owner) {
-			git(t, f.root, "rm", "foreign")
-			git(t, f.root, "commit", "-qm", "destination removed content")
+			gittest.MustRun(t, f.root, "rm", "foreign")
+			gittest.MustRun(t, f.root, "commit", "-qm", "destination removed content")
 		}},
 		{"extra spec bytes", "exact status transform", func(t *testing.T, f completionFixture, owner *Owner) {
 			owner.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
-				changed := append(gitBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), []byte("unreviewed acceptance change\n")...)
+				changed := append(gittest.OutputBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), []byte("unreviewed acceptance change\n")...)
 				wrong, err := replaceTreeFile(root, tree, f.evidence.Record.Spec, changed, 0644)
 				if err != nil {
 					t.Fatal(err)
@@ -210,7 +211,7 @@ func TestLandingCompletionEvidence(t *testing.T) {
 		}},
 		{"spec mode change", "exact status transform", func(t *testing.T, f completionFixture, owner *Owner) {
 			owner.authorize = func(ctx context.Context, root, tree string, stdout, stderr io.Writer) authorization.Result {
-				wrong, err := replaceTreeFile(root, tree, f.evidence.Record.Spec, gitBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), 0755)
+				wrong, err := replaceTreeFile(root, tree, f.evidence.Record.Spec, gittest.OutputBytes(t, root, "show", tree+":"+f.evidence.Record.Spec), 0755)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -242,10 +243,10 @@ func TestLandingCompletionEvidence(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if got := gitBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
+				if got := gittest.OutputBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
 					t.Fatalf("published status transform = %q", got)
 				}
-				if got := git(t, f.root, "rev-parse", "main"); got != result.Commit {
+				if got := gittest.Output(t, f.root, "rev-parse", "main"); got != result.Commit {
 					t.Fatalf("publication missing: %s", got)
 				}
 				return
@@ -253,7 +254,7 @@ func TestLandingCompletionEvidence(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), tc.reason) {
 				t.Fatalf("incomplete evidence published or lost reason %q: %v", tc.reason, err)
 			}
-			if got := git(t, f.root, "rev-parse", "main"); got != request.DestinationBase {
+			if got := gittest.Output(t, f.root, "rev-parse", "main"); got != request.DestinationBase {
 				t.Fatalf("ref moved before proof: %s", got)
 			}
 		})

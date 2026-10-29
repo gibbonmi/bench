@@ -163,7 +163,7 @@ func TestLandStackResumeFinishes(t *testing.T) {
 			return []string{f.members[1].request + "=" + f.members[1].tip}
 		}, nil},
 		{"ahead", nil, func(t *testing.T, f stackFixture, _, _ string) {
-			gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "--allow-empty", "-qm", "after the stack")
+			gitRun(t, f.root, withIdentity("commit", "--allow-empty", "-qm", "after the stack")...)
 		}},
 		// Member 2 commits after the file tip, and the override names that commit. So the
 		// published second parent is the override, and the resume without it refuses before

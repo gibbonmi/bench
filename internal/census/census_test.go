@@ -2,7 +2,6 @@ package census
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -310,7 +309,7 @@ func TestRecordRefusesASymlinkedCensusDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(target, Dir(home, root)); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("the filesystem refuses symlinks: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	err := Record("sed -i x "+filepath.Join(pool, ownerID+"-"+knownID, "x"), root, home, fixedTime)
 	if err == nil {

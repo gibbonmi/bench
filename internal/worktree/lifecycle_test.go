@@ -52,19 +52,13 @@ func TestReclaimable(t *testing.T) {
 func leasedRepo(t *testing.T, leaseContent string) (dir, lease string) {
 	t.Helper()
 	dir = t.TempDir()
-	for _, args := range [][]string{
-		{"init", "-q"},
-		{"config", "user.email", "t@t"},
-		{"config", "user.name", "t"},
-	} {
-		if out, err := descendant(t, "git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, out)
-		}
+	if out, err := descendant(t, "git", "-C", dir, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "tracked.txt"), []byte("clean\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"add", "."}, {"commit", "-qm", "init"}} {
+	for _, args := range [][]string{{"add", "."}, withIdentity("commit", "-qm", "init")} {
 		if out, err := descendant(t, "git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v: %s", args, err, out)
 		}

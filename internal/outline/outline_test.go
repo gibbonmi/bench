@@ -3,13 +3,13 @@ package outline
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // H14: --full emits symbol rows repository-wide, uncapped, with completeness metadata.
@@ -150,7 +150,7 @@ func TestCommandNamesSizeBinaryAndNonregularSkips(t *testing.T) {
 	writeOutlineFile(t, root, "binary.go", "package x\x00func Hidden() {}\n")
 	writeOutlineFile(t, root, "target.go", "package x\nfunc Target() {}\n")
 	if err := os.Symlink("target.go", filepath.Join(root, "link.go")); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlink unavailable: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 	gitAddOutline(t, root)
 	// --full is the row-bearing repository-wide form; skips ride the same envelope.
@@ -185,11 +185,7 @@ func TestCommandNamesUnreadableSkip(t *testing.T) {
 
 func outlineRepo(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
-	cmd := exec.Command("git", "init", "-q", root)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
-	}
+	root := gittest.Repo(t)
 	old, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -214,9 +210,7 @@ func writeOutlineFile(t *testing.T, root, rel, body string) {
 
 func gitAddOutline(t *testing.T, root string) {
 	t.Helper()
-	if out, err := exec.Command("git", "-C", root, "add", "-A").CombinedOutput(); err != nil {
-		t.Fatalf("git add: %v: %s", err, out)
-	}
+	gittest.MustRun(t, root, "add", "-A")
 }
 
 // symbolsCase drives the pure parser seam: feed one buffer for a language and assert

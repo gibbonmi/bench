@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // recordingAdmission appends each decision the admitted route asks for to calls.
@@ -48,13 +49,13 @@ func TestLandAdmittedDecidesAroundTheGate(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			root := fixture(t)
-			destination := git(t, root, "rev-parse", "HEAD")
+			destination := gittest.Output(t, root, "rev-parse", "HEAD")
 			sourceWorktree := filepath.Join(t.TempDir(), "source")
-			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 			write(t, sourceWorktree, "reviewed", "source bytes\n")
-			git(t, sourceWorktree, "add", "reviewed")
-			git(t, sourceWorktree, "commit", "-qm", "reviewed work")
-			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+			gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed work")
+			source := gittest.Output(t, sourceWorktree, "rev-parse", "HEAD")
 			sourceFingerprint, err := CheckoutFingerprint(sourceWorktree)
 			if err != nil {
 				t.Fatal(err)
@@ -78,7 +79,7 @@ func TestLandAdmittedDecidesAroundTheGate(t *testing.T) {
 			if strings.Join(calls, ",") != row.calls {
 				t.Fatalf("decisions = %q, want %q", strings.Join(calls, ","), row.calls)
 			}
-			main := git(t, root, "rev-parse", "main")
+			main := gittest.Output(t, root, "rev-parse", "main")
 			if row.published {
 				if err != nil || main != got.Commit {
 					t.Fatalf("admitted landing = (%+v, %v), main=%s", got, err, main)

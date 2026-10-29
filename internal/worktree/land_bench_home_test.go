@@ -39,7 +39,7 @@ func TestLandSuppliesTheDeclaredBenchHomeItself(t *testing.T) {
 			check := "printf '%s' \"${BENCH_HOME-unset}\" > '" + seen + "'\n[ -f owned.txt ]\nprintf g >> '" + fixture.tally + "'\n"
 			f.MustWrite(t, fixture.root, "set -eu\n"+check, "set -eu\nruntime=$1\n"+check)
 			gitRun(t, fixture.root, "add", ".bench/gate.sh", ".bench/gate-prospective.sh", ".bench/gate-inputs.json")
-			gitRun(t, fixture.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "declare the bench home")
+			gitRun(t, fixture.root, withIdentity("commit", "-qm", "declare the bench home")...)
 			base := gitOutput(t, fixture.root, "rev-parse", "HEAD")
 			gitRun(t, fixture.creation.Path, "rebase", "main")
 			refreshLandingEvidence(t, fixture.creation.Path, base)

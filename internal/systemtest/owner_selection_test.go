@@ -270,7 +270,7 @@ func TestWorktreeReauthorizeJourney(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"init", "-q", "-b", "main"}, {"add", "base.txt"}, {"-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "base"}} {
+	for _, args := range [][]string{{"init", "-q", "-b", "main"}, {"add", "base.txt"}, systemCommitArgs("-qm", "base")} {
 		if len(args) == 2 && args[0] == "add" {
 			if err := os.WriteFile(filepath.Join(repo, "base.txt"), []byte("base\n"), 0o644); err != nil {
 				t.Fatal(err)
@@ -284,7 +284,7 @@ func TestWorktreeReauthorizeJourney(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(repo, "reviewed.txt"), []byte("reviewed\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"add", "reviewed.txt"}, {"-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "reviewed"}} {
+	for _, args := range [][]string{{"add", "reviewed.txt"}, systemCommitArgs("-qm", "reviewed")} {
 		if result := owner.runAt(repo, nil, "git", args...); result.code != 0 {
 			t.Fatalf("git %q = (%d, %q)", args, result.code, result.stderr)
 		}

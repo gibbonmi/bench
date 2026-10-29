@@ -1,7 +1,6 @@
 package git
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // mergeHeadPath answers the MERGE_HEAD path that Git resolves for checkout.
@@ -73,17 +73,17 @@ func TestPendingMergeReadsEveryHead(t *testing.T) {
 	base := independentRevParse(t, linked, "HEAD")
 	var heads []string
 	for _, name := range []string{"one", "two"} {
-		runGit(t, root, "checkout", "-q", "-b", name, base)
+		gittest.MustRun(t, root, "checkout", "-q", "-b", name, base)
 		if err := os.WriteFile(filepath.Join(root, name+".txt"), []byte(name+"\n"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		runGit(t, root, "add", name+".txt")
-		runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", name)
+		gittest.MustRun(t, root, "add", name+".txt")
+		gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", name)...)
 		heads = append(heads, independentRevParse(t, root, "HEAD"))
 	}
 	merge := func(t *testing.T, commits ...string) {
 		t.Helper()
-		runGit(t, linked, append([]string{"-c", "user.email=bench@local", "-c", "user.name=bench", "merge", "-q", "--no-commit", "--no-ff"}, commits...)...)
+		gittest.MustRun(t, linked, append(append(gittest.IdentityArgs(), "merge", "-q", "--no-commit", "--no-ff"), commits...)...)
 	}
 	// Each step starts from the merge state that the step before it leaves. The two
 	// octopus steps give the heads in opposite orders, so a reader that sorts the heads
@@ -95,13 +95,13 @@ func TestPendingMergeReadsEveryHead(t *testing.T) {
 	}{
 		{"absent", func(*testing.T) {}, nil},
 		{"merge", func(t *testing.T) { merge(t, heads[0]) }, heads[:1]},
-		{"octopus", func(t *testing.T) { runGit(t, linked, "merge", "--abort"); merge(t, heads...) }, heads},
+		{"octopus", func(t *testing.T) { gittest.MustRun(t, linked, "merge", "--abort"); merge(t, heads...) }, heads},
 		{"octopus in reverse order", func(t *testing.T) {
-			runGit(t, linked, "merge", "--abort")
+			gittest.MustRun(t, linked, "merge", "--abort")
 			merge(t, heads[1], heads[0])
 		}, []string{heads[1], heads[0]}},
 		{"unterminated last line", func(t *testing.T) {
-			runGit(t, linked, "merge", "--abort")
+			gittest.MustRun(t, linked, "merge", "--abort")
 			if err := os.WriteFile(mergeHeadPath(t, linked), []byte(heads[0]+"\n"+heads[1]), 0o644); err != nil {
 				t.Fatal(err)
 			}
@@ -146,7 +146,7 @@ func TestPendingMergeRefusesUnreadableState(t *testing.T) {
 		{"directory", linked, func(*testing.T) error { return os.Mkdir(mergeHead, 0o755) }},
 		{"fifo", linked, func(t *testing.T) error {
 			if err := syscall.Mkfifo(mergeHead, 0o600); err != nil {
-				capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+				capability.Unavailable(t, capability.Fifo, err.Error())
 			}
 			return nil
 		}},
@@ -174,8 +174,8 @@ func TestPendingMergeRefusesMalformedState(t *testing.T) {
 	linked := linkedWorktree(t, root)
 	mergeHead := mergeHeadPath(t, linked)
 	head := independentRevParse(t, linked, "HEAD")
-	runGit(t, root, "update-ref", "refs/heads/main", head)
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "tag", "-a", "-m", "annotated", "annotated", head)
+	gittest.MustRun(t, root, "update-ref", "refs/heads/main", head)
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "tag", "-a", "-m", "annotated", "annotated", head)...)
 	for _, tc := range []struct{ name, content string }{
 		{"empty", ""},
 		{"abbreviated commit ID", head[:7] + "\n"},

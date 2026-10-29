@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/commitment/commitcmd"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -307,7 +308,7 @@ func commitFaceFixtures() []commitFaceFixture {
 			// The published commit holds the change, so the checkout is clean at it and
 			// the rerun has nothing left to publish.
 			settled: func(t *testing.T, f commitSet, code int, stdout, stderr string) {
-				if status := string(runGit(t, f.checkout, "status", "--porcelain")); status != "" || code == 3 {
+				if status := gittest.Output(t, f.checkout, "status", "--porcelain"); status != "" || code == 3 {
 					t.Fatalf("after the route the checkout status is %q and the rerun = (%d, %q, %q), want a clean checkout and no exit 3", status, code, stdout, stderr)
 				}
 			},

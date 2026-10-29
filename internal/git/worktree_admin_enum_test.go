@@ -2,7 +2,6 @@ package git
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -103,7 +102,7 @@ func TestWorktreesAllowsBenignAdminShapes(t *testing.T) {
 		}
 		base := filepath.Join(common, "worktrees")
 		if err := syscall.Mkfifo(base, 0o600); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 		if _, err := worktreesWithin(t, root); err != nil {
 			t.Fatalf("FIFO worktrees root: %v", err)
@@ -159,7 +158,7 @@ func assertBenignAdminShape(t *testing.T, state string) {
 	switch state {
 	case "prunable":
 		linked := filepath.Join(t.TempDir(), "linked")
-		runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+		gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 		if err := os.RemoveAll(linked); err != nil {
 			t.Fatal(err)
 		}
@@ -172,7 +171,7 @@ func assertBenignAdminShape(t *testing.T, state string) {
 			t.Fatal(err)
 		}
 		if err := syscall.Mkfifo(filepath.Join(id, "logs", "HEAD"), 0o600); err != nil {
-			capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+			capability.Unavailable(t, capability.Fifo, err.Error())
 		}
 	}
 	if _, err := worktreesWithin(t, root); err != nil {

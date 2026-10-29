@@ -18,6 +18,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 )
 
@@ -55,8 +56,7 @@ func newLandingFixture(t *testing.T, base func(*landingFixture)) *landingFixture
 // storeTable stores planReaders with identity as the table of the marker's tree.
 func (f *landingFixture) storeTable(identity string) {
 	f.t.Helper()
-	tree := outcomeGit(f.t, f.root, "rev-parse", f.marker+"^{tree}")
-	if _, err := storeReaderTable(durablefile.Native(), f.root, readerTableRecord{Schema: readerTableSchema, Tree: tree, Identity: identity, Readers: planReaders}); err != nil {
+	if _, err := storeReaderTable(durablefile.Native(), f.root, readerTableRecord{Schema: readerTableSchema, Tree: gittest.Output(f.t, f.root, "rev-parse", f.marker+"^{tree}"), Identity: identity, Readers: planReaders}); err != nil {
 		f.t.Fatal(err)
 	}
 }
@@ -65,7 +65,7 @@ func (f *landingFixture) storeTable(identity string) {
 func (f *landingFixture) put(rel, body string) {
 	f.t.Helper()
 	outcomeWrite(f.t, f.root, rel, body, 0o644)
-	outcomeGit(f.t, f.root, "add", "--", rel)
+	gittest.MustRun(f.t, f.root, "add", "--", rel)
 }
 
 // link replaces whatever rel holds with a symbolic link to target, and stages it.
@@ -81,20 +81,20 @@ func (f *landingFixture) link(rel, target string) {
 	if err := os.Symlink(target, full); err != nil {
 		f.t.Fatal(err)
 	}
-	outcomeGit(f.t, f.root, "add", "--", rel)
+	gittest.MustRun(f.t, f.root, "add", "--", rel)
 }
 
 // gitlink stages a gitlink at rel that names the HEAD commit.
 func (f *landingFixture) gitlink(rel string) {
 	f.t.Helper()
-	outcomeGit(f.t, f.root, "update-index", "--add", "--cacheinfo", benchgit.GitlinkMode+","+outcomeGit(f.t, f.root, "rev-parse", "HEAD")+","+rel)
+	gittest.MustRun(f.t, f.root, "update-index", "--add", "--cacheinfo", benchgit.GitlinkMode+","+gittest.Output(f.t, f.root, "rev-parse", "HEAD")+","+rel)
 }
 
 // commit commits the index and answers the new commit.
 func (f *landingFixture) commit(message string) string {
 	f.t.Helper()
-	outcomeGit(f.t, f.root, "commit", "-q", "--allow-empty", "-m", message)
-	return outcomeGit(f.t, f.root, "rev-parse", "HEAD")
+	gittest.Commit(f.t, f.root, message, "--allow-empty")
+	return gittest.Output(f.t, f.root, "rev-parse", "HEAD")
 }
 
 // chain adds n first-parent commits after the destination and moves the destination to the
@@ -111,7 +111,7 @@ func (f *landingFixture) chain(n, gap int) {
 		if i == gap {
 			continue
 		}
-		tree := outcomeGit(f.t, f.root, "rev-parse", f.destination+"^{tree}")
+		tree := gittest.Output(f.t, f.root, "rev-parse", f.destination+"^{tree}")
 		run := newReaderRun(subject{Tree: tree}, readerSchedule{Packages: []string{"./internal/conformance"}}, tree, f.marker)
 		if err := writeReaderGreen(durablefile.Native(), gitdir, run, strings.Repeat("d", 64), time.Now()); err != nil {
 			f.t.Fatal(err)
@@ -126,7 +126,7 @@ func (f *landingFixture) decide(ctx context.Context, change func(*landingFixture
 	f.t.Helper()
 	change(f)
 	plan := f.plan
-	plan.Tree = outcomeGit(f.t, f.root, "rev-parse", f.commit("change")+"^{tree}")
+	plan.Tree = gittest.Output(f.t, f.root, "rev-parse", f.commit("change")+"^{tree}")
 	var stdout bytes.Buffer
 	planner := readerPlanner{shellcheck: func(string) []string { return inventory }}
 	run, eligible := planner.plan(ctx, &stdout, f.root, f.root, plan, &runbinary.Selection{Path: filepath.Join(f.root, "bench"), SourceRoot: kit})
@@ -183,7 +183,7 @@ func TestLandingRunsTheReaderSet(t *testing.T) {
 	}
 	var stdout, stderr bytes.Buffer
 	result := executeSubjectReplacing(f.landing(), f.root, f.root, &stdout, &stderr, nil, forceRun, newGateEvaluation(f.root), owner, "", durablefile.Native())
-	tree := outcomeGit(t, f.root, "rev-parse", "HEAD^{tree}")
+	tree := gittest.Output(t, f.root, "rev-parse", "HEAD^{tree}")
 	if recorded, err := ReaderRecorded(f.root, tree); result.ActionExit != 0 || result.Schedule != ScheduleReader || !recorded || err != nil {
 		t.Fatalf("landing = %+v, recorded %t %v\nstdout:\n%s\nstderr:\n%s\nwant a green reader set that records %s", result, recorded, err, stdout.String(), stderr.String(), tree)
 	}
@@ -223,7 +223,7 @@ func TestReaderPlanRunsWholeForAnUncoveredPath(t *testing.T) {
 // runs the whole gate.
 func TestReaderPlanRunsWholeForARenameOutOfAFamily(t *testing.T) {
 	f := newLandingFixture(t, func(f *landingFixture) { f.put("docs/x.md", "moved\n") })
-	f.refuses(func(f *landingFixture) { outcomeGit(t, f.root, "mv", "docs/x.md", "x.md") }, nil, refusedUncovered)
+	f.refuses(func(f *landingFixture) { gittest.MustRun(t, f.root, "mv", "docs/x.md", "x.md") }, nil, refusedUncovered)
 }
 
 // embedFixture is a landing fixture whose base holds the Go file name with body and the
@@ -244,7 +244,7 @@ func TestReaderPlanRunsWholeForAnEmbedTarget(t *testing.T) {
 // TestReaderPlanRunsWholeBelowAnEmbeddedDirectory proves that deleting a file below an
 // embedded directory runs the whole gate.
 func TestReaderPlanRunsWholeBelowAnEmbeddedDirectory(t *testing.T) {
-	embedFixture(t, "embed.go", "//go:embed docs/assets", "docs/assets/a.txt").refuses(func(f *landingFixture) { outcomeGit(t, f.root, "rm", "-q", "docs/assets/a.txt") }, nil, refusedBuildInput)
+	embedFixture(t, "embed.go", "//go:embed docs/assets", "docs/assets/a.txt").refuses(func(f *landingFixture) { gittest.MustRun(t, f.root, "rm", "-q", "docs/assets/a.txt") }, nil, refusedBuildInput)
 }
 
 // TestReaderPlanRunsWholeForAnEmbedGlob proves that a change to a glob match runs the whole
@@ -287,7 +287,7 @@ func TestReaderPlanRunsWholeForARemovedSymlink(t *testing.T) {
 // whole gate, even when the repository's configuration hides submodule changes from a diff.
 func TestReaderPlanRunsWholeForAnAddedGitlink(t *testing.T) {
 	f := newLandingFixture(t, nil)
-	outcomeGit(t, f.root, "config", "diff.ignoreSubmodules", "all")
+	gittest.MustRun(t, f.root, "config", "diff.ignoreSubmodules", "all")
 	f.refuses(func(f *landingFixture) { f.gitlink("docs/module") }, nil, refusedLink)
 }
 
@@ -295,7 +295,7 @@ func TestReaderPlanRunsWholeForAnAddedGitlink(t *testing.T) {
 // whole gate.
 func TestReaderPlanRunsWholeForARemovedGitlink(t *testing.T) {
 	f := newLandingFixture(t, func(f *landingFixture) { f.gitlink("docs/module") })
-	f.refuses(func(f *landingFixture) { outcomeGit(t, f.root, "rm", "-q", "--cached", "docs/module") }, nil, refusedLink)
+	f.refuses(func(f *landingFixture) { gittest.MustRun(t, f.root, "rm", "-q", "--cached", "docs/module") }, nil, refusedLink)
 }
 
 // TestReaderPlanRunsWholeWithoutATable proves that a store without the table of the marker's
@@ -361,7 +361,7 @@ func TestReaderPlanRunsWholeWithoutAMarker(t *testing.T) {
 	if _, eligible, out := f.decide(WithLanding(context.Background(), f.destination, ""), docsChange, nil, f.root); eligible || out != fmt.Sprintf(readerRefusedFormat, refusedNoMarker) {
 		t.Fatalf("plan without a marker = %t %q; want the whole gate with the refusal %q", eligible, out, refusedNoMarker)
 	}
-	f.destination = outcomeGit(t, f.root, "commit-tree", "-m", "unrelated destination", f.marker+"^{tree}")
+	f.destination = gittest.Output(t, f.root, "commit-tree", "-m", "unrelated destination", f.marker+"^{tree}")
 	f.refuses(docsChange, nil, refusedNoMarker)
 }
 

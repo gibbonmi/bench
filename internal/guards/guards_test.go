@@ -112,9 +112,7 @@ func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) 
 	}
 	root := gittest.Repo(t)
 	// origin/HEAD resolves the protected branch live, the posture a linked repo has.
-	if out, err := exec.Command("git", "-C", root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main").CombinedOutput(); err != nil {
-		t.Fatalf("symbolic-ref: %v: %s", err, out)
-	}
+	gittest.MustRun(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
 	hooks := filepath.Join(root, ".git", "hooks")
 	if err := os.MkdirAll(hooks, 0o755); err != nil {
 		t.Fatal(err)
@@ -364,7 +362,7 @@ func TestGuardRowRejectsFIFOWithoutOpening(t *testing.T) {
 		return
 	}
 	if runtime.GOOS == "windows" {
-		capability.Capability(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
+		capability.Unavailable(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
 	}
 	fifo := filepath.Join(t.TempDir(), "special.sh")
 	if out, err := exec.Command("mkfifo", fifo).CombinedOutput(); err != nil {

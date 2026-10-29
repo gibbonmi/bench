@@ -42,8 +42,7 @@ func newEvidenceJourney(t *testing.T) evidenceJourney {
 		t.Fatal(err)
 	}
 	systemGit(t, root, "init", "-q", "-b", "main")
-	systemGit(t, root, "config", "user.email", "bench@local")
-	systemGit(t, root, "config", "user.name", "bench")
+	systemIdentity(t, root)
 	for path, body := range map[string]string{
 		".agents/skills/bench-craft-delegate/SKILL.md":                            "# Delegation skill\n",
 		".agents/skills/bench-craft-delegate/references/delegation-discipline.md": "# Delegation procedure\n",

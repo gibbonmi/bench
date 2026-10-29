@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestEveryRetainedFixtureBitesThroughRegisteredOwner(t *testing.T) {
@@ -377,8 +378,7 @@ func requireFixtureNoError(t *testing.T, err error) {
 }
 
 func TestRunConformanceReportsAbsentCanaryFamily(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	kitRoot := t.TempDir()
 	for _, family := range registry.Families() {
 		if family == "coverage-map-validation" {
@@ -398,8 +398,7 @@ func TestRunConformanceReportsAbsentCanaryFamily(t *testing.T) {
 }
 
 func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	kitRoot := t.TempDir()
 	for _, family := range registry.Families() {
 		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
@@ -423,8 +422,7 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 // bind. Its fixtures would have no production check owner. The kit's tree and its table
 // must agree in both directions.
 func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	kitRoot := t.TempDir()
 	canaryDir := filepath.Join(kitRoot, "tests", "canary")
 	families := append(registry.Families(), "unbound-family")
@@ -448,8 +446,7 @@ func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 // either side alone reds a family with no fixtures, or leaves a real family's fixtures
 // without a binding.
 func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	kitRoot := t.TempDir()
 	canaryDir := filepath.Join(kitRoot, "tests", "canary")
 	for _, family := range registry.Families() {
@@ -461,7 +458,7 @@ func TestSymlinkedCanaryFamilyIsInvisibleToInventory(t *testing.T) {
 	target := filepath.Join(kitRoot, "outside", "linked-family")
 	writeCanaryFixture(t, filepath.Join(target, "linked-fixture"))
 	if err := os.Symlink(target, filepath.Join(canaryDir, "symlinked-family")); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
@@ -511,8 +508,7 @@ func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T
 
 func runConformanceFamilyAbsence(t *testing.T, setup func(*testing.T, string)) {
 	t.Helper()
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	kitRoot := t.TempDir()
 	setup(t, filepath.Join(kitRoot, "tests", "canary"))
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
@@ -546,7 +542,7 @@ func TestRunConformanceAcceptsHostileRootPath(t *testing.T) {
 	if err := canary.MaterializeFixture(filepath.Join(canaryFixturePath(t, h.KitRoot, "invalid-json"), "files"), root); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "init")
+	gittest.MustRun(t, root, "init")
 
 	diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
@@ -556,15 +552,14 @@ func TestRunConformanceAcceptsHostileRootPath(t *testing.T) {
 }
 
 func TestRunConformanceChecksExecutableGitMode(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
+	root := gittest.Repo(t)
 	if err := os.MkdirAll(filepath.Join(root, "bin"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "bin", "bench.sh"), []byte("#!/usr/bin/env bash\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "bin/bench.sh")
+	gittest.MustRun(t, root, "add", "bin/bench.sh")
 
 	diags := RunConformance(root, NewHarness(t).KitRoot, registry.Dev, "")
 

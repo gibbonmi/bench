@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/landing/published"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
@@ -36,16 +37,16 @@ func newStackFixture(t *testing.T) *stackFixture {
 		outcomeWrite(t, root, path, body, 0o644)
 	}
 	outcomeCommit(t, root, "destination")
-	return &stackFixture{t: t, root: root, destination: outcomeGit(t, root, "rev-parse", "HEAD")}
+	return &stackFixture{t: t, root: root, destination: gittest.Output(t, root, "rev-parse", "HEAD")}
 }
 
 // edited answers the tree of base after edit changes the work tree.
 func (f *stackFixture) edited(base string, edit func()) string {
 	f.t.Helper()
-	outcomeGit(f.t, f.root, "read-tree", "--reset", "-u", base)
+	gittest.MustRun(f.t, f.root, "read-tree", "--reset", "-u", base)
 	edit()
-	outcomeGit(f.t, f.root, "add", "-A")
-	return outcomeGit(f.t, f.root, "write-tree")
+	gittest.MustRun(f.t, f.root, "add", "-A")
+	return gittest.Output(f.t, f.root, "write-tree")
 }
 
 // tree answers the destination tree with each file of files written and each path of
@@ -57,7 +58,7 @@ func (f *stackFixture) tree(files map[string]string, deleted ...string) string {
 			outcomeWrite(f.t, f.root, path, body, 0o644)
 		}
 		for _, path := range deleted {
-			outcomeGit(f.t, f.root, "rm", "-q", "--", path)
+			gittest.MustRun(f.t, f.root, "rm", "-q", "--", path)
 		}
 	})
 }
@@ -65,7 +66,7 @@ func (f *stackFixture) tree(files map[string]string, deleted ...string) string {
 // commit answers a commit of tree on the destination.
 func (f *stackFixture) commit(tree string) string {
 	f.t.Helper()
-	return outcomeGit(f.t, f.root, "commit-tree", "-p", f.destination, "-m", "member", tree)
+	return gittest.Output(f.t, f.root, "commit-tree", "-p", f.destination, "-m", "member", tree)
 }
 
 // member commits the tree of files and deleted on the destination, and answers the commit.
@@ -200,7 +201,7 @@ func TestStackProofRefusesAKeptFolder(t *testing.T) {
 	if err := f.grade(members, graded); err != nil {
 		t.Fatalf("closure of member 2 = %v; want a pass", err)
 	}
-	unclosed := f.edited(graded, func() { outcomeGit(t, f.root, "checkout", closing.Source, "--", "roadmap/FT1.md") })
+	unclosed := f.edited(graded, func() { gittest.MustRun(t, f.root, "checkout", closing.Source, "--", "roadmap/FT1.md") })
 	requireClosed(t, f.grade(members, unclosed), "roadmap/FT1.md")
 }
 

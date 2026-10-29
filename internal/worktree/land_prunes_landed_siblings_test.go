@@ -31,7 +31,7 @@ func TestLandCommandPrunesSquashFoldedSiblingBranch(t *testing.T) {
 	// The fold is a squash, the shape a raw-git composition leaves: the sibling's content
 	// reaches the landing source as a single-parent commit, so ancestry never proves it.
 	gitRun(t, f.creation.Path, "cherry-pick", "--no-commit", "main.."+sibling)
-	gitRun(t, f.creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "merge: sibling into the integration source")
+	gitRun(t, f.creation.Path, withIdentity("commit", "-qm", "merge: sibling into the integration source")...)
 	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 
 	r := runVerb(t, verbLand, f.call(specLessLandArgs(request, f.base, tip, f.creation.Path)...))

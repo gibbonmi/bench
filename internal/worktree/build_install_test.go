@@ -51,7 +51,7 @@ func newInstallAssignment(t *testing.T, request string, shape installShape) owne
 	mustMkdirAll(t, filepath.Dir(filepath.Join(root, installSpec)), 0o755)
 	mustWrite(t, filepath.Join(root, installSpec), []byte("# install\n\nStatus: staged\n"+shape.declaration), 0o644)
 	gitRun(t, root, "add", "go.mod", "cmd", "scripts", "bin", installSpec)
-	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "install sources")
+	gitRun(t, root, withIdentity("commit", "-qm", "install sources")...)
 	if shape.inputs {
 		commitLandingBuildInputs(t, root)
 	}

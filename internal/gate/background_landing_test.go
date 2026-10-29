@@ -44,7 +44,7 @@ func newLandingWorktree(t *testing.T, primary string) landingWorktree {
 func linkWorktree(t *testing.T, primary string) landingWorktree {
 	t.Helper()
 	root := filepath.Join(t.TempDir(), "linked")
-	outcomeGit(t, primary, "worktree", "add", "-q", "-b", "work", root, "main")
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", "work", root, "main")
 	return landingWorktree{t: t, primary: primary, root: root}
 }
 
@@ -54,10 +54,10 @@ func (w landingWorktree) commit(files map[string]string) string {
 	w.t.Helper()
 	for path, body := range files {
 		outcomeWrite(w.t, w.root, path, body, 0o644)
-		outcomeGit(w.t, w.root, "add", "--", path)
+		gittest.MustRun(w.t, w.root, "add", "--", path)
 	}
-	outcomeGit(w.t, w.root, "commit", "-qm", "work")
-	return outcomeGit(w.t, w.root, "rev-parse", "HEAD")
+	gittest.Commit(w.t, w.root, "work")
+	return gittest.Output(w.t, w.root, "rev-parse", "HEAD")
 }
 
 // subject answers the tree that the landing of tip with deliverable publishes onto main.
@@ -124,7 +124,7 @@ func TestSpecLessLandingGradeHasNoTransform(t *testing.T) {
 	outcomeWrite(t, w.primary, "main.txt", "main\n", 0o644)
 	outcomeCommit(t, w.primary, "move main")
 	record := w.requireGreen(tip)
-	composed, raw := InspectTree(w.primary, w.subject(tip, "")), InspectTree(w.primary, outcomeGit(t, w.root, "rev-parse", tip+"^{tree}"))
+	composed, raw := InspectTree(w.primary, w.subject(tip, "")), InspectTree(w.primary, gittest.Output(t, w.root, "rev-parse", tip+"^{tree}"))
 	if !composed.ReusableGreen || record.Key != composed.Grade || record.Key == raw.Grade {
 		t.Fatalf("record = %+v, composed = %+v, raw tip = %+v; want the green of the composition", record, composed, raw)
 	}
@@ -196,11 +196,11 @@ func newReaderLanding(t *testing.T) readerLanding {
 	outcomeWrite(t, primary, prospectiveGatePath, "#!/bin/sh\nexit 0\n", 0o755)
 	outcomeWrite(t, primary, "scripts/go-build.sh", "#!/bin/sh\n", 0o644)
 	outcomeCommit(t, primary, "prospective kit")
-	marker := outcomeGit(t, primary, "rev-parse", "HEAD")
+	marker := gittest.Output(t, primary, "rev-parse", "HEAD")
 	if err := greenmarker.Advance(primary, "main", marker, ""); err != nil {
 		t.Fatal(err)
 	}
-	tree := outcomeGit(t, primary, "rev-parse", marker+"^{tree}")
+	tree := gittest.Output(t, primary, "rev-parse", marker+"^{tree}")
 	var identity string
 	if err := withLandingPlan(primary, tree, func(_ string, plan subject) { identity = plan.Identity }); err != nil {
 		t.Fatal(err)
@@ -281,7 +281,7 @@ func TestNonKitLandingDerivesNoSubject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backgroundstate.WriteClaim(durablefile.Native(), outcomeGit(t, w.root, "rev-parse", "--path-format=absolute", "--git-common-dir"), claim); err != nil {
+	if err := backgroundstate.WriteClaim(durablefile.Native(), gittest.Output(t, w.root, "rev-parse", "--path-format=absolute", "--git-common-dir"), claim); err != nil {
 		t.Fatal(err)
 	}
 	// The wait ends at once, so a landing that derives its subject answers the budget of a wait.

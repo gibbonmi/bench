@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // TestTicketsOnlyFolder pins the predicate both the close step and `bench status`
@@ -72,10 +74,7 @@ func TestTicketsOnlyFolder(t *testing.T) {
 // shapes the close branches on, a blob at the folder path among them, and the name rows
 // prove the rule travels with the predicate rather than with one reader.
 func TestTicketsOnlyInCommit(t *testing.T) {
-	root := t.TempDir()
-	git(t, root, "init", "-q", "-b", "main")
-	git(t, root, "config", "user.email", "a@b.c")
-	git(t, root, "config", "user.name", "a")
+	root := gittest.RepoOnBranch(t, "main")
 	write(t, root, "specs/tickets-only/tickets/one.md", "# One\n")
 	write(t, root, "specs/spec-backed/tickets/one.md", "# One\n")
 	write(t, root, "specs/spec-backed/spec.md", "Status: staged\n")
@@ -84,9 +83,9 @@ func TestTicketsOnlyInCommit(t *testing.T) {
 	write(t, root, "specs/actual-*/tickets/one.md", "# One\n")
 	write(t, root, "specs/actual-*/spec.md", "Status: staged\n")
 	write(t, root, "specs/a-file", "a blob where a folder would be\n")
-	git(t, root, "add", ".")
-	git(t, root, "commit", "-qm", "specs")
-	commit := git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.MustRun(t, root, "commit", "-qm", "specs")
+	commit := gittest.Output(t, root, "rev-parse", "HEAD")
 
 	cases := []struct {
 		name string
