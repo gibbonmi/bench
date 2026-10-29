@@ -932,3 +932,16 @@ Each mutation below turns `TestLandingReadsTheDestinationCommonDirOnce` red, and
 - `identityBundleRefusal` with a nil run.
 - `planLandedSet` with a nil run.
 - The commitment reconcile store without the run.
+
+## GQ41 timing after the GQ-C2B checkpoint
+
+The coordinator ran the spec command five times on the GQ-C2B tip. Then it ran the same command five times at `main` 16eab3331 as a control in the same session.
+
+| arm | package runs, in ms | range | median |
+|---|---|---|---:|
+| GQ-C2B tip | 139252, 139558, 137117, 136139, 137421 | 136.1 to 139.6 s | 137.4 s |
+| control at `main` | 143704, 145044, 142848, 144318, 144239 | 142.8 to 145.0 s | 144.2 s |
+
+The row is not met in its literal reading. The smallest gain against the recorded baseline is 6.6 s, which is inside the recorded 7.6 s spread. The control shows 4.6 s of host drift between the two days. Every slice run sits below every control run. The smallest gain against the control is 3.2 s, outside the control's 2.2 s spread, and the median gain is 6.8 s.
+
+The reviewer deferred this decision to the consultants. Opus/high chose a return to the spec, and sonnet/high chose to continue. The fable/high tiebreak chose to continue. So the build continues as a deviation that the reviewer can veto, and GQ42 must meet the recorded spread literally at completion.
