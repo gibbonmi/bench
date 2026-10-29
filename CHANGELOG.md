@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Widen refuses a tracked new entry
+
+- Changed `bench spec widen`. An entry with the `(new)` marker refuses when the checkout HEAD holds its path as a file or a directory and the ticket does not already cover that path. The refusal names each such path and tells you to drop the `(new)` marker, and it writes nothing. Before, the verb added the entry, and an author could overwrite a file that the entry called new.
+
 ### Build cost
 
 - Changed the completion-plan grade. Each chunk requirement must name a probe, and a chunk can have no requirement. A plain chunk requirement refuses with its chunk and its requirement ID. `bench record ticket` accepts a ticket that owes no requirement.
