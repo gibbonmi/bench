@@ -83,9 +83,9 @@ func TestTicketsOnlyInCommit(t *testing.T) {
 	write(t, root, "specs/actual-*/tickets/one.md", "# One\n")
 	write(t, root, "specs/actual-*/spec.md", "Status: staged\n")
 	write(t, root, "specs/a-file", "a blob where a folder would be\n")
-	git(t, root, "add", ".")
-	git(t, root, "commit", "-qm", "specs")
-	commit := git(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.MustRun(t, root, "commit", "-qm", "specs")
+	commit := gittest.Output(t, root, "rev-parse", "HEAD")
 
 	cases := []struct {
 		name string

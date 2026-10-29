@@ -49,12 +49,12 @@ func TestDelegatedFinalVerifier(t *testing.T) {
 		// DI10
 		{"destination addition", "completion composition changes added.txt", func(t *testing.T, f completionFixture) {
 			write(t, f.root, "added.txt", "unreviewed destination content\n")
-			git(t, f.root, "add", "added.txt")
-			git(t, f.root, "commit", "-qm", "destination changed")
+			gittest.MustRun(t, f.root, "add", "added.txt")
+			gittest.MustRun(t, f.root, "commit", "-qm", "destination changed")
 		}},
 		{"destination deletion", "completion composition changes foreign", func(t *testing.T, f completionFixture) {
-			git(t, f.root, "rm", "foreign")
-			git(t, f.root, "commit", "-qm", "destination removed content")
+			gittest.MustRun(t, f.root, "rm", "foreign")
+			gittest.MustRun(t, f.root, "commit", "-qm", "destination removed content")
 		}},
 	}
 	for _, tc := range cases {
@@ -77,7 +77,7 @@ func TestDelegatedFinalVerifier(t *testing.T) {
 				if got := gittest.OutputBytes(t, f.root, "show", result.Commit+":"+request.SpecPath); !bytes.Equal(got, want) {
 					t.Fatalf("published status transform = %q", got)
 				}
-				if got := git(t, f.root, "rev-parse", "main"); got != result.Commit {
+				if got := gittest.Output(t, f.root, "rev-parse", "main"); got != result.Commit {
 					t.Fatalf("publication missing: %s", got)
 				}
 				return
@@ -85,7 +85,7 @@ func TestDelegatedFinalVerifier(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), tc.reason) {
 				t.Fatalf("incomplete delegated evidence published or lost reason %q: %v", tc.reason, err)
 			}
-			if got := git(t, f.root, "rev-parse", "main"); got != request.DestinationBase {
+			if got := gittest.Output(t, f.root, "rev-parse", "main"); got != request.DestinationBase {
 				t.Fatalf("ref moved before proof: %s", got)
 			}
 		})

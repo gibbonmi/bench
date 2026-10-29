@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // stackLanding is one destination and the reviewed member sources of a stack. Every member
@@ -30,22 +31,22 @@ type stackSource struct{ name, worktree, branch, tip, folder string }
 func newStackLanding(t *testing.T, n int, extra map[int]map[string]string) stackLanding {
 	t.Helper()
 	root := fixture(t)
-	f := stackLanding{root: root, base: git(t, root, "rev-parse", "HEAD")}
+	f := stackLanding{root: root, base: gittest.Output(t, root, "rev-parse", "HEAD")}
 	for i := 1; i <= n; i++ {
 		name := fmt.Sprintf("member-%d", i)
 		worktree := filepath.Join(t.TempDir(), name)
-		git(t, root, "worktree", "add", "-qb", name, worktree, f.base)
+		gittest.MustRun(t, root, "worktree", "add", "-qb", name, worktree, f.base)
 		folder := "specs/" + name
 		files := map[string]string{name: name + " bytes\n", folder + "/tickets/01.md": "# " + name + "\n"}
 		maps.Copy(files, extra[i])
 		for path, content := range files {
 			write(t, worktree, path, content)
 		}
-		git(t, worktree, "add", "-A")
-		git(t, worktree, "commit", "-qm", "review "+name)
+		gittest.MustRun(t, worktree, "add", "-A")
+		gittest.MustRun(t, worktree, "commit", "-qm", "review "+name)
 		f.members = append(f.members, stackSource{
 			name: name, worktree: worktree, branch: "refs/heads/" + name,
-			tip: git(t, worktree, "rev-parse", "HEAD"), folder: folder,
+			tip: gittest.Output(t, worktree, "rev-parse", "HEAD"), folder: folder,
 		})
 	}
 	return f
@@ -153,19 +154,19 @@ func landGreenStack(t *testing.T, n int) (stackLanding, StackResult, *stackRecor
 
 func treeNames(t *testing.T, root, tree string) []string {
 	t.Helper()
-	return strings.Split(git(t, root, "ls-tree", "-r", "--name-only", tree), "\n")
+	return strings.Split(gittest.Output(t, root, "ls-tree", "-r", "--name-only", tree), "\n")
 }
 
 func assertStackUnpublished(t *testing.T, f stackLanding, record *stackRecord) {
 	t.Helper()
-	if len(record.updates) != 0 || git(t, f.root, "rev-parse", "refs/heads/main") != f.base {
+	if len(record.updates) != 0 || gittest.Output(t, f.root, "rev-parse", "refs/heads/main") != f.base {
 		t.Fatalf("a refused stack moved the destination: updates %q", record.updates)
 	}
 }
 
 func TestLandStackGradesOnce(t *testing.T) {
 	f, got, record, _ := landGreenStack(t, 3)
-	top := git(t, f.root, "rev-parse", got.Merges[len(got.Merges)-1]+"^{tree}")
+	top := gittest.Output(t, f.root, "rev-parse", got.Merges[len(got.Merges)-1]+"^{tree}")
 	if !slices.Equal(record.graded, []string{top}) {
 		t.Fatalf("graded trees = %q, want the top tree %s once", record.graded, top)
 	}
@@ -192,10 +193,10 @@ func TestLandStackChainsMemberMerges(t *testing.T) {
 	previous := f.base
 	for i, m := range f.members {
 		merge := got.Merges[i]
-		if parents := git(t, f.root, "rev-list", "--parents", "-n", "1", merge); parents != merge+" "+previous+" "+m.tip {
+		if parents := gittest.Output(t, f.root, "rev-list", "--parents", "-n", "1", merge); parents != merge+" "+previous+" "+m.tip {
 			t.Fatalf("member %d merge parents = %q, want %s then %s", i+1, parents, previous, m.tip)
 		}
-		if message := git(t, f.root, "log", "-1", "--format=%B", merge); message != "land "+m.name {
+		if message := gittest.Output(t, f.root, "log", "-1", "--format=%B", merge); message != "land "+m.name {
 			t.Fatalf("member %d merge message = %q", i+1, message)
 		}
 		previous = merge
@@ -208,7 +209,7 @@ func TestLandStackPublishesWithOneUpdate(t *testing.T) {
 	if want := []string{"refs/heads/main " + f.base + " " + top}; !slices.Equal(record.updates, want) {
 		t.Fatalf("ref updates = %q, want %q", record.updates, want)
 	}
-	if git(t, f.root, "rev-parse", "refs/heads/main") != top {
+	if gittest.Output(t, f.root, "rev-parse", "refs/heads/main") != top {
 		t.Fatal("the destination does not name the top merge")
 	}
 }
@@ -216,17 +217,17 @@ func TestLandStackPublishesWithOneUpdate(t *testing.T) {
 func TestLandStackClosesEachFolderInItsMerge(t *testing.T) {
 	f, got, _, _ := landGreenStack(t, 2)
 	for _, m := range f.members {
-		if git(t, f.root, "ls-tree", "-r", "--name-only", m.tip, "--", m.folder) == "" {
+		if gittest.Output(t, f.root, "ls-tree", "-r", "--name-only", m.tip, "--", m.folder) == "" {
 			t.Fatalf("fixture tip of %s carries no tickets folder; the close is unobservable", m.name)
 		}
 	}
 	for i, merge := range got.Merges {
 		for _, m := range f.members[:i+1] {
-			if listed := git(t, f.root, "ls-tree", "-r", "--name-only", merge, "--", m.folder); listed != "" {
+			if listed := gittest.Output(t, f.root, "ls-tree", "-r", "--name-only", merge, "--", m.folder); listed != "" {
 				t.Fatalf("merge %d still carries the folder of %s: %q", i+1, m.name, listed)
 			}
 		}
-		if git(t, f.root, "show", merge+":"+f.members[i].name) != f.members[i].name+" bytes" {
+		if gittest.Output(t, f.root, "show", merge+":"+f.members[i].name) != f.members[i].name+" bytes" {
 			t.Fatalf("merge %d lost the reviewed bytes of its member", i+1)
 		}
 	}
@@ -295,7 +296,9 @@ func TestLandStackRefusesAMemberConflict(t *testing.T) {
 func TestLandStackRechecksEachMember(t *testing.T) {
 	f := newStackLanding(t, 3, nil)
 	o, record := stackOwner(authorization.Green)
-	record.duringGrade = func() { git(t, f.members[1].worktree, "commit", "--allow-empty", "-qm", "moved during the grade") }
+	record.duringGrade = func() {
+		gittest.MustRun(t, f.members[1].worktree, "commit", "--allow-empty", "-qm", "moved during the grade")
+	}
 	_, err := o.LandStack(context.Background(), f.request(t), &stackAdmissionRecord{})
 	var member StackMemberError
 	if !errors.As(err, &member) || member.Member != 2 {

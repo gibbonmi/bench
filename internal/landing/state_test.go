@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -65,8 +66,8 @@ func TestLandPreAuthorizationRefusalTable(t *testing.T) {
 			if err := os.Symlink("fifo-target", filepath.Join(root, "fifo-link")); err != nil {
 				capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
 			}
-			git(t, root, "add", "--", "fifo-link")
-			git(t, root, "commit", "-qm", "tracked symlink")
+			gittest.MustRun(t, root, "add", "--", "fifo-link")
+			gittest.MustRun(t, root, "commit", "-qm", "tracked symlink")
 			return []string{"fifo-link"}
 		}, "nothing to commit"},
 	}
@@ -75,7 +76,7 @@ func TestLandPreAuthorizationRefusalTable(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := fixture(t)
 			paths := tc.setup(t, root)
-			base := git(t, root, "rev-parse", "HEAD")
+			base := gittest.Output(t, root, "rev-parse", "HEAD")
 			calls := 0
 			o := New()
 			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
@@ -104,14 +105,14 @@ func TestLandPreAuthorizationRefusalTable(t *testing.T) {
 
 func TestLandPreservesTrackedPathCompositionFailureBeforeAuthorization(t *testing.T) {
 	root := fixture(t)
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	write(t, root, "named", "modified bytes that require a new object")
 
 	objectDirectory := filepath.Join(t.TempDir(), "objects")
 	if err := os.Mkdir(objectDirectory, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	blob := git(t, root, "hash-object", "--no-filters", "--", "named")
+	blob := gittest.Output(t, root, "hash-object", "--no-filters", "--", "named")
 	if err := os.WriteFile(filepath.Join(objectDirectory, blob[:2]), []byte("not a directory"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -189,21 +190,21 @@ func TestLandPreservesWholeUnnamedFingerprintAndCleansOwnedPaths(t *testing.T) {
 	write(t, root, "unnamed-staged", "base")
 	write(t, root, "unnamed-staged-plus-unstaged", "base")
 	write(t, root, "unnamed-unstaged", "base")
-	git(t, root, "add", "--", ".gitignore", "unnamed-staged", "unnamed-staged-plus-unstaged", "unnamed-unstaged")
-	git(t, root, "commit", "-qm", "fingerprint base")
+	gittest.MustRun(t, root, "add", "--", ".gitignore", "unnamed-staged", "unnamed-staged-plus-unstaged", "unnamed-unstaged")
+	gittest.MustRun(t, root, "commit", "-qm", "fingerprint base")
 
 	write(t, root, "named", "named landed bytes")
 	write(t, root, "unnamed-staged", "staged bytes")
-	git(t, root, "add", "--", "unnamed-staged")
+	gittest.MustRun(t, root, "add", "--", "unnamed-staged")
 	write(t, root, "unnamed-staged-plus-unstaged", "staged bytes")
-	git(t, root, "add", "--", "unnamed-staged-plus-unstaged")
+	gittest.MustRun(t, root, "add", "--", "unnamed-staged-plus-unstaged")
 	write(t, root, "unnamed-staged-plus-unstaged", "worktree bytes")
 	write(t, root, "unnamed-unstaged", "unstaged bytes")
 	write(t, root, "unnamed-untracked", "untracked bytes")
 	write(t, root, "unnamed-ignored", "ignored bytes")
 
 	before := fingerprintUnnamedState(t, root)
-	base := git(t, root, "rev-parse", "HEAD")
+	base := gittest.Output(t, root, "rev-parse", "HEAD")
 	o := greenOwner()
 	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "fingerprint", Paths: []string{"named"}})
 	if err != nil {
@@ -213,10 +214,10 @@ func TestLandPreservesWholeUnnamedFingerprintAndCleansOwnedPaths(t *testing.T) {
 	if !reflect.DeepEqual(after, before) {
 		t.Fatalf("unnamed fingerprint changed\nbefore: %#v\nafter:  %#v", before, after)
 	}
-	if status := git(t, root, "status", "--porcelain=v1", "--", "named"); status != "" {
+	if status := gittest.Output(t, root, "status", "--porcelain=v1", "--", "named"); status != "" {
 		t.Fatalf("owned paths are not clean: %q", status)
 	}
-	if published := git(t, root, "show", got.Commit+":named"); published != "named landed bytes" {
+	if published := gittest.Output(t, root, "show", got.Commit+":named"); published != "named landed bytes" {
 		t.Fatalf("published named bytes = %q", published)
 	}
 }
@@ -257,18 +258,18 @@ func TestFingerprintStatusFiltersOnlyDeclaredRuntimeResidue(t *testing.T) {
 func fingerprintUnnamedState(t *testing.T, root string) unnamedFingerprint {
 	t.Helper()
 	return unnamedFingerprint{
-		StagedIndexBlob:             git(t, root, "rev-parse", ":unnamed-staged"),
-		StagedStatus:                git(t, root, "status", "--porcelain=v1", "--", "unnamed-staged"),
-		StagedPlusUnstagedIndexBlob: git(t, root, "rev-parse", ":unnamed-staged-plus-unstaged"),
+		StagedIndexBlob:             gittest.Output(t, root, "rev-parse", ":unnamed-staged"),
+		StagedStatus:                gittest.Output(t, root, "status", "--porcelain=v1", "--", "unnamed-staged"),
+		StagedPlusUnstagedIndexBlob: gittest.Output(t, root, "rev-parse", ":unnamed-staged-plus-unstaged"),
 		StagedPlusUnstagedBytes:     string(mustRead(t, filepath.Join(root, "unnamed-staged-plus-unstaged"))),
-		StagedPlusUnstagedStatus:    git(t, root, "status", "--porcelain=v1", "--", "unnamed-staged-plus-unstaged"),
+		StagedPlusUnstagedStatus:    gittest.Output(t, root, "status", "--porcelain=v1", "--", "unnamed-staged-plus-unstaged"),
 		UnstagedTrackedBytes:        string(mustRead(t, filepath.Join(root, "unnamed-unstaged"))),
-		UnstagedTrackedStatus:       git(t, root, "status", "--porcelain=v1", "--", "unnamed-unstaged"),
+		UnstagedTrackedStatus:       gittest.Output(t, root, "status", "--porcelain=v1", "--", "unnamed-unstaged"),
 		UntrackedBytes:              string(mustRead(t, filepath.Join(root, "unnamed-untracked"))),
-		UntrackedStatus:             git(t, root, "status", "--porcelain=v1", "--", "unnamed-untracked"),
+		UntrackedStatus:             gittest.Output(t, root, "status", "--porcelain=v1", "--", "unnamed-untracked"),
 		IgnoredBytes:                string(mustRead(t, filepath.Join(root, "unnamed-ignored"))),
-		IgnoredClassification:       git(t, root, "check-ignore", "-v", "--", "unnamed-ignored"),
-		WholeStatus: git(t, root, "status", "--porcelain=v1", "--untracked-files=all", "--ignored", "--",
+		IgnoredClassification:       gittest.Output(t, root, "check-ignore", "-v", "--", "unnamed-ignored"),
+		WholeStatus: gittest.Output(t, root, "status", "--porcelain=v1", "--untracked-files=all", "--ignored", "--",
 			"unnamed-staged", "unnamed-staged-plus-unstaged", "unnamed-unstaged", "unnamed-untracked", "unnamed-ignored"),
 	}
 }
@@ -284,15 +285,15 @@ func TestLandReviewedRechecksCheckoutFingerprintsAfterAuthorization(t *testing.T
 		t.Run(tc.name, func(t *testing.T) {
 			root := fixture(t)
 			write(t, root, "specs/x/spec.md", "Status: staged\n")
-			git(t, root, "add", "specs/x/spec.md")
-			git(t, root, "commit", "-qm", "stage spec")
-			destination := git(t, root, "rev-parse", "HEAD")
+			gittest.MustRun(t, root, "add", "specs/x/spec.md")
+			gittest.MustRun(t, root, "commit", "-qm", "stage spec")
+			destination := gittest.Output(t, root, "rev-parse", "HEAD")
 			sourceWorktree := filepath.Join(t.TempDir(), "source")
-			git(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
+			gittest.MustRun(t, root, "worktree", "add", "-qb", "reviewed-source", sourceWorktree, destination)
 			write(t, sourceWorktree, "reviewed", "source bytes\n")
-			git(t, sourceWorktree, "add", "reviewed")
-			git(t, sourceWorktree, "commit", "-qm", "reviewed")
-			source := git(t, sourceWorktree, "rev-parse", "HEAD")
+			gittest.MustRun(t, sourceWorktree, "add", "reviewed")
+			gittest.MustRun(t, sourceWorktree, "commit", "-qm", "reviewed")
+			source := gittest.Output(t, sourceWorktree, "rev-parse", "HEAD")
 			sourceFingerprint, _ := CheckoutFingerprint(sourceWorktree)
 			destinationFingerprint, _ := CheckoutFingerprint(root)
 			o := New()
@@ -309,7 +310,7 @@ func TestLandReviewedRechecksCheckoutFingerprintsAfterAuthorization(t *testing.T
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("fingerprint mutation error = %v, want %q", err, tc.want)
 			}
-			if got := git(t, root, "rev-parse", "main"); got != destination {
+			if got := gittest.Output(t, root, "rev-parse", "main"); got != destination {
 				t.Fatalf("destination moved to %s", got)
 			}
 		})
