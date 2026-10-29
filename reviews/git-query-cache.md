@@ -666,6 +666,72 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gq-c2b-coverage-2",
+          "performer": "claude:gq-c2b-coverage-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dbd3a537c887b52112b1b4579f6666c2ccee8b71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2b-coverage-confirm-20261029",
+            "digest": "sha256:d565e2c2fed607ba385d5abecd6613d1e56a746ffd29f1cfdd4e508da1633c17",
+            "excerpt": "axis: Coverage (confirming round, repair delta 720c64a98..dad72c788)\nverdict: pass. The delta only threads a run into existing reads (terminalResumeReceipt, missingTreeLanded, missingTreeLeaseRefusal, the merge ledger read); argument order and error handling are unchanged apart from the leading run; a nil run answers the same, so a dropped run loses only cache.\nNo existing test stops covering its path. missingTreeRoute keeps a nil run by a documented choice, and its answer is live.\n"
+          },
+          "axis": "Coverage",
+          "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "tip": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c2b-coverage-1"
+          ]
+        },
+        {
+          "id": "gq-c2b-standards-2",
+          "performer": "claude:gq-c2b-standards-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dbd3a537c887b52112b1b4579f6666c2ccee8b71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2b-standards-confirm-20261029",
+            "digest": "sha256:3557edcb8c6a74251694b6ec026a45bdf468cbd46469106695701be7bdb8e78d",
+            "excerpt": "axis: Standards (confirming round, repair delta 720c64a98..dad72c788)\nS2: closed. ownership.go passes a.run; path.go missingTreeLanded takes the run; merge.go:74 reads through intent.In(a.run, root); the resume receipt and list.go pass the run.\nThe missingTreeRoute comment is accurate and in the comment register. No new defect.\nObservation (routed to ticket 04, which owns the release paths): ownership.go:226 and :329 still read the cleanup receipt without the run.\n"
+          },
+          "axis": "Standards",
+          "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "tip": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c2b-standards-1"
+          ]
+        },
+        {
+          "id": "gq-c2b-spec-2",
+          "performer": "claude:gq-c2b-spec-confirm-20261029",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dbd3a537c887b52112b1b4579f6666c2ccee8b71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c2b-spec-confirm-20261029",
+            "digest": "sha256:d96921ce6876b87c016dd6aea0b2bf3977bb0ee34d04f2ddb341ceeb1829be08",
+            "excerpt": "axis: Spec (confirming round, repair delta 720c64a98..dad72c788)\nP1: closed. ownership.go:343, list.go:86, path.go missingTreeLanded, and merge.go:74 read through the verb run.\nP2: closed. Both resume callers pass a.run to terminalResumeReceipt, which reads through intent.In(run, root).\nThe remaining nil in missingTreeRoute does not contradict the spec: its resolver callers take no run, and a nil run builds no run and caches nothing. GQ34 stays 54. No new finding.\n"
+          },
+          "axis": "Spec",
+          "base": "01d699aaa16c6fb51b3ad2e4ecc0f233c4f337e9",
+          "tip": "dad72c788f18af0a798be59e40c3ce761192ae56",
+          "finding_ids": [],
+          "supersedes": [
+            "gq-c2b-spec-1"
+          ]
         }
       ]
     }
