@@ -86,7 +86,7 @@ func skipOwnershipDiags(rel, path string) []string {
 			return true
 		}
 		diags = append(diags, fmt.Sprintf(
-			"%s calls %s outside %s (line %d); route the skip through capability.Capability(t, class, reason) for a host capability the test needs, or capability.Environment(t, reason) for a staging fact",
+			"%s calls %s outside %s (line %d); route the skip through capability.Unavailable(t, class, detail) for a FIFO or symlink class, capability.Capability(t, class, reason) for another host capability the test needs, or capability.Environment(t, reason) for a staging fact",
 			rel, expressionText(fset, call.Fun), skipOwnerDir, fset.Position(call.Pos()).Line))
 		return true
 	})

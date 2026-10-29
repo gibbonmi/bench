@@ -349,23 +349,18 @@ func TestOrdinaryBuildCensusRequiresTheTracedTestArgv(t *testing.T) {
 	}
 }
 
-// TestSystemProcessOwnerBites is GF18. A direct Git process in systemGit, which bypasses
-// owner.runAt, fails the census, and so does a systemProcessSites entry whose site is gone.
+// TestSystemProcessOwnerBites is GF18. On a throwaway root, the census entry fails a direct
+// Git process in systemGit, which bypasses owner.runAt, and a systemProcessSites entry whose
+// site is gone.
 func TestSystemProcessOwnerBites(t *testing.T) {
-	var sites []architectureSite
-	for entry := range systemProcessSites {
-		sites = append(sites, architectureSite{path: entry.path, symbol: entry.symbol, kind: entry.kind})
-	}
-	bypass, err := scanArchitectureGo("internal/systemtest/owner_land_race_test.go", []byte("package systemtest\n\nimport \"os/exec\"\n\nfunc systemGit(root string, args ...string) {\n\t_ = exec.Command(\"git\", append([]string{\"-C\", root}, args...)...).Run()\n}\n"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for want, graded := range map[string][]architectureSite{
-		"owner_land_race_test.go:6 in systemGit":                append(slices.Clone(sites), bypass...),
-		"runInterruptChild (process), which holds no such site": slices.DeleteFunc(slices.Clone(sites), func(site architectureSite) bool { return site.symbol == "runInterruptChild" }),
-	} {
-		if diags := systemProcessDiags(graded); len(diags) != 1 || !strings.Contains(diags[0], want) {
-			t.Errorf("diagnostics = %v, want one that holds %q", diags, want)
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.21\n")
+	writeFixtureFile(t, filepath.Join(root, "internal", "gate", "phases.go"), "package gate\n")
+	writeFixtureFile(t, filepath.Join(root, "internal", "systemtest", "owner_land_race_test.go"), "package systemtest\n\nimport \"os/exec\"\n\nfunc systemGit(root string, args ...string) {\n\t_ = exec.Command(\"git\", append([]string{\"-C\", root}, args...)...).Run()\n}\n")
+	diags := checkOrdinaryBuildCensus(root)
+	for _, want := range []string{"owner_land_race_test.go:6 in systemGit", "runInterruptChild (process), which holds no such site"} {
+		if !slices.ContainsFunc(diags, func(diag string) bool { return strings.Contains(diag, want) }) {
+			t.Errorf("census entry diagnostics hold no %q:\n%s", want, strings.Join(diags, "\n"))
 		}
 	}
 }

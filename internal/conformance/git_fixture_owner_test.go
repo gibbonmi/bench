@@ -51,7 +51,6 @@ var gitFixtureExceptions = map[ownedSite]string{
 	{"internal/preflight/preflighttest/reviewfiles.go", "SeedReviewPair", "git-runner"}:                  "the fast-import input stream with its pinned committer and times",
 	{"internal/roadmap/retro_cost_test.go", "costRepo.gitAuthored", "git-runner"}:                        "deliberate author and committer times",
 	{"internal/worktree/reset_refusal_test.go", "TestResetRefusesAnAmbiguousCheckpoint", "git-identity"}: "raw commit headers with fixed bytes for a hash-prefix collision search",
-	{"internal/worktree/test_run_test.go", "benchSourceRoot", "git-runner"}:                              "an error-returning query of the source checkout, outside the journey harness file",
 }
 
 // systemProcessSites is the exact set of process and gittest sites that internal/systemtest
