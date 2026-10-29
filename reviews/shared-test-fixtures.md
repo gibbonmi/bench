@@ -1884,6 +1884,72 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "gf-c13-standards-r2",
+          "performer": "claude:gf-c13-standards-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f257b0f449d5f87b28eae1eabd29b92bc638fd28",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c13-standards-r2",
+            "digest": "sha256:195cc4e40d1916dc4b67213885f1191def5fbf4f4239cb4a0c0d38f26605d0bb",
+            "excerpt": "Standards axis, chunk GF-C13 round 2 (claude:gf-c13-standards-r2). Findings: none. S1 holds (benchSourceRoot uses gittest.Run; exception entry gone; test_run_test.go is a journey harness file). S2 holds (benchModule + processLifetimeOwner). Skip-ownership message matches the Unavailable signature. Advice: gittest.Run combines stderr where the old read was stdout only.\n"
+          },
+          "axis": "Standards",
+          "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "tip": "ede4318ee38b1b5f4e55e79d8eafc266f6606d1c",
+          "finding_ids": [],
+          "supersedes": [
+            "gf-c13-standards-r1"
+          ]
+        },
+        {
+          "id": "gf-c13-spec-r2",
+          "performer": "claude:gf-c13-spec-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f257b0f449d5f87b28eae1eabd29b92bc638fd28",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c13-spec-r2",
+            "digest": "sha256:e402f03d5eef56c431ff99f02bf08f5760857d2ea06465d9494198b05a85f50a",
+            "excerpt": "Spec axis, chunk GF-C13 round 2 (claude:gf-c13-spec-r2). Findings: none. P1 closed: TestSystemProcessOwnerBites drives checkOrdinaryBuildCensus on a throwaway root with a systemGit bypass; dropping the routing or line 83 turns it red. GF10, GF24-GF28, GF31 unchanged in behavior. Advice: the runInterruptChild stale assertion is trivially true on an empty root; the bypass assertion is the guard.\n"
+          },
+          "axis": "Spec",
+          "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "tip": "ede4318ee38b1b5f4e55e79d8eafc266f6606d1c",
+          "finding_ids": [],
+          "supersedes": [
+            "gf-c13-spec-r1"
+          ]
+        },
+        {
+          "id": "gf-c13-coverage-r2",
+          "performer": "claude:gf-c13-coverage-r2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f257b0f449d5f87b28eae1eabd29b92bc638fd28",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c13-coverage-r2",
+            "digest": "sha256:093e3c47d96079a079ad3653c8e8d74a2fbdba60ed7057c870130379002fa40a",
+            "excerpt": "Coverage axis, chunk GF-C13 round 2 (claude:gf-c13-coverage-r2). Findings: none. C1 closed: omitting line 83, the line 68 append, or restoring continue each leaves the wanted diagnostics absent. Stale-entry bites intact (system entries in the census run; gitFixtureExceptions site-gone case untouched). benchSourceRoot keeps its error path. Advice: gittest.Run combines stderr.\n"
+          },
+          "axis": "Coverage",
+          "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "tip": "ede4318ee38b1b5f4e55e79d8eafc266f6606d1c",
+          "finding_ids": [],
+          "supersedes": [
+            "gf-c13-coverage-r1"
+          ]
         }
       ]
     }
@@ -2696,3 +2762,5 @@ Its witness omitted the `systemProcessDiags` wiring line in `checkOrdinaryBuildC
 
 The coordinator probe swapped the systemtest site routing for `continue`, which restores the old skip. `TestSystemProcessOwnerBites` turned red, and the restore passed.
 The repair widen of the ticket file makes the delta not test-only, so a confirming round of three axes follows. The repair consumed one of the two repair cycles of GF-C13.
+
+The confirming round passed on all three axes at `12937978f..ede4318ee`, with no finding. Each round 1 finding is closed.
