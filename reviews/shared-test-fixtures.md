@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:142b2f7c9288c50f1957cc9921b80ad2805b2eb2a0b142c44c6fc666f556d580",
+  "plan_digest": "sha256:bd1eedb145049f9d18d247761194b53a00a3046a9942d49a69ad123970e12d0e",
   "implementation_session": "",
   "chunks": [
     {
@@ -519,9 +519,9 @@
     {
       "id": "GF-C5A",
       "base": "874d872c35a274eeeca55f7831508b46fb634b2b",
-      "tip": "6b30e5797d5056f5442ae6db3d0270e66a283af0",
-      "plan_digest": "sha256:142b2f7c9288c50f1957cc9921b80ad2805b2eb2a0b142c44c6fc666f556d580",
-      "source_digest": "a5bf6ae22a750abdc790b354a808e777fa66e6f7",
+      "tip": "a8a6108eec28c50c398d57a68d5a8d4525d509f6",
+      "plan_digest": "sha256:bd1eedb145049f9d18d247761194b53a00a3046a9942d49a69ad123970e12d0e",
+      "source_digest": "49e4928b94431a2a9d8478c16bdb95150f8f0541",
       "acceptance_rows": [
         "GF16",
         "GF19",
@@ -586,6 +586,36 @@
               "ref": "claude-agent:bench-writer-medium:gf-t05a-author-20261029",
               "digest": "sha256:c71509ec0327b9f7c53732d17e3e0de82954789796d6988db0f35125f6ecf852",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestShellWrapperKitMatchesKitForRoot,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestShellWrapperKitMatchesKitForRoot,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,354\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,19,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestShellWrapperKitMatchesKitForRoot,\"wrapper_kit_test.go:111: git commit --quiet -m seed --allow-empty: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05b-probe-05b",
+          "performer": "claude:gf-t05b-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "49e4928b94431a2a9d8478c16bdb95150f8f0541",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:gf-t05b-author-20261029",
+            "digest": "sha256:cf13d590b743c6bf278af9155aec17b935f6c32e992a526e427c5d502dd3374c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestCommitmentLightPathCommit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commit,TestCommitmentLightPathCommit,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,349\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,fail,10,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestCommitmentLightPathCommit,\"commitment_test.go:219: git commit --quiet -m bootstrap: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a8a6108eec28c50c398d57a68d5a8d4525d509f6",
+          "requirement": "probe-05b",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/commit --run TestCommitmentLightPathCommit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:gf-t05b-author-20261029",
+              "digest": "sha256:cf13d590b743c6bf278af9155aec17b935f6c32e992a526e427c5d502dd3374c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestCommitmentLightPathCommit,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commit,TestCommitmentLightPathCommit,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,349\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,fail,10,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestCommitmentLightPathCommit,\"commitment_test.go:219: git commit --quiet -m bootstrap: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -670,6 +700,21 @@
     {
       "from": "sha256:d9897e338a549f2aaeab8a0e4f21046027df8b54f57e5f0feaecb189a07dfa9c",
       "to": "sha256:142b2f7c9288c50f1957cc9921b80ad2805b2eb2a0b142c44c6fc666f556d580",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ]
+      }
+    },
+    {
+      "from": "sha256:142b2f7c9288c50f1957cc9921b80ad2805b2eb2a0b142c44c6fc666f556d580",
+      "to": "sha256:bd1eedb145049f9d18d247761194b53a00a3046a9942d49a69ad123970e12d0e",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
