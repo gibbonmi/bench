@@ -372,7 +372,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c2-standards-r1",
+          "performer": "claude:gf-c2-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "80d2541f2df65975277aff4ba750e4c88108df35",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c2-standards-r1",
+            "digest": "sha256:60d752bf0add889a7a238b14fa65168ee9f83b9f8ce5264cb16b69b0779926c5",
+            "excerpt": "Standards axis, chunk GF-C2 (claude:gf-c2-standards-r1). S1 internal/structure/structure_test.go:349-359 private run renames OutputBytes with its own TrimRight; auto-fix, confidence 7. S2 private dated exec runners in internal/diff/compatibility_test.go:150, internal/maps/freshness_test.go:53-60, internal/roadmap/retro_cost_test.go:32-48, and costRepo.git runs plain add, rev-parse, checkout; ask-user, confidence 5. S3 the IdentityConfig apply loop repeats in structure, maps, status fixtures; ask-user, confidence 4. S4 status_producible_test.go gitDir parameter rename; auto-fix, confidence 5. Advice: an IdentityArgs commit helper; a comment on the pinned compatibility identity.\n"
+          },
+          "axis": "Standards",
+          "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "tip": "a94afe984816d50c98dbd1a67ae4935fe863721e",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c2-spec-r1",
+          "performer": "claude:gf-c2-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "80d2541f2df65975277aff4ba750e4c88108df35",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c2-spec-r1",
+            "digest": "sha256:587d61ebc34aadb591058a597cf1eaf839fae6bd0bf01d599d69b6ee5c471c50",
+            "excerpt": "Spec axis, chunk GF-C2 (claude:gf-c2-spec-r1). P1 (axis id F1) internal/status/status_signals_test.go:710-717 literal reformat and the roadmap_test.go import move are outside the fixture reach; auto-fix, confidence 6. P2 (axis id F2) internal/maps/freshness_test.go:56 commitAt is a timestamp-only private runner; siblings use t.Setenv plus gittest; ask-user, confidence 4. Kept raw sites classified correctly: diff command_test.go:69,78, matrix_test.go:277 and rawNoIndexPatch (expected exits), compatibility_test.go:125-137 (pinned identity and dates), state_scan_test.go:208 (stdin), retro_cost_test.go:40 (distinct author and committer times), structure run (output shape). Advice: shared identity apply helper; Commit in place of MustRun commit.\n"
+          },
+          "axis": "Spec",
+          "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "tip": "a94afe984816d50c98dbd1a67ae4935fe863721e",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c2-coverage-r1",
+          "performer": "claude:gf-c2-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "80d2541f2df65975277aff4ba750e4c88108df35",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c2-coverage-r1",
+            "digest": "sha256:70742b54b7d716362edc3a0d2b797f5b16aa8e7536bedf1c8fd35fc2279fe4c4",
+            "excerpt": "Coverage axis, chunk GF-C2 (claude:gf-c2-coverage-r1). V1 (axis id F1) internal/status/status_signals_test.go:264-267 literal reformat and the roadmap_test.go import move have no behavioral effect; no-op or revert, confidence 7. No changed subject found in the stdout-to-combined readers, the raw byte reads, the structure runner, the specialized probes, the stub-git tests, the identity change, or the empty -C root.\n"
+          },
+          "axis": "Coverage",
+          "base": "6002ec0cfad73163762ef34044426b4cfb5b3298",
+          "tip": "a94afe984816d50c98dbd1a67ae4935fe863721e",
+          "finding_ids": [
+            "V1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -468,3 +539,39 @@ Its witness reds each came from one `bench probe` of production code, and each r
 
 The coordinator probe swapped the email option of `IdentityArgs`, a different kind at a different site. It turned `TestFixtureIdentity` red, and the restore passed.
 The repair consumed one of the two repair cycles of GF-C1.
+
+## GF-C2 review pickup
+
+The repair allowance of GF-C2 is two cycles. The first repair cycle starts after this record.
+
+### Standards
+
+Findings: 4. Worst issue: S1.
+
+- S1, `internal/structure/structure_test.go:349`: the private `run` keeps a stdout-only output shape that callers outside the fence read. It is not a pure rename of a `gittest` helper, so the rename rule does not apply. Disposition: no-op. Confidence: 7.
+- S2, `internal/roadmap/retro_cost_test.go:32`: the private runner also performs plain `add`, `rev-parse`, and `checkout` steps. One exception does not exempt unrelated setup, so these steps move to `gittest`. Disposition: auto-fix. Confidence: 5.
+- S3, `internal/maps/freshness_test.go:32`: the identity configuration loop repeats in three fixtures. The identity values have one owner, and the loop is incidental composition. Disposition: no-op. Confidence: 4.
+- S4, `internal/status/status_producible_test.go:56`: the parameter rename keeps the closure on one line inside the structure budget. Disposition: no-op. Confidence: 5.
+
+### Spec
+
+Findings: 2. Worst issue: P2.
+
+- P1, `internal/status/status_signals_test.go:710`: the literal reformat keeps the file inside its structure budget, and the import move is `goimports` output. Disposition: no-op. Confidence: 6.
+- P2, `internal/maps/freshness_test.go:56`: `commitAt` is a timestamp-only private runner. Sibling fixtures set the dates with `t.Setenv` and commit through `gittest`. Disposition: auto-fix. Confidence: 4.
+
+### Coverage
+
+Findings: 1. Worst issue: V1.
+
+- V1, `internal/status/status_signals_test.go:264`: the same layout edit as P1 has no behavioral effect. Disposition: no-op. Confidence: 7.
+
+Repair targets: 2 (S2, P2), both on ticket 04, in one combined repair charge.
+
+### Retained specialized and intentional sites
+
+- `internal/diff/command_test.go` and `internal/diff/matrix_test.go` (`rawNoIndexPatch` and the `diff --check` probe): an expected nonzero exit.
+- `internal/diff/compatibility_test.go` (`seedCompatibilityRepo`): an intentional subject, because pinned commit ids grade its identity and dates.
+- `internal/handoff/state_scan_test.go` (`writeBlob`): custom standard input.
+- `internal/roadmap/retro_cost_test.go` (`gitAuthored`): distinct author and committer times that the fixture grades.
+- `internal/structure/structure_test.go` (`run`): a stdout-only output shape over `gittest.OutputBytes`.
