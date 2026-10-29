@@ -105,7 +105,78 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gq-c1-standards-1",
+          "performer": "claude:gq-c1-standards-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ab9506e1be46c9e86a6302b435dd4a45219d6a7e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c1-standards-20261028",
+            "digest": "sha256:522a21ad204fb6e20273e50e9869c1397fd977a82e7f763b06d9616b382f3971",
+            "excerpt": "axis: Standards\nverdict: findings\nfinding count: 1 (worst: S1, ADR 0033 overstates the revalidation rule)\nS1 | auto-fix | confidence 7 | docs/adr/0033-a-command-run-caches-its-pure-git-queries.md:31 | \"Each location read checks the stored directory again on the filesystem\" is wrong for the top-level location: Run.RootAt stores its answer and runs no validateCommonDir check; only CommonDir, AdminDir, and AdminPath revalidate. Fix: name the three directory-valued reads.\nGQ43 pass. GQ44 pass except S1.\nAdvice: FullObjectID hex loop repeats hexIdentity's loop; the ticket keeps hexIdentity unchanged.\n"
+          },
+          "axis": "Standards",
+          "base": "f979bae6807f82e9bc4a259b78076c3170710597",
+          "tip": "de8410c563e7ea8e2fd2d7a1b2bebac97fd646f1",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c1-spec-1",
+          "performer": "claude:gq-c1-spec-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ab9506e1be46c9e86a6302b435dd4a45219d6a7e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c1-spec-20261028",
+            "digest": "sha256:9feb7f34cd046ac6fd645450436e16a5d0d0a00e54145ea3ce60621f70d5b140",
+            "excerpt": "axis: Spec | verdict: findings | 2 findings | worst: P1\nP1 | ask-user | confidence 5 | internal/git/run.go:77-94 | Run.AdminPath checks the parent directory on the first read too; the nil run and the package form return the path. The spec row says the read checks the parent \"again\"; the flagged addition says \"each cached read\". Confirm the first-read check; if kept, the doc comment must state it.\nP2 | no-op | confidence 4 | specs/git-query-cache/spec.md:247-271 | The seam-cell citation rewrite sits outside the Writes: line; it is bookkeeping with no behavior change.\nEvery ticket 01 row has a test that asserts its behavior.\nAdvice: GQ9 moves the branch by commit, not update-ref; GQ19 checks only cat-file for ReadTreeFile; GQ23 refuses on the third read.\n"
+          },
+          "axis": "Spec",
+          "base": "f979bae6807f82e9bc4a259b78076c3170710597",
+          "tip": "de8410c563e7ea8e2fd2d7a1b2bebac97fd646f1",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gq-c1-coverage-1",
+          "performer": "claude:gq-c1-coverage-20261028",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "ab9506e1be46c9e86a6302b435dd4a45219d6a7e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gq-c1-coverage-20261028",
+            "digest": "sha256:ce2cae0997b2278751432de0c93ee5c8a9bad23ae5baabf5c5ced944d83e2f99",
+            "excerpt": "axis: Coverage | verdict: findings | 4 findings | worst: C1\nC1 | auto-fix | confidence 8 | internal/git/run.go:182, :318 | AdminPath key (name, root) and object key (-C root) have no test that tells two keys apart; dropping name or root from the key survives (spec Edge inventory: spellings key as exact bytes).\nC2 | auto-fix | confidence 8 | internal/git/run.go:273 | IsAncestor purity guard: deleting the !FullObjectID(ancestor) term survives; no ref-ancestor, full-descendant case next to GQ15.\nC3 | auto-fix | confidence 8 | internal/git/run.go:237 | pureListing: removing the ^{tree} trim or the flag skip survives; no <fullid>^{tree}, flag, or two-revision case.\nC4 | auto-fix | confidence 6 | internal/worktree/land_identity.go:291 | abbreviatedIdentity 64-digit expansion (flagged addition) has no test; a 40-only check survives.\n"
+          },
+          "axis": "Coverage",
+          "base": "f979bae6807f82e9bc4a259b78076c3170710597",
+          "tip": "de8410c563e7ea8e2fd2d7a1b2bebac97fd646f1",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -117,3 +188,29 @@
   }
 }
 ```
+
+## Chunk GQ-C1 review pickup
+
+The review read the frozen pair f979bae68 to de8410c56. Repair cycles used: 0 of 2. All six accepted findings fall on ticket 01, so one combined repair charge carries them.
+
+## Standards
+
+Findings: 1. Worst issue: S1.
+
+- S1, auto-fix, confidence 7: the ADR 0033 sentence "Each location read checks the stored directory again on the filesystem" is wrong for the top-level read. Only the common-directory, administration-directory, and administration-path reads check again (docs/adr/0033-a-command-run-caches-its-pure-git-queries.md:31).
+
+## Spec
+
+Findings: 2. Worst issue: P1.
+
+- P1, auto-fix, confidence 5: the doc comment of `Run.AdminPath` says that the method answers as the package form does (internal/git/run.go:77-94). But a non-nil run checks the parent directory on each read, the first read included. Of three consultants, opus/high and fable/high chose "check every read", and sonnet/high chose "check only a stored answer". The tiebreak cites spec story 9 and the edge inventory, which bind the check to each read. The repair corrects the comment only. A nil run keeps the package behavior under story 7.
+- P2, no-op, confidence 4: the seam-cell citation rewrite in the spec sits outside the `Writes:` line. The build rule puts each coverage-cell citation in the same commit as its cited test, so no repair target remains.
+
+## Coverage
+
+Findings: 4. Worst issue: C1.
+
+- C1, auto-fix, confidence 8: no test separates two keys of `AdminPath` or of the object store (internal/git/run.go:182 and :318). So a key without the name or the root spelling survives.
+- C2, auto-fix, confidence 8: no test reads a ref ancestor with a full-id descendant (internal/git/run.go:273; row GQ15). So a guard without the ancestor term survives.
+- C3, auto-fix, confidence 8: no test lists a full id with the `^{tree}` suffix, a flag operand, or two revisions (internal/git/run.go:237). So a listing rule without the suffix trim or the flag skip survives.
+- C4, auto-fix, confidence 6: no test expands a prefix to a 64-digit id through `abbreviatedIdentity`, so a 40-digit rule there survives (internal/worktree/land_identity.go:291; a flagged addition).
