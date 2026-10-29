@@ -317,6 +317,8 @@ The completion run includes the whole-project gate. Run the tagged system suite 
 - `internal/adopt/adopt_test.go`
 - `internal/adopt/broker_test.go`
 - `internal/adopt/link_hook_test.go`
+- `internal/adopt/lifecycle_consumption_test.go`
+- `internal/adopt/lifecycle_special_test.go`
 - `internal/adopt/link_transaction_test.go`
 - `internal/adopt/repairtest/session_test.go`
 - `internal/adopt/setup_prompt_test.go`
