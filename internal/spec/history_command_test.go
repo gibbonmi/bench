@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -41,13 +40,13 @@ func historyFixture(t *testing.T) historyFixtureData {
 	}
 	f.commit(t, "base", 1, "initial specs")
 	f.commit(t, "retire", 2, "spec-retire: retire-only")
-	runGit(t, root, "rm", "-q", "specs/mixed.md")
+	gittest.MustRun(t, root, "rm", "-q", "specs/mixed.md")
 	f.commit(t, "both", 3, "spec-retire: mixed")
-	runGit(t, root, "rm", "-q", "specs/only-delete/spec.md")
+	gittest.MustRun(t, root, "rm", "-q", "specs/only-delete/spec.md")
 	f.commit(t, "delete", 4, "remove obsolete spec")
 	writeFolderSpec(t, root, "mixed", "folder\n")
 	f.commit(t, "folder", 5, "add spec folder")
-	runGit(t, root, "rm", "-q", "specs/mixed/spec.md")
+	gittest.MustRun(t, root, "rm", "-q", "specs/mixed/spec.md")
 	f.commit(t, "mixed-delete", 6, "remove mixed spec")
 	f.commit(t, "prefix", 7, "spec-retire: mixed-extra")
 	f.commit(t, "newest", 8, "quoted \"café\", tab\tvalue spec-retire: mixed")
@@ -68,13 +67,9 @@ func (f historyFixtureData) commit(t *testing.T, name string, day int, subject s
 	date := fmt.Sprintf("2025-01-%02dT12:00:00+00:00", day)
 	t.Setenv("GIT_AUTHOR_DATE", date)
 	t.Setenv("GIT_COMMITTER_DATE", date)
-	runGit(t, f.root, "add", "-A")
-	runGit(t, f.root, "commit", "--allow-empty", "-qm", subject)
-	hash, err := git.Output("-C", f.root, "rev-parse", "--short", "HEAD")
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.hash[name] = hash
+	gittest.MustRun(t, f.root, "add", "-A")
+	gittest.Commit(t, f.root, subject, "--allow-empty")
+	f.hash[name] = gittest.Output(t, f.root, "rev-parse", "--short", "HEAD")
 }
 
 // expand replaces the fixture root and commit-name placeholders of a recorded value.

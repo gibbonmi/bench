@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestActive(t *testing.T) {
@@ -113,12 +114,7 @@ func TestBlockMessage(t *testing.T) {
 // empty tree in a commit-less repo.
 func newGitRepo(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
-	cmd := exec.Command("git", "init", "-q")
-	cmd.Dir = dir
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git init failed: %v\n%s", err, out)
-	}
+	dir := gittest.Repo(t)
 	t.Chdir(dir)
 	return dir
 }
@@ -157,12 +153,7 @@ func sentinelGate(t *testing.T, dir, sentinel string) string {
 // readCache observes whether Stop preserved the wrapper-owned verdict bytes.
 func readCache(t *testing.T, dir string) (string, bool) {
 	t.Helper()
-	cmd := exec.Command("git", "-C", dir, "rev-parse", "--absolute-git-dir")
-	out, err := cmd.Output()
-	if err != nil {
-		t.Fatalf("rev-parse --absolute-git-dir failed: %v", err)
-	}
-	gitdir := strings.TrimSpace(string(out))
+	gitdir := gittest.Output(t, dir, "rev-parse", "--absolute-git-dir")
 	data, err := os.ReadFile(filepath.Join(gitdir, "bench-last-gate"))
 	if os.IsNotExist(err) {
 		return "", false

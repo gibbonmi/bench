@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -32,12 +31,8 @@ func nonGoRepo(t *testing.T, rel, content string) string {
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write fixture file: %v", err)
 	}
-	if _, err := git.Output("-C", root, "add", rel); err != nil {
-		t.Fatalf("track fixture file: %v", err)
-	}
-	if _, err := git.Output("-C", root, "commit", "-q", "-m", "one"); err != nil {
-		t.Fatalf("commit fixture file: %v", err)
-	}
+	gittest.MustRun(t, root, "add", rel)
+	gittest.Commit(t, root, "one")
 	t.Chdir(root)
 	return root
 }
@@ -120,12 +115,8 @@ func TestSweepSkipsSymlinkAndFifoCandidates(t *testing.T) {
 			t.Fatalf("write %s: %v", path, err)
 		}
 	}
-	if _, err := git.Output("-C", root, "add", "-A"); err != nil {
-		t.Fatalf("track the candidates: %v", err)
-	}
-	if _, err := git.Output("-C", root, "commit", "-q", "-m", "candidates"); err != nil {
-		t.Fatalf("commit the candidates: %v", err)
-	}
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "candidates")
 	if err := os.Remove(fifo); err != nil {
 		t.Fatalf("remove the placeholder: %v", err)
 	}

@@ -2,11 +2,11 @@ package probe
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
@@ -83,7 +83,5 @@ func buildRecords(t *testing.T, records string) []string {
 func trackFixtureFile(t *testing.T, f *fixture, rel, body string) {
 	t.Helper()
 	writeFixtureFile(t, filepath.Join(f.root, rel), body, 0o644)
-	if out, err := exec.Command("git", "-C", f.root, "add", rel).CombinedOutput(); err != nil {
-		t.Fatalf("git add %s: %v\n%s", rel, err, out)
-	}
+	gittest.MustRun(t, f.root, "add", rel)
 }

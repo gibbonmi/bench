@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -207,7 +208,7 @@ func TestSelectedHistoryPreservesProducer(t *testing.T) {
 func byteFixture(t *testing.T) historyFixtureData {
 	t.Helper()
 	f := emptyHistoryRepo(t)
-	runGit(t, f.root, "config", "core.abbrev", "8")
+	gittest.MustRun(t, f.root, "config", "core.abbrev", "8")
 	flat := filepath.Join(f.root, "specs", "bytes.md")
 	for i, subject := range []string{"a", "b", "c"} {
 		// Each removal takes the emptied specs directory with it.
@@ -218,7 +219,7 @@ func byteFixture(t *testing.T) historyFixtureData {
 			t.Fatal(err)
 		}
 		f.commit(t, "add-"+subject, 2*i+11, "add bytes spec")
-		runGit(t, f.root, "rm", "-q", "specs/bytes.md")
+		gittest.MustRun(t, f.root, "rm", "-q", "specs/bytes.md")
 		f.commit(t, subject, 2*i+12, subject)
 	}
 	return f

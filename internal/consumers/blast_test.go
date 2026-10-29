@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
 
@@ -93,17 +92,9 @@ func commitTree(t *testing.T, root string, files map[string]string, message stri
 			t.Fatalf("write %s: %v", rel, err)
 		}
 	}
-	if _, err := git.Output("-C", root, "add", "-A"); err != nil {
-		t.Fatalf("git add: %v", err)
-	}
-	if _, err := git.Output("-C", root, "commit", "-q", "-m", message); err != nil {
-		t.Fatalf("git commit: %v", err)
-	}
-	sha, err := git.Output("-C", root, "rev-parse", "HEAD")
-	if err != nil {
-		t.Fatalf("rev-parse: %v", err)
-	}
-	return sha
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, message)
+	return gittest.Output(t, root, "rev-parse", "HEAD")
 }
 
 // tipFixture is the typed tip tree the stubbed loader returns for the blast fixture.
@@ -118,11 +109,7 @@ func tipFixture(root string) []fixturePkg {
 // head reports the tip sha of the repository the test is running in.
 func head(t *testing.T) string {
 	t.Helper()
-	sha, err := git.Output("rev-parse", "HEAD")
-	if err != nil {
-		t.Fatalf("rev-parse HEAD: %v", err)
-	}
-	return sha
+	return gittest.Output(t, "", "rev-parse", "HEAD")
 }
 
 // BL1 (story 16): the blast enumerates the consumers of every touched declaration, in

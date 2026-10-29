@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -164,7 +165,7 @@ func TestRunRefusesBeforeChild(t *testing.T) {
 		t.Fatal(err)
 	}
 	detached := r.create(t, "tree-target-detached", "detached")
-	gitIn(t, detached.Worktree, "checkout", "-q", "--detach")
+	gittest.MustRun(t, detached.Worktree, "checkout", "-q", "--detach")
 	missing := "usage: bench gate --in (missing argument: <label|primary>)\n"
 	usage := func(value string) string { return "usage: bench gate --in (unknown argument: " + value + ")\n" }
 	refusal := func(reason string) string { return "bench gate --in: " + reason + "\nnext=bench worktree list\n" }

@@ -19,8 +19,8 @@ func TestCommand(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	writeFile(t, root, ".agents/skills/alpha/SKILL.md", "---\nname: alpha\nindex: doing alpha things\n---\n")
 	writeFile(t, root, ".bench/BENCH-reference.md", reference(""))
-	run(t, root, "add", ".")
-	run(t, root, "commit", "-q", "-m", "fixture base")
+	gittest.MustRun(t, root, "add", ".")
+	gittest.Commit(t, root, "fixture base")
 	t.Chdir(root)
 
 	wantCheck := "skills index missing entry for skill 'alpha' (regenerate: bench skills-index --write)\n"
@@ -81,15 +81,6 @@ func TestConflictingModesAreRefusedOutsideARepository(t *testing.T) {
 	report, code := Command([]string{"--check", "--write"})
 	if report != wantConflict || code != 2 {
 		t.Fatalf("--check --write outside a repo = %q, %d, want %q, 2", report, code, wantConflict)
-	}
-}
-
-// run is the fixture git driver shared by this file's Command test.
-func run(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
 }
 

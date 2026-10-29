@@ -112,9 +112,7 @@ func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) 
 	}
 	root := gittest.Repo(t)
 	// origin/HEAD resolves the protected branch live, the posture a linked repo has.
-	if out, err := exec.Command("git", "-C", root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main").CombinedOutput(); err != nil {
-		t.Fatalf("symbolic-ref: %v: %s", err, out)
-	}
+	gittest.MustRun(t, root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
 	hooks := filepath.Join(root, ".git", "hooks")
 	if err := os.MkdirAll(hooks, 0o755); err != nil {
 		t.Fatal(err)

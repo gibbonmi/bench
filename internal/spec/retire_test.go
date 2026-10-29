@@ -2,7 +2,6 @@ package spec
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -36,8 +35,8 @@ func retirePrimary(t *testing.T, slug, body string, extraFiles map[string]string
 			t.Fatal(err)
 		}
 	}
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "commit", "-qm", "base")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.Commit(t, root, "base")
 	return root
 }
 
@@ -46,21 +45,8 @@ func retirePrimary(t *testing.T, slug, body string, extraFiles map[string]string
 func retireWorktree(t *testing.T, primary string) string {
 	t.Helper()
 	root := filepath.Join(t.TempDir(), "linked")
-	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", root)
-	out, err := exec.Command("git", "-C", root, "rev-parse", "--show-toplevel").Output()
-	if err != nil {
-		t.Fatalf("rev-parse: %v", err)
-	}
-	return strings.TrimSpace(string(out))
-}
-
-// runGit runs one git subcommand against root, failing the test on error.
-func runGit(t *testing.T, root string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", "topic", root)
+	return gittest.Output(t, root, "rev-parse", "--show-toplevel")
 }
 
 // runRetire runs retireCommand from root, the way the CLI does: RepoBase resolves
