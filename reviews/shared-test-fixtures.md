@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:a3967d35127d4fcdfff4d1e62cbd897f146f1fb1a246dbf3a51191668671db63",
+  "plan_digest": "sha256:95314d621569659d44dade204ac1f040da6f2cf762d7391f2647bf386bf87f2a",
   "implementation_session": "",
   "chunks": [
     {
@@ -850,9 +850,9 @@
     {
       "id": "GF-C5C",
       "base": "cc197d6b3a004ed2c2b776573744f5b17c0cdd70",
-      "tip": "6a7ba7e9344ea58e69499d92f2ce5dad6823425d",
-      "plan_digest": "sha256:a3967d35127d4fcdfff4d1e62cbd897f146f1fb1a246dbf3a51191668671db63",
-      "source_digest": "c0ec29fb6b4017eaef40ca4ff2ed17d8ea5e569b",
+      "tip": "dfe7edd94d504e9a7503f3f7810ff29cace1564c",
+      "plan_digest": "sha256:95314d621569659d44dade204ac1f040da6f2cf762d7391f2647bf386bf87f2a",
+      "source_digest": "6db3e77342d0220a9794838bccf4f165124a6e73",
       "acceptance_rows": [
         "GF16",
         "GF19",
@@ -905,6 +905,36 @@
             "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestSnapshotProofLifecycle,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,TestSnapshotProofLifecycle,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,379\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,6,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestSnapshotProofLifecycle,\"intent_test.go:143: git -c user.name= -c user.email=bench@example.invalid commit -qm init: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "6a7ba7e9344ea58e69499d92f2ce5dad6823425d",
+          "requirement": "probe-05d",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/intent --run TestSnapshotProofLifecycle",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t05d-author-20261029",
+              "digest": "sha256:f7c9ff6f3bd6c0bbc5c193e535135a2d6a8a8a875721abd3ea347fe836ba21b3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestSnapshotProofLifecycle,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,TestSnapshotProofLifecycle,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,379\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,6,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestSnapshotProofLifecycle,\"intent_test.go:143: git -c user.name= -c user.email=bench@example.invalid commit -qm init: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05d2-probe-05d",
+          "performer": "claude:gf-t05d-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6db3e77342d0220a9794838bccf4f165124a6e73",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t05d-author-20261029",
+            "digest": "sha256:f7c9ff6f3bd6c0bbc5c193e535135a2d6a8a8a875721abd3ea347fe836ba21b3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestSnapshotProofLifecycle,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/intent,TestSnapshotProofLifecycle,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,379\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/intent,fail,6,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/intent,TestSnapshotProofLifecycle,\"intent_test.go:143: git -c user.name= -c user.email=bench@example.invalid commit -qm init: exit status 128: Author identity unknown\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dfe7edd94d504e9a7503f3f7810ff29cace1564c",
           "requirement": "probe-05d",
           "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --package ./internal/intent --run TestSnapshotProofLifecycle",
           "exit_code": 0,
@@ -1076,6 +1106,24 @@
     {
       "from": "sha256:04a91e4d096c18351fae0e348f695e53ba82310e2510eec52a90a71c4fc94d33",
       "to": "sha256:a3967d35127d4fcdfff4d1e62cbd897f146f1fb1a246dbf3a51191668671db63",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a3967d35127d4fcdfff4d1e62cbd897f146f1fb1a246dbf3a51191668671db63",
+      "to": "sha256:95314d621569659d44dade204ac1f040da6f2cf762d7391f2647bf386bf87f2a",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
