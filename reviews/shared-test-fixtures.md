@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:ff68524e6aafc3f79c400ff2582dcf61f6da61f96d2243c123dedf53cd3c3f55",
+  "plan_digest": "sha256:a5ff80c862752d27b247e5152dafd77171098e81f633c88ceba7a8b069dcbbe7",
   "implementation_session": "",
   "chunks": [
     {
@@ -1676,6 +1676,87 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "GF-C13",
+      "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+      "tip": "985fadd255747c9087e802df449a571e2d324a33",
+      "plan_digest": "sha256:a5ff80c862752d27b247e5152dafd77171098e81f633c88ceba7a8b069dcbbe7",
+      "source_digest": "dcb912cd13d0baecf84680e41b4a14e9104449b8",
+      "acceptance_rows": [
+        "GF10",
+        "GF18",
+        "GF24",
+        "GF25",
+        "GF26",
+        "GF27",
+        "GF28",
+        "GF31",
+        "GF30"
+      ],
+      "verification": [
+        {
+          "id": "gf-t13-probe-13-classes",
+          "performer": "claude:gf-t13-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dcb912cd13d0baecf84680e41b4a14e9104449b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t13-author-20261029",
+            "digest": "sha256:c31f1329c36ecb1af57574fad0ae0cd7f5cac1337754689f472d9885bb07b36d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testrepo/socket.go,swap,failed,1,TestUnavailableCallerClasses,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestUnavailableCallerClasses,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,380\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,60,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestUnavailableCallerClasses,\"skip_reason_owner_test.go:154: internal/testrepo/socket.go skipWithoutSockets case 1 changed class from Fifo to Symlink\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "985fadd255747c9087e802df449a571e2d324a33",
+          "requirement": "probe-13-classes",
+          "command": "bench probe internal/testrepo/socket.go --swap 'capability.Fifo' --with 'capability.Symlink' --package ./internal/conformance --run TestUnavailableCallerClasses",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Change the socket helper class from FIFO to symlink. The independent class fixture then disagrees, so the caller-class test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t13-author-20261029",
+              "digest": "sha256:c31f1329c36ecb1af57574fad0ae0cd7f5cac1337754689f472d9885bb07b36d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/testrepo/socket.go,swap,failed,1,TestUnavailableCallerClasses,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,TestUnavailableCallerClasses,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,380\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,60,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestUnavailableCallerClasses,\"skip_reason_owner_test.go:154: internal/testrepo/socket.go skipWithoutSockets case 1 changed class from Fifo to Symlink\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "gf-t13-probe-13-runner",
+          "performer": "claude:gf-t13-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dcb912cd13d0baecf84680e41b4a14e9104449b8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t13-author-20261029",
+            "digest": "sha256:db7e672c6c1dfe2e0b8f72a59c4fefb1b56576d43f15991aa3c76476d3d813d9",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/wrapper_kit_test.go,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,git-plumbing-owner,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,570\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,622,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cmd/bench/wrapper_kit_test.go:38 (plantedGitRunner) holds a git-runner outside gittest; run it through gittest.Run, MustRun, Output, OutputBytes, or Commit, or record the specialized site in gitFixtureExceptions\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "985fadd255747c9087e802df449a571e2d324a33",
+          "requirement": "probe-13-runner",
+          "command": "bench probe cmd/bench/wrapper_kit_test.go --insert-before 'func newWrapperKitFixture(' --with 'func plantedGitRunner(dir string) ([]byte, error) { return exec.Command(\"git\", \"-C\", dir, \"status\").Output() }; ' --check git-plumbing-owner",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Plant a generic Git runner beside an allowed specialized site. The registered check then reports the sibling, so the check fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t13-author-20261029",
+              "digest": "sha256:db7e672c6c1dfe2e0b8f72a59c4fefb1b56576d43f15991aa3c76476d3d813d9",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/wrapper_kit_test.go,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,git-plumbing-owner,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,570\ncheck[1]{name,kind,tests_run,subjects}:\n  git-plumbing-owner,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,622,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cmd/bench/wrapper_kit_test.go:38 (plantedGitRunner) holds a git-runner outside gittest; run it through gittest.Run, MustRun, Output, OutputBytes, or Commit, or record the specialized site in gitFixtureExceptions\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2052,6 +2133,36 @@
     {
       "from": "sha256:d2c9a2f68c20ae311436ae2143e10838ba743e4d03187351f48f9337b2c9a115",
       "to": "sha256:ff68524e6aafc3f79c400ff2582dcf61f6da61f96d2243c123dedf53cd3c3f55",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C10": [
+          "GF-C10"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ],
+        "GF-C6": [
+          "GF-C6"
+        ],
+        "GF-C8": [
+          "GF-C8"
+        ],
+        "GF-C9": [
+          "GF-C9"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ff68524e6aafc3f79c400ff2582dcf61f6da61f96d2243c123dedf53cd3c3f55",
+      "to": "sha256:a5ff80c862752d27b247e5152dafd77171098e81f633c88ceba7a8b069dcbbe7",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
