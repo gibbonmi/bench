@@ -67,7 +67,7 @@ func subshellAt(root string, a ambient, shell string, environ []string, args []s
 		fmt.Fprintln(stderr, err)
 		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
 	}
-	creation, err := createAt(defaultJoins(), root, a.home, request, objective, nil, a.now, func() (creationStart, error) { return creationStart{ref: startRef}, nil })
+	creation, err := createAt(defaultJoins(), a.run, root, a.home, request, objective, nil, a.now, func() (creationStart, error) { return creationStart{ref: startRef}, nil })
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return end(1, otelrecord.WorkFailed, otelrecord.CleanupNone)
@@ -248,7 +248,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 		plan.Fingerprint = explicitRetainFingerprint(common, defaultRef, defaultOID, target, plan, options)
 		return plan, nil
 	}
-	admin, err := git.AdminDir(target)
+	admin, err := run.AdminDir(target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -256,7 +256,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	ledgerBytes, err := intent.LifecycleEvidence(root)
+	ledgerBytes, err := intent.In(run, root).LifecycleEvidence()
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -277,7 +277,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 		if markerErr != nil {
 			facts.MarkerErr = markerErr
 		} else {
-			assignments, assignmentErr := intent.Assignments(root)
+			assignments, assignmentErr := intent.In(run, root).Assignments()
 			if assignmentErr != nil {
 				facts.AssignmentLedgerErr = assignmentErr
 			} else {
@@ -301,7 +301,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 	} else if !errors.Is(markerStatErr, os.ErrNotExist) {
 		return CleanupPlan{}, markerStatErr
 	} else if !registration.Locked {
-		facts.ForeignAssignment = foreignRecoveryAssignment(root, target)
+		facts.ForeignAssignment = foreignRecoveryAssignment(run, root, target)
 	}
 	head, err := git.Output("-C", target, "rev-parse", "HEAD")
 	if err != nil {
@@ -329,7 +329,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	indexPath, err := git.AdminPath(target, "index")
+	indexPath, err := run.AdminPath(target, "index")
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -337,7 +337,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	leasePath, err := LeaseFile(target)
+	leasePath, err := leaseFileIn(run, target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -395,7 +395,7 @@ func planExplicitWith(j joins, run *git.Run, root, path string, options CleanupO
 	case lifecyclepolicy.RecoveryLookupOwned:
 		recovery, err = nextRecoveryRef(root, *plan.assignment)
 	case lifecyclepolicy.RecoveryLookupForeign:
-		recovery, err = predictedForeignRef(root, target, admin)
+		recovery, err = predictedForeignRef(run, root, target, admin)
 	}
 	if err != nil {
 		return CleanupPlan{}, err
@@ -458,8 +458,8 @@ func canonicalParts(parts ...[]byte) []byte {
 	}
 	return output.Bytes()
 }
-func predictedForeignRef(root, target, admin string) (string, error) {
-	common, err := git.CommonDir(root)
+func predictedForeignRef(run *git.Run, root, target, admin string) (string, error) {
+	common, err := run.CommonDir(root)
 	if err != nil {
 		return "", err
 	}

@@ -19,7 +19,7 @@ type Publication struct {
 
 // AdmitPublication grades the exact composed tree for the frozen source assignment.
 func (store Store) AdmitPublication(source Publication, tree string) error {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (store Store) PublishStackAdmitted(members []Publication, trees []string, p
 		return fmt.Errorf("stack publication has %d members and %d trees; want one tree for each member of a non-empty stack", len(members), len(trees))
 	}
 	published := false
-	err := intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	err := store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		for i, member := range members {
 			if err := store.window(ledger, member); err != nil {
 				return ledger, false, err
@@ -78,7 +78,7 @@ func (store Store) PublishStackAdmitted(members []Publication, trees []string, p
 // whatever deliverable it binds. It reads the bindings and not the open builds, because a
 // started tickets-only deliverable binds its assignment but opens no build.
 func (store Store) HoldsDeliveryBinding(assignment string) (bool, error) {
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return false, err
 	}

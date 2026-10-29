@@ -144,8 +144,8 @@ func landingMarker(root, branch, destination string) (string, error) {
 	return marker, nil
 }
 
-func landingAssignment(j joins, root, path, request, base, requestedTip string) (intent.Assignment, error) {
-	a, err := assignmentForRequest(root, request, assignmentRecoveryContext{
+func landingAssignment(j joins, run *git.Run, root, path, request, base, requestedTip string) (intent.Assignment, error) {
+	a, err := assignmentForRequest(run, root, request, assignmentRecoveryContext{
 		target: path,
 		base:   base,
 		tip:    requestedTip,
@@ -153,7 +153,7 @@ func landingAssignment(j joins, root, path, request, base, requestedTip string) 
 	if err != nil {
 		return intent.Assignment{}, err
 	}
-	if err := identityBundleRefusal(root, path, a, landingActiveState); err != nil {
+	if err := identityBundleRefusal(run, root, path, a, landingActiveState); err != nil {
 		return intent.Assignment{}, err
 	}
 	if requestedTip == "" {
@@ -288,7 +288,7 @@ func expandIdentity(repository, value string) string {
 }
 
 func abbreviatedIdentity(value, full string) bool {
-	if len(value) < 4 || len(value) > 39 || !fullCommitIdentity(full) {
+	if len(value) < 4 || len(value) > 39 || !git.FullObjectID(full) {
 		return false
 	}
 	if !hexIdentity(value) {

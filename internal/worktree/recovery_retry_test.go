@@ -20,7 +20,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			mustWrite(t, dirty, []byte("preserve once\n"), 0o644)
 			first, err := PlanExplicit(f.root, f.creation.Path)
 			mustNoError(t, err)
-			repo, target, err := cleanupIdentity(f.root, f.creation.Path)
+			repo, target, err := cleanupIdentity(nil, f.root, f.creation.Path)
 			mustNoError(t, err)
 
 			stop := errors.New("stop before recovery ref creation")
@@ -29,7 +29,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			_, err = applyExplicitWith(faulted, f.ambient(), f.root, f.creation.Path, first.Fingerprint, CleanupOptions{})
 			requireTest(t, errors.Is(err, stop), "first apply error = %v, want %v", err, stop)
 
-			pending, err := assignmentByID(f.root, f.creation.Assignment.ID)
+			pending, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 			mustNoError(t, err)
 			requireTest(t, pending.State == intent.StateCleanupPending && len(pending.Recovery) == 1,
 				"interrupted assignment = %#v", pending)
@@ -50,7 +50,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 				faulted.cleanupBoundary = failLifecycleStep(StepRemoval, stop)
 				_, err = applyExplicitWith(faulted, f.ambient(), f.root, f.creation.Path, retry.Fingerprint, CleanupOptions{})
 				requireTest(t, errors.Is(err, stop), "removal interruption = %v, want %v", err, stop)
-				interrupted, readErr := assignmentByID(f.root, f.creation.Assignment.ID)
+				interrupted, readErr := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 				requireTest(t, readErr == nil && interrupted.State == intent.StateCleanupPending && len(interrupted.Recovery) == 1,
 					"post-removal interrupted assignment = %#v, %v", interrupted, readErr)
 			}
@@ -63,7 +63,7 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 			requireTest(t, resolved == recovery.Root, "recovery ref = %s, want %s", resolved, recovery.Root)
 			refs := strings.Fields(gitOutput(t, f.root, "for-each-ref", "--format=%(refname)", intent.RecoveryRefPrefix(f.creation.Assignment.OwnerID, f.creation.Assignment.ID)))
 			requireTest(t, len(refs) == 1 && refs[0] == recovery.Ref, "recovery refs = %#v, want only %s", refs, recovery.Ref)
-			final, err := assignmentByID(f.root, f.creation.Assignment.ID)
+			final, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 			mustNoError(t, err)
 			requireTest(t, final.State == intent.StateRecovered && len(final.Recovery) == 1 && final.Recovery[0].Ref == recovery.Ref && final.Recovery[0].Root == recovery.Root,
 				"final recovered assignment = %#v", final)

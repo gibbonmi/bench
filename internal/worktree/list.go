@@ -55,7 +55,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	if selectsWorktrees(args) {
 		return listSelectedWorktrees(root, args)
 	}
-	j := defaultJoins()
+	j, run := defaultJoins(), &git.Run{}
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
 		return line + "\n", code
@@ -83,7 +83,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		assignedPaths[assignment.Worktree] = true
 		row := listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved), assignmentPath: assignment.Worktree}
 		if row.values[listTreeCell] == "missing" {
-			row.cleanLanded = missingTreeLanded(root, assignment)
+			row.cleanLanded = missingTreeLanded(run, root, assignment)
 		}
 		rows = append(rows, row)
 	}
@@ -115,7 +115,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		if assignment.State != intent.StateActive {
 			continue
 		}
-		if plan := planLandedAssignment(j, root, assignment, CleanupOptions{}); assignmentLanded(root, assignment, plan) {
+		if plan := planLandedAssignment(j, run, root, assignment, CleanupOptions{}); assignmentLanded(root, assignment, plan) {
 			landed = true
 			break
 		}

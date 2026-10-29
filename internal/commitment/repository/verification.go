@@ -52,7 +52,7 @@ func (store Store) Verify(milestone string, input []byte) (commitment.Verificati
 	if err != nil {
 		return commitment.Verification{}, fmt.Errorf("encode milestone verification: %w", err)
 	}
-	err = intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	err = store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		for _, receipt := range ledger.MilestoneReceipts {
 			if receipt.ID != verification.ID {
 				continue

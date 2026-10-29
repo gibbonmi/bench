@@ -156,7 +156,7 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 		claimedMidCleanup = claimAt(j, lease, time.Now(), staleLease)
 		real(wt)
 	}
-	releaseWith(j, dir)
+	releaseWith(j, nil, dir)
 	if claimedMidCleanup {
 		t.Error("entry was claimable mid-cleanup: a concurrent claimant can win while the worktree is dirty and lose its lease to the trailing remove")
 	}
@@ -392,7 +392,7 @@ func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
 	requireTest(t, first.exit == 0 && first.stderr == "", "release reconciliation code=%d stderr=%q", first.exit, first.stderr)
 	replay := runVerb(t, verbRelease, call)
 	requireTest(t, replay.exit == 0 && replay.stdout == first.stdout && replay.stderr == "", "release replay code=%d stdout=%q stderr=%q", replay.exit, replay.stdout, replay.stderr)
-	repo, _, _ := cleanupIdentity(f.root, f.creation.Path)
+	repo, _, _ := cleanupIdentity(nil, f.root, f.creation.Path)
 	_, found, err := intent.CleanupReceiptFor(f.root, repo, releaseOperation, f.creation.Path, intent.RequestDigest("landed-release-crash-window"))
 	requireTest(t, err == nil && found, "release receipt missing: %v", err)
 }
@@ -414,7 +414,7 @@ func TestReleaseUnmergedAssignmentRetains(t *testing.T) {
 		"unmerged reason missing: %q", release.stderr)
 	_, statErr := os.Stat(f.creation.Path)
 	requireTest(t, statErr == nil, "unmerged worktree removed: %v", statErr)
-	assignment, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	assignment, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, assignment.State == intent.StateCleanupPending, "unmerged assignment state = %q, want cleanup-pending", assignment.State)
 }

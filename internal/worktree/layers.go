@@ -68,7 +68,7 @@ func explicitContentIdentity(target string) (string, error) {
 
 // captureLayers writes one recovery envelope for the checkout at path and returns the
 // root commit and its payload commits. The manifest carries the base head.
-func captureLayers(root string, environ []string, path string, keepWorking bool, tip string) (string, []string, error) {
+func captureLayers(run *git.Run, root string, environ []string, path string, keepWorking bool, tip string) (string, []string, error) {
 	head, err := git.Output("-C", path, "rev-parse", "HEAD")
 	if err != nil {
 		return "", nil, fmt.Errorf("read recovery HEAD: %w", err)
@@ -77,7 +77,7 @@ func captureLayers(root string, environ []string, path string, keepWorking bool,
 	if err != nil {
 		return "", nil, fmt.Errorf("read recovery base tree: %w", err)
 	}
-	admin, err := git.AdminDir(path)
+	admin, err := run.AdminDir(path)
 	if err != nil {
 		return "", nil, err
 	}
@@ -102,7 +102,7 @@ func captureLayers(root string, environ []string, path string, keepWorking bool,
 			layerTrees[name] = tree
 		}
 	} else {
-		stagedTree, err := realIndexTree(path, admin)
+		stagedTree, err := realIndexTree(run, path, admin)
 		if err != nil {
 			return "", nil, fmt.Errorf("capture staged layer: %w", err)
 		}

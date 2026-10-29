@@ -191,7 +191,7 @@ func adminPathArgs(root, name string) []string {
 // CommonDir resolves the repository's shared administrative directory, refusing
 // an empty, missing, symlinked, or non-directory answer the way Worktrees does.
 // Each call starts its own query. A command run that reads one root more than once
-// reads through one Run.
+// reads through one Run, which caches its location answers and its pure object reads.
 func CommonDir(root string) (string, error) {
 	return new(Run).CommonDir(root)
 }
@@ -338,9 +338,15 @@ func worktreesAt(root, common string) ([]Worktree, error) {
 
 // PrimaryCheckout answers the primary checkout's path from any checkout of the
 // repository. Git lists the primary checkout as the first registration, and it outlives
-// every linked worktree.
+// every linked worktree. Each call starts its own queries.
 func PrimaryCheckout(root string) (string, error) {
-	worktrees, err := Worktrees(root)
+	return (*Run)(nil).PrimaryCheckout(root)
+}
+
+// PrimaryCheckout answers as the package PrimaryCheckout does. It reads the common
+// directory through the run, and it starts the porcelain on every call.
+func (r *Run) PrimaryCheckout(root string) (string, error) {
+	worktrees, err := r.Worktrees(root)
 	if err != nil {
 		return "", err
 	}

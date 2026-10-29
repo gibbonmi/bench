@@ -58,7 +58,7 @@ func TestResetApplyRepairsAShiftBranchCheckout(t *testing.T) {
 	fingerprint := plan.mustFingerprint(t)
 	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0, "shift repair = %d %s %s", result.exit, result.stdout, result.stderr)
-	_, err := resolveAssignment(f.root, f.creation.Assignment.ID)
+	_, err := resolveAssignment(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, gitOutput(t, f.root, "rev-parse", "refs/heads/bench/shift-reset-repair") == tip &&
 		gitOutput(t, f.creation.Path, "symbolic-ref", "HEAD") == f.creation.Assignment.Branch, "shift repair lost the shift branch or left HEAD off assignment")
@@ -121,7 +121,7 @@ func TestResetApplyRestoresTheExactLock(t *testing.T) {
 	fingerprint := plan.mustFingerprint(t)
 	result := runVerb(t, verbReset, f.call("--to", f.creation.Assignment.Start, f.creation.Assignment.ID, "--apply", fingerprint))
 	requireTest(t, result.exit == 0 && strings.Contains(result.stdout, "preserved=none"), "lock repair = %d %s %s", result.exit, result.stdout, result.stderr)
-	_, err := resolveAssignment(f.root, f.creation.Assignment.ID)
+	_, err := resolveAssignment(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 }
 

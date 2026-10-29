@@ -12,15 +12,15 @@ import (
 
 // applyReset applies a plan whose fingerprint the caller read. refuse prints each refusal
 // with the route of its face.
-func applyReset(j joins, root, home string, environ []string, plan resetPlan, fingerprint string, stdout io.Writer, refuse func(error) int) (exit int) {
+func applyReset(j joins, run *git.Run, root, home string, environ []string, plan resetPlan, fingerprint string, stdout io.Writer, refuse func(error) int) (exit int) {
 	finish := beginVerbSpan(home, root, otelResetSeam)
 	defer func() { finish(exit, plan.assignment.ID) }()
-	unlock, err := lockCleanupRegistration(j, root, plan.assignment.Worktree)
+	unlock, err := lockCleanupRegistration(j, run, root, plan.assignment.Worktree)
 	if err != nil {
 		return refuse(err)
 	}
 	defer unlock()
-	plan, err = planReset(root, plan.assignment.ID, plan.checkpoint, plan.envelope)
+	plan, err = planReset(run, root, plan.assignment.ID, plan.checkpoint, plan.envelope)
 	if err != nil {
 		return refuse(err)
 	}
@@ -67,7 +67,7 @@ func applyReset(j joins, root, home string, environ []string, plan resetPlan, fi
 		if err := j.resetLayers(plan.assignment.Worktree, plan.manifest); err != nil {
 			return resetResult(stdout, plan, envelope.Ref, 3)
 		}
-		if !resetRestoredLayersMatch(root, environ, plan) {
+		if !resetRestoredLayersMatch(run, root, environ, plan) {
 			return resetResult(stdout, plan, envelope.Ref, 3)
 		}
 	}

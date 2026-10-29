@@ -24,7 +24,7 @@ func (store Store) Outlook() (commitment.Outlook, error) {
 	if err != nil {
 		return commitment.Outlook{}, err
 	}
-	ledger, err := intent.Read(store.Root)
+	ledger, err := store.ledger().Read()
 	if err != nil {
 		return commitment.Outlook{}, err
 	}

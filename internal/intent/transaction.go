@@ -35,19 +35,29 @@ type Decision func(Ledger) (Ledger, bool, error)
 // matches it stays.
 type Compensation func()
 
+// Transact is Repo.Transact with a nil run.
+func Transact(root string, mode ReadMode, decide Decision, compensate Compensation) error {
+	return In(nil, root).Transact(mode, decide, compensate)
+}
+
 // Transact applies one ledger-to-ledger decision under the ledger's lock. It resolves
 // the address, acquires the lock, reads in the caller's mode, calls the decision, and
 // replaces the file durably on a reported change. It releases the lock on every
 // exit, including every error exit. A nil compensation runs nothing, so only a caller
 // with an external effect pays for one.
-func Transact(root string, mode ReadMode, decide Decision, compensate Compensation) error {
-	return TransactWithReplacer(durablefile.Native(), root, mode, decide, compensate)
+func (r Repo) Transact(mode ReadMode, decide Decision, compensate Compensation) error {
+	return r.TransactWithReplacer(durablefile.Native(), mode, decide, compensate)
+}
+
+// TransactWithReplacer is Repo.TransactWithReplacer with a nil run.
+func TransactWithReplacer(replacer durablefile.Replacer, root string, mode ReadMode, decide Decision, compensate Compensation) error {
+	return In(nil, root).TransactWithReplacer(replacer, mode, decide, compensate)
 }
 
 // TransactWithReplacer is Transact with the ledger replacement run through replacer, so
 // that a caller can fail one stage of the write under the real lock and decision.
-func TransactWithReplacer(replacer durablefile.Replacer, root string, mode ReadMode, decide Decision, compensate Compensation) error {
-	return transact(replacer, root, mode, func(ledger Ledger, _ int) (Ledger, bool, error) { return decide(ledger) }, compensate)
+func (r Repo) TransactWithReplacer(replacer durablefile.Replacer, mode ReadMode, decide Decision, compensate Compensation) error {
+	return r.transact(replacer, mode, func(ledger Ledger, _ int) (Ledger, bool, error) { return decide(ledger) }, compensate)
 }
 
 // countedDecision also receives how many assignment records the file held. Only the
@@ -56,8 +66,8 @@ func TransactWithReplacer(replacer durablefile.Replacer, root string, mode ReadM
 // that needs it, so the count stays off the exported decision.
 type countedDecision func(Ledger, int) (Ledger, bool, error)
 
-func transact(replacer durablefile.Replacer, root string, mode ReadMode, decide countedDecision, compensate Compensation) error {
-	path, err := Address(root)
+func (r Repo) transact(replacer durablefile.Replacer, mode ReadMode, decide countedDecision, compensate Compensation) error {
+	path, err := r.Address()
 	if err != nil {
 		return err
 	}
@@ -93,12 +103,15 @@ func published(err error) bool {
 	return errors.As(err, &replaceErr) && replaceErr.Published
 }
 
-// ReadTolerant reads the ledger at root in the tolerant mode, outside a transaction, and
+// ReadTolerant is Repo.ReadTolerant with a nil run.
+func ReadTolerant(root string) (Ledger, error) { return In(nil, root).ReadTolerant() }
+
+// ReadTolerant reads the ledger of r in the tolerant mode, outside a transaction, and
 // writes no byte. A field that this schema does not know therefore stops no lookup. The
 // mode drops each assignment record that it cannot decode, so a record that holds such a
 // field is absent from the answer.
-func ReadTolerant(root string) (Ledger, error) {
-	path, err := Address(root)
+func (r Repo) ReadTolerant() (Ledger, error) {
+	path, err := r.Address()
 	if err != nil {
 		return Ledger{}, err
 	}
@@ -106,7 +119,12 @@ func ReadTolerant(root string) (Ledger, error) {
 	return ledger, err
 }
 
-// RemoveFields removes each field path of paths from the raw ledger at root under the
+// RemoveFields is Repo.RemoveFields with a nil run.
+func RemoveFields(root, preserve string, paths [][]string) (bool, error) {
+	return In(nil, root).RemoveFields(preserve, paths)
+}
+
+// RemoveFields removes each field path of paths from the raw ledger of r under the
 // ledger lock, after it writes the ledger bytes that it read to preserve. It reports whether
 // it wrote that copy: a ledger file that does not exist holds no field, so the removal then
 // writes no file. A path holds JSON tag names from the ledger root. The removal deletes the
@@ -118,8 +136,8 @@ func ReadTolerant(root string) (Ledger, error) {
 // return as its zero value. The result must pass the strict decode first. The decode, not
 // the strict read, grades it, because the read's validation can require the nested field
 // that the removal deletes, and an executable that does not know the field requires nothing.
-func RemoveFields(root, preserve string, paths [][]string) (bool, error) {
-	path, err := Address(root)
+func (r Repo) RemoveFields(preserve string, paths [][]string) (bool, error) {
+	path, err := r.Address()
 	if err != nil {
 		return false, err
 	}

@@ -28,8 +28,9 @@ type joins struct {
 	// and before the ref update. It receives the destination root.
 	publicationGap func(string)
 	// reconcileCommitment runs after the publication. It releases the local claims that
-	// the published delivery facts satisfy. It receives the destination root.
-	reconcileCommitment      func(string) error
+	// the published delivery facts satisfy. It receives the destination store, which reads
+	// through the verb's run.
+	reconcileCommitment      func(commitrepo.Store) error
 	releaseLandingAssignment func(joins, ambient, string, []string, io.Writer, io.Writer) int
 	// cleanupBoundary is the deterministic transaction fault seam. A nil value carries no
 	// fault, exactly as hit reads it, so it is also the default.
@@ -48,10 +49,10 @@ type joins struct {
 	// is a seam because the default reaches a build script and a Go toolchain, and a
 	// fixture for that pair would make every output row wait on a real compile.
 	buildSubject func(context.Context, string, string) error
-	// heldInstall is the held-install predicate that the post-landing refresh reads at a
-	// destination root. It is a seam so a landing test can hold the refresh without an
-	// installed candidate.
-	heldInstall func(string) bool
+	// heldInstall is the held-install predicate that the post-landing refresh reads through
+	// the destination store, which reads through the verb's run. It is a seam so a landing
+	// test can hold the refresh without an installed candidate.
+	heldInstall func(commitrepo.Store) bool
 	// publishCandidate is the install's publication owner. Its operands are the seal
 	// root, the staged executable, the published executable, the manifest directory, and
 	// the version.
@@ -74,7 +75,7 @@ func defaultJoins() joins {
 			return landing.New().LandStack(ctx, request, admission)
 		},
 		publicationGap:           func(string) {},
-		reconcileCommitment:      func(root string) error { return commitrepo.Store{Root: root}.ReconcileDelivered() },
+		reconcileCommitment:      commitrepo.Store.ReconcileDelivered,
 		releaseLandingAssignment: releaseCommandWith,
 		cleanupLockAttempt:       func(string) {},
 		creationLockAttempt:      func(string) {},

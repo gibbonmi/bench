@@ -233,7 +233,7 @@ func LandedInDefault(root, branch, def string) (landed, byContent bool, err erro
 // IsAncestor reports whether ancestor is reachable from descendant. It separates Git's
 // exit 1, which is a truthful "no", from a failed query, which is an error.
 func IsAncestor(root, ancestor, descendant string) (bool, error) {
-	_, err := Raw("-C", root, "merge-base", "--is-ancestor", ancestor, descendant)
+	_, err := Raw(isAncestorArgs(root, ancestor, descendant)...)
 	if err == nil {
 		return true, nil
 	}
@@ -247,8 +247,18 @@ func IsAncestor(root, ancestor, descendant string) (bool, error) {
 // ResolveCommit returns the verified commit ID for revision.
 // Flags retain each caller's quiet and option-handling policy.
 func ResolveCommit(root, revision string, flags ...string) (string, error) {
+	return Output(resolveCommitArgs(root, revision, flags)...)
+}
+
+// isAncestorArgs builds the git argv of one ancestry check, which is also its run key.
+func isAncestorArgs(root, ancestor, descendant string) []string {
+	return []string{"-C", root, "merge-base", "--is-ancestor", ancestor, descendant}
+}
+
+// resolveCommitArgs builds the git argv of one commit resolution, which is also its run key.
+func resolveCommitArgs(root, revision string, flags []string) []string {
 	args := append([]string{"-C", root, "rev-parse", "--verify"}, flags...)
-	return Output(append(args, revision+"^{commit}")...)
+	return append(args, revision+"^{commit}")
 }
 
 // Output runs `git <args>` and returns stdout with a single trailing newline trimmed.

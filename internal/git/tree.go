@@ -152,10 +152,20 @@ func (e TreeEntry) IsRegularFile() bool { return regularFileModes[e.Mode] }
 // `<mode> <type> <object>\t<path>` and ends at a NUL, so the path is every byte past the
 // first tab and Git quotes none of it.
 func ListTree(root string, args ...string) ([]TreeEntry, error) {
-	raw, err := Raw(append([]string{"-C", root, "ls-tree", "-z"}, args...)...)
+	raw, err := Raw(listTreeArgs(root, args)...)
 	if err != nil {
 		return nil, err
 	}
+	return parseTreeEntries(raw)
+}
+
+// listTreeArgs builds the git argv of one ls-tree listing, which is also its run key.
+func listTreeArgs(root string, args []string) []string {
+	return append([]string{"-C", root, "ls-tree", "-z"}, args...)
+}
+
+// parseTreeEntries reads the NUL-terminated records of one ls-tree listing.
+func parseTreeEntries(raw []byte) ([]TreeEntry, error) {
 	records := strings.Split(string(raw), "\x00")
 	if records[len(records)-1] != "" {
 		return nil, fmt.Errorf("git: unterminated tree entry %q", records[len(records)-1])
@@ -220,21 +230,15 @@ func TreeWithoutFile(root, tree, path string) (string, error) {
 	return idxOutput(root, idx, "write-tree")
 }
 
-// ReadTreeFile reads a regular immutable blob under the control-record bound.
+// ReadTreeFile reads a regular immutable blob under the control-record bound. It reads
+// through a nil run, so each call starts its listing and its blob read.
 func ReadTreeFile(root, tree, path string) ([]byte, error) {
-	listing, err := ListTree(root, tree, "--", path)
-	if err != nil {
-		return nil, err
-	}
-	if len(listing) != 1 || listing[0].Path != path || !listing[0].IsRegularFile() {
-		return nil, fmt.Errorf("missing or nonregular tree file %s", path)
-	}
-	return ReadControlBlob(root, listing[0].Object)
+	return (*Run)(nil).ReadTreeFile(root, tree, path)
 }
 
 // ReadControlBlob bounds an immutable blob read for control-file consumers.
 func ReadControlBlob(root, object string) ([]byte, error) {
-	cmd := exec.Command("git", "-C", root, "cat-file", "blob", object)
+	cmd := exec.Command("git", controlBlobArgs(root, object)...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -252,6 +256,11 @@ func ReadControlBlob(root, object string) ([]byte, error) {
 		return nil, waitErr
 	}
 	return read.Data, nil
+}
+
+// controlBlobArgs builds the git argv of one blob read, which is also its run key.
+func controlBlobArgs(root, object string) []string {
+	return []string{"-C", root, "cat-file", "blob", object}
 }
 
 // treeChangeFields is the field count of one raw-diff entry's metadata: the two

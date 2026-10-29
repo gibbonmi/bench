@@ -53,13 +53,13 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 		return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, false))
 	}
 	result := landing.ReviewedResult{SourceBase: sourceBase, SourceTip: parsed.Flags["--source-tip"], DestinationBase: destinationBase, Commit: published, Tree: tree}
-	assignment, active, skipped, err := resumeAssignment(j, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
+	assignment, active, skipped, err := resumeAssignment(j, a.run, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"], parsed.Flags["--base"], landingSlug(parsed.Flags["--spec"]))
 	if err != nil {
 		return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, skipped))
 	}
 	assignmentID := assignment.ID
 	if !active {
-		receipt, err := terminalResumeReceipt(root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
+		receipt, err := terminalResumeReceipt(a.run, root, path, parsed.Flags["--request"], parsed.Flags["--source-tip"])
 		if err != nil {
 			return landRefusalError(stdout, landingFaceRoute(err, unassignedResume, false))
 		}
@@ -73,7 +73,7 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 	// Every refusal past this point names the caller's own resume, so the route survives
 	// the interruption the operator repairs.
 	rerun := landingResumeNext(result, parsed.Flags["--spec"], path, assignmentID)
-	refused, step := resumePublishedSteps(j, root, destination, branch, marker, published, destinationBase, rerun)
+	refused, step := resumePublishedSteps(j, a.run, root, destination, branch, marker, published, destinationBase, rerun)
 	if refused != nil {
 		return landRefusalError(stdout, refused)
 	}
@@ -97,7 +97,7 @@ func resumeLandWith(j joins, a ambient, root string, args []string, stdout, stde
 // its routed record with rerun as its re-run. A step that fails answers its name. Both are
 // empty when every step finished. The single resume and the stack resume both run these
 // steps once.
-func resumePublishedSteps(j joins, root, destination, branch, marker, published, destinationBase, rerun string) (refused error, step string) {
+func resumePublishedSteps(j joins, run *git.Run, root, destination, branch, marker, published, destinationBase, rerun string) (refused error, step string) {
 	// The residue policy owns the sentence, and the same guard runs inside the
 	// reconcile step, where no operator reads it. So the face is put on here.
 	if err := resumeDestructiveDestinationState(j, root, destination, published, destinationBase); err != nil {
@@ -116,15 +116,15 @@ func resumePublishedSteps(j joins, root, destination, branch, marker, published,
 		// The landing policy owns the marker sentence, so the face carries the policy's own.
 		return landingFaceRefusal(faceResumeMarker, refusal{detail: landingpolicy.MarkerRefusalDetail}, rerun, ""), ""
 	}
-	return nil, stepsAfterMarker(j, root, destination, published, destinationBase)
+	return nil, stepsAfterMarker(j, run, root, destination, published, destinationBase)
 }
 
-func terminalResumeReceipt(root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
-	repo, target, err := cleanupIdentity(root, path)
+func terminalResumeReceipt(run *git.Run, root, path, request, sourceTip string) (intent.CleanupReceipt, error) {
+	repo, target, err := cleanupIdentity(run, root, path)
 	if err != nil {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
-	receipt, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, target, intent.RequestDigest(request))
+	receipt, found, err := intent.In(run, root).CleanupReceiptFor(repo, releaseOperation, target, intent.RequestDigest(request))
 	if err != nil || !found || receipt.State != intent.ReceiptComplete || receipt.Phase != intent.ReceiptPhaseTerminal || !receipt.Owned || receipt.Action != string(ActionRemoved) || !intent.ValidIdentity(receipt.Tracked) || receipt.Branch == "" || !strings.HasSuffix(receipt.Branch, "/"+receipt.Tracked) {
 		return intent.CleanupReceipt{}, errors.New("missing-terminal-receipt")
 	}
@@ -182,13 +182,13 @@ func destinationResidueFacts(root, destination, published, destinationBase strin
 // resumeAssignment runs the resume's assignment group: the identity proofs first, then the
 // source proofs that read their result. skipped reports whether the refusal stopped the
 // group's later proofs, which the caller states in the route it attaches.
-func resumeAssignment(j joins, root, path, request, tip, base, slug string) (a intent.Assignment, active, skipped bool, err error) {
-	a, found, err := intent.FindAssignmentForRequest(root, request)
+func resumeAssignment(j joins, run *git.Run, root, path, request, tip, base, slug string) (a intent.Assignment, active, skipped bool, err error) {
+	a, found, err := intent.In(run, root).FindAssignmentForRequest(request)
 	if err != nil {
 		return intent.Assignment{}, false, true, err
 	}
 	if !found {
-		recovery, recoverable, err := unmatchedRequestRecovery(root, assignmentRecoveryContext{
+		recovery, recoverable, err := unmatchedRequestRecovery(run, root, assignmentRecoveryContext{
 			target: path,
 			base:   base,
 			tip:    tip,
@@ -201,7 +201,7 @@ func resumeAssignment(j joins, root, path, request, tip, base, slug string) (a i
 		}
 		return intent.Assignment{}, false, false, nil
 	}
-	if err := identityBundleRefusal(root, path, a, resumeActiveState); err != nil {
+	if err := identityBundleRefusal(run, root, path, a, resumeActiveState); err != nil {
 		return intent.Assignment{}, false, true, err
 	}
 	// The source proofs are the group's last stage, so their refusal stops no later proof.

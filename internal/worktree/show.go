@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -26,7 +27,7 @@ func ShowCommand(root, _ string, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, worktreeShowGrammar.Help)
 		return 2
 	}
-	path, err := resolveWorktree(root, parsed.Positionals[0])
+	path, err := resolveWorktree(&git.Run{}, root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, worktreeShowGrammar.Cmd, err)
 	}

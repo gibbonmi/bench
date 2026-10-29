@@ -4,14 +4,15 @@ package worktree
 
 import (
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // leaseLanding takes the destination's lease for the assignment after the admission
 // proofs and before the composition. A refusal carries the caller's own re-run. The
 // publish decision or the composition's refusal releases the lease, and a resume takes none.
-func leaseLanding(root, destination string, assignment intent.Assignment, request, base, tip, specArg, path string) (*commitrepo.Lease, error) {
-	lease, err := commitrepo.Store{Root: root}.AcquireLease(destination, assignment.ID)
+func leaseLanding(run *git.Run, root, destination string, assignment intent.Assignment, request, base, tip, specArg, path string) (*commitrepo.Lease, error) {
+	lease, err := commitrepo.Store{Root: root, Run: run}.AcquireLease(destination, assignment.ID)
 	if err != nil {
 		return nil, landingSourceRoute(err, request, base, tip, specArg, path, assignment.ID)
 	}

@@ -216,8 +216,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
 
-**FT402 (MEDIUM) — a command run caches its pure git queries, and serial worktree tests move into the parallel phase.**
-
 **FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
 
 **FT412 (LOW) — a production seam that does I/O per item has a test that pins how its cost grows.**
@@ -362,17 +360,16 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT402-git-cache
-2. FT360-shared-fixtures
-3. FT411
-4. FT125-exact-readers
-5. FT375-residual
-6. FT344-remedy
-7. FT406-rebuild
-8. FT366-rg-guard
-9. FT380-residual
-10. FT354-strict-json
-11. FT363-member-set
-12. FT358-block-reader
-13. FT365-conformance
-14. FT414-preconditions
+1. FT360-shared-fixtures
+2. FT411
+3. FT125-exact-readers
+4. FT375-residual
+5. FT344-remedy
+6. FT406-rebuild
+7. FT366-rg-guard
+8. FT380-residual
+9. FT354-strict-json
+10. FT363-member-set
+11. FT358-block-reader
+12. FT365-conformance
+13. FT414-preconditions

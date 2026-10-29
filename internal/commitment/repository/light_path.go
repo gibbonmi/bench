@@ -151,7 +151,7 @@ func (store Store) lightPathTickets(tree, scope string, policy *commitment.Polic
 		if folder.irregular || folder.count != 1 || approvedDeliverable(policy, spec.ClosedFolderPath(slug)) || !spec.TicketsOnly(spec.CommitTree(store.Root, tree), slug) {
 			continue
 		}
-		data, err := git.ReadTreeFile(store.Root, tree, folder.ticket)
+		data, err := store.Run.ReadTreeFile(store.Root, tree, folder.ticket)
 		if err != nil {
 			return nil, err
 		}

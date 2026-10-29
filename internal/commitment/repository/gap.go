@@ -101,7 +101,7 @@ func (store Store) holdsDefault(owner intent.Assignment) error {
 // active assignment of the store root. decide reads the build's current record, if any. An
 // unbound root and a nil answer write nothing, and an unchanged record keeps the ledger bytes.
 func (store Store) decideGap(decide func(gap intent.ChunkGap, recorded bool, owner intent.Assignment) (*intent.ChunkGap, error)) error {
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		owner, owned := activeOwner(ledger, store.Root)
 		if !owned {
 			return ledger, false, nil

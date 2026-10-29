@@ -21,7 +21,7 @@ func TestReleaseDeadLeaseRemovesAndCompacts(t *testing.T) {
 	requireTest(t, release.exit == 0, "dead-lease release exit=%d stdout=%q", release.exit, release.stdout)
 	_, statErr := os.Stat(f.creation.Path)
 	requireTest(t, os.IsNotExist(statErr), "dead-lease worktree remains: %v", statErr)
-	_, err = assignmentByID(f.root, f.creation.Assignment.ID)
+	_, err = assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	requireTest(t, err != nil, "dead-lease assignment was not compacted")
 	ledger, err := intent.Read(f.root)
 	requireTest(t, err == nil && len(ledger.CleanupReceipts) == 2, "dead-lease receipts=%#v error=%v", ledger.CleanupReceipts, err)

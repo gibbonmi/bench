@@ -63,7 +63,7 @@ func TestPlanAutomaticRejectsEveryInvalidMarkerWithoutMutation(t *testing.T) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(root, ".bench-home")
 			creation := mustCreate(t, root, home, "marker-"+tc.name, "marker validation")
-			markerFile, err := markerPath(creation.Path)
+			markerFile, err := markerPath(nil, creation.Path)
 			mustNoError(t, err)
 			valid := Marker{Schema: OwnerMarkerSchema, OwnerID: creation.Assignment.OwnerID, Path: creation.Path}
 			tc.mutate(t, creation.Path, markerFile, valid)
@@ -96,7 +96,7 @@ func TestCreatePersistsCanonicalPathThroughSymlinkedHome(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	creation, err := createAt(defaultJoins(), root, linkedHome, "symlinked-home", "symlinked home", nil, currentTime())
+	creation, err := createAt(defaultJoins(), nil, root, linkedHome, "symlinked-home", "symlinked home", nil, currentTime())
 	mustNoError(t, err)
 	requireTest(t, creation.Path == creation.Assignment.Worktree,
 		"creation path %q differs from assignment path %q", creation.Path, creation.Assignment.Worktree)
@@ -180,7 +180,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	}
 	results := make(chan result, 2)
 	go func() {
-		created, err := createAt(j, root, home, "same-request", "same label", func(step LifecycleStep) error {
+		created, err := createAt(j, nil, root, home, "same-request", "same label", func(step LifecycleStep) error {
 			if step == StepRegistration {
 				close(registered)
 				<-proceed
@@ -192,7 +192,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	<-attempted
 	<-registered
 	go func() {
-		created, err := createAt(j, root, home, "same-request", "same label", nil, currentTime())
+		created, err := createAt(j, nil, root, home, "same-request", "same label", nil, currentTime())
 		results <- result{created, err}
 	}()
 	<-attempted
@@ -200,7 +200,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 	first, second := <-results, <-results
 	requireTest(t, first.err == nil && second.err == nil && first.creation.Path == second.creation.Path && first.creation.Assignment.ID == second.creation.Assignment.ID,
 		"concurrent create = %#v/%v and %#v/%v", first.creation, first.err, second.creation, second.err)
-	_, err := createAt(j, root, home, "same-request", "changed label", nil, currentTime())
+	_, err := createAt(j, nil, root, home, "same-request", "changed label", nil, currentTime())
 	requireTest(t, err != nil, "changed-label replay did not conflict")
 	assignments, err := intent.Assignments(root)
 	requireTest(t, err == nil && len(assignments) == 1 && strings.Count(gitOutput(t, root, "worktree", "list", "--porcelain"), "worktree ") == 2,
@@ -210,7 +210,7 @@ func TestConcurrentCreateSerializesByRequest(t *testing.T) {
 		request := request
 		go func() {
 			<-start
-			created, err := createAt(j, root, home, request, request, nil, currentTime())
+			created, err := createAt(j, nil, root, home, request, request, nil, currentTime())
 			results <- result{created, err}
 		}()
 	}
@@ -248,7 +248,7 @@ exec "$REAL_GIT" "$@"
 	cmd.Env = append(os.Environ(), "BENCH_SIGINT_HELPER=1", "BENCH_SIGINT_ROOT="+f.root, "BENCH_SIGINT_PATH="+f.creation.Path, "REAL_GIT="+realGit, "PATH="+shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	out, err := cmd.CombinedOutput()
 	requireTest(t, err == nil, "SIGINT helper: %v\n%s", err, out)
-	err = validateCreationBundle(f.root, f.creation.Assignment)
+	err = validateCreationBundle(nil, f.root, f.creation.Assignment)
 	requireTest(t, err == nil, "SIGINT residual is not exact-locked: %v", err)
 	replay, err := ApplyAutomatic(f.root, f.creation.Path, nil)
 	requireTest(t, err == nil && replay.Action == ActionRemoved, "SIGINT replay = %#v, %v", replay, err)
@@ -270,7 +270,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			root := newWorktreeRepo(t)
 			home := filepath.Join(root, ".bench-home")
 			fault := errors.New("fault after " + string(tc.step))
-			creation, err := createAt(defaultJoins(), root, home, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
+			creation, err := createAt(defaultJoins(), nil, root, home, "fault-"+tc.name, "fault creation", func(got LifecycleStep) error {
 				if got == tc.step {
 					return fault
 				}
@@ -291,7 +291,7 @@ func TestLifecycleFaultBoundariesRemainLockedOrAbsent(t *testing.T) {
 			if tc.survives {
 				valid := readErr == nil && len(assignments) == 1
 				if valid {
-					valid = validateCreationBundle(root, assignments[0]) == nil
+					valid = validateCreationBundle(nil, root, assignments[0]) == nil
 				}
 				requireTest(t, valid, "surviving rollback bundle registrations=%s assignments=%#v error=%v", registrations, assignments, readErr)
 				requireTest(t, !tc.relockFault || strings.Contains(err.Error(), "HIGH-SEVERITY"), "relock residual lacks severity: %v", err)

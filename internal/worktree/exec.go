@@ -11,6 +11,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/runbinary"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -76,7 +77,8 @@ func ExecCommandResolving(root, home string, args []string, stdin io.Reader, std
 	// the span, so a target refusal records the verb with no subject.
 	var assignment string
 	finishSpan := beginVerbSpan(home, root, otelExecSeam)
-	exit := execAttributed(&assignment, parsed, root, home, newAmbient(home, stderr).environ, values, stdin, stdout, stderr)
+	a := newAmbient(home, stderr)
+	exit := execAttributed(a.run, &assignment, parsed, root, home, a.environ, values, stdin, stdout, stderr)
 	// The verb returns the child's own code, which the grammar help promises. The span
 	// takes the outcome instead: a 3 here is the child speaking rather than a Bench
 	// publication, so only a zero reads green.
@@ -92,15 +94,15 @@ func ExecCommandResolving(root, home string, args []string, stdin io.Reader, std
 // active state. It reads the ledger and applies the landing's active check, and it
 // resolves no target. A ledger that cannot be read holds no active assignment.
 func AssignmentActive(root, id string) bool {
-	a, err := assignmentByID(root, id)
+	a, err := assignmentByID(nil, root, id)
 	return err == nil && landingActiveState(a.State)
 }
 
 // execAttributed is the exec verb's own work, with the assignment that owns the child's
 // tree written to assignment. The ledger is read once, through the one target authority,
 // so the record names the same assignment the child ran in.
-func execAttributed(assignment *string, parsed usage.Result, root, home string, environ, values []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	selected, err := resolveAssignment(root, parsed.Positionals[0])
+func execAttributed(run *git.Run, assignment *string, parsed usage.Result, root, home string, environ, values []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	selected, err := resolveAssignment(run, root, parsed.Positionals[0])
 	if err != nil {
 		return printTargetRefusal(stderr, worktreeExecGrammar.Cmd, err)
 	}

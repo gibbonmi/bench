@@ -146,7 +146,7 @@ func TestReauthorizePublishedFailure(t *testing.T) {
 	cause := errors.New("injected ledger directory-sync failure")
 	rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
 
-	_, err := reauthorizeAssignment(rec.Replacer(), root, activeAssignment().ID, "next-request",
+	_, err := In(nil, root).reauthorizeAssignment(rec.Replacer(), activeAssignment().ID, "next-request",
 		func(Assignment) error { return nil }, transition, nil)
 
 	durablefiletest.RequireFailure(t, err, "directory-sync", true, cause)

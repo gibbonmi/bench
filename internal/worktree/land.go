@@ -134,7 +134,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	operand := resolveVerbOperand(root, parsed.Positionals[0])
+	operand := resolveVerbOperand(a.run, root, parsed.Positionals[0])
 	path, err := canonicalPathIn(a, operand)
 	if err != nil {
 		rerun := landingRerun(parsed.Flags["--request"], parsed.Flags["--base"], parsed.Flags["--source-tip"], parsed.Flags["--spec"], operand, "")
@@ -160,10 +160,10 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, false))
 	}
 	var source landingSourceFact
-	assignment, err := landingAssignment(j, root, path, parsed.Flags["--request"], base, tip)
+	assignment, err := landingAssignment(j, a.run, root, path, parsed.Flags["--request"], base, tip)
 	if err != nil {
 		refusals = append(refusals, landingFaceRoute(err, unassignedRerun, true))
-	} else if source, err = landingSourceProofs(j, root, assignment, base, tip, parsed.Flags["--spec"], destination); err != nil {
+	} else if source, err = landingSourceProofs(j, a.run, root, assignment, base, tip, parsed.Flags["--spec"], destination); err != nil {
 		// The source proofs read the resolved assignment, so their route addresses it.
 		refusals = append(refusals, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
 	}
@@ -195,15 +195,15 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	request.Root, request.Destination, request.DestinationBase, request.DestinationFingerprint = root, publication.Destination, destination, destinationFingerprint
 	request.GreenMarker, request.Stdout, request.Stderr = priorMarker, stdout, stderr
 	// The window decides before the lease, so a landing never waits for a lease and then for a gap.
-	if err := (commitrepo.Store{Root: root}).AdmitWindow(publication); err != nil {
+	if err := (commitrepo.Store{Root: root, Run: a.run}).AdmitWindow(publication); err != nil {
 		return landRefusalError(stdout, landingSourceRoute(err, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path, assignment.ID))
 	}
 	ctx, endWait := gate.AwaitLanding(ctx, a.home, a.kit, assignment.Worktree, source.tip, stderr)
 	defer endWait()
-	if publication.Lease, err = leaseLanding(root, request.Destination, assignment, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path); err != nil {
+	if publication.Lease, err = leaseLanding(a.run, root, request.Destination, assignment, parsed.Flags["--request"], base, tip, parsed.Flags["--spec"], path); err != nil {
 		return landRefusalError(stdout, err)
 	}
-	result, err := j.landReviewed(ctx, request, commitmentAdmission{store: commitrepo.Store{Root: root}, source: publication, gap: j.publicationGap})
+	result, err := j.landReviewed(ctx, request, commitmentAdmission{store: commitrepo.Store{Root: root, Run: a.run}, source: publication, gap: j.publicationGap})
 	if err != nil {
 		publication.Lease.Release()
 		var conflict landing.ConflictError
@@ -215,7 +215,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	// The destination CAS above is the commit point. Later errors name the durable
 	// commit and retain the source. first-run never attempts to publish again.
 	measures.subject = result.Commit
-	if step := publishedSteps(j, root, branch, result, priorMarker); step != "" {
+	if step := publishedSteps(j, a.run, root, branch, result, priorMarker); step != "" {
 		return landedIncomplete(stdout, result, parsed.Flags["--spec"], path, assignment.ID, step, records)
 	}
 	if !releaseLanded(j, a, root, parsed.Flags["--request"], path, stderr) {
@@ -260,7 +260,7 @@ func authorizationFace(err error) string {
 // landingSourceProofs runs the first run's source proofs over a resolved assignment: the
 // source itself, the review base's binding, and the destination's collisions with the
 // source tree. The first fault stops the rest.
-func landingSourceProofs(j joins, root string, assignment intent.Assignment, base, tip, specArg, destination string) (landingSourceFact, error) {
+func landingSourceProofs(j joins, run *git.Run, root string, assignment intent.Assignment, base, tip, specArg, destination string) (landingSourceFact, error) {
 	source, err := landingSource(j, root, assignment, base, tip, specArg)
 	if err != nil {
 		return landingSourceFact{}, err
@@ -270,13 +270,15 @@ func landingSourceProofs(j joins, root string, assignment intent.Assignment, bas
 	// and names the moved base; a base behind the recorded start instead grades a range the
 	// assignment never authorized. `--is-ancestor` accepts the recorded start itself, which
 	// is the unmoved case.
-	if !git.OK("-C", root, "merge-base", "--is-ancestor", assignment.Start, source.base) {
+	if holds, err := run.IsAncestor(root, assignment.Start, source.base); err != nil || !holds {
 		return landingSourceFact{}, identityRefusal(source.base, assignment.Start, reviewedRangeDetail)
 	}
 	// The review base binds before composition: a base outside the destination's history
 	// grades a range the destination never reviewed against.
-	if destination != "" && !git.OK("-C", root, "merge-base", "--is-ancestor", source.base, destination) {
-		return landingSourceFact{}, identityRefusal(source.base, destination, landingBaseNotAncestorDetail)
+	if destination != "" {
+		if holds, err := run.IsAncestor(root, source.base, destination); err != nil || !holds {
+			return landingSourceFact{}, identityRefusal(source.base, destination, landingBaseNotAncestorDetail)
+		}
 	}
 	if err := landingDestinationCollisions(root, source.tip); err != nil {
 		return landingSourceFact{}, err

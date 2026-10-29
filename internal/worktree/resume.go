@@ -19,12 +19,12 @@ var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
 
 const cleanupOperation = "worktree-clean"
 
-func cleanupIdentity(root, path string) (string, string, error) {
+func cleanupIdentity(run *git.Run, root, path string) (string, string, error) {
 	target, err := resolveOperand(path)
 	if err != nil {
 		return "", "", err
 	}
-	address, err := intent.Address(root)
+	address, err := intent.In(run, root).Address()
 	if err != nil {
 		return "", "", err
 	}
@@ -56,8 +56,8 @@ func planFromReceipt(receipt intent.CleanupReceipt) CleanupPlan {
 		ignoredSummary: receipt.Ignored,
 	}
 }
-func assignmentByID(root, id string) (intent.Assignment, error) {
-	assignments, err := intent.Assignments(root)
+func assignmentByID(run *git.Run, root, id string) (intent.Assignment, error) {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return intent.Assignment{}, err
 	}
@@ -102,18 +102,18 @@ func (plan CleanupPlan) eligible() bool {
 }
 
 func applyCleanupTransaction(j joins, a ambient, root, path, fingerprint string, planner cleanupPlanner, localFault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
-	repo, target, err := cleanupIdentity(root, path)
+	repo, target, err := cleanupIdentity(a.run, root, path)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	receipt, found, err := intent.CleanupReceiptFor(root, repo, cleanupOperation, target, fingerprint)
+	receipt, found, err := intent.In(a.run, root).CleanupReceiptFor(repo, cleanupOperation, target, fingerprint)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
 	if found && receipt.State == intent.ReceiptComplete {
 		return planFromReceipt(receipt), nil
 	}
-	release, err := lockCleanupRegistration(j, repo, target)
+	release, err := lockCleanupRegistration(j, a.run, repo, target)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -127,7 +127,7 @@ func applyCleanupTransaction(j joins, a ambient, root, path, fingerprint string,
 	if err := hit(fault, StepApplyLocked); err != nil {
 		return CleanupPlan{}, err
 	}
-	receipt, found, err = intent.CleanupReceiptFor(root, repo, cleanupOperation, target, fingerprint)
+	receipt, found, err = intent.In(a.run, root).CleanupReceiptFor(repo, cleanupOperation, target, fingerprint)
 	if err != nil {
 		return CleanupPlan{}, err
 	}
@@ -145,7 +145,7 @@ func applyCleanupTransaction(j joins, a ambient, root, path, fingerprint string,
 				return planFromReceipt(receipt), resumeErr
 			}
 			if resumable {
-				return finishInterruptedExplicit(root, receipt, terminal, fault)
+				return finishInterruptedExplicit(a.run, root, receipt, terminal, fault)
 			}
 		}
 	}
@@ -197,9 +197,9 @@ func applyCleanupTransaction(j joins, a ambient, root, path, fingerprint string,
 	if err != nil {
 		return plan, err
 	}
-	return completeCleanupTransaction(root, plan, receipt, terminal, fault)
+	return completeCleanupTransaction(a.run, root, plan, receipt, terminal, fault)
 }
-func completeCleanupTransaction(root string, plan CleanupPlan, receipt intent.CleanupReceipt, terminal cleanupTerminal, fault Fault) (CleanupPlan, error) {
+func completeCleanupTransaction(run *git.Run, root string, plan CleanupPlan, receipt intent.CleanupReceipt, terminal cleanupTerminal, fault Fault) (CleanupPlan, error) {
 	receipt.State, receipt.Phase, receipt.Action, receipt.Detail = intent.ReceiptComplete, intent.ReceiptPhaseTerminal, string(ActionRemoved), ""
 	plan.Action = ActionRemoved
 	if err := intent.PutCleanupReceipt(root, receipt); err != nil {
@@ -213,7 +213,7 @@ func completeCleanupTransaction(root string, plan CleanupPlan, receipt intent.Cl
 			return plan, err
 		}
 	}
-	if assignment, readErr := assignmentByID(root, receipt.Assignment); readErr == nil && assignment.State == intent.StateComplete {
+	if assignment, readErr := assignmentByID(run, root, receipt.Assignment); readErr == nil && assignment.State == intent.StateComplete {
 		if err := intent.DeleteAssignment(root, assignment.ID); err != nil {
 			return plan, err
 		}
@@ -280,7 +280,7 @@ func registeredAt(root, target string) (bool, error) {
 	return false, nil
 }
 
-func finishInterruptedExplicit(root string, receipt intent.CleanupReceipt, terminal cleanupTerminal, fault Fault) (CleanupPlan, error) {
+func finishInterruptedExplicit(run *git.Run, root string, receipt intent.CleanupReceipt, terminal cleanupTerminal, fault Fault) (CleanupPlan, error) {
 	plan := planFromReceipt(receipt)
 	switch receipt.Phase {
 	case intent.ReceiptPhaseRemoving, intent.ReceiptPhaseRemoved, intent.ReceiptPhaseBranch, intent.ReceiptPhaseTerminal:
@@ -294,7 +294,7 @@ func finishInterruptedExplicit(root string, receipt intent.CleanupReceipt, termi
 	if registered {
 		return plan, errStaleFingerprint
 	}
-	assignments, err := intent.Assignments(root)
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return plan, err
 	}
@@ -346,7 +346,7 @@ func finishInterruptedExplicit(root string, receipt intent.CleanupReceipt, termi
 			}
 		}
 	}
-	return completeCleanupTransaction(root, plan, receipt, terminal, fault)
+	return completeCleanupTransaction(run, root, plan, receipt, terminal, fault)
 }
 func recoveryAssignmentForPlan(root string, plan CleanupPlan) (intent.Assignment, error) {
 	if plan.assignment != nil {
@@ -371,11 +371,11 @@ func ApplyAutomatic(root, path string, fault Fault) (CleanupPlan, error) {
 	return applyAutomaticWithTerminal(defaultJoins(), newAmbient(Home(), os.Stderr), root, path, fault, nil)
 }
 func applyAutomaticWithTerminal(j joins, a ambient, root, path string, fault Fault, terminal cleanupTerminal) (CleanupPlan, error) {
-	plan, err := planAutomaticAt(j, root, path, a.now)
+	plan, err := planAutomaticAt(j, a.run, root, path, a.now)
 	if err != nil || !plan.eligible() {
 		return plan, err
 	}
-	planner := func(target string) (CleanupPlan, error) { return planAutomaticAt(j, root, target, a.now) }
+	planner := func(target string) (CleanupPlan, error) { return planAutomaticAt(j, a.run, root, target, a.now) }
 	return applyCleanupTransaction(j, a, root, path, plan.Fingerprint, planner, fault, terminal)
 }
 
@@ -414,7 +414,7 @@ func conservativeCleanupAt(j joins, a ambient, root string) (ResumeResult, error
 			result.Retained[ReasonUncertain]++
 			continue
 		}
-		plan, err := planAutomaticAt(j, root, wt.Path, a.now)
+		plan, err := planAutomaticAt(j, a.run, root, wt.Path, a.now)
 		if err != nil {
 			return result, err
 		}
@@ -432,10 +432,10 @@ func conservativeCleanupAt(j joins, a ambient, root string) (ResumeResult, error
 		}
 		result.Removed++
 	}
-	if err := sweepOrphanAssignments(j, root, &result, a.now); err != nil {
+	if err := sweepOrphanAssignments(j, a.run, root, &result, a.now); err != nil {
 		return result, err
 	}
-	result.PrunedBranches, err = intent.PruneUnclaimedLandedBranches(root)
+	result.PrunedBranches, err = intent.In(a.run, root).PruneUnclaimedLandedBranches()
 	return result, err
 }
 
@@ -455,8 +455,8 @@ func conservativeCleanupAt(j joins, a ambient, root string) (ResumeResult, error
 // which ones the pool still answers for.
 // The instant is the caller's explicit boundary resolution: one instant for the whole
 // pass, so two records of the same age cannot straddle the window and disagree.
-func sweepOrphanAssignments(j joins, root string, result *ResumeResult, now time.Time) error {
-	assignments, err := intent.Assignments(root)
+func sweepOrphanAssignments(j joins, run *git.Run, root string, result *ResumeResult, now time.Time) error {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return err
 	}
@@ -465,7 +465,7 @@ func sweepOrphanAssignments(j joins, root string, result *ResumeResult, now time
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
-			if plan := planLandedAssignment(j, root, a, CleanupOptions{}); assignmentLanded(root, a, plan) {
+			if plan := planLandedAssignment(j, run, root, a, CleanupOptions{}); assignmentLanded(root, a, plan) {
 				continue
 			}
 			result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
@@ -498,7 +498,7 @@ func resumeCleanCommandWith(j joins, a ambient, root string, args []string, stdo
 		return 1
 	}
 	result, cleanupErr := conservativeCleanupAt(j, a, root)
-	assignments, snapshotErr := intent.Assignments(root)
+	assignments, snapshotErr := intent.In(a.run, root).Assignments()
 	if snapshotErr == nil {
 		result.Open = len(assignments)
 	}

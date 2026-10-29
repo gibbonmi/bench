@@ -2049,6 +2049,14 @@
       "identity": "sha256:6f89369d1e6567465d31f9f8e90e05ad7dd2dc2f8589f75e12a30657640a34eb",
       "source": "755dd10d2dab848311daced798d5c23ebdcbf296",
       "evidence": "af62d4566dd11f77b57d9dace33f9ba4d2b42f92"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT402-git-cache",
+      "binding": "git-query-cache",
+      "identity": "sha256:2935d6a4573a7c7abf3dc7a631b6988cddc691f525f439f2642984ce57b10708",
+      "source": "5deb11ccef7fb3d377ee3c58ef52efa491cb5d76",
+      "evidence": "730c98a1fc02bf1b19db9d8147e63a9ea1dee829"
     }
   ]
 }

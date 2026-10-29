@@ -36,7 +36,7 @@ func TestResetRestoreRefusesAForeignTip(t *testing.T) {
 	f := restoreFixture(t)
 	foreign, err := commitTree(f.root, os.Environ(), gitOutput(t, f.root, "rev-parse", "HEAD^{tree}"), nil, "foreign root\n")
 	mustNoError(t, err)
-	rootOID, _, err := captureLayers(f.root, os.Environ(), f.creation.Path, true, foreign)
+	rootOID, _, err := captureLayers(nil, f.root, os.Environ(), f.creation.Path, true, foreign)
 	mustNoError(t, err)
 	gitRun(t, f.root, "update-ref", f.ref, rootOID)
 	result := runVerb(t, verbReset, f.call("--restore", f.ref, f.creation.Assignment.ID))

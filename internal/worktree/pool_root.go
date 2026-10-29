@@ -62,7 +62,7 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	if len(requestedStart) > 0 {
 		start = requestedStart[0]
 	}
-	return createAt(defaultJoins(), root, Home(), request, label, fault, currentTime(), func() (creationStart, error) { return creationStart{ref: start}, nil })
+	return createAt(defaultJoins(), &git.Run{}, root, Home(), request, label, fault, currentTime(), func() (creationStart, error) { return creationStart{ref: start}, nil })
 }
 
 type creationStart struct {
@@ -74,10 +74,10 @@ type creationStart struct {
 // because a caller whose start costs a lookup pays for it only when the request is new.
 type startResolver func() (creationStart, error)
 
-// createAt is Create with the creation instant and the Bench home resolved explicitly at
-// the caller's effect boundary. The start resolver runs after the request replay lookup
-// misses, so a replay returns its existing record without resolving a start at all.
-func createAt(j joins, root, home, request, label string, fault Fault, now time.Time, resolveStart ...startResolver) (Creation, error) {
+// createAt is Create with the run, the creation instant, and the Bench home resolved
+// explicitly at the caller's effect boundary. The start resolver runs after the request
+// replay lookup misses, so a replay returns its existing record without resolving a start.
+func createAt(j joins, run *git.Run, root, home, request, label string, fault Fault, now time.Time, resolveStart ...startResolver) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -91,13 +91,13 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 		return Creation{}, err
 	}
 	defer release()
-	if existing, ok, err := intent.FindAssignmentByRequest(root, digest); err != nil {
+	if existing, ok, err := intent.In(run, root).FindAssignmentByRequest(digest); err != nil {
 		return Creation{}, err
 	} else if ok {
 		if existing.Label != label || existing.State != intent.StateActive {
 			return Creation{}, errors.New("worktree create request conflicts with its existing assignment")
 		}
-		if err := validateCreationBundle(root, existing); err != nil {
+		if err := validateCreationBundle(run, root, existing); err != nil {
 			return Creation{}, fmt.Errorf("worktree create request has incomplete prior state: %w", err)
 		}
 		return Creation{Path: existing.Worktree, Assignment: existing}, nil
@@ -151,7 +151,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 		return Creation{}, fmt.Errorf("create locked worktree: %s", strings.TrimSpace(string(out)))
 	}
 	rollback := func(cause error) (Creation, error) {
-		attributionErr := ensureRollbackAttribution(root, assignment)
+		attributionErr := ensureRollbackAttribution(run, root, assignment)
 		if out, unlockErr := exec.Command("git", "-C", root, "worktree", "unlock", path).CombinedOutput(); unlockErr != nil {
 			return Creation{}, errors.Join(cause, attributionErr, fmt.Errorf("rollback unlock request-created registration: %s", strings.TrimSpace(string(out))))
 		}
@@ -162,7 +162,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 			}
 		}
 		if removeErr != nil {
-			return Creation{}, errors.Join(cause, attributionErr, removeErr, relock(root, assignment, fault))
+			return Creation{}, errors.Join(cause, attributionErr, removeErr, relock(run, root, assignment, fault))
 		}
 		if out, err := exec.Command("git", "-C", root, "update-ref", "-d", branch, start).CombinedOutput(); err != nil {
 			return Creation{}, errors.Join(cause, attributionErr, fmt.Errorf("rollback delete exact request branch: %s", strings.TrimSpace(string(out))))
@@ -185,7 +185,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 	}
 	assignment.Worktree = path
 	marker := Marker{Schema: OwnerMarkerSchema, OwnerID: ownerID, Path: path}
-	if err := writeMarker(path, marker); err != nil {
+	if err := writeMarker(run, path, marker); err != nil {
 		return rollback(fmt.Errorf("write owner marker: %w", err))
 	}
 	if err := hit(fault, StepMarker); err != nil {
@@ -201,7 +201,7 @@ func createAt(j joins, root, home, request, label string, fault Fault, now time.
 	if err := hit(fault, StepRecord); err != nil {
 		return rollback(err)
 	}
-	if err := validateCreationBundle(root, assignment); err != nil {
+	if err := validateCreationBundle(run, root, assignment); err != nil {
 		return rollback(err)
 	}
 	return Creation{Path: path, Assignment: assignment}, nil

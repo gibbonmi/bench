@@ -28,8 +28,11 @@ func poolAt(home, root string) string { return poolkey.Pool(home, root) }
 
 // LeaseFile returns the absolute path of the repository-specific lease file for path.
 // It returns an error when path is not a worktree whose git administration path resolves.
-func LeaseFile(path string) (string, error) {
-	return git.AdminPath(path, git.BenchLeaseFilename)
+func LeaseFile(path string) (string, error) { return leaseFileIn(nil, path) }
+
+// leaseFileIn is LeaseFile with the administration path read through run.
+func leaseFileIn(run *git.Run, path string) (string, error) {
+	return run.AdminPath(path, git.BenchLeaseFilename)
 }
 func PoolCommand(home string, args []string) (string, int) {
 	var root string
@@ -275,7 +278,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 		return 1
 	}
 	if target != "" {
-		target = resolveVerbOperand(root, target)
+		target = resolveVerbOperand(a.run, root, target)
 		// The plan holds no call directory, so a relative operand joins it here. A home
 		// operand stays, because expandHomeTarget owns its refusal. A failed directory read
 		// refuses here with the plan's own refusal, because the plan would read the process
@@ -323,7 +326,7 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 		return 0
 	}
 	if landed {
-		set, planErr := planLandedSet(j, root, options, "")
+		set, planErr := planLandedSet(j, a.run, root, options, "")
 		if planErr != nil {
 			_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: fingerprint, Reason: planErr.Error()})
 			return 1
@@ -383,8 +386,8 @@ func cleanCommandWith(j joins, a ambient, root string, args []string, stdout, st
 	}
 	return 0
 }
-func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
-	if assignment, err := assignmentByID(root, receipt.Tracked); err == nil && assignment.State == intent.StateComplete {
+func finishReleaseReceipt(run *git.Run, root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
+	if assignment, err := assignmentByID(run, root, receipt.Tracked); err == nil && assignment.State == intent.StateComplete {
 		if err := intent.DeleteAssignment(root, assignment.ID); err != nil {
 			return 1
 		}
@@ -421,10 +424,10 @@ func releaseCommandWith(j joins, a ambient, root string, args []string, stdout, 
 // releaseAttributed is the release verb's own work, with the released assignment written
 // to assignment as the receipt names it.
 func releaseAttributed(assignment *string, j joins, a ambient, root string, args []string, stdout, stderr io.Writer) int {
-	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(root, args[2]))
+	receipt, err := releaseAssignment(j, a, root, args[1], resolveVerbOperand(a.run, root, args[2]))
 	if err == nil {
 		*assignment = receipt.Tracked
-		return finishReleaseReceipt(root, stdout, receipt)
+		return finishReleaseReceipt(a.run, root, stdout, receipt)
 	}
 	fmt.Fprintf(stderr, "bench worktree release: %v\n", err)
 	return 1
@@ -513,23 +516,23 @@ const retainedSuffix = "; checkout retained"
 
 // assignmentForRequest keeps opaque-token resolution in intent. Only an unmatched
 // token permits path-derived recovery discovery.
-func assignmentForRequest(root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
-	assignment, found, err := intent.FindAssignmentForRequest(root, request)
+func assignmentForRequest(run *git.Run, root, request string, recoveryContext assignmentRecoveryContext) (intent.Assignment, error) {
+	assignment, found, err := intent.In(run, root).FindAssignmentForRequest(request)
 	if err != nil {
 		return intent.Assignment{}, err
 	}
 	if found {
 		return assignment, nil
 	}
-	recovery, _, err := unmatchedRequestRecovery(root, recoveryContext)
+	recovery, _, err := unmatchedRequestRecovery(run, root, recoveryContext)
 	if err != nil {
 		return intent.Assignment{}, err
 	}
 	return intent.Assignment{}, refusalError{recovery}
 }
 
-func unmatchedRequestRecovery(root string, recoveryContext assignmentRecoveryContext) (refusal, bool, error) {
-	assignments, err := intent.Assignments(root)
+func unmatchedRequestRecovery(run *git.Run, root string, recoveryContext assignmentRecoveryContext) (refusal, bool, error) {
+	assignments, err := intent.In(run, root).Assignments()
 	if err != nil {
 		return refusal{}, false, err
 	}
@@ -563,13 +566,11 @@ func reauthorizeRecoveryNext(assignment, target, base, tip string) string {
 }
 
 func reauthorizeIdentityArg(value, placeholder string) string {
-	if !fullCommitIdentity(value) {
+	if !git.FullObjectID(value) {
 		return placeholder
 	}
 	return sanitize.ShellQuote(value)
 }
-
-func fullCommitIdentity(value string) bool { return len(value) == 40 && hexIdentity(value) }
 
 func hexIdentity(value string) bool {
 	for _, b := range []byte(value) {

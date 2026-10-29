@@ -111,11 +111,11 @@ func lockReason(assignment intent.Assignment) string {
 		" label=" + textDigest(assignment.Label) +
 		" start=" + assignment.Start
 }
-func relock(root string, assignment intent.Assignment, fault Fault) error {
+func relock(run *git.Run, root string, assignment intent.Assignment, fault Fault) error {
 	if out, err := exec.Command("git", "-C", root, "worktree", "lock", "--reason", lockReason(assignment), assignment.Worktree).CombinedOutput(); err != nil {
 		return fmt.Errorf("HIGH-SEVERITY residual: restore exact Bench lock: %s", strings.TrimSpace(string(out)))
 	}
-	if err := validateCreationBundle(root, assignment); err != nil {
+	if err := validateCreationBundle(run, root, assignment); err != nil {
 		return fmt.Errorf("HIGH-SEVERITY residual: verify restored exact Bench lock: %w", err)
 	}
 	if err := hit(fault, StepRelock); err != nil {
@@ -140,12 +140,12 @@ func lockCreationRequest(j joins, root, digest string) (func(), error) {
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
 
-func ensureRollbackAttribution(root string, assignment intent.Assignment) error {
+func ensureRollbackAttribution(run *git.Run, root string, assignment intent.Assignment) error {
 	marker := Marker{Schema: OwnerMarkerSchema, OwnerID: assignment.OwnerID, Path: assignment.Worktree}
-	markerFile, markerErr := markerPath(assignment.Worktree)
+	markerFile, markerErr := markerPath(run, assignment.Worktree)
 	if markerErr == nil {
 		if data, err := os.ReadFile(markerFile); errors.Is(err, os.ErrNotExist) {
-			markerErr = writeMarker(assignment.Worktree, marker)
+			markerErr = writeMarker(run, assignment.Worktree, marker)
 		} else if err != nil {
 			markerErr = err
 		} else if recorded, err := decodeMarker(data); err != nil || recorded != marker {
@@ -155,15 +155,15 @@ func ensureRollbackAttribution(root string, assignment intent.Assignment) error 
 	recordErr := intent.PutAssignment(root, assignment)
 	return errors.Join(markerErr, recordErr)
 }
-func markerPath(path string) (string, error) {
-	admin, err := git.AdminDir(path)
+func markerPath(run *git.Run, path string) (string, error) {
+	admin, err := run.AdminDir(path)
 	if err != nil {
 		return "", errors.New("resolve checkout administration directory")
 	}
 	return filepath.Join(admin, OwnerMarkerFile), nil
 }
-func writeMarker(path string, marker Marker) error {
-	markerFile, err := markerPath(path)
+func writeMarker(run *git.Run, path string, marker Marker) error {
+	markerFile, err := markerPath(run, path)
 	if err != nil {
 		return err
 	}
@@ -197,11 +197,11 @@ func decodeMarker(data []byte) (Marker, error) {
 // validateCreationBundle names the one identity component the assignment's own records
 // fail. The checked-out branch is the bundle's own predicate, not a registry component,
 // so it keeps its own sentence between the marker read and the recorded evidence.
-func validateCreationBundle(root string, assignment intent.Assignment) error {
+func validateCreationBundle(run *git.Run, root string, assignment intent.Assignment) error {
 	// The marker step runs before the branch check, because the branch check decides
 	// nothing on evidence the marker step has not accepted. The caller already holds the
 	// assignment, so the state component stays the caller's own check.
-	evidence, err := ownerMarkerRefusal(&git.Run{}, root, assignment.Worktree, assignment)
+	evidence, err := ownerMarkerRefusal(run, root, assignment.Worktree, assignment)
 	if err != nil {
 		return err
 	}
@@ -218,12 +218,12 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}
-	repo, _, err := cleanupIdentity(root, target)
+	repo, _, err := cleanupIdentity(a.run, root, target)
 	if err != nil {
 		return intent.CleanupReceipt{}, err
 	}
 	request := intent.RequestDigest(requestArg)
-	if receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request); readErr != nil {
+	if receipt, found, readErr := intent.In(a.run, root).CleanupReceiptFor(repo, releaseOperation, target, request); readErr != nil {
 		return intent.CleanupReceipt{}, readErr
 	} else if found && receipt.State == intent.ReceiptComplete {
 		return receipt, nil
@@ -231,7 +231,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	var assignment *intent.Assignment
 	resumeFingerprint := ""
 	if _, statErr := os.Lstat(target); errors.Is(statErr, os.ErrNotExist) {
-		cleanup, found, readErr := intent.CleanupReceiptForRequest(root, repo, cleanupOperation, target, request)
+		cleanup, found, readErr := intent.In(a.run, root).CleanupReceiptForRequest(repo, cleanupOperation, target, request)
 		if readErr != nil {
 			return intent.CleanupReceipt{}, readErr
 		}
@@ -243,19 +243,19 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 			return receipt, intent.PutCleanupReceipt(root, receipt)
 		}
 		if matches && cleanup.State == intent.ReceiptInFlight {
-			current, currentErr := assignmentByID(root, cleanup.Assignment)
+			current, currentErr := assignmentByID(a.run, root, cleanup.Assignment)
 			if currentErr != nil || current.OwnerID != cleanup.Owner || current.Request != request || current.Worktree != target || current.Branch != cleanup.Branch || current.State != intent.StateCleanupPending {
 				return intent.CleanupReceipt{}, errors.New("in-flight cleanup assignment does not match receipt")
 			}
 			assignment, resumeFingerprint = &current, cleanup.Fingerprint
 		} else if found {
-			return reconcileOutOfBand(root, repo, request, target, cleanup)
+			return reconcileOutOfBand(a.run, root, repo, request, target, cleanup)
 		}
 	} else if statErr != nil {
 		return intent.CleanupReceipt{}, statErr
 	}
 	if assignment == nil {
-		foundAssignment, findErr := assignmentForRequest(root, requestArg, assignmentRecoveryContext{
+		foundAssignment, findErr := assignmentForRequest(a.run, root, requestArg, assignmentRecoveryContext{
 			target: target,
 			suffix: retainedSuffix,
 		})
@@ -281,18 +281,18 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	absent := false
 	if shape, shapeErr := ClassifyPathShape(target); resumeFingerprint == "" && shapeErr == nil && shape == ShapeAbsent {
 		absent = true
-		if err := missingTreeLeaseRefusal(root, targetArg, *assignment); err != nil {
+		if err := missingTreeLeaseRefusal(a.run, root, targetArg, *assignment); err != nil {
 			return intent.CleanupReceipt{}, err
 		}
 	} else if resumeFingerprint == "" {
-		lease, leaseErr := LeaseFile(target)
+		lease, leaseErr := leaseFileIn(a.run, target)
 		if leaseErr != nil {
 			return intent.CleanupReceipt{}, leaseErr
 		}
 		if _, statErr := os.Lstat(lease); statErr == nil && ProbeLease(lease) == LeaseUnknown {
 			return intent.CleanupReceipt{}, retainedReleaseError(retainedPlan(target, ReasonUncertain, unknownLeaseReason), targetArg, assignment.ID)
 		}
-		if err := validateCreationBundle(root, *assignment); err != nil {
+		if err := validateCreationBundle(a.run, root, *assignment); err != nil {
 			return intent.CleanupReceipt{}, fmt.Errorf("%w; checkout retained", err)
 		}
 	}
@@ -303,7 +303,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 		}
 	}
 	terminal := func(plan CleanupPlan) error {
-		current, readErr := assignmentByID(root, assignment.ID)
+		current, readErr := assignmentByID(a.run, root, assignment.ID)
 		if readErr != nil {
 			return readErr
 		}
@@ -317,7 +317,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	} else if resumeFingerprint == "" {
 		plan, err = applyAutomaticWithTerminal(j, a, root, target, nil, terminal)
 	} else {
-		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, root, path, a.now) }
+		planner := func(path string) (CleanupPlan, error) { return planAutomaticAt(j, a.run, root, path, a.now) }
 		plan, err = applyCleanupTransaction(j, a, root, target, resumeFingerprint, planner, nil, terminal)
 	}
 	if err != nil {
@@ -326,7 +326,7 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 	if plan.Action == ActionRetain {
 		return intent.CleanupReceipt{}, retainedReleaseError(plan, targetArg, assignment.ID)
 	}
-	receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request)
+	receipt, found, readErr := intent.In(a.run, root).CleanupReceiptFor(repo, releaseOperation, target, request)
 	if readErr != nil {
 		return intent.CleanupReceipt{}, readErr
 	}
@@ -339,8 +339,8 @@ func releaseAssignment(j joins, a ambient, root, requestArg, targetArg string) (
 // missingTreeLeaseRefusal keeps the lease verdicts of a present tree's release for a tree
 // that is gone: an unknown lease and a live lease each retain the assignment. The policy
 // decides the live-lease verdict, so its reason has one source.
-func missingTreeLeaseRefusal(root, targetArg string, assignment intent.Assignment) error {
-	leases, err := assignmentLeaseStates(root)
+func missingTreeLeaseRefusal(run *git.Run, root, targetArg string, assignment intent.Assignment) error {
+	leases, err := assignmentLeaseStates(run, root)
 	if err != nil {
 		return err
 	}
@@ -376,12 +376,12 @@ func residualAssignment(a intent.Assignment) bool { return lifecyclepolicy.Resid
 // reconcile shape (e.g. a request-less `bench worktree clean --discard-ignored --apply`).
 // A residue record is compacted to a terminal release receipt. A record still holding
 // preserved work is left intact, and its recovery command is named.
-func reconcileOutOfBand(root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
+func reconcileOutOfBand(run *git.Run, root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
 	unauthorized := errors.New("cleanup receipt does not authorize release reconciliation")
 	if cleanup.State != intent.ReceiptComplete || !cleanup.Owned || cleanup.Assignment == "" {
 		return intent.CleanupReceipt{}, unauthorized
 	}
-	assignment, err := assignmentByID(root, cleanup.Assignment)
+	assignment, err := assignmentByID(run, root, cleanup.Assignment)
 	if err != nil {
 		// The record was already compacted out of band. Synthesize the terminal receipt
 		// so a replay of this release is idempotent.

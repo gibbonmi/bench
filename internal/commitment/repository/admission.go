@@ -14,7 +14,7 @@ import (
 
 // Start binds the owned assignment and its deliverable under the intent lock.
 func (store Store) Start(outcome, request, deliverable string) error {
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		owner, valid := requestedAssignment(ledger, store.Root, request)
 		if !valid {
 			return ledger, false, refusalroute.Raised{Name: refusalroute.CommitmentNeedsAssignment, Err: errors.New("start requires the active owned assignment and its exact request")}
@@ -61,7 +61,7 @@ func (store Store) Block(outcome, reason string) error {
 func (store Store) Unblock(outcome string) error { return store.setBlocker(outcome, "", false) }
 
 func (store Store) setBlocker(outcome, reason string, blocked bool) error {
-	return intent.Transact(store.Root, intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
+	return store.ledger().Transact(intent.StrictRead, func(ledger intent.Ledger) (intent.Ledger, bool, error) {
 		policy, err := store.admissionPolicy()
 		if err != nil {
 			return ledger, false, err

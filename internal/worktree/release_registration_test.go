@@ -37,7 +37,7 @@ func TestReleaseRegistrationSkipsUnrelatedSpecialControlRecords(t *testing.T) {
 	mustNoError(t, syscall.Mkfifo(filepath.Join(stranger, "gitdir"), 0o600))
 
 	done := make(chan error, 1)
-	go func() { done <- releaseRegistration(f.root, f.creation.Path) }()
+	go func() { done <- releaseRegistration(nil, f.root, f.creation.Path) }()
 	select {
 	case releaseErr := <-done:
 		mustNoError(t, releaseErr)

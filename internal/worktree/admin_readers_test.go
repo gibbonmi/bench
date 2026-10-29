@@ -31,7 +31,7 @@ func TestLockCleanupRegistrationFallsBackForNonWorktree(t *testing.T) {
 	if err := os.WriteFile(lockPath, nil, 0o600); err != nil {
 		t.Fatalf("plant the repository-level lock file: %v", err)
 	}
-	release, err := lockCleanupRegistration(defaultJoins(), repo, target)
+	release, err := lockCleanupRegistration(defaultJoins(), nil, repo, target)
 	if err != nil {
 		t.Fatalf("lockCleanupRegistration over a non-repository target = %v, want a release function over the repository-level lock file", err)
 	}
@@ -99,10 +99,10 @@ func TestOwnershipRefusalTextsUseTheGlossaryTerm(t *testing.T) {
 	journeyStubGit(t, f.root, "fail-git-dir", filepath.Join(t.TempDir(), "argv"))
 
 	want := "checkout administration directory"
-	if _, err := validateOwnerMarker(f.root, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
+	if _, err := validateOwnerMarkerIn(nil, f.root, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("validateOwnerMarker error = %v, want it to hold %q", err, want)
 	}
-	if _, err := markerPath(f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
+	if _, err := markerPath(nil, f.creation.Path); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("markerPath error = %v, want it to hold %q", err, want)
 	}
 }

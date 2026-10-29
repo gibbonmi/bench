@@ -41,7 +41,7 @@ func refusedUnlandedRelease(t *testing.T, request string, work unlandedWork) ref
 	work.leave(t, f.creation.Path)
 	release := runVerb(t, verbRelease, f.call("--request", "landed-"+request, f.creation.Path))
 	requireTest(t, release.exit == 1 && strings.Contains(release.stderr, "worktree retained (unmerged)"), "release exit=%d stderr=%q", release.exit, release.stderr)
-	assignment, err := assignmentByID(f.root, f.creation.Assignment.ID)
+	assignment, err := assignmentByID(nil, f.root, f.creation.Assignment.ID)
 	mustNoError(t, err)
 	requireTest(t, assignment.State == intent.StateCleanupPending, "state = %q, want cleanup-pending", assignment.State)
 	return refusedRelease{ownedAssignment: f, stderr: release.stderr}

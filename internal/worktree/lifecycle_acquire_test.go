@@ -20,7 +20,7 @@ func TestAcquireCreatesPrivatePoolAndLease(t *testing.T) {
 	t.Cleanup(func() { syscall.Umask(oldUmask) })
 	home := t.TempDir()
 	root := newWorktreeRepo(t)
-	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
+	wt, err := acquireAt(defaultJoins(), nil, root, "", "", home, currentTime())
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
 		t.Fatalf("fixture default resolved to %q, want no resolvable default", ref)
 	}
 
-	wt, err := acquireAt(defaultJoins(), root, "", "", home, currentTime())
+	wt, err := acquireAt(defaultJoins(), nil, root, "", "", home, currentTime())
 
 	if err != nil {
 		t.Fatalf("Acquire with an unresolvable default: %v", err)
@@ -226,7 +226,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 		t.Helper()
 		root := newWorktreeRepo(t)
 		home := filepath.Join(root, ".bench-home")
-		creation, err := createAt(defaultJoins(), root, home, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil, currentTime())
+		creation, err := createAt(defaultJoins(), nil, root, home, "drift-"+strings.ReplaceAll(t.Name(), "/", "-"), "drift", nil, currentTime())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -243,12 +243,12 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 			gitRun(t, f.root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "default drift")
 		}},
 		{name: "marker bytes", mutate: func(t *testing.T, f fixture) {
-			path, _ := markerPath(f.creation.Path)
+			path, _ := markerPath(nil, f.creation.Path)
 			body, _ := os.ReadFile(path)
 			mustWrite(t, path, append(body, ' '), 0o600)
 		}},
 		{name: "marker mode", mutate: func(t *testing.T, f fixture) {
-			path, _ := markerPath(f.creation.Path)
+			path, _ := markerPath(nil, f.creation.Path)
 			if err := os.Chmod(path, 0o640); err != nil {
 				t.Fatal(err)
 			}
@@ -317,7 +317,7 @@ func TestExplicitApplyRevalidatesSafetyEvidence(t *testing.T) {
 func explicitDurableState(t *testing.T, root, target string) string {
 	t.Helper()
 	ledger, _ := intent.Address(root)
-	marker, _ := markerPath(target)
+	marker, _ := markerPath(nil, target)
 	lease, _ := LeaseFile(target)
 	var state bytes.Buffer
 	for _, path := range []string{ledger, marker, lease} {

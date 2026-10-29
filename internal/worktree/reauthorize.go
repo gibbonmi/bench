@@ -67,7 +67,7 @@ func reauthorizeParsed(j joins, a ambient, root string, parsed usage.Result, std
 	base, tip := parsed.Flags["--base"], parsed.Flags["--source-tip"]
 	// The proof closure below names its assignment a, so the run value takes its own name.
 	run := a.run
-	path, err := canonicalPathIn(a, resolveVerbOperand(root, parsed.Positionals[0]))
+	path, err := canonicalPathIn(a, resolveVerbOperand(run, root, parsed.Positionals[0]))
 	if err != nil {
 		fmt.Fprintln(stderr, "bench worktree reauthorize: worktree path is not canonical")
 		return 1

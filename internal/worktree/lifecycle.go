@@ -170,14 +170,14 @@ func isClean(dir string) bool {
 // all residual files before it returns. Soft reset mode falls back to HEAD when
 // resetRef does not resolve; all other reset failures leave the acquisition failed.
 func Acquire(root, resetRef, resetMode string) (string, error) {
-	return acquireAt(defaultJoins(), root, resetRef, resetMode, Home(), currentTime())
+	return acquireAt(defaultJoins(), new(git.Run), root, resetRef, resetMode, Home(), currentTime())
 }
 
 // acquireAt claims a clean pool entry or mints one in three bounded attempts. It
-// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref.
-// The home and the instant are the caller's explicit boundary resolutions. A claimed
+// resets to resetRef (HEAD when empty). Soft mode tolerates an unresolved ref. The run,
+// the home, and the instant are the caller's explicit boundary resolutions. A claimed
 // entry with an unresolved user goes back to the pool unreset.
-func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (string, error) {
+func acquireAt(j joins, run *git.Run, root, resetRef, resetMode, home string, now time.Time) (string, error) {
 	pool := poolAt(home, root)
 	if err := preparePoolRoot(j, pool); err != nil {
 		return "", err
@@ -189,11 +189,11 @@ func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (
 		if !isWorktree(d) || !isClean(d) {
 			continue
 		}
-		lease, err := LeaseFile(d)
+		lease, err := leaseFileIn(run, d)
 		if err != nil || !claimAt(j, lease, now, staleLease) {
 			continue
 		}
-		if checkoutUnprotected(new(git.Run), d) != nil {
+		if checkoutUnprotected(run, d) != nil {
 			os.Remove(lease)
 			continue
 		}
@@ -208,7 +208,7 @@ func acquireAt(j joins, root, resetRef, resetMode, home string, now time.Time) (
 		if !worktreeAdd(root, cand, remote) && (remote == "" || !worktreeAdd(root, cand, "")) {
 			break
 		}
-		lease, err := LeaseFile(cand)
+		lease, err := leaseFileIn(run, cand)
 		if err != nil {
 			continue
 		}
@@ -251,15 +251,15 @@ func worktreeAdd(root, cand, ref string) bool {
 // user of the checkout remains unresolved; after lease removal, callers must assume that a
 // concurrent Acquire owns the checkout.
 func Release(wt string) {
-	releaseWith(defaultJoins(), wt)
+	releaseWith(defaultJoins(), new(git.Run), wt)
 }
 
-// releaseWith is Release with the seam set resolved explicitly at the caller's boundary.
-func releaseWith(j joins, wt string) {
+// releaseWith is Release with the seam set and the run resolved at the caller's boundary.
+func releaseWith(j joins, run *git.Run, wt string) {
 	if wt == "" {
 		return
 	}
-	lease, err := LeaseFile(wt)
+	lease, err := leaseFileIn(run, wt)
 	if err != nil {
 		return
 	}
@@ -269,7 +269,7 @@ func releaseWith(j joins, wt string) {
 			return
 		}
 	}
-	if checkoutUnprotected(new(git.Run), wt) != nil {
+	if checkoutUnprotected(run, wt) != nil {
 		return
 	}
 	j.restoreClean(wt)
@@ -317,8 +317,8 @@ func lockCleanupFile(j joins, file *os.File, target string) (func(), error) {
 	}
 	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
 }
-func lockCleanupRegistration(j joins, repo, target string) (func(), error) {
-	admin, err := git.AdminDir(target)
+func lockCleanupRegistration(j joins, run *git.Run, repo, target string) (func(), error) {
+	admin, err := run.AdminDir(target)
 	var file *os.File
 	if err == nil {
 		file, err = os.Open(admin)
@@ -345,7 +345,7 @@ func lockCleanupPersistence(j joins, repo, target string) (func(), error) {
 // a landed branch the plan names go, and the bytes at the leftover path stay. It never
 // reaches the removal steps below. `git worktree remove` deletes the tree it is pointed at,
 // which is the one thing this plan exists to avoid.
-func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+func releaseLeftover(run *git.Run, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	assignment := *plan.assignment
 	if len(assignment.Recovery) > 0 {
 		if len(assignment.Recovery) != 1 {
@@ -364,7 +364,7 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 	if err := checkpoint(intent.ReceiptPhaseRemoving); err != nil {
 		return plan, err
 	}
-	if err := releaseRegistration(root, plan.leftover); err != nil {
+	if err := releaseRegistration(run, root, plan.leftover); err != nil {
 		return plan, err
 	}
 	if err := checkpoint(intent.ReceiptPhaseRemoved); err != nil {
@@ -396,8 +396,8 @@ func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) erro
 // abandon answers for one target, so a stranger's stale entry is never swept along with
 // it. Only a target with no git metadata entry reaches here, so its administration
 // directory is dangling, or Git already pruned it, the pool included, and nothing is left.
-func releaseRegistration(root, target string) error {
-	common, err := git.CommonDir(root)
+func releaseRegistration(run *git.Run, root, target string) error {
+	common, err := run.CommonDir(root)
 	if err != nil {
 		return fmt.Errorf("resolve common Git directory: %w", err)
 	}
@@ -502,7 +502,7 @@ func handoffDocumentPath(root string) string {
 // user keeps the checkout.
 func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
 	if plan.Action == actionReleaseLeftover {
-		return releaseLeftover(root, plan, checkpoint, fault)
+		return releaseLeftover(a.run, root, plan, checkpoint, fault)
 	}
 	if err := checkoutUnprotected(a.run, plan.Target); err != nil {
 		return plan, err
@@ -534,7 +534,7 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 			if err := intent.PutAssignment(root, assignment); err != nil {
 				return plan, err
 			}
-		} else if assignment, err = recoverAssignmentWithFault(root, a.environ, assignment, fault); err != nil {
+		} else if assignment, err = recoverAssignmentWithFault(a.run, root, a.environ, assignment, fault); err != nil {
 			return plan, err
 		}
 		recovered = &assignment
@@ -563,7 +563,7 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 			return plan, fmt.Errorf("unlock exact assignment: %s", strings.TrimSpace(string(out)))
 		}
 		if err := hit(fault, StepUnlock); err != nil {
-			return plan, errors.Join(err, relock(root, *plan.assignment, fault))
+			return plan, errors.Join(err, relock(a.run, root, *plan.assignment, fault))
 		}
 	}
 	force := plan.Tracked != "clean" || plan.Action == ActionDiscardRemove || plan.registration.Detached
@@ -574,14 +574,14 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 	removeArgs = append(removeArgs, plan.Target)
 	if err := hit(fault, StepRemovalAttempt); err != nil {
 		if plan.owned {
-			err = errors.Join(err, relock(root, *plan.assignment, fault))
+			err = errors.Join(err, relock(a.run, root, *plan.assignment, fault))
 		}
 		return plan, err
 	}
 	if interruptContext.Err() != nil {
 		interrupted := error(ErrCleanupInterrupted)
 		if plan.owned {
-			interrupted = errors.Join(interrupted, relock(root, *plan.assignment, fault))
+			interrupted = errors.Join(interrupted, relock(a.run, root, *plan.assignment, fault))
 		}
 		return plan, interrupted
 	}
@@ -589,13 +589,13 @@ func retireCheckout(j joins, a ambient, root string, plan CleanupPlan, checkpoin
 		if interruptContext.Err() != nil {
 			interrupted := error(ErrCleanupInterrupted)
 			if plan.owned {
-				interrupted = errors.Join(interrupted, relock(root, *plan.assignment, fault))
+				interrupted = errors.Join(interrupted, relock(a.run, root, *plan.assignment, fault))
 			}
 			return plan, interrupted
 		}
 		removeErr := fmt.Errorf("remove exact worktree: %s", strings.TrimSpace(string(out)))
 		if plan.owned {
-			removeErr = errors.Join(removeErr, relock(root, *plan.assignment, fault))
+			removeErr = errors.Join(removeErr, relock(a.run, root, *plan.assignment, fault))
 		}
 		return plan, removeErr
 	}

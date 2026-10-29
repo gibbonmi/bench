@@ -128,7 +128,7 @@ func TestResumeLandCommandPublicBindsPublishedLandingIdentity(t *testing.T) {
 	if code, stdout, stderr := land("--resume", published, "--request", request, "--base", f.base, "--source-tip", f.tip, "--spec", "x", f.creation.Path); code != 0 || !strings.Contains(stdout, "worktree=released,census=0}") || stderr != "" {
 		t.Fatalf("active resume = (%d, %q, %q)", code, stdout, stderr)
 	}
-	repo, _, err := cleanupIdentity(f.root, f.creation.Path)
+	repo, _, err := cleanupIdentity(nil, f.root, f.creation.Path)
 	if err != nil {
 		t.Fatal(err)
 	}

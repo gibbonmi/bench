@@ -31,7 +31,7 @@ type indexEntry struct {
 
 // recoverAssignmentWithFault writes every Git-visible layer through temporary indexes. It
 // never points HEAD elsewhere and never opens the real index for writing.
-func recoverAssignmentWithFault(root string, environ []string, assignment intent.Assignment, fault Fault) (intent.Assignment, error) {
+func recoverAssignmentWithFault(run *git.Run, root string, environ []string, assignment intent.Assignment, fault Fault) (intent.Assignment, error) {
 	if len(assignment.Recovery) > 0 {
 		if len(assignment.Recovery) != 1 {
 			return assignment, errors.New("existing recovery metadata is ambiguous")
@@ -41,7 +41,7 @@ func recoverAssignmentWithFault(root string, environ []string, assignment intent
 		}
 		return assignment, nil
 	}
-	rootOID, payloads, err := captureLayers(root, environ, assignment.Worktree, false, "")
+	rootOID, payloads, err := captureLayers(run, root, environ, assignment.Worktree, false, "")
 	if err != nil {
 		return assignment, err
 	}
@@ -123,8 +123,8 @@ func worktreeTree(path, admin string) (string, error) {
 	}
 	return indexInput(path, index, nil, "write-tree")
 }
-func realIndexTree(path, admin string) (string, error) {
-	realIndex, err := git.AdminPath(path, "index")
+func realIndexTree(run *git.Run, path, admin string) (string, error) {
+	realIndex, err := run.AdminPath(path, "index")
 	if err != nil {
 		return "", err
 	}

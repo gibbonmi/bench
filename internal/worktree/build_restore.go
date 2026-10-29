@@ -11,6 +11,7 @@ import (
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/refusalroute"
@@ -28,7 +29,7 @@ import (
 // does not exist leaves no copy, so the table then names none.
 func restoreAttributed(j joins, a ambient, root, slug string, stdout, stderr io.Writer) int {
 	rerun := usage.WorktreeBuildRestoreFor(refusalroute.Arg(refusalroute.FactSlug, slug))
-	primary, paths, err := restoreAuthority(root, spec.LiveSpecPath(slug), rerun)
+	primary, paths, err := restoreAuthority(a.run, root, spec.LiveSpecPath(slug), rerun)
 	if err != nil {
 		return printTargetRefusal(stderr, buildVerb, err)
 	}
@@ -68,7 +69,7 @@ func restoreAttributed(j joins, a ambient, root, slug string, stdout, stderr io.
 // The strict read comes before the open-build test, which reads the ledger too and would
 // print a decode error with no route. It answers the primary checkout and the declared
 // intent-ledger paths.
-func restoreAuthority(root, deliverable, rerun string) (string, [][]string, error) {
+func restoreAuthority(run *git.Run, root, deliverable, rerun string) (string, [][]string, error) {
 	primary, err := primaryWithInputs(root)
 	if err != nil {
 		return "", nil, err
@@ -85,7 +86,7 @@ func restoreAuthority(root, deliverable, rerun string) (string, [][]string, erro
 		// The strict read of this executable refuses the ledger. A field that only the
 		// candidate knows is one cause, so the route installs the candidate and then reruns
 		// the restore.
-		values := map[string]string{refusalroute.FactTarget: restoreTarget(primary, deliverable), refusalroute.FactRerun: rerun}
+		values := map[string]string{refusalroute.FactTarget: restoreTarget(run, primary, deliverable), refusalroute.FactRerun: rerun}
 		next := refusalroute.New(refusalroute.CandidateNotInstalled, refusalroute.Facts{Values: values}).Route
 		return "", nil, refusalError{refusal{detail: "this executable cannot read the intent ledger: " + err.Error(), next: next}}
 	}
@@ -111,7 +112,7 @@ func restoreAuthority(root, deliverable, rerun string) (string, [][]string, erro
 // restoreTarget is the install target of the stopped build of deliverable: the label of the
 // first bound assignment that the tolerant read finds with its tree, or empty when that lookup
 // fails, so the route prints the target slot.
-func restoreTarget(root, deliverable string) string {
+func restoreTarget(run *git.Run, root, deliverable string) string {
 	ledger, err := intent.ReadTolerant(root)
 	if err != nil || ledger.Commitment == nil {
 		return ""
@@ -120,7 +121,7 @@ func restoreTarget(root, deliverable string) string {
 		if binding.Deliverable != deliverable {
 			continue
 		}
-		if assignment, err := resolveAmong(root, ledger.Assignments, binding.Assignment, landingActiveState); err == nil {
+		if assignment, err := resolveAmong(run, root, ledger.Assignments, binding.Assignment, landingActiveState); err == nil {
 			return assignment.Label
 		}
 	}

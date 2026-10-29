@@ -51,7 +51,7 @@ func TestLandRetainsSiblingBornAtPublishedTip(t *testing.T) {
 			if got := gitOutput(t, f.root, "rev-parse", sibling.Assignment.Branch); got != sibling.Assignment.Start {
 				t.Fatalf("new sibling tip = %q, want its start %q", got, sibling.Assignment.Start)
 			}
-			row, selected := selectLandedCleanupRow(j, f.root, sibling.Assignment, "main", "none", CleanupOptions{}, "")
+			row, selected := selectLandedCleanupRow(j, nil, f.root, sibling.Assignment, "main", "none", CleanupOptions{}, "")
 			if !selected || !row.plan.Action.Removes() {
 				t.Fatalf("explicit cleanup changed: selected=%t, plan=%#v", selected, row.plan)
 			}
@@ -69,7 +69,7 @@ func TestScopedCleanupRequiresProvenContribution(t *testing.T) {
 	commitInWorktree(t, root, "later.txt", "later\n", "later main commit")
 	later := gitOutput(t, root, "rev-parse", "main")
 	j := defaultJoins()
-	planned, selected := selectLandedCleanupRow(j, root, sibling.Assignment, "main", "none", CleanupOptions{}, scope)
+	planned, selected := selectLandedCleanupRow(j, nil, root, sibling.Assignment, "main", "none", CleanupOptions{}, scope)
 	if !selected || !planned.plan.Action.Removes() {
 		t.Fatalf("contributed sibling excluded: selected=%t, plan=%#v", selected, planned.plan)
 	}
@@ -82,10 +82,10 @@ func TestScopedCleanupRequiresProvenContribution(t *testing.T) {
 			assignment := sibling.Assignment
 			assignment.Start = tc.start
 			writeAssignmentLedger(t, root, assignment)
-			if _, selected := selectLandedCleanupRow(j, root, assignment, "main", "none", CleanupOptions{}, scope); selected {
+			if _, selected := selectLandedCleanupRow(j, nil, root, assignment, "main", "none", CleanupOptions{}, scope); selected {
 				t.Fatal("automatic cleanup selected unproven contribution")
 			}
-			if _, err := requalifyLandedRow(j, root, planned, CleanupOptions{}, scope); !errors.Is(err, errStaleFingerprint) {
+			if _, err := requalifyLandedRow(j, nil, root, planned, CleanupOptions{}, scope); !errors.Is(err, errStaleFingerprint) {
 				t.Fatalf("requalification = %v, want stale refusal", err)
 			}
 			requirePresent(t, sibling.Path, "unproven sibling worktree")

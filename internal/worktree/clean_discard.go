@@ -80,6 +80,7 @@ type explicitTarget struct {
 // discardCandidates is the unclaimed set the fallback selects from. It is the set the bulk
 // planner selects, planned once per selection and only when an operand needs it.
 type discardCandidates struct {
+	run     *git.Run
 	root    string
 	planned bool
 	set     unclaimedAssignmentSet
@@ -101,7 +102,7 @@ func (c *discardCandidates) resolve(target string) (explicitTarget, error) {
 	if ref, ok := discardPrefixRef(target); ok {
 		return c.byRef(ref)
 	}
-	assignment, err := resolveAssignmentIn(c.root, target, resumeActiveState)
+	assignment, err := resolveAssignmentIn(c.run, c.root, target, resumeActiveState)
 	if !errors.Is(err, errTargetUnassigned) || !intent.ValidIdentity(target) {
 		return explicitTarget{assignment: assignment}, err
 	}
@@ -131,13 +132,13 @@ func (c *discardCandidates) resolve(target string) (explicitTarget, error) {
 // byRef resolves one full branch ref. A recorded branch plans through its record. A branch
 // outside the unclaimed set refuses with the fact that keeps it out of that set.
 func (c *discardCandidates) byRef(ref string) (explicitTarget, error) {
-	assignments, err := intent.Assignments(c.root)
+	assignments, err := intent.In(c.run, c.root).Assignments()
 	if err != nil {
 		return explicitTarget{}, err
 	}
 	for _, assignment := range assignments {
 		if assignment.Branch == ref {
-			selected, err := resolveAssignmentIn(c.root, assignment.ID, resumeActiveState)
+			selected, err := resolveAssignmentIn(c.run, c.root, assignment.ID, resumeActiveState)
 			return explicitTarget{assignment: selected}, err
 		}
 	}
