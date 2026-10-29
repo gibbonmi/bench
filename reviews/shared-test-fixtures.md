@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shared-test-fixtures/spec.md",
-  "plan_digest": "sha256:b1937fdaf5392277821c129deb56670966c6c5dd95400bf063340a34f67096c3",
+  "plan_digest": "sha256:5b4a8983e799c7e785028a7d2173239eb8a005409c5672be0154d929501628b0",
   "implementation_session": "",
   "chunks": [
     {
@@ -1218,6 +1218,51 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "GF-C8",
+      "base": "8f4bb23108b5fe050c3e7fbd9dd90a07c23c46f6",
+      "tip": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+      "plan_digest": "sha256:5b4a8983e799c7e785028a7d2173239eb8a005409c5672be0154d929501628b0",
+      "source_digest": "e5e6818dae5997facd755edf1905684f6cf6a047",
+      "acceptance_rows": [
+        "GF18",
+        "GF29",
+        "GF30"
+      ],
+      "verification": [
+        {
+          "id": "t08-probe-08",
+          "performer": "claude:gf-t08-author-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e5e6818dae5997facd755edf1905684f6cf6a047",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:gf-t08-author-20261029",
+            "digest": "sha256:3b665835d13c42259e0c65da1d6e141b0d4d77b9de6dea0bbd396b744d338e25",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestWorktreeReauthorizeJourney,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,^TestWorktreeReauthorizeJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,614\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,262,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestWorktreeReauthorizeJourney,\"owner_selection_test.go:280: git [\\\"-c\\\" \\\"user.name=\\\" \\\"-c\\\" \\\"user.email=bench@example.invalid\\\" \\\"commit\\\" \\\"-qm\\\" \\\"base\\\"] = (128, \\\"Author identity unknown\\\\\\\\n\\\\\\\\n*** Please tell me who you are.\\\\\\\\n\\\\\\\\nRun\\\\\\\\n\\\\\\\\n  git config --global user.email \\\\\\\\\\\"you@example.… (468 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "64eda701bbfce69ad016a30a5890597ccd1962b5",
+          "requirement": "probe-08",
+          "command": "bench probe internal/gittest/identity.go --swap '\"bench test\"' --with '\"\"' --check system --run '^TestWorktreeReauthorizeJourney$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Empty the canonical default name. Each commit through the shared identity then fails, so the named migrated test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:gf-t08-author-20261029",
+              "digest": "sha256:3b665835d13c42259e0c65da1d6e141b0d4d77b9de6dea0bbd396b744d338e25",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gittest/identity.go,swap,failed,1,TestWorktreeReauthorizeJourney,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,^TestWorktreeReauthorizeJourney$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,614\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,262,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestWorktreeReauthorizeJourney,\"owner_selection_test.go:280: git [\\\"-c\\\" \\\"user.name=\\\" \\\"-c\\\" \\\"user.email=bench@example.invalid\\\" \\\"commit\\\" \\\"-qm\\\" \\\"base\\\"] = (128, \\\"Author identity unknown\\\\\\\\n\\\\\\\\n*** Please tell me who you are.\\\\\\\\n\\\\\\\\nRun\\\\\\\\n\\\\\\\\n  git config --global user.email \\\\\\\\\\\"you@example.… (468 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1444,6 +1489,27 @@
     {
       "from": "sha256:d8576e9f92c8e64e0cf2f9d1954f7d3461fd4629442582ebb6c8f51f0133fd54",
       "to": "sha256:b1937fdaf5392277821c129deb56670966c6c5dd95400bf063340a34f67096c3",
+      "chunk_ids": {
+        "GF-C1": [
+          "GF-C1"
+        ],
+        "GF-C2": [
+          "GF-C2"
+        ],
+        "GF-C5A": [
+          "GF-C5A"
+        ],
+        "GF-C5C": [
+          "GF-C5C"
+        ],
+        "GF-C6": [
+          "GF-C6"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b1937fdaf5392277821c129deb56670966c6c5dd95400bf063340a34f67096c3",
+      "to": "sha256:5b4a8983e799c7e785028a7d2173239eb8a005409c5672be0154d929501628b0",
       "chunk_ids": {
         "GF-C1": [
           "GF-C1"
