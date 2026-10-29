@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/git-query-cache/spec.md",
-  "plan_digest": "sha256:4b0b041def0a1f7fca413deb4c0ef0955266efab771305abdcf80acd14729c85",
+  "plan_digest": "sha256:4ec601225fe8541d67f99a75e532c48db44f72441d70f68a992597a6ec9a6b45",
   "implementation_session": "",
   "chunks": [
     {
@@ -738,9 +738,9 @@
     {
       "id": "GQ-C3",
       "base": "dad72c788f18af0a798be59e40c3ce761192ae56",
-      "tip": "0cd3a189c0866b79b0229b07c3d4d35c5cf9a805",
-      "plan_digest": "sha256:4b0b041def0a1f7fca413deb4c0ef0955266efab771305abdcf80acd14729c85",
-      "source_digest": "ad635bdd0ea2d2f1169400f15b085b2ac8517f47",
+      "tip": "56da04a3b712ce1ab198b3970733179b16d5a759",
+      "plan_digest": "sha256:4ec601225fe8541d67f99a75e532c48db44f72441d70f68a992597a6ec9a6b45",
+      "source_digest": "90089486fadfbc669ea0443fac0a53eef1d3b4ca",
       "acceptance_rows": [
         "GQ35",
         "GQ36",
@@ -809,6 +809,36 @@
               "ref": "claude-agent:bench-writer-xhigh:gq-t05-author-20261029",
               "digest": "sha256:01639f4fc8369c6aa8d99230a734fa242f7d48553e88bf35d6be8b5984dbe6fa",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/reset.go,insert,failed,1,TestRunConstructionCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestRunConstructionCensus,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,401\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,15,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRunConstructionCensus,\"effect_census_test.go:137: reset.go:143: probeFreshRun builds a run outside newAmbient and the exported functions; take the verb's run as a parameter\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t05r1-probe-05",
+          "performer": "claude:gq-t05-repair1-20261029",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "90089486fadfbc669ea0443fac0a53eef1d3b4ca",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:gq-t05-repair1-20261029",
+            "digest": "sha256:57fa860db8187da62c38856d42dd363c2e5ffdaf1cbc5e3317f7ad9cb5f3e75a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/reset.go,insert,failed,1,TestRunConstructionCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestRunConstructionCensus,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,401\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,15,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRunConstructionCensus,\"effect_census_test.go:138: reset.go:143: probeFreshRun builds a run outside newAmbient and the exported functions; take the verb's run as a parameter\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "56da04a3b712ce1ab198b3970733179b16d5a759",
+          "requirement": "probe-05",
+          "command": "bench probe internal/worktree/reset.go --insert-before 'func planReset(run *git.Run, ' --with 'func probeFreshRun() *git.Run { return &git.Run{} }; ' --package ./internal/worktree --run TestRunConstructionCensus",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Add an unexported helper that builds its own run. The census then names the helper, so the census test fails.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:gq-t05-repair1-20261029",
+              "digest": "sha256:57fa860db8187da62c38856d42dd363c2e5ffdaf1cbc5e3317f7ad9cb5f3e75a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/reset.go,insert,failed,1,TestRunConstructionCensus,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,TestRunConstructionCensus,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,401\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,15,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRunConstructionCensus,\"effect_census_test.go:138: reset.go:143: probeFreshRun builds a run outside newAmbient and the exported functions; take the verb's run as a parameter\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -969,6 +999,24 @@
     {
       "from": "sha256:c47a5bddceb490984b6fd575b1550028b3026b7e62fbc02aae8dadb8e2b362aa",
       "to": "sha256:4b0b041def0a1f7fca413deb4c0ef0955266efab771305abdcf80acd14729c85",
+      "chunk_ids": {
+        "GQ-C1": [
+          "GQ-C1"
+        ],
+        "GQ-C2A": [
+          "GQ-C2A"
+        ],
+        "GQ-C2B": [
+          "GQ-C2B"
+        ],
+        "GQ-C3": [
+          "GQ-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4b0b041def0a1f7fca413deb4c0ef0955266efab771305abdcf80acd14729c85",
+      "to": "sha256:4ec601225fe8541d67f99a75e532c48db44f72441d70f68a992597a6ec9a6b45",
       "chunk_ids": {
         "GQ-C1": [
           "GQ-C1"
