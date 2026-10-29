@@ -221,7 +221,7 @@ func FIFOWorktreeAdmin(t testing.TB, root, id string) string {
 	}
 	gitDir := filepath.Join(worktreeDir, "gitdir")
 	if err := syscall.Mkfifo(gitDir, 0o600); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	return gitDir
 }

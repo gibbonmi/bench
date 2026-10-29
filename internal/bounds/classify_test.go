@@ -193,7 +193,7 @@ func TestClassifyFIFOWithoutOpen(t *testing.T) {
 func TestClassifyNonRegular(t *testing.T) {
 	device := "/dev/null"
 	if info, err := os.Lstat(device); err != nil || info.Mode()&os.ModeDevice == 0 {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("no device node at %s", device))
+		capability.Unavailable(t, capability.Fifo, "no device node at "+device)
 	}
 	socket := requireSocket(t, filepath.Join(t.TempDir(), "control.sock"))
 	for _, path := range []string{device, socket} {
@@ -272,14 +272,14 @@ func makeDir(t *testing.T, root, name string) string {
 func requireSymlink(t *testing.T, target, link string) {
 	t.Helper()
 	if err := os.Symlink(target, link); err != nil {
-		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Symlink, err.Error())
 	}
 }
 
 func requireFifo(t *testing.T, path string) {
 	t.Helper()
 	if err := syscall.Mkfifo(path, 0o644); err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 }
 
@@ -304,7 +304,7 @@ func requireSocket(t *testing.T, path string) string {
 	t.Helper()
 	listener, err := net.Listen("unix", path)
 	if err != nil {
-		capability.Capability(t, capability.Fifo, fmt.Sprintf("unix sockets unavailable on this filesystem: %v", err))
+		capability.Unavailable(t, capability.Fifo, err.Error())
 	}
 	t.Cleanup(func() { listener.Close() })
 	return path
@@ -419,7 +419,7 @@ func TestClassifyNoFollowStates(t *testing.T) {
 			fixture: func(t *testing.T, _ string) string {
 				const device = "/dev/null"
 				if info, err := os.Lstat(device); err != nil || info.Mode()&os.ModeDevice == 0 {
-					capability.Capability(t, capability.Fifo, fmt.Sprintf("no device node at %s", device))
+					capability.Unavailable(t, capability.Fifo, "no device node at "+device)
 				}
 				return device
 			},
