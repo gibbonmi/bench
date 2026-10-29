@@ -958,3 +958,13 @@ Repair targets: 2 (R1, R2), both on ticket 05a, in one combined repair charge.
 - `internal/commit/merge_parent_test.go` (`startPendingMerge`): an expected merge conflict with a nonzero exit.
 - `internal/adopt/link_hook_test.go` (the recorder and the failing stub tests): a stub Git on the path and an expected failure.
 - `cmd/bench/wrapper_kit_test.go` (`newWrapperKitFixture`): a linked worktree that the wrapper resolution grades. The plan probe of ticket 13 plants a sibling runner beside this site.
+
+### GF-C5A repair cycle 1
+
+The ticket 05a repair session committed `b1ea40219`, a test-only repair of R1 and R2. It refroze GF-C5A at that tip.
+It also migrated four more `runAXIGit` sites in the fenced `spec_retire_listing_test.go`, so that both wrappers could leave.
+Its witness swapped the `treeRowRepo` head query for a tree query, and `TestTreeRowLeadsTreeResponse` turned red. The restore passed.
+The date pin of `treeRowRepo` is an ungraded input.
+
+The coordinator probe omitted the staging step of `newAXIEnvelopeRepo`. `TestSelectedWorktreeCommandRoutes` turned red, and the restore passed.
+The repair consumed one of the two repair cycles of GF-C5A.
