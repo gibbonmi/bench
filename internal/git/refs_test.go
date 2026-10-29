@@ -9,13 +9,14 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestResolveCommitMatchesOriginalQueries(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "topic")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "tag", "-a", "annotated", "-m", "fixture")
-	commit := strings.TrimSpace(runGit(t, root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, root, "branch", "topic")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "tag", "-a", "annotated", "-m", "fixture")...)
+	commit := gittest.Output(t, root, "rev-parse", "HEAD")
 	for _, flags := range [][]string{nil, {"--quiet"}, {"--quiet", "--end-of-options"}} {
 		for _, revision := range []string{"HEAD", "topic", commit, "annotated", "HEAD^{tree}", "HEAD:a.txt", "missing", "--help"} {
 			t.Run(fmt.Sprint(flags)+"/"+revision, func(t *testing.T) {
@@ -61,20 +62,20 @@ func TestDeleteBranchExactRefusesMovedRef(t *testing.T) {
 	t.Parallel()
 	root := newRepo(t)
 	ref := "refs/heads/topic"
-	runGit(t, root, "branch", "topic")
-	oldOID := strings.TrimSpace(runGit(t, root, "rev-parse", ref))
+	gittest.MustRun(t, root, "branch", "topic")
+	oldOID := gittest.Output(t, root, "rev-parse", ref)
 	if err := os.WriteFile(filepath.Join(root, "advanced.txt"), []byte("advanced\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "advanced.txt")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "advance")
-	newOID := strings.TrimSpace(runGit(t, root, "rev-parse", "HEAD"))
-	runGit(t, root, "update-ref", ref, newOID, oldOID)
+	gittest.MustRun(t, root, "add", "advanced.txt")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-qm", "advance")...)
+	newOID := gittest.Output(t, root, "rev-parse", "HEAD")
+	gittest.MustRun(t, root, "update-ref", ref, newOID, oldOID)
 
 	if err := DeleteBranchExact(root, ref, oldOID); err == nil {
 		t.Fatal("DeleteBranchExact accepted a stale OID")
 	}
-	if got := strings.TrimSpace(runGit(t, root, "rev-parse", ref)); got != newOID {
+	if got := gittest.Output(t, root, "rev-parse", ref); got != newOID {
 		t.Fatalf("moved ref = %q, want retained %q", got, newOID)
 	}
 }
@@ -83,11 +84,11 @@ func TestBranchDeletionPreservesSymbolicRefTarget(t *testing.T) {
 	for _, prune := range []bool{false, true} {
 		t.Run(fmt.Sprintf("prune=%t", prune), func(t *testing.T) {
 			root := newRepo(t)
-			runGit(t, root, "branch", "-M", "main")
+			gittest.MustRun(t, root, "branch", "-M", "main")
 			ref := "refs/heads/landed-alias"
 			target := "refs/heads/main"
-			oid := strings.TrimSpace(runGit(t, root, "rev-parse", target))
-			runGit(t, root, "symbolic-ref", ref, target)
+			oid := gittest.Output(t, root, "rev-parse", target)
+			gittest.MustRun(t, root, "symbolic-ref", ref, target)
 			if prune {
 				count, err := PruneLandedBranches(root, nil)
 				if err != nil || count != 1 {
@@ -111,7 +112,7 @@ func TestBranchDeletionPreservesSymbolicRefTarget(t *testing.T) {
 // into a fixture repo and restores.
 func TestRefResolvesAndBranchExists(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "known-branch")
+	gittest.MustRun(t, root, "branch", "known-branch")
 	old, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -140,7 +141,7 @@ func TestRefResolvesAndBranchExists(t *testing.T) {
 // the only evidence of its default.
 func TestResolvedDefaultSoleMaster(t *testing.T) {
 	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "master")
+	gittest.MustRun(t, root, "branch", "-M", "master")
 
 	def, ok := ResolvedDefault(root)
 
@@ -155,7 +156,7 @@ func TestResolvedDefaultSoleMaster(t *testing.T) {
 // state.
 func TestResolvedDefaultNoLocalBranches(t *testing.T) {
 	root := t.TempDir()
-	runGit(t, root, "init")
+	gittest.MustRun(t, root, "init")
 
 	def, ok := ResolvedDefault(root)
 

@@ -14,20 +14,20 @@ import (
 )
 
 // independentRevParse runs an independent `git rev-parse` for comparison against a
-// reader's answer. It reuses runGit, the package's one exec.Command site, and
-// fails the test on a nonzero exit.
+// reader's answer. It reads the untrimmed stdout through the shared gittest helper,
+// and it fails the test on a nonzero exit.
 func independentRevParse(t *testing.T, root string, args ...string) string {
 	t.Helper()
-	return strings.TrimRight(runGit(t, root, append([]string{"rev-parse"}, args...)...), "\n")
+	return strings.TrimRight(string(gittest.OutputBytes(t, root, append([]string{"rev-parse"}, args...)...)), "\n")
 }
 
-// bareRepo initializes a bare repository and returns its root. It reuses runGit
-// rather than a second repository constructor, because the ordinary-build census
-// allows the package exactly one.
+// bareRepo initializes a bare repository and returns its root. It composes the shared
+// gittest runner rather than adding a repository constructor, which the ordinary-build
+// census limits.
 func bareRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	runGit(t, root, "init", "-q", "--bare")
+	gittest.MustRun(t, root, "init", "-q", "--bare")
 	return root
 }
 
@@ -35,7 +35,7 @@ func bareRepo(t *testing.T) string {
 func linkedWorktree(t *testing.T, root string) string {
 	t.Helper()
 	linked := filepath.Join(t.TempDir(), "linked")
-	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	return linked
 }
 
@@ -246,7 +246,7 @@ func TestAdminPathKeepsSymlinkPath(t *testing.T) {
 func TestRelativeGitPathStubPassesThroughToRealGit(t *testing.T) {
 	root := newRepo(t)
 	gittest.StubGit(t, root, "relative-git-path", filepath.Join(t.TempDir(), "argv"))
-	got := strings.TrimRight(runGit(t, root, "rev-parse", "--show-toplevel"), "\n")
+	got := strings.TrimRight(string(gittest.OutputBytes(t, root, "rev-parse", "--show-toplevel")), "\n")
 	want, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		t.Fatal(err)

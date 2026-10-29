@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestCommandCoherentSnapshotIncludesAllFilesFacts(t *testing.T) {
@@ -15,7 +17,7 @@ func TestCommandCoherentSnapshotIncludesAllFilesFacts(t *testing.T) {
 	}
 	mustWriteFile(t, "nested/new/untracked.txt", "untracked\n")
 	mustWriteFile(t, "f.txt", "worktree change \n")
-	runGit(t, "add", "f.txt")
+	gittest.MustRun(t, "", "add", "f.txt")
 	mustWriteFile(t, "f.txt", "worktree change \nsecond \n")
 
 	out, code := Command(nil)

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestPreMigrationResponsesDifferOnlyByNamedAXIDelta(t *testing.T) {
@@ -50,13 +52,10 @@ func TestPreMigrationResponsesDifferOnlyByNamedAXIDelta(t *testing.T) {
 	}
 
 	t.Run("preserved live resolution errors", func(t *testing.T) {
-		noDefault := t.TempDir()
+		noDefault := gittest.RepoOnBranch(t, "trunk")
 		t.Chdir(noDefault)
-		runGit(t, "init", "-q", "-b", "trunk")
-		runGit(t, "config", "user.email", "t@example.com")
-		runGit(t, "config", "user.name", "t")
 		commitFile(t, "f.txt", "0", "c0")
-		runGit(t, "checkout", "-q", "-b", "other")
+		gittest.MustRun(t, "", "checkout", "-q", "-b", "other")
 		commitFile(t, "f.txt", "1", "c1")
 		out, code := Command(nil)
 		want := "error: cannot resolve a review base — this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>\n"
@@ -64,14 +63,11 @@ func TestPreMigrationResponsesDifferOnlyByNamedAXIDelta(t *testing.T) {
 			t.Fatalf("unresolvable default = (%d,%q), want (%d,%q)", code, out, 1, want)
 		}
 
-		noBase := t.TempDir()
+		noBase := gittest.RepoOnBranch(t, "main")
 		t.Chdir(noBase)
-		runGit(t, "init", "-q", "-b", "main")
-		runGit(t, "config", "user.email", "t@example.com")
-		runGit(t, "config", "user.name", "t")
 		commitFile(t, "f.txt", "0", "main")
-		runGit(t, "checkout", "-q", "--orphan", "feature")
-		runGit(t, "rm", "-q", "-r", "--cached", ".")
+		gittest.MustRun(t, "", "checkout", "-q", "--orphan", "feature")
+		gittest.MustRun(t, "", "rm", "-q", "-r", "--cached", ".")
 		commitFile(t, "g.txt", "1", "feature")
 		out, code = Command(nil)
 		want = "error: cannot resolve a review base — no merge-base with 'main'; record one with: git config branch.<name>.benchBase <sha>\n"
@@ -87,7 +83,7 @@ func TestPreMigrationResponsesDifferOnlyByNamedAXIDelta(t *testing.T) {
 		if code != 1 || !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
 			t.Fatalf("hostile path = (%d,%q)", code, out)
 		}
-		runGit(t, "commit", "--allow-empty", "-m", "subject \033 control")
+		gittest.MustRun(t, "", "commit", "--allow-empty", "-m", "subject \033 control")
 		out, code = runProductionDiff(t, root, "--full")
 		if code != 1 || !strings.HasPrefix(out, "error: unrepresentable TOON cell — ") {
 			t.Fatalf("hostile subject = (%d,%q)", code, out)
@@ -125,27 +121,27 @@ func seedCompatibilityRepo(t *testing.T) (root, base, feature string) {
 	t.Helper()
 	root = t.TempDir()
 	t.Chdir(root)
-	runGit(t, "init", "-q", "-b", "main")
-	runGit(t, "config", "user.email", "fixture@example.com")
-	runGit(t, "config", "user.name", "Fixture")
-	runGit(t, "config", "core.autocrlf", "false")
+	gittest.MustRun(t, "", "init", "-q", "-b", "main")
+	gittest.MustRun(t, "", "config", "user.email", "fixture@example.com")
+	gittest.MustRun(t, "", "config", "user.name", "Fixture")
+	gittest.MustRun(t, "", "config", "core.autocrlf", "false")
 	mustWriteFile(t, "tracked.txt", "base line\n")
 	mustWriteFile(t, "delete.txt", "delete me\n")
-	runGit(t, "add", "tracked.txt", "delete.txt")
+	gittest.MustRun(t, "", "add", "tracked.txt", "delete.txt")
 	runGitEnv(t, root, []string{"GIT_AUTHOR_DATE=2001-01-01T00:00:00Z", "GIT_COMMITTER_DATE=2001-01-01T00:00:00Z"}, "commit", "-q", "-m", "base")
-	base = runGit(t, "rev-parse", "HEAD")
-	runGit(t, "switch", "-q", "-c", "feature")
+	base = gittest.Output(t, "", "rev-parse", "HEAD")
+	gittest.MustRun(t, "", "switch", "-q", "-c", "feature")
 	mustWriteFile(t, "tracked.txt", "base line\ncommitted line\n")
 	mustWriteFile(t, "committed.txt", "committed file\n")
-	runGit(t, "add", "tracked.txt", "committed.txt")
+	gittest.MustRun(t, "", "add", "tracked.txt", "committed.txt")
 	runGitEnv(t, root, []string{"GIT_AUTHOR_DATE=2001-01-02T00:00:00Z", "GIT_COMMITTER_DATE=2001-01-02T00:00:00Z"}, "commit", "-q", "-m", "feature commit")
-	feature = runGit(t, "rev-parse", "HEAD")
+	feature = gittest.Output(t, "", "rev-parse", "HEAD")
 	if base != "06d53f18d44494ead344d1f720fdb978128684a7" || feature != "f590a43d52b3b03f6d897375ee8f530f48efb596" {
 		t.Fatalf("compatibility fixture identity drifted: base=%s feature=%s", base, feature)
 	}
-	runGit(t, "config", "branch.feature.benchBase", base)
+	gittest.MustRun(t, "", "config", "branch.feature.benchBase", base)
 	mustWriteFile(t, "tracked.txt", "base line\ncommitted line\nstaged line\n")
-	runGit(t, "add", "tracked.txt")
+	gittest.MustRun(t, "", "add", "tracked.txt")
 	mustWriteFile(t, "tracked.txt", "base line\ncommitted line\nstaged line\nunstaged line\n")
 	mustWriteFile(t, "untracked.txt", "new bytes\n")
 	return root, base, feature

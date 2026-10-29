@@ -112,8 +112,8 @@ func TestRunReadsRefsLive(t *testing.T) {
 		t.Fatalf("ResolvedDefault(%s) found no default branch", root)
 	}
 	ref := "refs/heads/" + def
-	old := strings.TrimSpace(runGit(t, root, "rev-parse", ref))
-	next := strings.TrimSpace(runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", "-p", old, "-m", "next", old+"^{tree}"))
+	old := gittest.Output(t, root, "rev-parse", ref)
+	next := gittest.Output(t, root, append(gittest.IdentityArgs(), "commit-tree", "-p", old, "-m", "next", old+"^{tree}")...)
 	_, logPath := loggedStub(t, root, "fail-git-path")
 	run := new(Run)
 	readInRun := func(want string) {
@@ -136,7 +136,7 @@ func TestRunReadsRefsLive(t *testing.T) {
 		}
 	}
 	readInRun(old)
-	runGit(t, root, "update-ref", ref, next, old)
+	gittest.MustRun(t, root, "update-ref", ref, next, old)
 	readInRun(next)
 	if got := gittest.StubGitStarts(t, logPath, "--git-common-dir"); got != 1 {
 		t.Fatalf("common-directory starts = %d, want 1 inside the run", got)

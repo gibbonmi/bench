@@ -179,7 +179,7 @@ func TestWorktreesRefusesSymlinkedAdminRootBeforePorcelain(t *testing.T) {
 func TestWorktreesRefusesSharedAdminFromHostileLinkedRoot(t *testing.T) {
 	root := newRepo(t)
 	linked := filepath.Join(t.TempDir(), "linked root [*];$(nope)")
-	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	common, err := CommonDir(root)
 	if err != nil {
 		t.Fatal(err)

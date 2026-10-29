@@ -23,7 +23,7 @@ func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) 
 		{
 			name: "HEAD", dimension: "HEAD",
 			prepare: func(t *testing.T, _, _, _ string) func(int) {
-				return func(int) { runGit(t, "commit", "-q", "--allow-empty", "-m", "move HEAD") }
+				return func(int) { gittest.Commit(t, "", "move HEAD", "--allow-empty") }
 			},
 		},
 		{
@@ -31,9 +31,9 @@ func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) 
 			prepare: func(t *testing.T, _, c1, c3 string) func(int) {
 				return func(call int) {
 					if call%2 == 1 {
-						runGit(t, "update-ref", "refs/heads/main", c1)
+						gittest.MustRun(t, "", "update-ref", "refs/heads/main", c1)
 					} else {
-						runGit(t, "update-ref", "refs/heads/main", c3)
+						gittest.MustRun(t, "", "update-ref", "refs/heads/main", c3)
 					}
 				}
 			},
@@ -41,12 +41,12 @@ func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) 
 		{
 			name: "recorded base", dimension: "recorded base",
 			prepare: func(t *testing.T, c0, c1, _ string) func(int) {
-				runGit(t, "config", "branch.feature.benchBase", c0)
+				gittest.MustRun(t, "", "config", "branch.feature.benchBase", c0)
 				return func(call int) {
 					if call%2 == 1 {
-						runGit(t, "config", "branch.feature.benchBase", c1)
+						gittest.MustRun(t, "", "config", "branch.feature.benchBase", c1)
 					} else {
-						runGit(t, "config", "branch.feature.benchBase", c0)
+						gittest.MustRun(t, "", "config", "branch.feature.benchBase", c0)
 					}
 				}
 			},
@@ -55,13 +55,13 @@ func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) 
 			name: "raw index", dimension: "index",
 			prepare: func(t *testing.T, _, _, _ string) func(int) {
 				mustWriteFile(t, "index.txt", "index\n")
-				runGit(t, "add", "index.txt")
+				gittest.MustRun(t, "", "add", "index.txt")
 				return func(call int) {
 					flag := "+x"
 					if call%2 == 0 {
 						flag = "-x"
 					}
-					runGit(t, "update-index", "--chmod="+flag, "index.txt")
+					gittest.MustRun(t, "", "update-index", "--chmod="+flag, "index.txt")
 				}
 			},
 		},
@@ -150,35 +150,32 @@ func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) 
 
 	t.Run("dirty gitlink HEAD", func(t *testing.T) {
 		_, _, _, _ = seedDivergedRepo(t)
-		subject := t.TempDir()
-		runGitAt(t, subject, "init", "-q", "-b", "main")
-		runGitAt(t, subject, "config", "user.email", "t@example.com")
-		runGitAt(t, subject, "config", "user.name", "t")
+		subject := gittest.RepoOnBranch(t, "main")
 		mustWriteFileAt(t, subject, "sub.txt", "zero\n")
-		runGitAt(t, subject, "add", "sub.txt")
-		runGitAt(t, subject, "commit", "-q", "-m", "sub zero")
-		zero := runGitAt(t, subject, "rev-parse", "HEAD")
+		gittest.MustRun(t, subject, "add", "sub.txt")
+		gittest.Commit(t, subject, "sub zero")
+		zero := gittest.Output(t, subject, "rev-parse", "HEAD")
 		mustWriteFileAt(t, subject, "sub.txt", "one\n")
-		runGitAt(t, subject, "commit", "-qam", "sub one")
-		one := runGitAt(t, subject, "rev-parse", "HEAD")
+		gittest.MustRun(t, subject, "commit", "-qam", "sub one")
+		one := gittest.Output(t, subject, "rev-parse", "HEAD")
 		mustWriteFileAt(t, subject, "sub.txt", "two\n")
-		runGitAt(t, subject, "commit", "-qam", "sub two")
-		runGit(t, "-c", "protocol.file.allow=always", "submodule", "add", "-q", subject, "sub")
-		runGit(t, "commit", "-q", "-m", "add submodule")
-		runGitAt(t, "sub", "checkout", "-q", zero)
+		gittest.MustRun(t, subject, "commit", "-qam", "sub two")
+		gittest.MustRun(t, "", "-c", "protocol.file.allow=always", "submodule", "add", "-q", subject, "sub")
+		gittest.Commit(t, "", "add submodule")
+		gittest.MustRun(t, "sub", "checkout", "-q", zero)
 		assertRepeatedDrift(t, "dirty gitlink HEAD", func(call int) {
 			target := one
 			if call%2 == 0 {
 				target = zero
 			}
-			runGitAt(t, "sub", "checkout", "-q", target)
+			gittest.MustRun(t, "sub", "checkout", "-q", target)
 		})
 	})
 }
 
 func TestCommandResolvesRecordedBaseOncePerAttempt(t *testing.T) {
 	root, c0, _, _ := seedDivergedRepo(t)
-	runGit(t, "config", "branch.feature.benchBase", c0)
+	gittest.MustRun(t, "", "config", "branch.feature.benchBase", c0)
 	mustWriteFile(t, "f.txt", "dirty\n")
 	realGit, err := exec.LookPath("git")
 	if err != nil {
@@ -250,16 +247,6 @@ func assertRepeatedDrift(t *testing.T, dimension string, mutate func(int)) {
 			t.Errorf("drift response leaked a partial snapshot block %q:\n%s", forbidden, out)
 		}
 	}
-}
-
-func runGitAt(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git -C %s %v: %v\n%s", root, args, err, out)
-	}
-	return strings.TrimSpace(string(out))
 }
 
 func mustWriteFileAt(t *testing.T, root, path, body string) {

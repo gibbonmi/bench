@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 // noteWorktree adds a linked worktree of an existing repo and returns its resolved
@@ -11,7 +13,7 @@ import (
 func noteWorktree(t *testing.T, primary string) string {
 	t.Helper()
 	linked := filepath.Join(t.TempDir(), "linked")
-	runGit(t, primary, "worktree", "add", "-q", "-b", "topic", linked)
+	gittest.MustRun(t, primary, "worktree", "add", "-q", "-b", "topic", linked)
 	out, err := Output("-C", linked, "rev-parse", "--show-toplevel")
 	if err != nil {
 		t.Fatalf("rev-parse: %v", err)

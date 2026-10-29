@@ -159,7 +159,7 @@ func assertBenignAdminShape(t *testing.T, state string) {
 	switch state {
 	case "prunable":
 		linked := filepath.Join(t.TempDir(), "linked")
-		runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+		gittest.MustRun(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 		if err := os.RemoveAll(linked); err != nil {
 			t.Fatal(err)
 		}

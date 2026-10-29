@@ -21,9 +21,9 @@ type objectRepo struct {
 func newObjectRepo(t *testing.T) objectRepo {
 	t.Helper()
 	root := newRepo(t)
-	rev := func(name string) string { return strings.TrimSpace(runGit(t, root, "rev-parse", name)) }
+	rev := func(name string) string { return gittest.Output(t, root, "rev-parse", name) }
 	commit := rev("HEAD")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "--allow-empty", "-m", "second")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-q", "--allow-empty", "-m", "second")...)
 	return objectRepo{root: root, commit: commit, second: rev("HEAD"), tree: rev(commit + "^{tree}"), blob: rev(commit + ":a.txt")}
 }
 
@@ -134,7 +134,7 @@ func TestRunObjectReadsStayLive(t *testing.T) {
 	if !ok {
 		t.Fatalf("ResolvedDefault(%s) found no default branch", f.root)
 	}
-	runGit(t, f.root, "branch", "side", f.commit)
+	gittest.MustRun(t, f.root, "branch", "side", f.commit)
 	_, logPath := loggedStub(t, f.root, "log")
 	run := new(Run)
 	for range 2 {
@@ -172,9 +172,9 @@ func TestRunObjectReadsStayLive(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(f.root, "a.txt"), []byte("next\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, f.root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-am", "next")
-	runGit(t, f.root, "update-ref", "refs/heads/side", f.second)
-	head := strings.TrimSpace(runGit(t, f.root, "rev-parse", "HEAD"))
+	gittest.MustRun(t, f.root, append(gittest.IdentityArgs(), "commit", "-q", "-am", "next")...)
+	gittest.MustRun(t, f.root, "update-ref", "refs/heads/side", f.second)
+	head := gittest.Output(t, f.root, "rev-parse", "HEAD")
 	nextTree, err := listing(ListTree(f.root, head))
 	if err != nil {
 		t.Fatal(err)

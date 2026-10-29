@@ -27,7 +27,7 @@ func TestCheckedOutName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			root := newTopicRepo(t)
 			if tt.detach {
-				runGit(t, root, "checkout", "--detach", "HEAD")
+				gittest.MustRun(t, root, "checkout", "--detach", "HEAD")
 			}
 			got, ok := CheckedOutName(root)
 			if got != tt.wantName || ok != tt.wantOK {
@@ -45,7 +45,7 @@ func TestBarePushDestinationCheckedOutModes(t *testing.T) {
 		t.Run("mode="+mode, func(t *testing.T) {
 			root := newTopicRepo(t)
 			if mode != "" {
-				runGit(t, root, "config", "push.default", mode)
+				gittest.MustRun(t, root, "config", "push.default", mode)
 			}
 			got, ok := BarePushDestination(root)
 			if !ok || got != "topic" {
@@ -62,7 +62,7 @@ func TestBarePushDestinationUpstreamModes(t *testing.T) {
 	for _, mode := range []string{"upstream", "tracking"} {
 		t.Run("mode="+mode, func(t *testing.T) {
 			root := newTopicRepo(t)
-			runGit(t, root, "config", "push.default", mode)
+			gittest.MustRun(t, root, "config", "push.default", mode)
 			got, ok := BarePushDestination(root)
 			if !ok || got != "main" {
 				t.Fatalf("BarePushDestination = (%q, %v), want (\"main\", true)", got, ok)
@@ -83,7 +83,7 @@ func TestBarePushDestinationNoDestination(t *testing.T) {
 			name: "matching",
 			setup: func(t *testing.T) string {
 				root := newTopicRepo(t)
-				runGit(t, root, "config", "push.default", "matching")
+				gittest.MustRun(t, root, "config", "push.default", "matching")
 				return root
 			},
 		},
@@ -91,7 +91,7 @@ func TestBarePushDestinationNoDestination(t *testing.T) {
 			name: "nothing",
 			setup: func(t *testing.T) string {
 				root := newTopicRepo(t)
-				runGit(t, root, "config", "push.default", "nothing")
+				gittest.MustRun(t, root, "config", "push.default", "nothing")
 				return root
 			},
 		},
@@ -99,7 +99,7 @@ func TestBarePushDestinationNoDestination(t *testing.T) {
 			name: "detached HEAD",
 			setup: func(t *testing.T) string {
 				root := newTopicRepo(t)
-				runGit(t, root, "checkout", "--detach", "HEAD")
+				gittest.MustRun(t, root, "checkout", "--detach", "HEAD")
 				return root
 			},
 		},
@@ -107,7 +107,7 @@ func TestBarePushDestinationNoDestination(t *testing.T) {
 			name: "upstream mode with no upstream",
 			setup: func(t *testing.T) string {
 				root := newRepo(t)
-				runGit(t, root, "config", "push.default", "upstream")
+				gittest.MustRun(t, root, "config", "push.default", "upstream")
 				return root
 			},
 		},

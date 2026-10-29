@@ -12,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func TestProductionCommandRawGitMatrix(t *testing.T) {
@@ -37,7 +39,7 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 	}{
 		{name: "staged", mutate: func(t *testing.T, _ string) {
 			mustWriteFile(t, "f.txt", "staged\n")
-			runGit(t, "add", "f.txt")
+			gittest.MustRun(t, "", "add", "f.txt")
 		}},
 		{name: "unstaged", mutate: func(t *testing.T, _ string) { mustWriteFile(t, "f.txt", "unstaged\n") }},
 		{name: "untracked", mutate: func(t *testing.T, _ string) { mustWriteFile(t, "new.txt", "new\n") }},
@@ -48,7 +50,7 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 			mustWriteFile(t, "new/deep/file.txt", "nested\n")
 		}},
 		{name: "rename", mutate: func(t *testing.T, _ string) {
-			runGit(t, "mv", "f.txt", "renamed.txt")
+			gittest.MustRun(t, "", "mv", "f.txt", "renamed.txt")
 		}},
 		{name: "deletion", mutate: func(t *testing.T, _ string) {
 			if err := os.Remove("f.txt"); err != nil {
@@ -74,7 +76,7 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("binary full exit = %d:\n%s", code, out)
 		}
-		raw := rawGitBytes(t, root, false, "diff", base)
+		raw := gittest.OutputBytes(t, root, "diff", base)
 		if !bytes.Contains([]byte(out), append([]byte("diff_body:\n"), raw...)) {
 			t.Fatalf("tracked binary diff body differs from raw Git:\n%s", out)
 		}
@@ -83,7 +85,7 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 	t.Run("hostile filename control refusal", func(t *testing.T) {
 		root, _, _, _ := seedDivergedRepo(t)
 		mustWriteFile(t, "bad\x1bname", "hostile\n")
-		raw := rawGitBytes(t, root, false, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
+		raw := gittest.OutputBytes(t, root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
 		if !bytes.Contains(raw, []byte("bad\x1bname")) {
 			t.Fatal("raw Git fixture lost the control-bearing path")
 		}
@@ -95,8 +97,8 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 
 	t.Run("hostile reachable commit subject refusal", func(t *testing.T) {
 		root, _, _, _ := seedDivergedRepo(t)
-		runGit(t, "commit", "--allow-empty", "-m", "subject \033 control")
-		raw := rawGitBytes(t, root, false, "log", "--format=%h%x00%s")
+		gittest.MustRun(t, "", "commit", "--allow-empty", "-m", "subject \033 control")
+		raw := gittest.OutputBytes(t, root, "log", "--format=%h%x00%s")
 		if !bytes.Contains(raw, []byte{033}) {
 			t.Fatal("raw Git fixture lost control-bearing subject")
 		}
@@ -107,11 +109,8 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 	})
 
 	t.Run("clean", func(t *testing.T) {
-		root := t.TempDir()
+		root := gittest.RepoOnBranch(t, "main")
 		t.Chdir(root)
-		runGit(t, "init", "-q", "-b", "main")
-		runGit(t, "config", "user.email", "t@example.com")
-		runGit(t, "config", "user.name", "t")
 		base := commitFile(t, "clean.txt", "clean\n", "clean")
 		out, code := runProductionDiff(t, root)
 		assertRawLiveSnapshot(t, root, base, out, code)
@@ -122,7 +121,7 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 
 	t.Run("detached HEAD", func(t *testing.T) {
 		root, _, base, _ := seedDivergedRepo(t)
-		runGit(t, "checkout", "-q", "--detach")
+		gittest.MustRun(t, "", "checkout", "-q", "--detach")
 		out, code := runProductionDiff(t, root)
 		assertRawLiveSnapshot(t, root, base, out, code)
 		if got := tableRows(t, out, "revision")[0][0]; got != "(detached)" {
@@ -146,7 +145,7 @@ func TestProductionCommandRawGitMatrix(t *testing.T) {
 	t.Run("base equals HEAD", func(t *testing.T) {
 		root, _, _, _ := seedDivergedRepo(t)
 		head := rawGitText(t, root, "rev-parse", "HEAD")
-		runGit(t, "config", "branch.feature.benchBase", head)
+		gittest.MustRun(t, "", "config", "branch.feature.benchBase", head)
 		mustWriteFile(t, "only-untracked.txt", "new\n")
 		out, code := runProductionDiff(t, root)
 		assertRawLiveSnapshot(t, root, head, out, code)
@@ -187,8 +186,8 @@ func TestProductionCommandFullUntrackedKindsUseRawGitBodies(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("full untracked kinds exit = %d:\n%s", code, out)
 	}
-	aPatch := rawGitBytes(t, root, true, "diff", "--no-index", "--", "/dev/null", "a.txt")
-	bPatch := rawGitBytes(t, root, true, "diff", "--no-index", "--", "/dev/null", "b.bin")
+	aPatch := rawNoIndexPatch(t, root, "diff", "--no-index", "--", "/dev/null", "a.txt")
+	bPatch := rawNoIndexPatch(t, root, "diff", "--no-index", "--", "/dev/null", "b.bin")
 	if !bytes.Contains([]byte(out), aPatch) || !bytes.Contains([]byte(out), bPatch) || bytes.Index([]byte(out), aPatch) > bytes.Index([]byte(out), bPatch) {
 		t.Fatalf("untracked patches differ from sorted raw Git bodies:\n%s", out)
 	}
@@ -235,9 +234,9 @@ func assertRawLiveSnapshot(t *testing.T, root, base, out string, code int) {
 		t.Fatalf("revision row %v disagrees with raw Git head=%s divergence=%v base=%s", revision, head, behindAhead, base)
 	}
 
-	statusRaw := rawGitBytes(t, root, false, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
+	statusRaw := gittest.OutputBytes(t, root, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all")
 	statusEntries := independentPorcelain(statusRaw)
-	tracked := independentNameStatus(rawGitBytes(t, root, false, "diff", "--name-status", "--no-renames", "-z", base))
+	tracked := independentNameStatus(gittest.OutputBytes(t, root, "diff", "--name-status", "--no-renames", "-z", base))
 	staged, unstaged, untracked := 0, 0, 0
 	expectedCheckout := make([][]string, 0, len(statusEntries))
 	for _, entry := range statusEntries {
@@ -320,21 +319,21 @@ func tableRows(t *testing.T, out, name string) [][]string {
 
 func rawGitText(t *testing.T, root string, args ...string) string {
 	t.Helper()
-	return strings.TrimRight(string(rawGitBytes(t, root, false, args...)), "\n")
+	return strings.TrimRight(string(gittest.OutputBytes(t, root, args...)), "\n")
 }
 
-func rawGitBytes(t *testing.T, root string, permitOne bool, args ...string) []byte {
+// rawNoIndexPatch returns the raw stdout of a `git diff --no-index` comparison. That
+// form exits 1 when the two sides differ, so exit 1 is its expected answer here.
+func rawNoIndexPatch(t *testing.T, root string, args ...string) []byte {
 	t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
 	out, err := cmd.Output()
 	if err == nil {
 		return out
 	}
-	if permitOne {
-		var exit *exec.ExitError
-		if errorsAs(err, &exit) && exit.ExitCode() == 1 {
-			return out
-		}
+	var exit *exec.ExitError
+	if errorsAs(err, &exit) && exit.ExitCode() == 1 {
+		return out
 	}
 	t.Fatalf("git -C %s %v: %v\n%s", root, args, err, out)
 	return nil

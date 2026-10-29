@@ -2,23 +2,11 @@ package diff
 
 import (
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
-)
 
-// runGit runs a git command in the current working directory (set by the caller via
-// t.Chdir) and fails the test loudly on a non-zero exit, carrying the combined output
-// so a fixture-seeding mistake is diagnosable rather than a bare exit code.
-func runGit(t *testing.T, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %v: %v\n%s", args, err, out)
-	}
-	return strings.TrimSpace(string(out))
-}
+	"github.com/gibbonmi/bench/internal/gittest"
+)
 
 // mustWriteFile writes path relative to the current working directory, creating
 // parent directories as needed.
@@ -34,9 +22,9 @@ func mustWriteFile(t *testing.T, path, body string) {
 func commitFile(t *testing.T, name, content, msg string) string {
 	t.Helper()
 	mustWriteFile(t, name, content)
-	runGit(t, "add", name)
-	runGit(t, "commit", "-q", "-m", msg)
-	return runGit(t, "rev-parse", "HEAD")
+	gittest.MustRun(t, "", "add", name)
+	gittest.Commit(t, "", msg)
+	return gittest.Output(t, "", "rev-parse", "HEAD")
 }
 
 // seedDivergedRepo builds a repo with a "main" branch and a "feature" branch that
@@ -51,19 +39,16 @@ func commitFile(t *testing.T, name, content, msg string) string {
 // (the merge-base), and c3 (reachable but not an ancestor of feature's HEAD).
 func seedDivergedRepo(t *testing.T) (root, c0, c1, c3 string) {
 	t.Helper()
-	root = t.TempDir()
+	root = gittest.RepoOnBranch(t, "main")
 	t.Chdir(root)
-	runGit(t, "init", "-q", "-b", "main")
-	runGit(t, "config", "user.email", "t@example.com")
-	runGit(t, "config", "user.name", "t")
 
 	c0 = commitFile(t, "f.txt", "0", "c0")
 	c1 = commitFile(t, "f.txt", "1", "c1")
-	runGit(t, "checkout", "-q", "-b", "feature")
+	gittest.MustRun(t, "", "checkout", "-q", "-b", "feature")
 	commitFile(t, "f.txt", "2", "c2 feature")
-	runGit(t, "checkout", "-q", "main")
+	gittest.MustRun(t, "", "checkout", "-q", "main")
 	c3 = commitFile(t, "f.txt", "3", "c3 main only")
-	runGit(t, "checkout", "-q", "feature")
+	gittest.MustRun(t, "", "checkout", "-q", "feature")
 	return root, c0, c1, c3
 }
 
@@ -71,7 +56,7 @@ func seedDivergedRepo(t *testing.T) (root, c0, c1, c3 string) {
 // reachable ancestor wins over merge-base even when the two would disagree.
 func TestResolveReviewBase_RecordedPrecedence(t *testing.T) {
 	root, c0, c1, _ := seedDivergedRepo(t)
-	runGit(t, "config", "branch.feature.benchBase", c0)
+	gittest.MustRun(t, "", "config", "branch.feature.benchBase", c0)
 
 	base, method, errKind, errHint := ResolveReviewBase(root)
 	if errKind != "" || errHint != "" {
@@ -104,7 +89,7 @@ func TestResolveReviewBase_FallbackMergeBase(t *testing.T) {
 // loud label.
 func TestResolveReviewBase_UnreachableRecordedSha(t *testing.T) {
 	root, _, c1, _ := seedDivergedRepo(t)
-	runGit(t, "config", "branch.feature.benchBase", "1234567890123456789012345678901234567890")
+	gittest.MustRun(t, "", "config", "branch.feature.benchBase", "1234567890123456789012345678901234567890")
 
 	base, method, errKind, errHint := ResolveReviewBase(root)
 	if errKind != "" || errHint != "" {
@@ -120,7 +105,7 @@ func TestResolveReviewBase_UnreachableRecordedSha(t *testing.T) {
 // the exact loud label.
 func TestResolveReviewBase_NonAncestorRecordedSha(t *testing.T) {
 	root, _, c1, c3 := seedDivergedRepo(t)
-	runGit(t, "config", "branch.feature.benchBase", c3)
+	gittest.MustRun(t, "", "config", "branch.feature.benchBase", c3)
 
 	base, method, errKind, errHint := ResolveReviewBase(root)
 	if errKind != "" || errHint != "" {
@@ -135,13 +120,10 @@ func TestResolveReviewBase_NonAncestorRecordedSha(t *testing.T) {
 // exported resolution returns the existing cannot-resolve error kind and hint, never
 // an empty base paired with a clean return.
 func TestResolveReviewBase_Unresolvable(t *testing.T) {
-	root := t.TempDir()
+	root := gittest.RepoOnBranch(t, "trunk")
 	t.Chdir(root)
-	runGit(t, "init", "-q", "-b", "trunk")
-	runGit(t, "config", "user.email", "t@example.com")
-	runGit(t, "config", "user.name", "t")
 	commitFile(t, "f.txt", "0", "c0")
-	runGit(t, "checkout", "-q", "-b", "other")
+	gittest.MustRun(t, "", "checkout", "-q", "-b", "other")
 	commitFile(t, "f.txt", "1", "c1")
 
 	base, method, errKind, errHint := ResolveReviewBase(root)
@@ -170,7 +152,7 @@ func TestResolveReviewBase_ReadsRootFromAnotherDirectory(t *testing.T) {
 			root, c0, c1, _ := seedDivergedRepo(t)
 			wantBase, wantMethod := c1, "merge-base"
 			if tc.recorded {
-				runGit(t, "config", "branch.feature.benchBase", c0)
+				gittest.MustRun(t, "", "config", "branch.feature.benchBase", c0)
 				wantBase, wantMethod = c0, "recorded"
 			}
 			t.Chdir(t.TempDir())

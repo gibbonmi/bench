@@ -3,24 +3,14 @@ package git
 import (
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 )
-
-// runGit runs `git -C root <args>` and fails the test on a nonzero exit.
-func runGit(t *testing.T, root string, args ...string) string {
-	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", root}, args...)...).Output()
-	if err != nil {
-		t.Fatalf("git %v: %v", args, err)
-	}
-	return string(out)
-}
 
 func worktreesWithin(t *testing.T, root string) ([]Worktree, error) {
 	t.Helper()
@@ -54,12 +44,12 @@ func requireAdminRefusal(t *testing.T, err error, path, shape string) {
 func newRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	runGit(t, root, "init")
+	gittest.MustRun(t, root, "init")
 	if err := os.WriteFile(filepath.Join(root, "a.txt"), []byte("hello\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runGit(t, root, "add", "-A")
-	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-m", "init")
+	gittest.MustRun(t, root, "add", "-A")
+	gittest.MustRun(t, root, append(gittest.IdentityArgs(), "commit", "-m", "init")...)
 	return root
 }
 
@@ -69,7 +59,7 @@ func newRepo(t *testing.T) string {
 func newTwoBranchRepo(t *testing.T) string {
 	t.Helper()
 	root := newRepo(t)
-	runGit(t, root, "branch", "-M", "master")
-	runGit(t, root, "branch", "feature")
+	gittest.MustRun(t, root, "branch", "-M", "master")
+	gittest.MustRun(t, root, "branch", "feature")
 	return root
 }
