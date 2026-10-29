@@ -1756,7 +1756,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "gf-c13-standards-r1",
+          "performer": "claude:gf-c13-standards-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dcb912cd13d0baecf84680e41b4a14e9104449b8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c13-standards-r1",
+            "digest": "sha256:833a92685c62c23861a23b373bbdf1bab65e9997f974a110f48fb32c8d3ba206",
+            "excerpt": "Standards axis, chunk GF-C13 (claude:gf-c13-standards-r1). S1 git_fixture_owner_test.go:54 benchSourceRoot exception is avoidable: test_run_test.go is a journey harness file, so gittest.Run carries its rev-parse; auto-fix, confidence 6. S2 process_lifetime_test.go:21 restates the module prefix beside benchModule (git_fixture_owner_test.go:16); auto-fix, confidence 5. runGitEnv exception holds; systemtest scratch repositories accepted; callLiterals change keeps the guarantee. Advice: (file, symbol, kind) key admits a second same-kind site; selector-only class read; history comment on testrepoDir.\n"
+          },
+          "axis": "Standards",
+          "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "tip": "985fadd255747c9087e802df449a571e2d324a33",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c13-spec-r1",
+          "performer": "claude:gf-c13-spec-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dcb912cd13d0baecf84680e41b4a14e9104449b8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c13-spec-r1",
+            "digest": "sha256:d4484e82edb0945d2089ec040cd62e01f41684d3dc05213766e945e0700d84cf",
+            "excerpt": "Spec axis, chunk GF-C13 (claude:gf-c13-spec-r1). P1 ordinary_build_census_test.go:67-69,83 no test runs checkOrdinaryBuildCensus against a systemtest bypass, so a restored skip stays green (GF18); auto-fix, confidence 7. Rows GF10, GF24-GF28, GF30, GF31 met; administration rule and negative controls preserved. Advice: skipOwnershipDiags message (skip_ownership_test.go:89) still names Capability for every class; selector-only class read; testrepo test-file import exemption.\n"
+          },
+          "axis": "Spec",
+          "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "tip": "985fadd255747c9087e802df449a571e2d324a33",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "gf-c13-coverage-r1",
+          "performer": "claude:gf-c13-coverage-r1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "dcb912cd13d0baecf84680e41b4a14e9104449b8",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:gf-c13-coverage-r1",
+            "digest": "sha256:6d28a3710e8e64795ae0e39ddd52db506545150dea8f00653fdbb76deef62e34",
+            "excerpt": "Coverage axis, chunk GF-C13 (claude:gf-c13-coverage-r1). C1 ordinary_build_census_test.go:67-69,83 TestSystemProcessOwnerBites calls systemProcessDiags directly; a probe that omits line 83 is silent; auto-fix, confidence 8. C2 reviews/shared-test-fixtures.md:1699-1757 pre-commit reds for GF10, GF18, GF25-GF27 are not in the record; no-op, confidence 4. callLiterals, stale-entry logic, and the 97-row GF31 comparison hold. Advice: class through a variable evades GF26; grouped var block symbol; duplicate fixture rows collapse.\n"
+          },
+          "axis": "Coverage",
+          "base": "12937978ffb161bcc4b31869047f2bbae741983f",
+          "tip": "985fadd255747c9087e802df449a571e2d324a33",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
