@@ -2101,6 +2101,72 @@
           "supersedes": [
             "c4r-coverage"
           ]
+        },
+        {
+          "id": "c4r3-standards",
+          "performer": "ft358-confirm3-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f39a6cfb42f4d277a91ca1bf629d1acc9bce4d9c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm3-c4-standards",
+            "digest": "sha256:6bbbbc4a4fce2b738eb5180d3ec33c9dd26317d5bf4a7e5ddc974a3b34099a0c",
+            "excerpt": "Standards axis, MB-C4 confirming round 3 (repair delta f04f636e..15903e2c), reaffirmation. Zero findings.\nS1 closed: internal/anchors/match.go:50-52 says the body comes as stored with comments included, and names commentFreeSectionMapped as the reader of Locate and the evaluator, which matches locate.go:28 and registry.go:187. The evaluatorBody closure (locate_test.go:284-291) puts the write-and-resolve steps in one place.\nOptional advice: match.go:52 repeats the consumer list that the commentFreeSectionMapped doc states.\n"
+          },
+          "axis": "Standards",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r2-standards"
+          ]
+        },
+        {
+          "id": "c4r3-spec",
+          "performer": "ft358-confirm3-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f39a6cfb42f4d277a91ca1bf629d1acc9bce4d9c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm3-c4-spec",
+            "digest": "sha256:4c5e24da5393e141d7f9d4fbe6d307553b02c14417ae8b4e895c555fc78f5404",
+            "excerpt": "Spec axis, MB-C4 confirming round 3 (repair delta f04f636e..15903e2c), reaffirmation. Zero findings.\nS1 closed: the match.go doc matches the walk prose (spec.md:302-303), Closed decision 16, and the sweep line. C3 closed: locate_test.go:339-344 checks the evaluator body on the section-scoped rows. The delta changes no behavior; story 85, MB109, MB52, MB53, and MB94 still hold.\n"
+          },
+          "axis": "Spec",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r2-spec"
+          ]
+        },
+        {
+          "id": "c4r3-coverage",
+          "performer": "ft358-confirm3-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f39a6cfb42f4d277a91ca1bf629d1acc9bce4d9c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm3-c4-coverage",
+            "digest": "sha256:16d736b2251187e842fd3552928f8d33bb211c1bec6c5b98deb89a0044b14245",
+            "excerpt": "Coverage axis, MB-C4 confirming round 3 (repair delta f04f636e..15903e2c), reaffirmation. Zero findings. The probe restored; git status clean.\nC3 closed: the raw sectionRunesMapped walk at internal/anchors/registry.go:187 fails only TestLocateReadsTheBlockReader/a_comment_in_a_section_hides_its_needle at locate_test.go:343. The first table keeps every evaluator assertion through the evaluatorBody closure, and the second table checks the evaluator for each section-scoped row.\n"
+          },
+          "axis": "Coverage",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r2-coverage"
+          ]
         }
       ]
     }
@@ -2769,3 +2835,19 @@ Count: 0.
 Count: 1. Worst issue: C3.
 
 - C3, medium, auto-fix: add an evaluator row in `TestLocateReadsTheBlockReader` for a needle inside a comment in a section. The repair is test-only, so a coordinator probe that bites closes it through `bench record confirmation`.
+
+## MB-C4 confirming round 3
+
+All three axes pass, and S1 and C3 are closed. MB-C4 took three repair cycles: two from the allowance and one test-and-comment overrun under the reviewer's advance approval. The coordinator probe on `internal/anchors/registry.go:187` bit on the evaluator row.
+
+### Standards
+
+Count: 0.
+
+### Spec
+
+Count: 0.
+
+### Coverage
+
+Count: 0.
