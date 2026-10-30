@@ -21,16 +21,18 @@ import (
 // the same way as a require kind: a non-zero line locates the violation, the
 // presence of the forbidden needle.
 func Locate(kind Kind, section, needle, data string) int {
-	stripped, origin := stripCommentsMapped(data)
-	text, textOrigin := stripped, origin
+	var text []rune
+	var textOrigin []int
 	if kind.sectionScoped() {
-		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
+		var count int
+		text, textOrigin, count = commentFreeSectionMapped(data, section)
 		// An absent section and a duplicated one both refuse: the evaluator resolves a
 		// scoped anchor against exactly one owning heading.
 		if count != 1 {
 			return 0
 		}
-		text, textOrigin = body, bodyOrigin
+	} else {
+		text, textOrigin = stripCommentsMapped(data)
 	}
 	searchText, searchOrigin := normalizeMatchMapped(kind, text, textOrigin)
 	searchNeedleRunes := []rune(needle)
@@ -64,13 +66,32 @@ func stripCommentsMapped(data string) (text []rune, origin []int) {
 	return text, origin
 }
 
+// commentFreeSectionMapped answers the comment-free runes of title's first section in data,
+// each rune's index in data, and the number of owning headings. Locate and the evaluator read
+// a section through it. The walk reads data itself, the document that the comment strip reads,
+// so the strip and the walk take one frontmatter state. The body is each comment-free rune
+// inside the section's range of data.
+func commentFreeSectionMapped(data, title string) (body []rune, bodyOrigin []int, count int) {
+	text, origin := stripCommentsMapped(data)
+	runes := []rune(data)
+	_, span, count := sectionRunesMapped(runes, identityOrigin(len(runes)), title)
+	// An absent section and an empty one have no range of data.
+	if len(span) == 0 {
+		return nil, nil, count
+	}
+	from, _ := slices.BinarySearch(origin, span[0])
+	to, _ := slices.BinarySearch(origin, span[len(span)-1]+1)
+	return text[from:to], origin[from:to], count
+}
+
 // scopeRunesMapped is the package's one narrowing walk: it reads runes through the block
 // reader once and answers the first region opens accepts, that region's origin mapping into
 // runes, and the number of lines opens accepted. opens and closes read the reader's classified
 // lines. The body and the count come from the same walk, so a caller that refuses a duplicated
 // region reads the count the body came from. The body starts on the line after the opener.
-// The walk reads runes as the whole comment-free document, as the comment strip reads data, so
-// a comment opener or a fence marker inside the frontmatter hides no section.
+// The walk reads runes as a whole document, so a comment opener or a fence marker inside the
+// frontmatter hides no section. A caller passes the document itself, not its comment-free text,
+// because a removed comment can turn a line of that text into a frontmatter marker.
 func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line markdown.Line) bool) (body []rune, bodyOrigin []int, count int) {
 	text := string(runes)
 	lines := markdown.Read(text).Lines
