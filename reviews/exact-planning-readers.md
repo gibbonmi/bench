@@ -185,6 +185,86 @@
             "CV7"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ER-C1-standards-2",
+          "performer": "ft125-review-c1-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c64671b495882fb808603035026f8735babcf984",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-standards-2",
+            "digest": "sha256:ba0ffb450ac1a90bda44a63c12aae43c460e62e0bd106ac2d51f8b750bdd86f2",
+            "excerpt": "Standards confirming round ER-C1, repair delta 97ef9ee0e..8b89063e2: F1 F2 F3 F4 F5 F9 F10 closed. New: 5; worst N1.\nN1 internal/conformance/ticket_grammar_test.go:47-50 empty-Pkg fallback maps nested assessment and worktree to cmd/bench, so dropping internal/assessment or internal/worktree is silent; oracle weakened; ask-user; conf 8\nN2 cmd/bench/tree_scope.go:22-23 scopeRepository comment does not cover root read of checkout files; auto-fix; conf 7\nN3 cmd/bench/planning_reads.go:77-87 path variable reused after capture; no-op; conf 3\nN4 internal/responsebound/read_test.go:37,39 discarded Rows errors; auto-fix; conf 5\nN5 cmd/bench/planning_reader_commands_test.go:144 help check grades bytes only beside Fits; auto-fix; conf 4\n"
+          },
+          "axis": "Standards",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "8b89063e28fc3b5ede6b0d6250d23089eee0e0c9",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N3",
+            "N4",
+            "N5"
+          ],
+          "supersedes": [
+            "ER-C1-standards-1"
+          ]
+        },
+        {
+          "id": "ER-C1-spec-2",
+          "performer": "ft125-review-c1-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c64671b495882fb808603035026f8735babcf984",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-spec-2",
+            "digest": "sha256:9f1ff7326dc4dac3ff577d21f962a2090941488fce9ea711e2a52c1519a11733",
+            "excerpt": "Spec confirming round ER-C1, repair delta 97ef9ee0e..8b89063e2: S1 S2 S3 S4 closed; R15 conforms. New: 3 non-blocking; worst N1.\nN1 internal/responsebound/read.go:115-120 a cursor inside a rune of a valid UTF-8 selection is accepted and pages as base64; spec silent; ask-user; conf 4\nN2 spec fence and tickets/1.md Writes still name internal/conformance/axi_query_bite_test.go (new); no-op; conf 4\nN3 cmd/bench/tree_scope.go:22-24 scopeRepository comment; routed to Standards; no-op; conf 5\nRow audit: ER1, ER16-ER28, ER35-ER40, ER44, ER45, ER46 met.\n"
+          },
+          "axis": "Spec",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "8b89063e28fc3b5ede6b0d6250d23089eee0e0c9",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N3"
+          ],
+          "supersedes": [
+            "ER-C1-spec-1"
+          ]
+        },
+        {
+          "id": "ER-C1-coverage-2",
+          "performer": "ft125-review-c1-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c64671b495882fb808603035026f8735babcf984",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-coverage-2",
+            "digest": "sha256:df5f0a76996b5f6318e9ec347043359726ef06c20e61dc91dc3975fbb895e3e9",
+            "excerpt": "Coverage confirming round ER-C1, repair delta 97ef9ee0e..8b89063e2: CV1 CV2 CV5 CV6 CV7 closed; CV3 closed for the kind; CV4 closed for identity and size. New: 3; worst N1.\nN1 internal/responsebound/read.go:223 selection field of the token ungraded (line range reused on another line range); auto-fix; conf 7\nN2 internal/responsebound/file.go:99 mtime clause of Unchanged ungraded; probe mutant 2 silent; auto-fix; conf 7\nN3 internal/conformance/ticket_grammar_test.go:47-50 nested-exempt fallback ungraded; auto-fix; conf 4\nProbe: internal/responsebound/file.go --mutants (2): size clause bit TestExactSourceReplaced/rewritten; mtime clause silent.\n"
+          },
+          "axis": "Coverage",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "8b89063e28fc3b5ede6b0d6250d23089eee0e0c9",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N3"
+          ],
+          "supersedes": [
+            "ER-C1-coverage-1"
+          ]
         }
       ]
     }
@@ -294,3 +374,37 @@ Witness return (each probe restored its subject):
 W10 left orphan test processes that sealed the build-cache protection generation.
 The repair session stopped only those processes, and its retried commit passed the lane.
 After the reviewer's minimal-probing direction, delegates run only the plan's named probe and a bite proof for a changed check.
+
+## ER-C1 confirming round 1
+
+The repair delta is `97ef9ee0e..8b89063e2`. Each axis ran on opus / high.
+Of the round 1 targets, every target except the partial CV3 and CV4 residuals is closed.
+The orchestrator decided Standards N1: a routed row takes its routing package, and an exempt row keeps the `internal/<query>` derivation.
+This decision keeps the reviewer's routing decision and restores the earlier verdict of each nested query.
+Repair cycle 2 of 2 takes the auto-fix targets below.
+
+### Standards
+
+Count: 5. Worst issue: N1.
+
+- N1 (auto-fix, confidence 8): `internal/conformance/ticket_grammar_test.go:47-50` maps the nested `assessment` and `worktree` rows to `cmd/bench`, so a dropped nested package is silent. Repair target R16.
+- N2 (auto-fix, confidence 7): `cmd/bench/tree_scope.go:22-23` describes `scopeRepository` without root `read`. Repair target R17.
+- N3 (no-op, confidence 3): `cmd/bench/planning_reads.go:77-87` reuses one variable; optional advice.
+- N4 (auto-fix, confidence 5): `internal/responsebound/read_test.go:37,39` discards `Rows` errors. Repair target R18.
+- N5 (auto-fix, confidence 4): `cmd/bench/planning_reader_commands_test.go:144` grades the help bytes beside `Fits`. Repair target R18.
+
+### Spec
+
+Count: 3. Worst issue: N1.
+
+- N1 (ask-user, confidence 4): `internal/responsebound/read.go:115-120` accepts a cursor inside a rune of a valid UTF-8 selection, and the pages go out as base64. The pages stay reversible, and the spec does not define this cursor. This finding does not block, and it waits for a reviewer decision.
+- N2 (auto-fix, confidence 4): the fence and ticket 1 still name `internal/conformance/axi_query_bite_test.go (new)`. The re-slice plan commit removes it.
+- N3 (no-op, confidence 5): the same comment as Standards N2.
+
+### Coverage
+
+Count: 3. Worst issue: N1.
+
+- N1 (auto-fix, confidence 7): `internal/responsebound/read.go:223` has no test that reuses a line-range token on another line range. Repair target R19.
+- N2 (auto-fix, confidence 7): `internal/responsebound/file.go:99` has no test for a same-size rewrite with a new mtime. Repair target R20.
+- N3 (auto-fix, confidence 4): the nested-exempt branch of the grammar check has no test. Repair target R16.
