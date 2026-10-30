@@ -739,3 +739,12 @@ Count: 1. Worst issue: N1.
 - MB29 and MB30: the old code gave `references story 3, which the spec does not declare (has: 1, 2)` and `leaves story 2 unreferenced`.
 - MB83: a marker match on comment-free text gave `State = "mapped", want historical`.
 - `bench coverage --check` gives the same output and exit code at the base and at the tip on all 14 live specs.
+
+### MB-C2, ticket 3 (ft358-author-03, opus / high)
+
+- MB31 and MB81: the old code gave `failures = [{ROADMAP.md malformed roadmap row  11}]` for a tilde-fenced and a backtick-fenced row example.
+- MB32: the old code gave `sequence = [{Rank:1 Text:quoted Command:}]` for a tilde-fenced sequence heading.
+- MB33: the old code gave `roadmap/FT1.md: duplicate Next: line at line 4; a row carries one`.
+- MB99: the old projection replaced the quoted sequence section.
+- MB100: the old closure removed the quoted table row and kept `| FT2 | FT1 |` in the live table.
+- `bench roadmap` gives byte-identical output at the base and at the tip.
