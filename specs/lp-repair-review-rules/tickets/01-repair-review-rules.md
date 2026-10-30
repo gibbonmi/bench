@@ -1,7 +1,7 @@
 # Repair guidance states the repair-cost rules and review guidance states the variant sweep
 
 Blocked by: none
-Writes: .bench/BENCH.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, .agents/skills/bench-craft-review/references/finding-discipline.md, .agents/commands/bench-review-implementation.md, CHANGELOG.md, ROADMAP.md, roadmap/FT381.md, roadmap/FT403.md, roadmap/FT447.md
+Writes: .bench/BENCH.md, .agents/skills/bench-craft-line/references/bounded-repair-policy.md, .agents/skills/bench-craft-delegate/references/delegation-discipline.md, .agents/skills/bench-craft-review/references/finding-discipline.md, .agents/commands/bench-review-implementation.md, CHANGELOG.md, ROADMAP.md, roadmap/FT381.md, roadmap/FT403.md, roadmap/FT447.md, docs/adr/0023-each-ticket-gets-a-fresh-author.md
 Covers: none
 
 ## What to build
