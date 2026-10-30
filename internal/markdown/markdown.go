@@ -72,11 +72,11 @@ type Line struct {
 	Info string
 	// Section is the title of the open H2 section, and InSection reports that a section is
 	// open. A heading line opens its own section, so its Section is its title.
-	Section string
-	Class   Class
-	// Heading reports that the line opens an H2 section.
-	Heading   bool
+	Section   string
 	InSection bool
+	Class     Class
+	// Heading reports that the line opens an H2 section.
+	Heading bool
 }
 
 // Document is one reading: the classified lines, the removed comment spans in source order, and
@@ -117,8 +117,9 @@ func read(content string, frontmatter bool) Document {
 		closer := lines[held-1]
 		from = closer.Offset + len(closer.Raw)
 	}
-	cut, open := cutComments(content, from)
-	doc.Comments = cut
+	comments, open := cutComments(content, from)
+	doc.Comments = comments.spans
+	cut := doc.Comments
 	var block fence
 	section, inSection := "", false
 	for i := range lines {
