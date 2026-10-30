@@ -6,7 +6,7 @@ Roadmap: FT411
 
 Decision source: Named reviewed artifact: the bound outcome criteria `FT411.cut` and `FT411.probe` of outcome FT411 in `.bench/commitment.json` (reviewer decision 2026-10-18, drain d-359accf567c1 ticket triage). Under the reviewer decision of 2026-10-29 that `roadmap/FT437.md` records, these criteria win over the text of `roadmap/FT411.md`.
 
-Verification log: pending — the spec stage writes it at close.
+Verification log: 3 iteration(s) to accept — the spec round took 2 iterations, because iteration 1 rejected chunk requirements that held no probe; the ticket round took 1. Reviewer sign-off 2026-10-29.
 
 ## Problem
 
