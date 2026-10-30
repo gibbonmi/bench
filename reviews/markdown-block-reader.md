@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:db3964c4226ddfa7d839b061b646cbd166c039cb8da1620bac16b6f552cdd706",
+  "plan_digest": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
   "implementation_session": "",
   "chunks": [
     {
@@ -500,9 +500,9 @@
     {
       "id": "MB-C2",
       "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
-      "tip": "5c654076827727cd0609f18f78d4d251c65b4759",
-      "plan_digest": "sha256:db3964c4226ddfa7d839b061b646cbd166c039cb8da1620bac16b6f552cdd706",
-      "source_digest": "5fe25d8a9c17aabd33a4fef9447d69a56b240c87",
+      "tip": "cd86cf1efca9403f1d2908aadd32612e62857e42",
+      "plan_digest": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
+      "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
       "acceptance_rows": [
         "MB24",
         "MB25",
@@ -614,6 +614,66 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:165: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t4-maps",
+          "performer": "ft358-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-04",
+            "digest": "sha256:3f4b335f551a418a84db54df36c33ce60a8add52178e98526e7c80edc1941dc3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/fields.go,swap,failed,1,TestFieldScanMarksTildeFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/maps,^TestFieldScanMarksTildeFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,333\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/maps,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/maps,TestFieldScanMarksTildeFencedLines,\"tickets_test.go:278: Scan diagnostics = []string{\\\"duplicate Writes\\\"}, want none\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cd86cf1efca9403f1d2908aadd32612e62857e42",
+          "requirement": "maps",
+          "command": "bench test --package ./internal/maps --run '^TestFieldScanMarksTildeFencedLines$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/maps/fields.go: mark only backtick-fenced lines as fenced; expect TestFieldScanMarksTildeFencedLines",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-04",
+              "digest": "sha256:3f4b335f551a418a84db54df36c33ce60a8add52178e98526e7c80edc1941dc3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/fields.go,swap,failed,1,TestFieldScanMarksTildeFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/maps,^TestFieldScanMarksTildeFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,333\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/maps,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/maps,TestFieldScanMarksTildeFencedLines,\"tickets_test.go:278: Scan diagnostics = []string{\\\"duplicate Writes\\\"}, want none\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t4-tickets",
+          "performer": "ft358-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-04",
+            "digest": "sha256:cbb4803ea5e1e022f51a17aeb9f4ee6baea75ee934ec2dd1287b2274a8185821",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/tickets/tickets.go,swap,failed,3,TestParseTicketReadsTheBlockReaderFault/MB35_an_unterminated_tilde_block,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/tickets,^TestParseTicketReadsTheBlockReaderFault$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,873\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/tickets,fail,2,6\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB35_an_unterminated_tilde_block,\"fence_test.go:50: diagnostics = []string(nil), want []string{\\\"unterminated fence\\\"}\",1\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB36_a_four-backtick_block_that_holds_a_three-backtick_line,\"fence_test.go:50: diagnostics = []string{\\\"unterminated fence\\\"}, want []string(nil)\",1\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB37_a_Covers_line_inside_the_four-backtick_block,\"fence_test.go:50: diagnostics = []string{\\\"unterminated fence\\\", \\\"missing Covers\\\"}, want []string{\\\"missing Covers\\\"}\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cd86cf1efca9403f1d2908aadd32612e62857e42",
+          "requirement": "tickets",
+          "command": "bench test --package ./internal/tickets --run '^TestParseTicketReadsTheBlockReaderFault$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/tickets/tickets.go: report an unterminated fence on an odd count of backtick marker lines; expect TestParseTicketReadsTheBlockReaderFault",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-04",
+              "digest": "sha256:cbb4803ea5e1e022f51a17aeb9f4ee6baea75ee934ec2dd1287b2274a8185821",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/tickets/tickets.go,swap,failed,3,TestParseTicketReadsTheBlockReaderFault/MB35_an_unterminated_tilde_block,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/tickets,^TestParseTicketReadsTheBlockReaderFault$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,873\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/tickets,fail,2,6\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB35_an_unterminated_tilde_block,\"fence_test.go:50: diagnostics = []string(nil), want []string{\\\"unterminated fence\\\"}\",1\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB36_a_four-backtick_block_that_holds_a_three-backtick_line,\"fence_test.go:50: diagnostics = []string{\\\"unterminated fence\\\"}, want []string(nil)\",1\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB37_a_Covers_line_inside_the_four-backtick_block,\"fence_test.go:50: diagnostics = []string{\\\"unterminated fence\\\", \\\"missing Covers\\\"}, want []string{\\\"missing Covers\\\"}\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -657,6 +717,18 @@
     {
       "from": "sha256:284407be4ffe0befb25fe8c8ac81e8cc73e5d70e181611d5895d02443cd6b416",
       "to": "sha256:db3964c4226ddfa7d839b061b646cbd166c039cb8da1620bac16b6f552cdd706",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:db3964c4226ddfa7d839b061b646cbd166c039cb8da1620bac16b6f552cdd706",
+      "to": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
