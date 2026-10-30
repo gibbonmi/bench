@@ -158,8 +158,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
 
-**FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
-
 **FT420 (HIGH) — the review record and the author charge support the concurrent chunks of a delegated full run.**
 
 **FT433 (LOW, decision required) — every kept anchor row has a red route that a test shows, or the admission rule says that review owns it.**
