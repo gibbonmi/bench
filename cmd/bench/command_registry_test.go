@@ -10,11 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/axi/axitest"
-	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/maps"
-	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -76,58 +72,6 @@ func axiRegistryMemberNames(t *testing.T) []string {
 	}
 	sort.Strings(members)
 	return members
-}
-
-type axiEnvelopeCase struct {
-	successMarker, emptyMarker, usage              string
-	blocks                                         []string
-	route, successArgv, deepSuccessArgv, emptyArgv []string
-	setupSuccess, setupEmpty                       func(*testing.T, string)
-	// recordBacked marks a query that projects a record compiled into the binary. Such a
-	// query reads no disk and needs no repository. So it has no empty projection and no
-	// path it can refuse, and the definitive-empty and structured-refusal subtests do not
-	// apply to it. Every other subtest still runs. A query that reads the repository must
-	// leave this field false.
-	recordBacked bool
-}
-
-// resultBlock names the table whose rows differ between the success and empty cases.
-// The name comes from the identifying marker, so the two stay in step.
-func (tc axiEnvelopeCase) resultBlock(t *testing.T) string {
-	t.Helper()
-	name, _, found := strings.Cut(tc.successMarker, "[")
-	if !found || name == "" {
-		t.Fatalf("success marker %q names no result table", tc.successMarker)
-	}
-	return name
-}
-
-// axiEnvelopeRows decodes a member's whole stdout as one TOON document and returns its
-// result rows. The decode fails on any byte before, between, or after the blocks. The
-// recovered block order pins the order the command emitted, and the help table must be
-// schema-correct and terminal.
-func axiEnvelopeRows(t *testing.T, tc axiEnvelopeCase, result axiCommandResult) []any {
-	t.Helper()
-	document, err := axitest.DecodeDocument(result.stdout)
-	if err != nil {
-		t.Fatalf("stdout = %q, want structured TOON: %v", result.stdout, err)
-	}
-	if !reflect.DeepEqual(document.Blocks, tc.blocks) {
-		t.Fatalf("stdout blocks = %q, want %q; stdout=%q", document.Blocks, tc.blocks, result.stdout)
-	}
-	if _, err := document.HelpActions(); err != nil {
-		t.Fatalf("stdout = %q, want a terminal help[N]{cmd,why} envelope: %v", result.stdout, err)
-	}
-	rows, err := document.Rows(tc.resultBlock(t))
-	if err != nil {
-		t.Fatalf("stdout = %q: %v", result.stdout, err)
-	}
-	return rows
-}
-
-type axiCommandResult struct {
-	stdout, stderr string
-	code           int
 }
 
 func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
@@ -213,185 +157,6 @@ func TestAXIRegistryBindsEachRealCommandEnvelope(t *testing.T) {
 				t.Fatalf("deep cwd result = %#v, root result = %#v", fromDeep, fromRoot)
 			}
 		})
-	}
-}
-
-func axiEnvelopeCases() map[string]axiEnvelopeCase {
-	noSetup := func(*testing.T, string) {}
-	cases := map[string]axiEnvelopeCase{
-		"anchors": {
-			route: []string{"anchors"}, successArgv: []string{"anchors", "AGENTS.md"}, deepSuccessArgv: []string{"anchors", "../../AGENTS.md"}, emptyArgv: []string{"anchors", "unregistered.md"},
-			blocks:        []string{"anchors", "help"},
-			successMarker: "anchors[", emptyMarker: "anchors[0]{kind,section,needle,line}:\n", usage: "usage: bench anchors", setupSuccess: setupAXIAnchors, setupEmpty: noSetup,
-		},
-		"learnings": {
-			route: []string{"learnings"}, successArgv: []string{"learnings"}, emptyArgv: []string{"learnings"},
-			blocks:        []string{"learnings", "help"},
-			successMarker: "learnings[1]{date,title}:\n", emptyMarker: "learnings[0]{date,title}:\n", usage: "usage: bench learnings", setupSuccess: setupAXILearnings, setupEmpty: noSetup,
-		},
-		"maps": {
-			route: []string{"maps"}, successArgv: []string{"maps"}, emptyArgv: []string{"maps"},
-			blocks:        []string{"maps", "help"},
-			successMarker: "maps[1]{map,title,type,state,blockers,path}:\n", emptyMarker: "maps[0]{map,title,type,state,blockers,path}:\n", usage: "usage: bench maps", setupSuccess: setupAXIMap, setupEmpty: noSetup,
-		},
-		"guards": {
-			route: []string{"guards"}, successArgv: []string{"guards"}, emptyArgv: []string{"guards"},
-			blocks:        []string{"guards", "guard_scan", "help"},
-			successMarker: "guards[1]{guard,boundary,denies,branch,provenance,currency,wired}:\n", emptyMarker: "guards[0]{guard,boundary,denies,branch,provenance,currency,wired}:\n", usage: "usage: bench guards", setupSuccess: noSetup, setupEmpty: setupAXIEmptyGuards,
-		},
-		"diff": {
-			route: []string{"diff"}, successArgv: []string{"diff"}, emptyArgv: []string{"diff"},
-			blocks:        []string{"revision", "aggregate", "files", "checkout", "whitespace", "help"},
-			successMarker: "files[1]{status,path,kind}:\n", emptyMarker: "files[0]{status,path,kind}:\n", usage: "usage: bench diff", setupSuccess: setupAXIDiff, setupEmpty: noSetup,
-		},
-		"consumers": {
-			route: []string{"consumers"}, successArgv: []string{"consumers", "target.Symbol"}, emptyArgv: []string{"consumers", "target.Symbol"},
-			blocks:        []string{"consumers", "meta", "citation", "help"},
-			successMarker: "consumers[1]{file,line,via,enclosing}:\n", emptyMarker: "consumers[0]{file,line,via,enclosing}:\n", usage: "usage: bench consumers", setupSuccess: setupAXIConsumers, setupEmpty: setupAXIEmptyConsumers,
-		},
-		"coverage": {
-			route: []string{"coverage"}, successArgv: []string{"coverage", "fixture"}, emptyArgv: []string{"coverage", "empty"},
-			blocks:        []string{"spec", "state", "rows", "help"},
-			successMarker: "rows[1]{story,behavior,seam}:\n", emptyMarker: "state: mapped\nrows[0]{story,behavior,seam}:\n", usage: "usage: bench coverage", setupSuccess: setupAXICoverage, setupEmpty: setupAXIEmptyCoverage,
-		},
-		"worktree list": {
-			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
-			blocks:        []string{"worktrees", "help"},
-			successMarker: "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,request,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
-		},
-		// harnesses projects a record compiled into the binary, so it declares no empty
-		// case and no refusal case. See recordBacked.
-		"harnesses": {
-			route: []string{"harnesses"}, successArgv: []string{"harnesses"},
-			blocks:        []string{"schema", "harnesses", "help"},
-			successMarker: "harnesses[4]{harness,provider,phase_form,hooks,delegation_guard,headless,checked}:\n", usage: "usage: bench harnesses", setupSuccess: noSetup, recordBacked: true,
-		},
-		"roadmap": {
-			route: []string{"roadmap"}, successArgv: []string{"roadmap"}, emptyArgv: []string{"roadmap"},
-			blocks:        []string{"roadmap", "board", "commitment_outlook", "commitment_blockers", "sequence", "drain", "help"},
-			successMarker: "roadmap[", emptyMarker: "roadmap[0]{id,title,spec,spec_status,external_trigger,occurrence_count,occurrence_keys}:\n", usage: "usage: bench roadmap", setupSuccess: setupAXIRoadmap, setupEmpty: noSetup,
-		},
-	}
-	for name, item := range assessmentEnvelopeCases() {
-		cases[name] = item
-	}
-	return cases
-}
-
-func axiEnvelopeCaseNames(cases map[string]axiEnvelopeCase) []string {
-	names := make([]string, 0, len(cases))
-	for name := range cases {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return names
-}
-
-func newAXIEnvelopeRepo(t *testing.T) string {
-	t.Helper()
-	root := gittest.RepoOnBranch(t, "main")
-	writeAXIFixture(t, filepath.Join(root, "nested", "deep", ".keep"), "fixture\n")
-	gittest.MustRun(t, root, "add", ".")
-	gittest.Commit(t, root, "fixture base")
-	base := gittest.Output(t, root, "rev-parse", "HEAD")
-	gittest.MustRun(t, root, "config", "branch.main.benchBase", base)
-	return root
-}
-
-func setupAXIAnchors(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), readAnchorsFixture(t, "AGENTS.md"))
-}
-
-func setupAXILearnings(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, "capture", "learnings.md"), "# Learnings — usage journal\n\n## 2026-01-01 — fixture [open]\n")
-}
-
-func setupAXIMap(t *testing.T, root string) {
-	index := strings.Replace(maps.DecisionMapTemplate(), "\n- [<decision question>](<topic>/tickets/1.md): <gist>\n", "", 1)
-	ticket := strings.Replace(maps.DecisionTicketTemplate(), "<answer>", "— (open)", 1)
-	writeAXIFixture(t, filepath.Join(root, "decisions", "fixture.md"), index)
-	writeAXIFixture(t, filepath.Join(root, "decisions", "fixture", "tickets", "1.md"), ticket)
-}
-
-func setupAXIEmptyGuards(t *testing.T, root string) {
-	const hook = `#!/bin/sh
-# bench:managed-pre-push
-# name: pre-push
-# boundary: pre-push
-# denies: nothing (informational)
-# why: fixture has no deny-capable guards
-`
-	writeAXIFixture(t, filepath.Join(root, ".git", "hooks", "pre-push"), hook)
-}
-
-func setupAXIDiff(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, "dirty.txt"), "dirty\n")
-}
-
-func setupAXICoverage(t *testing.T, root string) {
-	const spec = `# Fixture
-
-## User stories
-
-1. As a caller, I get one row.
-
-### Acceptance coverage map
-
-| row | story | behavior | seam | why it catches the failure |
-|---|---|---|---|---|
-| FX1 | 1 | fixture | command | catches omission |
-`
-	writeAXIFixture(t, filepath.Join(root, "specs", "fixture", "spec.md"), spec)
-}
-
-func setupAXIEmptyCoverage(t *testing.T, root string) {
-	const spec = `# Empty
-
-## User stories
-
-1. As a caller, I get no rows.
-
-### Acceptance coverage map
-
-| row | story | behavior | seam | why it catches the failure |
-|---|---|---|---|---|
-`
-	writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), spec)
-}
-
-// setupAXIConsumers plants the smallest real Go module the resolver can answer over: one
-// declaration and one reference to it. The loader seam is package-internal, so this
-// surface test drives the real go/packages path rather than a stub.
-func setupAXIConsumers(t *testing.T, root string) {
-	setupAXIEmptyConsumers(t, root)
-	writeAXIFixture(t, filepath.Join(root, "consumer", "consumer.go"),
-		"package consumer\n\nimport \"example.com/axifixture/target\"\n\nfunc Direct() { target.Symbol() }\n")
-}
-
-// setupAXIEmptyConsumers plants the same module without a consumer, so the resolved
-// symbol has zero references and the response is the definitive empty table.
-func setupAXIEmptyConsumers(t *testing.T, root string) {
-	writeAXIFixture(t, filepath.Join(root, "go.mod"), "module example.com/axifixture\n\ngo 1.25\n")
-	writeAXIFixture(t, filepath.Join(root, "target", "target.go"), "package target\n\nfunc Symbol() {}\n")
-}
-
-func setupAXIWorktree(t *testing.T, root string) {
-	linked := filepath.Join(t.TempDir(), "linked")
-	gittest.MustRun(t, root, "worktree", "add", "-q", "-b", "fixture-linked", linked)
-}
-
-func setupAXIRoadmap(t *testing.T, root string) {
-	const heading = "**FT1 — fixture.**"
-	roadmaptest.WriteSplitBoard(t, root, heading+"\n", map[string]string{"FT1.md": heading + "\n"})
-}
-
-func writeAXIFixture(t *testing.T, path, content string) {
-	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatalf("mkdir fixture parent: %v", err)
-	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatalf("write fixture %s: %v", path, err)
 	}
 }
 
@@ -688,37 +453,6 @@ func TestSkillsIndexDistinguishesMissingGitFromOutsideRepository(t *testing.T) {
 	}
 }
 
-// TestHelpSpecRowsNameRetireHistoryAndWidenOnly pins FA9: the retired subcommand keeps no
-// help row, while the three live spec rows stay advertised.
-func TestHelpSpecRowsNameRetireHistoryAndWidenOnly(t *testing.T) {
-	help := renderCommandHelp()
-	if strings.Contains(help, "bench spec implemented") {
-		t.Errorf("bench help still advertises a retired subcommand:\n%s", help)
-	}
-	for _, want := range []string{"bench spec [--in <label|primary>] retire <slug>", "bench spec [--in <label|primary>] history <slug>", "bench spec [--in <label|primary>] widen <slug>"} {
-		if !strings.Contains(help, want) {
-			t.Errorf("bench help is missing %q:\n%s", want, help)
-		}
-	}
-}
-
-func TestTestHelpNamesOnlyRunnableFocusedForms(t *testing.T) {
-	help := renderCommandHelp()
-	if !strings.Contains(help, "bench test [--in <label|primary>] [--full] [--package <expr> [--package <expr>]... | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks") {
-		t.Errorf("bench help is missing the focused test grammar:\n%s", help)
-	}
-}
-
-func TestFocusedHelpNamesCheckAsEvidenceWithoutVerdict(t *testing.T) {
-	help := renderCommandHelp()
-	if !strings.Contains(help, "bench test [--full] --check <name>") {
-		t.Fatalf("bench help is missing the named-check form:\n%s", help)
-	}
-	if strings.Contains(strings.ToLower(help), "test --check <name>  gate") {
-		t.Fatalf("bench help presents a focused check as a verdict:\n%s", help)
-	}
-}
-
 // TestWorktreeRoutesKeepTheirBytesFromASubdirectory grades WF11. The four verbs that now
 // receive an explicit root must answer the same bytes from a subdirectory as from the
 // repository root, because the boundary resolves the root and the verb no longer reads
@@ -753,32 +487,5 @@ func TestWorktreeRoutesKeepTheirBytesFromASubdirectory(t *testing.T) {
 				}
 			})
 		}
-	}
-}
-
-func TestWorktreeCleanHelpUsesItsGrammar(t *testing.T) {
-	result := runAXICommandAt(t, t.TempDir(), []string{"worktree", "clean", "--help"})
-	want := "usage: " + usage.WorktreeClean + "\n"
-	if result.stdout != want || result.stderr != "" || result.code != 0 {
-		t.Fatalf("worktree clean --help = stdout=%q stderr=%q exit=%d, want stdout=%q stderr=\"\" exit=0", result.stdout, result.stderr, result.code, want)
-	}
-}
-
-// TestWorktreeHelpNamesTheExecGateForm pins WF14. The worktree usage trailer names the
-// gate as a worktree-native exec form, and it names no raw wrapper path. An appended
-// line beside the old trailer would keep the raw path alive, so the assertion demands
-// the trailer be the last line and demands the whole text hold no bin/bench.sh.
-func TestWorktreeHelpNamesTheExecGateForm(t *testing.T) {
-	out, code := runKeptRoute([]string{"worktree", "--help"})
-	if code != 0 {
-		t.Fatalf("worktree --help exit = %d, want 0; output=%q", code, out)
-	}
-	const trailer = "bench worktree exec <target> -- bench gate"
-	lines := strings.Split(strings.TrimSuffix(out, "\n"), "\n")
-	if last := strings.TrimSpace(lines[len(lines)-1]); last != trailer {
-		t.Errorf("worktree help last line = %q, want %q", last, trailer)
-	}
-	if strings.Contains(out, "bin/bench.sh") {
-		t.Errorf("worktree help = %q, want no bin/bench.sh", out)
 	}
 }

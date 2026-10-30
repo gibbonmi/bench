@@ -97,7 +97,7 @@ The pre-push hook guards the default branch. This line only states the binding.)
   missing `go` on `PATH` is a named refusal.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench consumers`, `bench harnesses`,
-  `bench roadmap`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, and `bench worktree list`, and the
+  `bench roadmap`, `bench read`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, and `bench worktree list`, and the
   shared flat-table TOON emitter). This is the agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract. It emits TOON
   stdout, definitive empty states, structured errors on stdout, and exit 0/1/2. The
@@ -114,6 +114,12 @@ The pre-push hook guards the default branch. This line only states the binding.)
   work. `bench coverage --check` is
   the one parser for the acceptance-coverage-map convention; the gate's docs
   fragment consumes it instead of carrying its own.
+
+  `bench read` returns exact file or artifact bytes as bounded pages. Each page
+  names its source identity, its byte offset, and its encoding. A nonterminal page
+  offers one exact continuation, and a continuation refuses a changed source before
+  any content. A read of a spill file or an exported evidence file verifies no
+  manifest and qualifies no evidence.
 - **The ambient dashboard** (`bench status`). This is the single deterministic renderer
   the SessionStart hook and the user both call. It ranks the signals that fire on a
   fixed severity ladder and leads with the next action. It reads gate state from the

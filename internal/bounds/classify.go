@@ -1,6 +1,7 @@
 package bounds
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -139,6 +140,9 @@ func ClassifyNoFollow(path string) Classified {
 	return gradeBytes(path, info, ControlRecordLimit)
 }
 
+// ErrLinkRefused marks the RefuseLinks refusal of a linked component.
+var ErrLinkRefused = errors.New("symlink refused")
+
 // RefuseLinks checks the complete path without resolving a linked component.
 func RefuseLinks(path string) error {
 	path, err := filepath.Abs(path)
@@ -151,7 +155,7 @@ func RefuseLinks(path string) error {
 			return err
 		}
 		if err == nil && info.Mode()&os.ModeSymlink != 0 {
-			return fmt.Errorf("symlink refused: %s", path)
+			return fmt.Errorf("%w: %s", ErrLinkRefused, path)
 		}
 		parent := filepath.Dir(path)
 		if parent == path {

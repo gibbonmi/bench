@@ -35,6 +35,7 @@ var subcommandRouting = map[string]routingEntry{
 	"models":       routed("internal/models"),
 	"outline":      routed("internal/outline"),
 	"preflight":    routed("internal/preflight"),
+	"read":         routed("cmd/bench"),
 	"record":       routed("internal/reviewrecord/recordcmd"),
 	"recovery":     routed("internal/refusalroute"),
 	"repair-pilot": routed("internal/repairpilot"),

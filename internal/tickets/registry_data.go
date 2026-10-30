@@ -18,6 +18,9 @@ var commandPackages = []string{
 	"internal/learnings",
 	"internal/maps",
 	"internal/probe",
+	// The read query's grammar lives in cmd/bench. The ticket-grammar closure derives
+	// internal/<query> for each approved query, so the read query holds this name too.
+	"internal/read",
 	"internal/roadmap",
 	"internal/worktree",
 }

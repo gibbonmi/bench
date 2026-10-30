@@ -150,6 +150,7 @@ func hasGoFile(path string) bool {
 }
 
 var directArchitectureTests = map[string]bool{
+	"cmd/bench/axi_query_envelope_test.go":       true,
 	"cmd/bench/command_registry_test.go":         true,
 	"internal/canary/decision_test.go":           true,
 	"internal/freshness/decision_test.go":        true,
