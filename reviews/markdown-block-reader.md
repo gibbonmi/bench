@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
+  "plan_digest": "sha256:bc10aca7700b5587db537b48f6e8b9ab1f933bfb162d3059b17d52f1212ffb8f",
   "implementation_session": "",
   "chunks": [
     {
@@ -2173,9 +2173,9 @@
     {
       "id": "MB-C5",
       "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
-      "tip": "49b8646e405e343497b03e605573e67355b08f28",
-      "plan_digest": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
-      "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+      "tip": "f7e31bcf9ff08245f08d7c52522a7714d22da094",
+      "plan_digest": "sha256:bc10aca7700b5587db537b48f6e8b9ab1f933bfb162d3059b17d52f1212ffb8f",
+      "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
       "acceptance_rows": [
         "MB57",
         "MB58",
@@ -2606,7 +2606,116 @@
     "source_digest": "",
     "performer": "",
     "reconciliation": {},
-    "verification": []
+    "verification": [
+      {
+        "id": "final-coverage-check",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:final-coverage-check",
+          "digest": "sha256:53c4deadb5e6dae82b7b1d150c29ff9449f35e99ba2eda9a241762ad7fa306ec",
+          "excerpt": "bench coverage specs/markdown-block-reader/spec.md --check at 33440d30: ok: coverage map valid — 106 row(s)\n"
+        },
+        "requirement": "coverage-check",
+        "command": "bench coverage specs/markdown-block-reader/spec.md --check",
+        "exit_code": 0
+      },
+      {
+        "id": "final-markdown",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:final-markdown",
+          "digest": "sha256:30c750fcba83e9a70c7c38e6b08cdce7154b438e97e1275768a52413f1b6a4ef",
+          "excerpt": "bench test --package ./internal/markdown at 33440d30: github.com/gibbonmi/bench/internal/markdown pass, 42 tests, 0 failures, 0 skips\n"
+        },
+        "requirement": "markdown",
+        "command": "bench test --package ./internal/markdown",
+        "exit_code": 0
+      },
+      {
+        "id": "final-prose-mechanics",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:final-prose-mechanics",
+          "digest": "sha256:e89a6e6d67e86864d816de0c5003d835f587a1cb48290fb9baf69c219656013b",
+          "excerpt": "bench test --check prose-mechanics at 33440d30: internal/conformance pass, 1 test, 0 failures, 0 skips\n"
+        },
+        "requirement": "prose-mechanics",
+        "command": "bench test --check prose-mechanics",
+        "exit_code": 0
+      },
+      {
+        "id": "final-docs-currency-workflow",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:final-docs-currency-workflow",
+          "digest": "sha256:e8f86ba79431ea54347f2840571a47e750fae7234aceb61d6806b3d8c2ccf101",
+          "excerpt": "bench test --check docs-currency-workflow at 33440d30: internal/conformance pass, 1 test, 0 failures, 0 skips\n"
+        },
+        "requirement": "docs-currency-workflow",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-markdown-block-owner",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:final-markdown-block-owner",
+          "digest": "sha256:70a037c5516507bb37541b8cc9a984a9773214cc5d9fcef98c66274eff77ed24",
+          "excerpt": "bench test --check markdown-block-owner at 33440d30: internal/conformance pass, 1 test, 0 failures, 0 skips\n"
+        },
+        "requirement": "markdown-block-owner",
+        "command": "bench test --check markdown-block-owner",
+        "exit_code": 0
+      },
+      {
+        "id": "final-conformance-meta",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "fb1c912c08b9d3993bff8c98481cba9a6e071799",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:final-conformance-meta",
+          "digest": "sha256:8b63759c1166acaf55e247434aa89609f5c7bae5e0a8d8ed50447699a918f7b9",
+          "excerpt": "bench test --check conformance-meta at 33440d30: internal/conformance pass, 1 test, 0 failures, 0 skips\n"
+        },
+        "requirement": "conformance-meta",
+        "command": "bench test --check conformance-meta",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -2900,6 +3009,27 @@
     {
       "from": "sha256:a7ef5bc715c0df86eb39bf91e71bf940aeedc093cbfa00369948467107736c0d",
       "to": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ],
+        "MB-C4": [
+          "MB-C4"
+        ],
+        "MB-C5": [
+          "MB-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
+      "to": "sha256:bc10aca7700b5587db537b48f6e8b9ab1f933bfb162d3059b17d52f1212ffb8f",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
