@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/subsumed-test-cuts/spec.md",
-  "plan_digest": "sha256:e1564e017bb221e293307e9ca521767f8831bc4731280ac8f2de1aeef747bfca",
+  "plan_digest": "sha256:0d0f369cac0d4a134ad41fa09c025f63069706c7ace97e6b2b9fd35cead1e997",
   "implementation_session": "",
   "chunks": [
     {
       "id": "FT411-C1",
       "base": "931b7ea78a972b7f45af2e7bfcfd7ddfc40c3a77",
-      "tip": "c299acc0b86168670e4e75b012e6b8bff6a1e78e",
-      "plan_digest": "sha256:e1564e017bb221e293307e9ca521767f8831bc4731280ac8f2de1aeef747bfca",
-      "source_digest": "13c164f90efc3783e7e9f05a4090bce87d0f4159",
+      "tip": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+      "plan_digest": "sha256:0d0f369cac0d4a134ad41fa09c025f63069706c7ace97e6b2b9fd35cead1e997",
+      "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
       "acceptance_rows": [
         "TC2",
         "TC3",
@@ -794,6 +794,336 @@
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLifecycleLinkPartitions/dangling_leaf_collision,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestLifecycleLinkPartitions$/^dangling_leaf_collision$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
+        },
+        {
+          "id": "r02-tc1",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:a58008107f8d27c0a4a54bab749485bb5f4f4cebc676d7748f8979ec6e4e3baa",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDoctorParsesHelpAndUnknownFlags,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestDoctorParsesHelpAndUnknownFlags$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc1",
+          "command": "bench test --package ./internal/adopt --run '^TestDoctorParsesHelpAndUnknownFlags$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/compatibility.go: swap `args[0] == \"--compat\"` for `args[0] != \"--compat\"`; expect TestDoctorParsesHelpAndUnknownFlags",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:a58008107f8d27c0a4a54bab749485bb5f4f4cebc676d7748f8979ec6e4e3baa",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDoctorParsesHelpAndUnknownFlags,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestDoctorParsesHelpAndUnknownFlags$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc10",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:73a58af80747b1d2ce1e741d60b0992091b74202d2fdca49e5c820fbb9247077",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestSetupGateRejectsIgnoredDeclaredInputs/undeclared,4,1,0,null,yes\n  2,bit,omit,failed,1,TestSetupSeedsGateInputsInZeroSignalRepo,1,1,0,null,yes\n  3,bit,swap,failed,1,TestSetupTwiceLeavesGateInputsIdentical,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestSetupGateRejectsIgnoredDeclaredInputs$|^TestSetupSeedsGateInputsInZeroSignalRepo$|^TestSetupTwiceLeavesGateInputsIdentical$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc10",
+          "command": "bench test --package ./internal/adopt --run '^TestSetupGateRejectsIgnoredDeclaredInputs$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/setup.go: omit `BENCH_CONFORMANCE_CONSUMER_ONLY=1 `; expect TestSetupGateRejectsIgnoredDeclaredInputs",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:73a58af80747b1d2ce1e741d60b0992091b74202d2fdca49e5c820fbb9247077",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestSetupGateRejectsIgnoredDeclaredInputs/undeclared,4,1,0,null,yes\n  2,bit,omit,failed,1,TestSetupSeedsGateInputsInZeroSignalRepo,1,1,0,null,yes\n  3,bit,swap,failed,1,TestSetupTwiceLeavesGateInputsIdentical,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestSetupGateRejectsIgnoredDeclaredInputs$|^TestSetupSeedsGateInputsInZeroSignalRepo$|^TestSetupTwiceLeavesGateInputsIdentical$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc11",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:73a58af80747b1d2ce1e741d60b0992091b74202d2fdca49e5c820fbb9247077",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestSetupGateRejectsIgnoredDeclaredInputs/undeclared,4,1,0,null,yes\n  2,bit,omit,failed,1,TestSetupSeedsGateInputsInZeroSignalRepo,1,1,0,null,yes\n  3,bit,swap,failed,1,TestSetupTwiceLeavesGateInputsIdentical,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestSetupGateRejectsIgnoredDeclaredInputs$|^TestSetupSeedsGateInputsInZeroSignalRepo$|^TestSetupTwiceLeavesGateInputsIdentical$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc11",
+          "command": "bench test --package ./internal/adopt --run '^TestSetupSeedsGateInputsInZeroSignalRepo$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/setup.go: omit `\"BENCH_RUN_BINARY\", `; expect TestSetupSeedsGateInputsInZeroSignalRepo",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:73a58af80747b1d2ce1e741d60b0992091b74202d2fdca49e5c820fbb9247077",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestSetupGateRejectsIgnoredDeclaredInputs/undeclared,4,1,0,null,yes\n  2,bit,omit,failed,1,TestSetupSeedsGateInputsInZeroSignalRepo,1,1,0,null,yes\n  3,bit,swap,failed,1,TestSetupTwiceLeavesGateInputsIdentical,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestSetupGateRejectsIgnoredDeclaredInputs$|^TestSetupSeedsGateInputsInZeroSignalRepo$|^TestSetupTwiceLeavesGateInputsIdentical$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc12",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:73a58af80747b1d2ce1e741d60b0992091b74202d2fdca49e5c820fbb9247077",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestSetupGateRejectsIgnoredDeclaredInputs/undeclared,4,1,0,null,yes\n  2,bit,omit,failed,1,TestSetupSeedsGateInputsInZeroSignalRepo,1,1,0,null,yes\n  3,bit,swap,failed,1,TestSetupTwiceLeavesGateInputsIdentical,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestSetupGateRejectsIgnoredDeclaredInputs$|^TestSetupSeedsGateInputsInZeroSignalRepo$|^TestSetupTwiceLeavesGateInputsIdentical$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc12",
+          "command": "bench test --package ./internal/adopt --run '^TestSetupTwiceLeavesGateInputsIdentical$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/setup.go: swap `content: scaffoldGateInputs()` for `content: scaffoldGateInputs() + map[bool]string{false: \" \"}[facts.zeroSignal]`; expect TestSetupTwiceLeavesGateInputsIdentical",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:73a58af80747b1d2ce1e741d60b0992091b74202d2fdca49e5c820fbb9247077",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestSetupGateRejectsIgnoredDeclaredInputs/undeclared,4,1,0,null,yes\n  2,bit,omit,failed,1,TestSetupSeedsGateInputsInZeroSignalRepo,1,1,0,null,yes\n  3,bit,swap,failed,1,TestSetupTwiceLeavesGateInputsIdentical,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestSetupGateRejectsIgnoredDeclaredInputs$|^TestSetupSeedsGateInputsInZeroSignalRepo$|^TestSetupTwiceLeavesGateInputsIdentical$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc13",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc13",
+          "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/decision.go: swap `; exists {` for `; exists && false {`; expect TestCompleteLifecycleDecisions",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc14",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc14",
+          "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/decision.go: omit ` || asset.Fingerprint == \"\"`; expect TestCompleteLifecycleDecisions",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc15",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc15",
+          "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/decision.go: insert an `empty` refusal for an input with no current and no desired asset before `decisions := make([]LifecycleDecision, 0, len(current)+len(desired))`; expect TestCompleteLifecycleDecisions",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc16",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc16",
+          "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/decision.go: swap `case lifecycleAdd, lifecycleChange, lifecycleRemove:` for `case lifecycleAdd, lifecycleChange:`; expect TestCompleteLifecycleDecisions",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc17",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:c3ab7614591ad3f12a68b53216c0b6a4973f777d63c182e9e82b8ee398b2ac0d",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestLifecycleDecisionOrder/execution,4,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestLifecycleDecisionOrder$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc17",
+          "command": "bench test --package ./internal/adopt --run '^TestLifecycleDecisionOrder$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/decision.go: swap `return decisions[i].Path < decisions[j].Path` for `return false && decisions[i].Path < decisions[j].Path`; expect TestLifecycleDecisionOrder",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:c3ab7614591ad3f12a68b53216c0b6a4973f777d63c182e9e82b8ee398b2ac0d",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestLifecycleDecisionOrder/execution,4,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestLifecycleDecisionOrder$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc45",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc45",
+          "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/decision.go: swap `if !validAssetPath(asset.Path) || asset.Fingerprint == \"\" {` for `if asset.Fingerprint == \"\" {`; expect TestCompleteLifecycleDecisions",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:04781eb931d71761d236a82414702933a8e514aa8056cd8bee315b7cfb38565d",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCompleteLifecycleDecisions/legacy_duplicate,18,1,0,null,yes\n  2,bit,omit,failed,1,TestCompleteLifecycleDecisions/legacy_missing_fingerprint,18,1,0,null,yes\n  3,bit,insert,failed,1,TestCompleteLifecycleDecisions/present_empty_execution,18,1,0,null,yes\n  4,bit,swap,failed,3,TestCompleteLifecycleDecisions/legacy,18,1,0,null,yes\n  5,bit,swap,failed,2,TestCompleteLifecycleDecisions/current_before_desired,18,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestCompleteLifecycleDecisions$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "r02-tc19",
+          "performer": "ft411-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "97df05fc3a2c6e7a91ec99118964b973f19c71fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+            "digest": "sha256:b19b267bb7ba9fa70b70f055b858390c9a808a98e6bd10c6a3686047903938ff",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestPrePushHookIgnoresALegacyPin,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestPrePushHookIgnoresALegacyPin$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "requirement": "tc19",
+          "command": "bench test --package ./internal/adopt --run '^TestPrePushHookIgnoresALegacyPin$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/prepush.sh: insert `echo \"topic push\" >&2` before `exit 0`; expect TestPrePushHookIgnoresALegacyPin",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft411-repair-02",
+              "digest": "sha256:b19b267bb7ba9fa70b70f055b858390c9a808a98e6bd10c6a3686047903938ff",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestPrePushHookIgnoresALegacyPin,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/adopt,^TestPrePushHookIgnoresALegacyPin$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -887,6 +1217,15 @@
     {
       "from": "sha256:68132c138c14f1f05b79f12799c0bd19247a27c7ae9d3b7c8652c19e23b0850e",
       "to": "sha256:e1564e017bb221e293307e9ca521767f8831bc4731280ac8f2de1aeef747bfca",
+      "chunk_ids": {
+        "FT411-C1": [
+          "FT411-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e1564e017bb221e293307e9ca521767f8831bc4731280ac8f2de1aeef747bfca",
+      "to": "sha256:0d0f369cac0d4a134ad41fa09c025f63069706c7ace97e6b2b9fd35cead1e997",
       "chunk_ids": {
         "FT411-C1": [
           "FT411-C1"
