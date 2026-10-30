@@ -34,6 +34,7 @@ A preference without a binding requirement or concrete defect remains optional a
 Optional advice is neither a finding nor a repair target.
 Give optional advice no disposition or finding ID, and exclude it from finding totals.
 Retain optional advice in a separate advice section of the native excerpt and the review pickup.
+An initial-round finding at severity 3 or lower that is not a correctness defect goes to optional advice and takes no repair cycle.
 
 After the acceptance rows of a chunk prove, the chunk permits at most one hardening cycle.
 A hardening cycle adds checks beyond the approved acceptance rows.
@@ -55,6 +56,8 @@ The issuing axis reaffirms a changed disposition.
 Only the issuing axis reaffirms an evidence-only correction unless it invalidates another axis's evidence.
 
 After substantive repairs, obtain current results or permitted native reaffirmations from every review axis.
+After a production repair, each axis that issued a finding re-reviews in full.
+Each other axis gives a native reaffirmation that reads only the repair delta, and that reaffirmation stays a recorded axis result.
 A test-only repair whose coordinator probe bites takes no new axis results; the coordinator writes a confirmation with `bench record confirmation` instead.
 The confirmation's finding list is the coordinator's disposition of the findings that the repair closes.
 

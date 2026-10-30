@@ -158,10 +158,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
 
-**FT403 (MEDIUM) — a review axis sweeps for each variant of a held finding and checks every registry of an extended family.**
-
-**FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
-
 **FT420 (HIGH) — the review record and the author charge support the concurrent chunks of a delegated full run.**
 
 **FT433 (LOW, decision required) — every kept anchor row has a red route that a test shows, or the admission rule says that review owns it.**
@@ -174,29 +170,17 @@ and the small cuts. The rows below hold the rest.
 
 **FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
 
-**FT447 (MEDIUM) — the bounded repair policy states the repair-cost rules of the FT445 and FT463 builds.**
-
 **FT453 (LOW) — the Claude line binding names Haiku as a reviewer-allowed model, and the agent-line guard accepts it.**
 
 **FT454 (MEDIUM) — a delegated full run reviews in unified mode by default, and a plan can change its review mode between chunks.**
 
 **FT455 (MEDIUM, decision required) — a plan-only or sibling commit keeps the test-only confirmation route, and a fence-only widening keeps the author's charge.**
 
-**FT456 (MEDIUM) — until the record holds sibling chunks, a delegated run freezes chunks in plan order and names the owner of each shared helper.**
-
 **FT457 (MEDIUM) — a ticket continuation goes to a fresh narrow session, not a resume of the full author context.**
-
-**FT458 (LOW) — the review record holds each author witness red before the initial review charge.**
-
-**FT459 (LOW) — a build's docs ticket receives each spec-versus-code divergence that the build settled.**
 
 **FT461 (MEDIUM, decision required) — an outcome's phase-close commits fold into its build landing, so one outcome pays one landing gate.**
 
 **FT469 (LOW, decision required) — `craft-spec` plans a broker-first landing for a relaxed evidence rule and grades a timing row against a same-session control.**
-
-**FT470 (LOW) — each mutation that a ticket names becomes a plan probe on the registered check.**
-
-**FT471 (LOW) — the implement-spec charges name the chunk base for the first ticket record, and each checkpoint reports its cost.**
 
 **FT472 (LOW) — probe-only plans keep no plain-requirement branch, and the evidence reader reads the one pass predicate.**
 

@@ -15,7 +15,7 @@ Turn the authorized decision source and what you know of the codebase into `spec
    - Read one existing precedent for each named seam.
    - Sweep the whole tree for each reader of a count, a schema field, or an artifact path the spec changes. This reader sweep includes `.mjs` scripts and workflow files, and `references/map-discipline.md` states its rules. Each reader takes a row or a named exclusion.
 2. **Place the seam**: After step 1, apply [Evidence-led authoring](#evidence-led-authoring). If its exception applies, follow `craft-seams`. Confirm the selected seam with the reviewer.
-3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact. Verify each current-code claim against the tree under the claim rules in `references/map-discipline.md`.
+3. **Write the spec** from the template below, in ASD-STE100 prose per `references/ste-prose.md`, and run `bench coverage --check`. The spec file is the published artifact. Verify each current-code claim against the tree under the claim rules in `references/map-discipline.md`. Apply the reword rule: unless the decision source deletes a clause, a reworded sentence keeps each predicate of the old sentence. New content joins as new sentences.
 
 ## Evidence-led authoring
 
@@ -83,6 +83,8 @@ The round asks six questions:
 - Does any behavior, why-it-catches clause, or decision answer name an outcome family instead of an exact predicate?
 - Are the source and observed reds sound even when the source is same-session, conflicting, or mostly not observed?
 - Per row, does the map name the gate check or test that reds it, or mark the row review-owned?
+
+The round also grades each reworded sentence against the reword rule of authoring step 3.
 
 The degenerate standard is the cheapest plausible wrong implementation — a degenerate that needs deliberate contrivance is the build's mutation-probe target, never a new spec row. A finding blocks only when it changes observable behavior, an ownership fence, or the ticket graph. A round that returns only prose or accounting findings is the acceptance round. Fold those fixes into the acceptance instead of another round. A revision may not add a promise beyond the decision source unless a blocking finding demands it. The review flags an unflagged addition for removal rather than demanding rows for it.
 
