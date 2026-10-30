@@ -1998,3 +1998,7 @@ Count: 1. Worst issue: P7.
 ### Coverage
 
 Count: 0. The optional advice is in the excerpt.
+
+### MB-C3 repair 3 witness reds (ft358-repair-03c, opus / high, repair cycle 3, an overrun)
+
+- P7: the old code failed the legacy-mix row and the legacy next-command row of `TestParseQuotesTheRawHeading`, because each refusal quoted the comment-free heading.
