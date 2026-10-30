@@ -4,11 +4,12 @@ import "testing"
 
 // TestMetadataSkipsAFencedStatus pins the one fence classification of the header readers: a
 // tilde fence and an indented backtick fence each hide a spec path from LiveSpecSlugs and a
-// column-zero `Status:` line from Facts.
+// column-zero `Status:` line from Facts. A first-line frontmatter block hides them too.
 func TestMetadataSkipsAFencedStatus(t *testing.T) {
 	for name, content := range map[string]string{
-		"tilde fence":    "Status: staged\n\n~~~\nspecs/hidden/spec.md\nStatus: implemented\n~~~\n",
-		"indented fence": "Status: staged\n\n  ```\nspecs/hidden/spec.md\nStatus: implemented\n  ```\n",
+		"tilde fence":       "Status: staged\n\n~~~\nspecs/hidden/spec.md\nStatus: implemented\n~~~\n",
+		"indented fence":    "Status: staged\n\n  ```\nspecs/hidden/spec.md\nStatus: implemented\n  ```\n",
+		"frontmatter block": "---\nspecs/hidden/spec.md\nStatus: implemented\n---\nStatus: staged\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			if got := LiveSpecSlugs([]byte(content)); len(got) != 0 {

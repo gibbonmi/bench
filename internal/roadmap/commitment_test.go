@@ -134,17 +134,20 @@ func TestCommitmentDependencyClosure(t *testing.T) {
 
 // TestParseDocumentSkipsTildeFences reads the index and a row file over the block reader. A
 // fenced row example gives no row and no malformed-row failure, a fenced sequence heading
-// opens no sequence, and a fenced `Next:` line is no second marker.
+// opens no sequence, a fenced line in the live sequence is no entry, and a fenced `Next:`
+// line is no second marker. A first-line frontmatter block declares nothing.
 func TestParseDocumentSkipsTildeFences(t *testing.T) {
 	const row = "**FT1 — one.**\n"
-	for name, tc := range map[string]struct{ quoted, file string }{
-		"tilde row":        {"~~~\n**FT9 — quoted.**\n**not a row\n~~~\n", row + "Next: spec\n"},
-		"backtick row":     {"```\n**FT9 — quoted.**\n**not a row\n```\n", row + "Next: spec\n"},
-		"tilde sequence":   {"~~~\n## Recommended sequence\n\n1. quoted\n~~~\n", row + "Next: spec\n"},
-		"tilde next after": {"", row + "Next: spec\n~~~\nNext: spec\n~~~\n"},
+	for name, tc := range map[string]struct{ front, quoted, file, tail string }{
+		"tilde row":         {quoted: "~~~\n**FT9 — quoted.**\n**not a row\n~~~\n", file: row + "Next: spec\n"},
+		"backtick row":      {quoted: "```\n**FT9 — quoted.**\n**not a row\n```\n", file: row + "Next: spec\n"},
+		"tilde sequence":    {quoted: "~~~\n## Recommended sequence\n\n1. quoted\n~~~\n", file: row + "Next: spec\n"},
+		"tilde next after":  {file: row + "Next: spec\n~~~\nNext: spec\n~~~\n"},
+		"fenced entry":      {file: row + "Next: spec\n", tail: "~~~\n1. fake\n~~~\n"},
+		"frontmatter block": {front: "---\n**FT9 — quoted.**\n**not a row\n---\n", file: row + "Next: spec\n"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			index := "# Roadmap\n\n" + tc.quoted + "\n" + row + "\n## Recommended sequence\n\n1. live\n"
+			index := tc.front + "# Roadmap\n\n" + tc.quoted + "\n" + row + "\n## Recommended sequence\n\n1. live\n" + tc.tail
 			document, failures, diagnostics := ParseDocument(splitTree(index, map[string]string{"FT1.md": tc.file}), nil, false)
 			if len(failures) != 0 || len(diagnostics) != 0 {
 				t.Fatalf("failures = %v, diagnostics = %v, want none", failures, diagnostics)
@@ -158,11 +161,28 @@ func TestParseDocumentSkipsTildeFences(t *testing.T) {
 
 // TestProjectSequenceSkipsFencedHeadings projects the sequence after a fenced copy of its
 // heading. The fenced copy stays byte for byte, and only the live sequence takes the outcomes.
+// The title match reads the raw heading, so a heading with a second space after the marker
+// or a trailing U+00A0 is no sequence.
 func TestProjectSequenceSkipsFencedHeadings(t *testing.T) {
 	const quoted = "# Roadmap\n\n~~~\n## Recommended sequence\n\n1. quoted\n~~~\n\n"
 	got, err := ProjectSequence([]byte(quoted+"## Recommended sequence\n\n1. A\n"), []string{"B"})
 	if want := quoted + "## Recommended sequence\n\n1. B\n"; err != nil || string(got) != want {
 		t.Fatalf("projection = %q, %v; want %q", got, err, want)
+	}
+	for _, heading := range []string{"##  Recommended sequence", "## Recommended sequence "} {
+		if got, err := ProjectSequence([]byte(heading+"\n\n1. A\n"), []string{"B"}); err == nil {
+			t.Errorf("projection under %q = %q; want no recommended sequence", heading, got)
+		}
+	}
+}
+
+// TestCloseSkipsAFencedRowHeading closes FT1 beside a fenced FT1 example. Close reads the
+// rows that ParseDocument reads, so it removes only the live row and keeps the example.
+func TestCloseSkipsAFencedRowHeading(t *testing.T) {
+	const example = "# Roadmap\n\n```\n**FT1 — x**\n```\n\n"
+	got, err := Close([]byte(example+"**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n"), []string{"FT1"}, []string{"B"})
+	if want := example + "**FT2 — B**\n\n## Recommended sequence\n\n1. B\n"; err != nil || string(got) != want {
+		t.Fatalf("closure = %q, %v; want %q", got, err, want)
 	}
 }
 

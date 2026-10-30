@@ -50,9 +50,10 @@ type FieldLine struct {
 	Text string
 	// Fenced marks a code-fence marker or a line inside a fence. Such a line matches no field.
 	Fenced bool
-	// FenceRole marks an opening or a closing fence marker, and FenceLabel is the block
-	// reader's info of that marker. A schema owner that reads one fenced block keys on the
-	// open role and its label, so a label inside another fence opens nothing.
+	// FenceRole marks an opening or a closing fence marker. FenceLabel is an opener's info
+	// string, and a closer's trimmed text after a run of the opener's length, so a longer
+	// nested run keeps a label. A schema owner that reads one fenced block keys on the open
+	// role and its label, so a label inside another fence opens nothing.
 	FenceRole  FenceRole
 	FenceLabel string
 	// Field names the matched field, and stays empty when the line matches none.
@@ -85,11 +86,19 @@ func (s FieldScan) Scan(content []byte) ([]FieldLine, []string) {
 	var diagnostics []string
 	seen := make(map[string]bool)
 	scope, scopeKey := "", ""
-	scopes := 0
+	scopes, run := 0, ""
 	for _, block := range blocks {
 		line := block.Raw
 		if role, fenced := fenceRoles[block.Class]; fenced {
-			scanned = append(scanned, FieldLine{Text: line, Fenced: true, FenceRole: role, FenceLabel: block.Info})
+			label := block.Info
+			switch role {
+			case FenceOpen:
+				run = openerRun(block)
+			case FenceClose:
+				_, after, _ := strings.Cut(block.Text, run)
+				label = strings.TrimSpace(after)
+			}
+			scanned = append(scanned, FieldLine{Text: line, Fenced: true, FenceRole: role, FenceLabel: label})
 			continue
 		}
 		if s.Scope != nil {
@@ -128,6 +137,13 @@ func (s FieldScan) Scan(content []byte) ([]FieldLine, []string) {
 		scanned = append(scanned, entry)
 	}
 	return scanned, diagnostics
+}
+
+// openerRun is the marker run of a fence opener: its comment-free text without the indent
+// and the info string. The block reader's text and info give it, so this file states no
+// marker rule.
+func openerRun(opener markdown.Line) string {
+	return strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(opener.Text), opener.Info))
 }
 
 // FieldSeparator joins the entries of one list field value.

@@ -167,9 +167,7 @@ func parse(content []byte) parsed {
 			inMap = true
 			continue
 		}
-		if inMap && mapEndRe.MatchString(text) {
-			inMap = false
-		}
+		inMap = inMap && !mapEndRe.MatchString(text)
 		if inMap {
 			p.processMapLine(text, line.Number)
 		}

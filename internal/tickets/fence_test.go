@@ -8,7 +8,8 @@ import (
 
 // TestParseTicketReadsTheBlockReaderFault grades each fence shape by the block reader's
 // fault. A tilde block refuses like a backtick block, a shorter run stays inside a longer
-// block, and an unclosed frontmatter marker on the first line changes no diagnostic.
+// block, and an unclosed frontmatter marker on the first line changes no diagnostic. An
+// unterminated comment is the reader's first fault, so it gives no fence diagnostic.
 func TestParseTicketReadsTheBlockReaderFault(t *testing.T) {
 	const body = "One parser owns the schema."
 	fourRun := "````\nquoted\n```\nCovers: TG9\n````"
@@ -41,6 +42,11 @@ func TestParseTicketReadsTheBlockReaderFault(t *testing.T) {
 			name:     "MB95 an unclosed frontmatter marker and an unterminated block",
 			document: "---\n" + wellFormed() + "```\nquoted\n",
 			want:     []string{"unterminated fence"},
+			covers:   []string{"TG1", "TG2"},
+		},
+		{
+			name:     "FA11 an unterminated comment before an unterminated block",
+			document: wellFormed() + "<!-- open\n```\nquoted\n",
 			covers:   []string{"TG1", "TG2"},
 		},
 	}

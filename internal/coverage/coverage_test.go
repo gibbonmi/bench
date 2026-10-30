@@ -277,9 +277,10 @@ func TestMapRowsProjectTheParsedMap(t *testing.T) {
 
 // TestParseSkipsFencedCoverageLines reads the coverage scan over the block reader: a fenced
 // story line and a fenced map row add nothing, a fenced H2 line leaves the story list open, and
-// the historical marker comment still exempts its spec.
+// the historical marker comment still exempts its spec. A first-line frontmatter block that
+// holds a map heading and a row declares nothing.
 func TestParseSkipsFencedCoverageLines(t *testing.T) {
-	body := "# b\n\n## User stories\n1. As a, I want b, so c.\n~~~\n2. As d, I want e, so f.\n## Example\n~~~\n" +
+	body := "---\n### Acceptance coverage map\n| ZZ9 | 9 | b | s | w |\n---\n# b\n\n## User stories\n1. As a, I want b, so c.\n~~~\n2. As d, I want e, so f.\n## Example\n~~~\n" +
 		"3. As g, I want h, so i.\n\n### Acceptance coverage map\n" + hdrReducedID +
 		"| AB1 | 1, 3 | b | s | w |\n````\n| AB2 | 1 | b | s | w |\n```\n````\n"
 	if v := Check(spec(body)); len(v) != 0 {

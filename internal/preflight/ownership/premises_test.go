@@ -88,6 +88,15 @@ func TestMetadataGrammarFenceRoles(t *testing.T) {
 	if !reflect.DeepEqual(lines, want) || !reflect.DeepEqual(diagnostics, []string{"duplicate Owner"}) {
 		t.Fatalf("Scan = %#v, %#v; want %#v and one duplicate", lines, diagnostics, want)
 	}
+	// A longer run closes the facts fence, and its label is the text after a run of the
+	// opener's length, so the facts reader still refuses the nested marker.
+	nested := "```" + ownership.MetadataLabel + "\n" + completeEmpty + "\n````\n"
+	if lines, _ := scan.Scan([]byte(nested)); lines[len(lines)-2].FenceLabel != "`" {
+		t.Fatalf("longer closer = %#v; want the label `", lines[len(lines)-2])
+	}
+	if got := ownership.ParseManifest([]byte(nested)).Diagnostics; len(got) != 1 || !strings.Contains(got[0].Reason, "another fence marker") {
+		t.Fatalf("ParseManifest diagnostics = %v; want the nested-marker refusal", got)
+	}
 }
 
 // TestSizingPremises drives the line-count, glob-member, and headroom collectors through
