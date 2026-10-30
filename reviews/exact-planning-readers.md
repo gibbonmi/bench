@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:31861a49dc8cf784d33f054307f9a9c5d708ffb298f803b6b748e5518d78c1f7",
+  "plan_digest": "sha256:3ac7ce83999acc3cf7e20f551f4a8a52889192313d46706167b7c957a273b330",
   "implementation_session": "",
   "chunks": [
     {
       "id": "ER-C1",
       "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
-      "tip": "97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e",
-      "plan_digest": "sha256:31861a49dc8cf784d33f054307f9a9c5d708ffb298f803b6b748e5518d78c1f7",
-      "source_digest": "2edc7d7c59d6ac67660c1aa947cecf41b3c9c39e",
+      "tip": "8b89063e28fc3b5ede6b0d6250d23089eee0e0c9",
+      "plan_digest": "sha256:3ac7ce83999acc3cf7e20f551f4a8a52889192313d46706167b7c957a273b330",
+      "source_digest": "c64671b495882fb808603035026f8735babcf984",
       "acceptance_rows": [
         "ER1",
         "ER16",
@@ -66,6 +66,36 @@
               "ref": "claude-agent:bench-writer-medium:ft125-author-01",
               "digest": "sha256:6930f08283d31f41eda8deb2a55c8b5d3eb9957de14af7813cd22f3d797f58dc",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/responsebound/read.go,swap,failed,6,TestExactReaderCLIReconstruction/empty.txt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExactReaderCLIReconstruction,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2308\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,700,8\nfailures[6]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/empty.txt,\"planning_reader_commands_test.go:96: [\\\"read\\\" \\\"empty.txt\\\" \\\"--offset\\\" \\\"1\\\" \\\"--source\\\" \\\"61b45b3dedeb2168900a7220792c78d867d65ea2f4294ab19ca255928d15a069\\\"] = stdout=\\\"error: cursor out of range — offset 1 is outside the 0 selected bytes; read aga… (329 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/exported_evidence,\"planning_reader_commands_test.go:96: [\\\"read\\\" \\\"/dev/shm/IWND7Z/t/TestExactReaderCLIReconstruction155984913/002/evidence/source-1.txt\\\" \\\"--artifact\\\" \\\"--offset\\\" \\\"9801\\\" \\\"--source\\\" \\\"e27548a8e9e63ad4f3becf814d376bb682756968497e5454df04d75dd59cb13c… (514 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/invalid.bin,\"planning_reader_commands_test.go:96: [\\\"read\\\" \\\"invalid.bin\\\" \\\"--offset\\\" \\\"6003\\\" \\\"--source\\\" \\\"b608671a06e4befce4f041cbffc6441e0335b952a3e60caa420f89950682f624\\\"] = stdout=\\\"error: cursor out of range — offset 6003 is outside the 6002 selected byte… (342 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/mixed.txt,\"planning_reader_commands_test.go:96: [\\\"read\\\" \\\"mixed.txt\\\" \\\"--offset\\\" \\\"11239\\\" \\\"--source\\\" \\\"46b85bac9811733299542453c808777d3c375b11c6f4817cbc8032747bce16ab\\\"] = stdout=\\\"error: cursor out of range — offset 11239 is outside the 11238 selected byt… (341 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/spill,\"planning_reader_commands_test.go:96: [\\\"read\\\" \\\"/dev/shm/IWND7Z/t/bench-cmd-home-4247697596/responses/none/primary/1793400900665359220-c4b656308f3c9620.out\\\" \\\"--artifact\\\" \\\"--offset\\\" \\\"5201\\\" \\\"--source\\\" \\\"b48f8496e09065051f4598387fa3b82567a4c327d1… (558 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/unicode.txt,\"planning_reader_commands_test.go:96: [\\\"read\\\" \\\"unicode.txt\\\" \\\"--offset\\\" \\\"9601\\\" \\\"--source\\\" \\\"f5e77d45e198b9c37c8593b20cff4af9677890e880235a91536703849c4f81db\\\"] = stdout=\\\"error: cursor out of range — offset 9601 is outside the 9600 selected byte… (342 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ER-C1-r1-ER-C1-successor-red",
+          "performer": "ft125-repair-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c64671b495882fb808603035026f8735babcf984",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-repair-01",
+            "digest": "sha256:33137a0238df5ce7c1c6237d98b1e397b3b2b74a4bc43026109cc1e6edc8f6ba",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/responsebound/read.go,swap,failed,10,TestExactReaderCLIReconstruction/empty.txt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExactReaderCLIReconstruction,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,3773\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,404,12\nfailures[10]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/empty.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"empty.txt\\\" \\\"--offset\\\" \\\"1\\\" \\\"--source\\\" \\\"f00566d7c32be13f59bf8cc354e7e800c1f10b752a2f02be4819a86045f546e3\\\"] = stdout=\\\"error: cursor out of range — offset 1 is outside the 0 selected bytes; read ag… (330 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/exported_evidence,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"/dev/shm/ZBPITE/t/TestExactReaderCLIReconstruction2238966278/002/evidence/source-1.txt\\\" \\\"--artifact\\\" \\\"--offset\\\" \\\"9801\\\" \\\"--source\\\" \\\"98988842053f9b987bdb62909ba693f24e5ba55917cfe29d7210f15ce28923… (517 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/from_a_subdirectory,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"deep.txt\\\" \\\"--offset\\\" \\\"8401\\\" \\\"--source\\\" \\\"878ebc0f1b56930cc5bdbca33b3d6466eb62414acfcf5f291d8149bd1b3f299b\\\"] = stdout=\\\"error: cursor out of range — offset 8401 is outside the 8400 selected bytes;… (337 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/invalid.bin,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"invalid.bin\\\" \\\"--offset\\\" \\\"6003\\\" \\\"--source\\\" \\\"a1ab9c4cc20654262bcc019f9e95853849ec923fa3d734b867bd196cf0449250\\\"] = stdout=\\\"error: cursor out of range — offset 6003 is outside the 6002 selected byt… (343 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/mixed.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"mixed.txt\\\" \\\"--offset\\\" \\\"11239\\\" \\\"--source\\\" \\\"d82efeadf5a5434784a9e9004c7adc9d86a54696a7b573aae694a96a314a813a\\\"] = stdout=\\\"error: cursor out of range — offset 11239 is outside the 11238 selected by… (342 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/nested/deep.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"nested/deep.txt\\\" \\\"--offset\\\" \\\"8401\\\" \\\"--source\\\" \\\"878ebc0f1b56930cc5bdbca33b3d6466eb62414acfcf5f291d8149bd1b3f299b\\\"] = stdout=\\\"error: cursor out of range — offset 8401 is outside the 8400 selected… (351 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/parent_from_a_subdirectory,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"../mixed.txt\\\" \\\"--offset\\\" \\\"11239\\\" \\\"--source\\\" \\\"d82efeadf5a5434784a9e9004c7adc9d86a54696a7b573aae694a96a314a813a\\\"] = stdout=\\\"error: cursor out of range — offset 11239 is outside the 11238 selected… (348 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/spaced_name.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"spaced name.txt\\\" \\\"--offset\\\" \\\"8001\\\" \\\"--source\\\" \\\"3071850cc1efb28437772059bcf3947c7e6bed4424d5ff63f3b854d311bfdd71\\\"] = stdout=\\\"error: cursor out of range — offset 8001 is outside the 8000 selected… (353 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/spill,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"/dev/shm/ZBPITE/t/bench-cmd-home-4247622525/responses/none/primary/1793403881356566172-700fdd1beb5c3b4b.out\\\" \\\"--artifact\\\" \\\"--offset\\\" \\\"5201\\\" \\\"--source\\\" \\\"3a45dc0504dd049ca5bd7056744e3f2e606300624… (559 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/unicode.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"unicode.txt\\\" \\\"--offset\\\" \\\"9601\\\" \\\"--source\\\" \\\"ea90ae20f56cc6bbadd37f8006b456e8502a51bb1a779ecb382c47b1fca20ba8\\\"] = stdout=\\\"error: cursor out of range — offset 9601 is outside the 9600 selected byt… (343 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8b89063e28fc3b5ede6b0d6250d23089eee0e0c9",
+          "requirement": "ER-C1-successor-red",
+          "command": "bench test --package ./cmd/bench --run TestExactReaderCLIReconstruction",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "skip one source byte in continuation successor",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-repair-01",
+              "digest": "sha256:33137a0238df5ce7c1c6237d98b1e397b3b2b74a4bc43026109cc1e6edc8f6ba",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/responsebound/read.go,swap,failed,10,TestExactReaderCLIReconstruction/empty.txt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExactReaderCLIReconstruction,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,3773\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,404,12\nfailures[10]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/empty.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"empty.txt\\\" \\\"--offset\\\" \\\"1\\\" \\\"--source\\\" \\\"f00566d7c32be13f59bf8cc354e7e800c1f10b752a2f02be4819a86045f546e3\\\"] = stdout=\\\"error: cursor out of range — offset 1 is outside the 0 selected bytes; read ag… (330 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/exported_evidence,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"/dev/shm/ZBPITE/t/TestExactReaderCLIReconstruction2238966278/002/evidence/source-1.txt\\\" \\\"--artifact\\\" \\\"--offset\\\" \\\"9801\\\" \\\"--source\\\" \\\"98988842053f9b987bdb62909ba693f24e5ba55917cfe29d7210f15ce28923… (517 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/from_a_subdirectory,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"deep.txt\\\" \\\"--offset\\\" \\\"8401\\\" \\\"--source\\\" \\\"878ebc0f1b56930cc5bdbca33b3d6466eb62414acfcf5f291d8149bd1b3f299b\\\"] = stdout=\\\"error: cursor out of range — offset 8401 is outside the 8400 selected bytes;… (337 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/invalid.bin,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"invalid.bin\\\" \\\"--offset\\\" \\\"6003\\\" \\\"--source\\\" \\\"a1ab9c4cc20654262bcc019f9e95853849ec923fa3d734b867bd196cf0449250\\\"] = stdout=\\\"error: cursor out of range — offset 6003 is outside the 6002 selected byt… (343 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/mixed.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"mixed.txt\\\" \\\"--offset\\\" \\\"11239\\\" \\\"--source\\\" \\\"d82efeadf5a5434784a9e9004c7adc9d86a54696a7b573aae694a96a314a813a\\\"] = stdout=\\\"error: cursor out of range — offset 11239 is outside the 11238 selected by… (342 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/nested/deep.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"nested/deep.txt\\\" \\\"--offset\\\" \\\"8401\\\" \\\"--source\\\" \\\"878ebc0f1b56930cc5bdbca33b3d6466eb62414acfcf5f291d8149bd1b3f299b\\\"] = stdout=\\\"error: cursor out of range — offset 8401 is outside the 8400 selected… (351 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/parent_from_a_subdirectory,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"../mixed.txt\\\" \\\"--offset\\\" \\\"11239\\\" \\\"--source\\\" \\\"d82efeadf5a5434784a9e9004c7adc9d86a54696a7b573aae694a96a314a813a\\\"] = stdout=\\\"error: cursor out of range — offset 11239 is outside the 11238 selected… (348 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/spaced_name.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"spaced name.txt\\\" \\\"--offset\\\" \\\"8001\\\" \\\"--source\\\" \\\"3071850cc1efb28437772059bcf3947c7e6bed4424d5ff63f3b854d311bfdd71\\\"] = stdout=\\\"error: cursor out of range — offset 8001 is outside the 8000 selected… (353 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/spill,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"/dev/shm/ZBPITE/t/bench-cmd-home-4247622525/responses/none/primary/1793403881356566172-700fdd1beb5c3b4b.out\\\" \\\"--artifact\\\" \\\"--offset\\\" \\\"5201\\\" \\\"--source\\\" \\\"3a45dc0504dd049ca5bd7056744e3f2e606300624… (559 bytes)\",1\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderCLIReconstruction/unicode.txt,\"planning_reader_commands_test.go:112: [\\\"read\\\" \\\"unicode.txt\\\" \\\"--offset\\\" \\\"9601\\\" \\\"--source\\\" \\\"ea90ae20f56cc6bbadd37f8006b456e8502a51bb1a779ecb382c47b1fca20ba8\\\"] = stdout=\\\"error: cursor out of range — offset 9601 is outside the 9600 selected byt… (343 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -165,7 +195,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:31861a49dc8cf784d33f054307f9a9c5d708ffb298f803b6b748e5518d78c1f7",
+      "to": "sha256:3ac7ce83999acc3cf7e20f551f4a8a52889192313d46706167b7c957a273b330",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
