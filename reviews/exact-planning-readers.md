@@ -70,7 +70,93 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ER-C1-standards-1",
+          "performer": "ft125-review-c1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2edc7d7c59d6ac67660c1aa947cecf41b3c9c39e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-standards",
+            "digest": "sha256:5553046294979116042ddedbbd0b0b67605d6ff0a0bb72fa40c8e12ddcd96e34",
+            "excerpt": "Standards axis ER-C1 c02a0324c..97ef9ee0e: 11 findings; worst F1.\nF1 internal/tickets/registry_data.go:21-23 placeholder internal/read entry satisfies a check that derives internal/\u003cquery>; ask-user; conf 9\nF2 internal/responsebound/read.go:168 page-budget predicate re-derives Owner.overBound; auto-fix; conf 7\nF3 internal/bounds/open.go:28-29 second regular-file classifier copies gradeBytes; auto-fix; conf 8\nF4 cmd/bench/planning_reads.go:73 stand-in commandDefinition repeats the registered scope; ask-user; conf 6\nF5 internal/responsebound/read.go:92, file.go:122-123 two decimal validators; auto-fix; conf 6\nF6 internal/responsebound/read.go:163 re-derives the TOON help header to detect axi fallback; ask-user; conf 5\nF7 internal/conformance/axi_query_registry_test.go:22 bite tests not moved as the spec says; auto-fix; conf 7\nF8 cmd/bench/planning_reads.go:80 another containment derivation; no-op; conf 4\nF9 cmd/bench/planning_reads.go:90 literal \"read\" repeats the verb name; auto-fix; conf 4\nF10 cmd/bench/planning_reader_commands_test.go:33,35,134 discarded Rows error; auto-fix; conf 4\nF11 internal/responsebound/read_test.go:18 fixture embeds the build worktree label; auto-fix; conf 3\n"
+          },
+          "axis": "Standards",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e",
+          "finding_ids": [
+            "F1",
+            "F2",
+            "F3",
+            "F4",
+            "F5",
+            "F6",
+            "F7",
+            "F8",
+            "F9",
+            "F10",
+            "F11"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C1-spec-1",
+          "performer": "ft125-review-c1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2edc7d7c59d6ac67660c1aa947cecf41b3c9c39e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-spec",
+            "digest": "sha256:afed380b7b1a92b7f5ac842667ead9eeda750e212f63ce0e3ffee4c5f76b24f4",
+            "excerpt": "Spec axis ER-C1 c02a0324c..97ef9ee0e: 4 findings; worst S1.\nS1 cmd/bench/planning_reads.go:90 with read.go:106,211 and main.go:95 a bench read --in continuation omits --in and refuses as changed source; spec grammar has no --in on read; ask-user; conf 8\nS2 cmd/bench/planning_reads.go:79,90 continuation carries the root-relative path, so a subdirectory caller reads the wrong file; auto-fix; conf 8\nS3 internal/tickets/registry_data.go:23 internal/read entry names no package; ask-user; conf 8\nS4 spec Placement lines 338-352 and tickets/1.md:22-23 not amended for the bite tests that stayed in place; auto-fix; conf 7\nDivergences: bite tests in place accepted (IEA seam citations); SKILL.md join accepted; open choices accepted except tree-scoped read (S1).\n"
+          },
+          "axis": "Spec",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C1-coverage-1",
+          "performer": "ft125-review-c1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2edc7d7c59d6ac67660c1aa947cecf41b3c9c39e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-coverage",
+            "digest": "sha256:bdc15bbee649b0383badabbdbd48fb309055ff8de11afb5ceeb2e321e5ed1ac0",
+            "excerpt": "Coverage axis ER-C1 c02a0324c..97ef9ee0e: 7 findings; worst CV1.\nCV1 cmd/bench/planning_reads.go:79,90 continuation from a subdirectory reads nested/\u003cname>; probe bit, 3 failures; auto-fix; conf 9\nCV2 internal/responsebound/file.go:67 oversized repository file refusal untested; probe silent; auto-fix; conf 8\nCV3 internal/responsebound/read.go:213 selection binding in the token untested; probe silent; auto-fix; conf 8\nCV4 internal/responsebound/file.go:101 Source.Unchanged untested; probe silent; auto-fix; conf 7\nCV5 internal/responsebound/read.go:163 help fallback guard untested (control byte in path); probe silent; auto-fix; conf 8\nCV6 internal/responsebound/read.go:182 empty nonterminal guard untested; tiny window splits a rune; probe silent; auto-fix; conf 7\nCV7 internal/responsebound/read.go:168, file.go:127 line clause and --lines overflow untested; probes silent; auto-fix; conf 7\n"
+          },
+          "axis": "Coverage",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e",
+          "finding_ids": [
+            "CV1",
+            "CV2",
+            "CV3",
+            "CV4",
+            "CV5",
+            "CV6",
+            "CV7"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -99,3 +185,46 @@ Each probe answered `bit`, and the author restored each subject.
 | `internal/bounds/open.go` | remove the `RefuseLinks` call | `TestExactFileStates/linked_parent` | ER37 |
 | `cmd/bench/main.go` | make the read row AXI-exempt | `TestAXIRegistryBindsEachRealCommandEnvelope` | ER46 |
 | `cmd/bench/main.go` | change the read help suffix | `TestHelpInventoryIsComplete` | ER46 |
+
+## ER-C1 review round 1
+
+The frozen pair is `c02a0324c..97ef9ee0e`. Each axis ran on opus / high.
+The round has 22 raw findings and 16 repair targets after duplicates merge.
+The reviewer decided F1 and S3 on 2026-10-30: the check takes each query's grammar package from the routing table.
+
+### Standards
+
+Count: 11. Worst issue: F1.
+
+- F1 (auto-fix, reviewer decision, confidence 9): `internal/tickets/registry_data.go:21-23` adds a placeholder `internal/read` entry. Repair target R2.
+- F2 (auto-fix, confidence 7): `internal/responsebound/read.go:168` derives the page budget a second time beside `Owner.overBound`. Repair target R3.
+- F3 (auto-fix, confidence 8): `internal/bounds/open.go:28-29` copies the regular-file classification of `gradeBytes`. Repair target R4.
+- F4 (auto-fix, confidence 6): `cmd/bench/planning_reads.go:73` builds a stand-in definition that repeats the registered scope. Repair target R5.
+- F5 (auto-fix, confidence 6): `internal/responsebound/read.go:92` and `file.go:122-123` hold two decimal validators. Repair target R6.
+- F6 (no-op, confidence 5): `internal/responsebound/read.go:163` detects the axi help fallback by its header. A learning records the axi predicate.
+- F7 (no-op, confidence 7): the bite tests stay in place, because a staged spec cites them there. Spec target S4 amends the text.
+- F8 (no-op, confidence 4): `cmd/bench/planning_reads.go:80` adds a containment test. A learning records the missing owner.
+- F9 (auto-fix, confidence 4): `cmd/bench/planning_reads.go:90` repeats the verb name. Repair target R8.
+- F10 (auto-fix, confidence 4): `cmd/bench/planning_reader_commands_test.go:33,35,134` discards a `Rows` error. Repair target R9.
+- F11 (auto-fix, confidence 3): `internal/responsebound/read_test.go:18` embeds the build label. Repair target R10.
+
+### Spec
+
+Count: 4. Worst issue: S1.
+
+- S1 (auto-fix, confidence 8): a root `bench read --in` continuation refuses, and the spec grammar gives root `read` no `--in`. Repair target R1.
+- S2 (auto-fix, confidence 8): `cmd/bench/planning_reads.go:79,90` makes a continuation from a subdirectory read the wrong path. Repair target R1.
+- S3 (auto-fix, reviewer decision, confidence 8): the same defect as F1. Repair target R2.
+- S4 (auto-fix, confidence 7): the spec Placement text and ticket 1 still say to move the bite tests. The plan commit before the repair amends them.
+
+### Coverage
+
+Count: 7. Worst issue: CV1.
+
+- CV1 (auto-fix, confidence 9): a probe from a subdirectory bit with 3 failures. Repair target R1.
+- CV2 (auto-fix, confidence 8): no test reads an oversized repository file. Repair target R11.
+- CV3 (auto-fix, confidence 8): no test reuses a token across selections. Repair target R12.
+- CV4 (auto-fix, confidence 7): no test replaces a file during one read. Repair target R13.
+- CV5 (auto-fix, confidence 8): no test puts a control byte or a space in a continued path. Repair target R14.
+- CV6 (auto-fix, confidence 7): no test makes a window smaller than one rune; such a window must refuse, not split the rune. Repair target R15.
+- CV7 (auto-fix, confidence 7): no test grades the 10-line budget or a `--lines` overflow. Repair targets R3 and R6.
