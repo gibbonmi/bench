@@ -687,3 +687,13 @@ Count: 0.
 Count: 1. Worst issue: N1.
 
 - N1, medium, confidence 8, auto-fix: omitting `c.first = c.first[:i]` at `internal/markdown/comments.go:95` is silent. Add the row `<!<!----><!---->----><!<!---->---->` to `TestReadBlockRules`, with the spans 0-21 and 21-35 and empty text. The repair is test-only, so a coordinator probe that bites closes it through `bench record confirmation`.
+
+### MB-C2, ticket 2 (ft358-author-02, opus / high)
+
+- MB24: the old code gave `LiveSpecSlugs = ["hidden"], want none` for a tilde-fenced spec path.
+- MB25: the old code gave `Facts = [...Status:"implemented"...], want one fact with the status staged` for an indented fence.
+- MB26: the old code gave `Implemented = "", spec has more than one Status: staged line`.
+- MB80: the old code gave `Implemented = "", spec has no Status: staged line` on a CRLF spec.
+- MB29 and MB30: the old code gave `references story 3, which the spec does not declare (has: 1, 2)` and `leaves story 2 unreferenced`.
+- MB83: a marker match on comment-free text gave `State = "mapped", want historical`.
+- `bench coverage --check` gives the same output and exit code at the base and at the tip on all 14 live specs.
