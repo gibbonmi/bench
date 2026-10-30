@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:a7ef5bc715c0df86eb39bf91e71bf940aeedc093cbfa00369948467107736c0d",
+  "plan_digest": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
   "implementation_session": "",
   "chunks": [
     {
@@ -2173,9 +2173,9 @@
     {
       "id": "MB-C5",
       "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
-      "tip": "9d5e681d32acc80cc0654018f783b1e23cb3a454",
-      "plan_digest": "sha256:a7ef5bc715c0df86eb39bf91e71bf940aeedc093cbfa00369948467107736c0d",
-      "source_digest": "2c8a1051010604cd1d2c0ef9a22f1be66f667273",
+      "tip": "49b8646e405e343497b03e605573e67355b08f28",
+      "plan_digest": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
+      "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
       "acceptance_rows": [
         "MB57",
         "MB58",
@@ -2344,6 +2344,126 @@
               "ref": "claude-agent:bench-writer-high:ft358-author-11",
               "digest": "sha256:7b1fb9a77dd0964497c11c217b962a4fa232dfc095cafbe2bc2ebeed4b507a5c",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/tier_live_tree_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,conformance-meta,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,446\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,31,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: conformance meta unregistered live-tree assertion TestMarkdownBlockOwnerHoldsOnTheLiveTree\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r9-markdown-block-owner",
+          "performer": "ft358-repair-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+            "digest": "sha256:964be0f11c6c9722d024490959dee8a14245b091f19a2aef26c694e5e2922c71",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/markdown_block_owner_test.go,omit,failed,2,TestMarkdownBlockOwnerBites/each_kind_in_internal,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestMarkdownBlockOwnerBites$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,901\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,11,7\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestMarkdownBlockOwnerBites/each_kind_in_internal,\"markdown_block_owner_test.go:112: diagnostics = [\\\"internal/example/example.go:4 spells the backtick fence run outside internal/markdown; read or render the block through the block reader\\\" \\\"internal/example/example.go:6 spells the frontmatte… (761 bytes)\",1\n  github.com/gibbonmi/bench/internal/conformance,TestMarkdownBlockOwnerBites/sibling_of_the_owner,\"markdown_block_owner_test.go:141: diagnostics = [\\\"internal/markdowntest/extra.go:4 spells the backtick fence run outside internal/markdown; read or render the block through the block reader\\\" \\\"internal/markdowntest/extra.go:6 spells the fron… (835 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "49b8646e405e343497b03e605573e67355b08f28",
+          "requirement": "markdown-block-owner",
+          "command": "bench test --package ./internal/conformance --run '^TestMarkdownBlockOwnerBites$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/conformance/markdown_block_owner_test.go: omit the tilde-run kind; expect TestMarkdownBlockOwnerBites",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+              "digest": "sha256:964be0f11c6c9722d024490959dee8a14245b091f19a2aef26c694e5e2922c71",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/markdown_block_owner_test.go,omit,failed,2,TestMarkdownBlockOwnerBites/each_kind_in_internal,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestMarkdownBlockOwnerBites$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,901\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,11,7\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestMarkdownBlockOwnerBites/each_kind_in_internal,\"markdown_block_owner_test.go:112: diagnostics = [\\\"internal/example/example.go:4 spells the backtick fence run outside internal/markdown; read or render the block through the block reader\\\" \\\"internal/example/example.go:6 spells the frontmatte… (761 bytes)\",1\n  github.com/gibbonmi/bench/internal/conformance,TestMarkdownBlockOwnerBites/sibling_of_the_owner,\"markdown_block_owner_test.go:141: diagnostics = [\\\"internal/markdowntest/extra.go:4 spells the backtick fence run outside internal/markdown; read or render the block through the block reader\\\" \\\"internal/markdowntest/extra.go:6 spells the fron… (835 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r9-skill-description-budgets",
+          "performer": "ft358-repair-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+            "digest": "sha256:2ceb32c03ceb1f73f0be424aeee250849031664fa92c0304765323556def99aa",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/skill_description_budgets_test.go,insert,failed,1,TestSkillDescriptionBudgetReportsMissingAndFoldedValues,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestSkillDescriptionBudgetReportsMissingAndFoldedValues$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,465\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,12,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetReportsMissingAndFoldedValues,\"skill_description_budgets_test.go:430: want \\\"skill-description folded: .agents/commands/bench-fixture.md continues its description on an indented second line\\\" in one run, got:\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "49b8646e405e343497b03e605573e67355b08f28",
+          "requirement": "skill-description-budgets",
+          "command": "bench test --package ./internal/conformance --run '^TestSkillDescriptionBudgetReportsMissingAndFoldedValues$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/conformance/skill_description_budgets_test.go: make skillDescriptionFolded return false; expect TestSkillDescriptionBudgetReportsMissingAndFoldedValues",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+              "digest": "sha256:2ceb32c03ceb1f73f0be424aeee250849031664fa92c0304765323556def99aa",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/skill_description_budgets_test.go,insert,failed,1,TestSkillDescriptionBudgetReportsMissingAndFoldedValues,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestSkillDescriptionBudgetReportsMissingAndFoldedValues$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,465\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,12,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestSkillDescriptionBudgetReportsMissingAndFoldedValues,\"skill_description_budgets_test.go:430: want \\\"skill-description folded: .agents/commands/bench-fixture.md continues its description on an indented second line\\\" in one run, got:\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r9-skills-index-command-adapters",
+          "performer": "ft358-repair-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+            "digest": "sha256:372f445046a91acf93afd9c5d7ab40701e3397cfa866faa41cbe36e130c8e798",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/skills_index_checks_test.go,omit,failed,1,TestCommandInvocationPolicyGradesTableCompleteness/body_prose_mention_of_the_key_is_inert,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestCommandInvocationPolicyGradesTableCompleteness$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,563\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,13,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommandInvocationPolicyGradesTableCompleteness/body_prose_mention_of_the_key_is_inert,\"skills_index_checks_test.go:533: body-prose mention of disable-model-invocation reddened the check: [\\\"command 'bench-write-spec' frontmatter carries disable-model-invocation though the invocation policy makes it model-invocable on Claude\\\"]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "49b8646e405e343497b03e605573e67355b08f28",
+          "requirement": "skills-index-command-adapters",
+          "command": "bench test --package ./internal/conformance --run '^TestCommandInvocationPolicyGradesTableCompleteness$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/conformance/skills_index_checks_test.go: make frontmatterHasKey read past the closing frontmatter marker; expect TestCommandInvocationPolicyGradesTableCompleteness",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+              "digest": "sha256:372f445046a91acf93afd9c5d7ab40701e3397cfa866faa41cbe36e130c8e798",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/skills_index_checks_test.go,omit,failed,1,TestCommandInvocationPolicyGradesTableCompleteness/body_prose_mention_of_the_key_is_inert,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestCommandInvocationPolicyGradesTableCompleteness$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,563\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,13,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestCommandInvocationPolicyGradesTableCompleteness/body_prose_mention_of_the_key_is_inert,\"skills_index_checks_test.go:533: body-prose mention of disable-model-invocation reddened the check: [\\\"command 'bench-write-spec' frontmatter carries disable-model-invocation though the invocation policy makes it model-invocable on Claude\\\"]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r9-conformance-meta",
+          "performer": "ft358-repair-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+            "digest": "sha256:1ae91477554f482c83936c268eabbddc5e7a6e1d939d3408364d494c7730c74b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/tier_live_tree_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,conformance-meta,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,446\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,30,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: conformance meta unregistered live-tree assertion TestMarkdownBlockOwnerHoldsOnTheLiveTree\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "49b8646e405e343497b03e605573e67355b08f28",
+          "requirement": "conformance-meta",
+          "command": "bench test --check conformance-meta",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/conformance/tier_live_tree_test.go: omit the TestMarkdownBlockOwnerHoldsOnTheLiveTree entry of classifiedLiveTreeTests, so the unregistered live-tree assertion diagnostic fires; expect TestRootConformance",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-05",
+              "digest": "sha256:1ae91477554f482c83936c268eabbddc5e7a6e1d939d3408364d494c7730c74b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/tier_live_tree_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,conformance-meta,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,446\ncheck[1]{name,kind,tests_run,subjects}:\n  conformance-meta,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,30,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: conformance meta unregistered live-tree assertion TestMarkdownBlockOwnerHoldsOnTheLiveTree\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -2693,6 +2813,27 @@
     {
       "from": "sha256:b9b3d587f8e5b0a278aeda03fdbf9f50b424e699eb649789d12eabe285e94a7b",
       "to": "sha256:a7ef5bc715c0df86eb39bf91e71bf940aeedc093cbfa00369948467107736c0d",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ],
+        "MB-C4": [
+          "MB-C4"
+        ],
+        "MB-C5": [
+          "MB-C5"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a7ef5bc715c0df86eb39bf91e71bf940aeedc093cbfa00369948467107736c0d",
+      "to": "sha256:173af756972b42372825d2cdfae3ea79634ee61ae6e384c9ac6f342b8045eabc",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
