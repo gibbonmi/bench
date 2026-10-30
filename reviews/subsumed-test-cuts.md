@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/subsumed-test-cuts/spec.md",
-  "plan_digest": "sha256:0d0f369cac0d4a134ad41fa09c025f63069706c7ace97e6b2b9fd35cead1e997",
+  "plan_digest": "sha256:231c4c21fcd42b76e165ed5bf163f33aa4482652664ac995293048a25c1501b1",
   "implementation_session": "",
   "chunks": [
     {
@@ -1231,6 +1231,244 @@
           }
         }
       ]
+    },
+    {
+      "id": "FT411-C2",
+      "base": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+      "tip": "d466c480239e31d45e37c79a2240f6145afb7b19",
+      "plan_digest": "sha256:231c4c21fcd42b76e165ed5bf163f33aa4482652664ac995293048a25c1501b1",
+      "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+      "acceptance_rows": [
+        "TC25",
+        "TC26",
+        "TC29",
+        "TC30",
+        "TC31",
+        "TC32",
+        "TC33",
+        "TC27",
+        "TC28",
+        "TC34",
+        "TC35",
+        "TC36",
+        "TC37",
+        "TC38",
+        "TC39",
+        "TC40"
+      ],
+      "verification": [
+        {
+          "id": "t04-tc25",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:085cb72c8b924ab0a040f5e6be994c7d80738660e40db790c45d81f5b69d428a",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandPrintsNoHeadsLineWithoutRecords,1,1,0,null,yes\n  2,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\n  3,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandPrintsNoHeadsLineWithoutRecords$|^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc25",
+          "command": "bench test --package ./internal/worktree --run '^TestLandCommandPrintsNoHeadsLineWithoutRecords$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land.go: swap `return counts[assignment]` for `return counts[assignment] + 1`; expect TestLandCommandPrintsNoHeadsLineWithoutRecords",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:085cb72c8b924ab0a040f5e6be994c7d80738660e40db790c45d81f5b69d428a",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandPrintsNoHeadsLineWithoutRecords,1,1,0,null,yes\n  2,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\n  3,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandPrintsNoHeadsLineWithoutRecords$|^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t04-tc26",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:b947daf0b0c4350b20188752c6855d119d8ca4e42f9ce5e89d2372d0321d0ea6",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandSkipsTheRefreshWithoutBuildInputs,1,1,0,null,yes\n  2,bit,swap,failed,1,TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandSkipsTheRefreshWithoutBuildInputs$|^TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc26",
+          "command": "bench test --package ./internal/worktree --run '^TestLandSkipsTheRefreshWithoutBuildInputs$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land_effects.go: swap `return landedComplete(stdout, result, active, records)` for a call that keeps the exit code, prints one trailer line after the landed record, and returns the code; expect TestLandSkipsTheRefreshWithoutBuildInputs",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:b947daf0b0c4350b20188752c6855d119d8ca4e42f9ce5e89d2372d0321d0ea6",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandSkipsTheRefreshWithoutBuildInputs,1,1,0,null,yes\n  2,bit,swap,failed,1,TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandSkipsTheRefreshWithoutBuildInputs$|^TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t04-tc29",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:b947daf0b0c4350b20188752c6855d119d8ca4e42f9ce5e89d2372d0321d0ea6",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandSkipsTheRefreshWithoutBuildInputs,1,1,0,null,yes\n  2,bit,swap,failed,1,TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandSkipsTheRefreshWithoutBuildInputs$|^TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc29",
+          "command": "bench test --package ./internal/worktree --run '^TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land_effects.go: swap `if j.releaseLandingAssignment(j, a, root, []string{\"--request\", request, path}, io.Discard, &diagnostic) == 0 {` for `if true {`; expect TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:b947daf0b0c4350b20188752c6855d119d8ca4e42f9ce5e89d2372d0321d0ea6",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandSkipsTheRefreshWithoutBuildInputs,1,1,0,null,yes\n  2,bit,swap,failed,1,TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandSkipsTheRefreshWithoutBuildInputs$|^TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t04-tc30",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:085cb72c8b924ab0a040f5e6be994c7d80738660e40db790c45d81f5b69d428a",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandPrintsNoHeadsLineWithoutRecords,1,1,0,null,yes\n  2,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\n  3,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandPrintsNoHeadsLineWithoutRecords$|^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc30",
+          "command": "bench test --package ./internal/worktree --run '^TestLandCommandStatesTheCensusCountAndDropsTheRecords$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land.go: omit `fmt.Fprintf(stderr, \"census heads{%s}\\n\", breakdown)`; expect TestLandCommandStatesTheCensusCountAndDropsTheRecords",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:085cb72c8b924ab0a040f5e6be994c7d80738660e40db790c45d81f5b69d428a",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandPrintsNoHeadsLineWithoutRecords,1,1,0,null,yes\n  2,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\n  3,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandPrintsNoHeadsLineWithoutRecords$|^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t04-tc31",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:085cb72c8b924ab0a040f5e6be994c7d80738660e40db790c45d81f5b69d428a",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandPrintsNoHeadsLineWithoutRecords,1,1,0,null,yes\n  2,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\n  3,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandPrintsNoHeadsLineWithoutRecords$|^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc31",
+          "command": "bench test --package ./internal/worktree --run '^TestLandCommandStatesTheCensusCountAndDropsTheRecords$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land.go: omit `fmt.Fprintf(stderr, \"census output{%s}\\n\", breakdown)`; expect TestLandCommandStatesTheCensusCountAndDropsTheRecords",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:085cb72c8b924ab0a040f5e6be994c7d80738660e40db790c45d81f5b69d428a",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandPrintsNoHeadsLineWithoutRecords,1,1,0,null,yes\n  2,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\n  3,bit,omit,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandPrintsNoHeadsLineWithoutRecords$|^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t04-tc32",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:8633b423c8c84f6a485fa122601a2f27a6f79dddabf8c66cccd551dedbaddbab",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc32",
+          "command": "bench test --package ./internal/worktree --run '^TestLandCommandStatesTheCensusCountAndDropsTheRecords$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/lifecycle.go: swap `_ = census.Drop(a.home, root, id)` for `_ = census.Drop`; expect TestLandCommandStatesTheCensusCountAndDropsTheRecords",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:8633b423c8c84f6a485fa122601a2f27a6f79dddabf8c66cccd551dedbaddbab",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t04-tc33",
+          "performer": "ft411-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-04",
+            "digest": "sha256:8633b423c8c84f6a485fa122601a2f27a6f79dddabf8c66cccd551dedbaddbab",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "d466c480239e31d45e37c79a2240f6145afb7b19",
+          "requirement": "tc33",
+          "command": "bench test --package ./internal/worktree --run '^TestLandCommandStatesTheCensusCountAndDropsTheRecords$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/census/output.go: swap `assignment+outputSuffix` for `assignment` in the RecordOutput write; expect TestLandCommandStatesTheCensusCountAndDropsTheRecords",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-04",
+              "digest": "sha256:8633b423c8c84f6a485fa122601a2f27a6f79dddabf8c66cccd551dedbaddbab",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1262,6 +1500,15 @@
     {
       "from": "sha256:e1564e017bb221e293307e9ca521767f8831bc4731280ac8f2de1aeef747bfca",
       "to": "sha256:0d0f369cac0d4a134ad41fa09c025f63069706c7ace97e6b2b9fd35cead1e997",
+      "chunk_ids": {
+        "FT411-C1": [
+          "FT411-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0d0f369cac0d4a134ad41fa09c025f63069706c7ace97e6b2b9fd35cead1e997",
+      "to": "sha256:231c4c21fcd42b76e165ed5bf163f33aa4482652664ac995293048a25c1501b1",
       "chunk_ids": {
         "FT411-C1": [
           "FT411-C1"
