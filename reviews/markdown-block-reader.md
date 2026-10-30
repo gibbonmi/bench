@@ -3077,3 +3077,11 @@ Count: 0.
 - MB61 and MB70: the old marker scan gave no refusal for an unterminated tilde block and for a comment fault.
 - MB86, MB97, MB87, and MB91: the Bench-text condition, the fragment read, and the CR-preserving rebuild each failed their row when omitted.
 - The live AGENTS.md rewrites and strips to the same bytes at the base and at the tip.
+
+### MB-C5, ticket 11 (ft358-author-11, opus / high)
+
+- MB62 to MB67: a stubbed check gave no diagnostic for each of the six literal kinds.
+- MB68: each exemption, removed alone, turned its side of the exemption case red.
+- MB69: before the two fixtures moved to the fence constant, the live-tree test gave four diagnostics.
+- MB101: without its entry, `conformance-meta` reported the unregistered live-tree assertion.
+- MB98: the old `skillDescriptionFolded`, `frontmatterHasKey`, and `h2Headings` failed `TestConformanceReadersUseTheBlockReader` on CRLF frontmatter and on a fenced or commented heading.
