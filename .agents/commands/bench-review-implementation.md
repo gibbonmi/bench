@@ -50,7 +50,7 @@ A test-only repair whose coordinator probe bites closes through `bench record co
 
 Until the review record holds sibling chunks, the coordinator plans a three-axis confirming round for a repair delta that holds a sibling chunk's commit.
 
-When every accepted finding of a round falls on one ticket, one combined repair charge carries them all. That charge holds the findings of every axis and goes to that ticket's repair session. When the accepted findings fall on several tickets, each affected ticket keeps its own repair session under `.bench/BENCH.md`'s repair rule.
+When every accepted finding of a round falls on one ticket, one combined repair charge carries them all. That charge holds the findings of every axis and goes to that ticket's repair session. When the accepted findings fall on several tickets, `.bench/BENCH.md`'s repair rule routes the small findings to one repair session.
 
 A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.
 
@@ -135,8 +135,10 @@ Here, findings that prevent progression are unresolved blockers; retain optional
 
    Resolve every axis through `craft-line`'s conditional review line from the implementation model.
 
-   On one shared tree, only one axis runs tests or probes while the other axes read.
-   A probing axis otherwise takes its own worktree.
+   On one shared tree, only the Coverage axis runs tests or `bench probe` while the other axes read.
+   Each axis charge names the Coverage axis as the probing axis. A probing axis otherwise takes its own worktree.
+   While an axis probes, the orchestrator reads code only through `git show` at the frozen tip.
+   `craft-delegate` owns the clean `git status` check after each return.
 
    Collect every axis return before you accept a finding. A missing or failed
    axis return leaves the review incomplete. It is never a clean finding set.

@@ -24,11 +24,15 @@ Base commit: <commit that the repair changes>
 Ownership fence: <exact repo-relative file or path prefix>
 Effort: <level and iteration cap>
 Focused suite: <exact command>
-Independent biting probe: <property, mutation kind, site, and expected red>
+Independent biting probe: <each probe of the plan that the ticket owes: property, mutation kind, site, and expected red>
 Debug route: start with `.agents/commands/bench-debug.md`; return the recorded cause
 Repair context: <fold targets and author context, each read by the coordinator before this charge names it>
 Witness return: <the demonstrated red of each independent test expectation that the repair adds: mutation, killing test, restored>
 ```
+
+A repair charge carries every finding that `.bench/BENCH.md`'s repair rule routes to its session.
+A repair charge names only the probes of the plan. The one coordinator probe carries the finding mutants.
+A repair charge never skips a named-check plan probe, because a named-check requirement never carries.
 
 ## In the charge
 
@@ -195,8 +199,9 @@ Witness return: <the demonstrated red of each independent test expectation that 
 - A hand verification does not close an acceptance row without a named
   red-capable test.
 - A ticket without an observed red for each row goes back to its ticket author for those reds. The coordinator gets the reds before the commit.
-- Keep an accepted finding on its original ticket when attribution is clear. Use
-  an umbrella repair ticket only for a genuinely shared owner.
+- `.bench/BENCH.md`'s repair rule routes the small accepted findings of a chunk round
+  to one ticket. Keep each other accepted finding on its original ticket when
+  attribution is clear. Use an umbrella repair ticket only for a genuinely shared owner.
 - When an installed lane cannot commit its repair, run the same ordinary commit core from
   the candidate tree. Grade the composed snapshot, then require the sanctioned rebuild after landing.
 - The checkpoint ticket records a reviewer decision that occurs during a build.

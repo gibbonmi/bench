@@ -14,6 +14,8 @@ baseline, and the universal-claim rule.
 
 - A finding cites the line the axis read this pass, or the symbol instead. A line number
   from an earlier pass points at bytes that moved.
+- A finding that asks for a new stop or refusal first cites the validator's current
+  diagnostic for that input.
 - A review-owned row names the artifact that stores its evidence. Evidence that lives
   only in a delegate return is not citable at the landing.
 - Review grades rule wording directly, because no anchor pins it. So a repair of a rule sentence seeks no anchor row.
@@ -40,11 +42,19 @@ baseline, and the universal-claim rule.
   - each competing refusal and each writer
   - each pairing of a publication with a refusal
   - each affected legacy input
+  - each registry of an extended family, which the `craft-delegate` charge rule for an
+    enumerated family names
 - The Coverage axis exercises these tree states:
   - immutable tracked files
   - transitioned specs
   - untracked descendants
   - nested working directories
+
+## When a cause repeats
+
+- After a held finding whose cause is a repeatable pattern, the axis searches for that
+  pattern. An in-fence hit becomes its own finding, and an out-of-fence hit goes to
+  `bench learning`.
 
 ## What an axis return carries
 
