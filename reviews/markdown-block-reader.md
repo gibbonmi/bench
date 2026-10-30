@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
+  "plan_digest": "sha256:a0517fefa850069b8ac3657f4567d1e6ffff412ce1f57ded61459a0e554fb375",
   "implementation_session": "",
   "chunks": [
     {
@@ -500,9 +500,9 @@
     {
       "id": "MB-C2",
       "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
-      "tip": "cd86cf1efca9403f1d2908aadd32612e62857e42",
-      "plan_digest": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
-      "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
+      "tip": "592040eab58cc8bdcc388aa0973757a6c86cabd4",
+      "plan_digest": "sha256:a0517fefa850069b8ac3657f4567d1e6ffff412ce1f57ded61459a0e554fb375",
+      "source_digest": "86d28a1c0b9b0e25f9b79741a8a669daf3bfbf47",
       "acceptance_rows": [
         "MB24",
         "MB25",
@@ -517,6 +517,7 @@
         "MB81",
         "MB99",
         "MB100",
+        "MB103",
         "MB34",
         "MB35",
         "MB36",
@@ -674,6 +675,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/tickets/tickets.go,swap,failed,3,TestParseTicketReadsTheBlockReaderFault/MB35_an_unterminated_tilde_block,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/tickets,^TestParseTicketReadsTheBlockReaderFault$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,873\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/tickets,fail,2,6\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB35_an_unterminated_tilde_block,\"fence_test.go:50: diagnostics = []string(nil), want []string{\\\"unterminated fence\\\"}\",1\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB36_a_four-backtick_block_that_holds_a_three-backtick_line,\"fence_test.go:50: diagnostics = []string{\\\"unterminated fence\\\"}, want []string(nil)\",1\n  github.com/gibbonmi/bench/internal/tickets,TestParseTicketReadsTheBlockReaderFault/MB37_a_Covers_line_inside_the_four-backtick_block,\"fence_test.go:50: diagnostics = []string{\\\"unterminated fence\\\", \\\"missing Covers\\\"}, want []string{\\\"missing Covers\\\"}\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "r2-roadmap",
+          "performer": "ft358-repair-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "86d28a1c0b9b0e25f9b79741a8a669daf3bfbf47",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-02",
+            "digest": "sha256:dd395c7ec98a337b102d4f5cdfd3bb22e5fb31fd24ca39a2ed234d35fd09de93",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "592040eab58cc8bdcc388aa0973757a6c86cabd4",
+          "requirement": "roadmap",
+          "command": "bench test --package ./internal/roadmap --run '^TestProjectSequenceSkipsFencedHeadings$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/roadmap/sequence_projection.go: make sectionBounds ignore the reader's fence class; expect TestProjectSequenceSkipsFencedHeadings",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-02",
+              "digest": "sha256:dd395c7ec98a337b102d4f5cdfd3bb22e5fb31fd24ca39a2ed234d35fd09de93",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -802,6 +833,18 @@
     {
       "from": "sha256:db3964c4226ddfa7d839b061b646cbd166c039cb8da1620bac16b6f552cdd706",
       "to": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:5282f157288e552be111dee9dbb280c348f121f3ef44d7fa67b8b3df386f68fe",
+      "to": "sha256:a0517fefa850069b8ac3657f4567d1e6ffff412ce1f57ded61459a0e554fb375",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
