@@ -1311,3 +1311,11 @@ Count: 0.
 ### Coverage
 
 Count: 0.
+
+### MB-C3, ticket 5 (ft358-author-05, opus / high)
+
+- MB39 and MB40: the old toggle in `OpenFence` and `UnfencedLines` gave the wrong fence on three shapes. They are a longer closer, a closer of the other character, and a shorter run.
+- MB93: `OpenFence` through `Read` gave `(0, false), want (2, true)` for a State body whose first line is `---`.
+- MB38: the old toggle in `splitSections` split a section at a fenced `## X` line.
+- MB82: without the comment-fault refusal, `readStateFile` gave no refusal or the section-heading refusal.
+- `handoffdoc.Parse` gives byte-identical output at the base and at the tip on the live session handoff.
