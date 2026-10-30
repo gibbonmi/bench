@@ -554,7 +554,7 @@ reds the live tree until the last copy goes.
 | MB68 | 61 | The same literals in a `_test.go` file and in `internal/markdown` give no diagnostic | `internal/conformance/markdown_block_owner_test.go` (`TestMarkdownBlockOwnerBites`) | A check without the exemptions reds each fixture and the owner itself. |
 | MB69 | 62 | `bench test --check markdown-block-owner` is green on the live tree | `internal/conformance/markdown_block_owner_test.go` (`TestMarkdownBlockOwnerHoldsOnTheLiveTree`) | A surviving copy in any module reds the live-tree run. |
 | MB101 | 62 | The detected `TestMarkdownBlockOwnerHoldsOnTheLiveTree` assertion has its entry in `classifiedLiveTreeTests` | review-owned: ticket 11 traces the assertion through testChecksLiveTree and runs `bench test --check conformance-meta` | Removing the required entry gives the unregistered-live-tree assertion diagnostic. |
-| MB98 | 77 | `skillDescriptionFolded`, `frontmatterHasKey`, and `h2Headings` each call the block reader and hold no block-rule literal | review-owned: the ticket 11 review reads the three function bodies | The check exempts test files, so only a review sees a surviving copy in these helpers. |
+| MB98 | 77 | `skillDescriptionFolded`, `frontmatterHasKey`, `h2Headings`, the skill frontmatter test of `checkSkillFrontmatter`, and the README first-H2 read each call the block reader and hold no block-rule literal | review-owned: the ticket 11 review reads the five function bodies | The check exempts test files, so only a review sees a surviving copy in these helpers. |
 
 Not covered: story 1 — MB1 to MB19 cover the classification facts one at a time, and story 1 is their union.
 Not covered: story 63 — Won't handle: the indented code block.
@@ -836,7 +836,7 @@ keep their expectations without an edit, as MB55 states.
 - FA4: an indented fence opener now opens a block in each column-zero site. The roadmap sites are `tree.go:115`, `:276`, and `:344`, plus `sequence_projection.go:22`. The other sites are `maps/fields.go:83`, `tickets/tickets.go:109-116`, `adopt/marker.go:48`, `:104`, and `:150`, and `spec/spec.go:80`. MB25 covers the spec site. The `reviewrecord` site is FA7.
 - FA6: `ParseDocument` stops parsing a roadmap row inside any fence, a backtick fence included. MB81 covers it.
 - FA7: `reviewrecord.locate` now opens a record on an indented opener, a tilde opener, or a CRLF opener. `ReadPlan` and `parseRecord` read records that Bench writes itself, so the output of each Bench writer does not move.
-- FA8: the three conformance readers of ticket 11 read CRLF frontmatter, and `h2Headings` drops a fenced or commented heading. Closed decision 9 requires the move.
+- FA8: the five conformance readers of ticket 11 read CRLF frontmatter, and the H2 readers drop a fenced or commented heading. A skill file that opens with `---` and has no closer now gives "missing frontmatter". Closed decisions 8 and 9 require the move.
 - FA9: `markdown-block-owner` is a new conformance check. The source asks for one reader, and the check is the red-capable copy-survival row.
 - FA10: a valid frontmatter block in a spec, a coverage map, the roadmap index, the learnings journal, or a retrospective declares nothing, because story 9 keeps frontmatter out of every grammar. No tracked spec or roadmap file starts with `---`.
 - FA11: `ParseTicket` gives no `unterminated fence` diagnostic when an unterminated HTML comment comes first. The reader reports the comment fault first (MB71), and the ticket grammar names no comment diagnostic.

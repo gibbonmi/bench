@@ -3309,3 +3309,10 @@ Count: 0. The spec text now says that the check grades every non-test Go file of
 ### Coverage
 
 Count: 0. The repair also adds two hardening rows from the advice: a body-inert case for `skillDescriptionFolded`, and a sibling-path case for the owner exemption.
+
+### MB-C5 repair witness reds (ft358-repair-05, opus / high, repair cycle 1 of 2)
+
+- S2: the old helpers gave "missing frontmatter" for a CRLF skill file. They also read a fenced or a commented heading as the README's first H2.
+- Body-inert hardening: a `skillDescriptionFolded` without the frontmatter class test read a folded description in the body.
+- Sibling-path hardening: an owner exemption without the path separator gave no diagnostic for a sibling package.
+- S1: the omission of the tilde kind still fails the bite test. The live-tree check stays green, and each kind comes from an `internal/markdown` constant.
