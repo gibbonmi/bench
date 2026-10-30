@@ -2,6 +2,7 @@ package handoffdoc
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -239,7 +240,8 @@ func TestParseSkipsAFencedStateHeading(t *testing.T) {
 
 // TestParseRefusesAFenceBehindAFrontmatterFault proves that an unclosed first-line marker
 // hides no fence. The reader reports only the frontmatter fault there, so Parse reads the
-// fence fault from the fragment reading. The marker line alone stays header.
+// fence fault from the fragment reading. The marker line alone stays header. A closed
+// frontmatter block is no fault, so a fence marker line inside it opens no fence.
 func TestParseRefusesAFenceBehindAFrontmatterFault(t *testing.T) {
 	body := MainHeading + "\n\nNext command: `bench status`\n\n" + StateHeading + "\n\n"
 	for _, tc := range []struct {
@@ -248,6 +250,7 @@ func TestParseRefusesAFenceBehindAFrontmatterFault(t *testing.T) {
 	}{
 		{"open fence", "---\n" + body + "```\n" + RequestHeadingPrefix + "abc\n", 8},
 		{"no fence", "---\n" + body + "The worktree is live.\n", 0},
+		{"fence marker in closed frontmatter", "---\n```\n---\n" + body + "The worktree is live.\n", 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := Parse("handoff.md", []byte(tc.content))
@@ -291,6 +294,31 @@ func TestParseReadsHeadingsOnCommentFreeText(t *testing.T) {
 	got, err := Parse("handoff.md", []byte("<!-- lead -->"+MainHeading+"\n\n"+StateHeading+"\n\n"+state+"\n"))
 	if err != nil || !reflect.DeepEqual(got, want) {
 		t.Fatalf("commented headings: Parse refused at line %d or changed the sections, want main alone with the commented heading in State", refusalLine(err))
+	}
+}
+
+// TestParseQuotesTheRawHeading proves that a heading refusal and a converted legacy heading
+// keep the line as the file spells it, comment included.
+func TestParseQuotesTheRawHeading(t *testing.T) {
+	const notes = "## Notes <!-- c -->"
+	const request = RequestHeadingPrefix + "a b <!-- c -->"
+	main := MainHeading + "\n\nNext command: `bench status`\n\n" + StateHeading + "\n\n"
+	for _, tc := range []struct{ name, content, quote string }{
+		{"unknown heading", main + notes + "\n", notes},
+		{"request digest", main + request + "\n", request},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Parse("handoff.md", []byte(tc.content))
+			refusal, ok := err.(*ParseError)
+			if !ok || !strings.HasPrefix(refusal.Reason, "heading "+strconv.Quote(tc.quote)+" ") {
+				t.Fatalf("%s: Parse refusal at line %d (a refusal: %t), want the heading refusal quoting the raw line", tc.name, refusalLine(err), ok)
+			}
+		})
+	}
+
+	got, err := Parse("handoff.md", []byte(legacyStateHeading+"\n\nx\n\n"+notes+"\n\ny\n"))
+	if err != nil || got.Sections[0].State != "x\n\n### Notes <!-- c -->\n\ny" {
+		t.Fatalf("legacy heading: Parse refused at line %d or changed the converted heading, want it with its comment", refusalLine(err))
 	}
 }
 

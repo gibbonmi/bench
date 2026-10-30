@@ -218,7 +218,7 @@ func Parse(path string, content []byte) (*Document, error) {
 	}
 	seen := map[string]int{}
 	for _, block := range blocks {
-		key, err := sectionKey(path, block.line, block.heading)
+		key, err := sectionKey(path, block)
 		if err != nil {
 			return nil, err
 		}
@@ -242,13 +242,13 @@ func Parse(path string, content []byte) (*Document, error) {
 	return doc, nil
 }
 
-// block is one level-two heading, as the file spells it, and the read lines below
-// it. The heading stays unresolved here so that the legacy conversion can read a
-// spelling this grammar has no key for.
+// block is one level-two heading and the read lines below it. The heading is its
+// comment-free title, unresolved so that the legacy conversion can read a spelling this
+// grammar has no key for, and raw is the line as the file spells it, for a refusal to quote.
 type block struct {
-	heading string
-	line    int
-	body    []markdown.Line
+	heading, raw string
+	line         int
+	body         []markdown.Line
 }
 
 // splitSections cuts the lines into the header and one block per level-two
@@ -268,7 +268,7 @@ func splitSections(lines []markdown.Line) (blocks []block, header []string) {
 			}
 			continue
 		}
-		blocks = append(blocks, block{heading: strings.TrimRight(line.Text, " \t"), line: line.Number})
+		blocks = append(blocks, block{heading: strings.TrimRight(line.Text, " \t"), raw: strings.TrimRight(line.Raw, " \t"), line: line.Number})
 	}
 	return blocks, header
 }
@@ -321,7 +321,7 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 			}
 			next = body
 		default:
-			extras += "\n\n" + h3Prefix + strings.TrimPrefix(b.heading, markdown.H2Prefix) + "\n\n" + body
+			extras += "\n\n" + h3Prefix + strings.TrimPrefix(b.raw, markdown.H2Prefix) + "\n\n" + body
 		}
 	}
 
@@ -340,20 +340,20 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 
 // sectionKey resolves one heading to its key. Shape keeps its heading as the key,
 // because it is the one block that holds no section.
-func sectionKey(path string, line int, trimmed string) (string, error) {
+func sectionKey(path string, b block) (string, error) {
 	switch {
-	case trimmed == MainHeading:
+	case b.heading == MainHeading:
 		return MainKey, nil
-	case trimmed == shapeHeading:
+	case b.heading == shapeHeading:
 		return shapeHeading, nil
-	case strings.HasPrefix(trimmed, RequestHeadingPrefix):
-		digest := strings.TrimSpace(strings.TrimPrefix(trimmed, RequestHeadingPrefix))
+	case strings.HasPrefix(b.heading, RequestHeadingPrefix):
+		digest := strings.TrimSpace(strings.TrimPrefix(b.heading, RequestHeadingPrefix))
 		if digest == "" || strings.ContainsAny(digest, " \t") {
-			return "", &ParseError{path, line, fmt.Sprintf("heading %q names no single request digest", trimmed)}
+			return "", &ParseError{path, b.line, fmt.Sprintf("heading %q names no single request digest", b.raw)}
 		}
 		return digest, nil
 	}
-	return "", &ParseError{path, line, fmt.Sprintf("heading %q is not %q, %q, or %q", trimmed, MainHeading, RequestHeadingPrefix+"<digest>", shapeHeading)}
+	return "", &ParseError{path, b.line, fmt.Sprintf("heading %q is not %q, %q, or %q", b.raw, MainHeading, RequestHeadingPrefix+"<digest>", shapeHeading)}
 }
 
 // parseSection reads one block's label lines and its State body. Everything below

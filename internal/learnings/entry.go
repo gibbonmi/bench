@@ -45,7 +45,7 @@ func resolvedBy(line string) (string, bool) {
 	return strings.TrimSpace(value), ok
 }
 
-// sourceBody returns the source text of lines[from:to] with the empty lines at each end
+// sourceBody returns the source text of lines[from:to] with the newline bytes at each end
 // trimmed. It slices the source, not the reader's lines, so a CRLF body keeps each carriage
 // return that the reader strips from a line.
 func sourceBody(content string, lines []markdown.Line, from, to int) string {

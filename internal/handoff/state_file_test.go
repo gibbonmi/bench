@@ -241,10 +241,11 @@ func TestHandoffStateFileRefusesAnUnclosedFence(t *testing.T) {
 // closed comment writes.
 func TestStateFileRefusesAnUnterminatedComment(t *testing.T) {
 	const opener = "<!-- draft note"
+	const commentHint = handoffdoc.OpenCommentRepair + stateRerun + opener
 	for _, tc := range []struct{ name, draft, kind, hint string }{
-		{"open comment", "The build is live.\n\n" + opener + "\n" + handoffdoc.MainHeading + "\n", faultStateFileComment, stateCommentRepair + opener},
-		{"open fence above it", "```\n  " + opener + "\n", faultStateFileComment, stateCommentRepair + opener},
-		{"leading marker line", "---\n" + opener + "\n", faultStateFileComment, stateCommentRepair + opener},
+		{"open comment", "The build is live.\n\n" + opener + "\n" + handoffdoc.MainHeading + "\n", faultStateFileComment, commentHint},
+		{"open fence above it", "```\n  " + opener + "\n", faultStateFileComment, commentHint},
+		{"leading marker line", "---\n" + opener + "\n", faultStateFileComment, commentHint},
 		{"trailing-space heading", "The build is live.\n\n## \n", faultStateFileHeading, stateRepair + "##"},
 		{"heading after a comment", "<!-- c -->## x\n", faultStateFileHeading, stateRepair + "<!-- c -->## x"},
 	} {

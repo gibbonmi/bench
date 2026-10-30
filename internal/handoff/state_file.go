@@ -22,17 +22,13 @@ const (
 	faultStateFileHeading    = "the handoff state file opens a section heading"
 )
 
+// Each repair ends in stateRerun. The fence and comment repairs take the fix from the
+// document parser, which owns the words. The draft and the document refuse the same fence
+// or comment for the same reason, so a reworded instruction there carries here.
 const (
-	stateFileRepair = "name a readable regular file, then rerun bench handoff: "
-	stateByteRepair = "remove the control byte, then rerun bench handoff: "
-)
-
-// The fence and comment repairs take the fix from the document parser, which owns the words.
-// The draft and the document refuse the same fence or comment for the same reason, so a
-// reworded instruction there carries here.
-var (
-	stateFenceRepair   = handoffdoc.OpenFenceRepair + ", then rerun bench handoff: "
-	stateCommentRepair = handoffdoc.OpenCommentRepair + ", then rerun bench handoff: "
+	stateRerun      = ", then rerun bench handoff: "
+	stateFileRepair = "name a readable regular file" + stateRerun
+	stateByteRepair = "remove the control byte" + stateRerun
 )
 
 // readStateFile answers the State body a `--state-file` run writes, or the refusal that
@@ -70,11 +66,11 @@ func readStateFile(path string) (string, error) {
 	// no frontmatter, so every other fault is a fence.
 	read := handoffdoc.ReadState(state)
 	if fault := read.Fault; fault != nil {
-		opener := strings.TrimSpace(read.Lines[fault.Line-1].Raw)
+		kind := faultStateFileFence
 		if fault.Kind == markdown.CommentFault {
-			return "", refusal{faultStateFileComment, stateCommentRepair + opener}
+			kind = faultStateFileComment
 		}
-		return "", refusal{faultStateFileFence, stateFenceRepair + opener}
+		return "", refusal{kind, handoffdoc.FaultRepair(fault.Kind) + stateRerun + strings.TrimSpace(read.Lines[fault.Line-1].Raw)}
 	}
 	// handoffdoc splits the file on each line that the reader reads as an H2 heading, and any
 	// spelling that the grammar has no key for makes every later run refuse the document. So

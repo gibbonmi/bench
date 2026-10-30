@@ -19,6 +19,15 @@ const OpenFenceRepair = "close the fence, so the headings below it read as headi
 // OpenCommentRepair is the fix for a comment that the text never closes, for the same reason.
 const OpenCommentRepair = "close the comment, so the headings below it read as headings"
 
+// FaultRepair is the repair that a refusal states for a reader fault of kind: the comment
+// repair for a comment fault, and the fence repair for every other kind.
+func FaultRepair(kind markdown.FaultKind) string {
+	if kind == markdown.CommentFault {
+		return OpenCommentRepair
+	}
+	return OpenFenceRepair
+}
+
 // ReadState is the one read of a State body. The text is a fragment, so a leading marker line
 // opens no frontmatter, and the fault is the comment or the fence that the body leaves open.
 // Each line carries the heading rule that Parse applies to the document.
@@ -27,11 +36,10 @@ func ReadState(state string) markdown.Document {
 }
 
 // OpenFence reports the line that opens a fenced block the text never closes, counting
-// from one, and false when every fence closes. A writer holding text bound for a section
-// calls it before the render: such a fence absorbs every heading below it, so the written
-// document is a shape Parse refuses on the next run. The text is a State body, so a
-// leading marker line opens no frontmatter. A closer uses the opener's character and a
-// run at least as long, so a shorter run or the other character leaves the block open.
+// from one, and false when every fence closes or an unterminated comment comes first. The
+// text is a State body, so a leading marker line opens no frontmatter. A closer uses the
+// opener's character and a run at least as long, so a shorter run or the other character
+// leaves the block open.
 func OpenFence(text string) (int, bool) {
 	return fenceFault(ReadState(text))
 }
@@ -49,10 +57,11 @@ func blockFault(content string, read markdown.Document) *markdown.Fault {
 // faultRefusal is the Parse refusal of a comment or fence fault, at the line of its opener.
 func faultRefusal(path string, lines []markdown.Line, fault *markdown.Fault) *ParseError {
 	opener := strings.TrimRight(lines[fault.Line-1].Raw, " \t")
+	opens := "a fenced block"
 	if fault.Kind == markdown.CommentFault {
-		return &ParseError{path, fault.Line, fmt.Sprintf("line %q opens an HTML comment that the file never closes; %s", opener, OpenCommentRepair)}
+		opens = "an HTML comment"
 	}
-	return &ParseError{path, fault.Line, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", opener, OpenFenceRepair)}
+	return &ParseError{path, fault.Line, fmt.Sprintf("line %q opens %s that the file never closes; %s", opener, opens, FaultRepair(fault.Kind))}
 }
 
 // fenceFault reports the opener line of a reading's fence fault. The reader reports a
