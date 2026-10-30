@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/maps"
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // Ticket is the parsed form of one ticket file.
@@ -36,7 +36,6 @@ const (
 	sectionAccept  = "Acceptance"
 	sectionCharge  = "Delegate charge"
 	noneSentinel   = "none"
-	fenceMarker    = "```"
 )
 
 var ticketFields = []maps.FieldSpec{
@@ -106,13 +105,7 @@ func ParseTicket(name string, content []byte, siblings []string, tag string) (Ti
 	for field, at := range live {
 		values[field] = scanned[at].Value
 	}
-	fences := 0
-	for _, entry := range scanned {
-		if strings.HasPrefix(entry.Text, fenceMarker) {
-			fences++
-		}
-	}
-	if fences%2 == 1 {
+	if fault := maps.Blocks(content).Fault; fault != nil && fault.Kind == markdown.FenceFault {
 		diagnostics = append(diagnostics, "unterminated fence")
 	}
 

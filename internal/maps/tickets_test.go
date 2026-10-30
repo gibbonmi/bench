@@ -268,3 +268,16 @@ func TestValidateDecisionMapTreeScansCompiledAndSpacedSplitMaps(t *testing.T) {
 		t.Fatalf("compiled shaping diagnostics = %v", diagnostics)
 	}
 }
+
+// TestFieldScanMarksTildeFencedLines scans a Writes: line that a tilde fence quotes. The
+// block reader marks it fenced, so it matches no field and the live line stays the only one.
+func TestFieldScanMarksTildeFencedLines(t *testing.T) {
+	scan := FieldScan{Table: []FieldSpec{{Name: "Writes", Syntax: "Writes:"}}, Duplicate: func(spec FieldSpec, _ string) string { return "duplicate " + spec.Name }}
+	lines, diagnostics := scan.Scan([]byte("Writes: live.go\n\n~~~md\nWrites: quoted.go\n~~~\n"))
+	if len(diagnostics) != 0 {
+		t.Fatalf("Scan diagnostics = %#v, want none", diagnostics)
+	}
+	if quoted := lines[3]; quoted.Text != "Writes: quoted.go" || !quoted.Fenced || quoted.Field != "" {
+		t.Fatalf("quoted line = %#v, want a fenced line that matches no field", quoted)
+	}
+}
