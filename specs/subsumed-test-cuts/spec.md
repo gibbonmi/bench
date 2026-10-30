@@ -114,7 +114,7 @@ A row ID is `T1-<n>` for row n of the first review's Table 1, and `WT-<n>` for r
 | T1-9 | `TestSetupSeedsGateInputs` (`setup_test.go:53`) | move, then cut | `TestSetupTwiceLeavesGateInputsIdentical`, `TestSetupSeedsGateInputsInZeroSignalRepo` |
 | T1-10 | `TestPlanLifecycleFromImmutableInventories` (`internal/adopt/decision_test.go:8`) | move, then cut | `TestCompleteLifecycleDecisions`, `TestLifecycleDecisionOrder` |
 | T1-11 | `TestPrePushHookTopicPushIsSilent` (`internal/adopt/link_hook_test.go:332`) | cut | `TestPrePushHookIgnoresALegacyPin` |
-| T1-12 | seven e2e rows of `TestLifecycleUpgradePreviewCompatibility` (`internal/adopt/lifecycle_preview_test.go:94-108`): owned inline drift, owned adapter drift, the three unowned rows, dropped row, and preserved CLAUDE.md | cut | its `plan kinds` subtest; the `converged`, `owned file drift`, and two `hook refresh` rows stay |
+| T1-12 | seven e2e rows of `TestLifecycleUpgradePreviewCompatibility` (`internal/adopt/lifecycle_preview_test.go:94-109`): owned inline drift, owned adapter drift, the three unowned rows, dropped row, and preserved CLAUDE.md | cut | its `plan kinds` subtest; the `converged`, `owned file drift`, and two `hook refresh` rows stay |
 | T1-13 | the Link, Dropped, and Claude partition e2e tables | stays: probe silent | none |
 | T1-14 | `TestRootConformanceCheckPrintsFailures` | no cut: run scoping | none |
 | T1-15 | pasted git helpers | delivered by `2d44df8b2` and `c3f718143` (FT360) | none |
@@ -318,7 +318,7 @@ Each chunk requirement is a probe on a kept test. The final verification runs th
 | TC43 | 5, 10 | A repair that writes the CODEX_HOME trust file turns the merged boundary test red | planned TestCompatibilityRecoveryBoundaries in internal/adopt/repairtest/repair_test.go | A merge that drops the trust-file comparison would pass without this probe, because TC7 reaches only the config file |
 | TC44 | 16 | The preview test keeps its `converged` and `owned file drift` e2e rows | review-owned: the preview test table | These rows prove the real Link plan against a real manifest, and no production mutation separates them from the pure table |
 
-Not covered: story 1 — the probe rows TC1 to TC42 and the chunk checkpoints carry it, and time saved is a measurement, not a predicate.
+Not covered: story 1 — the probe rows TC1 to TC44 and the chunk checkpoints carry it, and time saved is a measurement, not a predicate.
 Not covered: story 31 — the Out of scope section owns it, and no test can red an exclusion.
 
 ### Edge inventory
