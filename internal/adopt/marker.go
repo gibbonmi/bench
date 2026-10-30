@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/adopt/transaction"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,42 +34,54 @@ func BenchAgentsBlock() string {
 	}, "\n")
 }
 
+// markerScan holds the 1-based line numbers of the live start and end markers, and the block
+// reader's lines of the content. blockFault reports an unterminated fence or comment. An
+// unterminated comment hides each later fence marker, so either fault makes the markers
+// untrusted.
 type markerScan struct {
 	starts, ends       []int
-	unbalancedFence    bool
+	lines              []markdown.Line
+	blockFault         bool
 	benchTextInContent bool
 }
 
+// scanMarkers reads content as a fragment, so a leading unclosed frontmatter marker gives no
+// fault and each line reads as body. Each marker is itself a comment, so it matches the raw
+// text of a body line.
 func scanMarkers(content string) markerScan {
-	lines := splitLines(content)
-	inFence := false
-	var scan markerScan
-	for i, line := range lines {
-		lineNo := i + 1
-		lineIsFence := strings.HasPrefix(line, "```")
-		if lineIsFence {
-			inFence = !inFence
-		}
-		if strings.Contains(line, "bench:") {
-			scan.benchTextInContent = true
-		}
-		if lineIsFence || inFence {
+	doc := markdown.ReadFragment(content)
+	scan := markerScan{
+		lines:              doc.Lines,
+		blockFault:         doc.Fault != nil,
+		benchTextInContent: strings.Contains(content, "bench:"),
+	}
+	for _, line := range doc.Lines {
+		if line.Class != markdown.Body {
 			continue
 		}
-		if strings.Contains(line, benchStartMarker) {
-			scan.starts = append(scan.starts, lineNo)
+		if strings.Contains(line.Raw, benchStartMarker) {
+			scan.starts = append(scan.starts, line.Number)
 		}
-		if strings.Contains(line, benchEndMarker) {
-			scan.ends = append(scan.ends, lineNo)
+		if strings.Contains(line.Raw, benchEndMarker) {
+			scan.ends = append(scan.ends, line.Number)
 		}
 	}
-	scan.unbalancedFence = inFence
 	return scan
+}
+
+// blockSpan returns the source byte range of the first live managed block: from the start of
+// its start marker line through the newline after its end marker line.
+func (s markerScan) blockSpan(content string) (start, end int) {
+	start, end = s.lines[s.starts[0]-1].Offset, len(content)
+	if s.ends[0] < len(s.lines) {
+		end = s.lines[s.ends[0]].Offset
+	}
+	return start, end
 }
 
 func validateAgentsContent(content string) error {
 	scan := scanMarkers(content)
-	if scan.unbalancedFence && scan.benchTextInContent {
+	if scan.blockFault && scan.benchTextInContent {
 		return errors.New("conflict: AGENTS.md has an unclosed code fence around Bench markers; marker detection cannot be trusted")
 	}
 	if len(scan.starts) == 0 && len(scan.ends) == 0 {
@@ -81,7 +94,8 @@ func validateAgentsContent(content string) error {
 }
 
 // RewriteAgentsBlock appends or replaces the unfenced Bench managed block while
-// leaving fenced examples and project-owned text intact.
+// leaving fenced examples and project-owned text intact. It copies the text outside the block
+// from the source bytes, so each carriage return stays.
 func RewriteAgentsBlock(content string) (string, error) {
 	if err := validateAgentsContent(content); err != nil {
 		return "", err
@@ -94,35 +108,9 @@ func RewriteAgentsBlock(content string) (string, error) {
 		}
 		return content + "\n" + block, nil
 	}
-
-	lines := splitLines(content)
-	var out []string
-	inFence := false
-	skip := false
-	done := false
-	for _, line := range lines {
-		lineIsFence := strings.HasPrefix(line, "```")
-		if lineIsFence {
-			inFence = !inFence
-		}
-		if !lineIsFence && !inFence && strings.Contains(line, benchStartMarker) {
-			if !done {
-				out = append(out, strings.Split(strings.TrimSuffix(block, "\n"), "\n")...)
-				done = true
-			}
-			skip = true
-			continue
-		}
-		if !lineIsFence && !inFence && strings.Contains(line, benchEndMarker) {
-			skip = false
-			continue
-		}
-		if !skip {
-			out = append(out, line)
-		}
-	}
-	result := strings.Join(out, "\n")
-	if strings.HasSuffix(content, "\n") || !strings.HasSuffix(result, "\n") {
+	start, end := scan.blockSpan(content)
+	result := content[:start] + block + content[end:]
+	if !strings.HasSuffix(result, "\n") {
 		result += "\n"
 	}
 	return result, nil
@@ -134,6 +122,10 @@ func RewriteAgentsBlock(content string) (string, error) {
 // block" is. Content with no managed block returns unchanged. unlink reads a resulting
 // whitespace-only file as the signal to remove an AGENTS.md that link created with no
 // user content.
+//
+// The kept source bytes lose one final newline and gain one back only when they end inside a
+// line. A link appends a newline and the block, so the strip of a linked file that ended in a
+// newline gives back its original bytes.
 func StripAgentsBlock(content string) (string, error) {
 	if err := validateAgentsContent(content); err != nil {
 		return "", err
@@ -142,40 +134,12 @@ func StripAgentsBlock(content string) (string, error) {
 	if len(scan.starts) == 0 {
 		return content, nil
 	}
-	lines := splitLines(content)
-	var out []string
-	inFence := false
-	skip := false
-	for _, line := range lines {
-		lineIsFence := strings.HasPrefix(line, "```")
-		if lineIsFence {
-			inFence = !inFence
-		}
-		if !lineIsFence && !inFence && strings.Contains(line, benchStartMarker) {
-			skip = true
-			continue
-		}
-		if !lineIsFence && !inFence && strings.Contains(line, benchEndMarker) {
-			skip = false
-			continue
-		}
-		if !skip {
-			out = append(out, line)
-		}
-	}
-	result := strings.Join(out, "\n")
+	start, end := scan.blockSpan(content)
+	result := strings.TrimSuffix(content[:start]+content[end:], "\n")
 	if result != "" && !strings.HasSuffix(result, "\n") {
 		result += "\n"
 	}
 	return result, nil
-}
-
-func splitLines(content string) []string {
-	if content == "" {
-		return nil
-	}
-	content = strings.TrimSuffix(content, "\n")
-	return strings.Split(content, "\n")
 }
 
 func benchClaudeMD() string {
@@ -295,16 +259,7 @@ func stagedRepairAgents(stage, root string, repair *repairRun) (string, error) {
 	}
 	scan := scanMarkers(string(content))
 	if len(scan.starts) > 0 {
-		lines := strings.SplitAfter(string(content), "\n")
-		start, end := 0, 0
-		for i, line := range lines {
-			if i < scan.starts[0]-1 {
-				start += len(line)
-			}
-			if i < scan.ends[0] {
-				end += len(line)
-			}
-		}
+		start, end := scan.blockSpan(string(content))
 		if strings.TrimSuffix(string(content[start:end]), "\n") != strings.TrimSuffix(BenchAgentsBlock(), "\n") {
 			return "", fmt.Errorf("conflict: AGENTS.md has a modified managed block")
 		}
