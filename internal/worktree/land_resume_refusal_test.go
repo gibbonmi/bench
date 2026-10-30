@@ -58,6 +58,11 @@ func TestResumeLandCommandPublicRefusesDestructiveDestinationState(t *testing.T)
 				plantNestedRepository(t, root)
 			}},
 		} {
+			// TestResumeLandCommandPublicBindsPublishedLandingIdentity owns the clean resume
+			// after a destination move.
+			if journey.name == "PL30" && tc.name == "clean" {
+				continue
+			}
 			t.Run(journey.name+"/"+tc.name, func(t *testing.T) {
 				request := "resume-destination-state-" + strings.ReplaceAll(journey.name+"-"+tc.name, " ", "-")
 				f := publicLandingFixture(t, request, "private/output", "dist/")
