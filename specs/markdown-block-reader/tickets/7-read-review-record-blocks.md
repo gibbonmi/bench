@@ -2,7 +2,7 @@
 
 Blocked by: 1-add-block-reader.md
 Writes: internal/reviewrecord/parse.go, internal/reviewrecord/write.go, internal/reviewrecord/assignment.go, internal/reviewrecord/record_test.go, internal/reviewrecord/recordtest/fixture.go
-Covers: MB48, MB49, MB50, MB51, MB96
+Covers: MB48, MB49, MB50, MB51, MB96, MB107
 
 ## What to build
 
@@ -24,7 +24,13 @@ Render the fence in `recordtest/fixture.go:87` through the same constant.
 
 `internal/reviewrecord` is a crowded directory, so the ticket adds no file.
 
+The record writer encodes the less-than sign of each excerpt in the payload, so
+an excerpt that holds an HTML comment opener opens no comment for the block
+reader (MB107). Each existing payload field keeps its decoded value.
+
 ## Acceptance
+
+- [ ] `TestRenderEncodesACommentOpenerInAnExcerpt` proves that a record whose excerpt holds an unterminated comment opener reads whole after a render (MB107).
 
 - [ ] A four-backtick block that quotes the record fence before the real record reads the real payload with no duplicate error.
 - [ ] A record whose first line is an unclosed `---` reads its payload as it does today.
