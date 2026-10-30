@@ -12,15 +12,15 @@ import (
 	"strings"
 )
 
-// FenceMarker is the shortest backtick fence marker, and H2Prefix opens an H2 heading. A writer
-// renders a fence or a heading through them, so the writer keeps no block literal of its own.
+// FenceMarker is the shortest backtick fence marker, H2Prefix opens an H2 heading, and
+// FrontmatterMarker opens and closes the frontmatter block. A writer renders a block through
+// them, and so does a check that refuses a block literal, so no block literal of its own stays
+// outside this package.
 const (
-	FenceMarker = "```"
-	H2Prefix    = "## "
+	FenceMarker       = "```"
+	H2Prefix          = "## "
+	FrontmatterMarker = "---"
 )
-
-// frontmatterMarker opens and closes the frontmatter block.
-const frontmatterMarker = "---"
 
 // Class names the block that holds one line.
 type Class uint8
@@ -170,11 +170,11 @@ func splitLines(content string) []Line {
 // opens on a first line that is exactly the marker and closes on the next such line. A block
 // with no closer holds no line and gives a fault on line 1.
 func frontmatterEnd(lines []Line) (int, *Fault) {
-	if lines[0].Raw != frontmatterMarker {
+	if lines[0].Raw != FrontmatterMarker {
 		return 0, nil
 	}
 	for i := 1; i < len(lines); i++ {
-		if lines[i].Raw == frontmatterMarker {
+		if lines[i].Raw == FrontmatterMarker {
 			return i + 1, nil
 		}
 	}

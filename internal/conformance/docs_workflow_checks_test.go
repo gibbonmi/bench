@@ -685,9 +685,9 @@ func checkCommandFirstAnchors(root string) []string {
 		diags = append(diags, "README.md missing")
 	} else {
 		firstH2 := ""
-		for _, line := range strings.Split(readme, "\n") {
-			if strings.HasPrefix(line, "## ") {
-				firstH2 = line
+		for _, line := range markdown.Read(readme).Lines {
+			if line.Heading {
+				firstH2 = line.Text
 				break
 			}
 		}

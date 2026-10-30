@@ -2,10 +2,10 @@ package markdown
 
 import "strings"
 
-// commentOpen and commentClose delimit an HTML comment.
+// CommentOpen and CommentClose delimit an HTML comment.
 const (
-	commentOpen  = "<!--"
-	commentClose = "-->"
+	CommentOpen  = "<!--"
+	CommentClose = "-->"
 )
 
 // cutComments returns the spans of src[from:] that the comment rule removes, in order, and the
@@ -22,18 +22,18 @@ func cutComments(src string, from int) (cut cuts, open int) {
 	for {
 		start, after := cut.joinedOpener(src, from, at)
 		if start < 0 {
-			k := strings.Index(src[at:], commentOpen)
+			k := strings.Index(src[at:], CommentOpen)
 			if k < 0 {
 				return cut, -1
 			}
-			start, after = at+k, at+k+len(commentOpen)
+			start, after = at+k, at+k+len(CommentOpen)
 		}
-		k := strings.Index(src[after:], commentClose)
+		k := strings.Index(src[after:], CommentClose)
 		if k < 0 {
 			cut.push(Span{Start: start, End: len(src)})
 			return cut, start
 		}
-		at = after + k + len(commentClose)
+		at = after + k + len(CommentClose)
 		cut.push(Span{Start: start, End: at})
 	}
 }
@@ -53,7 +53,7 @@ type cuts struct {
 // no such opener exists. The kept bytes before at are the bytes of src[from:at] outside c.
 func (c *cuts) joinedOpener(src string, from, at int) (start, after int) {
 	// kept holds the offsets of up to three kept bytes before at, the nearest first.
-	var kept [len(commentOpen) - 1]int
+	var kept [len(CommentOpen) - 1]int
 	n := 0
 	for pos, top := at-1, len(c.spans)-1; n < len(kept) && pos >= from; c.steps++ {
 		if top >= 0 && pos >= c.spans[top].Start && pos < c.spans[top].End {
@@ -67,7 +67,7 @@ func (c *cuts) joinedOpener(src string, from, at int) (start, after int) {
 		pos--
 	}
 	// window holds the kept bytes, the earliest first, and then the bytes that start src[at:].
-	var window [2*len(commentOpen) - 2]byte
+	var window [2*len(CommentOpen) - 2]byte
 	m := 0
 	for i := n - 1; i >= 0; i-- {
 		window[m] = src[kept[i]]
@@ -77,9 +77,9 @@ func (c *cuts) joinedOpener(src string, from, at int) (start, after int) {
 		window[m] = src[i]
 		m++
 	}
-	for p := 0; p < n && p+len(commentOpen) <= m; p++ {
-		if string(window[p:p+len(commentOpen)]) == commentOpen {
-			return kept[n-1-p], at + len(commentOpen) - (n - p)
+	for p := 0; p < n && p+len(CommentOpen) <= m; p++ {
+		if string(window[p:p+len(CommentOpen)]) == CommentOpen {
+			return kept[n-1-p], at + len(CommentOpen) - (n - p)
 		}
 	}
 	return -1, 0

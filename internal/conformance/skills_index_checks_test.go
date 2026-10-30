@@ -91,11 +91,7 @@ func checkSkillFrontmatter(root string) []string {
 			diags = append(diags, fmt.Sprintf("%s refused: %s", slashRel(root, path), classified.Reason))
 			continue
 		}
-		first := string(classified.Data)
-		if i := strings.IndexByte(first, '\n'); i >= 0 {
-			first = first[:i]
-		}
-		if first != "---" {
+		if markdown.Read(string(classified.Data)).Lines[0].Class != markdown.Frontmatter {
 			diags = append(diags, fmt.Sprintf("%s missing frontmatter", slashRel(root, path)))
 		}
 	}

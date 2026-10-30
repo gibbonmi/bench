@@ -17,16 +17,17 @@ const markdownBlockOwner = "internal/markdown"
 // blockRuleKinds are the block-rule literals that production Go may not spell. A fence run
 // refuses a literal that contains it anywhere, so a detector cannot hide the run after other
 // text. Each other kind refuses only a literal that equals it, so a whole heading title or a
-// managed-block marker stays legal.
+// managed-block marker stays legal. Each kind takes its value from the block reader, and the
+// tilde run takes the length of the backtick run, so the check spells no block literal itself.
 var blockRuleKinds = []struct {
 	name, value string
 	anywhere    bool
 }{
 	{"backtick fence run", markdown.FenceMarker, true},
-	{"tilde fence run", "~~~", true},
-	{"frontmatter marker", "---", false},
-	{"comment opener", "<!--", false},
-	{"comment closer", "-->", false},
+	{"tilde fence run", strings.Repeat("~", len(markdown.FenceMarker)), true},
+	{"frontmatter marker", markdown.FrontmatterMarker, false},
+	{"comment opener", markdown.CommentOpen, false},
+	{"comment closer", markdown.CommentClose, false},
 	{"H2 prefix", markdown.H2Prefix, false},
 }
 
@@ -134,6 +135,12 @@ func TestMarkdownBlockOwnerBites(t *testing.T) {
 			t.Fatalf("diagnostics = %q, want none", diags)
 		}
 	})
+	t.Run("sibling of the owner", func(t *testing.T) {
+		diags := checkMarkdownBlockOwner(throwawayRoot{files: map[string]string{markdownBlockOwner + "test/extra.go": blockRuleProduction}}.build(t))
+		if len(diags) != len(blockRuleKindsIndependentExpectation) {
+			t.Fatalf("diagnostics = %q, want one for each of the %d kinds, because the owner exemption covers only its own directory", diags, len(blockRuleKindsIndependentExpectation))
+		}
+	})
 	t.Run("test file and owner exempt", func(t *testing.T) {
 		root := throwawayRoot{files: map[string]string{
 			"internal/example/example_test.go": blockRuleProduction,
@@ -154,19 +161,39 @@ func TestMarkdownBlockOwnerHoldsOnTheLiveTree(t *testing.T) {
 	}
 }
 
-// TestConformanceReadersUseTheBlockReader pins the block rules that three conformance readers
-// take from the block reader: a CRLF frontmatter block opens, and a fenced or commented heading
-// is no heading.
+// TestConformanceReadersUseTheBlockReader pins the block rules that five conformance readers
+// take from the block reader: a CRLF frontmatter block opens, a block with no closer or a body
+// line is no frontmatter, and a fenced or commented heading is no heading.
 func TestConformanceReadersUseTheBlockReader(t *testing.T) {
 	const crlf = "---\r\nname: x\r\ndescription: a\r\n  folded\r\ndisable-model-invocation: true\r\n---\r\n"
 	if !skillDescriptionFolded(crlf) {
 		t.Error("skillDescriptionFolded misses the folded description of a CRLF frontmatter block")
 	}
+	if skillDescriptionFolded("---\nname: x\n---\ndescription: a\n  folded\n") {
+		t.Error("skillDescriptionFolded reads a folded description in the body")
+	}
 	if !frontmatterHasKey(crlf, "disable-model-invocation") {
 		t.Error("frontmatterHasKey misses the key of a CRLF frontmatter block")
+	}
+	skills := throwawayRoot{files: map[string]string{
+		".agents/skills/crlf/SKILL.md":     crlf,
+		".agents/skills/bare/SKILL.md":     "name: x\n",
+		".agents/skills/unclosed/SKILL.md": "---\nname: x\n",
+	}}.build(t)
+	if diags := checkSkillFrontmatter(skills); strings.Join(diags, "\n") != ".agents/skills/bare/SKILL.md missing frontmatter\n.agents/skills/unclosed/SKILL.md missing frontmatter" {
+		t.Errorf("checkSkillFrontmatter = %q, want only the bare and the unclosed skill without frontmatter", diags)
 	}
 	heads := h2Headings("## Kept\n" + markdown.FenceMarker + "\n## Fenced\n" + markdown.FenceMarker + "\n<!--\n## Commented\n-->\n")
 	if len(heads) != 1 || !heads["## Kept"] {
 		t.Errorf("h2Headings reads %d headings, want only the heading outside the fence and the comment", len(heads))
+	}
+	for name, hidden := range map[string]string{
+		"fenced":    markdown.FenceMarker + "\n## Fenced\n" + markdown.FenceMarker + "\n",
+		"commented": "<!--\n## Commented\n-->\n",
+	} {
+		readme := throwawayRoot{files: map[string]string{"README.md": "# T\n" + hidden + "## Reviewer quick start\n"}}.build(t)
+		if diags := checkCommandFirstAnchors(readme); len(diags) != 0 {
+			t.Errorf("checkCommandFirstAnchors with a %s heading first = %q, want none", name, diags)
+		}
 	}
 }
