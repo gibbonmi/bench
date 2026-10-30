@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:27f3d64fb8abd49d83a5d49138560b8d5ba8dcbb419b54cbbd4729efa68278ce",
+  "plan_digest": "sha256:284407be4ffe0befb25fe8c8ac81e8cc73e5d70e181611d5895d02443cd6b416",
   "implementation_session": "",
   "chunks": [
     {
@@ -496,6 +496,97 @@
           }
         }
       ]
+    },
+    {
+      "id": "MB-C2",
+      "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+      "tip": "08479e59b53cbac724b91d0a2955782d46d03cc8",
+      "plan_digest": "sha256:284407be4ffe0befb25fe8c8ac81e8cc73e5d70e181611d5895d02443cd6b416",
+      "source_digest": "956cb86cb6530e6d9fd110cc26d195b1ff130db4",
+      "acceptance_rows": [
+        "MB24",
+        "MB25",
+        "MB26",
+        "MB29",
+        "MB30",
+        "MB80",
+        "MB83",
+        "MB31",
+        "MB32",
+        "MB33",
+        "MB81",
+        "MB99",
+        "MB100",
+        "MB34",
+        "MB35",
+        "MB36",
+        "MB37",
+        "MB95",
+        "MB102"
+      ],
+      "verification": [
+        {
+          "id": "t2-spec",
+          "performer": "ft358-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "956cb86cb6530e6d9fd110cc26d195b1ff130db4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-02",
+            "digest": "sha256:148ec91d985dbd280b3a968387fa1498e6dd74a7fea97ba07b1cb0b61635bc44",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/spec.go,swap,failed,2,TestMetadataSkipsAFencedStatus/indented_fence,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,^TestMetadataSkipsAFencedStatus$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,481\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,2,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestMetadataSkipsAFencedStatus/indented_fence,\"header_fence_test.go:15: LiveSpecSlugs = [\\\"hidden\\\"], want none\",2\n  github.com/gibbonmi/bench/internal/spec,TestMetadataSkipsAFencedStatus/tilde_fence,\"header_fence_test.go:15: LiveSpecSlugs = [\\\"hidden\\\"], want none\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "08479e59b53cbac724b91d0a2955782d46d03cc8",
+          "requirement": "spec",
+          "command": "bench test --package ./internal/spec --run '^TestMetadataSkipsAFencedStatus$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/spec/spec.go: make headerLines ignore the reader's fence class; expect TestMetadataSkipsAFencedStatus",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-02",
+              "digest": "sha256:148ec91d985dbd280b3a968387fa1498e6dd74a7fea97ba07b1cb0b61635bc44",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/spec.go,swap,failed,2,TestMetadataSkipsAFencedStatus/indented_fence,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,^TestMetadataSkipsAFencedStatus$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,481\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,2,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestMetadataSkipsAFencedStatus/indented_fence,\"header_fence_test.go:15: LiveSpecSlugs = [\\\"hidden\\\"], want none\",2\n  github.com/gibbonmi/bench/internal/spec,TestMetadataSkipsAFencedStatus/tilde_fence,\"header_fence_test.go:15: LiveSpecSlugs = [\\\"hidden\\\"], want none\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t2-coverage",
+          "performer": "ft358-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "956cb86cb6530e6d9fd110cc26d195b1ff130db4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-02",
+            "digest": "sha256:e89536ec4d293bbf36c83ff2d267dc55904ea9ea10028c4e42f6a9ad7da87ed0",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/coverage/rows.go,swap,failed,1,TestParseSkipsFencedCoverageLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/coverage,^TestParseSkipsFencedCoverageLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/coverage,TestParseSkipsFencedCoverageLines,\"coverage_test.go:286: Check = [coverage map leaves story 2 unreferenced; add a row or a `Not covered: story 2 — <reason>` line], want none\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "08479e59b53cbac724b91d0a2955782d46d03cc8",
+          "requirement": "coverage",
+          "command": "bench test --package ./internal/coverage --run '^TestParseSkipsFencedCoverageLines$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/coverage/rows.go: drop the fenced-line skip in parse; expect TestParseSkipsFencedCoverageLines",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-02",
+              "digest": "sha256:e89536ec4d293bbf36c83ff2d267dc55904ea9ea10028c4e42f6a9ad7da87ed0",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/coverage/rows.go,swap,failed,1,TestParseSkipsFencedCoverageLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/coverage,^TestParseSkipsFencedCoverageLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/coverage,TestParseSkipsFencedCoverageLines,\"coverage_test.go:286: Check = [coverage map leaves story 2 unreferenced; add a row or a `Not covered: story 2 — <reason>` line], want none\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -518,6 +609,15 @@
     {
       "from": "sha256:fcf4869a9e51f9cc4e151c012af5028c10e27b8cc88e6e18f5ffa7fa55d53a41",
       "to": "sha256:27f3d64fb8abd49d83a5d49138560b8d5ba8dcbb419b54cbbd4729efa68278ce",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:27f3d64fb8abd49d83a5d49138560b8d5ba8dcbb419b54cbbd4729efa68278ce",
+      "to": "sha256:284407be4ffe0befb25fe8c8ac81e8cc73e5d70e181611d5895d02443cd6b416",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
