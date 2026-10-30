@@ -470,6 +470,7 @@ current-state advertisement of its non-meta input bindings:
 | `published-executable-path` | `catch-all` |
 | `go-build-vcs` | `catch-all` |
 | `git-plumbing-owner` | `go-source` |
+| `markdown-block-owner` | `go-source` |
 | `cancel-signal-registrations` | `go-source` |
 | `wait-deadline-literals` | `go-source` |
 | `subcommand-routing` | `go-source` |

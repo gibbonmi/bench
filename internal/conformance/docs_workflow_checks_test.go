@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/roadmap/roadmaptest"
 )
@@ -634,10 +635,9 @@ func checkBenchReferenceTokenDiet(root string) []string {
 			break
 		}
 	}
-	benchHeads := h2Headings(bench)
 	refHeads := h2Headings(ref)
 	var dup []string
-	for head := range benchHeads {
+	for head := range h2Headings(bench) {
 		if refHeads[head] {
 			dup = append(dup, head)
 		}
@@ -742,9 +742,9 @@ func walkConformanceDocs(dir string) []string {
 
 func h2Headings(text string) map[string]bool {
 	out := map[string]bool{}
-	for _, line := range strings.Split(text, "\n") {
-		if strings.HasPrefix(line, "## ") {
-			out[line] = true
+	for _, line := range markdown.Read(text).Lines {
+		if line.Heading {
+			out[line.Text] = true
 		}
 	}
 	return out

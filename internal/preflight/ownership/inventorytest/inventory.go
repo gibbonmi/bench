@@ -1,11 +1,14 @@
 // Package inventorytest renders the planning-facts inventories that the preflight fixtures
-// declare. Only tests import it. It imports no Bench package: the shared preflight fixture
-// imports it, and the tests of packages that ownership itself imports use that fixture.
+// declare. Only tests import it. It imports no Bench package but the block reader, a
+// standard-library leaf: the shared preflight fixture imports it, and the tests of packages
+// that ownership itself imports use that fixture.
 package inventorytest
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // Manifest is one version 1 inventory of completeness that holds each given item in its
@@ -20,5 +23,5 @@ var CompleteEmpty = Manifest("declared-complete", nil, nil, nil, nil)
 
 // Section is one planning-facts section of a spec that holds payload.
 func Section(payload string) string {
-	return "\n## Planning claim inventory\n\n```bench-planning-facts\n" + payload + "\n```\n"
+	return "\n## Planning claim inventory\n\n" + markdown.FenceMarker + "bench-planning-facts\n" + payload + "\n" + markdown.FenceMarker + "\n"
 }
