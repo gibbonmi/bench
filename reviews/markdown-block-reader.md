@@ -301,6 +301,74 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1r-standards",
+          "performer": "ft358-confirm-c1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1efde0ff74f0f0f1591151bfbd6a1a7aa168d711",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c1-standards",
+            "digest": "sha256:ce2219863e6f3f8871a2299093455dd83360fde7ae61aaea1e970b5520e8bf57",
+            "excerpt": "Standards axis, MB-C1 confirming round (repair delta 252408eb..503aef49). Zero findings.\nS1 closed: internal/markdown/markdown.go:73-79 declares InSection directly after Section under the shared comment, and the Heading comment sits only over Heading.\nRepair shape checked: cuts.push (comments.go:88-102) trims first with spans; joinedOpener is a pointer method because it writes steps; the cuts type comment states the reason for first; the steps counter (comments.go:48) is test-read only and its comment states why; every edit falls under an MB-C1 finding.\n"
+          },
+          "axis": "Standards",
+          "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
+          "tip": "503aef49a0de6507e0690eb4161aa0e09a71536d",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards"
+          ]
+        },
+        {
+          "id": "c1r-spec",
+          "performer": "ft358-confirm-c1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1efde0ff74f0f0f1591151bfbd6a1a7aa168d711",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c1-spec",
+            "digest": "sha256:d693de3cfd6f91398b89222f6872fcd5a885ebe1d2c8f08b1ad50c0cea6dec6b",
+            "excerpt": "Spec axis, MB-C1 confirming round (repair delta 252408eb..503aef49). Zero findings.\nP1 closed: internal/markdown/comments.go:54-68 and :90-102. Spans stay ordered; first[i] lets one jump cross a whole adjacent run; after a jump the next byte is kept, so a walk takes at most 6 steps; total work is O(n), under the MB79 bound of 8 steps per comment. The walk visits exactly the kept positions of the old walk, so the result still equals stripCommentsMapped (internal/anchors/locate.go:58-74).\nRows MB10-MB13, MB88, MB89 unchanged; MB79 gains the work bound of Closed decision 10; spec.md:206-211 now holds. No edit outside the acceptance's reach.\n"
+          },
+          "axis": "Spec",
+          "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
+          "tip": "503aef49a0de6507e0690eb4161aa0e09a71536d",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec"
+          ]
+        },
+        {
+          "id": "c1r-coverage",
+          "performer": "ft358-confirm-c1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "1efde0ff74f0f0f1591151bfbd6a1a7aa168d711",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c1-coverage",
+            "digest": "sha256:6e4ee5e02f50ed2e1c4038d9c29ab18ff487b56cf321202644190bff54cf7bce",
+            "excerpt": "Coverage axis, MB-C1 confirming round (repair delta 252408eb..503aef49). C1, C2, C3 closed; one new finding.\nRound 1 mutants re-run, all red: omit top-- (comments.go:62), for->if in push (:91), at+len(commentOpen)-n (:82), append in the unterminated branch (:33), CutPrefix on line.Raw (markdown.go:136), omit the frontmatter continue (markdown.go:133), two-byte kept window (comments.go:56).\nNew mutants: omit top = c.first[top] red (MB79); first = i red (MB79); End <= s.Start red (MB12).\nN1 (medium, confidence 8, auto-fix): internal/markdown/comments.go:95. Omitting c.first = c.first[:i] is silent. Witness input <!<!----><!---->----><!<!---->----> reads comment 0-21 and comment 21-35 with empty text; the mutant reads comments 0-21 and 23-30 with visible <!---->. Repair: add that row to TestReadBlockRules.\n"
+          },
+          "axis": "Coverage",
+          "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
+          "tip": "503aef49a0de6507e0690eb4161aa0e09a71536d",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [
+            "c1-coverage"
+          ]
         }
       ]
     }
@@ -367,3 +435,21 @@ Count: 3. Worst issue: C1.
 - C2: X6 is red against `strings.CutPrefix(line.Raw, H2Prefix)`.
 - C3: X5 is red against the omission of the frontmatter `continue`.
 - Each red failed only its new row, and each probe restored its subject.
+
+## MB-C1 confirming round 1
+
+Standards and Spec pass: S1 and P1 are closed. Coverage closes C1, C2, and C3, and it reports one new finding. The repair allowance consumed is 1 of 2.
+
+### Standards
+
+Count: 0.
+
+### Spec
+
+Count: 0.
+
+### Coverage
+
+Count: 1. Worst issue: N1.
+
+- N1, medium, confidence 8, auto-fix: omitting `c.first = c.first[:i]` at `internal/markdown/comments.go:95` is silent. Add the row `<!<!----><!---->----><!<!---->---->` to `TestReadBlockRules`, with the spans 0-21 and 21-35 and empty text. The repair is test-only, so a coordinator probe that bites closes it through `bench record confirmation`.
