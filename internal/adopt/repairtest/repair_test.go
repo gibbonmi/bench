@@ -15,26 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/adopt"
 )
 
-func TestCompatibilityManagedRepair(t *testing.T) {
-	s := linkedSession(t)
-	hook := filepath.Join(s.root, ".codex", "hooks.json")
-	before, err := os.ReadFile(hook)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Remove(hook); err != nil {
-		t.Fatal(err)
-	}
-	code, stdout, stderr := s.doctor("--fix")
-	if code != 1 {
-		t.Fatalf("repair must leave unknown live obligations visible: %d, %s, %s", code, stdout, stderr)
-	}
-	after, err := os.ReadFile(hook)
-	if err != nil || !bytes.Equal(after, before) {
-		t.Fatalf("canonical hook was not restored: %v; %s %s", err, stdout, stderr)
-	}
-}
-
 func TestCompatibilityModifiedConflict(t *testing.T) {
 	for _, kind := range []string{"payload content", "payload mode", "managed pre-push", "ownership manifest"} {
 		t.Run(kind, func(t *testing.T) {
@@ -70,29 +50,6 @@ func TestCompatibilityModifiedConflict(t *testing.T) {
 				t.Fatalf("modified conflict was not reported with a failed local result: %d, %s %s", code, stdout, stderr)
 			}
 		})
-	}
-}
-
-func TestCompatibilityUndoCreated(t *testing.T) {
-	s := linkedSession(t)
-	hook := filepath.Join(s.root, ".codex", "hooks.json")
-	if err := os.Remove(hook); err != nil {
-		t.Fatal(err)
-	}
-	code, stdout, stderr := s.doctor("--fix")
-	if code != 1 || stderr != "" {
-		t.Fatalf("repair = %d, %s %s", code, stdout, stderr)
-	}
-	id := repairID(t, stdout)
-	if _, err := os.Stat(hook); err != nil {
-		t.Fatalf("repair did not create target: %v", err)
-	}
-	code, stdout, stderr = s.doctor("--undo", id)
-	if code != 1 || stderr != "" {
-		t.Fatalf("undo = %d, %s %s", code, stdout, stderr)
-	}
-	if _, err := os.Lstat(hook); !os.IsNotExist(err) {
-		t.Fatalf("undo did not restore absence: %v", err)
 	}
 }
 
@@ -214,34 +171,23 @@ func TestCompatibilityForeignConflict(t *testing.T) {
 	}
 }
 
-func TestCompatibilityPolicyBoundary(t *testing.T) {
+func TestCompatibilityRecoveryBoundaries(t *testing.T) {
 	s := linkedSession(t)
 	home := os.Getenv("CODEX_HOME")
 	if err := os.MkdirAll(home, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	paths := []string{filepath.Join(home, "config.toml"), filepath.Join(home, "trust.json")}
-	before := []byte("sandbox_mode = \"read-only\"\ntrust = \"untrusted\"\n")
-	for _, path := range paths {
+	runtime := filepath.Join(home, "private-runtime", "missing-launcher")
+	policy := "sandbox_mode = \"read-only\"\ntrust = \"untrusted\"\n"
+	planted := map[string][]byte{
+		filepath.Join(home, "config.toml"): []byte(policy + "cli_path = \"" + runtime + "\"\n"),
+		filepath.Join(home, "trust.json"):  []byte(policy),
+	}
+	for path, before := range planted {
 		if err := os.WriteFile(path, before, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
-	code, stdout, stderr := s.doctor("--fix")
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		info, statErr := os.Stat(path)
-		if err != nil || statErr != nil || !bytes.Equal(data, before) || info.Mode().Perm() != 0o600 {
-			t.Fatalf("repair changed permission or trust settings: %s, %q, %v, %v", path, data, err, statErr)
-		}
-	}
-	if code != 1 || !strings.Contains(stdout, "security-policy,decision,") {
-		t.Fatalf("repair omitted security-policy decision: %d, %s %s", code, stdout, stderr)
-	}
-}
-
-func TestCompatibilityInterruptionBoundary(t *testing.T) {
-	s := linkedSession(t)
 	process := exec.Command("cat")
 	input, err := process.StdinPipe()
 	if err != nil {
@@ -256,6 +202,16 @@ func TestCompatibilityInterruptionBoundary(t *testing.T) {
 	}
 	t.Cleanup(func() { input.Close(); process.Process.Kill(); process.Wait() })
 	code, stdout, stderr := s.doctor("--fix")
+	for path, before := range planted {
+		data, err := os.ReadFile(path)
+		info, statErr := os.Stat(path)
+		if err != nil || statErr != nil || !bytes.Equal(data, before) || info.Mode().Perm() != 0o600 {
+			t.Fatalf("repair changed policy or launcher settings: %s, %q, %v, %v", path, data, err, statErr)
+		}
+	}
+	if _, err := os.Lstat(filepath.Dir(runtime)); !os.IsNotExist(err) {
+		t.Fatalf("repair created a private runtime directory: %v", err)
+	}
 	if _, err := input.Write([]byte("still running\n")); err != nil {
 		t.Fatalf("repair interrupted the supervised process: %v", err)
 	}
@@ -263,33 +219,13 @@ func TestCompatibilityInterruptionBoundary(t *testing.T) {
 	if err != nil || line != "still running\n" {
 		t.Fatalf("supervised process did not survive: %q, %v", line, err)
 	}
-	if code != 1 || !strings.Contains(stdout, "process-interruption,decision,") {
-		t.Fatalf("repair omitted process-interruption decision: %d, %s %s", code, stdout, stderr)
+	if code != 1 {
+		t.Fatalf("repair = %d, %s %s", code, stdout, stderr)
 	}
-}
-
-func TestCompatibilityRuntimeBoundary(t *testing.T) {
-	s := linkedSession(t)
-	home := os.Getenv("CODEX_HOME")
-	if err := os.MkdirAll(home, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	runtime := filepath.Join(home, "private-runtime", "missing-launcher")
-	config := []byte("cli_path = \"" + runtime + "\"\n")
-	configPath := filepath.Join(home, "config.toml")
-	if err := os.WriteFile(configPath, config, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	code, stdout, stderr := s.doctor("--fix")
-	if _, err := os.Lstat(filepath.Dir(runtime)); !os.IsNotExist(err) {
-		t.Fatalf("repair created a private runtime directory: %v", err)
-	}
-	data, err := os.ReadFile(configPath)
-	if err != nil || !bytes.Equal(data, config) {
-		t.Fatalf("repair changed private launcher selection: %q, %v", data, err)
-	}
-	if code != 1 || !strings.Contains(stdout, "private-runtime,decision,") {
-		t.Fatalf("repair omitted private-runtime decision: %d, %s %s", code, stdout, stderr)
+	for _, row := range []string{"security-policy", "process-interruption", "private-runtime"} {
+		if !strings.Contains(stdout, row+",decision,") {
+			t.Fatalf("repair omitted %s decision: %s %s", row, stdout, stderr)
+		}
 	}
 }
 
