@@ -1,8 +1,8 @@
 # Read roadmap lines from the block reader
 
 Blocked by: 1-add-block-reader.md
-Writes: internal/roadmap/tree.go, internal/roadmap/sequence_projection.go, internal/roadmap/commitment_test.go
-Covers: MB31, MB32, MB33, MB81, MB99, MB100
+Writes: internal/roadmap/tree.go, internal/roadmap/sequence_projection.go, internal/roadmap/commitment_test.go, internal/roadmap/closure.go, internal/coverage/rows.go, internal/coverage/coverage_test.go, internal/spec/header_fence_test.go, internal/tickets/fence_test.go, internal/maps/fields.go, internal/preflight/ownership/premises_test.go
+Covers: MB31, MB32, MB33, MB81, MB99, MB100, MB103
 
 ## What to build
 

@@ -676,7 +676,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards",
+          "performer": "ft358-review-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c2-standards",
+            "digest": "sha256:30e08c710115aa177b06d0344236373f93731a36ab180e6f48c2593be1587d3a",
+            "excerpt": "Standards axis, MB-C2 (base 2c79f46e, tip cd86cf1e). Three findings.\nPer-consumer Class != markdown.Body tests are not duplicated knowledge: the enum owns the block fact, each site states its own grammar. maps.Blocks is the single source of the ReadFragment choice that Scan and ParseTicket share (no-op).\nS1 (medium, high confidence, ask-user): internal/roadmap/closure.go:19 and :27. Close matches roadmapStartRe on every line, fenced or not, while its doc comment says a row heading is what ParseDocument reads as one; ParseDocument now skips fenced rows (tree.go:116). Repair: Close skips non-Body lines; widen ticket 3 Writes to internal/roadmap/closure.go.\nS2 (low, medium confidence, ask-user): internal/tickets/tickets.go:108. ParseTicket tests only FenceFault; a comment fault comes first (markdown.go:142-148), so an unclosed comment hides an unterminated fence that the old count reported.\nS3 (low, high confidence, no-op): tree.go:92, :274, sequence_projection.go:27 read the index three times; the parallel strings.Split matches by construction.\n"
+          },
+          "axis": "Standards",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "cd86cf1efca9403f1d2908aadd32612e62857e42",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec",
+          "performer": "ft358-review-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c2-spec",
+            "digest": "sha256:ef1202045ecbc8b470639b25412b49fcfbd5ea897da0809a122dec93f1328216",
+            "excerpt": "Spec axis, MB-C2 (base 2c79f46e, tip cd86cf1e). Two findings; rows MB24-26, MB29-37, MB80, MB81, MB83, MB95, MB99, MB100, MB102 hold.\nP1 (severity 5, confidence 10, auto-fix): internal/coverage/rows.go grows from 301 to 303 lines; ticket 2 and spec lines 341-344 require no net growth. Repair: cut two net lines in parse.\nP2 (severity 4, confidence 8, ask-user): internal/roadmap/closure.go:19 and :27. Close counts a fenced row heading that ParseDocument now skips (FA6), so a fenced example beside a live row refuses, and its doc comment is false. Outside every Writes line.\nFlag b: a non-behavioral contradiction; the behavior clauses (lines 288-291, Closed decision 16, MB95) require ReadFragment for tickets, so lines 293-296 and the Closed decision 16 caller list need a prose correction.\nAdvice: flag a is intended by story 9; flag c follows from the MB71 fault order and is not required by any row.\n"
+          },
+          "axis": "Spec",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "cd86cf1efca9403f1d2908aadd32612e62857e42",
+          "finding_ids": [
+            "P1",
+            "P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage",
+          "performer": "ft358-review-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "540aea0cabec043307afb28b3e8ad136d026e091",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c2-coverage",
+            "digest": "sha256:4e679d779a9c92de4278fdae61186b4e1ed86bbc15b72b6efc396a0ba7d0d3ea",
+            "excerpt": "Coverage axis, MB-C2 (base 2c79f46e, tip cd86cf1e). Five findings; the six named packages pass; seven probes restored; git status clean.\nC1 (medium, confidence 8, auto-fix): spec.go:67, coverage/rows.go:133, roadmap/tree.go:92 Read->ReadFragment swaps are silent; no test pins the frontmatter rule in these readers. Add a first-line --- ... --- case to each module test.\nC2 (medium, confidence 9, auto-fix): tickets.go:108 fault-kind filter swap to any fault is silent across 11151 tests. Add an unterminated-comment case that expects no unterminated fence.\nC3 (medium, confidence 9, auto-fix): tree.go:276 fence skip inside the live sequence is silent. Add a fenced 1. fake line inside the live sequence.\nC4 (low, confidence 7, auto-fix): sequence_projection.go:32 title compare tests only the accepted side. Add a rejected-side case.\nC5 (low, confidence 7, ask-user): a longer closer inside the planning-facts fence now closes with an empty label (maps/fields.go:92), so metadata.go:63 truncates the payload with no refusal; spec.md:330 says a nested marker still refuses.\n"
+          },
+          "axis": "Coverage",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "cd86cf1efca9403f1d2908aadd32612e62857e42",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -829,3 +902,33 @@ Count: 1. Worst issue: N1.
 - MB95: a `Blocks` that returns `markdown.Read` lost the fence fault after an unclosed `---` first line.
 - MB102: a `Scan` that drops `FenceLabel` failed `TestMetadataGrammarFenceRoles` at `premises_test.go:89`.
 - `ParseTicket` gives byte-identical diagnostics, `Covers`, and `Writes` at the base and at the tip over all 1001 tracked Markdown files.
+
+## MB-C2 review round 1
+
+The orchestrator decides each finding under the reviewer's advance approval of the `--full` run. One combined repair charge carries every repair target, and it routes to ticket 3, which holds most of the paths. Repair allowance consumed for MB-C2 before this repair: 0 of 2.
+
+### Standards
+
+Count: 3. Worst issue: S1.
+
+- S1, medium, high confidence, auto-fix (decided): `internal/roadmap/closure.go:19` and `:27`. `Close` counts a fenced row heading that `ParseDocument` skips. Make `Close` skip non-body lines. New row MB103 covers it.
+- S2, low, medium confidence, no-op (decided): `internal/tickets/tickets.go:108`. The reader reports the comment fault first (MB71), so FA11 records the result. The C2 test pins it.
+- S3, low, high confidence, no-op: the triple index read in `internal/roadmap` matches by construction.
+
+### Spec
+
+Count: 2. Worst issue: P1.
+
+- P1, severity 5, confidence 10, auto-fix: `internal/coverage/rows.go` grows from 301 to 303 lines. Cut two net lines.
+- P2, severity 4, confidence 8, auto-fix (decided): the same defect as S1.
+- The non-behavioral contradiction about fragment callers is corrected in the spec prose, in Closed decision 16, and in FA10 to FA12.
+
+### Coverage
+
+Count: 5. Worst issue: C1.
+
+- C1, medium, confidence 8, auto-fix: add a first-line `---` to `---` frontmatter case to `TestMetadataSkipsAFencedStatus`, `TestParseSkipsFencedCoverageLines`, and `TestParseDocumentSkipsTildeFences`.
+- C2, medium, confidence 9, auto-fix: add an unterminated-comment case to `TestParseTicketReadsTheBlockReaderFault` that expects no `unterminated fence`.
+- C3, medium, confidence 9, auto-fix: add a fenced `1. fake` line inside the live sequence to `TestParseDocumentSkipsTildeFences`.
+- C4, low, confidence 7, auto-fix: add a rejected-side title case for `internal/roadmap/sequence_projection.go:32`.
+- C5, low, confidence 7, auto-fix (decided): `internal/maps/fields.go:92`. A closer's label is the text after a run of the opener's length. Thus a longer nested run inside the planning-facts fence still refuses (story 78). Add that case to `TestMetadataGrammarFenceRoles`.
