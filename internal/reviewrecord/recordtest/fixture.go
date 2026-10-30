@@ -11,6 +11,7 @@ import (
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/markdown"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
@@ -80,11 +81,9 @@ func (f *Fixture) WritePlan() {
 	f.Write(f.spec, planDocument(f.body, data))
 }
 
-// planHeading opens the completion plan section that follows the fixture body.
-const planHeading = "\n## Completion plan\n\n"
-
+// planDocument is body, then the completion plan section with data as its fence payload.
 func planDocument(body string, data []byte) string {
-	return body + planHeading + "```bench-completion-plan\n" + string(data) + "\n```\n"
+	return body + "\n## Completion plan\n\n" + markdown.FenceMarker + "bench-completion-plan\n" + string(data) + "\n" + markdown.FenceMarker + "\n"
 }
 
 // preparedWrites is the `Writes:` line of every ticket Prepare writes.

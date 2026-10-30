@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -32,8 +33,8 @@ type Entry struct {
 	Line                     int
 }
 
-// Malformed is one heading that started a `## ` entry but did not parse as a dated
-// one. Line is the 1-based source line, carried so a surface can name where to look.
+// Malformed is one journal line that did not parse as a dated entry, or the opener of an
+// unterminated block. Line is the 1-based source line, carried so a surface can name where to look.
 type Malformed struct {
 	Reason, Raw string
 	Line        int
@@ -46,9 +47,12 @@ func Entries(content []byte) []Entry {
 	return entries
 }
 
-// Parse returns typed entries plus every malformed heading fragment.
+// Parse returns typed entries plus every malformed heading fragment. The block reader names
+// the entry headings on comment-free text, so a fenced or commented heading stays in its entry
+// body, and the reader's fault adds one malformed record.
 func Parse(content []byte) ([]Entry, []Malformed) {
-	lines := strings.Split(string(content), "\n")
+	read := markdown.Read(string(content))
+	lines := read.Lines
 	unaccountedStart, unaccountedEnd := unaccountedRegion(lines)
 	var out []Entry
 	var malformed []Malformed
@@ -60,11 +64,11 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		if runStart < 0 {
 			return
 		}
-		malformed = append(malformed, Malformed{Reason: unaccountedReason, Raw: strings.TrimSuffix(lines[runStart], "\r"), Line: runStart + 1})
+		malformed = append(malformed, Malformed{Reason: unaccountedReason, Raw: lines[runStart].Raw, Line: runStart + 1})
 		runStart = -1
 	}
 	for i := 0; i < len(lines); {
-		line := strings.TrimSuffix(lines[i], "\r")
+		line := lines[i].Raw
 		if i >= unaccountedStart && i < unaccountedEnd {
 			switch {
 			case strings.TrimSpace(line) == "":
@@ -83,9 +87,9 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 			continue
 		}
 		flushRun()
-		if !isDatedHeading(line) {
+		if !isDatedHeading(lines[i]) {
 			switch {
-			case strings.HasPrefix(line, "## "):
+			case lines[i].Heading:
 				// The shipped scaffold's own worked example (internal/adopt seeds every fresh
 				// repo with it under "Format per entry:") is documentation, not a broken record,
 				// so an unedited template never counts as malformed.
@@ -98,7 +102,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 			i++
 			continue
 		}
-		date, title, state := parseHeading(line)
+		date, title, state := parseHeading(lines[i].Text)
 		start := i + 1
 		i = start
 		// A dated line inside the body is collected rather than appended as it is found,
@@ -106,18 +110,18 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		// every reason stays in ascending source-line order.
 		var bodyLost []Malformed
 		linkedCommit := ""
-		for i < len(lines) && !strings.HasPrefix(strings.TrimSuffix(lines[i], "\r"), "## ") {
-			bodyLine := strings.TrimSuffix(lines[i], "\r")
+		for i < len(lines) && !lines[i].Heading {
+			bodyLine := lines[i].Raw
 			if isLostDatedLine(bodyLine) {
 				bodyLost = append(bodyLost, Malformed{Reason: lostDatedLineReason, Raw: bodyLine, Line: i + 1})
 			}
-			if commit, ok := resolvedBy(bodyLine); ok && linkedCommit == "" {
+			// A fenced resolved bullet is a quote, so only a body line links a commit.
+			if commit, ok := resolvedBy(bodyLine); ok && linkedCommit == "" && lines[i].Class == markdown.Body {
 				linkedCommit = commit
 			}
 			i++
 		}
-		body := strings.Join(lines[start:i], "\n")
-		body = strings.Trim(body, "\n")
+		body := sourceBody(string(content), lines, start, i)
 		if state != "open" {
 			malformed = append(malformed, Malformed{Reason: "dated learning heading must end with [open]", Raw: line, Line: start})
 		} else {
@@ -126,7 +130,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		malformed = append(malformed, bodyLost...)
 	}
 	flushRun()
-	return out, malformed
+	return out, withFault(malformed, read)
 }
 
 // unaccountedReason is the reason content below the entries marker carries. It names
@@ -136,7 +140,8 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 const unaccountedReason = "learning content below the entries marker is not an entry"
 
 // unaccountedRegion returns the half-open line-index range below an opening entries
-// marker, or (-1, -1) when no marker opens the rule.
+// marker, or (-1, -1) when no marker opens the rule. It reads raw lines with no fence rule,
+// because nothing belongs below the marker, a fenced block included.
 //
 // The marker opens the rule only above the first real entry heading, a `## ` line that
 // isTemplatePlaceholder does not claim. That exclusion is load-bearing: the shipped
@@ -145,11 +150,11 @@ const unaccountedReason = "learning content below the entries marker is not an e
 // marker below a real heading (pasted into an entry body) is ordinary text, and a second
 // marker below the first joins the run rather than restarting the region, so the lines
 // between the two are never silently dropped.
-func unaccountedRegion(lines []string) (start, end int) {
+func unaccountedRegion(lines []markdown.Line) (start, end int) {
 	marker := -1
-	for i, raw := range lines {
-		line := strings.TrimSuffix(raw, "\r")
-		if strings.HasPrefix(line, "## ") && !isTemplatePlaceholder(line) {
+	for i, read := range lines {
+		line := read.Raw
+		if strings.HasPrefix(line, markdown.H2Prefix) && !isTemplatePlaceholder(line) {
 			if marker < 0 {
 				return -1, -1
 			}
@@ -185,7 +190,7 @@ func openRows(entries []Entry) [][]string {
 }
 
 func parseHeading(line string) (date, title, state string) {
-	rest := strings.TrimPrefix(line, "## ")
+	rest := strings.TrimPrefix(line, markdown.H2Prefix)
 	date = rest
 	if i := strings.IndexFunc(rest, isSpace); i >= 0 {
 		date = rest[:i]
@@ -199,8 +204,8 @@ func parseHeading(line string) (date, title, state string) {
 	return date, title, state
 }
 
-func isDatedHeading(line string) bool {
-	return strings.HasPrefix(line, "## ") && opensWithDate(line[len("## "):])
+func isDatedHeading(line markdown.Line) bool {
+	return line.Heading && opensWithDate(strings.TrimPrefix(line.Text, markdown.H2Prefix))
 }
 
 // lostDatedLineReason is the reason a dated line that is not a well-formed heading
@@ -221,7 +226,7 @@ const lostDatedLineReason = "dated learning entry is not a heading"
 // U+3000 must not re-open the silent drop, while the zero-width U+200B and U+FEFF are
 // not White_Space and stay non-separators a reader can see.
 func isLostDatedLine(line string) bool {
-	if strings.HasPrefix(line, "## ") {
+	if strings.HasPrefix(line, markdown.H2Prefix) {
 		return false
 	}
 	return opensWithDate(strings.TrimLeftFunc(line, func(r rune) bool {
@@ -255,7 +260,7 @@ func opensWithDate(s string) bool {
 // isTemplatePlaceholder reports whether line is the scaffold's own worked example, whose
 // date field is the literal `<date>` token rather than a date.
 func isTemplatePlaceholder(line string) bool {
-	rest := strings.TrimPrefix(line, "## ")
+	rest := strings.TrimPrefix(line, markdown.H2Prefix)
 	date := rest
 	if i := strings.IndexFunc(rest, isSpace); i >= 0 {
 		date = rest[:i]
@@ -263,13 +268,13 @@ func isTemplatePlaceholder(line string) bool {
 	return date == "<date>"
 }
 
-// hasAnyHeading reports whether content attempts the journal shape at all: any line
-// beginning `## `, dated, malformed, or the template placeholder alike. Its absence is
+// hasAnyHeading reports whether content attempts the journal shape at all: any H2 heading
+// of the block reader, dated, malformed, or the template placeholder alike. Its absence is
 // what unsupported-schema means for this document: bytes that never attempt a heading,
 // as distinct from a heading attempt that failed to parse.
 func hasAnyHeading(content []byte) bool {
-	for _, raw := range strings.Split(string(content), "\n") {
-		if strings.HasPrefix(strings.TrimSuffix(raw, "\r"), "## ") {
+	for _, line := range markdown.Read(string(content)).Lines {
+		if line.Heading {
 			return true
 		}
 	}

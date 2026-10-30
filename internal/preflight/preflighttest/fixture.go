@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/preflight/chargesource"
 	"github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest"
 	"github.com/gibbonmi/bench/internal/reviewrecord"
@@ -108,7 +109,7 @@ func PlanSection(plan reviewrecord.Plan) string {
 	if err != nil {
 		panic(err)
 	}
-	return "\n## Completion plan\n\n```bench-completion-plan\n" + string(data) + "\n```\n"
+	return "\n## Completion plan\n\n" + markdown.FenceMarker + "bench-completion-plan\n" + string(data) + "\n" + markdown.FenceMarker + "\n"
 }
 
 // SpecBody renders a bootstrap-conformant spec for slug. It has staged status, a valid

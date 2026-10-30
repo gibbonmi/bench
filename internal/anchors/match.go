@@ -47,10 +47,9 @@ func MarkdownH2Section(text, title string) string {
 	return body
 }
 
-// MarkdownH2Sections returns the first matching H2 section body and occurrence
-// count. Headings inside backtick fences do not delimit or count as sections. It
-// projects sectionRunesMapped, the package's one section resolution, so the evaluator
-// and Locate read the same body from the same walk.
+// MarkdownH2Sections returns the first matching H2 section body as stored, comments
+// included, and the occurrence count. It projects sectionRunesMapped, the package's one
+// section resolution. Locate and the evaluator read a section through commentFreeSectionMapped.
 func MarkdownH2Sections(text, title string) (string, int) {
 	runes := []rune(text)
 	body, _, count := sectionRunesMapped(runes, identityOrigin(len(runes)), title)

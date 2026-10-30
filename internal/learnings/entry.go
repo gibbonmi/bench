@@ -2,8 +2,12 @@ package learnings
 
 import (
 	"errors"
+	"slices"
+	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // FormatEntry renders one open journal entry in the shape Parse reads back: the dated
@@ -24,7 +28,7 @@ func FormatEntry(date, title, what, right, rule string) string {
 		rule = "none"
 	}
 	values := []string{what, right, rule}
-	out := "## " + date + " — " + title + "  [open]\n"
+	out := markdown.H2Prefix + date + " — " + title + "  [open]\n"
 	for i, bullet := range entryBullets {
 		out += "- **" + bullet.label + ":** " + values[i] + "\n"
 	}
@@ -39,6 +43,39 @@ const resolvedBulletPrefix = "- **Resolved by:** "
 func resolvedBy(line string) (string, bool) {
 	value, ok := strings.CutPrefix(line, resolvedBulletPrefix)
 	return strings.TrimSpace(value), ok
+}
+
+// sourceBody returns the source text of lines[from:to] with the newline bytes at each end
+// trimmed. It slices the source, not the reader's lines, so a CRLF body keeps each carriage
+// return that the reader strips from a line.
+func sourceBody(content string, lines []markdown.Line, from, to int) string {
+	if from >= to {
+		return ""
+	}
+	end := len(content)
+	if to < len(lines) {
+		end = lines[to].Offset
+	}
+	return strings.Trim(content[lines[from].Offset:end], "\n")
+}
+
+// faultReasons names the malformed reason of each block-reader fault kind.
+var faultReasons = map[markdown.FaultKind]string{
+	markdown.FenceFault:       "unterminated fenced block",
+	markdown.CommentFault:     "unterminated HTML comment",
+	markdown.FrontmatterFault: "unterminated frontmatter block",
+}
+
+// withFault adds the record of the reader's fault to malformed, at the opener line and after
+// each record of a line at or above it. An unterminated fence or comment hides each entry
+// below its opener, so this record shows the writer where those entries went.
+func withFault(malformed []Malformed, read markdown.Document) []Malformed {
+	if read.Fault == nil {
+		return malformed
+	}
+	fault := Malformed{Reason: faultReasons[read.Fault.Kind], Raw: read.Lines[read.Fault.Line-1].Raw, Line: read.Fault.Line}
+	at := sort.Search(len(malformed), func(i int) bool { return malformed[i].Line > fault.Line })
+	return slices.Insert(malformed, at, fault)
 }
 
 // Refusals MarkResolved returns when the title does not name exactly one unlinked open

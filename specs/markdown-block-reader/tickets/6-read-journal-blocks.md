@@ -1,16 +1,20 @@
 # Read learning and retrospective lines from the block reader
 
 Blocked by: 1-add-block-reader.md
-Writes: internal/learnings/learnings.go, internal/learnings/entry.go, internal/learnings/learnings_test.go, internal/retros/retros.go, internal/retros/retros_test.go, internal/retros/recommendations.go, internal/retros/recommendations_test.go, tests/canary/package-core-guard/bounds-classify-limit-restated, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB84
+Writes: internal/learnings/learnings.go, internal/learnings/entry.go, internal/learnings/learnings_test.go, internal/retros/retros.go, internal/retros/retros_test.go, internal/retros/recommendations.go, internal/retros/recommendations_test.go, internal/handoffdoc/document.go, internal/handoffdoc/fence.go, internal/handoffdoc/document_test.go, internal/handoff/state_file.go, internal/handoff/state_file_test.go
+Covers: MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB84, MB104, MB105, MB106
 
 ## What to build
 
-Make `learnings.Parse` and `hasAnyHeading` read the reader's H2 headings on raw
-text, so a fenced dated heading stays in its entry body. The body keeps its raw
-lines. `Parse` adds one malformed record for the reader's fault, at the fault
-line. The reasons are `unterminated fenced block`, `unterminated HTML comment`,
-and `unterminated frontmatter block`. The prose mechanics check prints each
+Make `learnings.Parse` (`learnings.go:50`) and `hasAnyHeading` read the reader's
+H2 headings on raw text, so a fenced dated heading stays in its entry body. The
+body keeps its raw lines. The `ResolvedBy` body scan at `learnings.go:109-118`
+reads unfenced lines only, and `Parse` still returns `ResolvedBy`.
+
+`Parse` adds one malformed record for the reader's fault, at the fault line. The
+reasons are `unterminated fenced block`, `unterminated HTML comment`, and
+`unterminated frontmatter block`. Put the fault-to-record helper in `entry.go`,
+because `learnings.go` has 393 lines. The prose mechanics check prints each
 record through its existing malformed-record path.
 
 One exception stays: `unaccountedRegion` reads raw lines, with no fence rule,
@@ -18,17 +22,28 @@ because its rule is that nothing belongs below the entries marker. It tests the
 H2 prefix through the reader's exported constant. DL31 stays green without an
 edit.
 
-Make `retros.Parse` and `Recommendations` read the reader on raw text. A fenced
-required heading does not count. A fenced `## ` line does not end the
-improvements section. A fence marker line and each fenced line are no
+Make `retros.Parse` (`retros.go:67`) and `Recommendations` read the reader on raw
+text. A fenced required heading does not count. A fenced `## ` line does not end
+the improvements section. A fence marker line and each fenced line are no
 recommendation unit, and each one ends the open unit.
 
 Render each heading through the reader's H2 constant, so neither package keeps a
-`## ` literal. The learnings rows go in `learnings_test.go`, because
+`## ` literal. The heading constants at `retros.go:24`, `:27`, `:30`, and `:33`
+and the H2 entries of `requiredHeadings` at `retros.go:42-48` render as the H2
+constant plus a title. The learnings rows go in `learnings_test.go`, because
 `entry_test.go` tests only the formatter. The `retros.Parse` row goes in
-`retros_test.go`.
+`retros_test.go`. `Parse` requires `## Cost`, so the MB45 fixture carries a live
+`## Cost` heading.
+
+The MB-C3 review repair also lands here. `handoffdoc.Parse` refuses an open fence
+behind an unclosed first-line `---` (MB104), and it refuses an unterminated HTML
+comment (MB105). `handoffdoc` exports one State-body read, and `readStateFile`
+refuses each line that the reader reads as an H2 heading through it (MB106).
 
 ## Acceptance
+
+- [ ] `TestParseRefusesAFenceBehindAFrontmatterFault` and `TestParseRefusesAnUnterminatedComment` prove MB104 and MB105.
+- [ ] `TestStateFileRefusesAnUnterminatedComment` proves that the State guard refuses a trailing-space `## ` line and a heading after a comment (MB106).
 
 - [ ] An entry body with a fenced dated heading gives one entry whose body holds the fenced line.
 - [ ] An unterminated fence, comment, and frontmatter block each give one malformed record with its reason and line.
@@ -37,5 +52,5 @@ Render each heading through the reader's H2 constant, so neither package keeps a
 - [ ] An item after a fenced `## Notes` line counts, and a fenced `- item` line gives no recommendation.
 - [ ] `TestRecommendationsKeepsImprovementParagraphsAndListItemsSeparate` stays green without an edit.
 - [ ] `learnings.Parse` of the primary journal and `retros.Parse` of each file under `capture/retros/` give the same result at the base and at the tip.
-- [ ] `internal/learnings` and `internal/retros` hold no literal `## `. The sites today are `learnings.go:87`, `:107`, `:146`, `:182`, `:197`, `:218`, `:252`, `:266`, `entry.go:26`, and `recommendations.go:22`, `:23`, and `:39`.
+- [ ] `internal/learnings` and `internal/retros` hold no literal `## `. The sites today are `learnings.go:88`, `:109`, `:152`, `:188`, `:203`, `:224`, `:258`, `:272`, `entry.go:27`, `recommendations.go:22` and `:39`, `retros.go:24`, `:27`, `:30`, and `:33`, and `requiredHeadings` at `retros.go:42-48`.
 - [ ] No file in `Writes:` grows past 400 lines.

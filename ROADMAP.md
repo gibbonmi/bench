@@ -360,23 +360,22 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT358-block-reader
-2. FT125-exact-readers
-3. FT375-residual
-4. FT344-remedy
-5. FT406-rebuild
-6. FT366-rg-guard
-7. FT380-residual
-8. FT354-strict-json
-9. FT363-member-set
-10. FT365-conformance
-11. FT414-preconditions
-12. FT437-pinned-rows
-13. FT439-comment-correction
-14. FT354-shell-args
-15. FT343-seam-policy
-16. FT446-cache-store
-17. FT369-charge-slicing
-18. FT341-in-only
-19. FT420-concurrent-chunks
-20. FT387-overflow
+1. FT125-exact-readers
+2. FT375-residual
+3. FT344-remedy
+4. FT406-rebuild
+5. FT366-rg-guard
+6. FT380-residual
+7. FT354-strict-json
+8. FT363-member-set
+9. FT365-conformance
+10. FT414-preconditions
+11. FT437-pinned-rows
+12. FT439-comment-correction
+13. FT354-shell-args
+14. FT343-seam-policy
+15. FT446-cache-store
+16. FT369-charge-slicing
+17. FT341-in-only
+18. FT420-concurrent-chunks
+19. FT387-overflow

@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // FieldSpec declares one line-oriented field of a Markdown grammar.
@@ -27,24 +29,31 @@ const (
 	FenceClose
 )
 
-// fenceRole is the role of the marker that the fence state meets: a marker opens a fence
-// when none is open, and closes the open one otherwise.
-func fenceRole(open bool) FenceRole {
-	if open {
-		return FenceClose
-	}
-	return FenceOpen
+// fenceRoles maps each fence class of the block reader to its role. A line of any other
+// class is a field line.
+var fenceRoles = map[markdown.Class]FenceRole{
+	markdown.FenceOpener: FenceOpen,
+	markdown.Fenced:      FenceNone,
+	markdown.FenceCloser: FenceClose,
+}
+
+// Blocks is the block reading that Scan classifies. It applies no frontmatter rule, so a
+// leading marker line reads as a field line, as every field grammar reads it. A grammar that
+// refuses a block fault reads the fault here, so its fault and its fenced lines agree.
+func Blocks(content []byte) markdown.Document {
+	return markdown.ReadFragment(string(content))
 }
 
 // FieldLine is one source line resolved against a field table.
 type FieldLine struct {
-	// Text is the line without its newline and with CRLF already normalized.
+	// Text is the block reader's raw text of the line.
 	Text string
 	// Fenced marks a code-fence marker or a line inside a fence. Such a line matches no field.
 	Fenced bool
-	// FenceRole marks an opening or a closing fence marker. FenceLabel is that marker's
-	// exact text after its backticks. A schema owner that reads one fenced block keys on
-	// the open role and its label, so a label inside another fence opens nothing.
+	// FenceRole marks an opening or a closing fence marker. FenceLabel is an opener's info
+	// string, and a closer's trimmed text after a run of the opener's length, so a longer
+	// nested run keeps a label. A schema owner that reads one fenced block keys on the open
+	// role and its label, so a label inside another fence opens nothing.
 	FenceRole  FenceRole
 	FenceLabel string
 	// Field names the matched field, and stays empty when the line matches none.
@@ -72,21 +81,24 @@ type FieldScan struct {
 // Scan resolves every line against the table and returns the duplicate-field
 // diagnostics in line order. A fenced line never parses as a field.
 func (s FieldScan) Scan(content []byte) ([]FieldLine, []string) {
-	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
-	scanned := make([]FieldLine, 0, len(lines))
+	blocks := Blocks(content).Lines
+	scanned := make([]FieldLine, 0, len(blocks))
 	var diagnostics []string
 	seen := make(map[string]bool)
 	scope, scopeKey := "", ""
-	scopes := 0
-	inFence := false
-	for _, line := range lines {
-		if label, marker := strings.CutPrefix(line, "```"); marker {
-			scanned = append(scanned, FieldLine{Text: line, Fenced: true, FenceRole: fenceRole(inFence), FenceLabel: label})
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			scanned = append(scanned, FieldLine{Text: line, Fenced: true})
+	scopes, run := 0, ""
+	for _, block := range blocks {
+		line := block.Raw
+		if role, fenced := fenceRoles[block.Class]; fenced {
+			label := block.Info
+			switch role {
+			case FenceOpen:
+				run = openerRun(block)
+			case FenceClose:
+				_, after, _ := strings.Cut(block.Text, run)
+				label = strings.TrimSpace(after)
+			}
+			scanned = append(scanned, FieldLine{Text: line, Fenced: true, FenceRole: role, FenceLabel: label})
 			continue
 		}
 		if s.Scope != nil {
@@ -125,6 +137,13 @@ func (s FieldScan) Scan(content []byte) ([]FieldLine, []string) {
 		scanned = append(scanned, entry)
 	}
 	return scanned, diagnostics
+}
+
+// openerRun is the marker run of a fence opener: its comment-free text without the indent
+// and the info string. The block reader's text and info give it, so this file states no
+// marker rule.
+func openerRun(opener markdown.Line) string {
+	return strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(opener.Text), opener.Info))
 }
 
 // FieldSeparator joins the entries of one list field value.

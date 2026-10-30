@@ -145,7 +145,7 @@ func evaluate(root string, group *Group, subject string) PathEvaluation {
 		key := anchor.File + "\x00" + anchor.Section
 		section, resolved := sections[key]
 		if !resolved {
-			section = resolveSection(anchor.File, anchor.Section, file.active, file.exists)
+			section = resolveSection(anchor.File, anchor.Section, file)
 			sections[key] = section
 			if section.diagnostic != "" {
 				result.Diagnostics = append(result.Diagnostics, section.diagnostic)
@@ -178,18 +178,20 @@ type scopeResult struct {
 	diagnostic string
 }
 
-func resolveSection(file, title, active string, exists bool) scopeResult {
-	if !exists {
-		return scopeResult{diagnostic: "section-scoped anchor file missing: " + file}
+// resolveSection gives commentFreeSectionMapped the file's bytes as stored, as Locate does, and
+// not the comment-free active text.
+func resolveSection(rel, title string, file fileResult) scopeResult {
+	if !file.exists {
+		return scopeResult{diagnostic: "section-scoped anchor file missing: " + rel}
 	}
-	body, count := MarkdownH2Sections(active, title)
+	body, _, count := commentFreeSectionMapped(string(file.classified.Data), title)
 	if count == 0 {
-		return scopeResult{diagnostic: fmt.Sprintf("%s is missing the %q section that owns a scoped anchor", file, title)}
+		return scopeResult{diagnostic: fmt.Sprintf("%s is missing the %q section that owns a scoped anchor", rel, title)}
 	}
 	if count > 1 {
-		return scopeResult{diagnostic: fmt.Sprintf("%s carries %d %q sections; a scoped anchor needs exactly one owning section", file, count, title)}
+		return scopeResult{diagnostic: fmt.Sprintf("%s carries %d %q sections; a scoped anchor needs exactly one owning section", rel, count, title)}
 	}
-	return scopeResult{body: body}
+	return scopeResult{body: string(body)}
 }
 
 // RefusalPrefix opens every refused-anchor-file diagnostic. A consumer that composes
@@ -214,7 +216,7 @@ func read(path, rel string) fileResult {
 	return file
 }
 
-// StripHTMLComments removes complete comments and truncates at an unterminated comment.
+// StripHTMLComments returns text without the comments that the block reader removes.
 // It projects stripCommentsMapped, the package's one comment strip, so the evaluator reads
 // the text Locate searches.
 func StripHTMLComments(text string) string {

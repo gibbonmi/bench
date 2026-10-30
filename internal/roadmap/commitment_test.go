@@ -132,6 +132,74 @@ func TestCommitmentDependencyClosure(t *testing.T) {
 	}
 }
 
+// TestParseDocumentSkipsTildeFences reads the index and a row file over the block reader. A
+// fenced row example gives no row and no malformed-row failure, a fenced sequence heading
+// opens no sequence, a fenced line in the live sequence is no entry, and a fenced `Next:`
+// line is no second marker. A first-line frontmatter block declares nothing.
+func TestParseDocumentSkipsTildeFences(t *testing.T) {
+	const row = "**FT1 — one.**\n"
+	for name, tc := range map[string]struct{ front, quoted, file, tail string }{
+		"tilde row":         {quoted: "~~~\n**FT9 — quoted.**\n**not a row\n~~~\n", file: row + "Next: spec\n"},
+		"backtick row":      {quoted: "```\n**FT9 — quoted.**\n**not a row\n```\n", file: row + "Next: spec\n"},
+		"tilde sequence":    {quoted: "~~~\n## Recommended sequence\n\n1. quoted\n~~~\n", file: row + "Next: spec\n"},
+		"tilde next after":  {file: row + "Next: spec\n~~~\nNext: spec\n~~~\n"},
+		"fenced entry":      {file: row + "Next: spec\n", tail: "~~~\n1. fake\n~~~\n"},
+		"frontmatter block": {front: "---\n**FT9 — quoted.**\n**not a row\n---\n", file: row + "Next: spec\n"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			index := tc.front + "# Roadmap\n\n" + tc.quoted + "\n" + row + "\n## Recommended sequence\n\n1. live\n" + tc.tail
+			document, failures, diagnostics := ParseDocument(splitTree(index, map[string]string{"FT1.md": tc.file}), nil, false)
+			if len(failures) != 0 || len(diagnostics) != 0 {
+				t.Fatalf("failures = %v, diagnostics = %v, want none", failures, diagnostics)
+			}
+			if len(document.Rows) != 1 || document.Rows[0].ID != "FT1" || len(document.Sequence) != 1 || document.Sequence[0].Text != "live" {
+				t.Fatalf("rows = %+v, sequence = %+v, want the row FT1 and the sequence entry live", document.Rows, document.Sequence)
+			}
+		})
+	}
+}
+
+// TestProjectSequenceSkipsFencedHeadings projects the sequence after a fenced copy of its
+// heading. The fenced copy stays byte for byte, and only the live sequence takes the outcomes.
+// The title match reads the raw heading, so a heading with a second space after the marker
+// or a trailing U+00A0 is no sequence.
+func TestProjectSequenceSkipsFencedHeadings(t *testing.T) {
+	const quoted = "# Roadmap\n\n~~~\n## Recommended sequence\n\n1. quoted\n~~~\n\n"
+	got, err := ProjectSequence([]byte(quoted+"## Recommended sequence\n\n1. A\n"), []string{"B"})
+	if want := quoted + "## Recommended sequence\n\n1. B\n"; err != nil || string(got) != want {
+		t.Fatalf("projection = %q, %v; want %q", got, err, want)
+	}
+	for _, heading := range []string{"##  Recommended sequence", "## Recommended sequence "} {
+		if got, err := ProjectSequence([]byte(heading+"\n\n1. A\n"), []string{"B"}); err == nil {
+			t.Errorf("projection under %q = %q; want no recommended sequence", heading, got)
+		}
+	}
+}
+
+// TestCloseSkipsAFencedRowHeading closes FT1 beside a frontmatter FT1 example and a fenced
+// one. Close reads the rows that ParseDocument reads, so it removes only the live row and
+// keeps both examples.
+func TestCloseSkipsAFencedRowHeading(t *testing.T) {
+	const example = "---\n**FT1 — x**\n---\n# Roadmap\n\n```\n**FT1 — x**\n```\n\n"
+	got, err := Close([]byte(example+"**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n"), []string{"FT1"}, []string{"B"})
+	if want := example + "**FT2 — B**\n\n## Recommended sequence\n\n1. B\n"; err != nil || string(got) != want {
+		t.Fatalf("closure = %q, %v; want %q", got, err, want)
+	}
+}
+
+// TestCommitmentDependencyClosureSkipsFencedHeadings closes FT1 after a fenced copy of the
+// dependency heading. The fenced table row stays, and only the live dependency table changes.
+func TestCommitmentDependencyClosureSkipsFencedHeadings(t *testing.T) {
+	const quoted = "~~~\n## Dependencies\n\n| FT2 | FT1 | Quoted. |\n~~~\n\n## Dependencies\n\n| FT | Depends on | Why |\n|---|---|---|\n"
+	const index = "# Roadmap\n\n**FT1 — A**\n\n**FT2 — B**\n\n" + quoted +
+		"| FT2 | FT1 | B needs A. |\n| FT3 | FT1, FT4 | C needs A and D. |\n\n## Recommended sequence\n\n1. A\n2. B\n"
+	got, err := Close([]byte(index), []string{"FT1"}, []string{"B"})
+	const want = "# Roadmap\n\n**FT2 — B**\n\n" + quoted + "| FT3 | FT4 | C needs A and D. |\n\n## Recommended sequence\n\n1. B\n"
+	if err != nil || string(got) != want {
+		t.Fatalf("dependency closure = %q, %v; want %q", got, err, want)
+	}
+}
+
 func TestCommitmentOccurrenceUpdate(t *testing.T) {
 	const original = "**FT1 — Preserve the obligation**\n\nThe requirement stays unchanged.\n"
 	got, err := RequirementBytes("roadmap/FT1.md", []byte(original+"Occurrences: first, second\n"))

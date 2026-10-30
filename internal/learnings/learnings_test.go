@@ -354,3 +354,47 @@ func TestCommandSurfacesAnUndatedNoteAppendedToAScaffoldedJournal(t *testing.T) 
 		t.Fatalf("Command = (%d, %q), want (1, %q)", code, got, want)
 	}
 }
+
+// TestParseKeepsAFencedHeadingInTheBody proves that a fenced or commented dated heading stays in
+// its body, a fenced resolved bullet links no commit, a frontmatter heading declares nothing, a
+// heading behind a comment parses, and a body keeps its source bytes, each carriage return included.
+func TestParseKeepsAFencedHeadingInTheBody(t *testing.T) {
+	const first, quoted = "## 2026-01-01 — first [open]", "## 2026-01-02 — quoted [open]"
+	body := "```\n" + quoted + "\n- **Resolved by:** quoted\n```\n<!--\n" + quoted + "\n-->\n- **Resolved by:** abc"
+	for _, tc := range []struct {
+		name, in string
+		want     []Entry
+	}{
+		{"fenced and commented body headings", first + "\n" + body + "\n", []Entry{{"2026-01-01", "first", "open", body, "abc", 1}}},
+		{"frontmatter and comment-led headings", "---\n" + quoted + "\n---\n<!-- c -->" + first + "\nx", []Entry{{"2026-01-01", "first", "open", "x", "", 4}}},
+		{"CRLF bodies", first + "\r\nx\r\n\r\n## 2026-01-03 — last [open]\r\ny\r\n", []Entry{{"2026-01-01", "first", "open", "x\r\n\r", "", 1}, {"2026-01-03", "last", "open", "y\r", "", 4}}},
+		{"quoted top headings", "---\n" + quoted + "\n---\n```\n" + quoted + "\n```\n", nil},
+	} {
+		entries, malformed := Parse([]byte(tc.in))
+		if journal := UnsupportedSchemaReason([]byte(tc.in)) == ""; !reflect.DeepEqual(entries, tc.want) || len(malformed) != 0 || journal != (tc.want != nil) {
+			t.Errorf("%s: Parse gives %d entries and %d malformed records (a journal heading: %t), want %d entries with their source bodies and none malformed", tc.name, len(entries), len(malformed), journal, len(tc.want))
+		}
+	}
+}
+
+// TestParseReportsAnUnterminatedBlock proves that each fault kind gives one malformed record
+// at its opener line, after each record of a line at or above it.
+func TestParseReportsAnUnterminatedBlock(t *testing.T) {
+	const first, lost = "## 2026-01-01 — first [open]", "- 2026-08-21 — lost"
+	for _, tc := range []struct {
+		name, in string
+		entries  int
+		want     []Malformed
+	}{
+		{"fence", "## broken\n" + first + "\n```\n## 2026-01-02 — second [open]\n", 1, []Malformed{{"malformed learning heading", "## broken", 1}, {"unterminated fenced block", "```", 3}}},
+		{"comment", JournalEntriesMarker + "\n<!-- open\n" + lost + "\n" + first + "\n", 0, []Malformed{{unaccountedReason, "<!-- open", 2}, {"unterminated HTML comment", "<!-- open", 2}, {lostDatedLineReason, lost, 3}}},
+		{"frontmatter", "---\n" + first + "\n" + lost + "\n", 1, []Malformed{{"unterminated frontmatter block", "---", 1}, {lostDatedLineReason, lost, 3}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			entries, got := Parse([]byte(tc.in))
+			if len(entries) != tc.entries || !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("%s: Parse gives %d entries and %d malformed records, want %d and %d in line order", tc.name, len(entries), len(got), tc.entries, len(tc.want))
+			}
+		})
+	}
+}

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/skillsindex"
 )
 
@@ -90,11 +91,7 @@ func checkSkillFrontmatter(root string) []string {
 			diags = append(diags, fmt.Sprintf("%s refused: %s", slashRel(root, path), classified.Reason))
 			continue
 		}
-		first := string(classified.Data)
-		if i := strings.IndexByte(first, '\n'); i >= 0 {
-			first = first[:i]
-		}
-		if first != "---" {
+		if markdown.Read(string(classified.Data)).Lines[0].Class != markdown.Frontmatter {
 			diags = append(diags, fmt.Sprintf("%s missing frontmatter", slashRel(root, path)))
 		}
 	}
@@ -244,18 +241,11 @@ func invocationYAMLValue(implicit bool) string {
 
 // frontmatterHasKey reports whether a frontmatter block declares key at all, empty value
 // included. FrontmatterField cannot answer this presence question, because it returns the
-// same empty string for an absent key and for a declared-but-blank one. A mention in the
-// body is not frontmatter, and stays inert.
+// same empty string for an absent key and for a declared-but-blank one. The block reader
+// marks the frontmatter lines, so a mention in the body is not frontmatter, and stays inert.
 func frontmatterHasKey(text, key string) bool {
-	lines := strings.Split(text, "\n")
-	if len(lines) == 0 || lines[0] != "---" {
-		return false
-	}
-	for _, line := range lines[1:] {
-		if line == "---" {
-			return false
-		}
-		if strings.HasPrefix(line, key+":") {
+	for _, line := range markdown.Read(text).Lines {
+		if line.Class == markdown.Frontmatter && strings.HasPrefix(line.Raw, key+":") {
 			return true
 		}
 	}
@@ -534,10 +524,11 @@ func TestCommandInvocationPolicyGradesTableCompleteness(t *testing.T) {
 
 	t.Run("body prose mention of the key is inert", func(t *testing.T) {
 		root := materializePolicyRoot(t)
-		// bench-write-spec is model-invocable, so a graded key would red the phase. The
-		// mention lands in the body, below the closing frontmatter fence.
+		// bench-write-spec is model-invocable, so a graded key would red the phase. Both
+		// mentions land in the body, below the closing frontmatter marker, and the last one
+		// starts its line as a frontmatter key does.
 		write(t, root, ".agents/commands/bench-write-spec.md",
-			"---\ndescription: the bench-write-spec phase\n---\n\nA command file disables Claude's own reach for a phase with the\n`disable-model-invocation: true` frontmatter key.\n")
+			"---\ndescription: the bench-write-spec phase\n---\n\nA command file disables Claude's own reach for a phase with the\n`disable-model-invocation: true` frontmatter key.\n\ndisable-model-invocation: true\n")
 		if diags := checkCodexCommandAdapters(root); len(diags) != 0 {
 			t.Fatalf("body-prose mention of disable-model-invocation reddened the check: %q", diags)
 		}

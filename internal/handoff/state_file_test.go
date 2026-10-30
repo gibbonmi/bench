@@ -233,6 +233,37 @@ func TestHandoffStateFileRefusesAnUnclosedFence(t *testing.T) {
 	runIn(t, root, nil)
 }
 
+// An open comment hides every heading under it from the State walk, so the draft refuses with
+// a fault that names the opener line. The reader reports the comment ahead of a fence, so a
+// fence above the comment draws the same fault, and a State opens no frontmatter, so a
+// leading marker line hides no comment. The heading guard reads each line as the document
+// parser reads it, so a trailing-space H2 line and a heading after a comment refuse. A
+// closed comment writes.
+func TestStateFileRefusesAnUnterminatedComment(t *testing.T) {
+	const opener = "<!-- draft note"
+	const commentHint = handoffdoc.OpenCommentRepair + stateRerun + opener
+	for _, tc := range []struct{ name, draft, kind, hint string }{
+		{"open comment", "The build is live.\n\n" + opener + "\n" + handoffdoc.MainHeading + "\n", faultStateFileComment, commentHint},
+		{"open fence above it", "```\n  " + opener + "\n", faultStateFileComment, commentHint},
+		{"leading marker line", "---\n" + opener + "\n", faultStateFileComment, commentHint},
+		{"trailing-space heading", "The build is live.\n\n## \n", faultStateFileHeading, stateRepair + "##"},
+		{"heading after a comment", "<!-- c -->## x\n", faultStateFileHeading, stateRepair + "<!-- c -->## x"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := readStateFile(stateFile(t, tc.draft))
+			got, ok := err.(refusal)
+			if !ok || got.kind != tc.kind || got.hint != tc.hint {
+				t.Fatalf("%s: readStateFile refusal kind %q (hint names the line: %t), want %q naming the line", tc.name, got.kind, got.hint == tc.hint, tc.kind)
+			}
+		})
+	}
+
+	const closed = "The build is live.\n\n<!-- draft note -->"
+	if state, err := readStateFile(stateFile(t, closed+"\n")); err != nil || state != closed {
+		t.Fatalf("closed comment: readStateFile refused (%t) or changed the State (%t), want the State unchanged", err != nil, state != closed)
+	}
+}
+
 // LC28, story 30. An empty draft is a deliberate reset rather than a failed read, so it
 // writes an empty State and the header carries the first-session guidance again.
 func TestHandoffStateFileAcceptsAnEmptyFile(t *testing.T) {

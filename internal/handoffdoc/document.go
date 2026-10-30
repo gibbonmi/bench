@@ -4,15 +4,18 @@
 // section, removes a section by key, and ensures "main". It also owns the locked
 // read-modify-write that lets two live phases write the file at once.
 //
-// The package is a leaf and imports the standard library only. Three packages
-// read this grammar — the handoff command, the worktree retirement path, and the
-// status row — and internal/worktree cannot import internal/handoff. A grammar
-// that lived in either consumer would be re-derived in the other.
+// The package imports the standard library, the block reader, and the file primitives
+// of internal/bounds and internal/durablefile, and none of its readers. Three packages
+// read this grammar — the handoff command, the worktree retirement path, and the status
+// row — and internal/worktree cannot import internal/handoff. A grammar that lived in
+// either consumer would be re-derived in the other.
 package handoffdoc
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // MainKey is the key of the section every document carries. It is the section a
@@ -26,10 +29,11 @@ const MainKey = "main"
 // describes, so the single-source check grades that text against these rather
 // than against a second copy of them.
 const (
-	MainHeading          = "## " + MainKey
-	RequestHeadingPrefix = "## request "
-	StateHeading         = "### State"
-	shapeHeading         = "## Shape"
+	MainHeading          = markdown.H2Prefix + MainKey
+	RequestHeadingPrefix = markdown.H2Prefix + "request "
+	StateHeading         = h3Prefix + "State"
+	shapeHeading         = markdown.H2Prefix + "Shape"
+	h3Prefix             = "#" + markdown.H2Prefix
 )
 
 // The label lines of a section. The handoff command names them, so a second
@@ -194,19 +198,19 @@ func labelLine(label, value string) string {
 // heading, a body line that is neither a label line nor part of State, and a
 // document with no main section. Each refusal names the file and the line.
 //
-// Fenced blocks are skipped when locating a heading. A heading inside a fence is
-// prose about the document, not a section of it. A fence that is still open at the
-// end of the file is refused on the line that opened it, because such a fence makes
-// every heading below it prose and leaves the document one section.
+// Fenced blocks and comments are skipped when locating a heading. A heading inside one
+// is prose about the document, not a section of it. A fence or a comment that is still
+// open at the end of the file is refused on the line that opened it, also behind an
+// unclosed first-line marker, because it hides every heading below it.
 //
 // A document in the pre-section shape reads as main alone. See convertLegacy.
 func Parse(path string, content []byte) (*Document, error) {
-	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
+	read := markdown.Read(string(content))
 	doc := &Document{}
-	if opened, open := OpenFence(string(content)); open {
-		return nil, &ParseError{path, opened, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", strings.TrimRight(lines[opened-1], " \t"), OpenFenceRepair)}
+	if fault := blockFault(string(content), read); fault != nil {
+		return nil, faultRefusal(path, read.Lines, fault)
 	}
-	blocks, header := splitSections(lines)
+	blocks, header := splitSections(read.Lines)
 	doc.Header = strings.Trim(strings.Join(header, "\n"), "\n")
 	blocks, err := convertLegacy(path, blocks)
 	if err != nil {
@@ -214,12 +218,12 @@ func Parse(path string, content []byte) (*Document, error) {
 	}
 	seen := map[string]int{}
 	for _, block := range blocks {
-		key, err := sectionKey(path, block.line, block.heading)
+		key, err := sectionKey(path, block)
 		if err != nil {
 			return nil, err
 		}
 		if key == shapeHeading {
-			doc.Shape = strings.Trim(strings.Join(block.body, "\n"), "\n")
+			doc.Shape = bodyText(block.body)
 			continue
 		}
 		if first, repeated := seen[key]; repeated {
@@ -233,42 +237,38 @@ func Parse(path string, content []byte) (*Document, error) {
 		doc.Sections = append(doc.Sections, section)
 	}
 	if _, found := doc.Section(MainKey); !found {
-		return nil, &ParseError{path, len(lines), fmt.Sprintf("document carries no %q section; every handoff holds one", MainHeading)}
+		return nil, &ParseError{path, len(read.Lines), fmt.Sprintf("document carries no %q section; every handoff holds one", MainHeading)}
 	}
 	return doc, nil
 }
 
-// block is one level-two heading, as the file spells it, and the raw lines below
-// it. The heading stays unresolved here so that the legacy conversion can read a
-// spelling this grammar has no key for.
+// block is one level-two heading and the read lines below it. The heading is its
+// comment-free title, unresolved so that the legacy conversion can read a spelling this
+// grammar has no key for, and raw is the line as the file spells it, for a refusal to quote.
 type block struct {
-	heading string
-	line    int
-	body    []string
+	heading, raw string
+	line         int
+	body         []markdown.Line
 }
 
 // splitSections cuts the lines into the header and one block per level-two
 // heading. It returns the blocks in file order, so main keeps whatever place the
 // file gave it and Shape stays last.
 //
-// A heading inside a fence stays body. The caller has already refused a fence the
-// file never closes, so no block here absorbs the sections below one.
-func splitSections(lines []string) (blocks []block, header []string) {
-	fenced := false
-	for i, raw := range lines {
-		trimmed := strings.TrimRight(raw, " \t")
-		if isFence(trimmed) {
-			fenced = !fenced
-		}
-		if fenced || !strings.HasPrefix(trimmed, "## ") {
+// The block reader names the H2 headings on comment-free text, so a heading inside a fence
+// or a comment stays body. The caller has already refused a fence or a comment the file
+// never closes, so no block here absorbs the sections below one.
+func splitSections(lines []markdown.Line) (blocks []block, header []string) {
+	for _, line := range lines {
+		if !line.Heading {
 			if len(blocks) == 0 {
-				header = append(header, raw)
+				header = append(header, line.Raw)
 			} else {
-				blocks[len(blocks)-1].body = append(blocks[len(blocks)-1].body, raw)
+				blocks[len(blocks)-1].body = append(blocks[len(blocks)-1].body, line)
 			}
 			continue
 		}
-		blocks = append(blocks, block{heading: trimmed, line: i + 1})
+		blocks = append(blocks, block{heading: strings.TrimRight(line.Text, " \t"), raw: strings.TrimRight(line.Raw, " \t"), line: line.Number})
 	}
 	return blocks, header
 }
@@ -278,7 +278,7 @@ func splitSections(lines []string) (blocks []block, header []string) {
 // rename of either carries here rather than leaving a stale legacy spelling.
 var (
 	legacyStateHeading = strings.TrimPrefix(StateHeading, "#")
-	legacyNextHeading  = "## " + LabelNextCommand
+	legacyNextHeading  = markdown.H2Prefix + LabelNextCommand
 )
 
 // convertLegacy rewrites a pre-section document into the blocks this grammar
@@ -295,7 +295,7 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 			legacy = b.line
 		}
 		if (b.heading == MainHeading || strings.HasPrefix(b.heading, RequestHeadingPrefix)) && section == "" {
-			section = b.heading
+			section = b.raw
 		}
 	}
 	if legacy == 0 {
@@ -308,7 +308,7 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 	var state, extras, next string
 	var shape *block
 	for _, b := range blocks {
-		body := strings.Trim(strings.Join(b.body, "\n"), "\n")
+		body := bodyText(b.body)
 		switch {
 		case b.heading == shapeHeading:
 			copied := b
@@ -317,17 +317,20 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 			state = body
 		case b.heading == legacyNextHeading:
 			if strings.Contains(body, "\n") {
-				return nil, &ParseError{path, b.line, fmt.Sprintf("heading %q carries more than one line; a next command is one line", b.heading)}
+				return nil, &ParseError{path, b.line, fmt.Sprintf("heading %q carries more than one line; a next command is one line", b.raw)}
 			}
 			next = body
 		default:
-			extras += "\n\n### " + strings.TrimPrefix(b.heading, "## ") + "\n\n" + body
+			extras += "\n\n" + h3Prefix + strings.TrimPrefix(b.raw, markdown.H2Prefix) + "\n\n" + body
 		}
 	}
 
+	// Each converted line is a body line. parseSection meets the State heading third and
+	// reads no class below it.
 	main := block{heading: MainHeading, line: legacy}
-	main.body = append(main.body, labelLine(LabelNextCommand, next), "", StateHeading, "")
-	main.body = append(main.body, strings.Split(state+extras, "\n")...)
+	for _, raw := range append([]string{labelLine(LabelNextCommand, next), "", StateHeading, ""}, strings.Split(state+extras, "\n")...) {
+		main.body = append(main.body, markdown.Line{Raw: raw})
+	}
 	converted := []block{main}
 	if shape != nil {
 		converted = append(converted, *shape)
@@ -337,34 +340,30 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 
 // sectionKey resolves one heading to its key. Shape keeps its heading as the key,
 // because it is the one block that holds no section.
-func sectionKey(path string, line int, trimmed string) (string, error) {
+func sectionKey(path string, b block) (string, error) {
 	switch {
-	case trimmed == MainHeading:
+	case b.heading == MainHeading:
 		return MainKey, nil
-	case trimmed == shapeHeading:
+	case b.heading == shapeHeading:
 		return shapeHeading, nil
-	case strings.HasPrefix(trimmed, RequestHeadingPrefix):
-		digest := strings.TrimSpace(strings.TrimPrefix(trimmed, RequestHeadingPrefix))
+	case strings.HasPrefix(b.heading, RequestHeadingPrefix):
+		digest := strings.TrimSpace(strings.TrimPrefix(b.heading, RequestHeadingPrefix))
 		if digest == "" || strings.ContainsAny(digest, " \t") {
-			return "", &ParseError{path, line, fmt.Sprintf("heading %q names no single request digest", trimmed)}
+			return "", &ParseError{path, b.line, fmt.Sprintf("heading %q names no single request digest", b.raw)}
 		}
 		return digest, nil
 	}
-	return "", &ParseError{path, line, fmt.Sprintf("heading %q is not %q, %q, or %q", trimmed, MainHeading, RequestHeadingPrefix+"<digest>", shapeHeading)}
+	return "", &ParseError{path, b.line, fmt.Sprintf("heading %q is not %q, %q, or %q", b.raw, MainHeading, RequestHeadingPrefix+"<digest>", shapeHeading)}
 }
 
 // parseSection reads one block's label lines and its State body. Everything below
 // the State heading is the reviewer's, and it passes through untouched.
 func parseSection(path, key string, b block) (Section, error) {
 	section := Section{Key: key}
-	fenced := false
-	for i, raw := range b.body {
-		trimmed := strings.TrimRight(raw, " \t")
-		if isFence(trimmed) {
-			fenced = !fenced
-		}
-		if !fenced && trimmed == StateHeading {
-			section.State = strings.Trim(strings.Join(b.body[i+1:], "\n"), "\n")
+	for i, line := range b.body {
+		trimmed := strings.TrimRight(line.Raw, " \t")
+		if line.Class == markdown.Body && trimmed == StateHeading {
+			section.State = bodyText(b.body[i+1:])
 			return section, nil
 		}
 		if strings.TrimSpace(trimmed) == "" {

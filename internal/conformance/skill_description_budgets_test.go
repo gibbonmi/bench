@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/skillsindex"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -135,26 +136,16 @@ func skillDescriptionLength(value string) int {
 
 // skillDescriptionFolded reports whether the description value continues on an indented
 // line. The frontmatter reader returns the first value line, so a folded description would
-// otherwise pass on a count the listing never renders. This reads the line after the key
-// rather than parsing the block a second time.
+// otherwise pass on a count the listing never renders. The block reader marks the frontmatter
+// lines, and this reads the line after the key. A frontmatter key line always has a next line,
+// because the closer follows it.
 func skillDescriptionFolded(body string) bool {
-	lines := strings.Split(body, "\n")
-	if len(lines) == 0 || lines[0] != "---" {
-		return false
-	}
-	prefix := skillDescriptionKey + ":"
-	for i, line := range lines[1:] {
-		if line == "---" {
-			return false
+	lines := markdown.Read(body).Lines
+	for i, line := range lines {
+		if line.Class == markdown.Frontmatter && strings.HasPrefix(line.Raw, skillDescriptionKey+":") {
+			next := lines[i+1].Raw
+			return strings.TrimSpace(next) != "" && (strings.HasPrefix(next, " ") || strings.HasPrefix(next, "\t"))
 		}
-		if !strings.HasPrefix(line, prefix) {
-			continue
-		}
-		if i+2 >= len(lines) {
-			return false
-		}
-		next := lines[i+2]
-		return next != "---" && strings.TrimSpace(next) != "" && (strings.HasPrefix(next, " ") || strings.HasPrefix(next, "\t"))
 	}
 	return false
 }

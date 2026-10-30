@@ -3,6 +3,9 @@ package anchors
 import (
 	"slices"
 	"unicode"
+	"unicode/utf8"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // Locate answers the 1-based physical line, in data as stored, of the first
@@ -18,16 +21,18 @@ import (
 // the same way as a require kind: a non-zero line locates the violation, the
 // presence of the forbidden needle.
 func Locate(kind Kind, section, needle, data string) int {
-	stripped, origin := stripCommentsMapped(data)
-	text, textOrigin := stripped, origin
+	var text []rune
+	var textOrigin []int
 	if kind.sectionScoped() {
-		body, bodyOrigin, count := sectionRunesMapped(stripped, origin, section)
+		var count int
+		text, textOrigin, count = commentFreeSectionMapped(data, section)
 		// An absent section and a duplicated one both refuse: the evaluator resolves a
 		// scoped anchor against exactly one owning heading.
 		if count != 1 {
 			return 0
 		}
-		text, textOrigin = body, bodyOrigin
+	} else {
+		text, textOrigin = stripCommentsMapped(data)
 	}
 	searchText, searchOrigin := normalizeMatchMapped(kind, text, textOrigin)
 	searchNeedleRunes := []rune(needle)
@@ -39,57 +44,61 @@ func Locate(kind Kind, section, needle, data string) int {
 	return lineAtRune(data, searchOrigin[at])
 }
 
-// commentOpen and commentClose delimit an HTML comment, fenceMark opens a fenced block,
-// and headingMark opens an H2 heading. They are declared once here rather than allocated
-// fresh on every call.
-var (
-	commentOpen, commentClose = []rune("<!--"), []rune("-->")
-	fenceMark                 = []rune("```")
-	headingMark               = []rune("## ")
-)
-
-// stripCommentsMapped is the package's one comment strip: a complete comment is removed,
-// an unterminated one truncates the text, and the scan restarts on the rewritten text. It
-// works over runes and returns each surviving rune's index in data alongside it, so a
-// caller can map a match back to its source position; StripHTMLComments is this function's
-// string projection. The restart is what makes a comment that the removal itself creates,
-// from text either side of a removed comment, hide its needle from Locate as it hides it
-// from the evaluator. A single pass would locate a needle the evaluator reads as absent.
+// stripCommentsMapped is the package's one comment strip. It keeps each rune of data outside
+// the comment spans that markdown.Read removes from data as a whole file, and each kept rune's
+// index in data, so a caller can map a match back to its source position. The spans are byte
+// ranges, but the origin is a rune index, because lineAtRune and the case fold count runes.
+// StripHTMLComments is this function's string projection, so Locate and the evaluator read
+// the same comment-free text.
 func stripCommentsMapped(data string) (text []rune, origin []int) {
-	text = []rune(data)
-	origin = identityOrigin(len(text))
-	for {
-		start := indexRunes(text, commentOpen)
-		if start < 0 {
-			return text, origin
+	cut := markdown.Read(data).Comments
+	index := 0
+	for at, r := range data {
+		for len(cut) > 0 && at >= cut[0].End {
+			cut = cut[1:]
 		}
-		end := indexRunes(text[start+len(commentOpen):], commentClose)
-		if end < 0 {
-			return text[:start], origin[:start]
+		if len(cut) == 0 || at < cut[0].Start {
+			text = append(text, r)
+			origin = append(origin, index)
 		}
-		cut := start + len(commentOpen) + end + len(commentClose)
-		text = append(text[:start:start], text[cut:]...)
-		origin = append(origin[:start:start], origin[cut:]...)
+		index++
 	}
+	return text, origin
 }
 
-// scopeRunesMapped is the package's one narrowing walk: it walks the lines once and answers
-// the first region opens accepts, that region's origin mapping into runes, and the number of
-// lines opens accepted. A line inside a fenced block neither opens nor closes a region. The
-// body and the count come from the same walk, so a caller that refuses a duplicated region
-// reads the count the body came from. The body starts on the line after the opener.
-func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune) bool) (body []rune, bodyOrigin []int, count int) {
-	lines := splitRuneLines(runes)
-	fenced := false
+// commentFreeSectionMapped answers the comment-free runes of title's first section in data,
+// each rune's index in data, and the number of owning headings. Locate and the evaluator read
+// a section through it. The walk reads data itself, the document that the comment strip reads,
+// so the strip and the walk take one frontmatter state. The body is each comment-free rune
+// inside the section's range of data.
+func commentFreeSectionMapped(data, title string) (body []rune, bodyOrigin []int, count int) {
+	text, origin := stripCommentsMapped(data)
+	runes := []rune(data)
+	_, span, count := sectionRunesMapped(runes, identityOrigin(len(runes)), title)
+	// An absent section and an empty one have no range of data.
+	if len(span) == 0 {
+		return nil, nil, count
+	}
+	from, _ := slices.BinarySearch(origin, span[0])
+	to, _ := slices.BinarySearch(origin, span[len(span)-1]+1)
+	return text[from:to], origin[from:to], count
+}
+
+// scopeRunesMapped is the package's one narrowing walk: it reads runes through the block
+// reader once and answers the first region opens accepts, that region's origin mapping into
+// runes, and the number of lines opens accepted. opens and closes read the reader's classified
+// lines. The body and the count come from the same walk, so a caller that refuses a duplicated
+// region reads the count the body came from. The body starts on the line after the opener.
+// The walk reads runes as a whole document, so a comment opener or a fence marker inside the
+// frontmatter hides no section. A caller passes the document itself, not its comment-free text,
+// because a removed comment can turn a line of that text into a frontmatter marker.
+func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line markdown.Line) bool) (body []rune, bodyOrigin []int, count int) {
+	text := string(runes)
+	lines := markdown.Read(text).Lines
+	// lineStart answers the index in runes where line i starts. A line offset is a byte offset.
+	lineStart := func(i int) int { return utf8.RuneCountInString(text[:lines[i].Offset]) }
 	start, end := -1, -1
 	for i, line := range lines {
-		if hasPrefixRunes(trimSpaceRunes(line), fenceMark) {
-			fenced = !fenced
-			continue
-		}
-		if fenced {
-			continue
-		}
 		if opens(line) {
 			count++
 			if count == 1 {
@@ -107,14 +116,13 @@ func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune
 	if end < 0 {
 		end = len(lines)
 	}
-	lineStarts := runeLineStarts(runes)
 	startOffset := len(runes)
-	if start < len(lineStarts) {
-		startOffset = lineStarts[start]
+	if start < len(lines) {
+		startOffset = lineStart(start)
 	}
 	endOffset := len(runes)
-	if end < len(lineStarts) {
-		endOffset = lineStarts[end]
+	if end < len(lines) {
+		endOffset = lineStart(end)
 		if endOffset > startOffset {
 			// Drop the boundary line's own leading newline from the body.
 			endOffset--
@@ -127,14 +135,13 @@ func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line []rune
 }
 
 // sectionRunesMapped is the package's one H2 section resolution: title's first owning
-// section, the number of owning headings, and the next H2 heading as the close. A heading
-// inside a fenced block neither delimits a section nor counts as one.
-// MarkdownH2Sections is this function's string projection.
+// section, the number of owning headings, and the next H2 heading as the close. Only a line
+// that the block reader reads as an H2 heading opens or closes a section, so a fenced or an
+// indented heading line does neither. MarkdownH2Sections is this function's string projection.
 func sectionRunesMapped(runes []rune, origin []int, title string) (body []rune, bodyOrigin []int, count int) {
-	heading := []rune("## " + title)
 	return scopeRunesMapped(runes, origin,
-		func(line []rune) bool { return slices.Equal(trimSpaceRunes(line), heading) },
-		func(line []rune) bool { return hasPrefixRunes(line, headingMark) })
+		func(line markdown.Line) bool { return line.Heading && line.Section == title },
+		func(line markdown.Line) bool { return line.Heading })
 }
 
 // collapseSpaceMapped is the package's one whitespace collapse: each whitespace run becomes
@@ -315,49 +322,4 @@ func indexRunes(haystack, needle []rune) int {
 		}
 	}
 	return -1
-}
-
-func splitRuneLines(runes []rune) [][]rune {
-	var lines [][]rune
-	start := 0
-	for i, r := range runes {
-		if r == '\n' {
-			lines = append(lines, runes[start:i])
-			start = i + 1
-		}
-	}
-	lines = append(lines, runes[start:])
-	return lines
-}
-
-// runeLineStarts answers, for each line splitRuneLines would produce, that line's
-// starting rune index in runes.
-func runeLineStarts(runes []rune) []int {
-	starts := []int{0}
-	for i, r := range runes {
-		if r == '\n' {
-			starts = append(starts, i+1)
-		}
-	}
-	return starts
-}
-
-func trimSpaceRunes(runes []rune) []rune {
-	start := 0
-	for start < len(runes) && unicode.IsSpace(runes[start]) {
-		start++
-	}
-	end := len(runes)
-	for end > start && unicode.IsSpace(runes[end-1]) {
-		end--
-	}
-	return runes[start:end]
-}
-
-// hasPrefixRunes reports whether runes starts with prefix.
-func hasPrefixRunes(runes, prefix []rune) bool {
-	if len(prefix) > len(runes) {
-		return false
-	}
-	return slices.Equal(runes[:len(prefix)], prefix)
 }

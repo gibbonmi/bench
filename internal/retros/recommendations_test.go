@@ -18,6 +18,26 @@ func TestRecommendationsKeepsImprovementParagraphsAndListItemsSeparate(t *testin
 	}
 }
 
+// TestRecommendationsSkipFencedLines proves that a fenced H2 line leaves the improvements open,
+// so the items after it count. A fence marker line and a fenced item are no unit, and each
+// marker line ends the open unit. A live H2 heading ends the unit and the section. An H2 line
+// inside a closed comment also leaves the section open, though the commented lines stay unit
+// text, and a heading inside a closed frontmatter block opens no section.
+func TestRecommendationsSkipFencedLines(t *testing.T) {
+	for _, tc := range []struct {
+		name, content string
+		want          []Recommendation
+	}{
+		{"fenced lines", "## Agent-experience improvements\n\n- First\n```\n## Notes\n- quoted\n```\nafter the fence\n\n- Last\n## Other\n- outside\n", []Recommendation{{"First", 3}, {"after the fence", 8}, {"Last", 10}}},
+		{"commented heading", "## Agent-experience improvements\n\n### Process <!--\n## Other\n-->\n\n- After\n", []Recommendation{{"## Other\n-->", 4}, {"After", 7}}},
+		{"frontmatter heading", "---\n## Agent-experience improvements\n- quoted\n---\n", nil},
+	} {
+		if got := Recommendations([]byte(tc.content)); !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("%s: Recommendations gives %d units or other units, want the %d units outside every fence and frontmatter block", tc.name, len(got), len(tc.want))
+		}
+	}
+}
+
 func TestRecommendationsIgnoreRepairAttributionHeadingBeforeImprovements(t *testing.T) {
 	content := []byte("## Repair attribution\n\n| ticket | rounds | causes |\n|---|---|---|\n| add-thing | 1 | spec-row |\n\n## Agent-experience improvements\n\n- First\n- Second\n")
 	want := []Recommendation{

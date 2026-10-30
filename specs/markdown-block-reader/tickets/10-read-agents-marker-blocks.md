@@ -6,17 +6,20 @@ Covers: MB57, MB58, MB61, MB70, MB86, MB87, MB91, MB97
 
 ## What to build
 
-The `cli-desktop-consistency` prerequisite is satisfied at `37ac80b8`.
-Read `marker.go` and its current callers before the first edit. The
-`stagedRepairAgents` caller and its link-transaction path are present. Keep that
-repair path on the same marker scan and rewrite.
+Read `marker.go` and its current callers before the first edit. The link
+transaction calls `stagedRepairAgents` at `link_transaction.go:160`. The unlink
+path calls `observeUnlinkAgents` (`marker.go:227`) at `unlink.go:137`, and it
+calls `StripAgentsBlock`. Keep both paths on the same marker scan and rewrite.
+Keep the signatures of `scanMarkers`, `validateAgentsContent`, and
+`RewriteAgentsBlock`, because `doctor_rows.go:93-96`, `link.go:248`, and
+`link_stage.go:58` call them.
 
 Make `scanMarkers`, `RewriteAgentsBlock`, and `StripAgentsBlock` read the block
 reader's fence classes. Each one still finds a marker in the raw line text,
 because each marker is itself an HTML comment. The unbalanced-fence flag comes
 from the reader's fence fault or its comment fault. Either fault refuses only when
-the file holds Bench text, as the fence fault does today at `marker.go:67`. Both
-faults give the exact message at `marker.go:68`:
+the file holds Bench text, as the fence fault does today at `marker.go:71`. Both
+faults give the exact message at `marker.go:72`:
 `conflict: AGENTS.md has an unclosed code fence around Bench markers; marker detection cannot be trusted`.
 
 The rewrite and the strip write their output from the source bytes by the
@@ -31,7 +34,7 @@ The new rows go in `link_plan_test.go`. `TestRewriteAgentsBlockEdges` lives in
 
 - [ ] A marker example inside a `~~~` block stays, and `RewriteAgentsBlock` replaces only the live block.
 - [ ] `StripAgentsBlock` keeps a tilde-fenced marker example and removes the live block.
-- [ ] An unterminated `~~~` block around Bench text refuses with the `marker.go:68` message.
+- [ ] An unterminated `~~~` block around Bench text refuses with the `marker.go:72` message.
 - [ ] A file that holds only an unterminated comment opener and a fenced marker example refuses with the same message, not the malformed-markers message.
 - [ ] A file that holds an unterminated comment opener and no Bench text rewrites with no refusal.
 - [ ] `RewriteAgentsBlock` on a CRLF file keeps each carriage return outside the replaced block.
@@ -39,5 +42,5 @@ The new rows go in `link_plan_test.go`. `TestRewriteAgentsBlockEdges` lives in
 - [ ] An AGENTS.md whose first line is an unclosed `---` rewrites as it does today, with no refusal.
 - [ ] `TestRewriteAgentsBlockEdges` stays green without an edit.
 - [ ] `RewriteAgentsBlock` of the live `AGENTS.md` gives the same bytes at the base and at the tip.
-- [ ] `internal/adopt/marker.go` holds no string literal with a run of three backticks.
+- [ ] `internal/adopt/marker.go` holds no string literal with a run of three backticks. The sites today are `marker.go:48`, `:104`, and `:150`.
 - [ ] No file in `Writes:` grows past 400 lines.

@@ -2247,6 +2247,14 @@
       "identity": "sha256:22c540a45384db50868942dcb76b28b7e6e0b477fa791e89202586585389ce2e",
       "source": "d2de2ce22f4fa6765f2779128d0d45469a2f6453",
       "evidence": "abc678a3541c986a1960600df70802d31beee720"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT358-block-reader",
+      "binding": "markdown-block-reader",
+      "identity": "sha256:fc6dcf6d82322cd7ef4723998ebeb6db6b8c4403ab307687057e9251f9c0fd70",
+      "source": "591ecb52e7e1ec0a7292c47a334135776181e426",
+      "evidence": "6be154513bf63263e4fdaaef57c96e0b20f39e4b"
     }
   ]
 }

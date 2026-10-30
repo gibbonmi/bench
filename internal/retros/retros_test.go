@@ -57,6 +57,24 @@ func TestParseRejectsMissingRequiredHeading(t *testing.T) {
 	}
 }
 
+// TestParseIgnoresAFencedHeading proves that a fenced, commented, or frontmatter required
+// heading does not count, so a retrospective whose only Outcome heading is quoted fails Parse
+// on that heading. Each later heading, the live Cost heading included, stays in place.
+func TestParseIgnoresAFencedHeading(t *testing.T) {
+	rest := strings.Join(RequiredHeadings()[1:], "\n\n") + "\n"
+	for name, outcome := range map[string]string{
+		"fenced":      "```\n## Outcome\n```",
+		"commented":   "<!--\n## Outcome\n-->",
+		"frontmatter": "---\n## Outcome\n---",
+	} {
+		t.Run(name, func(t *testing.T) {
+			if err := Parse([]byte(outcome + "\n\n" + rest)); err == nil || !strings.Contains(err.Error(), `heading "## Outcome"`) {
+				t.Fatalf("%s Outcome heading: Parse accepts the retrospective or names another heading, want the missing Outcome heading", name)
+			}
+		})
+	}
+}
+
 func TestFactsClassifiesEligibleFilesInStableOrder(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, Directory)

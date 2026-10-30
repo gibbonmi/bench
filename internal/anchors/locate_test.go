@@ -270,3 +270,78 @@ func TestLocateStripsRejoinedComments(t *testing.T) {
 		t.Fatalf("needle after a plain comment: Locate = %d, want line 3", got)
 	}
 }
+
+// TestLocateReadsTheBlockReader pins the block reader's rules under the section walk and the
+// comment strip. A fenced or an indented heading line neither opens nor closes a section. The
+// walk and the strip read the whole document, so a comment opener or a fence marker in the
+// frontmatter hides no section, a marker line in a section body stays body, and a comment in
+// the frontmatter stays. The walk reads the file as stored, in Locate and in the evaluator, so
+// a removed comment cannot make a frontmatter marker, and a comment in a section still hides its
+// needle. Multi-byte text before a section or a comment moves neither the section body nor the
+// source line of a match.
+func TestLocateReadsTheBlockReader(t *testing.T) {
+	dir := t.TempDir()
+	evaluatorBody := func(t *testing.T, doc string) string {
+		t.Helper()
+		path := filepath.Join(dir, "doc.md")
+		if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return resolveSection("doc.md", "S", read(path, "doc.md")).body
+	}
+	for _, test := range []struct {
+		name, doc   string
+		count, line int
+	}{
+		{"a tilde-fenced heading leaves the section open", "## S\n~~~\n## Other\n~~~\nneedle\n## T\n", 1, 5},
+		{"a tilde-fenced heading counts as no section", "~~~\n## S\n~~~\n## S\nneedle\n", 1, 5},
+		{"an indented heading opens no section", "  ## S\nneedle\n", 0, 0},
+		{"an indented heading closes no section", "## S\n  ## T\nneedle\n", 1, 3},
+		{"frontmatter that holds a comment opener keeps the section", "---\nk: <!--\n---\n## S\nneedle\n", 1, 5},
+		{"frontmatter that holds a tilde marker keeps the section and its marker body line", "---\n~~~\n---\n## S\n---\nneedle\n", 1, 6},
+		{"a comment before a marker on the first line opens no frontmatter", "<!-- c -->---\n## S\nneedle\n---\n", 1, 3},
+		{"a comment before a later marker closes no frontmatter", "---\n## S\n<!-- c -->---\nneedle\n", 1, 4},
+		{"an empty section holds no needle", "## S\n## T\nneedle\n", 1, 0},
+		{"a section after multi-byte text keeps its body", "€€€€\n## S\nneedle\n## T\nafter\n", 1, 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if _, count := MarkdownH2Sections(test.doc, "S"); count != test.count {
+				t.Errorf("%s: section count = %d, want %d", test.name, count, test.count)
+			}
+			if got := strings.Contains(MarkdownH2Section(test.doc, "S"), "needle"); got != (test.line > 0) {
+				t.Errorf("%s: section body holds the needle = %t, want %t", test.name, got, test.line > 0)
+			}
+			if got := Locate(RequireInSection, "S", "needle", test.doc); got != test.line {
+				t.Errorf("%s: Locate = %d, want line %d", test.name, got, test.line)
+			}
+			if got := strings.Contains(evaluatorBody(t, test.doc), "needle"); got != (test.line > 0) {
+				t.Errorf("%s: evaluator section body holds the needle = %t, want %t", test.name, got, test.line > 0)
+			}
+		})
+	}
+	const frontmatter = "---\n<!-- kept -->\n---\n<!-- hidden -->\n"
+	const section = "## S\n<!-- hidden -->\nkept\n"
+	for _, test := range []struct {
+		name, doc, needle string
+		kind              Kind
+		line              int
+	}{
+		{"a match after a comment keeps its line after multi-byte text", "€€€€<!-- x -->\nab\nneedle\n", "needle", Require, 3},
+		{"a comment in the frontmatter stays", frontmatter, "kept", Require, 2},
+		{"a comment below the frontmatter hides its needle", frontmatter, "hidden", Require, 0},
+		{"a comment in a section hides its needle", section, "hidden", RequireInSection, 0},
+		{"a match after a comment in a section keeps its line", section, "kept", RequireInSection, 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := Locate(test.kind, "S", test.needle, test.doc); got != test.line {
+				t.Errorf("%s: Locate = %d, want line %d", test.name, got, test.line)
+			}
+			if !test.kind.sectionScoped() {
+				return
+			}
+			if got := strings.Contains(evaluatorBody(t, test.doc), test.needle); got != (test.line > 0) {
+				t.Errorf("%s: evaluator section body holds the needle = %t, want %t", test.name, got, test.line > 0)
+			}
+		})
+	}
+}

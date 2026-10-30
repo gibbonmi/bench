@@ -22,6 +22,7 @@ import (
 
 	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 const (
@@ -162,11 +163,11 @@ func Entries(root string) ([]Entry, error) {
 	return entries, err
 }
 
-// FrontmatterField returns the first value of key inside path's complete leading
-// `---` fence. The fence must open at byte zero and close. Prose before the opener
-// and an unclosed opener are body text, so neither can authorize an indexed field.
-// Nothing after the closing fence counts either. This is the `<key>:` prefix contract,
-// not YAML: nesting, quoting, and schema validation stay out of scope.
+// FrontmatterField returns the first value of key among path's frontmatter lines, as
+// the block reader classifies them. Prose before the opener and an unclosed opener are
+// body text, so neither can authorize an indexed field. Nothing after the closer counts
+// either. This is the `<key>:` prefix contract, not YAML: nesting, quoting, and schema
+// validation stay out of scope.
 func FrontmatterField(path, key string) string {
 	// This uses the producer classifier, not os.ReadFile: this path is attacker-shaped
 	// input to generated output. A link is refused rather than followed, and a FIFO
@@ -175,22 +176,16 @@ func FrontmatterField(path, key string) string {
 	if classified.State != bounds.StateParsed {
 		return ""
 	}
-	lines := strings.Split(string(classified.Data), "\n")
-	if len(lines) == 0 || lines[0] != "---" {
-		return ""
-	}
-	prefix := key + ":"
-	value, found := "", false
-	for _, line := range lines[1:] {
-		if line == "---" {
-			return value
+	// The reader holds no frontmatter line for an unclosed opener, so the body that the
+	// opener swallowed gives no value.
+	for _, line := range markdown.Read(string(classified.Data)).Lines {
+		if line.Class != markdown.Frontmatter {
+			break
 		}
-		if !found && strings.HasPrefix(line, prefix) {
-			value, found = strings.TrimSpace(strings.TrimPrefix(line, prefix)), true
+		if value, ok := strings.CutPrefix(line.Raw, key+":"); ok {
+			return strings.TrimSpace(value)
 		}
 	}
-	// Falling out of the loop means the opener never closed. The body it swallowed is
-	// not frontmatter, and the value it appeared to carry is withheld.
 	return ""
 }
 
