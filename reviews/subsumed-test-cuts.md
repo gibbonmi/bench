@@ -1773,11 +1773,148 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+    "performer": "session_01JK5CPYv9wmkqVE69kw7W9b",
+    "reconciliation": {
+      "TC1": "covered",
+      "TC10": "covered",
+      "TC11": "covered",
+      "TC12": "covered",
+      "TC13": "covered",
+      "TC14": "covered",
+      "TC15": "covered",
+      "TC16": "covered",
+      "TC17": "covered",
+      "TC18": "covered",
+      "TC19": "covered",
+      "TC2": "covered",
+      "TC20": "covered",
+      "TC21": "covered",
+      "TC22": "covered",
+      "TC23": "covered",
+      "TC24": "covered",
+      "TC25": "covered",
+      "TC26": "covered",
+      "TC27": "covered",
+      "TC28": "covered",
+      "TC29": "covered",
+      "TC3": "covered",
+      "TC30": "covered",
+      "TC31": "covered",
+      "TC32": "covered",
+      "TC33": "covered",
+      "TC34": "covered",
+      "TC35": "covered",
+      "TC36": "covered",
+      "TC37": "covered",
+      "TC38": "covered",
+      "TC39": "covered",
+      "TC4": "covered",
+      "TC40": "covered",
+      "TC41": "covered",
+      "TC42": "covered",
+      "TC43": "covered",
+      "TC44": "covered",
+      "TC45": "covered",
+      "TC5": "covered",
+      "TC6": "covered",
+      "TC7": "covered",
+      "TC8": "covered",
+      "TC9": "covered"
+    },
+    "verification": [
+      {
+        "id": "f-adopt-suites",
+        "performer": "session_01JK5CPYv9wmkqVE69kw7W9b",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:f-adopt-suites",
+          "digest": "sha256:5fe7b0c4e262119c0e461132c940af662594d20028a4e8e6161b99a04daa6c26",
+          "excerpt": "bench test --package ./internal/adopt --package ./internal/adopt/repairtest at 835edbe94\ninternal/adopt pass 230 tests; internal/adopt/repairtest pass 24 tests; failures 0; skips 0\n"
+        },
+        "requirement": "adopt-suites",
+        "command": "bench test --package ./internal/adopt --package ./internal/adopt/repairtest",
+        "exit_code": 0
+      },
+      {
+        "id": "f-worktree-suite",
+        "performer": "session_01JK5CPYv9wmkqVE69kw7W9b",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:f-worktree-suite",
+          "digest": "sha256:414ef35758aaa4ec1c19058d5c99a778c54822c9e743011fbf62418612320e4d",
+          "excerpt": "bench test --package ./internal/worktree at 835edbe94\ninternal/worktree pass 1588 tests in 75746 ms; failures 0; skips 0\n"
+        },
+        "requirement": "worktree-suite",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "f-census",
+        "performer": "session_01JK5CPYv9wmkqVE69kw7W9b",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:f-census",
+          "digest": "sha256:c3035d4dceac3593ee900fd261ceff92e7f2df10ad101c4c73fd4d77e6591646",
+          "excerpt": "bench test --check ordinary-build-census at 835edbe94\ninternal/conformance pass 1 test; failures 0\n"
+        },
+        "requirement": "census",
+        "command": "bench test --check ordinary-build-census",
+        "exit_code": 0
+      },
+      {
+        "id": "f-spec-citations",
+        "performer": "session_01JK5CPYv9wmkqVE69kw7W9b",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:f-spec-citations",
+          "digest": "sha256:0843cdb1a068d7f57e34e1fd092ee6272855fb17f692888db49fc9a8ed65828d",
+          "excerpt": "bench test --check docs-currency-workflow at 835edbe94\ninternal/conformance pass 1 test; failures 0\n"
+        },
+        "requirement": "spec-citations",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "f-coverage",
+        "performer": "session_01JK5CPYv9wmkqVE69kw7W9b",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:f-coverage",
+          "digest": "sha256:60a5232bcf38ec0de96d9634574578021a9dfbc84acf707242133c04fd83a6e5",
+          "excerpt": "bench coverage --check subsumed-test-cuts at 835edbe94\nok: coverage map valid - 45 rows; uncited: TC9, TC18 (check-cell seams)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check subsumed-test-cuts",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
