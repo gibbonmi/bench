@@ -19,7 +19,8 @@ import (
 // candidate tree carries its own build entry point, a go-build.sh that records the
 // destination branch it observed. The refresh effect runs that script once, and nothing
 // before it does: the branch the script read is the published commit, so the candidate
-// code reached no step that decided which bytes were published.
+// code reached no step that decided which bytes were published. The release runs under
+// the same owner before the refresh, so the released checkout is gone.
 func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testing.T) {
 	t.Parallel()
 	request := "land-owner-no-candidate-code"
@@ -48,41 +49,7 @@ func TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion(t *testin
 	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
 		t.Fatalf("gate tally = %q, %v, want one prospective run", got, err)
 	}
-}
-
-// TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease is SOL04 and LC7. The
-// invoked owner carries the complete landing — publication, marker, reconcile, release,
-// and the effects — in one process. A rebuild-and-re-exec path would either replace the
-// process or surface its rebuild disclosure; neither may appear. This destination
-// declares build inputs but carries no build entry point, so the refresh reports failed
-// under that same owner rather than handing the landing to another process.
-func TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease(t *testing.T) {
-	t.Parallel()
-	request := "land-owner-single-process"
-	f := publicLandingFixture(t, request, "", "")
-	commitLandingBuildInputs(t, f.root)
-	base := gitOutput(t, f.root, "rev-parse", "HEAD")
-	gitRun(t, f.creation.Path, "rebase", "main")
-	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
-	tip := gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
-
-	ownerPid := os.Getpid()
-	r := runVerb(t, verbLand, f.call(landArgs(request, base, tip, f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed")) {
-		t.Fatalf("single-owner landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
-	}
-	if os.Getpid() != ownerPid {
-		t.Fatalf("owner process identity changed: %d -> %d", ownerPid, os.Getpid())
-	}
-	if strings.Contains(r.stderr, "rebuilt") {
-		t.Fatalf("owner re-executed through a rebuild: %q", r.stderr)
-	}
-	if got, err := os.ReadFile(f.tally); err != nil || string(got) != "g" {
-		t.Fatalf("gate tally = %q, %v, want exactly one gate under one owner", got, err)
-	}
-	if _, err := os.Stat(f.creation.Path); !os.IsNotExist(err) {
-		t.Fatalf("release did not complete under the owner process: %v", err)
-	}
+	requireAbsent(t, f.creation.Path, "released checkout")
 }
 
 // TestLandCommandIgnoresAForgedPrimaryExecutableAndSeal is SOL17 and LC4, at the real

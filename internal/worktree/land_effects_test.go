@@ -107,9 +107,10 @@ func publishVerifyingBroker(t *testing.T, root, executable string) error {
 	return freshness.Publish(root, staged, executable, filepath.Dir(executable), "0.0.0-fixture")
 }
 
-// TestLandSkipsTheRefreshWithoutBuildInputs is LC2. A destination that declares no Bench
-// build inputs has no broker of its own to refresh, so the effect reports not-applicable
-// and the build seam is never reached.
+// TestLandSkipsTheRefreshWithoutBuildInputs is LC2 and LC20. A destination that declares no
+// Bench build inputs has no broker of its own to refresh, so the effect reports
+// not-applicable and the build seam is never reached. Every existing reader takes the
+// landed record from the last stdout line, so the effects table sits immediately before it.
 func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-no-inputs"
@@ -118,8 +119,9 @@ func TestLandSkipsTheRefreshWithoutBuildInputs(t *testing.T) {
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
 	r.mustViaJoins(t)
-	if r.exit != 0 || !strings.Contains(r.stdout, wantEffects("not-applicable")) {
-		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh", r.exit, r.stdout, r.stderr)
+	effects, landed, _ := strings.Cut(r.stdout, "landed{")
+	if r.exit != 0 || !strings.HasSuffix(effects, wantEffects("not-applicable")) || strings.Count(landed, "\n") != 1 || !strings.HasSuffix(landed, "\n") {
+		t.Fatalf("landing without build inputs = (%d, %q, %q), want a not-applicable refresh just before the landed record, and that record last", r.exit, r.stdout, r.stderr)
 	}
 	if *calls != 0 {
 		t.Fatalf("refresh build calls = %d, want none", *calls)
@@ -329,32 +331,6 @@ func TestRefreshHoldsAnInstalledCandidate(t *testing.T) {
 		requireTest(t, r.exit == 0 && strings.Contains(r.stdout, wantEffects(effectHeld)), "held landing = (%d, %q, %q), want a held refresh at exit 0", r.exit, r.stdout, r.stderr)
 		requireTest(t, *calls == 0 && !strings.Contains(r.stderr, brokerNoticeAnchor), "held landing: build calls %d, stderr %q; want no build and no broker notice", *calls, r.stderr)
 	})
-}
-
-// TestLandEffectsRowPrecedesTheLandedRecord is LC20. Every existing reader takes the
-// landed record from the last stdout line, so the effects table sits immediately before
-// it rather than after it.
-func TestLandEffectsRowPrecedesTheLandedRecord(t *testing.T) {
-	t.Parallel()
-	request := "land-effects-row-order"
-	f := publicLandingFixture(t, request, "", "")
-	j, _ := refreshJoins(nil)
-
-	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, f.tip, f.creation.Path)...))
-	if r.exit != 0 {
-		t.Fatalf("landing = (%d, %q, %q), want a released landing", r.exit, r.stdout, r.stderr)
-	}
-	lines := strings.Split(strings.TrimSuffix(r.stdout, "\n"), "\n")
-	if len(lines) < 4 {
-		t.Fatalf("landing stdout = %q, want the effects table before the landed record", r.stdout)
-	}
-	tail := strings.Join(lines[len(lines)-4:], "\n") + "\n"
-	if !strings.HasPrefix(tail, wantEffects("not-applicable")) {
-		t.Fatalf("landing stdout tail = %q, want the effects table first", tail)
-	}
-	if !strings.HasPrefix(lines[len(lines)-1], "landed{") {
-		t.Fatalf("last stdout line = %q, want the landed record", lines[len(lines)-1])
-	}
 }
 
 // TestResumeReadsEffectStateFromTheTree is LC19. The resume keeps no journal of its own:
