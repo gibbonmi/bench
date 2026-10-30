@@ -104,7 +104,8 @@ A link above the store root does not refuse, because a checkout can sit below a 
 For that reason the read does not use `bounds.RefuseLinks`, which walks each ancestor up to the file-system root (`internal/bounds/classify.go:143`).
 `refuseSymlinkComponents` holds the needed walk for a retro write today (`internal/roadmap/retro.go:76`).
 The ticket moves that walk into `internal/bounds` once, and the retro write and the working read both call it.
-The moved walk names the linked component in a neutral text, because it now serves a read and a write. No test pins the old text.
+The moved walk names the linked component in a neutral text, because it now serves a read and a write.
+No test pins the full old text. `TestRetroRefusesSymlinkedDestinationComponents` requires the words `symbolic link`, and the neutral text keeps them, so that test needs no edit.
 The read then classifies the file with `bounds.ClassifyNoFollow` (`internal/bounds/classify.go:134`), which binds the control-record limit that the tree read also binds (`internal/git/run.go:154`).
 Only a parsed classification passes, and each other state refuses.
 
@@ -136,6 +137,7 @@ The comment above `readTree` and the comment above that test state the new rule.
 
 One ticket delivers the whole outcome, because one function serves both read sides.
 A plan-side ticket alone would leave an approved plan that no commit can record, and a commit-side ticket alone has no approved plan to grade.
+The move of the link walk is not its own prefactor ticket, because this ticket is its sole new consumer, and the walk has one existing caller.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
@@ -256,7 +258,7 @@ The orchestrator amends it to version 2 before the first author dispatch.
 | PE26 | 20 | The Unreleased section of `CHANGELOG.md` holds one entry that names the working-file read at plan and approve and the candidate-tree read at commit and landing | review-owned: the Unreleased section of CHANGELOG.md | A missing entry leaves the read rule only in code after the row file retires |
 | PE27 | 21 | Plan accepts the new identity of a pinned row when the store root of the worktree is a path through a linked parent directory | planned TestPinnedRowPlanReadsTheWorkingFile in internal/commitment/pinned_row_test.go | A link walk up to the file-system root, as `bounds.RefuseLinks` does, refuses this checkout |
 | PE28 | 22 | `bench retro` still refuses a retro path whose destination component is a symbolic link | `internal/roadmap/retro_test.go` (`TestRetroRefusesSymlinkedDestinationComponents`) | A kept-rule witness: the moved walk must keep the refusal of the retro write |
-| PE29 | 22 | The tree holds one component-link walk, in `internal/bounds`, and `internal/roadmap` holds no copy | review-owned: `rg -n "refuseSymlinkComponents" internal` returns no hit after the move | A surviving copy is a second source for one link rule |
+| PE29 | 22 | The tree holds one root-relative component-link walk, in `internal/bounds`, and `internal/roadmap` holds no copy | review-owned: `rg -n "refuseSymlinkComponents" internal` returns no hit after the move | A surviving copy is a second source for one link rule |
 
 ### Edge inventory
 
@@ -274,6 +276,7 @@ Won't handle: a plan from the primary checkout that reads the working file of th
 Won't handle: an untracked working row file — the commit reads the candidate tree of the named tracked paths, so an untracked edit cannot land.
 Won't handle: a proposal that changes one of two identities that bind one row path — `protectedCandidate` refuses that commit at the candidate tree. No current outcome shares a path.
 Won't handle: the held row edits in the saved drain patch — the next `/bench-drain` applies them through this route.
+Won't handle: the `rejectSymlinkComponents` walk of the freshness build inputs (`internal/freshness/freshness_buildinputs.go:211`) — it walks from the volume root, as `bounds.RefuseLinks` does, so it is not a copy of the moved root-relative walk.
 Won't handle: the interim spec-stage rule for a pinned row — only `roadmap/FT437.md` holds it, and the promote-then-delete of this spec removes that file.
 
 ## Out of scope
@@ -315,7 +318,7 @@ Won't handle: the interim spec-stage rule for a pinned row — only `roadmap/FT4
 ### Pre-review proof checklist
 
 - Cited symbols: `readTree` (`internal/commitment/repository/sources.go:97`), `sourceAt` (`internal/commitment/repository/sources.go:26`), `validateSourceAt` (`internal/commitment/repository/sources.go:186`), `validateIdentity` (`internal/commitment/repository/sources.go:194`), `NewSource` (`internal/commitment/delivery.go:176`), `NewDeliverable` (`internal/commitment/delivery.go:158`), `namesSource` (`internal/commitment/delivery.go:182`), `BuildPlan` (`internal/commitment/authority.go:48`), `approvedTransition` (`internal/commitment/repository/candidate.go:190`), `protectedCandidate` (`internal/commitment/repository/candidate.go:239`), `Store.Plan` (`internal/commitment/repository/repository.go:106`), `Store.approve` (`internal/commitment/repository/repository.go:163`), `Store.AdmitPublication` (`internal/commitment/repository/publication.go:21`), `roadmap.RequirementBytes` (`internal/roadmap/tree_validation.go:32`), `bounds.ClassifyNoFollow` (`internal/bounds/classify.go:134`), `bounds.RefuseLinks` (`internal/bounds/classify.go:143`), and `refuseSymlinkComponents` (`internal/roadmap/retro.go:76`).
-- Import edges: the production code of `internal/commitment/repository` gains `internal/bounds`. `go list -deps ./internal/bounds` names no `internal/commitment` package, so the edge makes no cycle. `internal/roadmap` already imports `internal/bounds` (`internal/roadmap/tree.go:51`).
+- Import edges: the production code of `internal/commitment/repository` gains `internal/bounds`. `go list -deps ./internal/bounds` names no `internal/commitment` package, so the edge makes no cycle. `internal/roadmap` already imports `internal/bounds` (`internal/roadmap/tree.go:11`).
 - Source-row clauses and occurrences: the table above quotes each clause. The row records seven occurrences, from the 2026-10-18 drain to the 2026-10-29 drain re-plan (`roadmap/FT437.md:23`).
 - Promised field labels: none. No record field changes, so no `Persisted fields:` line applies.
 - Changed-function callers: `bench consumers` at 7b0a83e44 names `readTree` callers at `candidate.go:211`, `sources.go:151`, and `sources.go:164`; `validateSources` callers at `repository.go:127` and `repository.go:215`; the `approvedTransition` caller at `candidate.go:67`; `sourceAt` callers at `closure.go:40`, `repository.go:62`, `sources.go:17`, `sources.go:60`, `sources.go:81`, `sources.go:132`, and `sources.go:187`; and the `NewSource` caller at `sources.go:98`. `refuseSymlinkComponents` has one caller, at `internal/roadmap/retro.go:50`.
