@@ -338,7 +338,8 @@ Every conformance source reader that parses commandRegistry still reads main.go.
 `command_registry_test.go` has 784 lines and no new default growth allowance.
 Move its existing envelope types and runner plus fixture helpers into axi_query_envelope_test.go.
 Move only `axiEnvelopeCases` into axi_query_cases_test.go, preserving one independent expectation table.
-Move the existing final help tests into command_help_test.go, leaving the original source at about 361 lines.
+Move the existing final help tests into command_help_test.go, leaving the original source below its 784-line base.
+`TestAXIRegistryBindsEachRealCommandEnvelope` stays in command_registry_test.go, because a staged spec cites it there.
 The new files target at most 350 lines and reuse all existing helpers.
 Existing declarations and callers keep their names except where a test name inaccurately says only retire, history, and widen.
 
@@ -348,8 +349,8 @@ Its registered-command closure and registry tests remain the sole ownership chec
 New production-entry tests use the same fixtures, never a copied repository builder or child benchmark harness.
 
 `internal/conformance/axi_query_registry_test.go` has 431 lines.
-Move its existing guidance and bidirectional membership bite tests into axi_query_bite_test.go before adding approved memberships.
-Leave its parser and independent membership map in the original owner, with a target below 400 lines.
+Its guidance, bidirectional membership, and parser-closure bite tests stay in that file, because a staged spec cites them there.
+Each approved membership joins the independent membership map without growth past the file's 431-line base.
 Keep the parser's main.go path and exact diagnostics.
 
 Approved additions are read, outline, spec show, and worktree read; worktree list is already approved.
