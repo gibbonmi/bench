@@ -820,3 +820,12 @@ Count: 1. Worst issue: N1.
 - MB99: the old projection replaced the quoted sequence section.
 - MB100: the old closure removed the quoted table row and kept `| FT2 | FT1 |` in the live table.
 - `bench roadmap` gives byte-identical output at the base and at the tip.
+
+### MB-C2, ticket 4 (ft358-author-04, opus / high)
+
+- MB34: the old code gave `Scan diagnostics = []string{"duplicate Writes"}, want none`.
+- MB35: the old code gave `diagnostics = nil, want ["unterminated fence"]`.
+- MB36 and MB37: the old code gave `["unterminated fence", "missing Acceptance section"]` for a balanced four-backtick block.
+- MB95: a `Blocks` that returns `markdown.Read` lost the fence fault after an unclosed `---` first line.
+- MB102: a `Scan` that drops `FenceLabel` failed `TestMetadataGrammarFenceRoles` at `premises_test.go:89`.
+- `ParseTicket` gives byte-identical diagnostics, `Covers`, and `Writes` at the base and at the tip over all 1001 tracked Markdown files.
