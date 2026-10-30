@@ -2239,3 +2239,10 @@ Count: 0.
 - MB49 to MB51: an accepted unterminated fence, a first-opener rule, and a shifted span end each failed their Render test.
 - MB107: a writer without the encoding gave an unterminated-fence refusal after a render of an excerpt that holds a comment opener.
 - The record payloads of all 129 review and spec files decode the same at the base and at the tip.
+
+### MB-C4, ticket 8 (ft358-author-08, opus / xhigh)
+
+- MB52, MB53, and MB85: the base `locate.go` failed the tilde-fenced heading, the fenced duplicate heading, and the indented heading cases of `TestLocateReadsTheBlockReader`.
+- MB94: `Read` in place of `ReadFragment` for the section body gave a count of 0.
+- The line-start, origin, span, and strip mutants each failed their own case, and an origin mutant failed `TestLocateStripsRejoinedComments`.
+- MB56: `bench anchors` gives identical verdicts, and all 435 live anchors keep their located lines at the base and at the tip.
