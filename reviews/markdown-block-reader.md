@@ -1448,3 +1448,10 @@ Count: 0.
 - MB46 and MB47: a raw H2 branch and a unit scan without the body class failed their rows.
 - The `ResolvedBy` scan without the fence condition failed its case, and each fault reason string failed on its own.
 - `bench learnings`, the drain journal read, and `retros.Parse` on the live retro give identical output at the base and at the tip.
+
+### MB-C3, ticket 9 (ft358-author-09, opus / high)
+
+- MB59: the old split and exact compare gave `index = "", want "x"` for a CRLF skill file.
+- MB60: a reader fault read as frontmatter gave `index = "smuggled", want ""` for an unclosed opener.
+- A disabled stop at the first body line failed eight cases.
+- `bench skills-index --check` gives no diagnostic, and `--write` changes no file at the tip.
