@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:c31bcf3103d4d0c4225c463e4b60f241de6c3c6b338663b5093a9bf6b765733a",
+  "plan_digest": "sha256:e5d6e08b78bc3f83cf7b2f61e8ef9579bad2cce480c69fcec4a72a109430a5ee",
   "implementation_session": "",
   "chunks": [
     {
@@ -358,7 +358,7 @@
           "native_ref": {
             "ref": "claude-agent:bench-reviewer-high:ft358-review-c1-spec",
             "digest": "sha256:78c288c11fa6fa181ef000bc923b59b729164e82ff4bdc9dfe396a0fb8f7f6c7",
-            "excerpt": "Spec axis, MB-C1 (base 36a07d83, tip 252408eb). One finding; every other mapped row (MB1-MB19, MB71-MB79, MB88-MB90, MB92) and acceptance item matches.\nP1 (medium, confidence 8, auto-fix): internal/markdown/comments.go:43-56 joinedOpener. Spec.md:210-211 and Closed decision 10 require one linear pass. For adjacent comments with no kept byte between them (repeated <!---->), the walk-back steps across every earlier cut, so the work is quadratic. MB79 measures allocation only and its comments are 93 bytes apart, so it stays green. Repair: make the skip over a run of adjacent cuts O(1), and add a run of adjacent comments to the comment-dense input under a bound.\nChecked: comment rule matches stripCommentsMapped; Closed decisions 5, 8, 14, 16; fault order frontmatter, comment, fence; exported constants; prose prepare fault mapping; no banned literal in internal/prose non-test files.\n"
+            "excerpt": "Spec axis, MB-C1 (base 36a07d83, tip 252408eb). One finding; every other mapped row (MB1-MB19, MB71-MB79, MB88-MB90, MB92) and acceptance item matches.\nP1 (medium, confidence 8, auto-fix): internal/markdown/comments.go:43-56 joinedOpener. Spec.md:210-211 and Closed decision 10 require one linear pass. For adjacent comments with no kept byte between them (repeated \u003c!---->), the walk-back steps across every earlier cut, so the work is quadratic. MB79 measures allocation only and its comments are 93 bytes apart, so it stays green. Repair: make the skip over a run of adjacent cuts O(1), and add a run of adjacent comments to the comment-dense input under a bound.\nChecked: comment rule matches stripCommentsMapped; Closed decisions 5, 8, 14, 16; fault order frontmatter, comment, fence; exported constants; prose prepare fault mapping; no banned literal in internal/prose non-test files.\n"
           },
           "axis": "Spec",
           "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
@@ -448,7 +448,7 @@
           "native_ref": {
             "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c1-coverage",
             "digest": "sha256:6e4ee5e02f50ed2e1c4038d9c29ab18ff487b56cf321202644190bff54cf7bce",
-            "excerpt": "Coverage axis, MB-C1 confirming round (repair delta 252408eb..503aef49). C1, C2, C3 closed; one new finding.\nRound 1 mutants re-run, all red: omit top-- (comments.go:62), for->if in push (:91), at+len(commentOpen)-n (:82), append in the unterminated branch (:33), CutPrefix on line.Raw (markdown.go:136), omit the frontmatter continue (markdown.go:133), two-byte kept window (comments.go:56).\nNew mutants: omit top = c.first[top] red (MB79); first = i red (MB79); End <= s.Start red (MB12).\nN1 (medium, confidence 8, auto-fix): internal/markdown/comments.go:95. Omitting c.first = c.first[:i] is silent. Witness input <!<!----><!---->----><!<!---->----> reads comment 0-21 and comment 21-35 with empty text; the mutant reads comments 0-21 and 23-30 with visible <!---->. Repair: add that row to TestReadBlockRules.\n"
+            "excerpt": "Coverage axis, MB-C1 confirming round (repair delta 252408eb..503aef49). C1, C2, C3 closed; one new finding.\nRound 1 mutants re-run, all red: omit top-- (comments.go:62), for->if in push (:91), at+len(commentOpen)-n (:82), append in the unterminated branch (:33), CutPrefix on line.Raw (markdown.go:136), omit the frontmatter continue (markdown.go:133), two-byte kept window (comments.go:56).\nNew mutants: omit top = c.first[top] red (MB79); first = i red (MB79); End \u003c= s.Start red (MB12).\nN1 (medium, confidence 8, auto-fix): internal/markdown/comments.go:95. Omitting c.first = c.first[:i] is silent. Witness input \u003c!\u003c!---->\u003c!---->---->\u003c!\u003c!---->----> reads comment 0-21 and comment 21-35 with empty text; the mutant reads comments 0-21 and 23-30 with visible \u003c!---->. Repair: add that row to TestReadBlockRules.\n"
           },
           "axis": "Coverage",
           "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
@@ -474,7 +474,7 @@
           "native_ref": {
             "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:n1-probe",
             "digest": "sha256:8729f6ca95b5b9d966ebceb870e0ea64d9ecde4b80b1a802ecf998e3a8e9116c",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/markdown/comments.go,omit,failed,1,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/markdown,^TestReadBlockRules$,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,386\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/markdown,fail,5,32\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/markdown,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,\"markdown_test.go:68: reading of \\\"<!<!----><!---->----><!<!---->---->\\\":\",8\nskips[0]{package,test,reason}:\n"
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/markdown/comments.go,omit,failed,1,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/markdown,^TestReadBlockRules$,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,386\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/markdown,fail,5,32\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/markdown,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,\"markdown_test.go:68: reading of \\\"\u003c!\u003c!---->\u003c!---->---->\u003c!\u003c!---->---->\\\":\",8\nskips[0]{package,test,reason}:\n"
           },
           "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
           "reviewed_tip": "503aef49a0de6507e0690eb4161aa0e09a71536d",
@@ -491,7 +491,7 @@
             "native_ref": {
               "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:n1-probe",
               "digest": "sha256:8729f6ca95b5b9d966ebceb870e0ea64d9ecde4b80b1a802ecf998e3a8e9116c",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/markdown/comments.go,omit,failed,1,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/markdown,^TestReadBlockRules$,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,386\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/markdown,fail,5,32\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/markdown,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,\"markdown_test.go:68: reading of \\\"<!<!----><!---->----><!<!---->---->\\\":\",8\nskips[0]{package,test,reason}:\n"
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/markdown/comments.go,omit,failed,1,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/markdown,^TestReadBlockRules$,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,386\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/markdown,fail,5,32\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/markdown,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,\"markdown_test.go:68: reading of \\\"\u003c!\u003c!---->\u003c!---->---->\u003c!\u003c!---->---->\\\":\",8\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -568,7 +568,7 @@
           "native_ref": {
             "ref": "claude-agent:bench-writer-high:ft358-author-02",
             "digest": "sha256:e89536ec4d293bbf36c83ff2d267dc55904ea9ea10028c4e42f6a9ad7da87ed0",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/coverage/rows.go,swap,failed,1,TestParseSkipsFencedCoverageLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/coverage,^TestParseSkipsFencedCoverageLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/coverage,TestParseSkipsFencedCoverageLines,\"coverage_test.go:286: Check = [coverage map leaves story 2 unreferenced; add a row or a `Not covered: story 2 — <reason>` line], want none\",2\nskips[0]{package,test,reason}:\n"
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/coverage/rows.go,swap,failed,1,TestParseSkipsFencedCoverageLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/coverage,^TestParseSkipsFencedCoverageLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/coverage,TestParseSkipsFencedCoverageLines,\"coverage_test.go:286: Check = [coverage map leaves story 2 unreferenced; add a row or a `Not covered: story 2 — \u003creason>` line], want none\",2\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "08479e59b53cbac724b91d0a2955782d46d03cc8",
           "requirement": "coverage",
@@ -582,7 +582,7 @@
             "native_ref": {
               "ref": "claude-agent:bench-writer-high:ft358-author-02",
               "digest": "sha256:e89536ec4d293bbf36c83ff2d267dc55904ea9ea10028c4e42f6a9ad7da87ed0",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/coverage/rows.go,swap,failed,1,TestParseSkipsFencedCoverageLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/coverage,^TestParseSkipsFencedCoverageLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/coverage,TestParseSkipsFencedCoverageLines,\"coverage_test.go:286: Check = [coverage map leaves story 2 unreferenced; add a row or a `Not covered: story 2 — <reason>` line], want none\",2\nskips[0]{package,test,reason}:\n"
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/coverage/rows.go,swap,failed,1,TestParseSkipsFencedCoverageLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/coverage,^TestParseSkipsFencedCoverageLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,399\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/coverage,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/coverage,TestParseSkipsFencedCoverageLines,\"coverage_test.go:286: Check = [coverage map leaves story 2 unreferenced; add a row or a `Not covered: story 2 — \u003creason>` line], want none\",2\nskips[0]{package,test,reason}:\n"
             }
           }
         },
@@ -598,7 +598,7 @@
           "native_ref": {
             "ref": "claude-agent:bench-writer-high:ft358-author-03",
             "digest": "sha256:faac94ce3104d1126decacad6d94cfdbc68ba9881a4d8959f0c5e2af0a2d8ea9",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:165: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:165: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", \u003cnil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "5c654076827727cd0609f18f78d4d251c65b4759",
           "requirement": "roadmap",
@@ -612,7 +612,7 @@
             "native_ref": {
               "ref": "claude-agent:bench-writer-high:ft358-author-03",
               "digest": "sha256:faac94ce3104d1126decacad6d94cfdbc68ba9881a4d8959f0c5e2af0a2d8ea9",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:165: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:165: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", \u003cnil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         },
@@ -688,7 +688,7 @@
           "native_ref": {
             "ref": "claude-agent:bench-writer-high:ft358-repair-02",
             "digest": "sha256:dd395c7ec98a337b102d4f5cdfd3bb22e5fb31fd24ca39a2ed234d35fd09de93",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", \u003cnil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "592040eab58cc8bdcc388aa0973757a6c86cabd4",
           "requirement": "roadmap",
@@ -702,7 +702,7 @@
             "native_ref": {
               "ref": "claude-agent:bench-writer-high:ft358-repair-02",
               "digest": "sha256:dd395c7ec98a337b102d4f5cdfd3bb22e5fb31fd24ca39a2ed234d35fd09de93",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", \u003cnil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         },
@@ -718,7 +718,7 @@
           "native_ref": {
             "ref": "claude-agent:bench-writer-high:ft358-repair-02b",
             "digest": "sha256:dd395c7ec98a337b102d4f5cdfd3bb22e5fb31fd24ca39a2ed234d35fd09de93",
-            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", \u003cnil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
           },
           "source_commit": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
           "requirement": "roadmap",
@@ -732,7 +732,7 @@
             "native_ref": {
               "ref": "claude-agent:bench-writer-high:ft358-repair-02b",
               "digest": "sha256:dd395c7ec98a337b102d4f5cdfd3bb22e5fb31fd24ca39a2ed234d35fd09de93",
-              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", <nil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/sequence_projection.go,swap,failed,1,TestProjectSequenceSkipsFencedHeadings,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestProjectSequenceSkipsFencedHeadings$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,566\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestProjectSequenceSkipsFencedHeadings,\"commitment_test.go:170: projection = \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. A\\\\\\\\n\\\", \u003cnil>; want \\\"# Roadmap\\\\\\\\n\\\\\\\\n~~~\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. quoted\\\\\\\\n~~~\\\\\\\\n\\\\\\\\n## Recommended sequence\\\\\\\\n\\\\\\\\n1. B\\\\\\\\n\\\"\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1598,6 +1598,60 @@
           ]
         }
       ]
+    },
+    {
+      "id": "MB-C4",
+      "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+      "tip": "8bc499d87ee64737ed23bd7013abb2b1260be5ae",
+      "plan_digest": "sha256:e5d6e08b78bc3f83cf7b2f61e8ef9579bad2cce480c69fcec4a72a109430a5ee",
+      "source_digest": "706396690a176f0a092ee846506269477f83eeb3",
+      "acceptance_rows": [
+        "MB48",
+        "MB49",
+        "MB50",
+        "MB51",
+        "MB96",
+        "MB107",
+        "MB52",
+        "MB53",
+        "MB55",
+        "MB56",
+        "MB85",
+        "MB94"
+      ],
+      "verification": [
+        {
+          "id": "t7-reviewrecord",
+          "performer": "ft358-author-07",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "706396690a176f0a092ee846506269477f83eeb3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-07",
+            "digest": "sha256:be991a7d4dc62769a68fd5d82d3ed44c752f0acf215cc76625cb675db3aed865",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/parse.go,swap,failed,1,TestRecordSkipsAQuotedFence,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,^TestRecordSkipsAQuotedFence$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,440\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestRecordSkipsAQuotedFence,\"record_test.go:193: a longer fence that quotes the record opener: render and read = invalid duplicate bench-review-record fence; want the record payload replaced and read in place\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8bc499d87ee64737ed23bd7013abb2b1260be5ae",
+          "requirement": "reviewrecord",
+          "command": "bench test --package ./internal/reviewrecord --run '^TestRecordSkipsAQuotedFence$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/reviewrecord/parse.go: match a record opener on fenced lines too; expect TestRecordSkipsAQuotedFence",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-07",
+              "digest": "sha256:be991a7d4dc62769a68fd5d82d3ed44c752f0acf215cc76625cb675db3aed865",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/reviewrecord/parse.go,swap,failed,1,TestRecordSkipsAQuotedFence,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,^TestRecordSkipsAQuotedFence$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,440\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/reviewrecord,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/reviewrecord,TestRecordSkipsAQuotedFence,\"record_test.go:193: a longer fence that quotes the record opener: render and read = invalid duplicate bench-review-record fence; want the record payload replaced and read in place\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1758,6 +1812,21 @@
     {
       "from": "sha256:5e374001bec3bab9c1d9f5ede599951b1d8344ac5ce244bc1ad38319a78d34ab",
       "to": "sha256:c31bcf3103d4d0c4225c463e4b60f241de6c3c6b338663b5093a9bf6b765733a",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c31bcf3103d4d0c4225c463e4b60f241de6c3c6b338663b5093a9bf6b765733a",
+      "to": "sha256:e5d6e08b78bc3f83cf7b2f61e8ef9579bad2cce480c69fcec4a72a109430a5ee",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
