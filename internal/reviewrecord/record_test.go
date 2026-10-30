@@ -209,3 +209,37 @@ func TestRenderRefusesADuplicateFence(t *testing.T) {
 		t.Fatalf("Render accepted a duplicate fence:\n%s", out)
 	}
 }
+
+// TestRenderRefusesANestedRecordOpener renders over a record opener that a second record opener
+// follows at once. The block reader reads the second opener as the record's closer, so a render
+// that splices there leaves an open fence. Render refuses it with the message of two record
+// fences.
+func TestRenderRefusesANestedRecordOpener(t *testing.T) {
+	opener := "```bench-review-record\n"
+	_, duplicate := Render([]byte(opener+"{}\n```\n"+opener+"{}\n```\n"), renderRecord("ok"))
+	_, err := Render([]byte("# Review outcomes\n\n"+opener+opener+"{}\n```\n"), renderRecord("ok"))
+	if duplicate == nil || err == nil || err.Error() != duplicate.Error() {
+		t.Fatalf("Render of a nested record opener = %v; want the duplicate refusal %v", err, duplicate)
+	}
+}
+
+// TestRecordReadsEachReaderFence renders over a record whose opener the block reader opens
+// after an indent, with tildes, or with a CRLF ending, or whose closer holds text other than
+// the record name. Render replaces the payload of that record in place and appends no second
+// record.
+func TestRecordReadsEachReaderFence(t *testing.T) {
+	const head, tail = "# Review outcomes\n\n", "\nKept.\n"
+	for _, c := range []struct{ name, opener, closer string }{
+		{"an indented opener", "  ```bench-review-record\n", "```\n"},
+		{"a tilde opener", "~~~bench-review-record\n", "~~~\n"},
+		{"a CRLF opener", "```bench-review-record\r\n", "```\r\n"},
+		{"a closer with trailing text", "```bench-review-record\n", "``` text\n"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			out, _ := render(t, []byte(head+c.opener+"{\"version\": 0}\n"+c.closer+tail), renderRecord("ok"))
+			if !strings.HasPrefix(out, head+c.opener) || !strings.HasSuffix(out, c.closer+tail) || strings.Contains(out, `"version": 0`) {
+				t.Errorf("%s: Render did not replace the record payload in place", c.name)
+			}
+		})
+	}
+}

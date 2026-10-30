@@ -214,7 +214,7 @@ func read(path, rel string) fileResult {
 	return file
 }
 
-// StripHTMLComments removes complete comments and truncates at an unterminated comment.
+// StripHTMLComments returns text without the comments that the block reader removes.
 // It projects stripCommentsMapped, the package's one comment strip, so the evaluator reads
 // the text Locate searches.
 func StripHTMLComments(text string) string {

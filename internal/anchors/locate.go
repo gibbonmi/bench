@@ -69,11 +69,11 @@ func stripCommentsMapped(data string) (text []rune, origin []int) {
 // runes, and the number of lines opens accepted. opens and closes read the reader's classified
 // lines. The body and the count come from the same walk, so a caller that refuses a duplicated
 // region reads the count the body came from. The body starts on the line after the opener.
-// The walk reads runes as a fragment, so text that starts with a frontmatter marker line, such
-// as a section body, keeps that line and the lines below it as body.
+// The walk reads runes as the whole comment-free document, as the comment strip reads data, so
+// a comment opener or a fence marker inside the frontmatter hides no section.
 func scopeRunesMapped(runes []rune, origin []int, opens, closes func(line markdown.Line) bool) (body []rune, bodyOrigin []int, count int) {
 	text := string(runes)
-	lines := markdown.ReadFragment(text).Lines
+	lines := markdown.Read(text).Lines
 	// lineStart answers the index in runes where line i starts. A line offset is a byte offset.
 	lineStart := func(i int) int { return utf8.RuneCountInString(text[:lines[i].Offset]) }
 	start, end := -1, -1

@@ -291,14 +291,17 @@ type fenceSpan struct{ start, end int }
 // disagree about where a fence starts or ends. The fence is the one opener of
 // the block reader whose info string is name, so an opener that another block
 // quotes is a fenced line. The read is a fragment read, so a leading
-// frontmatter marker line stays a body line and gives no fault.
+// frontmatter marker line stays a body line and gives no fault. A record
+// closer whose label is name repeats the record opener, so it also refuses as
+// a duplicate: a splice at that closer leaves the marker line below it open.
 func locate(data []byte, name string) (fenceSpan, error) {
 	lines := markdown.ReadFragment(string(data)).Lines
+	duplicate := fmt.Errorf("invalid duplicate %s fence", name)
 	opener := -1
 	for i, line := range lines {
 		if line.Class == markdown.FenceOpener && line.Info == name {
 			if opener >= 0 {
-				return fenceSpan{}, fmt.Errorf("invalid duplicate %s fence", name)
+				return fenceSpan{}, duplicate
 			}
 			opener = i
 		}
@@ -308,6 +311,9 @@ func locate(data []byte, name string) (fenceSpan, error) {
 	}
 	for _, line := range lines[opener+1:] {
 		if line.Class == markdown.FenceCloser {
+			if line.Info == name {
+				return fenceSpan{}, duplicate
+			}
 			return fenceSpan{start: lines[opener+1].Offset, end: line.Offset}, nil
 		}
 	}

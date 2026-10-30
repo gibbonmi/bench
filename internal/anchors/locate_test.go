@@ -272,10 +272,11 @@ func TestLocateStripsRejoinedComments(t *testing.T) {
 }
 
 // TestLocateReadsTheBlockReader pins the block reader's rules under the section walk and the
-// comment strip. A fenced or an indented heading line neither opens nor closes a section, and
-// a section walk reads its text as a fragment, so a leading marker line stays body. The strip
-// reads the whole file, so a comment in the frontmatter stays. Multi-byte text before a section
-// or a comment moves neither the section body nor the source line of a match.
+// comment strip. A fenced or an indented heading line neither opens nor closes a section. The
+// walk and the strip read the whole document, so a comment opener or a fence marker in the
+// frontmatter hides no section, a marker line in a section body stays body, and a comment in
+// the frontmatter stays. Multi-byte text before a section or a comment moves neither the
+// section body nor the source line of a match.
 func TestLocateReadsTheBlockReader(t *testing.T) {
 	for _, test := range []struct {
 		name, doc   string
@@ -285,7 +286,8 @@ func TestLocateReadsTheBlockReader(t *testing.T) {
 		{"a tilde-fenced heading counts as no section", "~~~\n## S\n~~~\n## S\nneedle\n", 1, 5},
 		{"an indented heading opens no section", "  ## S\nneedle\n", 0, 0},
 		{"an indented heading closes no section", "## S\n  ## T\nneedle\n", 1, 3},
-		{"a leading marker line of a fragment stays body", "---\n## S\n---\nneedle\n---\n", 1, 4},
+		{"frontmatter that holds a comment opener keeps the section", "---\nk: <!--\n---\n## S\nneedle\n", 1, 5},
+		{"frontmatter that holds a tilde marker keeps the section and its marker body line", "---\n~~~\n---\n## S\n---\nneedle\n", 1, 6},
 		{"a section after multi-byte text keeps its body", "€€€€\n## S\nneedle\n## T\nafter\n", 1, 3},
 	} {
 		t.Run(test.name, func(t *testing.T) {
