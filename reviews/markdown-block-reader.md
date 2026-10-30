@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:4b0b90422efdddcf683c1eb5a32d0bf68d153fed48f264671dfebc96e810e3db",
+  "plan_digest": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
   "implementation_session": "",
   "chunks": [
     {
@@ -950,6 +950,93 @@
           ]
         }
       ]
+    },
+    {
+      "id": "MB-C3",
+      "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+      "tip": "e2cda7748aa220e019b688c69a6d3063a5214f89",
+      "plan_digest": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
+      "source_digest": "a80577a8fa012564e7f053eafb36716acdbd45e7",
+      "acceptance_rows": [
+        "MB38",
+        "MB39",
+        "MB40",
+        "MB82",
+        "MB93",
+        "MB41",
+        "MB42",
+        "MB43",
+        "MB44",
+        "MB45",
+        "MB46",
+        "MB47",
+        "MB84",
+        "MB59",
+        "MB60"
+      ],
+      "verification": [
+        {
+          "id": "t5-handoffdoc",
+          "performer": "ft358-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a80577a8fa012564e7f053eafb36716acdbd45e7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-05",
+            "digest": "sha256:1a480f97a9f6ca1423b8c6e34a732dcdf30482dbff1fcdf62c98549aca1d7fe2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/handoffdoc/fence.go,swap,failed,4,TestOpenFenceUsesTheCloseRule/longer_run_closes,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,^TestOpenFenceUsesTheCloseRule$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,870\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,2,6\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/longer_run_closes,\"document_test.go:269: longer run closes: OpenFence = (3, true), want (0, false)\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/open_comment,\"document_test.go:269: open comment: OpenFence = (1, true), want (0, false)\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/other_character,\"document_test.go:269: other character: OpenFence = (0, false), want (1, true)\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/shorter_run,\"document_test.go:269: shorter run: OpenFence = (0, false), want (1, true)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2cda7748aa220e019b688c69a6d3063a5214f89",
+          "requirement": "handoffdoc",
+          "command": "bench test --package ./internal/handoffdoc --run '^TestOpenFenceUsesTheCloseRule$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/handoffdoc/fence.go: close an open block on any marker line; expect TestOpenFenceUsesTheCloseRule",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-05",
+              "digest": "sha256:1a480f97a9f6ca1423b8c6e34a732dcdf30482dbff1fcdf62c98549aca1d7fe2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/handoffdoc/fence.go,swap,failed,4,TestOpenFenceUsesTheCloseRule/longer_run_closes,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoffdoc,^TestOpenFenceUsesTheCloseRule$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,870\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoffdoc,fail,2,6\nfailures[4]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/longer_run_closes,\"document_test.go:269: longer run closes: OpenFence = (3, true), want (0, false)\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/open_comment,\"document_test.go:269: open comment: OpenFence = (1, true), want (0, false)\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/other_character,\"document_test.go:269: other character: OpenFence = (0, false), want (1, true)\",1\n  github.com/gibbonmi/bench/internal/handoffdoc,TestOpenFenceUsesTheCloseRule/shorter_run,\"document_test.go:269: shorter run: OpenFence = (0, false), want (1, true)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t5-handoff",
+          "performer": "ft358-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a80577a8fa012564e7f053eafb36716acdbd45e7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-05",
+            "digest": "sha256:45188b7031c63fbc19bf6d387312b9d23a5e332a9f19cc3a4dcaf5d5e14dd2eb",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/handoff/state_file.go,omit,failed,2,TestStateFileRefusesAnUnterminatedComment/open_comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,^TestStateFileRefusesAnUnterminatedComment$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,831\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,fail,4,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestStateFileRefusesAnUnterminatedComment/open_comment,\"state_file_test.go:249: open comment: readStateFile refusal kind \\\"the handoff state file opens a section heading\\\" (hint names the opener: false), want \\\"the handoff state file opens an HTML comment it never closes\\\" naming the opener line\",1\n  github.com/gibbonmi/bench/internal/handoff,TestStateFileRefusesAnUnterminatedComment/open_fence_above_it,\"state_file_test.go:249: open fence above it: readStateFile refusal kind \\\"\\\" (hint names the opener: false), want \\\"the handoff state file opens an HTML comment it never closes\\\" naming the opener line\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e2cda7748aa220e019b688c69a6d3063a5214f89",
+          "requirement": "handoff",
+          "command": "bench test --package ./internal/handoff --run '^TestStateFileRefusesAnUnterminatedComment$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/handoff/state_file.go: omit the comment-fault refusal in readStateFile; expect TestStateFileRefusesAnUnterminatedComment",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-05",
+              "digest": "sha256:45188b7031c63fbc19bf6d387312b9d23a5e332a9f19cc3a4dcaf5d5e14dd2eb",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/handoff/state_file.go,omit,failed,2,TestStateFileRefusesAnUnterminatedComment/open_comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,^TestStateFileRefusesAnUnterminatedComment$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,831\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,fail,4,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestStateFileRefusesAnUnterminatedComment/open_comment,\"state_file_test.go:249: open comment: readStateFile refusal kind \\\"the handoff state file opens a section heading\\\" (hint names the opener: false), want \\\"the handoff state file opens an HTML comment it never closes\\\" naming the opener line\",1\n  github.com/gibbonmi/bench/internal/handoff,TestStateFileRefusesAnUnterminatedComment/open_fence_above_it,\"state_file_test.go:249: open fence above it: readStateFile refusal kind \\\"\\\" (hint names the opener: false), want \\\"the handoff state file opens an HTML comment it never closes\\\" naming the opener line\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1026,6 +1113,18 @@
     {
       "from": "sha256:a0517fefa850069b8ac3657f4567d1e6ffff412ce1f57ded61459a0e554fb375",
       "to": "sha256:4b0b90422efdddcf683c1eb5a32d0bf68d153fed48f264671dfebc96e810e3db",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4b0b90422efdddcf683c1eb5a32d0bf68d153fed48f264671dfebc96e810e3db",
+      "to": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
