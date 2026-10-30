@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
+  "plan_digest": "sha256:91964500432f92c3f973997f471817b3f52158f7bb423122eacd110baaa95596",
   "implementation_session": "",
   "chunks": [
     {
@@ -954,9 +954,9 @@
     {
       "id": "MB-C3",
       "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
-      "tip": "251b6e3adf4950681b0227de1fc93449dc8910ef",
-      "plan_digest": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
-      "source_digest": "183a350962746062b7ffb6fc133d42339b3ace33",
+      "tip": "a73b8668bef51370c7aa42e462ca7afaca153097",
+      "plan_digest": "sha256:91964500432f92c3f973997f471817b3f52158f7bb423122eacd110baaa95596",
+      "source_digest": "9eceeda011572dab56efc7b5241150fa3518bbe0",
       "acceptance_rows": [
         "MB38",
         "MB39",
@@ -971,6 +971,9 @@
         "MB46",
         "MB47",
         "MB84",
+        "MB104",
+        "MB105",
+        "MB106",
         "MB59",
         "MB60"
       ],
@@ -1122,6 +1125,66 @@
               "ref": "claude-agent:bench-writer-high:ft358-author-09",
               "digest": "sha256:b4f6e7132ddd0a25db252dcbcb1d8d548b2f3fe8e52c3e8e9a113ac59637361a",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/skillsindex/skillsindex.go,insert,failed,1,TestFrontmatterFieldReadsCRLF/CRLF_block,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/skillsindex,^TestFrontmatterFieldReadsCRLF$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,332\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/skillsindex,fail,2,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/skillsindex,TestFrontmatterFieldReadsCRLF/CRLF_block,\"frontmatter_test.go:23: CRLF block: index = \\\"\\\", want \\\"x\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r3-learnings",
+          "performer": "ft358-repair-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9eceeda011572dab56efc7b5241150fa3518bbe0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-03",
+            "digest": "sha256:2a5cf2c0e2d8f5a815bca77a558bf429b0546b6449c1978227d6cc54c4915cc4",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/learnings/learnings.go,swap,failed,3,TestParseReportsAnUnterminatedBlock/comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/learnings,^TestParseReportsAnUnterminatedBlock$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,782\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/learnings,fail,2,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/comment,\"learnings_test.go:396: comment: Parse gives 0 entries and 2 malformed records, want 0 and 3 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/fence,\"learnings_test.go:396: fence: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/frontmatter,\"learnings_test.go:396: frontmatter: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a73b8668bef51370c7aa42e462ca7afaca153097",
+          "requirement": "learnings",
+          "command": "bench test --package ./internal/learnings --run '^TestParseReportsAnUnterminatedBlock$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/learnings: omit the malformed record for the reader fault; expect TestParseReportsAnUnterminatedBlock",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-03",
+              "digest": "sha256:2a5cf2c0e2d8f5a815bca77a558bf429b0546b6449c1978227d6cc54c4915cc4",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/learnings/learnings.go,swap,failed,3,TestParseReportsAnUnterminatedBlock/comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/learnings,^TestParseReportsAnUnterminatedBlock$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,782\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/learnings,fail,2,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/comment,\"learnings_test.go:396: comment: Parse gives 0 entries and 2 malformed records, want 0 and 3 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/fence,\"learnings_test.go:396: fence: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/frontmatter,\"learnings_test.go:396: frontmatter: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r3-retros",
+          "performer": "ft358-repair-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9eceeda011572dab56efc7b5241150fa3518bbe0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-repair-03",
+            "digest": "sha256:42754338134bf11b5e60cf7530840544ff9dd822a5ac608c0b45aef81bb60b14",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/recommendations.go,swap,failed,1,TestRecommendationsSkipFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/retros,^TestRecommendationsSkipFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,402\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/retros,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/retros,TestRecommendationsSkipFencedLines,\"recommendations_test.go:36: fenced lines: Recommendations gives 1 units or other units, want the 3 units outside every fence and frontmatter block\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a73b8668bef51370c7aa42e462ca7afaca153097",
+          "requirement": "retros",
+          "command": "bench test --package ./internal/retros --run '^TestRecommendationsSkipFencedLines$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/retros/recommendations.go: end the improvements on any H2 line, fenced or not; expect TestRecommendationsSkipFencedLines",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-repair-03",
+              "digest": "sha256:42754338134bf11b5e60cf7530840544ff9dd822a5ac608c0b45aef81bb60b14",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/recommendations.go,swap,failed,1,TestRecommendationsSkipFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/retros,^TestRecommendationsSkipFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,402\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/retros,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/retros,TestRecommendationsSkipFencedLines,\"recommendations_test.go:36: fenced lines: Recommendations gives 1 units or other units, want the 3 units outside every fence and frontmatter block\",2\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1321,6 +1384,21 @@
     {
       "from": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
       "to": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
+      "to": "sha256:91964500432f92c3f973997f471817b3f52158f7bb423122eacd110baaa95596",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
