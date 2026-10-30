@@ -7,6 +7,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
@@ -88,7 +89,8 @@ func TestExactFileStates(t *testing.T) {
 }
 
 // TestExactSourceReplaced grades the change check after the open: a file that a rename
-// replaces or a write rewrites refuses with the changed-file reason.
+// replaces, a write rewrites, or a same-size write rewrites in place with a new mtime
+// refuses with the changed-file reason.
 func TestExactSourceReplaced(t *testing.T) {
 	for name, change := range map[string]func(t *testing.T, path string){
 		"renamed over": func(t *testing.T, path string) {
@@ -97,6 +99,19 @@ func TestExactSourceReplaced(t *testing.T) {
 				t.Fatal(err)
 			}
 			if err := os.Rename(other, path); err != nil {
+				t.Fatal(err)
+			}
+		},
+		"rewritten in place at the same size": func(t *testing.T, path string) {
+			before, err := os.Stat(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, []byte("ORIGINAL bytes\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			after := before.ModTime().Add(time.Second)
+			if err := os.Chtimes(path, after, after); err != nil {
 				t.Fatal(err)
 			}
 		},

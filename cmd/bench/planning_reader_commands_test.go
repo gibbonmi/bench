@@ -141,19 +141,23 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	writeAXIFixture(t, filepath.Join(root, "page.txt"), strings.Repeat("page text\n", 600))
 	writeAXIFixture(t, filepath.Join(root, "control\x01.txt"), strings.Repeat("page text\n", 600))
 	help := runAXICommandAt(t, root, []string{"read", "--help"})
-	if help.code != 0 || !strings.Contains(help.stdout, "usage: bench read <path>") || !strings.Contains(help.stdout, responsebound.CursorUsage) || len(help.stdout) > bounds.ResponseBytes {
+	if help.code != 0 || !strings.Contains(help.stdout, "usage: bench read <path>") || !strings.Contains(help.stdout, responsebound.CursorUsage) || !responsebound.Fits(help.stdout) {
 		t.Fatalf("read --help = stdout=%q exit=%d, want the bounded cursor grammar", help.stdout, help.code)
 	}
-	first := runAXICommandAt(t, root, []string{"read", "page.txt"})
-	document, err := axitest.DecodeDocument(first.stdout)
-	if err != nil {
-		t.Fatal(err)
+	sourceOf := func(argv []string) string {
+		t.Helper()
+		document, err := axitest.DecodeDocument(runAXICommandAt(t, root, argv).stdout)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := document.Rows("page")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rows[0].(map[string]any)["source"].(string)
 	}
-	rows, err := document.Rows("page")
-	if err != nil {
-		t.Fatal(err)
-	}
-	token := rows[0].(map[string]any)["source"].(string)
+	token := sourceOf([]string{"read", "page.txt"})
+	linesToken := sourceOf([]string{"read", "page.txt", "--lines", "1:600"})
 	for _, tc := range []struct {
 		name   string
 		argv   []string
@@ -171,6 +175,7 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		{"overflowing lines", []string{"read", "page.txt", "--lines", "1:99999999999999999999"}, 2, "usage: bench read"},
 		{"tree target", []string{"read", "--in", "primary", "page.txt"}, 2, "usage: bench read"},
 		{"token from another selection", []string{"read", "page.txt", "--lines", "1:600", "--offset", "0", "--source", token}, 1, "error: source changed since the cursor"},
+		{"token from another line range", []string{"read", "page.txt", "--lines", "2:600", "--offset", "0", "--source", linesToken}, 1, "error: source changed since the cursor"},
 		{"control byte in a continued path", []string{"read", "control\x01.txt"}, 1, "error: continuation cannot be rendered"},
 		{"relative artifact", []string{"read", "page.txt", "--artifact"}, 2, "usage: bench read"},
 		{"missing file", []string{"read", "missing.txt"}, 1, "error: missing.txt is absent"},

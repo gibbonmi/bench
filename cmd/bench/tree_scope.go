@@ -19,8 +19,9 @@ type treeScope uint8
 const (
 	// scopeTree marks a leaf that reads, grades, or writes tracked content of one checkout.
 	scopeTree treeScope = iota + 1
-	// scopeRepository marks a leaf that reads or writes only Git refs, the worktree
-	// ledger, git-ignored capture files, or state under the Bench home.
+	// scopeRepository marks a leaf that takes no tree target: it reads or writes only Git
+	// refs, the worktree ledger, git-ignored capture files, or state under the Bench home,
+	// or, as root read does, it reads only the checkout of the caller.
 	scopeRepository
 )
 

@@ -3,7 +3,6 @@ package conformance
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"syscall"
@@ -29,8 +28,9 @@ func checkTicketGrammar(root string) []string {
 // gradeCommandPackages reds each approved AXI query command whose grammar package the
 // command-package predicate does not hold. The approved query set is the AXI check's own
 // inventory, and the grammar package is the routing check's own row, so a new verb cannot
-// ship outside the command-package list. A nested family dispatches its leaves from the
-// dispatch package, so that package holds its grammar. A query with no routing row reds.
+// ship outside the command-package list. A routed query takes its routing package. An
+// exempt query, such as a nested family, has no routing package and takes internal/<query>.
+// A query with no routing row reds.
 func gradeCommandPackages(approved map[string][]string, routing map[string]routingEntry, commandPackage func(string) bool) []string {
 	commands := make([]string, 0, len(approved))
 	for command := range approved {
@@ -46,7 +46,7 @@ func gradeCommandPackages(approved map[string][]string, routing map[string]routi
 		}
 		pkg := entry.Pkg
 		if pkg == "" {
-			pkg = path.Dir(dispatchFile)
+			pkg = "internal/" + command
 		}
 		if !commandPackage(pkg) {
 			diags = append(diags, fmt.Sprintf("%sAXI query command %q has no command-package entry for %s", ticketGrammarPrefix, command, pkg))
@@ -226,13 +226,19 @@ func TestTicketGrammarSweepSkipsCoversWithoutSpec(t *testing.T) {
 }
 
 // TestTicketGrammarRedsUnlistedQueryPackage pins TG18 over the command-package list. A list
-// that drops the routed diff package reds the approved diff query command, and a query with
-// no routing row reds.
+// that drops the routed diff package reds the approved diff query command, a list that drops
+// the nested worktree package reds the exempt worktree query, and a query with no routing
+// row reds.
 func TestTicketGrammarRedsUnlistedQueryPackage(t *testing.T) {
 	dropped := func(path string) bool { return path != "internal/diff" && tickets.CommandPackage(path) }
 	want := `ticket-grammar: AXI query command "diff" has no command-package entry for internal/diff`
 	if diags := gradeCommandPackages(approvedAXIQueries, subcommandRouting, dropped); len(diags) != 1 || diags[0] != want {
 		t.Fatalf("dropped diff package = %v, want exactly [%q]", diags, want)
+	}
+	nested := func(path string) bool { return path != "internal/worktree" && tickets.CommandPackage(path) }
+	want = `ticket-grammar: AXI query command "worktree" has no command-package entry for internal/worktree`
+	if diags := gradeCommandPackages(approvedAXIQueries, subcommandRouting, nested); len(diags) != 1 || diags[0] != want {
+		t.Fatalf("dropped nested worktree package = %v, want exactly [%q]", diags, want)
 	}
 	unrouted := map[string]routingEntry{}
 	for name, entry := range subcommandRouting {

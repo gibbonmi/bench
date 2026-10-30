@@ -34,9 +34,15 @@ func decodePage(t *testing.T, output string) decodedPage {
 	if err != nil || !reflect.DeepEqual(document.Blocks, []string{"page", "content", "help"}) {
 		t.Fatalf("page = %q, want page, content, and help blocks: %v", output, err)
 	}
-	rows, _ := document.Rows("page")
+	rows, err := document.Rows("page")
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("page block = %v, want one row: %v", rows, err)
+	}
 	page := decodedPage{row: rows[0].(map[string]any)}
-	contents, _ := document.Rows("content")
+	contents, err := document.Rows("content")
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, content := range contents {
 		data, err := DecodeContent(cell(page.row, "encoding"), content.(map[string]any)["data"].(string))
 		if err != nil {
