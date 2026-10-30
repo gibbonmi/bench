@@ -88,11 +88,20 @@ func ParseCursor(flags map[string]string) (int64, string, bool, error) {
 	if !hasOffset {
 		return 0, "", false, nil
 	}
-	value, err := strconv.ParseInt(offset, 10, 64)
-	if err != nil || strings.Trim(offset, "0123456789") != "" {
+	value, err := decimal(offset)
+	if err != nil {
 		return 0, "", false, errors.New(OffsetFlag + " takes a nonnegative decimal byte offset")
 	}
 	return value, token, true, nil
+}
+
+// decimal reads one cursor or selector number: ASCII digits alone, with no sign, within
+// int64. Every exact-reader number parses through it.
+func decimal(text string) (int64, error) {
+	if text == "" || strings.Trim(text, "0123456789") != "" {
+		return 0, fmt.Errorf("%q is not a decimal", text)
+	}
+	return strconv.ParseInt(text, 10, 64)
 }
 
 // PageRead answers one bounded page of the selection, or a refusal before any content. The
@@ -115,14 +124,17 @@ func PageRead(r ReadRequest) (ReadPage, error) {
 			return ReadPage{}, &ReadRefusal{Kind: "selection unreadable", Hint: fmt.Sprint(err)}
 		}
 	}
-	best, fits, err := r.render(token, window[:min(1, len(window))])
+	// The smallest page takes one whole unit: the first rune when the window opens with a
+	// valid one, and otherwise one byte. A page never splits a valid rune.
+	_, unit := utf8.DecodeRune(window)
+	best, fits, err := r.render(token, window[:unit])
 	if err != nil {
 		return ReadPage{}, err
 	}
 	if !fits {
-		return ReadPage{}, &ReadRefusal{Kind: "page metadata exceeds the response bound", Hint: "the frame, the page row, and the continuation leave no room for one content byte"}
+		return ReadPage{}, &ReadRefusal{Kind: "page metadata exceeds the response bound", Hint: "the frame, the page row, and the continuation leave no room for the next content byte or whole character"}
 	}
-	for low, high := 1, len(window); low < high; {
+	for low, high := unit, len(window); low < high; {
 		middle := (low + high + 1) / 2
 		page, fits, err := r.render(token, window[:middle])
 		if err != nil {
@@ -164,9 +176,7 @@ func (r ReadRequest) render(token string, window []byte) (ReadPage, bool, error)
 		return ReadPage{}, false, &ReadRefusal{Kind: "continuation cannot be rendered", Hint: "a selector argument holds a character that an executable command cannot carry"}
 	}
 	output := page + content + help
-	framed := r.Frame + output
-	fits := len(framed) <= bounds.ResponseBytes && strings.Count(framed, "\n") <= bounds.ResponseLines
-	return ReadPage{Output: output, Next: next, Complete: complete}, fits, nil
+	return ReadPage{Output: output, Next: next, Complete: complete}, Fits(r.Frame + output), nil
 }
 
 // encodeWindow encodes the page window. A nonfinal window that ends inside a rune stops at

@@ -23,16 +23,22 @@ func readPages(t *testing.T, cwd string, argv []string) ([]byte, int) {
 	var rebuilt []byte
 	for pages := 1; pages < 1000; pages++ {
 		result := runAXICommandAt(t, cwd, argv)
-		if result.code != 0 || result.stderr != "" || len(result.stdout) > bounds.ResponseBytes || strings.Count(result.stdout, "\n") > bounds.ResponseLines {
+		if result.code != 0 || result.stderr != "" || !responsebound.Fits(result.stdout) {
 			t.Fatalf("%q = stdout=%q stderr=%q exit=%d, want one bounded page", argv, result.stdout, result.stderr, result.code)
 		}
 		document, err := axitest.DecodeDocument(result.stdout)
 		if err != nil {
 			t.Fatal(err)
 		}
-		rows, _ := document.Rows("page")
+		rows, err := document.Rows("page")
+		if err != nil {
+			t.Fatal(err)
+		}
 		page := rows[0].(map[string]any)
-		contents, _ := document.Rows("content")
+		contents, err := document.Rows("content")
+		if err != nil {
+			t.Fatal(err)
+		}
 		for _, content := range contents {
 			data, err := responsebound.DecodeContent(page["encoding"].(string), content.(map[string]any)["data"].(string))
 			if err != nil {
@@ -55,14 +61,17 @@ func readPages(t *testing.T, cwd string, argv []string) ([]byte, int) {
 
 // TestExactReaderCLIReconstruction reconstructs independently authored bytes through the real
 // command and every continuation: repository files, a real spill file, and an exported
-// evidence file. A changed source refuses its continuation before any content.
+// evidence file. A call from a subdirectory follows every continuation to the same file. A
+// changed source refuses its continuation before any content.
 func TestExactReaderCLIReconstruction(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	files := map[string]string{
-		"mixed.txt":   "alpha\r\nbeta\n" + strings.Repeat("one oversized physical line ", 400) + "\x00\x01\t\"\\ tail without newline",
-		"unicode.txt": strings.Repeat("é😀ü", 1200),
-		"invalid.bin": "\xff\xfe" + strings.Repeat("\x80abc", 1500),
-		"empty.txt":   "",
+		"mixed.txt":       "alpha\r\nbeta\n" + strings.Repeat("one oversized physical line ", 400) + "\x00\x01\t\"\\ tail without newline",
+		"unicode.txt":     strings.Repeat("é😀ü", 1200),
+		"invalid.bin":     "\xff\xfe" + strings.Repeat("\x80abc", 1500),
+		"empty.txt":       "",
+		"spaced name.txt": strings.Repeat("a name with a space\n", 400),
+		"nested/deep.txt": strings.Repeat("nested line\n", 700),
 	}
 	for name, content := range files {
 		writeAXIFixture(t, filepath.Join(root, name), content)
@@ -77,23 +86,30 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 	}
 	exported := filepath.Join(t.TempDir(), "evidence", "source-1.txt")
 	writeAXIFixture(t, exported, strings.Repeat("evidence ✓\r\n", 700))
-	cases := map[string][]string{}
-	for name := range files {
-		cases[name] = []string{"read", name}
+	type readCase struct {
+		cwd, file string
+		argv      []string
 	}
-	cases["spill"] = []string{"read", spill.Path, "--artifact"}
-	cases["exported evidence"] = []string{"read", exported, "--artifact"}
-	for name, argv := range cases {
+	nested := filepath.Join(root, "nested")
+	cases := map[string]readCase{}
+	for name := range files {
+		cases[name] = readCase{root, name, []string{"read", name}}
+	}
+	cases["from a subdirectory"] = readCase{nested, "nested/deep.txt", []string{"read", "deep.txt"}}
+	cases["parent from a subdirectory"] = readCase{nested, "mixed.txt", []string{"read", "../mixed.txt"}}
+	cases["spill"] = readCase{root, "", []string{"read", spill.Path, "--artifact"}}
+	cases["exported evidence"] = readCase{root, "", []string{"read", exported, "--artifact"}}
+	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			want, ok := files[name]
+			want, ok := files[c.file]
 			if !ok {
-				data, err := os.ReadFile(argv[1])
+				data, err := os.ReadFile(c.argv[1])
 				if err != nil {
 					t.Fatal(err)
 				}
 				want = string(data)
 			}
-			got, pages := readPages(t, root, argv)
+			got, pages := readPages(t, c.cwd, c.argv)
 			if string(got) != want {
 				t.Fatalf("reconstructed %d bytes over %d pages, want the %d original bytes", len(got), pages, len(want))
 			}
@@ -118,10 +134,12 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 }
 
 // TestPlanningReaderHelpAndRefusals grades the cursor grammar in bounded help, the usage and
-// operational refusals, and the registered tree-scoped route of `bench read`.
+// operational refusals, and the registered repository-scoped route of `bench read`, whose
+// grammar takes no tree target.
 func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "page.txt"), strings.Repeat("page text\n", 600))
+	writeAXIFixture(t, filepath.Join(root, "control\x01.txt"), strings.Repeat("page text\n", 600))
 	help := runAXICommandAt(t, root, []string{"read", "--help"})
 	if help.code != 0 || !strings.Contains(help.stdout, "usage: bench read <path>") || !strings.Contains(help.stdout, responsebound.CursorUsage) || len(help.stdout) > bounds.ResponseBytes {
 		t.Fatalf("read --help = stdout=%q exit=%d, want the bounded cursor grammar", help.stdout, help.code)
@@ -131,7 +149,10 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rows, _ := document.Rows("page")
+	rows, err := document.Rows("page")
+	if err != nil {
+		t.Fatal(err)
+	}
 	token := rows[0].(map[string]any)["source"].(string)
 	for _, tc := range []struct {
 		name   string
@@ -147,6 +168,10 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		{"repeated offset", []string{"read", "page.txt", "--offset", "1", "--offset", "1", "--source", token}, 2, "usage: bench read"},
 		{"lines with artifact", []string{"read", "/page.txt", "--lines", "1:2", "--artifact"}, 2, "usage: bench read"},
 		{"malformed lines", []string{"read", "page.txt", "--lines", "2:1"}, 2, "usage: bench read"},
+		{"overflowing lines", []string{"read", "page.txt", "--lines", "1:99999999999999999999"}, 2, "usage: bench read"},
+		{"tree target", []string{"read", "--in", "primary", "page.txt"}, 2, "usage: bench read"},
+		{"token from another selection", []string{"read", "page.txt", "--lines", "1:600", "--offset", "0", "--source", token}, 1, "error: source changed since the cursor"},
+		{"control byte in a continued path", []string{"read", "control\x01.txt"}, 1, "error: continuation cannot be rendered"},
 		{"relative artifact", []string{"read", "page.txt", "--artifact"}, 2, "usage: bench read"},
 		{"missing file", []string{"read", "missing.txt"}, 1, "error: missing.txt is absent"},
 		{"outside the repository", []string{"read", "../outside.txt"}, 1, "error: ../outside.txt is outside the repository"},
@@ -162,11 +187,11 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		})
 	}
 
-	t.Run("registered tree-scoped query", func(t *testing.T) {
+	t.Run("registered repository-scoped query", func(t *testing.T) {
 		var stdout bytes.Buffer
 		t.Chdir(root)
-		if code := (Command{Stdout: &stdout}).Run([]string{"read", "page.txt", "--lines", "2:3"}); code != 0 || !strings.HasPrefix(stdout.String(), "tree[1]{target,head,dirty}:\n") {
-			t.Fatalf("read = %q exit %d, want the dispatcher's tree row first", stdout.String(), code)
+		if code := (Command{Stdout: &stdout}).Run([]string{"read", "page.txt", "--lines", "2:3"}); code != 0 || !strings.HasPrefix(stdout.String(), "page[1]{") {
+			t.Fatalf("read = %q exit %d, want the page block first and no tree row", stdout.String(), code)
 		}
 		if !slices.Contains(axiRegistryMemberNames(t), "read") {
 			t.Fatal("read is no AXI query member")

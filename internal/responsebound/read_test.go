@@ -70,8 +70,7 @@ func pageAll(t *testing.T, payload []byte, encoding string) []string {
 		if err != nil {
 			t.Fatalf("offset %d: %v", request.Offset, err)
 		}
-		framed := readFrame + page.Output
-		if len(framed) > bounds.ResponseBytes || strings.Count(framed, "\n") > bounds.ResponseLines {
+		if framed := readFrame + page.Output; !Fits(framed) {
 			t.Fatalf("framed page has %d bytes and %d lines, past the response bound", len(framed), strings.Count(framed, "\n"))
 		}
 		outputs = append(outputs, page.Output)
@@ -142,6 +141,7 @@ func TestExactPageProtocol(t *testing.T) {
 		{"offset past the end", 7, token, readFrame, "cursor out of range"},
 		{"negative offset", -1, token, readFrame, "cursor out of range"},
 		{"oversized metadata", 0, token, strings.Repeat("x", bounds.ResponseBytes-100) + "\n", "page metadata exceeds the response bound"},
+		{"frame of many lines", 0, token, strings.Repeat("frame\n", bounds.ResponseLines), "page metadata exceeds the response bound"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			request := pageRequest(tc.frame, payload)
@@ -153,4 +153,27 @@ func TestExactPageProtocol(t *testing.T) {
 			}
 		})
 	}
+
+	// A frame leaves room for one byte of the next rune but not for the whole rune, so the
+	// page refuses rather than split it.
+	t.Run("window smaller than the next rune", func(t *testing.T) {
+		payload := []byte(strings.Repeat("é😀", 3))
+		request := pageRequest("", payload)
+		token := request.identity()
+		request.Offset, request.Token, request.Continued = int64(len("é")), token, true
+		whole, _, err := request.render(token, payload[request.Offset:request.Offset+int64(len("😀"))])
+		if err != nil {
+			t.Fatal(err)
+		}
+		split, _, err := request.render(token, payload[request.Offset:request.Offset+1])
+		if err != nil || len(split.Output) >= len(whole.Output) {
+			t.Fatalf("a split-rune page of %d bytes is no shorter than the whole-rune page of %d bytes: %v", len(split.Output), len(whole.Output), err)
+		}
+		request.Frame = strings.Repeat("x", bounds.ResponseBytes-len(whole.Output)) + "\n"
+		page, err := PageRead(request)
+		var refusal *ReadRefusal
+		if !errors.As(err, &refusal) || refusal.Kind != "page metadata exceeds the response bound" || page.Output != "" {
+			t.Fatalf("PageRead = %q, %v; want the bounded refusal and no split rune", page.Output, err)
+		}
+	})
 }

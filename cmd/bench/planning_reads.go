@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
@@ -70,8 +71,11 @@ func readCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	request := responsebound.ReadRequest{Kind: "file", Scope: root, Offset: offset, Token: token, Continued: continued, Frame: commandDefinition{Scope: scopeTree}.treeRow(nil)}
+	request := responsebound.ReadRequest{Kind: "file", Scope: root, Offset: offset, Token: token, Continued: continued}
+	// The identity keeps the root-relative path, and every command the page offers keeps
+	// the caller's own operand, so it names the same file from the caller's directory.
 	path := filepath.Clean(parsed.Positionals[0])
+	request.Command = append(strings.Fields(readGrammar.Cmd)[1:], path)
 	if artifact {
 		request.Kind, request.Scope, request.Path = "artifact", "", path
 	} else {
@@ -87,7 +91,6 @@ func readCommand(args []string) (string, int) {
 		return readSourceRefusal(request.Path, err)
 	}
 	defer source.Close()
-	request.Command = []string{"read", request.Path}
 	request.Digest, request.SourceSize, request.Payload, request.Size = source.Digest, source.Size, source, source.Size
 	if ranged {
 		selected, err := responsebound.SelectLines(source.Bytes(), first, last)

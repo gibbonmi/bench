@@ -3,12 +3,10 @@ package responsebound
 import (
 	"bytes"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -111,23 +109,12 @@ func (s *Source) Close() error { return s.file.Close() }
 // first no greater than last.
 func ParseLineRange(value string) (int, int, error) {
 	firstText, lastText, found := strings.Cut(value, ":")
-	first, firstErr := positiveDecimal(firstText)
-	last, lastErr := positiveDecimal(lastText)
-	if !found || firstErr != nil || lastErr != nil || first > last {
+	first, firstErr := decimal(firstText)
+	last, lastErr := decimal(lastText)
+	if !found || firstErr != nil || lastErr != nil || first < 1 || first > last {
 		return 0, 0, fmt.Errorf("line range %q is not <first>:<last> with ordered positive bounds", value)
 	}
-	return first, last, nil
-}
-
-func positiveDecimal(text string) (int, error) {
-	if text == "" || strings.Trim(text, "0123456789") != "" {
-		return 0, errors.New("not a decimal")
-	}
-	value, err := strconv.Atoi(text)
-	if err != nil || value < 1 {
-		return 0, errors.New("not a positive decimal")
-	}
-	return value, nil
+	return int(first), int(last), nil
 }
 
 // SelectLines answers physical lines first through last of data, inclusive and one-based,

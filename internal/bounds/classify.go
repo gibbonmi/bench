@@ -181,8 +181,8 @@ func resolveNoFollow(path string) (fs.FileInfo, FileState, string) {
 // bind. info must already be the caller's resolved stat: this helper does not decide
 // whether a link is a control record.
 func gradeBytes(path string, info fs.FileInfo, limit int64) Classified {
-	if !info.Mode().IsRegular() {
-		return Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}
+	if irregular, refused := refuseIrregular(info); refused {
+		return irregular
 	}
 	file, err := os.Open(path)
 	if err != nil {
@@ -190,6 +190,15 @@ func gradeBytes(path string, info fs.FileInfo, limit int64) Classified {
 	}
 	defer file.Close()
 	return ClassifyBytes(Read(file, limit))
+}
+
+// refuseIrregular answers the wrong-type refusal of a stat that is not a regular file, and
+// whether it refused. Every producer-file reader classifies the file type through it.
+func refuseIrregular(info fs.FileInfo) (Classified, bool) {
+	if info.Mode().IsRegular() {
+		return Classified{}, false
+	}
+	return Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}, true
 }
 
 // ClassifyBytes grades the result of one bounded read. It is the whole disposition of

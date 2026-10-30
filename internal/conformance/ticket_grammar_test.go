@@ -3,6 +3,7 @@ package conformance
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"syscall"
@@ -22,13 +23,15 @@ const ticketGrammarPrefix = "ticket-grammar: "
 // The gate owns this sweep, so a malformed ticket cannot land green behind a phase that
 // never re-ran preflight.
 func checkTicketGrammar(root string) []string {
-	return append(sweepTicketFolders(root), gradeCommandPackages(approvedAXIQueries, tickets.CommandPackage)...)
+	return append(sweepTicketFolders(root), gradeCommandPackages(approvedAXIQueries, subcommandRouting, tickets.CommandPackage)...)
 }
 
-// gradeCommandPackages reds each approved AXI query command whose package the
+// gradeCommandPackages reds each approved AXI query command whose grammar package the
 // command-package predicate does not hold. The approved query set is the AXI check's own
-// inventory, so a new verb cannot ship outside the command-package list.
-func gradeCommandPackages(approved map[string][]string, commandPackage func(string) bool) []string {
+// inventory, and the grammar package is the routing check's own row, so a new verb cannot
+// ship outside the command-package list. A nested family dispatches its leaves from the
+// dispatch package, so that package holds its grammar. A query with no routing row reds.
+func gradeCommandPackages(approved map[string][]string, routing map[string]routingEntry, commandPackage func(string) bool) []string {
 	commands := make([]string, 0, len(approved))
 	for command := range approved {
 		commands = append(commands, command)
@@ -36,7 +39,16 @@ func gradeCommandPackages(approved map[string][]string, commandPackage func(stri
 	sort.Strings(commands)
 	var diags []string
 	for _, command := range commands {
-		if pkg := "internal/" + command; !commandPackage(pkg) {
+		entry, ok := routing[command]
+		if !ok {
+			diags = append(diags, fmt.Sprintf("%sAXI query command %q has no subcommand-routing row", ticketGrammarPrefix, command))
+			continue
+		}
+		pkg := entry.Pkg
+		if pkg == "" {
+			pkg = path.Dir(dispatchFile)
+		}
+		if !commandPackage(pkg) {
 			diags = append(diags, fmt.Sprintf("%sAXI query command %q has no command-package entry for %s", ticketGrammarPrefix, command, pkg))
 		}
 	}
@@ -214,11 +226,22 @@ func TestTicketGrammarSweepSkipsCoversWithoutSpec(t *testing.T) {
 }
 
 // TestTicketGrammarRedsUnlistedQueryPackage pins TG18 over the command-package list. A list
-// that drops the anchors package reds the approved anchors query command.
+// that drops the routed diff package reds the approved diff query command, and a query with
+// no routing row reds.
 func TestTicketGrammarRedsUnlistedQueryPackage(t *testing.T) {
-	dropped := func(path string) bool { return path != "internal/anchors" && tickets.CommandPackage(path) }
-	want := `ticket-grammar: AXI query command "anchors" has no command-package entry for internal/anchors`
-	if diags := gradeCommandPackages(approvedAXIQueries, dropped); len(diags) != 1 || diags[0] != want {
-		t.Fatalf("dropped anchors package = %v, want exactly [%q]", diags, want)
+	dropped := func(path string) bool { return path != "internal/diff" && tickets.CommandPackage(path) }
+	want := `ticket-grammar: AXI query command "diff" has no command-package entry for internal/diff`
+	if diags := gradeCommandPackages(approvedAXIQueries, subcommandRouting, dropped); len(diags) != 1 || diags[0] != want {
+		t.Fatalf("dropped diff package = %v, want exactly [%q]", diags, want)
+	}
+	unrouted := map[string]routingEntry{}
+	for name, entry := range subcommandRouting {
+		if name != "read" {
+			unrouted[name] = entry
+		}
+	}
+	want = `ticket-grammar: AXI query command "read" has no subcommand-routing row`
+	if diags := gradeCommandPackages(approvedAXIQueries, unrouted, tickets.CommandPackage); len(diags) != 1 || diags[0] != want {
+		t.Fatalf("unrouted read query = %v, want exactly [%q]", diags, want)
 	}
 }

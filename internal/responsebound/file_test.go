@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -26,6 +27,7 @@ func TestExactFileStates(t *testing.T) {
 		}
 	}
 	write(filepath.Join(dir, "empty.txt"), "")
+	write(filepath.Join(dir, "oversized.txt"), strings.Repeat("x", int(bounds.ControlRecordLimit)+1))
 	write(filepath.Join(dir, "real", "file.txt"), "linked\n")
 	write(filepath.Join(dir, "locked.txt"), "locked\n")
 	if err := os.Chmod(filepath.Join(dir, "locked.txt"), 0); err != nil {
@@ -53,6 +55,7 @@ func TestExactFileStates(t *testing.T) {
 		{"directory", "real", false, bounds.StateWrongType},
 		{"unreadable", "locked.txt", false, bounds.StateUnreadable},
 		{"missing", "missing.txt", false, bounds.StateAbsent},
+		{"repository file past the control-record limit", "oversized.txt", false, bounds.StateUnreadable},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.name == "unreadable" && os.Geteuid() == 0 {
@@ -84,6 +87,47 @@ func TestExactFileStates(t *testing.T) {
 	}
 }
 
+// TestExactSourceReplaced grades the change check after the open: a file that a rename
+// replaces or a write rewrites refuses with the changed-file reason.
+func TestExactSourceReplaced(t *testing.T) {
+	for name, change := range map[string]func(t *testing.T, path string){
+		"renamed over": func(t *testing.T, path string) {
+			other := path + ".new"
+			if err := os.WriteFile(other, []byte("other bytes\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Rename(other, path); err != nil {
+				t.Fatal(err)
+			}
+		},
+		"rewritten": func(t *testing.T, path string) {
+			if err := os.WriteFile(path, []byte("original bytes and more\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "source.txt")
+			if err := os.WriteFile(path, []byte("original bytes\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			source, err := OpenSource(path, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer source.Close()
+			if err := source.Unchanged(); err != nil {
+				t.Fatalf("an unchanged source refused: %v", err)
+			}
+			change(t, path)
+			var refusal *SourceError
+			if err := source.Unchanged(); !errors.As(err, &refusal) || refusal.State != bounds.StateUnreadable || refusal.Reason != changedReason {
+				t.Fatalf("Unchanged = %v, want the changed-file refusal", err)
+			}
+		})
+	}
+}
+
 // TestExactLineRanges grades the inclusive one-based physical-line selection with its
 // original terminators, and its refusal of a range beyond the last line.
 func TestExactLineRanges(t *testing.T) {
@@ -109,7 +153,7 @@ func TestExactLineRanges(t *testing.T) {
 	if _, err := SelectLines(nil, 1, 1); err == nil {
 		t.Error("an empty source selected a line")
 	}
-	for _, value := range []string{"0:1", "2:1", "1", "1:", "+1:2", "a:b"} {
+	for _, value := range []string{"0:1", "2:1", "1", "1:", "+1:2", "a:b", "1:99999999999999999999"} {
 		if _, _, err := ParseLineRange(value); err == nil {
 			t.Errorf("ParseLineRange(%q) accepted a malformed range", value)
 		}

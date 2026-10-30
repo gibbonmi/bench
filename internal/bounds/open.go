@@ -2,7 +2,6 @@ package bounds
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"syscall"
 )
@@ -25,8 +24,8 @@ func OpenNoFollow(path string) (*os.File, Classified) {
 	if state != "" {
 		return nil, Classified{State: state, Reason: reason}
 	}
-	if !info.Mode().IsRegular() {
-		return nil, Classified{State: StateWrongType, Reason: fmt.Sprintf("not a regular file: %s", info.Mode().Type())}
+	if irregular, refused := refuseIrregular(info); refused {
+		return nil, irregular
 	}
 	file, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW, 0)
 	if err != nil {
