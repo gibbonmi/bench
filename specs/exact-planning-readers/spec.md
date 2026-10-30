@@ -429,8 +429,8 @@ ER-C5 changes no existing denial policy and has no dependency on a future guard 
 
 ### Completion plan
 
-This version-1 plan binds the five ticket checkpoints and their required verification inventories.
-A delegated build must author its complete version-2 execution assignments through the existing validator before dispatch.
+This version-2 plan binds the five ticket checkpoints, their required verification inventories, and the delegated run.
+Each ticket author's assignment is recorded through the existing validator before dispatch.
 This graph does not invent execution identity.
 Each chunk reviews its frozen predecessor and current tips before the next ticket starts.
 
@@ -442,7 +442,20 @@ No runtime result is asserted by this plan.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft125-build-run-1",
+    "orchestrator_session": "session_01JK5CPbT18o2hCYe8SVhPcj",
+    "author_limit": 1,
+    "assignments": {
+      "1.md": [],
+      "2.md": [],
+      "3.md": [],
+      "4.md": [],
+      "5.md": []
+    }
+  },
   "chunks": [
     {
       "id": "ER-C1",
@@ -453,7 +466,8 @@ No runtime result is asserted by this plan.
         {
           "id": "ER-C1-successor-red",
           "command": "bench test --package ./cmd/bench --run TestExactReaderCLIReconstruction",
-          "probe": "skip one source byte in continuation successor"
+          "probe": "skip one source byte in continuation successor",
+          "ticket": "1.md"
         }
       ]
     },
@@ -466,7 +480,8 @@ No runtime result is asserted by this plan.
         {
           "id": "ER-C2-hidden-heading-red",
           "command": "bench test --package ./internal/spec --run TestExactMarkdownSelections",
-          "probe": "internal/spec/read.go: accept a fenced or commented H2 line as an owning heading; expect TestExactMarkdownSelections"
+          "probe": "internal/spec/read.go: accept a fenced or commented H2 line as an owning heading; expect TestExactMarkdownSelections",
+          "ticket": "2.md"
         }
       ]
     },
@@ -479,7 +494,8 @@ No runtime result is asserted by this plan.
         {
           "id": "ER-C3-doc-span-red",
           "command": "bench test --package ./internal/outline --run TestDeclarationSpans",
-          "probe": "internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans"
+          "probe": "internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans",
+          "ticket": "3.md"
         }
       ]
     },
@@ -492,7 +508,8 @@ No runtime result is asserted by this plan.
         {
           "id": "ER-C4-projection-red",
           "command": "bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection",
-          "probe": "replace complete related projection identity with commitment-only identity"
+          "probe": "replace complete related projection identity with commitment-only identity",
+          "ticket": "4.md"
         }
       ]
     },
@@ -505,7 +522,8 @@ No runtime result is asserted by this plan.
         {
           "id": "ER-C5-head-red",
           "command": "bench test --package ./cmd/bench --run TestExactReaderOutputHeads",
-          "probe": "omit the native read-form qualifier at outputHead"
+          "probe": "omit the native read-form qualifier at outputHead",
+          "ticket": "5.md"
         }
       ]
     }
