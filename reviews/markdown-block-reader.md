@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
+  "plan_digest": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
   "implementation_session": "",
   "chunks": [
     {
@@ -954,9 +954,9 @@
     {
       "id": "MB-C3",
       "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
-      "tip": "ffc1d806ccde0e7e73fe12199dfb574d660911d5",
-      "plan_digest": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
-      "source_digest": "35971c128fe7f207e4c16fa1a02f69237a952aae",
+      "tip": "251b6e3adf4950681b0227de1fc93449dc8910ef",
+      "plan_digest": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
+      "source_digest": "183a350962746062b7ffb6fc133d42339b3ace33",
       "acceptance_rows": [
         "MB38",
         "MB39",
@@ -1094,6 +1094,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/recommendations.go,swap,failed,1,TestRecommendationsSkipFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/retros,^TestRecommendationsSkipFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/retros,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/retros,TestRecommendationsSkipFencedLines,\"recommendations_test.go:33: fenced lines: Recommendations gives 1 units or other units, want the 3 unfenced units\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "t9-skillsindex",
+          "performer": "ft358-author-09",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "183a350962746062b7ffb6fc133d42339b3ace33",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-09",
+            "digest": "sha256:b4f6e7132ddd0a25db252dcbcb1d8d548b2f3fe8e52c3e8e9a113ac59637361a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/skillsindex/skillsindex.go,insert,failed,1,TestFrontmatterFieldReadsCRLF/CRLF_block,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/skillsindex,^TestFrontmatterFieldReadsCRLF$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,332\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/skillsindex,fail,2,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/skillsindex,TestFrontmatterFieldReadsCRLF/CRLF_block,\"frontmatter_test.go:23: CRLF block: index = \\\"\\\", want \\\"x\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "251b6e3adf4950681b0227de1fc93449dc8910ef",
+          "requirement": "skillsindex",
+          "command": "bench test --package ./internal/skillsindex --run '^TestFrontmatterFieldReadsCRLF$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/skillsindex/skillsindex.go: compare the first line to the frontmatter marker before the carriage-return strip; expect TestFrontmatterFieldReadsCRLF",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-09",
+              "digest": "sha256:b4f6e7132ddd0a25db252dcbcb1d8d548b2f3fe8e52c3e8e9a113ac59637361a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/skillsindex/skillsindex.go,insert,failed,1,TestFrontmatterFieldReadsCRLF/CRLF_block,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/skillsindex,^TestFrontmatterFieldReadsCRLF$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,332\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/skillsindex,fail,2,4\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/skillsindex,TestFrontmatterFieldReadsCRLF/CRLF_block,\"frontmatter_test.go:23: CRLF block: index = \\\"\\\", want \\\"x\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -1197,6 +1227,21 @@
     {
       "from": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
       "to": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
+      "to": "sha256:dd882480f65b3003489ea44e0c0ec2e2f4d9f36046718103bbee28583a6bff69",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
