@@ -1,23 +1,28 @@
 # Read roadmap lines from the block reader
 
 Blocked by: 1-add-block-reader.md
-Writes: internal/roadmap/tree.go, internal/roadmap/sequence_projection.go, internal/roadmap/commitment_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/roadmap/tree.go, internal/roadmap/sequence_projection.go, internal/roadmap/commitment_test.go
 Covers: MB31, MB32, MB33, MB81, MB99, MB100
 
 ## What to build
 
 Replace the fence toggles in `internal/roadmap/tree.go` and the section detector
 in `internal/roadmap/sequence_projection.go` with the block reader's classification.
-Each one matches its grammar on the raw text of the unfenced lines. `ParseDocument` skips a fenced line for the row grammar and for
-the section title. Today it matches a row on every line, fenced or not, so the
-skip is new behavior for a backtick fence too.
+The toggles are `ParseDocument` at `tree.go:115`, `parseSequence` at `:276`, and
+`rowNextDiagnostics` at `:344`. Each one matches its grammar on the raw text of
+the unfenced lines. `ParseDocument` skips a fenced line for the row grammar and
+for the section title, which it reads at `tree.go:118` and `:137`. Today it
+matches a row on every line, fenced or not, so the skip is new behavior for a
+backtick fence too.
 
-`sequenceBounds` and `sectionBounds` use the reader's H2 headings, so a fenced
-heading neither starts nor ends a section. `parseSequence` consumes those bounds
-and reads sequence rows only from unfenced lines. `ProjectSequence` consumes
-those bounds and renders its heading through the reader's H2 constant.
+`sequenceBounds` (`sequence_projection.go:10`) and `sectionBounds`
+(`sequence_projection.go:17`, toggle at `:22`) use the reader's H2 headings, so a
+fenced heading neither starts nor ends a section. `parseSequence` consumes those
+bounds and reads sequence rows only from unfenced lines. `ProjectSequence`
+consumes those bounds and renders its heading through the reader's H2 constant.
 
-`closeDependencies` consumes `sectionBounds` through `Close`. The sequence
+`closeDependencies` (`closure.go:47`) consumes `sectionBounds` at `closure.go:48`,
+and `Close` calls it. The sequence
 projection keeps its outcome grammar, and the dependency closure keeps its table
 grammar. The exported signatures stay the same.
 `rowNextDiagnostics` reads only unfenced lines for the `Next:` marker. It keeps
@@ -36,5 +41,5 @@ tests. Do not recreate the deleted helper file or grow `tree_test.go`.
 - [ ] `TestCommitmentDependencyClosureSkipsFencedHeadings` proves that `Close` removes FT1 from only the live dependency section after a tilde-fenced dependency heading.
 - [ ] `TestCommitmentSequenceClosure` and `TestCommitmentDependencyClosure` stay green without an edit.
 - [ ] `bench roadmap` prints the same output on the live tree at the base and at the tip.
-- [ ] `tree.go` and `sequence_projection.go` hold no string literal with a run of three backticks, and no literal `## `.
+- [ ] `tree.go` and `sequence_projection.go` hold no string literal with a run of three backticks, and no literal `## `. The sites today are `tree.go:115`, `:118`, `:137`, `:276`, and `:344`, and `sequence_projection.go:22`, `:29`, and `:36`.
 - [ ] `internal/roadmap/tree.go` does not grow.

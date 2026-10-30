@@ -1,7 +1,7 @@
 # Read the review record fence from the block reader
 
 Blocked by: 1-add-block-reader.md
-Writes: internal/reviewrecord/parse.go, internal/reviewrecord/write.go, internal/reviewrecord/record_test.go, internal/reviewrecord/recordtest/fixture.go
+Writes: internal/reviewrecord/parse.go, internal/reviewrecord/write.go, internal/reviewrecord/assignment.go, internal/reviewrecord/record_test.go, internal/reviewrecord/recordtest/fixture.go
 Covers: MB48, MB49, MB50, MB51, MB96
 
 ## What to build
@@ -14,9 +14,13 @@ payload is the raw source bytes of the span. `locate` ignores the reader's
 frontmatter fault and reads each line as body, as it does today.
 
 The duplicate, unterminated, and missing refusals keep their exact message
-bytes. `Render` and `fenced` keep one shared locate. Render the fence through the
-reader's fence constant in `write.go` and in `recordtest/fixture.go`, and delete
-the package's own `fenceMarker` constant.
+bytes. `Render` and `fenced` keep one shared locate. `assignment.go:96` calls
+`locate(data, planFence)`, and it keeps that call.
+
+Delete the package's own `fenceMarker` constant at `parse.go:290`. Its readers at
+`write.go:41` and `parse.go:304` and `:309` move to the reader's fence constant.
+Render the fence in `recordtest/fixture.go:87` through the same constant.
+`recordtest/fixture.go` has 396 lines, so its edit must not grow it.
 
 `internal/reviewrecord` is a crowded directory, so the ticket adds no file.
 
@@ -26,5 +30,5 @@ the package's own `fenceMarker` constant.
 - [ ] A record whose first line is an unclosed `---` reads its payload as it does today.
 - [ ] `TestRenderRefusesAnUnterminatedFence`, `TestRenderRefusesADuplicateFence`, and `TestRenderKeepsProseAroundTheFence` stay green without an edit.
 - [ ] `ReadPlan` of each staged spec and `Read` of each file under `reviews/` give the same payload at the base and at the tip.
-- [ ] `internal/reviewrecord` holds no string literal that contains a run of three backticks. The sites today are `parse.go:244` and `recordtest/fixture.go:81`.
-- [ ] No file in `Writes:` grows past 400 lines.
+- [ ] The non-test files of `internal/reviewrecord` and `internal/reviewrecord/recordtest` hold no string literal that contains a run of three backticks. The sites today are `parse.go:290` and `recordtest/fixture.go:87`.
+- [ ] `internal/reviewrecord/recordtest/fixture.go` does not grow, and no other file in `Writes:` grows past 400 lines.

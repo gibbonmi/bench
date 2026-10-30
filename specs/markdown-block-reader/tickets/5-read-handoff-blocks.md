@@ -21,7 +21,8 @@ handoff file is untracked, so no prose grade refuses an open comment in it.
 The `Parse` refusal for an open fence keeps its exact message bytes, and
 `OpenFenceRepair` stays. Render each heading through the reader's H2 constant, so
 `internal/handoffdoc` keeps no `## ` literal. Each exported signature stays the
-same.
+same, so the `UnfencedLines` call at `internal/handoff/state_scan.go:53` needs no
+edit.
 
 ## Acceptance
 
@@ -32,5 +33,5 @@ same.
 - [ ] `readStateFile` refuses a State with an unterminated comment and names the opener line.
 - [ ] `TestParseKeepsAFencedHeadingInsideState` and `TestOpenFenceNamesTheOpeningLine` stay green without an edit.
 - [ ] `handoffdoc.Parse` of the primary checkout's `capture/session-handoff.md` gives the same sections at the base and at the tip.
-- [ ] `internal/handoffdoc` holds no string literal with a run of three backticks or tildes, and no literal `## `. The sites today are `fence.go:17`, `document.go:29`, `document.go:263`, `document.go:281`, and `document.go:324`.
+- [ ] `internal/handoffdoc` holds no string literal with a run of three backticks or tildes, and no literal `## `. The sites today are `fence.go:17`, `document.go:29`, `:30`, `:32`, `:263`, `:281`, and `:324`.
 - [ ] `internal/handoffdoc/document.go` (400 lines) does not grow, and no other file in `Writes:` grows past 400 lines.
