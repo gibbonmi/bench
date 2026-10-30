@@ -329,7 +329,8 @@ closer by the reader's byte offsets.
 keeps its return shape, the lines and the duplicate diagnostics, so the decision
 map output does not change. Each line keeps its `FenceRole` and `FenceLabel`. An
 opener takes the open role, and its label is the trimmed info string. A closer
-takes the close role, and its label is the trimmed text after its marker run.
+takes the close role, and its label is the trimmed text after a run of the
+opener's length, so a longer nested run keeps a label.
 The planning-facts reader in `internal/preflight/ownership/metadata.go` keys on
 these fields, so a nested marker in its fence still refuses. MB102 covers it.
 

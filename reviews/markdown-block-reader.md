@@ -975,3 +975,13 @@ Count: 5. Worst issue: C1.
 - C3, medium, confidence 9, auto-fix: add a fenced `1. fake` line inside the live sequence to `TestParseDocumentSkipsTildeFences`.
 - C4, low, confidence 7, auto-fix: add a rejected-side title case for `internal/roadmap/sequence_projection.go:32`.
 - C5, low, confidence 7, auto-fix (decided): `internal/maps/fields.go:92`. A closer's label is the text after a run of the opener's length. Thus a longer nested run inside the planning-facts fence still refuses (story 78). Add that case to `TestMetadataGrammarFenceRoles`.
+
+### MB-C2 repair witness reds (ft358-repair-02, opus / high, repair cycle 1 of 2)
+
+- MB103: the old regex scan in `Close` gave `closure = "", closed row FT1 appears 2 times in ROADMAP.md`.
+- C5: the old whole-run label gave an empty `FenceLabel` for a longer nested closer.
+- C1: `Read` to `ReadFragment` gave `LiveSpecSlugs = ["hidden"]` in spec, `coverage map missing the canonical header` in coverage, and `malformed roadmap row` in roadmap.
+- C2: a filter that accepts every fault kind gave `diagnostics = []string{"unterminated fence"}, want []string(nil)`.
+- C3: a disabled fence skip gave `sequence = [{Rank:1 Text:live} {Rank:1 Text:fake}]`.
+- C4: the compare `H2Prefix+line.Section` turned both rejected headings red.
+- P1: `internal/coverage/rows.go` ends at 301 lines.
