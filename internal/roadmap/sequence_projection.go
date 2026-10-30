@@ -5,35 +5,35 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
+// sequenceHeading opens the board's recommended sequence. The parser reads it, and
+// ProjectSequence renders it.
+const sequenceHeading = markdown.H2Prefix + "Recommended sequence"
+
 func sequenceBounds(lines []string) (start, end int, hasSection bool) {
-	return sectionBounds(lines, "## Recommended sequence")
+	return sectionBounds(lines, sequenceHeading)
 }
 
-// sectionBounds locates the first level-two section titled heading outside a code fence.
-// start is the heading line, or -1 when the section is absent, and end is the next
-// level-two heading or the end of lines. hasSection reports any level-two heading.
+// sectionBounds locates the first H2 section titled heading. The block reader names the H2
+// headings, so a fenced heading neither starts nor ends a section. The title match reads the
+// raw heading line with its trailing spaces and tabs cut. start is the heading line, or -1
+// when the section is absent, and end is the next H2 heading or the end of lines. hasSection
+// reports any H2 heading.
 func sectionBounds(lines []string, heading string) (start, end int, hasSection bool) {
-	inFence := false
 	start, end = -1, len(lines)
-	for idx, line := range lines {
-		trimmed := strings.TrimRight(line, " \t\r")
-		if strings.HasPrefix(trimmed, "```") {
-			inFence = !inFence
+	for idx, line := range markdown.Read(strings.Join(lines, "\n")).Lines {
+		if !line.Heading {
 			continue
 		}
-		if inFence {
-			continue
-		}
-		if strings.HasPrefix(trimmed, "## ") {
-			hasSection = true
-		}
-		if start < 0 && trimmed == heading {
+		hasSection = true
+		if start < 0 && strings.TrimRight(line.Raw, " \t") == heading {
 			start = idx
 			continue
 		}
-		if start >= 0 && strings.HasPrefix(trimmed, "## ") {
+		if start >= 0 {
 			end = idx
 			break
 		}
@@ -48,7 +48,7 @@ func ProjectSequence(document []byte, outcomes []string) ([]byte, error) {
 	if start < 0 {
 		return nil, errors.New("ROADMAP.md has no recommended sequence")
 	}
-	replacement := []string{"## Recommended sequence", ""}
+	replacement := []string{sequenceHeading, ""}
 	for index, outcome := range outcomes {
 		if strings.TrimSpace(outcome) == "" || strings.ContainsAny(outcome, "\r\n") {
 			return nil, fmt.Errorf("invalid commitment outcome %q", outcome)

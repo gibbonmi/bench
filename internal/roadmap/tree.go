@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/spec"
 )
 
@@ -88,7 +89,7 @@ func (d Diagnostic) String() string { return d.Path + ": " + d.Reason }
 // orphan, and an unrecognized file yield no row at all.
 func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, []ParseFailure, []Diagnostic) {
 	content := tree.Index.Data
-	lines := strings.Split(string(content), "\n")
+	lines, blocks := strings.Split(string(content), "\n"), markdown.Read(string(content)).Lines
 	doc := Document{Text: string(content)}
 	var failures []ParseFailure
 	var diagnostics []Diagnostic
@@ -97,11 +98,11 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 	// duplicate. claimed holds every ID the index names at all, faulted lines included. The
 	// directory pass therefore never calls a claimed row's file an orphan.
 	rowed, claimed := map[string]bool{}, map[string]bool{}
-	// section holds the index heading the current row sits under. indexFence keeps a heading
-	// inside a fenced block from becoming that section. The parked section is the one place
-	// a row may carry no next action. The row grammar therefore needs to know which section
-	// claimed the row.
-	section, indexFence := "", false
+	// section holds the title of the index heading the current row sits under. The parked
+	// section is the one place a row may carry no next action. The row grammar therefore
+	// needs to know which section claimed the row. The row grammar and the section read only
+	// the block reader's body lines, so a fenced example is neither a row nor a section.
+	section := ""
 	// A directory the classifier could not read yields no listing. Every row would otherwise
 	// be told its detail owner is missing. This code names the directory once instead, since
 	// nobody looked and no row's owner is known to be absent.
@@ -112,11 +113,12 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 
 	for i := 0; i < len(lines); {
 		line := lines[i]
-		if strings.HasPrefix(strings.TrimRight(line, " \t\r"), "```") {
-			indexFence = !indexFence
+		if blocks[i].Class != markdown.Body {
+			i++
+			continue
 		}
-		if !indexFence && strings.HasPrefix(line, "## ") {
-			section = line
+		if blocks[i].Heading {
+			section = blocks[i].Section
 		}
 		m := roadmapStartRe.FindStringSubmatch(line)
 		if m == nil {
@@ -134,7 +136,7 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 		// Whatever sits under the heading is consumed either way. The split shape has no body
 		// in the index, so these lines are only ever evidence of a fault.
 		under := i
-		for i < len(lines) && !strings.HasPrefix(lines[i], "**") && !strings.HasPrefix(lines[i], "## ") {
+		for i < len(lines) && !strings.HasPrefix(lines[i], "**") && !blocks[i].Heading {
 			i++
 		}
 		if closeAt < 0 {
@@ -260,24 +262,18 @@ func anyNonBlank(lines []string) bool {
 	return false
 }
 
-// parseSequence extracts the `## Recommended sequence` section, from its heading, with
-// trailing whitespace tolerated, to the next `## ` heading or EOF. It also reports
-// whether the index carries any unfenced `## ` heading at all. This function tracks fence
-// state throughout. A heading inside a fenced code block neither starts the section nor
-// ends it.
+// parseSequence extracts the recommended sequence section that sequenceBounds locates, from
+// its heading to the next H2 heading or EOF. It also reports whether the index carries any
+// H2 heading at all. A sequence row is a body line of the block reader, so a fenced line is
+// no row.
 func parseSequence(lines []string) (rows []SequenceRow, text string, hasSection bool) {
 	sequenceStart, sequenceEnd, hasSection := sequenceBounds(lines)
 	if sequenceStart < 0 {
 		return nil, "", hasSection
 	}
-	inFence := false
-	for _, line := range lines[sequenceStart+1 : sequenceEnd] {
-		trimmed := strings.TrimRight(line, " \t\r")
-		if strings.HasPrefix(trimmed, "```") {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
+	blocks := markdown.Read(strings.Join(lines, "\n")).Lines
+	for index, line := range lines[sequenceStart+1 : sequenceEnd] {
+		if blocks[sequenceStart+1+index].Class != markdown.Body {
 			continue
 		}
 		parts := strings.SplitN(line, ". ", 2)
@@ -334,21 +330,16 @@ var rowNextMissingReason = "missing " + rowNextMarker + " line; expected one of 
 // line, outside a fenced code block, separated by one ASCII space. An indented line, a
 // line broken after the marker, and an invisible separator all read as the unanchored
 // class rather than passing. This keeps the marker exactly where the reader sees it, and
-// nowhere else. A fenced line is not a marker at all, which keeps a documented example
-// out of the grammar.
+// nowhere else. Only a body line of the block reader is a marker, which keeps a fenced
+// example out of the grammar.
 func rowNextDiagnostics(path, text string, parked bool) []Diagnostic {
 	var diagnostics []Diagnostic
-	inFence, seen := false, 0
-	for index, raw := range strings.Split(text, "\n") {
-		line := strings.TrimRight(raw, "\r")
-		if strings.HasPrefix(strings.TrimRight(line, " \t"), "```") {
-			inFence = !inFence
+	seen := 0
+	for _, block := range markdown.Read(text).Lines {
+		if block.Class != markdown.Body {
 			continue
 		}
-		if inFence {
-			continue
-		}
-		at := index + 1
+		line, at := block.Raw, block.Number
 		if !strings.HasPrefix(line, rowNextMarker) {
 			if strings.HasPrefix(strings.TrimLeftFunc(line, unicode.IsSpace), rowNextMarker) {
 				seen++
