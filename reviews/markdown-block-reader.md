@@ -2929,3 +2929,10 @@ Count: 0.
 ### Coverage
 
 Count: 0.
+
+### MB-C5, ticket 10 (ft358-author-10, opus / high)
+
+- MB57 and MB58: the old marker scan refused a tilde-fenced marker example as malformed.
+- MB61 and MB70: the old marker scan gave no refusal for an unterminated tilde block and for a comment fault.
+- MB86, MB97, MB87, and MB91: the Bench-text condition, the fragment read, and the CR-preserving rebuild each failed their row when omitted.
+- The live AGENTS.md rewrites and strips to the same bytes at the base and at the tip.
