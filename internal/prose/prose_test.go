@@ -20,3 +20,13 @@ func TestGradeNamedResultsExposesSentenceFinding(t *testing.T) {
 		t.Fatalf("GradeNamedResults result = %+v, want path docs/notes.md, line 1, sentence rule, count 27, and sentence %q", got[0], wantSentence)
 	}
 }
+
+// TestFindingsSkipsARejoinedComment grades a comment that a removal rejoins. The removal of the
+// inner comment joins the bytes on its two sides into a second opener, and that comment is
+// removed too, so its 30 words make no sentence.
+func TestFindingsSkipsARejoinedComment(t *testing.T) {
+	doc := "Short prose. <!<!-- inner -->-- " + words(30) + ". -->\n"
+	if got := Findings(doc); len(got) != 0 {
+		t.Fatalf("Findings() = %+v, want none", got)
+	}
+}
