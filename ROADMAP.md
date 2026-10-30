@@ -182,21 +182,11 @@ and the small cuts. The rows below hold the rest.
 
 **FT455 (MEDIUM, decision required) — a plan-only or sibling commit keeps the test-only confirmation route, and a fence-only widening keeps the author's charge.**
 
-**FT456 (MEDIUM) — until the record holds sibling chunks, a delegated run freezes chunks in plan order and names the owner of each shared helper.**
-
 **FT457 (MEDIUM) — a ticket continuation goes to a fresh narrow session, not a resume of the full author context.**
-
-**FT458 (LOW) — the review record holds each author witness red before the initial review charge.**
-
-**FT459 (LOW) — a build's docs ticket receives each spec-versus-code divergence that the build settled.**
 
 **FT461 (MEDIUM, decision required) — an outcome's phase-close commits fold into its build landing, so one outcome pays one landing gate.**
 
 **FT469 (LOW, decision required) — `craft-spec` plans a broker-first landing for a relaxed evidence rule and grades a timing row against a same-session control.**
-
-**FT470 (LOW) — each mutation that a ticket names becomes a plan probe on the registered check.**
-
-**FT471 (LOW) — the implement-spec charges name the chunk base for the first ticket record, and each checkpoint reports its cost.**
 
 **FT472 (LOW) — probe-only plans keep no plain-requirement branch, and the evidence reader reads the one pass predicate.**
 

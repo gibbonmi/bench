@@ -48,6 +48,8 @@ A chunk that ends on a repair takes one confirming round of all three axes at it
 A confirming round reads only the repair delta and examines only the findings that its charge names. Its charge names those findings and the folds to confirm.
 A test-only repair whose coordinator probe bites closes through `bench record confirmation` and takes no confirming round.
 
+Until the review record holds sibling chunks, the coordinator plans a three-axis confirming round for a repair delta that holds a sibling chunk's commit.
+
 When every accepted finding of a round falls on one ticket, one combined repair charge carries them all. That charge holds the findings of every axis and goes to that ticket's repair session. When the accepted findings fall on several tickets, each affected ticket keeps its own repair session under `.bench/BENCH.md`'s repair rule.
 
 A coverage-map amendment updates each affected ticket's `Covers:` line under `.bench/BENCH.md`'s plan-expansion policy.
