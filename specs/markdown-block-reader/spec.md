@@ -252,7 +252,7 @@ marker and an H2 heading come from the comment-free text in every module.
 | `internal/coverage` | raw | the historical marker is itself a comment |
 | `internal/roadmap` | raw | no roadmap grammar reads a comment today |
 | `internal/maps` and `internal/tickets` | raw | no field grammar reads a comment today |
-| `internal/handoffdoc` and `internal/handoff` | comment-free | FA2: a commented heading opens no section |
+| `internal/handoffdoc` and `internal/handoff` | comment-free for headings | FA2: a commented heading opens no section; the State pin scan reads raw text |
 | `internal/learnings` | raw | the entries marker is itself a comment |
 | `internal/retros` | comment-free | FA2: a commented H2 or H3 heading counts as no heading |
 | `internal/reviewrecord` | raw | the payload bytes must stay exact |

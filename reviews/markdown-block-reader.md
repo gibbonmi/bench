@@ -1267,6 +1267,81 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3r-standards",
+          "performer": "ft358-confirm-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9eceeda011572dab56efc7b5241150fa3518bbe0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c3-standards",
+            "digest": "sha256:d4495394aaf491ad7d2d9ada29f3f34436d8b35a5bca297158c3f8caf06ed055",
+            "excerpt": "Standards axis, MB-C3 confirming round (repair delta 251b6e3a..a73b8668). S1, S2, S3, S5, S6 closed; three new low findings.\nS7 (low, high, auto-fix): internal/handoffdoc/fence.go:30-32 OpenFence doc says a writer calls it before the render; no production code calls it now. Rewrite the doc to state what it reports.\nS8 (low, medium, auto-fix): fence.go:52-55 and internal/handoff/state_file.go:74-77 both map a comment fault to the comment repair and any other fault to the fence repair. Export one handoffdoc function that both call.\nS9 (low, high, auto-fix): internal/learnings/entry.go:48 sourceBody doc says it trims the empty lines at each end; it trims only newline bytes.\nReadState, OpenCommentRepair, and sourceBody are sound against one source per fact.\n"
+          },
+          "axis": "Standards",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "a73b8668bef51370c7aa42e462ca7afaca153097",
+          "finding_ids": [
+            "S7",
+            "S8",
+            "S9"
+          ],
+          "supersedes": [
+            "c3-standards"
+          ]
+        },
+        {
+          "id": "c3r-spec",
+          "performer": "ft358-confirm-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9eceeda011572dab56efc7b5241150fa3518bbe0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c3-spec",
+            "digest": "sha256:49b5a145908e9b720123006c977833666d7448d5997973309180af5fa4b97b0f",
+            "excerpt": "Spec axis, MB-C3 confirming round (repair delta 251b6e3a..a73b8668). P1, P2, P3 closed; P4 confirmed; FA10, FA15 met; every file within its bound; two new low findings.\nP5 (low, confidence 7, auto-fix decided): internal/handoffdoc/document.go:271 takes block.heading from line.Text, so the existing message at document.go:356 quotes the comment-free heading, against spec.md:871 (existing messages keep their bytes). Repair: quote line.Raw in the message.\nP6 (low, confidence 6, auto-fix, spec text only): spec.md:255 marks internal/handoff comment-free, but the State pin scan reads raw text through UnfencedLines. Narrow the row to the heading grammar.\n"
+          },
+          "axis": "Spec",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "a73b8668bef51370c7aa42e462ca7afaca153097",
+          "finding_ids": [
+            "P5",
+            "P6"
+          ],
+          "supersedes": [
+            "c3-spec"
+          ]
+        },
+        {
+          "id": "c3r-coverage",
+          "performer": "ft358-confirm-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "9eceeda011572dab56efc7b5241150fa3518bbe0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c3-coverage",
+            "digest": "sha256:b8be6f3c0224ce9abefac80bf262f77a922e793ca6d7ac537026ac4fadfbb39a",
+            "excerpt": "Coverage axis, MB-C3 confirming round (repair delta 251b6e3a..a73b8668). C1-C5 closed (each round 1 mutant now red); one new finding. Every probe restored; git status clean.\nNew mutants on the repaired code red: Text->Raw title reads, faultRefusal opener and comment branch, readStateFile guard, opener, and comment branch, sourceBody guard and trim.\nC6 (low, high confidence, auto-fix): internal/handoffdoc/fence.go:43 frontmatter-fault narrowing is untested; if true passes 1696 tests. Add a case with a closed first-line --- block that holds a fence marker line, which Parse must accept.\n"
+          },
+          "axis": "Coverage",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "a73b8668bef51370c7aa42e462ca7afaca153097",
+          "finding_ids": [
+            "C6"
+          ],
+          "supersedes": [
+            "c3-coverage"
+          ]
         }
       ]
     }
@@ -1655,3 +1730,28 @@ Count: 5. Worst issue: C1.
 - FA15: a title read from raw text refused a heading behind a leading comment.
 - C3, C4, and C5: each named mutant (`Read` for `ReadState`, a raw-prefix heading test, `ReadFragment` for `Read`) failed its new case.
 - S3: the CR strip, the end bound, and the guard of `sourceBody` each failed a test when omitted.
+
+## MB-C3 confirming round 1
+
+Standards closes S1, S2, S3, S5, and S6. Spec closes P1 to P3, and Coverage closes C1 to C5. The round reports six new findings. The repair allowance consumed for MB-C3 is 1 of 2, so the next repair is cycle 2 of 2.
+
+### Standards
+
+Count: 3. Worst issue: S8.
+
+- S7, low, auto-fix: rewrite the `OpenFence` doc in `internal/handoffdoc/fence.go`, so that it states only what the function reports.
+- S8, low, auto-fix: export one `handoffdoc` function that maps a fault kind to its repair text, and call it from `fence.go` and `internal/handoff/state_file.go`.
+- S9, low, auto-fix: the `sourceBody` doc in `internal/learnings/entry.go` says that it trims the newline bytes at each end.
+
+### Spec
+
+Count: 2. Worst issue: P5.
+
+- P5, low, auto-fix (decided): the heading refusal at `internal/handoffdoc/document.go:356` quotes the raw line, so the existing message keeps its bytes.
+- P6, low, auto-fix: the grammar-text row for the handoff packages now says that only the heading grammar is comment-free. The orchestrator corrects it in this commit.
+
+### Coverage
+
+Count: 1. Worst issue: C6.
+
+- C6, low, auto-fix: add a case beside MB104 whose closed first-line frontmatter block holds a fence marker line, which `Parse` accepts.
