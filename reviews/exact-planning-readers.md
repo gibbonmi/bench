@@ -82,3 +82,20 @@
   }
 }
 ```
+
+## ER-C1 author witness reds
+
+The ticket 1 author `ft125-author-01` (opus / medium) reported these witness reds at ticket commit `97ef9ee0e`.
+Each probe answered `bit`, and the author restored each subject.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/responsebound/read.go` | drop the tree frame from the page budget | `TestExactPageProtocol/ascii` | ER20 |
+| `internal/responsebound/read.go` | disable the rune-boundary trim | `TestExactPageProtocol/unicode` | ER21 |
+| `internal/responsebound/read.go` | drop the source-token check | `TestExactReaderCLIReconstruction/changed_source` | ER17 |
+| `internal/responsebound/read.go` | render invalid UTF-8 as a JSON string | `TestExactPageProtocol/invalid_utf-8` | ER24 |
+| `internal/responsebound/read.go` | drop `--source` from the continuation | `TestExactPageProtocol/ascii` | ER18 |
+| `internal/responsebound/read.go` | accept an offset equal to the size | `TestExactPageProtocol/offset_at_the_end` | ER28 |
+| `internal/bounds/open.go` | remove the `RefuseLinks` call | `TestExactFileStates/linked_parent` | ER37 |
+| `cmd/bench/main.go` | make the read row AXI-exempt | `TestAXIRegistryBindsEachRealCommandEnvelope` | ER46 |
+| `cmd/bench/main.go` | change the read help suffix | `TestHelpInventoryIsComplete` | ER46 |
