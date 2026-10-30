@@ -882,6 +882,72 @@
           "supersedes": [
             "c2-coverage"
           ]
+        },
+        {
+          "id": "c2r2-standards",
+          "performer": "ft358-confirm2-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce1c5f482491cc109c94105f85ea9955ad3736ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c2-standards",
+            "digest": "sha256:031a04251ef0fcb4199dcbe74ec43b539718119d8d0af5adfb26b2c23906664d",
+            "excerpt": "Standards axis, MB-C2 confirming round 2 (repair delta 592040ea..60f0d9ee). Zero findings.\nS4 closed: rowHeading (internal/roadmap/tree.go:205-212) is the one place that combines the body-class test with roadmapStartRe; ParseDocument (tree.go:116) and Close (closure.go:30) both call it; behavior unchanged; comments meet craft-comments.\nOptional advice (no finding, no repair): premises_test.go:99-101 packs four unnamed closer-label cases on one line, and a named-case table would read better; TestCloseSkipsAFencedRowHeading now also covers a frontmatter example, so a name such as TestCloseSkipsNonBodyRowHeadings would fit both cases.\n"
+          },
+          "axis": "Standards",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "finding_ids": [],
+          "supersedes": [
+            "c2r-standards"
+          ]
+        },
+        {
+          "id": "c2r2-spec",
+          "performer": "ft358-confirm2-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce1c5f482491cc109c94105f85ea9955ad3736ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c2-spec",
+            "digest": "sha256:feb72f0260a7188b38a9b518820b32a075384a3adaee351d13a5a8e61bbbfdb0",
+            "excerpt": "Spec axis, MB-C2 confirming round 2 (repair delta 592040ea..60f0d9ee). Zero findings.\nP3 closed: ticket 3 names MB103 in What to build (:27-29) and in Acceptance (:44).\nThe rowHeading refactor keeps ParseDocument (tree.go:114-131) and Close (closure.go:30) behavior exactly; both read through markdown.Read, so FA10 and FA12 hold; MB31, MB81, FA6 hold. tree.go numstat from the chunk base is 36/36, so it does not grow. The premises_test.go cases are in scope.\n"
+          },
+          "axis": "Spec",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "finding_ids": [],
+          "supersedes": [
+            "c2r-spec"
+          ]
+        },
+        {
+          "id": "c2r2-coverage",
+          "performer": "ft358-confirm2-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "ce1c5f482491cc109c94105f85ea9955ad3736ea",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c2-coverage",
+            "digest": "sha256:c8046d90e4fcc8bba69a5174da7513c0bbe8bd84d0e37cca68c8d4659ebd3a09",
+            "excerpt": "Coverage axis, MB-C2 confirming round 2 (repair delta 592040ea..60f0d9ee). Zero findings. Every probe restored; git status clean.\nN1 closed: run = markdown.FenceMarker, strings.CutPrefix for strings.Cut, and openerRun without the outer TrimSpace each fail their own case at premises_test.go:102.\nN2 closed: markdown.ReadFragment in Close fails at commitment_test.go:186.\nMutants on rowHeading (tree.go:208-209) and both callers (closure.go:30, tree.go:116-117) are all red.\n"
+          },
+          "axis": "Coverage",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "finding_ids": [],
+          "supersedes": [
+            "c2r-coverage"
+          ]
         }
       ]
     }
@@ -1130,3 +1196,19 @@ Count: 2. Worst issue: N1.
 - S4: `rowHeading` in `internal/roadmap/tree.go` is the one row-heading predicate, and `ParseDocument` and `Close` both call it. The roadmap, roadmapflow, maps, and ownership packages pass.
 - N1: `run = markdown.FenceMarker` failed the four-run case, `strings.CutPrefix` failed the indented case, and `openerRun` without its outer `TrimSpace` failed the spaced-info case. Each failed at `premises_test.go:101`.
 - N2: `markdown.ReadFragment` in `Close` gave `closure = "", closed row FT1 appears 2 times in ROADMAP.md`.
+
+## MB-C2 confirming round 2
+
+All three axes pass. S4, P3, N1, and N2 are closed. The repair allowance consumed for MB-C2 is 2 of 2.
+
+### Standards
+
+Count: 0. Optional advice: a named-case table in `premises_test.go`, and a test name that also covers the frontmatter case.
+
+### Spec
+
+Count: 0.
+
+### Coverage
+
+Count: 0.
