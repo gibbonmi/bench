@@ -18,17 +18,16 @@ func RowOwner(id, path string) bool { return path == rowFilePath(id) }
 
 // Close removes each named row heading from the index, with the blank line that follows
 // it, removes the closed rows from the dependency tables, and projects the recommended
-// sequence from the remaining outcomes. A row heading is a body line of the block reader
-// that matches the row grammar, as ParseDocument reads it, so a fenced or frontmatter
-// example stays. Each named row must appear exactly once. The caller removes each detail
-// owner.
+// sequence from the remaining outcomes. Close reads row headings through rowHeading, as
+// ParseDocument does, so a fenced or frontmatter example stays. Each named row must appear
+// exactly once. The caller removes each detail owner.
 func Close(index []byte, rows, outcomes []string) ([]byte, error) {
 	lines, blocks := strings.Split(string(index), "\n"), markdown.Read(string(index)).Lines
 	kept := make([]string, 0, len(lines))
 	removed := map[string]int{}
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
-		if m := roadmapStartRe.FindStringSubmatch(line); m != nil && blocks[i].Class == markdown.Body && slices.Contains(rows, m[1]) {
+		if m, _ := rowHeading(line, blocks[i]); m != nil && slices.Contains(rows, m[1]) {
 			removed[m[1]]++
 			if i+1 < len(lines) && strings.TrimSpace(lines[i+1]) == "" {
 				i++

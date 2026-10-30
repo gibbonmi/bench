@@ -88,14 +88,19 @@ func TestMetadataGrammarFenceRoles(t *testing.T) {
 	if !reflect.DeepEqual(lines, want) || !reflect.DeepEqual(diagnostics, []string{"duplicate Owner"}) {
 		t.Fatalf("Scan = %#v, %#v; want %#v and one duplicate", lines, diagnostics, want)
 	}
-	// A longer run closes the facts fence, and its label is the text after a run of the
-	// opener's length, so the facts reader still refuses the nested marker.
-	nested := "```" + ownership.MetadataLabel + "\n" + completeEmpty + "\n````\n"
-	if lines, _ := scan.Scan([]byte(nested)); lines[len(lines)-2].FenceLabel != "`" {
+	// A closer's label is its text after a run of the opener's length, so the reader refuses a
+	// longer closer. An equal or indented closer has no label, and no space joins the run.
+	facts := func(opener, closer string) string {
+		return opener + ownership.MetadataLabel + "\n" + completeEmpty + "\n" + closer + "\n"
+	}
+	if lines, _ := scan.Scan([]byte(facts("```", "````"))); lines[len(lines)-2].FenceLabel != "`" {
 		t.Fatalf("longer closer = %#v; want the label `", lines[len(lines)-2])
 	}
-	if got := ownership.ParseManifest([]byte(nested)).Diagnostics; len(got) != 1 || !strings.Contains(got[0].Reason, "another fence marker") {
-		t.Fatalf("ParseManifest diagnostics = %v; want the nested-marker refusal", got)
+	for text, refused := range map[string]bool{facts("```", "````"): true, facts("````", "````"): false, facts("```", "   ```"): false, facts("``` ", "````"): true} {
+		got := ownership.ParseManifest([]byte(text)).Diagnostics
+		if refusal := len(got) == 1 && strings.Contains(got[0].Reason, "another fence marker"); refusal != refused || !refused && len(got) != 0 {
+			t.Errorf("ParseManifest(%q) diagnostics = %v; want the nested-marker refusal %t", text, got, refused)
+		}
 	}
 }
 

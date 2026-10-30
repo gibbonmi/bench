@@ -176,10 +176,11 @@ func TestProjectSequenceSkipsFencedHeadings(t *testing.T) {
 	}
 }
 
-// TestCloseSkipsAFencedRowHeading closes FT1 beside a fenced FT1 example. Close reads the
-// rows that ParseDocument reads, so it removes only the live row and keeps the example.
+// TestCloseSkipsAFencedRowHeading closes FT1 beside a frontmatter FT1 example and a fenced
+// one. Close reads the rows that ParseDocument reads, so it removes only the live row and
+// keeps both examples.
 func TestCloseSkipsAFencedRowHeading(t *testing.T) {
-	const example = "# Roadmap\n\n```\n**FT1 — x**\n```\n\n"
+	const example = "---\n**FT1 — x**\n---\n# Roadmap\n\n```\n**FT1 — x**\n```\n\n"
 	got, err := Close([]byte(example+"**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n"), []string{"FT1"}, []string{"B"})
 	if want := example + "**FT2 — B**\n\n## Recommended sequence\n\n1. B\n"; err != nil || string(got) != want {
 		t.Fatalf("closure = %q, %v; want %q", got, err, want)

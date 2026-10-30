@@ -113,14 +113,14 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 
 	for i := 0; i < len(lines); {
 		line := lines[i]
-		if blocks[i].Class != markdown.Body {
+		m, body := rowHeading(line, blocks[i])
+		if !body {
 			i++
 			continue
 		}
 		if blocks[i].Heading {
 			section = blocks[i].Section
 		}
-		m := roadmapStartRe.FindStringSubmatch(line)
 		if m == nil {
 			if strings.HasPrefix(line, "**") {
 				raw, n := projectBody(line, full)
@@ -200,6 +200,15 @@ func ParseDocument(tree Tree, statuses map[string]string, full bool) (Document, 
 		failures = append(failures, ParseFailure{RoadmapFile, noRoadmapRowsReason, raw, n})
 	}
 	return doc, failures, diagnostics
+}
+
+// rowHeading reports whether the index line is a body line of the block reader, and for a
+// body line it returns the row grammar's match. A fenced or frontmatter line is no row.
+func rowHeading(line string, block markdown.Line) (m []string, body bool) {
+	if block.Class != markdown.Body {
+		return nil, false
+	}
+	return roadmapStartRe.FindStringSubmatch(line), true
 }
 
 // rowFileOwners splits the listing into the row files a row may be read from. It also
