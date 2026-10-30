@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/subsumed-test-cuts/spec.md",
-  "plan_digest": "sha256:231c4c21fcd42b76e165ed5bf163f33aa4482652664ac995293048a25c1501b1",
+  "plan_digest": "sha256:16257c50144fb814146df571aafeccab801f9a1e804c2442569f9531ba1b59b7",
   "implementation_session": "",
   "chunks": [
     {
@@ -1235,9 +1235,9 @@
     {
       "id": "FT411-C2",
       "base": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
-      "tip": "d466c480239e31d45e37c79a2240f6145afb7b19",
-      "plan_digest": "sha256:231c4c21fcd42b76e165ed5bf163f33aa4482652664ac995293048a25c1501b1",
-      "source_digest": "e886fe61608d9babaa528e30c0c603aad6cbb2f8",
+      "tip": "8d5da89454d696ebc8182694fb62c9580c88960b",
+      "plan_digest": "sha256:16257c50144fb814146df571aafeccab801f9a1e804c2442569f9531ba1b59b7",
+      "source_digest": "b9cec03af1c1336cd65eeec124fd6d1c85c573b6",
       "acceptance_rows": [
         "TC25",
         "TC26",
@@ -1466,6 +1466,96 @@
               "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestLandCommandStatesTheCensusCountAndDropsTheRecords,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestLandCommandStatesTheCensusCountAndDropsTheRecords$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
+        },
+        {
+          "id": "t05-tc27",
+          "performer": "ft411-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9cec03af1c1336cd65eeec124fd6d1c85c573b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-05",
+            "digest": "sha256:8edae92fcad3589472e4e29a3f38f6fa6e761464c17f3b3cd128086606d741a0",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestResumeLandCommandCompletesAnInterruptedMarker,1,1,0,null,yes\n  2,bit,swap,failed,1,TestResumeLandCommandAcceptsSpecSlugAndPath/./specs/x/spec.md,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestResumeLandCommandCompletesAnInterruptedMarker$|^TestResumeLandCommandAcceptsSpecSlugAndPath$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "8d5da89454d696ebc8182694fb62c9580c88960b",
+          "requirement": "tc27",
+          "command": "bench test --package ./internal/worktree --run '^TestResumeLandCommandCompletesAnInterruptedMarker$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land_resume.go: swap `stderr) != 0 {` for `stderr) == 0 {`; expect TestResumeLandCommandCompletesAnInterruptedMarker",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-05",
+              "digest": "sha256:8edae92fcad3589472e4e29a3f38f6fa6e761464c17f3b3cd128086606d741a0",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestResumeLandCommandCompletesAnInterruptedMarker,1,1,0,null,yes\n  2,bit,swap,failed,1,TestResumeLandCommandAcceptsSpecSlugAndPath/./specs/x/spec.md,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestResumeLandCommandCompletesAnInterruptedMarker$|^TestResumeLandCommandAcceptsSpecSlugAndPath$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t05-tc28",
+          "performer": "ft411-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9cec03af1c1336cd65eeec124fd6d1c85c573b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-05",
+            "digest": "sha256:8edae92fcad3589472e4e29a3f38f6fa6e761464c17f3b3cd128086606d741a0",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestResumeLandCommandCompletesAnInterruptedMarker,1,1,0,null,yes\n  2,bit,swap,failed,1,TestResumeLandCommandAcceptsSpecSlugAndPath/./specs/x/spec.md,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestResumeLandCommandCompletesAnInterruptedMarker$|^TestResumeLandCommandAcceptsSpecSlugAndPath$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "8d5da89454d696ebc8182694fb62c9580c88960b",
+          "requirement": "tc28",
+          "command": "bench test --package ./internal/worktree --run '^TestResumeLandCommandAcceptsSpecSlugAndPath$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/land_resume.go: swap `landingSlug(parsed.Flags[\"--spec\"])` for `parsed.Flags[\"--spec\"]`; expect TestResumeLandCommandAcceptsSpecSlugAndPath",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-05",
+              "digest": "sha256:8edae92fcad3589472e4e29a3f38f6fa6e761464c17f3b3cd128086606d741a0",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestResumeLandCommandCompletesAnInterruptedMarker,1,1,0,null,yes\n  2,bit,swap,failed,1,TestResumeLandCommandAcceptsSpecSlugAndPath/./specs/x/spec.md,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestResumeLandCommandCompletesAnInterruptedMarker$|^TestResumeLandCommandAcceptsSpecSlugAndPath$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "t05-tc34",
+          "performer": "ft411-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "b9cec03af1c1336cd65eeec124fd6d1c85c573b6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft411-author-05",
+            "digest": "sha256:a5a367a68ca21d3fee618cef0b92421b00415a98aa8a47aa7f060bb2f8501997",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestResumeLandCommandPublicBindsPublishedLandingIdentity,3,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestResumeLandCommandPublicBindsPublishedLandingIdentity$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "8d5da89454d696ebc8182694fb62c9580c88960b",
+          "requirement": "tc34",
+          "command": "bench test --package ./internal/worktree --run '^TestResumeLandCommandPublicBindsPublishedLandingIdentity$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/worktree/landingpolicy/landingpolicy.go: swap `if !f.MarkerPresent || !f.MarkerReachesPublished() {` for `if true {`; expect TestResumeLandCommandPublicBindsPublishedLandingIdentity",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft411-author-05",
+              "digest": "sha256:a5a367a68ca21d3fee618cef0b92421b00415a98aa8a47aa7f060bb2f8501997",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestResumeLandCommandPublicBindsPublishedLandingIdentity,3,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,^TestResumeLandCommandPublicBindsPublishedLandingIdentity$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -1512,6 +1602,18 @@
       "chunk_ids": {
         "FT411-C1": [
           "FT411-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:231c4c21fcd42b76e165ed5bf163f33aa4482652664ac995293048a25c1501b1",
+      "to": "sha256:16257c50144fb814146df571aafeccab801f9a1e804c2442569f9531ba1b59b7",
+      "chunk_ids": {
+        "FT411-C1": [
+          "FT411-C1"
+        ],
+        "FT411-C2": [
+          "FT411-C2"
         ]
       }
     }
