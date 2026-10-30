@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // Render returns document with record as the payload of its review-record
@@ -38,19 +39,22 @@ func Render(document []byte, record Record) ([]byte, error) {
 			head += "\n"
 		}
 	}
-	return []byte(head + "\n" + fenceMarker + recordFence + "\n" + string(data) + fenceMarker + "\n"), nil
+	return []byte(head + "\n" + markdown.FenceMarker + recordFence + "\n" + string(data) + markdown.FenceMarker + "\n"), nil
 }
 
 // payload encodes value as fence payload lines, each indented by indent.
 func payload(value any, indent string) ([]byte, error) {
 	var data bytes.Buffer
 	encoder := json.NewEncoder(&data)
-	// A reader reads "&", "<", and ">" in an excerpt as written. The encoder
-	// still escapes every control byte, so each payload line stays one line.
+	// A reader reads "&" and ">" in an excerpt as written. The encoder still
+	// escapes every control byte, so each payload line stays one line. Each "<"
+	// takes its JSON escape, so an excerpt that holds an HTML comment opener
+	// opens no comment for the block reader, and the fence keeps its closer.
+	// JSON holds a "<" only inside a string, so the escape changes no value.
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", indent)
 	err := encoder.Encode(value)
-	return data.Bytes(), err
+	return bytes.ReplaceAll(data.Bytes(), []byte("<"), []byte(`\u003c`)), err
 }
 
 // splice returns document with the payload lines of span replaced by data.

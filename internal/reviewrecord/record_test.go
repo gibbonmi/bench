@@ -161,6 +161,40 @@ func TestRenderWritesAReadablePayload(t *testing.T) {
 	}
 }
 
+// TestRenderEncodesACommentOpenerInAnExcerpt renders an excerpt that holds an unterminated
+// HTML comment opener. The rendered record must read whole, so the opener opens no comment
+// that hides the fence closer, and the excerpt and its digest keep their decoded values.
+func TestRenderEncodesACommentOpenerInAnExcerpt(t *testing.T) {
+	excerpt := "a <!-- b"
+	out, err := Render(nil, renderRecord(excerpt))
+	var loaded Record
+	if err == nil {
+		loaded, err = parseRecord(out, renderSpec)
+	}
+	if err != nil || loaded.Completion.Verification[0].NativeRef != renderRecord(excerpt).Completion.Verification[0].NativeRef {
+		t.Fatalf("render and read of a comment-opener excerpt = %v; want the record read whole with the excerpt unchanged", err)
+	}
+}
+
+// TestRecordSkipsAQuotedFence renders and reads a record that a document surrounds with
+// text that no record reader may take for its fence or a frontmatter block.
+func TestRecordSkipsAQuotedFence(t *testing.T) {
+	for _, c := range []struct{ name, before, after string }{
+		{"a longer fence that quotes the record opener", "````markdown\n```bench-review-record\n{}\n```\n````\n\n", ""},
+		{"a first line that opens no frontmatter closer", "---\n", ""},
+		{"a frontmatter marker pair around the record", "---\n", "---\n"},
+	} {
+		out, err := Render([]byte(c.before+"```bench-review-record\n{}\n```\n"+c.after), renderRecord("ok"))
+		var loaded Record
+		if err == nil {
+			loaded, err = parseRecord(out, renderSpec)
+		}
+		if err != nil || !strings.HasPrefix(string(out), c.before) || !strings.HasSuffix(string(out), "```\n"+c.after) || loaded.Completion.Verification[0].NativeRef.Excerpt != "ok" {
+			t.Errorf("%s: render and read = %v; want the record payload replaced and read in place", c.name, err)
+		}
+	}
+}
+
 // The malformed documents below are built by hand on purpose: no encoder can
 // produce them.
 func TestRenderRefusesAnUnterminatedFence(t *testing.T) {
