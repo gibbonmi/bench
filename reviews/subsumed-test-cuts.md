@@ -796,7 +796,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-standards",
+          "performer": "ft411-review-c1-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "13c164f90efc3783e7e9f05a4090bce87d0f4159",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:c1-standards",
+            "digest": "sha256:30968bfc40656ac0eb491a3bb661a0e43cf36bf6c98d669a4479454a31bdc836",
+            "excerpt": "Standards axis FT411-C1 (931b7ea78..c299acc0b), sonnet/high. 2 advice, 0 blocking.\nF1 advice auto-fix conf 6 internal/adopt/lifecycle_decision_test.go:197,200: refusal-table check loosened from nil to len(...) != 0 for the legacy empty row; restore the nil check on refusal rows.\nF2 advice auto-fix conf 5 internal/adopt/setup_test.go:76: doc comment \"pins SD4.\" is stale after the T1-9 move adds the exact seeded-bytes check.\nChecked clean: merged boundary assertions, helpers, census key, fence.\n"
+          },
+          "axis": "Standards",
+          "base": "931b7ea78a972b7f45af2e7bfcfd7ddfc40c3a77",
+          "tip": "c299acc0b86168670e4e75b012e6b8bff6a1e78e",
+          "finding_ids": [
+            "c1-f1-nil-check",
+            "c1-f2-sd4-comment"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-spec",
+          "performer": "ft411-review-c1-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "13c164f90efc3783e7e9f05a4090bce87d0f4159",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:c1-spec",
+            "digest": "sha256:d6a0ee12139c36a42ccc63e812341bb342d1b8252012c65b26f096e4b0ec2e8b",
+            "excerpt": "Spec axis FT411-C1 (931b7ea78..c299acc0b), sonnet/high. 1 advice, 0 blocking.\nF1 advice conf 4 internal/adopt/lifecycle_decision_test.go:~200: shared refusal assertion loosened from nil to len(...) != 0 for the legacy empty row; keep the nil check where want != \"\".\nTC8 pass, TC44 pass, T1-5 bytes and modes pass, T1-9 and T1-10 moves pass, LTE cells pass, planned cells pass, all 25 recorded probes bit.\n"
+          },
+          "axis": "Spec",
+          "base": "931b7ea78a972b7f45af2e7bfcfd7ddfc40c3a77",
+          "tip": "c299acc0b86168670e4e75b012e6b8bff6a1e78e",
+          "finding_ids": [
+            "c1-f1-nil-check"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c1-coverage",
+          "performer": "ft411-review-c1-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "13c164f90efc3783e7e9f05a4090bce87d0f4159",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:c1-coverage",
+            "digest": "sha256:1c6494bd8305b2330a8e5d61b45dc1f3c37bad9e0f52c7c4dbff6cec1251cfd6",
+            "excerpt": "Coverage axis FT411-C1 (931b7ea78..c299acc0b), sonnet/high. 2 advice, 0 blocking. No probe run.\nF1 advice ask-user conf 4 internal/adopt/lifecycle_decision_test.go:200: nil check weakened to admit the legacy empty success row; keep nil for refusal rows and give legacy empty its own assertion.\nF3 advice no-op conf 3 spec TC3 why-clause: kept TestCompatibilityUndo bit on the byte flip through undo divergence, not a repaired-bytes assertion; probe tc3 bit.\nChecked: TC45 escape row held, preview cuts held by plan kinds, topic push held, merge predicates kept, no dead helper. git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "931b7ea78a972b7f45af2e7bfcfd7ddfc40c3a77",
+          "tip": "c299acc0b86168670e4e75b012e6b8bff6a1e78e",
+          "finding_ids": [
+            "c1-f1-nil-check"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -828,3 +896,28 @@
   ]
 }
 ```
+
+## FT411-C1 review findings
+
+Frozen pair: 931b7ea78 to c299acc0b. Each axis ran on sonnet at high effort.
+The raw count is 5 findings, and the repair-target count is 2.
+
+### Standards
+
+The axis reports 2 findings, and the worst is F1.
+
+- F1 `c1-f1-nil-check`, auto-fix, confidence 6: `internal/adopt/lifecycle_decision_test.go:200` loosens the refusal-row check from a nil check to a length check for the `legacy empty` row. The repair keeps the nil check on the refusal rows and gives `legacy empty` its own assertion.
+- F2 `c1-f2-sd4-comment`, auto-fix, confidence 5: the doc comment at `internal/adopt/setup_test.go:76` names only SD4, but the test now also holds the exact seeded bytes. The repair states both facts.
+
+### Spec
+
+The axis reports 1 finding, and the worst is F1.
+
+- F1 `c1-f1-nil-check`, auto-fix, confidence 4: the same finding as Standards F1.
+
+### Coverage
+
+The axis reports 2 findings, and the worst is F1.
+
+- F1 `c1-f1-nil-check`, auto-fix, confidence 4: the same finding as Standards F1.
+- F3, no-op, confidence 3: the TC3 why-clause overstates what the kept test asserts. Probe tc3 bit on `TestCompatibilityUndo`, so no repair target remains.
