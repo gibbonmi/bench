@@ -158,8 +158,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT400 (MEDIUM, decision required) — a ticket author near 300k context tokens finishes its ticket, and a fresh recorded session takes later work.**
 
-**FT403 (MEDIUM) — a review axis sweeps for each variant of a held finding and checks every registry of an extended family.**
-
 **FT417 (LOW) — a reworded spec sentence keeps each predicate of the old sentence unless a decision deletes it.**
 
 **FT420 (HIGH) — the review record and the author charge support the concurrent chunks of a delegated full run.**
@@ -173,8 +171,6 @@ and the small cuts. The rows below hold the rest.
 **FT441 (MEDIUM, decision required) — the spec author re-reads each cited source and walks each lifecycle, and the spec review grades rows against the tree.**
 
 **FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
-
-**FT447 (MEDIUM) — the bounded repair policy states the repair-cost rules of the FT445 and FT463 builds.**
 
 **FT453 (LOW) — the Claude line binding names Haiku as a reviewer-allowed model, and the agent-line guard accepts it.**
 
