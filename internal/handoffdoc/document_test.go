@@ -193,6 +193,85 @@ func TestOpenFenceNamesTheOpeningLine(t *testing.T) {
 	}
 }
 
+// TestParseKeepsANestedFenceInsideState is MB38. A closer uses the opener's character and
+// a run at least as long, so the inner three-backtick line and the heading under it stay
+// State. A toggle on any marker line closes the block there and splits a section at "## X".
+func TestParseKeepsANestedFenceInsideState(t *testing.T) {
+	state := "Pasted:\n\n````\n```\n## X\n````"
+	want := &Document{Sections: []Section{{Key: MainKey, State: state}}}
+
+	got, err := Parse("handoff.md", []byte(want.Render()))
+	if err != nil {
+		t.Fatalf("parse the nested fence: %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("nested fence round trip = %#v, want %#v", got, want)
+	}
+}
+
+// TestParseReadsAFrontmatterHeadingAsHeader proves that Parse reads the whole file as a
+// document. A heading line inside a leading frontmatter block stays header, so it does not
+// declare main a second time.
+func TestParseReadsAFrontmatterHeadingAsHeader(t *testing.T) {
+	want := &Document{Header: "---\n" + MainHeading + "\n---", Sections: []Section{{Key: MainKey}}}
+
+	got, err := Parse("handoff.md", []byte(want.Render()))
+	if err != nil {
+		t.Fatalf("parse the frontmatter header: %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("frontmatter round trip = %#v, want %#v", got, want)
+	}
+}
+
+// TestParseSkipsAFencedStateHeading proves that a section reads the reader's fence class.
+// A label-shaped fence opener reads as a field, so without that class the State heading
+// inside its block would open State.
+func TestParseSkipsAFencedStateHeading(t *testing.T) {
+	content := MainHeading + "\n\n```Note: x\n" + StateHeading + "\n```\n\n" + StateHeading + "\n"
+
+	_, err := Parse("handoff.md", []byte(content))
+	refusal, ok := err.(*ParseError)
+	if !ok || refusal.Line != 4 || !strings.Contains(refusal.Reason, "neither a label line") {
+		t.Fatalf("parse a fenced State heading = %v, want the label refusal at line 4", err)
+	}
+}
+
+// TestOpenFenceUsesTheCloseRule is MB39, MB40, and MB93. A State body is a fragment, so a
+// leading marker line opens no frontmatter, and only a closer of the opener's character
+// and at least its run closes a block. The comment case is the other side of the fault
+// kind: the reader reports the comment ahead of the fence, so no fence is reported.
+func TestOpenFenceUsesTheCloseRule(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		text string
+		line int
+		open bool
+	}{
+		{"other character", "~~~\n```", 1, true},
+		{"shorter run", "````\n```", 1, true},
+		{"longer run closes", "````\n```\n````", 0, false},
+		{"leading marker line", "---\n```\nx\n---", 2, true},
+		{"open comment", "```\n<!--\nx", 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			line, open := OpenFence(tc.text)
+			if line != tc.line || open != tc.open {
+				t.Fatalf("OpenFence(%q) = (%d, %t), want (%d, %t)", tc.text, line, open, tc.line, tc.open)
+			}
+		})
+	}
+
+	state := "---\nbefore \t\n````\n```\ninside\n````\nafter\n---"
+	var got []string
+	for line := range UnfencedLines(state) {
+		got = append(got, line)
+	}
+	if want := []string{"---", "before", "after", "---"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("UnfencedLines(%q) = %q, want %q", state, got, want)
+	}
+}
+
 // TestEnsureMainAndRemoveKeepTheFallbackSection covers the retirement path's two
 // document-level moves: the removal drops one key, and main survives the last one.
 func TestEnsureMainAndRemoveKeepTheFallbackSection(t *testing.T) {

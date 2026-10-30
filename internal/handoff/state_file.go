@@ -5,35 +5,33 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/handoffdoc"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// The four ways a drafted State never reaches the document, each named by what the writer
+// The five ways a drafted State never reaches the document, each named by what the writer
 // has to fix. The read faults share one headline because the repair is the same for all
-// four file kinds: name a file this command can read. The three text faults are separate,
-// because a byte to remove, a fence to close, and a line to reword are different edits.
+// four file kinds: name a file this command can read. The four text faults are separate,
+// because a byte to remove, a fence or a comment to close, and a line to reword are
+// different edits.
 const (
 	faultStateFileUnreadable = "the handoff state file is not a readable regular file"
 	faultStateFileByte       = "the handoff state file carries a control byte"
 	faultStateFileFence      = "the handoff state file opens a fence it never closes"
+	faultStateFileComment    = "the handoff state file opens an HTML comment it never closes"
 	faultStateFileHeading    = "the handoff state file opens a section heading"
 )
 
 const (
-	stateFileRepair = "name a readable regular file, then rerun bench handoff: "
-	stateByteRepair = "remove the control byte, then rerun bench handoff: "
+	stateFileRepair    = "name a readable regular file, then rerun bench handoff: "
+	stateByteRepair    = "remove the control byte, then rerun bench handoff: "
+	stateCommentRepair = "close the comment, then rerun bench handoff: "
 )
 
 // stateFenceRepair takes the fix from the document parser, which owns the words for this
 // fence. The draft and the document refuse the same fence for the same reason, so a
 // reworded instruction there carries here.
 var stateFenceRepair = handoffdoc.OpenFenceRepair + ", then rerun bench handoff: "
-
-// sectionOpener is the prefix that opens a level-two block, derived from the document's
-// own main heading rather than spelled again here. handoffdoc splits the file on this
-// prefix, and any spelling below it that the grammar has no key for makes every later run
-// refuse the document. So the test is the prefix, not the two headings this command writes.
-var sectionOpener = strings.TrimSuffix(handoffdoc.MainHeading, handoffdoc.MainKey)
 
 // readStateFile answers the State body a `--state-file` run writes, or the refusal that
 // ends the run before anything is written.
@@ -69,8 +67,16 @@ func readStateFile(path string) (string, error) {
 	if opened, open := handoffdoc.OpenFence(state); open {
 		return "", refusal{faultStateFileFence, stateFenceRepair + strings.TrimSpace(strings.Split(state, "\n")[opened-1])}
 	}
+	// An open comment hides every heading under it in the same way. The reader reports it
+	// ahead of a fence fault, so this refusal also covers a fence that the comment hides.
+	if read := markdown.ReadFragment(state); read.Fault != nil && read.Fault.Kind == markdown.CommentFault {
+		return "", refusal{faultStateFileComment, stateCommentRepair + strings.TrimSpace(read.Lines[read.Fault.Line-1].Raw)}
+	}
+	// handoffdoc splits the file on the H2 prefix, and any spelling below it that the
+	// grammar has no key for makes every later run refuse the document. So the test is the
+	// prefix, not the two headings this command writes.
 	for line := range handoffdoc.UnfencedLines(state) {
-		if strings.HasPrefix(line, sectionOpener) {
+		if strings.HasPrefix(line, markdown.H2Prefix) {
 			return "", refusal{faultStateFileHeading, stateRepair + strings.TrimSpace(line)}
 		}
 	}

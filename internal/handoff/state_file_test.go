@@ -233,6 +233,30 @@ func TestHandoffStateFileRefusesAnUnclosedFence(t *testing.T) {
 	runIn(t, root, nil)
 }
 
+// MB82, story 68. An open comment hides every heading under it from the State walk, so the
+// draft refuses with a fault that names the opener line. The reader reports the comment
+// ahead of a fence, so a fence above the comment draws the same fault. A closed comment
+// writes.
+func TestStateFileRefusesAnUnterminatedComment(t *testing.T) {
+	for _, tc := range []struct{ name, draft, opener string }{
+		{"open comment", "The build is live.\n\n<!-- draft note\n" + handoffdoc.MainHeading + "\n", "<!-- draft note"},
+		{"open fence above it", "```\n  <!-- draft note\n", "<!-- draft note"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := readStateFile(stateFile(t, tc.draft))
+			got, ok := err.(refusal)
+			if !ok || got.kind != faultStateFileComment || got.hint != stateCommentRepair+tc.opener {
+				t.Fatalf("readStateFile(%q) = %v, want the comment fault that names %q", tc.draft, err, tc.opener)
+			}
+		})
+	}
+
+	const closed = "The build is live.\n\n<!-- draft note -->"
+	if state, err := readStateFile(stateFile(t, closed+"\n")); err != nil || state != closed {
+		t.Fatalf("readStateFile over a closed comment = (%q, %v), want (%q, nil)", state, err, closed)
+	}
+}
+
 // LC28, story 30. An empty draft is a deliberate reset rather than a failed read, so it
 // writes an empty State and the header carries the first-session guidance again.
 func TestHandoffStateFileAcceptsAnEmptyFile(t *testing.T) {
