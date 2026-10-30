@@ -460,6 +460,41 @@
             "c1-coverage"
           ]
         }
+      ],
+      "confirmations": [
+        {
+          "id": "c1-n1-confirmation",
+          "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e61e60d055c6e595d4a32ab85c7df816423ceb",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:n1-probe",
+            "digest": "sha256:8729f6ca95b5b9d966ebceb870e0ea64d9ecde4b80b1a802ecf998e3a8e9116c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/markdown/comments.go,omit,failed,1,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/markdown,^TestReadBlockRules$,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,386\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/markdown,fail,5,32\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/markdown,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,\"markdown_test.go:68: reading of \\\"<!<!----><!---->----><!<!---->---->\\\":\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "36a07d83591f99cc079f571f185d25e606db0a2c",
+          "reviewed_tip": "503aef49a0de6507e0690eb4161aa0e09a71536d",
+          "repaired_tip": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "internal/markdown/comments.go: omit c.first = c.first[:i]",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj:n1-probe",
+              "digest": "sha256:8729f6ca95b5b9d966ebceb870e0ea64d9ecde4b80b1a802ecf998e3a8e9116c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/markdown/comments.go,omit,failed,1,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/markdown,^TestReadBlockRules$,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,386\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/markdown,fail,5,32\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/markdown,TestReadBlockRules/MB12_a_rejoin_after_a_rejoin_of_two_adjacent_removals_is_removed_too,\"markdown_test.go:68: reading of \\\"<!<!----><!---->----><!<!---->---->\\\":\",8\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
