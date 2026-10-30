@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 const escSentinel = "\x1c" // stands in for an escaped `\|` across the pipe split
@@ -127,21 +129,21 @@ func (p parsed) projection() schema {
 
 func parse(content []byte) parsed {
 	var p parsed
-	inStories, inMap := false, false
-	for n, raw := range strings.Split(string(content), "\n") {
-		line := strings.TrimSuffix(raw, "\r")
-		if line == historicalMarker {
+	inMap := false
+	for _, line := range markdown.Read(string(content)).Lines {
+		text := line.Raw
+		if text == historicalMarker {
 			p.historical = true
 		}
-		if line == "## User stories" {
-			inStories = true
+		if line.Class != markdown.Body {
 			continue
 		}
-		if inStories && strings.HasPrefix(line, "## ") {
-			inStories = false
+		inStories := line.Section == "User stories"
+		if inStories && line.Heading {
+			continue
 		}
-		if inStories && storyNumRe.MatchString(line) {
-			num := line
+		if inStories && storyNumRe.MatchString(text) {
+			num := text
 			if i := strings.IndexByte(num, '.'); i >= 0 {
 				num = num[:i]
 			}
@@ -152,7 +154,7 @@ func parse(content []byte) parsed {
 				p.storyNums[n] = true
 			}
 		}
-		if m := notCoveredRe.FindStringSubmatch(line); m != nil {
+		if m := notCoveredRe.FindStringSubmatch(text); m != nil {
 			if n, err := strconv.Atoi(m[1]); err == nil {
 				if p.notCovered == nil {
 					p.notCovered = make(map[int]string)
@@ -160,16 +162,16 @@ func parse(content []byte) parsed {
 				p.notCovered[n] = trimSpaceTab(m[2])
 			}
 		}
-		if line == "### Acceptance coverage map" && !p.seen {
+		if text == "### Acceptance coverage map" && !p.seen {
 			p.seen = true
 			inMap = true
 			continue
 		}
-		if inMap && mapEndRe.MatchString(line) {
+		if inMap && mapEndRe.MatchString(text) {
 			inMap = false
 		}
 		if inMap {
-			p.processMapLine(line, n+1)
+			p.processMapLine(text, line.Number)
 		}
 	}
 	return p

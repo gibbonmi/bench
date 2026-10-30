@@ -274,3 +274,21 @@ func TestMapRowsProjectTheParsedMap(t *testing.T) {
 		t.Fatalf("MapRows(no map) = %#v, want none", got)
 	}
 }
+
+// TestParseSkipsFencedCoverageLines reads the coverage scan over the block reader: a fenced
+// story line and a fenced map row add nothing, a fenced H2 line leaves the story list open, and
+// the historical marker comment still exempts its spec.
+func TestParseSkipsFencedCoverageLines(t *testing.T) {
+	body := "# b\n\n## User stories\n1. As a, I want b, so c.\n~~~\n2. As d, I want e, so f.\n## Example\n~~~\n" +
+		"3. As g, I want h, so i.\n\n### Acceptance coverage map\n" + hdrReducedID +
+		"| AB1 | 1, 3 | b | s | w |\n````\n| AB2 | 1 | b | s | w |\n```\n````\n"
+	if v := Check(spec(body)); len(v) != 0 {
+		t.Errorf("Check = %v, want none", v)
+	}
+	if rows := MapRows([]byte(body)); len(rows) != 1 || rows[0].ID != "AB1" {
+		t.Errorf("MapRows = %#v, want the row AB1 only", rows)
+	}
+	if got := State(spec("# h\n" + historicalMarker + "\n### Acceptance coverage map\n|bad|\n")); got != "historical" {
+		t.Errorf("State = %q, want historical", got)
+	}
+}

@@ -14,7 +14,6 @@
 package spec
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -27,6 +26,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/markdown"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -44,21 +44,12 @@ type Fact struct {
 	Slug, Path, Status, RoadmapID string
 }
 
-// LiveSpecSlugs enumerates distinct live folder-spec slugs named outside fenced code.
+// LiveSpecSlugs enumerates distinct live folder-spec slugs that the header lines name.
 func LiveSpecSlugs(content []byte) []string {
 	seen := map[string]bool{}
 	var slugs []string
-	inFence := false
-	for _, line := range strings.Split(string(content), "\n") {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "```") {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		for _, match := range liveSpecPathTokenRe.FindAllStringSubmatch(line, -1) {
+	for _, line := range headerLines(content) {
+		for _, match := range liveSpecPathTokenRe.FindAllStringSubmatch(line.Raw, -1) {
 			slug := match[1]
 			if !seen[slug] {
 				seen[slug] = true
@@ -69,33 +60,21 @@ func LiveSpecSlugs(content []byte) []string {
 	return slugs
 }
 
-// headerLines is the header scan's view of spec content: each line without its trailing CR,
-// minus fenced code. A line whose first three bytes are a code fence toggles fence state,
-// and the scan skips it and every line inside a fence.
-func headerLines(content []byte) []string {
-	var lines []string
-	inFence := false
-	for _, raw := range strings.Split(string(content), "\n") {
-		line := strings.TrimSuffix(raw, "\r")
-		if strings.HasPrefix(line, "```") {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		lines = append(lines, line)
-	}
-	return lines
+// headerLines is the header scan's view of spec content: the body lines of the block reader.
+// Every spec grammar matches the raw text of these lines, so a fenced line or a frontmatter
+// line declares nothing.
+func headerLines(content []byte) []markdown.Line {
+	lines := markdown.Read(string(content)).Lines
+	return slices.DeleteFunc(lines, func(line markdown.Line) bool { return line.Class != markdown.Body })
 }
 
 func metadata(content []byte) (status, roadmapID string) {
 	for _, line := range headerLines(content) {
-		switch {
-		case strings.HasPrefix(line, "Status:"):
-			status = strings.TrimSpace(strings.TrimPrefix(line, "Status:"))
-		case strings.HasPrefix(line, "Roadmap:"):
-			roadmapID = strings.TrimSpace(strings.TrimPrefix(line, "Roadmap:"))
+		switch raw := line.Raw; {
+		case strings.HasPrefix(raw, "Status:"):
+			status = strings.TrimSpace(strings.TrimPrefix(raw, "Status:"))
+		case strings.HasPrefix(raw, "Roadmap:"):
+			roadmapID = strings.TrimSpace(strings.TrimPrefix(raw, "Roadmap:"))
 		}
 	}
 	return status, roadmapID
@@ -129,7 +108,7 @@ type PersistedField struct {
 func PersistedFields(content []byte) ([]PersistedField, error) {
 	value, declared := "", false
 	for _, line := range headerLines(content) {
-		v, ok := strings.CutPrefix(line, "Persisted fields:")
+		v, ok := strings.CutPrefix(line.Raw, "Persisted fields:")
 		if !ok {
 			continue
 		}
@@ -230,20 +209,20 @@ func Implemented(content []byte) ([]byte, error) {
 	return implemented, nil
 }
 
+// deriveImplemented flips the one staged status line in the source bytes by its line offset, so
+// each other byte, a carriage return included, stays.
 func deriveImplemented(content []byte) ([]byte, int) {
-	lines := bytes.Split(content, []byte("\n"))
-	matches := 0
-	matched := 0
-	for i, line := range lines {
-		if stagedRe.Match(line) {
+	matches, at := 0, 0
+	for _, line := range headerLines(content) {
+		if stagedRe.MatchString(line.Raw) {
 			matches++
-			matched = i
+			at = line.Offset + strings.Index(line.Raw, "staged")
 		}
 	}
-	if matches == 1 {
-		lines[matched] = bytes.Replace(lines[matched], []byte("staged"), []byte("implemented"), 1)
+	if matches != 1 {
+		return content, matches
 	}
-	return bytes.Join(lines, []byte("\n")), matches
+	return slices.Concat(content[:at], []byte(StatusImplemented), content[at+len("staged"):]), matches
 }
 
 // Command implements `bench spec <subcommand> <slug>`. Its help lists `retire`, `history`,
