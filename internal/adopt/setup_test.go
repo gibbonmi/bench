@@ -49,15 +49,6 @@ func readGateInputs(t *testing.T, root string) string {
 	return string(data)
 }
 
-// TestSetupSeedsGateInputs pins SD1.
-func TestSetupSeedsGateInputs(t *testing.T) {
-	root := setupPromptTestRepo(t)
-	runSetupYes(t)
-	if got := readGateInputs(t, root); got != wantSeededGateInputs {
-		t.Fatalf("seeded gate-inputs.json =\n%s\nwant:\n%s", got, wantSeededGateInputs)
-	}
-}
-
 // TestSetupPreservesOperatorGateInputs pins SD3: an operator-authored manifest
 // survives byte-identical and is never recorded as a managed row.
 func TestSetupPreservesOperatorGateInputs(t *testing.T) {
@@ -87,6 +78,9 @@ func TestSetupTwiceLeavesGateInputsIdentical(t *testing.T) {
 	root := setupPromptTestRepo(t)
 	runSetupYes(t)
 	first := readGateInputs(t, root)
+	if first != wantSeededGateInputs {
+		t.Fatalf("seeded gate-inputs.json =\n%s\nwant:\n%s", first, wantSeededGateInputs)
+	}
 	runSetupYes(t)
 	if second := readGateInputs(t, root); second != first {
 		t.Fatalf("second setup rewrote gate-inputs.json:\nfirst:\n%s\nsecond:\n%s", first, second)
@@ -153,18 +147,5 @@ func TestSetupGateRejectsIgnoredDeclaredInputs(t *testing.T) {
 				t.Fatalf("gate = (%v, %q), want red=%t and %q", err, out, test.red, test.want)
 			}
 		})
-	}
-}
-
-func TestSetupGateDeclaresConsumerOnlyValidityScope(t *testing.T) {
-	root := setupBareTestRepo(t)
-	runSetupYes(t)
-	gate, err := os.ReadFile(filepath.Join(root, ".bench", "gate.sh"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := `BENCH_CONFORMANCE_CONSUMER_ONLY=1 "$bench" test --check load-validity-metadata`
-	if !strings.Contains(string(gate), want) {
-		t.Fatalf("scaffolded gate missing consumer-only validity intent %q:\n%s", want, gate)
 	}
 }

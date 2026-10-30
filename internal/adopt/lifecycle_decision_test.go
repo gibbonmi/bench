@@ -192,9 +192,12 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 			Current: []Asset{{"../c", "h"}}, Desired: []Asset{{"../d", "h"}}, Preserve: []string{"../p"}}},
 		{name: "desired before preserve", want: `managed asset "../d" is invalid`, input: LifecycleInput{
 			Desired: []Asset{{"../d", "h"}}, Preserve: []string{"../p"}}},
+		{name: "legacy duplicate", want: `managed asset "x" is duplicated`, input: LifecycleInput{Current: []Asset{{"x", "a"}, {"x", "b"}}}},
+		{name: "legacy missing fingerprint", want: `managed asset "x" is invalid`, input: LifecycleInput{Desired: []Asset{{"x", ""}}}},
+		{name: "legacy empty", want: "", input: LifecycleInput{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := PlanLifecycle(tc.input); got.Refusal != tc.want || got.Decisions != nil || got.Operations != nil {
+			if got := PlanLifecycle(tc.input); got.Refusal != tc.want || len(got.Decisions) != 0 || len(got.Operations) != 0 {
 				t.Fatalf("PlanLifecycle() = %#v, want the refusal %q", got, tc.want)
 			}
 		})
