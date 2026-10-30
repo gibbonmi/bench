@@ -1709,6 +1709,18 @@
               "path": "roadmap/FT437.md",
               "identity": "sha256:ed986b1d5df9ff39b3f63d5a4c23c5c7100ac4a116a129a5fb94bced2f91cb80"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "pinned-row-edits",
+                "path": "specs/pinned-row-edits/spec.md",
+                "identity": "sha256:a02e080262846ab9554ec281f2fa90e0d68dec5da01cd10a7bb9e10b946e4236"
+              },
+              "obligations": [
+                "FT437"
+              ]
+            }
           ]
         },
         {
