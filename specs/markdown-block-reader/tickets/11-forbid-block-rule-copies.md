@@ -1,7 +1,7 @@
 # Forbid a block-rule copy outside the block reader
 
 Blocked by: 2-read-spec-and-coverage-blocks.md, 3-read-roadmap-blocks.md, 4-read-field-scan-blocks.md, 5-read-handoff-blocks.md, 6-read-journal-blocks.md, 7-read-review-record-blocks.md, 8-read-anchor-blocks.md, 9-read-skills-frontmatter.md, 10-read-agents-marker-blocks.md
-Writes: internal/conformance/markdown_block_owner_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/checks.go, internal/conformance/tier_test.go, internal/conformance/tier_live_tree_test.go, internal/conformance/skill_description_budgets_test.go, internal/conformance/skills_index_checks_test.go, internal/conformance/docs_workflow_checks_test.go, internal/preflight/preflighttest/fixture.go, internal/preflight/ownership/inventorytest/inventory.go, projects/benchkit.md, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route
+Writes: internal/conformance/markdown_block_owner_test.go (new), internal/conformance/checks_test.go, internal/conformance/registry/checks.go, internal/conformance/tier_test.go, internal/conformance/tier_live_tree_test.go, internal/conformance/skill_description_budgets_test.go, internal/conformance/skills_index_checks_test.go, internal/conformance/docs_workflow_checks_test.go, internal/preflight/preflighttest/fixture.go, internal/preflight/ownership/inventorytest/inventory.go, projects/benchkit.md, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route, internal/markdown/markdown.go, internal/markdown/comments.go
 Covers: MB62, MB63, MB64, MB65, MB66, MB67, MB68, MB69, MB98, MB101
 
 ## What to build
@@ -34,7 +34,14 @@ entry to `classifiedLiveTreeTests` (`tier_live_tree_test.go:19`). Keep the hidde
 metadata check and `TestClassifiedLiveTreeInventoryNamesDetectedTests` intact.
 The former rejects an omitted classification, and the latter rejects a stale one.
 
+The MB-C5 review repair also lands here. `internal/markdown` exports the
+frontmatter marker and the two comment delimiters, and the check binds each
+literal kind to an exported constant. The skill frontmatter test of
+`checkSkillFrontmatter` and the README first-H2 read move onto the block reader.
+
 ## Acceptance
+
+- [ ] `markdown-block-owner` spells no block literal of its own; each kind comes from an `internal/markdown` constant.
 
 - [ ] The bite proof plants each of the six literal kinds and gets one diagnostic for each.
 - [ ] The same literals in a `_test.go` file and in `internal/markdown` give no diagnostic.

@@ -237,9 +237,10 @@ its verdict on the live tree.
 The reader reports at most one fault, in the order frontmatter, comment, fence.
 The input three backticks, a newline, then a comment opener holds an open fence
 and an open comment. The reader reports the comment fault at line 2 for it, as
-`prose.prepare` does today. The package also exports the fence marker and the H2
-prefix as constants. A writer that renders a fence or a heading uses them, so no
-block literal stays outside the package.
+`prose.prepare` does today. The package also exports the fence marker, the H2
+prefix, the frontmatter marker, and the two comment delimiters as constants. A
+writer that renders a block uses them, and `markdown-block-owner` binds its
+literal kinds to them, so no block literal stays outside the package.
 
 ### Raw text or comment-free text
 
@@ -378,8 +379,7 @@ a reviewer decision.
 
 `markdown-block-owner` is a new `go-source` conformance check. It follows
 `checkGitPlumbingOwner` in `internal/conformance/git_plumbing_owner_test.go`.
-It parses each non-test Go file under `cmd/` and `internal/`, outside
-`internal/markdown`. It refuses a string literal whose value contains a run of
+It parses each non-test Go file of the module, outside `internal/markdown`. It refuses a string literal whose value contains a run of
 three backticks or three tildes. It also refuses a literal whose value is exactly `---`,
 `<!--`, `-->`, or `## `.
 
@@ -859,7 +859,7 @@ The reviewer defers these decisions to the Fable consultation of 2026-10-03.
 6. Guard literal rule, amended (2026-10-03, Fable consultation). The check refuses a literal that contains a run of three backticks or three tildes, not only one that starts with the run. The three production fence-literal hits outside the migrated modules are `internal/preflight/preflighttest/fixture.go:111`, `internal/reviewrecord/recordtest/fixture.go:87`, and `internal/preflight/ownership/inventorytest/inventory.go:23`. Ticket 7 routes the second, and ticket 11 routes the first and the third through the fence constant.
 7. Ticket writes, amended (2026-10-30, staleness pass). Each ticket's `Writes:` line holds only the paths that its acceptance edits. The tickets run in plan order, because the author limit is 1.
 8. Frontmatter predicate, decided (2026-10-03, Fable consultation). The opener and the closer are exactly `---` after the carriage-return strip, in every module. This fails closed for a hostile skill file, and no loader accepts an indented opener. MB59, MB74, and MB75 cover it.
-9. Conformance readers, decided (2026-10-03, Fable consultation). Ticket 11 moves `skillDescriptionFolded`, `frontmatterHasKey`, and `h2Headings` onto the block reader. The skill example reader at `internal/tickets/example_test.go:51` takes a Won't handle line.
+9. Conformance readers, decided (2026-10-03, Fable consultation). Ticket 11 moves `skillDescriptionFolded`, `frontmatterHasKey`, `h2Headings`, the skill frontmatter test of `checkSkillFrontmatter`, and the README first-H2 read onto the block reader. The skill example reader at `internal/tickets/example_test.go:51` takes a Won't handle line.
 10. Linear rejoin, decided (2026-10-03, Fable consultation). The reader removes comments with a stack over its output, in one pass. MB79 bounds the work, and MB12, MB55, MB88, and MB89 pin the DG43 result.
 11. Rebuild from source bytes, decided (2026-10-03, Fable consultation). The adopt rebuilders and `deriveImplemented` write from the source bytes by the reader's line offsets. MB80 and MB87 cover a CRLF round trip.
 12. Handoff comment fault, decided (2026-10-03, Fable consultation). `readStateFile` refuses an unterminated comment with a new fault that names the opener line. MB82 covers it.

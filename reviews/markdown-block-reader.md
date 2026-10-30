@@ -2348,7 +2348,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c5-standards",
+          "performer": "ft358-review-c5-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2c8a1051010604cd1d2c0ef9a22f1be66f667273",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c5-standards",
+            "digest": "sha256:ec296054431f6bd29cbb104cdf7604364246f7a4e8ad03618ca87f9c9bea8ec2",
+            "excerpt": "Standards axis, MB-C5 (base 15903e2c, tip 6ac6dc60). Two findings.\nS1 (low, medium, auto-fix decided): internal/conformance/markdown_block_owner_test.go:387-390 spells the tilde run, the frontmatter marker, and the two comment delimiters itself, while internal/markdown owns them (markdown.go:23, comments.go:7-8, markdown.go:215, :221). Repair: internal/markdown exports the frontmatter marker and the comment delimiters, and the check binds to them; build the tilde kind from the fence-marker length.\nS2 (low, high, auto-fix decided): internal/conformance/skills_index_checks_test.go:95-98 tests the first line against the frontmatter marker with no carriage-return strip, against Closed decision 8, and docs_workflow_checks_test.go:688-693 reads a fenced or commented H2 line as the README's first H2. Repair: move both helpers onto the block reader.\nThe profile row agrees with the registry; blockSpan in internal/adopt/marker.go collapses three split loops into one source.\n"
+          },
+          "axis": "Standards",
+          "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "tip": "9d5e681d32acc80cc0654018f783b1e23cb3a454",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c5-spec",
+          "performer": "ft358-review-c5-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2c8a1051010604cd1d2c0ef9a22f1be66f667273",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c5-spec",
+            "digest": "sha256:9e1e6629f1308c00bf7409c235e6f404a4fa941e2f633749a8caee7e688da372",
+            "excerpt": "Spec axis, MB-C5 (base 15903e2c, tip 6ac6dc60). Zero findings.\nbench coverage --check gives ok with 106 rows; every MB-C5 row cites its seam and no planned cell is left. Ticket 10 meets MB57, MB58, MB61, MB70, MB86, MB87, MB91, MB97 (fragment read, Bench-text fault condition, exact message bytes, CR-preserving rebuild); ticket 11 meets MB62-MB69, MB98, MB101 (six-kind bite proof, exemptions, registry and profile row, live-tree entry, the three readers on the block reader). Every line bound holds.\nOptional advice: the check also grades the root-level package, wider than spec.md:381; two block-rule copies stay in conformance test helpers; the check spells four literals itself.\n"
+          },
+          "axis": "Spec",
+          "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "tip": "9d5e681d32acc80cc0654018f783b1e23cb3a454",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c5-coverage",
+          "performer": "ft358-review-c5-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "2c8a1051010604cd1d2c0ef9a22f1be66f667273",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c5-coverage",
+            "digest": "sha256:e04527d53bb33c4f541dc8efa99b679cd351c8bae6acf7dcad4b9dcb935d676b",
+            "excerpt": "Coverage axis, MB-C5 (base 15903e2c, tip 6ac6dc60). Zero findings. Every probe restored; git status clean.\nEvery acceptance row has a test that fails under its named mutation: the Bench-text condition, the strip suffix, the blockSpan end guard, the equal-versus-contains rule, and the frontmatterHasKey class test all bit.\nOptional advice: skillDescriptionFolded has no body-inert case; the owner exemption has no sibling-path case; marker.go:56 and :59 and docs_workflow_checks_test.go:747 have silent mutants that do not change behavior today.\n"
+          },
+          "axis": "Coverage",
+          "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "tip": "9d5e681d32acc80cc0654018f783b1e23cb3a454",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -3085,3 +3149,22 @@ Count: 0.
 - MB69: before the two fixtures moved to the fence constant, the live-tree test gave four diagnostics.
 - MB101: without its entry, `conformance-meta` reported the unregistered live-tree assertion.
 - MB98: the old `skillDescriptionFolded`, `frontmatterHasKey`, and `h2Headings` failed `TestConformanceReadersUseTheBlockReader` on CRLF frontmatter and on a fenced or commented heading.
+
+## MB-C5 review round 1
+
+The orchestrator decides each finding under the reviewer's advance approval of the `--full` run. One repair charge carries both findings, and it routes to ticket 11, which widens to `internal/markdown`. The repair allowance consumed for MB-C5 before this repair is 0 of 2.
+
+### Standards
+
+Count: 2. Worst issue: S1.
+
+- S1, low, auto-fix (decided): `internal/markdown` exports the frontmatter marker and the two comment delimiters, and `markdown-block-owner` binds each literal kind to an exported constant.
+- S2, low, auto-fix (decided): the skill frontmatter test of `checkSkillFrontmatter` and the README first-H2 read move onto the block reader. Closed decision 9 now names them.
+
+### Spec
+
+Count: 0. The spec text now says that the check grades every non-test Go file of the module.
+
+### Coverage
+
+Count: 0. The repair also adds two hardening rows from the advice: a body-inert case for `skillDescriptionFolded`, and a sibling-path case for the owner exemption.
