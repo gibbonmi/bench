@@ -1830,3 +1830,10 @@ Count: 2. Worst issue: P5.
 Count: 1. Worst issue: C6.
 
 - C6, low, auto-fix: add a case beside MB104 whose closed first-line frontmatter block holds a fence marker line, which `Parse` accepts.
+
+### MB-C3 repair 2 witness reds (ft358-repair-03b, opus / high, repair cycle 2 of 2)
+
+- S8: a shared `FaultRepair` that maps the comment fault to the fence repair failed three cases, for example the hint-names-the-line case at `state_file_test.go:256`.
+- P5: `TestParseQuotesTheRawHeading` with the raw quote fed from comment-free text failed all three rows.
+- C6: `if true` in place of the frontmatter-fault narrowing gave `Parse refusal at line 2, want ... line 0`.
+- S7 and S9 change comments only.
