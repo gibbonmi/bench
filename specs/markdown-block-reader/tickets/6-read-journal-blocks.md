@@ -1,8 +1,8 @@
 # Read learning and retrospective lines from the block reader
 
 Blocked by: 1-add-block-reader.md
-Writes: internal/learnings/learnings.go, internal/learnings/entry.go, internal/learnings/learnings_test.go, internal/retros/retros.go, internal/retros/retros_test.go, internal/retros/recommendations.go, internal/retros/recommendations_test.go
-Covers: MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB84
+Writes: internal/learnings/learnings.go, internal/learnings/entry.go, internal/learnings/learnings_test.go, internal/retros/retros.go, internal/retros/retros_test.go, internal/retros/recommendations.go, internal/retros/recommendations_test.go, internal/handoffdoc/document.go, internal/handoffdoc/fence.go, internal/handoffdoc/document_test.go, internal/handoff/state_file.go, internal/handoff/state_file_test.go
+Covers: MB41, MB42, MB43, MB44, MB45, MB46, MB47, MB84, MB104, MB105, MB106
 
 ## What to build
 
@@ -35,7 +35,15 @@ constant plus a title. The learnings rows go in `learnings_test.go`, because
 `retros_test.go`. `Parse` requires `## Cost`, so the MB45 fixture carries a live
 `## Cost` heading.
 
+The MB-C3 review repair also lands here. `handoffdoc.Parse` refuses an open fence
+behind an unclosed first-line `---` (MB104), and it refuses an unterminated HTML
+comment (MB105). `handoffdoc` exports one State-body read, and `readStateFile`
+refuses each line that the reader reads as an H2 heading through it (MB106).
+
 ## Acceptance
+
+- [ ] `TestParseRefusesAFenceBehindAFrontmatterFault` and `TestParseRefusesAnUnterminatedComment` prove MB104 and MB105.
+- [ ] `TestStateFileRefusesAnUnterminatedComment` proves that the State guard refuses a trailing-space `## ` line and a heading after a comment (MB106).
 
 - [ ] An entry body with a fenced dated heading gives one entry whose body holds the fenced line.
 - [ ] An unterminated fence, comment, and frontmatter block each give one malformed record with its reason and line.

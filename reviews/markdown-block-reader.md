@@ -1126,7 +1126,86 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards",
+          "performer": "ft358-review-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "183a350962746062b7ffb6fc133d42339b3ace33",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c3-standards",
+            "digest": "sha256:f0868fc565ae8f24977eb84f73117e9147b700bceab400c682e56d961bf69ed5",
+            "excerpt": "Standards axis, MB-C3 (base 60f0d9ee, tip 251b6e3a). Six findings, all low.\nS1 (low, high, auto-fix): internal/handoffdoc/document.go:7 package doc says it imports the standard library and the block reader only; store.go imports internal/bounds and internal/durablefile.\nS2 (low, high, auto-fix): internal/handoff/state_file.go:72 calls markdown.ReadFragment and checks CommentFault itself, while handoffdoc/fence.go owns the State-body read; export one State-body fault accessor from handoffdoc.\nS3 (low, medium-high, auto-fix): internal/learnings/learnings.go:55, :67, :157 keep a parallel strings.Split and strip CR again; use the reader's Line.Raw.\nS4 (low, high, no-op this chunk): internal/handoff/sections.go:7-10 ShapeHeading duplicates handoffdoc shapeHeading; predates the delta and is outside every Writes line; capture as a learning.\nS5 (low, medium, ask-user): learnings.go:194, :209 and handoffdoc/document.go:270 detect a heading on Text but take the title from Raw; a heading behind a leading inline comment may fail the title parse.\nS6 (low, medium, auto-fix): new test doc comments lead with row IDs (learnings_test.go:358, :373, retros_test.go:60, recommendations_test.go:21, handoffdoc/document_test.go:196, :249), which craft-comments treats as provenance.\n"
+          },
+          "axis": "Standards",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "251b6e3adf4950681b0227de1fc93449dc8910ef",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec",
+          "performer": "ft358-review-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "183a350962746062b7ffb6fc133d42339b3ace33",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c3-spec",
+            "digest": "sha256:b9a4ffc40f0a48a45e3c1e7a8bba7237ae1608d64f950d2f2ef31599ae814ca4",
+            "excerpt": "Spec axis, MB-C3 (base 60f0d9ee, tip 251b6e3a). Four findings; rows MB38-MB47, MB59, MB60, MB82, MB84, MB93 hold; no Writes file grows past its bound.\nP1 (medium, high, auto-fix): internal/handoff/state_file.go:78-79. The guard tests H2Prefix on trimmed UnfencedLines text, while Parse takes headings from the reader; a draft line of ## with trailing spaces passes the guard, Render writes it verbatim, and every later Parse refuses the document. Repair: refuse on line.Heading from the ReadFragment result at :72.\nP2 (low, high, ask-user): spec rule-delta row :737 and the flagged additions do not record that a handoff ## line with trailing whitespace, or with comment-free text that starts with ##, now opens a heading that Parse refuses. Add an FA line.\nP3 (low, medium, ask-user): handoffdoc fence.go:31-43 with document.go:209. An open fence followed by an unterminated comment lost its Parse fence refusal, the handoffdoc twin of FA11. Add an FA line.\nP4 (low, high, ask-user): internal/retros/retros.go:76 matches on line.Text, but ticket 6 and spec :254 say retros reads raw text; a commented H3 entry no longer counts and ## Outcome followed by a comment now counts.\n"
+          },
+          "axis": "Spec",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "251b6e3adf4950681b0227de1fc93449dc8910ef",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3",
+            "P4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage",
+          "performer": "ft358-review-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "183a350962746062b7ffb6fc133d42339b3ace33",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c3-coverage",
+            "digest": "sha256:15b2464fd8a5e08bcb2c45c48f3756d05edc8ac5eda410fc08258b7fc90e8a6b",
+            "excerpt": "Coverage axis, MB-C3 (base 60f0d9ee, tip 251b6e3a). Five findings. Every probe restored; git status clean.\nC1 (high, confidence 9, ask-user): internal/handoffdoc/document.go:209. Parse reads through Read; an unclosed first-line --- reports a frontmatter fault that masks the fence fault, so Parse accepts an open fence that the base refused (Closed decision 1).\nC2 (medium, confidence 8, ask-user): internal/handoffdoc/document.go:209. Parse does not refuse an unterminated comment, so a later section silently joins the State.\nC3 (medium, confidence 9, auto-fix): internal/handoff/state_file.go:72 ReadFragment->Read is silent. Add an MB82 subtest whose first line is ---.\nC4 (medium, confidence 9, auto-fix): FA2 (a heading inside a closed comment opens nothing) has no test at handoffdoc/document.go:262, learnings/learnings.go:113, retros/recommendations.go:25. Add one commented-heading case per site.\nC5 (low, confidence 7, ask-user): Read->ReadFragment is silent at retros/retros.go:75, retros/recommendations.go:20, learnings.go:277; a closed frontmatter block in a journal hides an entry with no record. Add a first-line --- row per site and decide the learnings frontmatter.\n"
+          },
+          "axis": "Coverage",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "251b6e3adf4950681b0227de1fc93449dc8910ef",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1455,3 +1534,37 @@ Count: 0.
 - MB60: a reader fault read as frontmatter gave `index = "smuggled", want ""` for an unclosed opener.
 - A disabled stop at the first body line failed eight cases.
 - `bench skills-index --check` gives no diagnostic, and `--write` changes no file at the tip.
+
+## MB-C3 review round 1
+
+The orchestrator decides each finding under the reviewer's advance approval of the `--full` run. One combined repair charge carries every repair target, and it routes to ticket 6, which holds most of the paths. Ticket 6 widens to the handoff paths. The repair allowance consumed for MB-C3 before this repair is 0 of 2.
+
+### Standards
+
+Count: 6. Worst issue: S2.
+
+- S1, low, auto-fix: correct the package doc at `internal/handoffdoc/document.go:7`, so that it names the real imports.
+- S2, low, auto-fix: `handoffdoc` exports one State-body read, and `readStateFile` uses it (with P1 and MB106).
+- S3, low, auto-fix: `learnings.Parse` reads the reader's lines and drops its parallel split.
+- S4, low, no-op: the duplicate `ShapeHeading` predates the build and sits outside every `Writes:` line. A learning records it.
+- S5, low, auto-fix (decided): each heading title comes from the comment-free text (FA15).
+- S6, low, auto-fix: remove the row-ID provenance from the new test doc comments.
+
+### Spec
+
+Count: 4. Worst issue: P1.
+
+- P1, medium, auto-fix: the State guard refuses each line that the reader reads as an H2 heading (MB106).
+- P2, low, auto-fix (decided): FA13 records the trailing-space heading.
+- P3, low, auto-fix (decided): `handoffdoc.Parse` refuses an unterminated comment (MB105, FA14).
+- P4, low, no-op (decided): `retros` keeps comment-free matching, and the grammar-text table now says so.
+
+### Coverage
+
+Count: 5. Worst issue: C1.
+
+- C1, high, auto-fix (decided): `handoffdoc.Parse` refuses an open fence behind an unclosed first-line `---` (MB104).
+- C2, medium, auto-fix (decided): the same repair as P3.
+- C3, medium, auto-fix: add an MB82 case whose first line is `---`.
+- C4, medium, auto-fix: add a commented-heading case at `handoffdoc/document.go:262`, `learnings.go:113`, and `recommendations.go:25`.
+- C5, low, auto-fix (decided): add a first-line frontmatter case at `retros.go:75`, `recommendations.go:20`, and `learnings.go:277`. FA10 now names the journal and the retrospectives.
