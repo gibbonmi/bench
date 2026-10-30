@@ -1646,3 +1646,12 @@ Count: 5. Worst issue: C1.
 - C3, medium, auto-fix: add an MB82 case whose first line is `---`.
 - C4, medium, auto-fix: add a commented-heading case at `handoffdoc/document.go:262`, `learnings.go:113`, and `recommendations.go:25`.
 - C5, low, auto-fix (decided): add a first-line frontmatter case at `retros.go:75`, `recommendations.go:20`, and `learnings.go:277`. FA10 now names the journal and the retrospectives.
+
+### MB-C3 repair witness reds (ft358-repair-03, opus / high, repair cycle 1 of 2)
+
+- MB104: the old code gave `Parse refusal at line 0, want the fence refusal at line 8`.
+- MB105: the old code gave `Parse refusal at line 0 (a refusal: false), want the comment refusal at line 7`.
+- MB106: the old guard gave no refusal kind for a trailing-space heading and for a heading after a comment.
+- FA15: a title read from raw text refused a heading behind a leading comment.
+- C3, C4, and C5: each named mutant (`Read` for `ReadState`, a raw-prefix heading test, `ReadFragment` for `Read`) failed its new case.
+- S3: the CR strip, the end bound, and the guard of `sourceBody` each failed a test when omitted.
