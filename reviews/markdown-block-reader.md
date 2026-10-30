@@ -359,3 +359,11 @@ Count: 3. Worst issue: C1.
 - C1, medium, confidence 9, auto-fix: four mutants of `internal/markdown/comments.go:39`, `:53-56`, `:76`, and `:85` are silent. Add the chained rejoin, the join at offset 1, the three-kept-byte join, and the unterminated rejoin as rows of `TestReadBlockRules`.
 - C2, low-medium, confidence 9, auto-fix: `internal/markdown/markdown.go:249` tests the H2 prefix on raw text without a red. Add a row whose heading follows a comment on the same line and whose commented line holds `## B`.
 - C3, low-medium, confidence 8, auto-fix: omitting the frontmatter skip at `internal/markdown/markdown.go:244-247` is silent. Add a row whose frontmatter holds a fence marker.
+
+## MB-C1 repair witness reds (ft358-repair-01, opus / xhigh, repair cycle 1 of 2)
+
+- P1: with the old walk back, the adjacent-comment row gave `cutComments walked 50005000 steps over 10000 adjacent comments, want at most 80000`.
+- C1: X1 is red against the omission of `top--` and against `for` to `if` in `push`. X2 is red against `after = at + len(commentOpen) - n`. X4 and X2 are red against `append` in place of `cut.push` in the unterminated branch. X3 is red against a two-byte `kept` window.
+- C2: X6 is red against `strings.CutPrefix(line.Raw, H2Prefix)`.
+- C3: X5 is red against the omission of the frontmatter `continue`.
+- Each red failed only its new row, and each probe restored its subject.
