@@ -1708,7 +1708,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards",
+          "performer": "ft411-review-c2-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:c2-standards",
+            "digest": "sha256:f08a8bdb6cdbe3449a34c050b21777251f85023fecec7ea51ef74f1dd22cdfe6",
+            "excerpt": "Standards axis FT411-C2 (824802ac0..6fe336eab), sonnet/high. 4 advice, 0 blocking, all no-op.\nComment wording at refusal_route_follow_test.go:45-48 and :58-60, an ID list at land_freshness_test.go:18, and a short wrap at land_refusal_fixture_test.go:35-38.\nJudged clean: the seven-face list is independent of the registry; budgets hold (376, 961); the PL30 continue is sound; the pin doc sentence is accurate; no forbidden literal or process call.\n"
+          },
+          "axis": "Standards",
+          "base": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "tip": "6fe336eabe56e7028d5279aedb7ef9c0fa043a10",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec",
+          "performer": "ft411-review-c2-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:c2-spec",
+            "digest": "sha256:0c809d3a31ad044763592d687d4cde060eda8763d6a2f8c6b30acdbf8306f05c",
+            "excerpt": "Spec axis FT411-C2 (824802ac0..6fe336eab), sonnet/high. 0 findings.\nWT-8 merge keeps every predicate and the raw-call count; WT-2, WT-3, WT-4, WT-5, WT-6, WT-10 match the spec; the pin 880 to 872 equals the 8 removed top-level tests; the fixture comment points at the follow walk; WT-7, WT-9, WT-12 untouched; all C2 probes recorded bit.\n"
+          },
+          "axis": "Spec",
+          "base": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "tip": "6fe336eabe56e7028d5279aedb7ef9c0fa043a10",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage",
+          "performer": "ft411-review-c2-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e7414f0ea8591aaf52c3132dd42bd415da5c1d03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:c2-coverage",
+            "digest": "sha256:cf1ca419af0cd0fbcfa16b624becaeb3e527a91850c8c632e0698871963a1490",
+            "excerpt": "Coverage axis FT411-C2 (824802ac0..6fe336eab), sonnet/high. 2 advice, 0 blocking, both no-op.\nThe slug-and-path test name now overstates a one-row loop; the PL30 clean cell is declared but skipped by design.\nEach removed body checked against its kept test: no gap. One probe run: rc2-landred-rerun, bit, restored yes, first_failure TestLandingFacesFollowTheirRoutes/land-red. git status clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "824802ac05e7eb4f070b5bdf86506172bec49eb3",
+          "tip": "6fe336eabe56e7028d5279aedb7ef9c0fa043a10",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1807,3 +1868,21 @@ The axis reports 2 findings, and the worst is F1.
 
 - F1 `c1-f1-nil-check`, auto-fix, confidence 4: the same finding as Standards F1.
 - F3, no-op, confidence 3: the TC3 why-clause overstates what the kept test asserts. Probe tc3 bit on `TestCompatibilityUndo`, so no repair target remains.
+
+## FT411-C2 review findings
+
+Frozen pair: 824802ac0 to 6fe336eab. Each axis ran on sonnet at high effort.
+The raw count is 6 findings, and the repair-target count is 0.
+
+### Standards
+
+The axis reports 4 findings, and each is a no-op. The worst is a comment at `internal/worktree/refusal_route_follow_test.go:58` that does not state that the fixture loop is a guard.
+
+### Spec
+
+The axis reports 0 findings.
+
+### Coverage
+
+The axis reports 2 findings, and each is a no-op. The worst is the name of `TestResumeLandCommandAcceptsSpecSlugAndPath`, which now overstates its one row. The spec cites that name at TC28, so the test keeps it.
+The axis ran one probe on the land-red rerun predicate, and the probe bit on `TestLandingFacesFollowTheirRoutes/land-red`.
