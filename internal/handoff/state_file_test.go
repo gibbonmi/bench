@@ -246,14 +246,14 @@ func TestStateFileRefusesAnUnterminatedComment(t *testing.T) {
 			_, err := readStateFile(stateFile(t, tc.draft))
 			got, ok := err.(refusal)
 			if !ok || got.kind != faultStateFileComment || got.hint != stateCommentRepair+tc.opener {
-				t.Fatalf("readStateFile(%q) = %v, want the comment fault that names %q", tc.draft, err, tc.opener)
+				t.Fatalf("%s: readStateFile refusal kind %q (hint names the opener: %t), want %q naming the opener line", tc.name, got.kind, got.hint == stateCommentRepair+tc.opener, faultStateFileComment)
 			}
 		})
 	}
 
 	const closed = "The build is live.\n\n<!-- draft note -->"
 	if state, err := readStateFile(stateFile(t, closed+"\n")); err != nil || state != closed {
-		t.Fatalf("readStateFile over a closed comment = (%q, %v), want (%q, nil)", state, err, closed)
+		t.Fatalf("closed comment: readStateFile refused (%t) or changed the State (%t), want the State unchanged", err != nil, state != closed)
 	}
 }
 

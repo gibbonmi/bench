@@ -202,10 +202,10 @@ func TestParseKeepsANestedFenceInsideState(t *testing.T) {
 
 	got, err := Parse("handoff.md", []byte(want.Render()))
 	if err != nil {
-		t.Fatalf("parse the nested fence: %v", err)
+		t.Fatalf("nested fence: Parse refused at line %d, want one main section", refusalLine(err))
 	}
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("nested fence round trip = %#v, want %#v", got, want)
+		t.Fatalf("nested fence: round trip gives %d section(s) or a changed State, want one main section with the State unchanged", len(got.Sections))
 	}
 }
 
@@ -217,10 +217,10 @@ func TestParseReadsAFrontmatterHeadingAsHeader(t *testing.T) {
 
 	got, err := Parse("handoff.md", []byte(want.Render()))
 	if err != nil {
-		t.Fatalf("parse the frontmatter header: %v", err)
+		t.Fatalf("frontmatter header: Parse refused at line %d, want the header kept", refusalLine(err))
 	}
 	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("frontmatter round trip = %#v, want %#v", got, want)
+		t.Fatalf("frontmatter header: round trip gives %d section(s) or a changed header, want the header and main alone", len(got.Sections))
 	}
 }
 
@@ -233,8 +233,17 @@ func TestParseSkipsAFencedStateHeading(t *testing.T) {
 	_, err := Parse("handoff.md", []byte(content))
 	refusal, ok := err.(*ParseError)
 	if !ok || refusal.Line != 4 || !strings.Contains(refusal.Reason, "neither a label line") {
-		t.Fatalf("parse a fenced State heading = %v, want the label refusal at line 4", err)
+		t.Fatalf("fenced State heading: refusal at line %d (a refusal: %t), want the label refusal at line 4", refusalLine(err), ok)
 	}
+}
+
+// refusalLine is the line that a Parse refusal names, or 0 for no refusal. A failure message
+// names the line, not the refusal text, because that text quotes a source line.
+func refusalLine(err error) int {
+	if refusal, ok := err.(*ParseError); ok {
+		return refusal.Line
+	}
+	return 0
 }
 
 // TestOpenFenceUsesTheCloseRule is MB39, MB40, and MB93. A State body is a fragment, so a
@@ -257,7 +266,7 @@ func TestOpenFenceUsesTheCloseRule(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			line, open := OpenFence(tc.text)
 			if line != tc.line || open != tc.open {
-				t.Fatalf("OpenFence(%q) = (%d, %t), want (%d, %t)", tc.text, line, open, tc.line, tc.open)
+				t.Fatalf("%s: OpenFence = (%d, %t), want (%d, %t)", tc.name, line, open, tc.line, tc.open)
 			}
 		})
 	}
@@ -268,7 +277,7 @@ func TestOpenFenceUsesTheCloseRule(t *testing.T) {
 		got = append(got, line)
 	}
 	if want := []string{"---", "before", "after", "---"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("UnfencedLines(%q) = %q, want %q", state, got, want)
+		t.Fatalf("nested block: UnfencedLines yields %d line(s) or other lines, want the %d unfenced lines", len(got), len(want))
 	}
 }
 
