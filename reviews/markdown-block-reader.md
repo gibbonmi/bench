@@ -1402,6 +1402,74 @@
           "supersedes": [
             "c3-coverage"
           ]
+        },
+        {
+          "id": "c3r2-standards",
+          "performer": "ft358-confirm2-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8a003b2caf0b92790af1f599434e4241878fb1d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c3-standards",
+            "digest": "sha256:fa0df6652ed8b3c0ff4f4b649849e4d5c27ba0652832b561d291d16bb95c7647",
+            "excerpt": "Standards axis, MB-C3 confirming round 2 (repair delta a73b8668..73bfbb2d). Zero findings.\nS7 closed: internal/handoffdoc/fence.go:38-42 OpenFence doc states only what it reports. S8 closed: handoffdoc.FaultRepair (fence.go:24-29) is the one fault-to-repair map; faultRefusal and readStateFile both call it. S9 closed: entry.go:48 doc matches the code.\nOptional advice (no finding): stateRepair in internal/handoff/state_scan.go:34 still spells the rerun suffix itself; the legacy next-command refusal at document.go:320 quotes the comment-free heading; the OpenFence doc phrase about a comment coming first is ambiguous; bodyText's doc at fence.go:96 says empty lines where it trims newline bytes.\n"
+          },
+          "axis": "Standards",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "73bfbb2d56ac678a658b54d24561ba91636525c6",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r-standards"
+          ]
+        },
+        {
+          "id": "c3r2-spec",
+          "performer": "ft358-confirm2-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8a003b2caf0b92790af1f599434e4241878fb1d6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c3-spec",
+            "digest": "sha256:331b2c2e9283e5953c82c1c1a960077a3c9dbafd0e3b76445d33e2530795e89f",
+            "excerpt": "Spec axis, MB-C3 confirming round 2 (repair delta a73b8668..73bfbb2d). P5 closed at its cited sites; P6 closed; one new finding. document.go is 399 lines.\nEvery base refusal keeps its bytes except the legacy-mix refusal.\nP7 (low, confidence 8, auto-fix): internal/handoffdoc/document.go:298 sets section = b.heading and :305 quotes it, so a legacy document with a heading followed by a trailing comment quotes the comment-free heading, against spec.md:871. Repair: section = b.raw at :298, and one legacy-mix row in TestParseQuotesTheRawHeading.\nOptional advice: :320 quotes b.heading; quoting b.raw would match the other heading refusals.\n"
+          },
+          "axis": "Spec",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "73bfbb2d56ac678a658b54d24561ba91636525c6",
+          "finding_ids": [
+            "P7"
+          ],
+          "supersedes": [
+            "c3r-spec"
+          ]
+        },
+        {
+          "id": "c3r2-coverage",
+          "performer": "ft358-confirm2-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8a003b2caf0b92790af1f599434e4241878fb1d6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c3-coverage",
+            "digest": "sha256:75e58352af0ad65cfdf926a769d220c76f0bb417e275f4028d52c11948a4f11f",
+            "excerpt": "Coverage axis, MB-C3 confirming round 2 (repair delta a73b8668..73bfbb2d). Zero findings. Every probe restored; git status clean.\nC6 closed: true in place of the frontmatter-fault narrowing at internal/handoffdoc/fence.go:51 fails the fence marker in closed frontmatter case at document_test.go:259. FaultRepair if false and the faultRefusal comment opener omission both fail tests.\nOptional advice (no finding): FaultRepair if true passes, because no test checks the fence repair text (a gap that predates the repair); the TrimRight on block.raw at document.go:271 has no test.\n"
+          },
+          "axis": "Coverage",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "73bfbb2d56ac678a658b54d24561ba91636525c6",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r-coverage"
+          ]
         }
       ]
     }
@@ -1837,3 +1905,21 @@ Count: 1. Worst issue: C6.
 - P5: `TestParseQuotesTheRawHeading` with the raw quote fed from comment-free text failed all three rows.
 - C6: `if true` in place of the frontmatter-fault narrowing gave `Parse refusal at line 2, want ... line 0`.
 - S7 and S9 change comments only.
+
+## MB-C3 confirming round 2
+
+Standards closes S7, S8, and S9, and Coverage closes C6. Spec closes P5 and P6 and reports P7. The repair allowance for MB-C3 is spent (2 of 2). The reviewer's advance approval of the `--full` run covers repair rounds past the allowance, so repair cycle 3 takes P7 as an overrun.
+
+### Standards
+
+Count: 0. The optional advice is in the excerpt, and a learning records the two handoff items.
+
+### Spec
+
+Count: 1. Worst issue: P7.
+
+- P7, low, confidence 8, auto-fix: `internal/handoffdoc/document.go:298` sets the legacy-mix section from the comment-free heading, so the refusal at `:305` changes its bytes. Quote `b.raw` at `:298` and at `:320`, and add a legacy-mix row to `TestParseQuotesTheRawHeading`.
+
+### Coverage
+
+Count: 0. The optional advice is in the excerpt.
