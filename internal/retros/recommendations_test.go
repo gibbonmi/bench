@@ -18,6 +18,22 @@ func TestRecommendationsKeepsImprovementParagraphsAndListItemsSeparate(t *testin
 	}
 }
 
+// TestRecommendationsSkipFencedLines is MB46 and MB47. A fenced H2 line leaves the
+// improvements open, so the items after it count. A fence marker line and a fenced item are
+// no unit, and each marker line ends the open unit. A live H2 heading ends the unit and the
+// section.
+func TestRecommendationsSkipFencedLines(t *testing.T) {
+	content := []byte("## Agent-experience improvements\n\n- First\n```\n## Notes\n- quoted\n```\nafter the fence\n\n- Last\n## Other\n- outside\n")
+	want := []Recommendation{
+		{Body: "First", Line: 3},
+		{Body: "after the fence", Line: 8},
+		{Body: "Last", Line: 10},
+	}
+	if got := Recommendations(content); !reflect.DeepEqual(got, want) {
+		t.Fatalf("fenced lines: Recommendations gives %d units or other units, want the %d unfenced units", len(got), len(want))
+	}
+}
+
 func TestRecommendationsIgnoreRepairAttributionHeadingBeforeImprovements(t *testing.T) {
 	content := []byte("## Repair attribution\n\n| ticket | rounds | causes |\n|---|---|---|\n| add-thing | 1 | spec-row |\n\n## Agent-experience improvements\n\n- First\n- Second\n")
 	want := []Recommendation{

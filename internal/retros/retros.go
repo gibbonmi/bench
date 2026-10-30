@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // Directory is the repository-relative retrospective capture directory.
@@ -21,17 +22,20 @@ var retrospectiveSlug = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 // through a second spelling of the heading.
 const (
 	// CostHeading opens the build-cost section.
-	CostHeading = "## Cost"
+	CostHeading = markdown.H2Prefix + "Cost"
 
 	// TimingsHeading opens the gate-stage timings section.
-	TimingsHeading = "## Gate-stage timings"
+	TimingsHeading = markdown.H2Prefix + "Gate-stage timings"
 
 	// DelegateHeading opens the ticket-versus-spec-slice and delegate performance section.
-	DelegateHeading = "## Ticket-versus-spec-slice and delegate performance"
+	DelegateHeading = markdown.H2Prefix + "Ticket-versus-spec-slice and delegate performance"
 
 	// RepairHeading opens the repair-attribution section.
-	RepairHeading = "## Repair attribution"
+	RepairHeading = markdown.H2Prefix + "Repair attribution"
 )
+
+// improvementsTitle titles the section whose units Recommendations reads.
+const improvementsTitle = "Agent-experience improvements"
 
 // CalibrationHeader is the calibration table's header row. It is named here, beside the
 // heading that owns the table, so the renderer spells no cell of its own and counts the
@@ -39,13 +43,13 @@ const (
 const CalibrationHeader = "| surface | claim | status | confidence | label | model / effort / role |"
 
 var requiredHeadings = []string{
-	"## Outcome",
+	markdown.H2Prefix + "Outcome",
 	CostHeading,
 	TimingsHeading,
 	DelegateHeading,
-	"## Coordinator catches",
+	markdown.H2Prefix + "Coordinator catches",
 	RepairHeading,
-	"## Agent-experience improvements",
+	markdown.H2Prefix + improvementsTitle,
 	"### Bench CLI",
 	"### Skills",
 	"### Process",
@@ -64,12 +68,12 @@ func Path(value string) string { return filepath.ToSlash(filepath.Join(Directory
 
 // Parse validates the canonical implementation-retrospective headings and every
 // improvement destination marker. The writer calls it before it opens the destination.
+// A heading counts on a body line of the block reader, on its comment-free text, so a
+// fenced or commented heading does not count.
 func Parse(content []byte) error {
-	lines := strings.Split(string(content), "\n")
 	next := 0
-	for _, line := range lines {
-		line = strings.TrimSuffix(line, "\r")
-		if next == len(requiredHeadings) || line != requiredHeadings[next] {
+	for _, line := range markdown.Read(string(content)).Lines {
+		if next == len(requiredHeadings) || line.Class != markdown.Body || line.Text != requiredHeadings[next] {
 			continue
 		}
 		next++

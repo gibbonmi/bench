@@ -354,3 +354,40 @@ func TestCommandSurfacesAnUndatedNoteAppendedToAScaffoldedJournal(t *testing.T) 
 		t.Fatalf("Command = (%d, %q), want (1, %q)", code, got, want)
 	}
 }
+
+// TestParseKeepsAFencedHeadingInTheBody is MB41. A fenced dated heading stays in its entry
+// body, and a fenced resolved bullet links no commit. A fenced heading above every entry is
+// no entry, no malformed heading, and no journal heading.
+func TestParseKeepsAFencedHeadingInTheBody(t *testing.T) {
+	body := "```\n## 2026-01-02 — quoted [open]\n- **Resolved by:** quoted\n```\n- **Resolved by:** abc"
+	entries, malformed := Parse([]byte("## 2026-01-01 — first [open]\n" + body + "\n"))
+	if len(entries) != 1 || entries[0].Body != body || entries[0].ResolvedBy != "abc" || len(malformed) != 0 {
+		t.Fatalf("fenced body heading: Parse gives %d entries and %d malformed records, want one entry that keeps its body and links the unfenced commit", len(entries), len(malformed))
+	}
+	quoted := []byte("```\n## 2026-01-03 — quoted [open]\n```\n")
+	if entries, malformed := Parse(quoted); len(entries) != 0 || len(malformed) != 0 || UnsupportedSchemaReason(quoted) == "" {
+		t.Fatalf("fenced top heading: Parse gives %d entries and %d malformed records, want none and the unsupported-schema reason", len(entries), len(malformed))
+	}
+}
+
+// TestParseReportsAnUnterminatedBlock is MB42, MB43, and MB44. Each fault kind gives one
+// malformed record at its opener line, after each record of a line at or above it.
+func TestParseReportsAnUnterminatedBlock(t *testing.T) {
+	const first, lost = "## 2026-01-01 — first [open]", "- 2026-08-21 — lost"
+	for _, tc := range []struct {
+		name, in string
+		entries  int
+		want     []Malformed
+	}{
+		{"fence", "## broken\n" + first + "\n```\n## 2026-01-02 — second [open]\n", 1, []Malformed{{"malformed learning heading", "## broken", 1}, {"unterminated fenced block", "```", 3}}},
+		{"comment", JournalEntriesMarker + "\n<!-- open\n" + lost + "\n" + first + "\n", 0, []Malformed{{unaccountedReason, "<!-- open", 2}, {"unterminated HTML comment", "<!-- open", 2}, {lostDatedLineReason, lost, 3}}},
+		{"frontmatter", "---\n" + first + "\n" + lost + "\n", 1, []Malformed{{"unterminated frontmatter block", "---", 1}, {lostDatedLineReason, lost, 3}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			entries, got := Parse([]byte(tc.in))
+			if len(entries) != tc.entries || !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("%s: Parse gives %d entries and %d malformed records, want %d and %d in line order", tc.name, len(entries), len(got), tc.entries, len(tc.want))
+			}
+		})
+	}
+}

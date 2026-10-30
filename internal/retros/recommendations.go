@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // Recommendation is one drainable paragraph or list item and its source line.
@@ -13,41 +15,43 @@ type Recommendation struct {
 }
 
 // Recommendations returns the recommendation units beneath Agent-experience improvements.
+// The block reader names the H2 headings, so a fenced heading leaves the section open.
 func Recommendations(content []byte) []Recommendation {
-	lines := strings.Split(string(content), "\n")
+	lines := markdown.Read(string(content)).Lines
 	inImprovements := false
 	var out []Recommendation
 	for i := 0; i < len(lines); {
-		line := strings.TrimSuffix(lines[i], "\r")
-		if after, ok := strings.CutPrefix(line, "## "); ok {
-			inImprovements = strings.TrimSpace(after) == "Agent-experience improvements"
+		line := lines[i]
+		if line.Heading {
+			inImprovements = line.Section == improvementsTitle
 			i++
 			continue
 		}
-		if !inImprovements || strings.HasPrefix(line, "### ") || strings.TrimSpace(line) == "" {
+		if !inImprovements || !unitText(line) {
 			i++
 			continue
 		}
-		body, listed := listItem(line)
-		start := i
+		body, listed := listItem(line.Raw)
 		if !listed {
-			body = strings.TrimSpace(line)
+			body = strings.TrimSpace(line.Raw)
 		}
 		i++
-		for i < len(lines) {
-			next := strings.TrimSuffix(lines[i], "\r")
-			if strings.HasPrefix(next, "## ") || strings.HasPrefix(next, "### ") || strings.TrimSpace(next) == "" {
+		for i < len(lines) && !lines[i].Heading && unitText(lines[i]) {
+			if _, nextListed := listItem(lines[i].Raw); nextListed {
 				break
 			}
-			if _, nextListed := listItem(next); nextListed {
-				break
-			}
-			body += "\n" + strings.TrimSpace(next)
+			body += "\n" + strings.TrimSpace(lines[i].Raw)
 			i++
 		}
-		out = append(out, Recommendation{Body: body, Line: start + 1})
+		out = append(out, Recommendation{Body: body, Line: line.Number})
 	}
 	return out
+}
+
+// unitText reports whether a line that is no H2 heading holds unit text. A fence marker line,
+// a fenced line, an H3 line, and a blank line hold none, so each one ends the open unit.
+func unitText(line markdown.Line) bool {
+	return line.Class == markdown.Body && !strings.HasPrefix(line.Raw, "### ") && strings.TrimSpace(line.Raw) != ""
 }
 
 // feedsMarker is the destination grammar an improvement item ends with: a roadmap row
