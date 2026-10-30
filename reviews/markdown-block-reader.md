@@ -155,3 +155,13 @@
   }
 }
 ```
+
+## Author witness reds
+
+### MB-C1, ticket 1 (ft358-author-01, opus / xhigh)
+
+- MB22: the base `prepare` gave `Findings() = [{Kind:sentence Line:1 Count:30}], want none` for a 30-word sentence inside a rejoined comment.
+- The author ran 58 `bench probe` mutants, one for each coverage row and each new branch. Each mutant returned `bit` and failed only its own subtest. Two first spellings missed and the author spelled them again: one did not build, and one named a row with no prose.
+- MB23: the `prose-mechanics` plan probe made `TestRootConformance` red with `gate: prose: ".agents/skills/bench-craft-tickets/SKILL.md" line 82: sentence of 26 words is over the 25-word bound`.
+- The comment rule gave the result of `stripCommentsMapped` on 2,000,000 random inputs. MB79 allocates 2.42 times the input size.
+- The `bench gate-prose` output over all 1000 tracked Markdown files is identical at the base and at the tip.
