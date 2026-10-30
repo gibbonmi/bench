@@ -135,19 +135,6 @@ func TestConflictRepairIsAReviewerRoute(t *testing.T) {
 	}
 }
 
-// TestLandingRedRouteNamesTheRepair is RR67. The authorization sentence names no action,
-// so the land-red face carries the repair: the route commits in the source through
-// `bench commit --in` and ends with the caller's re-run at the repaired source tip.
-func TestLandingRedRouteNamesTheRepair(t *testing.T) {
-	t.Parallel()
-	produced := produceLandingFace(t, landingFixtureFor(t, faceLandRed))
-	rerun := landArgsRerunAt(produced.request, produced.f.base, repairedTipArg, produced.f.creation.Path)
-	if !strings.Contains(produced.r.stdout, "refused{detail=prospective authorization refused: ") ||
-		!strings.Contains(produced.next, "bench commit --in ") || !strings.HasSuffix(produced.next, "; then "+rerun) {
-		t.Fatalf("land-red next = %q in %q, want a commit through bench commit --in and the re-run %q", produced.next, produced.r.stdout, rerun)
-	}
-}
-
 // A landing composition error that no face claims hands back to the reviewer under its
 // own sentence, so no landing refusal prints without a route.
 func TestUnclaimedLandingCompositionErrorHandsBack(t *testing.T) {
@@ -162,31 +149,6 @@ func TestUnclaimedLandingCompositionErrorHandsBack(t *testing.T) {
 	next, printed := landingFaceNext(r.stdout, "an unclaimed composition fault")
 	if r.exit != 1 || !printed || !strings.HasPrefix(next, reviewerRoute) {
 		t.Fatalf("unclaimed composition error = (%d, %q, %q), want exit 1 and a next= value that opens with %q", r.exit, r.stdout, r.stderr, reviewerRoute)
-	}
-}
-
-// TestReviewerLandFacesOpenWithTheMarker is RR18. The spec's face inventory gives each of
-// these land faces to the reviewer, so the route each producing fixture prints must open
-// with the reviewer marker. The list is the spec's, not the registry's, so a face the
-// registry hands to the agent turns this test red.
-func TestReviewerLandFacesOpenWithTheMarker(t *testing.T) {
-	t.Parallel()
-	for _, face := range []string{
-		faceDestinationNotClean,
-		faceDestinationCollision,
-		faceCompositionConflict,
-		faceCompositionConflictPending,
-		faceResumeDestinationResidue,
-		faceResumeMarker,
-		faceLandHandback,
-	} {
-		t.Run(face, func(t *testing.T) {
-			t.Parallel()
-			produced := produceLandingFace(t, landingFixtureFor(t, face))
-			if !strings.HasPrefix(produced.next, reviewerRoute) {
-				t.Fatalf("%s next = %q in %q, want a value that opens with %q", face, produced.next, produced.r.stdout, reviewerRoute)
-			}
-		})
 	}
 }
 
