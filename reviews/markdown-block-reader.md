@@ -1711,7 +1711,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4-standards",
+          "performer": "ft358-review-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f4c2bdff3d46f2490d899712e4af6a1dea3b3113",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c4-standards",
+            "digest": "sha256:71b550334ba4b621b40e4af5873b4f2d02107af3d99ce063efa480cbdd6d22e5",
+            "excerpt": "Standards axis, MB-C4 (base 82fe6fdb, tip ea07f899). Two findings.\nS1 (medium, high, auto-fix): internal/anchors/registry.go:217 restates the comment rule in prose (removes complete comments and truncates at an unterminated comment), which is now incomplete because a comment inside valid frontmatter stays. Repair: say the function returns the text without the comments that the block reader removes; widen ticket 8 to registry.go.\nS2 (low, high, auto-fix): internal/anchors/locate.go:72-73 says the walk reads a section body; every caller passes the whole comment-stripped document.\nThe payload escape in internal/reviewrecord/write.go:46-58 is the one encoding site, and its comment is accurate.\nOptional advice: write.go:49 frames the escape as excerpts only; recordtest/fixture.go:86 writes the H2 heading as a literal; the strip reads frontmatter through Read while the walk reads through ReadFragment.\n"
+          },
+          "axis": "Standards",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "ea07f8994bc0dc3802829aace137e7c5288a1b96",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4-spec",
+          "performer": "ft358-review-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f4c2bdff3d46f2490d899712e4af6a1dea3b3113",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c4-spec",
+            "digest": "sha256:dd22ad0a59a81368bbb6b15373a2ff6b67df63433d7c1d78148f7830abdbaf31",
+            "excerpt": "Spec axis, MB-C4 (base 82fe6fdb, tip ea07f899). One finding; all 12 rows mapped with tests that match; every line bound and refusal byte holds.\nP1 (medium, confidence 7, auto-fix decided): internal/reviewrecord/parse.go:294-323. A second record opener directly after a record reads as a closer with trailing text, so the base duplicate refusal no longer fires and Render writes a document that ends in an open fence; story 48 keeps the duplicate refusal. Repair: refuse a closer whose label equals the record name with the existing duplicate message, and add a nested case to record_test.go.\nFlags: (a) permitted; (b) required by spec:300-301 and rule 2; (c) required by spec:231-232; (d) permitted.\nOptional advice: the rule-delta rows could name the (b), (c), and closer deltas; ticket 7 and write.go say excerpt where the code escapes every less-than sign.\n"
+          },
+          "axis": "Spec",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "ea07f8994bc0dc3802829aace137e7c5288a1b96",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c4-coverage",
+          "performer": "ft358-review-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "f4c2bdff3d46f2490d899712e4af6a1dea3b3113",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-review-c4-coverage",
+            "digest": "sha256:863538561f36b52375b67c141713e006f2265b011ec95492a08821d2ac437e3c",
+            "excerpt": "Coverage axis, MB-C4 (base 82fe6fdb, tip ea07f899). One finding; the other hostile-input classes hold (CRLF, no trailing newline, tilde and indented openers, the less-than escape, non-ASCII and invalid UTF-8 mapping, a heading behind a comment). git status clean.\nC1 (medium, confidence 7, ask-user): internal/anchors/locate.go:76 scopeRunesMapped reads the whole comment-stripped document through ReadFragment, while stripCommentsMapped at :52 reads it through Read. On a document with valid frontmatter that holds a comment opener or a tilde marker, the walk loses section S (count 0; the base gave 1 for the tilde case). The walk reads the whole file, not a section body, so spec 298-301, Closed decision 16, and MB94 rest on a wrong premise. Repair: read through Read like the strip, and restate MB94.\nOptional advice: FA7 has no test (the exact-line opener mutant passes 444 tests); raw greater-than is not pinned; a closer with trailing text now closes a record.\n"
+          },
+          "axis": "Coverage",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "ea07f8994bc0dc3802829aace137e7c5288a1b96",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2246,3 +2314,26 @@ Count: 0.
 - MB94: `Read` in place of `ReadFragment` for the section body gave a count of 0.
 - The line-start, origin, span, and strip mutants each failed their own case, and an origin mutant failed `TestLocateStripsRejoinedComments`.
 - MB56: `bench anchors` gives identical verdicts, and all 435 live anchors keep their located lines at the base and at the tip.
+
+## MB-C4 review round 1
+
+The orchestrator decides each finding under the reviewer's advance approval of the `--full` run. One combined repair charge carries every repair target, and it routes to ticket 8, which widens to the review-record repair paths. The repair allowance consumed for MB-C4 before this repair is 0 of 2.
+
+### Standards
+
+Count: 2. Worst issue: S1.
+
+- S1, medium, auto-fix: the `StripHTMLComments` doc in `internal/anchors/registry.go` says the function returns the text without the comments that the block reader removes. It restates no comment rule.
+- S2, low, auto-fix: the walk doc in `internal/anchors/locate.go` says that the walk reads the whole document.
+
+### Spec
+
+Count: 1. Worst issue: P1.
+
+- P1, medium, auto-fix (decided): a record closer whose label is the record name refuses with the existing duplicate message. Story 84 and row MB108 cover it.
+
+### Coverage
+
+Count: 1. Worst issue: C1.
+
+- C1, medium, auto-fix (decided): the anchor section walk reads the whole comment-free document through `Read`, as the comment strip does. MB94 now states the frontmatter case, and Closed decision 16 drops the walk from the fragment callers. The repair also adds an FA7 opener test as hardening.

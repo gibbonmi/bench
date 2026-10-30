@@ -1,8 +1,8 @@
 # Read anchor sections and comments from the block reader
 
 Blocked by: 1-add-block-reader.md
-Writes: internal/anchors/locate.go, internal/anchors/match.go, internal/anchors/locate_test.go
-Covers: MB52, MB53, MB55, MB56, MB85, MB94
+Writes: internal/anchors/locate.go, internal/anchors/match.go, internal/anchors/locate_test.go, internal/anchors/registry.go, internal/reviewrecord/parse.go, internal/reviewrecord/record_test.go
+Covers: MB52, MB53, MB55, MB56, MB85, MB94, MB108
 
 ## What to build
 
@@ -27,7 +27,14 @@ cases go in `locate_test.go`. The test callers keep their calls:
 `internal/conformance/docs_workflow_helpers_test.go:236` and `:96`,
 `locate_test.go:253-254`, and `match_test.go:69` and `:154`.
 
+The MB-C4 review repair also lands here. The section walk reads the whole
+comment-free document through `Read`, as the comment strip does (MB94). A record
+closer whose label is the record name refuses as a duplicate (MB108).
+
 ## Acceptance
+
+- [ ] `TestLocateReadsTheBlockReader` proves that leading frontmatter with a comment opener or a tilde marker keeps section `S` (MB94).
+- [ ] `TestRenderRefusesANestedRecordOpener` proves the duplicate refusal for a second opener right after a record (MB108).
 
 - [ ] A needle after a tilde-fenced `## Other` line inside section `S` locates inside `S`.
 - [ ] A tilde-fenced `## S` line before the real one gives a section count of 1.
