@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:883b6bddb7b21f4ecb92530705af9a0faf9b3a10ccf428aff9805f5cede17939",
+  "plan_digest": "sha256:c23ac50b1b8ab72bf7fca4145523c99c6a021058aa10f9b9752578c2e22ebf28",
   "implementation_session": "",
   "chunks": [
     {
@@ -1602,9 +1602,9 @@
     {
       "id": "MB-C4",
       "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
-      "tip": "ea07f8994bc0dc3802829aace137e7c5288a1b96",
-      "plan_digest": "sha256:883b6bddb7b21f4ecb92530705af9a0faf9b3a10ccf428aff9805f5cede17939",
-      "source_digest": "f4c2bdff3d46f2490d899712e4af6a1dea3b3113",
+      "tip": "b5f0b2de83f9885e2d526e1d79b6529e65b6900d",
+      "plan_digest": "sha256:c23ac50b1b8ab72bf7fca4145523c99c6a021058aa10f9b9752578c2e22ebf28",
+      "source_digest": "46a61529456dfc592f5e2c20c015713aaa8ac2fa",
       "acceptance_rows": [
         "MB48",
         "MB49",
@@ -1617,7 +1617,8 @@
         "MB55",
         "MB56",
         "MB85",
-        "MB94"
+        "MB94",
+        "MB108"
       ],
       "verification": [
         {
@@ -1707,6 +1708,66 @@
               "ref": "claude-agent:bench-writer-xhigh:ft358-author-08",
               "digest": "sha256:8b762d3326ef5bd56aa175716e476851f86f11d44b6f6b2c9671a01622e69cb0",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/locate.go,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,476\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3397,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: .agents/skills/bench-craft-spec/SKILL.md Template missing acceptance coverage anchor: why it catches the failure\",9\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r6-anchors",
+          "performer": "ft358-repair-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "46a61529456dfc592f5e2c20c015713aaa8ac2fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:ft358-repair-04",
+            "digest": "sha256:cb0fffe7da3b297f6517717df8b494520634ba06dbd024369dbfa58b41a0c7fa",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/locate.go,swap+swap,failed,2,TestLocateReadsTheBlockReader/a_tilde-fenced_heading_counts_as_no_section,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,^TestLocateReadsTheBlockReader$,passed,11\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,588\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,2,11\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestLocateReadsTheBlockReader/a_tilde-fenced_heading_counts_as_no_section,\"locate_test.go:295: a tilde-fenced heading counts as no section: section count = 2, want 1\",2\n  github.com/gibbonmi/bench/internal/anchors,TestLocateReadsTheBlockReader/an_indented_heading_opens_no_section,\"locate_test.go:295: an indented heading opens no section: section count = 1, want 0\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "b5f0b2de83f9885e2d526e1d79b6529e65b6900d",
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors --run '^TestLocateReadsTheBlockReader$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/anchors/locate.go: open a section on a trimmed heading line; expect TestLocateReadsTheBlockReader",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:ft358-repair-04",
+              "digest": "sha256:cb0fffe7da3b297f6517717df8b494520634ba06dbd024369dbfa58b41a0c7fa",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/locate.go,swap+swap,failed,2,TestLocateReadsTheBlockReader/a_tilde-fenced_heading_counts_as_no_section,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,^TestLocateReadsTheBlockReader$,passed,11\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,588\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,2,11\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestLocateReadsTheBlockReader/a_tilde-fenced_heading_counts_as_no_section,\"locate_test.go:295: a tilde-fenced heading counts as no section: section count = 2, want 1\",2\n  github.com/gibbonmi/bench/internal/anchors,TestLocateReadsTheBlockReader/an_indented_heading_opens_no_section,\"locate_test.go:295: an indented heading opens no section: section count = 1, want 0\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "r6-docs-currency-workflow",
+          "performer": "ft358-repair-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "46a61529456dfc592f5e2c20c015713aaa8ac2fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:ft358-repair-04",
+            "digest": "sha256:ee1edda5bb31f3bafd49b8f48d19b539fb94a4b88cb6c873aee99b428bc7fa34",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/locate.go,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,476\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3378,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: .agents/skills/bench-craft-spec/SKILL.md Template missing acceptance coverage anchor: why it catches the failure\",9\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "b5f0b2de83f9885e2d526e1d79b6529e65b6900d",
+          "requirement": "docs-currency-workflow",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/anchors/locate.go: end a section at any line that starts with `#`; expect TestRootConformance",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:ft358-repair-04",
+              "digest": "sha256:ee1edda5bb31f3bafd49b8f48d19b539fb94a4b88cb6c873aee99b428bc7fa34",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/locate.go,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,476\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3378,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: .agents/skills/bench-craft-spec/SKILL.md Template missing acceptance coverage anchor: why it catches the failure\",9\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1970,6 +2031,24 @@
     {
       "from": "sha256:e5d6e08b78bc3f83cf7b2f61e8ef9579bad2cce480c69fcec4a72a109430a5ee",
       "to": "sha256:883b6bddb7b21f4ecb92530705af9a0faf9b3a10ccf428aff9805f5cede17939",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ],
+        "MB-C4": [
+          "MB-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:883b6bddb7b21f4ecb92530705af9a0faf9b3a10ccf428aff9805f5cede17939",
+      "to": "sha256:c23ac50b1b8ab72bf7fca4145523c99c6a021058aa10f9b9752578c2e22ebf28",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
