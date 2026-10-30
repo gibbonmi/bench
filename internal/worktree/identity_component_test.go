@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/refusalroute"
 )
 
 // identityComponentFixture produces exactly one component's refusal. mutate breaks one
@@ -207,40 +206,6 @@ func TestIdentityComponentRegistryHasAProducingFixture(t *testing.T) {
 	}
 	if identityComponentByName(componentRequest).recovers == identityComponentByName(componentLock).recovers {
 		t.Errorf("the request component is the only one that carries a recovery command")
-	}
-}
-
-// TestLandingRefusalRegistryHasAProducingFixture is LRS1, LRS2, and RR14. The shared
-// registry is the source of the landing's face set, so a land face added without a fixture
-// reds here rather than reaching an operator unproven, and a face whose route string is
-// empty reds on the value its fixture prints.
-func TestLandingRefusalRegistryHasAProducingFixture(t *testing.T) {
-	t.Parallel()
-	produced := map[string]bool{}
-	for _, fixture := range landingRefusalFixtures() {
-		if produced[fixture.face] {
-			t.Fatalf("face %q has two producing fixtures", fixture.face)
-		}
-		produced[fixture.face] = true
-	}
-	// A stack face has its producing fixtures in the stack route walk.
-	for _, fixture := range stackRouteFixtures() {
-		produced[fixture.face] = true
-	}
-	for _, face := range refusalroute.Faces(refusalroute.Land) {
-		if !produced[face.Name] {
-			t.Errorf("registry face %q has no producing fixture", face.Name)
-		}
-		delete(produced, face.Name)
-	}
-	for name := range produced {
-		t.Errorf("fixture %q produces no registered land face", name)
-	}
-	for _, fixture := range landingRefusalFixtures() {
-		t.Run(fixture.face, func(t *testing.T) {
-			t.Parallel()
-			produceLandingFace(t, fixture)
-		})
 	}
 }
 

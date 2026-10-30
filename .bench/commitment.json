@@ -2239,6 +2239,14 @@
       "identity": "sha256:1735f602a175b6d21782c10ba0f0b0cd6e495905144b51b54cd0dc6d0d8b5df8",
       "source": "f261820dc713d188bc731c53e0724a13ca131fa4",
       "evidence": "5091c3c2baa751ce69693a3f0107cf289a1db878"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT411",
+      "binding": "subsumed-test-cuts",
+      "identity": "sha256:22c540a45384db50868942dcb76b28b7e6e0b477fa791e89202586585389ce2e",
+      "source": "d2de2ce22f4fa6765f2779128d0d45469a2f6453",
+      "evidence": "abc678a3541c986a1960600df70802d31beee720"
     }
   ]
 }

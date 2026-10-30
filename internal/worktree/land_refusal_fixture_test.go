@@ -33,7 +33,7 @@ const (
 // landingRefusalFixture produces exactly one landing face. mutate breaks the landing
 // fixture so that face is the one the landing prints. The registry walk requires one
 // fixture per land face of the shared registry, so a face added with no fixture turns
-// TestLandingRefusalRegistryHasAProducingFixture red. stage states how the walk drives
+// TestLandingFacesFollowTheirRoutes red. stage states how the walk drives
 // the fixture: a resume fixture's mutation runs against the published destination of an
 // interrupted landing, not against the first run.
 type landingRefusalFixture struct {

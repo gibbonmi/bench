@@ -208,8 +208,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT377 (MEDIUM, decision required) — the package-core check grades `npm pack` only on the declared Node and npm floor.**
 
-**FT411 (MEDIUM, decision required) — tests that add no value are cut, and their coverage stays with the tests that subsume them.**
-
 **FT412 (LOW) — a production seam that does I/O per item has a test that pins how its cost grows.**
 
 **FT415 (LOW) — a red `bench test` lists every failed want line of a multi-rule harness.**
@@ -362,24 +360,23 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT411
-2. FT125-exact-readers
-3. FT375-residual
-4. FT344-remedy
-5. FT406-rebuild
-6. FT366-rg-guard
-7. FT380-residual
-8. FT354-strict-json
-9. FT363-member-set
-10. FT358-block-reader
-11. FT365-conformance
-12. FT414-preconditions
-13. FT437-pinned-rows
-14. FT439-comment-correction
-15. FT354-shell-args
-16. FT343-seam-policy
-17. FT446-cache-store
-18. FT369-charge-slicing
-19. FT341-in-only
-20. FT420-concurrent-chunks
-21. FT387-overflow
+1. FT125-exact-readers
+2. FT375-residual
+3. FT344-remedy
+4. FT406-rebuild
+5. FT366-rg-guard
+6. FT380-residual
+7. FT354-strict-json
+8. FT363-member-set
+9. FT358-block-reader
+10. FT365-conformance
+11. FT414-preconditions
+12. FT437-pinned-rows
+13. FT439-comment-correction
+14. FT354-shell-args
+15. FT343-seam-policy
+16. FT446-cache-store
+17. FT369-charge-slicing
+18. FT341-in-only
+19. FT420-concurrent-chunks
+20. FT387-overflow

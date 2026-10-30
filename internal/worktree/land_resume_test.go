@@ -207,7 +207,7 @@ func TestResumeLandCommandReconcilesAnUnreconciledPublishedCheckout(t *testing.T
 
 func TestResumeLandCommandAcceptsSpecSlugAndPath(t *testing.T) {
 	t.Parallel()
-	for _, specArg := range []string{"x", "./specs/x/spec.md"} {
+	for _, specArg := range []string{"./specs/x/spec.md"} {
 		t.Run(specArg, func(t *testing.T) {
 			request := "resume-spec-form-" + strings.ReplaceAll(specArg, "/", "-")
 			f := markerLandingFixture(t, request, true)

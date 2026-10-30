@@ -163,6 +163,9 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 		if got := PlanLifecycle(LifecycleInput{Current: current}); len(got.Decisions) != 1 {
 			t.Fatalf("nil execution = %#v, want the legacy decision", got)
 		}
+		if got := PlanLifecycle(LifecycleInput{}); got.Refusal != "" || len(got.Decisions) != 0 || len(got.Operations) != 0 {
+			t.Fatalf("legacy empty = %#v, want no refusal and no decisions", got)
+		}
 	})
 	execution := func(action string, observations ...LifecycleObservation) LifecycleInput {
 		return LifecycleInput{Execution: &LifecycleInventory{Action: action, Observations: observations}}
@@ -192,6 +195,8 @@ func TestCompleteLifecycleDecisions(t *testing.T) {
 			Current: []Asset{{"../c", "h"}}, Desired: []Asset{{"../d", "h"}}, Preserve: []string{"../p"}}},
 		{name: "desired before preserve", want: `managed asset "../d" is invalid`, input: LifecycleInput{
 			Desired: []Asset{{"../d", "h"}}, Preserve: []string{"../p"}}},
+		{name: "legacy duplicate", want: `managed asset "x" is duplicated`, input: LifecycleInput{Current: []Asset{{"x", "a"}, {"x", "b"}}}},
+		{name: "legacy missing fingerprint", want: `managed asset "x" is invalid`, input: LifecycleInput{Desired: []Asset{{"x", ""}}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := PlanLifecycle(tc.input); got.Refusal != tc.want || got.Decisions != nil || got.Operations != nil {

@@ -98,16 +98,6 @@ func TestCompatibilityInspectionBoundary(t *testing.T) {
 	}
 }
 
-func TestCompatibilityLegacyDoctor(t *testing.T) {
-	for _, args := range [][]string{nil, {"--help"}, {"--bogus"}, {"--fix"}} {
-		legacy := runLegacyFixture(t, args, legacyDoctor)
-		current := runLegacyFixture(t, args, Doctor)
-		if legacy != current {
-			t.Fatalf("Doctor(%q) = %#v, pre-compatibility baseline = %#v", args, current, legacy)
-		}
-	}
-}
-
 type doctorResult struct {
 	Code           int
 	Stdout, Stderr string

@@ -10,6 +10,7 @@ import (
 	"context"
 	"io"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -41,6 +42,22 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 		keys = append(keys, [2]string{fixture.face, ""})
 	}
 	faces := routetest.Fixtures(t, refusalroute.Land, append(keys, stackRouteKeys()...))
+	// The spec's face inventory gives each of these land faces to the reviewer. The walk
+	// reads a face's authority from the registry that renders its route, so this list is
+	// the spec's and not the registry's: a listed face that the registry gives to the agent
+	// turns the walk red.
+	reviewerFaces := []string{
+		faceDestinationNotClean,
+		faceDestinationCollision,
+		faceCompositionConflict,
+		faceCompositionConflictPending,
+		faceResumeDestinationResidue,
+		faceResumeMarker,
+		faceLandHandback,
+	}
+	for _, face := range reviewerFaces {
+		landingFixtureFor(t, face)
+	}
 	followStackRoutes(t, wrapper, faces)
 	for _, fixture := range lightPathLandingFixtures() {
 		t.Run(fixture.face, func(t *testing.T) {
@@ -53,6 +70,9 @@ func TestLandingFacesFollowTheirRoutes(t *testing.T) {
 			t.Parallel()
 			face := faces[fixture.face]
 			produced := produceLandingFace(t, fixture)
+			if slices.Contains(reviewerFaces, fixture.face) && !strings.HasPrefix(produced.next, reviewerRoute) {
+				t.Fatalf("%s next = %q in %q, want a value that opens with %q", fixture.face, produced.next, produced.r.stdout, reviewerRoute)
+			}
 			var names []string
 			if fixture.names != nil {
 				names = fixture.names(produced.f)

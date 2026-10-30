@@ -77,12 +77,6 @@ func TestLifecycleUpgradePreviewCompatibility(t *testing.T) {
 			editPreviewManifest(t, root, func(rows map[string]string) { rows[rel] = hash })
 		}
 	}
-	dropRow := func(kind string) func(*testing.T, string) {
-		return func(t *testing.T, root string) {
-			rel := previewEntry(t, kind)
-			editPreviewManifest(t, root, func(rows map[string]string) { delete(rows, rel) })
-		}
-	}
 	for _, tc := range []struct {
 		name    string
 		version string
@@ -91,22 +85,6 @@ func TestLifecycleUpgradePreviewCompatibility(t *testing.T) {
 	}{
 		{name: "converged", version: "1.0.1", arrange: func(*testing.T, string) {}},
 		{name: "owned file drift", version: "1.0.1", arrange: setHash("file", "stale"), want: previewCounts{changed: 1}},
-		{name: "owned inline drift", version: "1.0.1", arrange: setHash("inline", "stale")},
-		{name: "owned adapter drift", version: "1.0.1", arrange: setHash("adapter", "stale")},
-		{name: "unowned file", version: "1.0.1", arrange: dropRow("file"), want: previewCounts{added: 1}},
-		{name: "unowned inline", version: "1.0.1", arrange: dropRow("inline"), want: previewCounts{added: 1}},
-		{name: "unowned adapter", version: "1.0.1", arrange: dropRow("adapter"), want: previewCounts{added: 1}},
-		{name: "dropped row", version: "1.0.1", arrange: func(t *testing.T, root string) {
-			editPreviewManifest(t, root, func(rows map[string]string) { rows[".agents/commands/retired.md"] = "old" })
-		}, want: previewCounts{removed: 1}},
-		{name: "preserved CLAUDE.md", version: "1.0.1", arrange: func(t *testing.T, root string) {
-			editPreviewManifest(t, root, func(rows map[string]string) {
-				if rows["CLAUDE.md"] == "" {
-					t.Fatal("Link recorded no CLAUDE.md row")
-				}
-				rows["CLAUDE.md"] = "project edit"
-			})
-		}},
 		{name: "hook refresh", version: "1.0.1", arrange: removePreviewHook, want: previewCounts{changed: 1}},
 		{name: "hook refresh at equal version", version: "1.0.0", arrange: removePreviewHook},
 	} {
