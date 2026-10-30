@@ -1971,6 +1971,76 @@
           "supersedes": [
             "c4-coverage"
           ]
+        },
+        {
+          "id": "c4r2-standards",
+          "performer": "ft358-confirm2-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3758c40164a6d4adc2c8d4f2c6178106b4e31cd0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c4-standards",
+            "digest": "sha256:d204b77e54537e61e27ae02110203c610826452bc8f79e23be4933a3dc2105cc",
+            "excerpt": "Standards axis, MB-C4 confirming round 2 (repair delta b5f0b2de..f04f636e). One finding.\nS1 (low, high, broken mandatory standard craft-comments, auto-fix): internal/anchors/match.go:50-53 says MarkdownH2Sections projects the walk so the evaluator and Locate read the same body; resolveSection and Locate now read through commentFreeSectionMapped. Repair: name commentFreeSectionMapped as their section reader, or drop the clause.\nOptional advice: commentFreeSectionMapped calls markdown.Read twice on the same data; the origin parameter of sectionRunesMapped is now always identityOrigin.\n"
+          },
+          "axis": "Standards",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "f04f636e8e8f38beb3159e4984d8b507df83bf50",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": [
+            "c4r-standards"
+          ]
+        },
+        {
+          "id": "c4r2-spec",
+          "performer": "ft358-confirm2-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3758c40164a6d4adc2c8d4f2c6178106b4e31cd0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c4-spec",
+            "digest": "sha256:a3826ddc699f6b93f271bccd74527d69e3d3d128cbb9fed8b9f94b7e8fc7ac39",
+            "excerpt": "Spec axis, MB-C4 confirming round 2 (repair delta b5f0b2de..f04f636e). Zero findings.\nP2 closed: ticket 8 says the file read and the section walk both use Read, with the frontmatter state taken from the original document; its acceptance line names an existing row. P3 closed: story 85 and MB109 match the code and the row at locate_test.go:294; the walk prose, Closed decision 16, and the sweep line match commentFreeSectionMapped and its two callers; bench coverage --check passes with 106 rows. MB94, MB52, MB53, MB85, MB55 still hold. The three author flags are accepted.\nOptional advice: the match.go doc is stale; docs_workflow_helpers_test.go:96 passes comment-free text to MarkdownH2Section, harmless today.\n"
+          },
+          "axis": "Spec",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "f04f636e8e8f38beb3159e4984d8b507df83bf50",
+          "finding_ids": [],
+          "supersedes": [
+            "c4r-spec"
+          ]
+        },
+        {
+          "id": "c4r2-coverage",
+          "performer": "ft358-confirm2-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3758c40164a6d4adc2c8d4f2c6178106b4e31cd0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm2-c4-coverage",
+            "digest": "sha256:23a489b2ebaf1259c5fd1dc651cb40eb7f26f5d2ea255161998dad815892bf29",
+            "excerpt": "Coverage axis, MB-C4 confirming round 2 (repair delta b5f0b2de..f04f636e). C2 closed; one new finding. Every probe restored; git status clean.\nC2 closed: the old walk in commentFreeSectionMapped fails the MB109 row and the closer row; feeding resolveSection the comment-free text fails the evaluator check. The to-search, from, to, and empty-range mutants all fail; ten hostile-input rows (CRLF, non-ASCII, spanning comments, end of file) all pass.\nC3 (medium, high, auto-fix): internal/anchors/registry.go:187 swapping commentFreeSectionMapped for sectionRunesMapped over the raw text is silent across 140 anchors tests and docs-currency-workflow, because the comment-hiding rows assert only Locate. Repair: add the row \"a comment in a section hides its needle from the evaluator\" (## S, a commented needle) to the first table, which also checks the evaluator.\n"
+          },
+          "axis": "Coverage",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "f04f636e8e8f38beb3159e4984d8b507df83bf50",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": [
+            "c4r-coverage"
+          ]
         }
       ]
     }
@@ -2601,3 +2671,23 @@ Count: 1. Worst issue: C2.
 - A walk over the comment-free text failed the MB109 row and a closer row, and an evaluator fed the comment-free text failed its section-body case.
 - The empty-range guard, the range offsets, and a body that keeps its comments each failed their own row.
 - A binary built from the chunk base and the tip binary give byte-identical anchor results, and all 435 anchors keep their located lines.
+
+## MB-C4 confirming round 2
+
+Spec closes P2 and P3, and Coverage closes C2. The round reports two new findings. The repair allowance for MB-C4 is spent (2 of 2). The reviewer's advance approval of the `--full` run covers this overrun, which is test-only plus one comment correction.
+
+### Standards
+
+Count: 1. Worst issue: S1.
+
+- S1, low, auto-fix: the `MarkdownH2Sections` doc in `internal/anchors/match.go` names `commentFreeSectionMapped` as the section reader of `Locate` and the evaluator. This change is comment-only and evidence-only.
+
+### Spec
+
+Count: 0.
+
+### Coverage
+
+Count: 1. Worst issue: C3.
+
+- C3, medium, auto-fix: add an evaluator row in `TestLocateReadsTheBlockReader` for a needle inside a comment in a section. The repair is test-only, so a coordinator probe that bites closes it through `bench record confirmation`.
