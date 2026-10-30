@@ -1839,6 +1839,77 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c4r-standards",
+          "performer": "ft358-confirm-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "46a61529456dfc592f5e2c20c015713aaa8ac2fa",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c4-standards",
+            "digest": "sha256:17abd62fa80d9efbf0008cc9b6d16d6cecc6a4d781e103a0060225a78a461eab",
+            "excerpt": "Standards axis, MB-C4 confirming round (repair delta ea07f899..b5f0b2de). Zero findings.\nS1 closed: internal/anchors/registry.go:217 says the function returns the text without the comments that the block reader removes. S2 closed: internal/anchors/locate.go:72-73 says the walk reads the whole comment-free document.\nThe shared duplicate-refusal variable at internal/reviewrecord/parse.go:299 is one source for both refusal paths, and the new test derives its expected message from a two-record Render. Every doc comment above a changed body is accurate.\nOptional advice: the ReadFragment doc at internal/markdown/markdown.go:96 still names a section body; a duplicateFence type would avoid building the error up front.\n"
+          },
+          "axis": "Standards",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "b5f0b2de83f9885e2d526e1d79b6529e65b6900d",
+          "finding_ids": [],
+          "supersedes": [
+            "c4-standards"
+          ]
+        },
+        {
+          "id": "c4r-spec",
+          "performer": "ft358-confirm-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "46a61529456dfc592f5e2c20c015713aaa8ac2fa",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c4-spec",
+            "digest": "sha256:1d41463a74344c77467a091fc0d40bf1e57fbb44ddebbe2fa2abb57866f59bea",
+            "excerpt": "Spec axis, MB-C4 confirming round (repair delta ea07f899..b5f0b2de). P1 closed; two new findings.\nP1 closed: internal/reviewrecord/parse.go:312-318 refuses the record's first closer with Info equal to the name with the existing duplicate message; every refusal keeps its base bytes; story 84, MB108, MB94, FA16, FA17, the fragment-caller paragraph, and Closed decision 16 match the code; every file is within its bound. The author's reading of MB108 (the record's own closer) is correct.\nP2 (medium, high, auto-fix): specs/markdown-block-reader/tickets/8-read-anchor-blocks.md:13-14 still says the walk uses ReadFragment, and line 42 keeps the old MB94 text.\nP3 (low, medium, decided auto-fix with Coverage C2): internal/anchors/locate.go:76 applies the frontmatter rule to the comment-free text, so a comment followed by --- on line 1 hides section S.\n"
+          },
+          "axis": "Spec",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "b5f0b2de83f9885e2d526e1d79b6529e65b6900d",
+          "finding_ids": [
+            "P2",
+            "P3"
+          ],
+          "supersedes": [
+            "c4-spec"
+          ]
+        },
+        {
+          "id": "c4r-coverage",
+          "performer": "ft358-confirm-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "46a61529456dfc592f5e2c20c015713aaa8ac2fa",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c4-coverage",
+            "digest": "sha256:41806e45cedf671cb37d15676a61017751548b53b31c45c56cfcb1863979338a",
+            "excerpt": "Coverage axis, MB-C4 confirming round (repair delta ea07f899..b5f0b2de). C1 closed; one new finding. Every probe restored; git status clean.\nC1 closed: ReadFragment at internal/anchors/locate.go:76 fails both new rows with section count = 0, want 1.\nC2 (medium, high, auto-fix): internal/anchors/locate.go:76 (and the evaluator path through registry.go:185) applies the line-1 frontmatter rule to the comment-free text. For a first line of a comment followed by --- on the same line, Locate returns 0 where the original document gives line 3; the base walk found it. Repair: take the frontmatter state from the original document, and add that row as the witness.\nThe nested-closer refusal and the shared duplicate variable have no silent mutant.\n"
+          },
+          "axis": "Coverage",
+          "base": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "tip": "b5f0b2de83f9885e2d526e1d79b6529e65b6900d",
+          "finding_ids": [
+            "C2"
+          ],
+          "supersedes": [
+            "c4-coverage"
+          ]
         }
       ]
     }
@@ -2423,3 +2494,24 @@ Count: 1. Worst issue: C1.
 - MB108: the old reader gave no refusal for a record fence followed at once by a second record opener.
 - FA7: the exact-line opener failed the indented and tilde cases, and a prefix test failed all three cases. An empty-info closer test failed the trailing-text closer case.
 - S1 and S2 change comments only. `bench anchors .` gives the same verdicts for all 42 files.
+
+## MB-C4 confirming round 1
+
+Standards closes S1 and S2. Spec closes P1, and Coverage closes C1. The round reports three new findings, and two of them name one defect. The repair allowance consumed for MB-C4 is 1 of 2, so the next repair is cycle 2 of 2.
+
+### Standards
+
+Count: 0. The optional advice is in the excerpt.
+
+### Spec
+
+Count: 2. Worst issue: P2.
+
+- P2, medium, auto-fix: the ticket 8 body said that the walk uses `ReadFragment`. The orchestrator corrects the ticket prose and the FA17 wording in this commit.
+- P3, low, auto-fix (decided): the same defect as C2.
+
+### Coverage
+
+Count: 1. Worst issue: C2.
+
+- C2, medium, auto-fix: the anchor section walk takes the line-1 frontmatter rule from the comment-free text. Thus a comment followed by `---` on line 1 hides section `S`. Take the frontmatter state from the original document. Story 85 and row MB109 cover it.

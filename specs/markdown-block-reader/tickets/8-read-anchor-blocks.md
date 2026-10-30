@@ -2,16 +2,17 @@
 
 Blocked by: 1-add-block-reader.md
 Writes: internal/anchors/locate.go, internal/anchors/match.go, internal/anchors/locate_test.go, internal/anchors/registry.go, internal/reviewrecord/parse.go, internal/reviewrecord/record_test.go
-Covers: MB52, MB53, MB55, MB56, MB85, MB94, MB108
+Covers: MB52, MB53, MB55, MB56, MB85, MB94, MB108, MB109
 
 ## What to build
 
 Make `stripCommentsMapped` (`locate.go:58`) in `internal/anchors` a projection of
 the reader's removed comment spans. It keeps its rune-origin mapping, so `Locate`
 names the same physical lines. Make `scopeRunesMapped` (`locate.go:81`) read the
-reader's fence classes instead of its own backtick toggle. The file read uses
-`Read`. The section walk `sectionRunesMapped` reads a section body through
-`scopeRunesMapped`, so it uses `ReadFragment`.
+reader's fence classes instead of its own backtick toggle. The file read and the
+section walk `sectionRunesMapped` both use `Read`. The walk takes its frontmatter
+state from the original document, so a comment cannot turn a line into a
+frontmatter marker (MB109).
 
 The section opener compares the reader's H2 title with the anchor title, so an
 indented `## ` line no longer opens a section. Today the opener builds its
@@ -39,7 +40,7 @@ closer whose label is the record name refuses as a duplicate (MB108).
 - [ ] A needle after a tilde-fenced `## Other` line inside section `S` locates inside `S`.
 - [ ] A tilde-fenced `## S` line before the real one gives a section count of 1.
 - [ ] An indented `  ## S` line gives no section `S`.
-- [ ] `MarkdownH2Section` on a section whose body's first line is `---` locates a needle on the next body line.
+- [ ] `TestLocateReadsTheBlockReader` proves that a first line of a comment and `---` hides no section (MB109).
 - [ ] `TestLocateStripsRejoinedComments` (`locate_test.go:247`) stays green without an edit.
 - [ ] `bench test --check docs-currency-workflow` is green, so each live anchor keeps its verdict.
 - [ ] `internal/anchors/locate.go` holds no string literal with a run of three backticks, and no literal comment delimiter or `## `. The sites today are `locate.go:46`, `:47`, `:48`, and `:134`.
