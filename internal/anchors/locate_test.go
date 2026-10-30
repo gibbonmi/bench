@@ -281,6 +281,14 @@ func TestLocateStripsRejoinedComments(t *testing.T) {
 // source line of a match.
 func TestLocateReadsTheBlockReader(t *testing.T) {
 	dir := t.TempDir()
+	evaluatorBody := func(t *testing.T, doc string) string {
+		t.Helper()
+		path := filepath.Join(dir, "doc.md")
+		if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return resolveSection("doc.md", "S", read(path, "doc.md")).body
+	}
 	for _, test := range []struct {
 		name, doc   string
 		count, line int
@@ -306,11 +314,7 @@ func TestLocateReadsTheBlockReader(t *testing.T) {
 			if got := Locate(RequireInSection, "S", "needle", test.doc); got != test.line {
 				t.Errorf("%s: Locate = %d, want line %d", test.name, got, test.line)
 			}
-			path := filepath.Join(dir, "doc.md")
-			if err := os.WriteFile(path, []byte(test.doc), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			if got := strings.Contains(resolveSection("doc.md", "S", read(path, "doc.md")).body, "needle"); got != (test.line > 0) {
+			if got := strings.Contains(evaluatorBody(t, test.doc), "needle"); got != (test.line > 0) {
 				t.Errorf("%s: evaluator section body holds the needle = %t, want %t", test.name, got, test.line > 0)
 			}
 		})
@@ -331,6 +335,12 @@ func TestLocateReadsTheBlockReader(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if got := Locate(test.kind, "S", test.needle, test.doc); got != test.line {
 				t.Errorf("%s: Locate = %d, want line %d", test.name, got, test.line)
+			}
+			if !test.kind.sectionScoped() {
+				return
+			}
+			if got := strings.Contains(evaluatorBody(t, test.doc), test.needle); got != (test.line > 0) {
+				t.Errorf("%s: evaluator section body holds the needle = %t, want %t", test.name, got, test.line > 0)
 			}
 		})
 	}
