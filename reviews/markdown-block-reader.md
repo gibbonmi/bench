@@ -1394,3 +1394,12 @@ Count: 0.
 - MB38: the old toggle in `splitSections` split a section at a fenced `## X` line.
 - MB82: without the comment-fault refusal, `readStateFile` gave no refusal or the section-heading refusal.
 - `handoffdoc.Parse` gives byte-identical output at the base and at the tip on the live session handoff.
+
+### MB-C3, ticket 6 (ft358-author-06, opus / high)
+
+- MB41: a body loop on the raw H2 prefix split a second entry at a fenced dated heading.
+- MB42 to MB44: a parse that drops the fault record failed all three fault subtests.
+- MB45: a retros parse without the body-class test accepted a fenced `## Outcome`.
+- MB46 and MB47: a raw H2 branch and a unit scan without the body class failed their rows.
+- The `ResolvedBy` scan without the fence condition failed its case, and each fault reason string failed on its own.
+- `bench learnings`, the drain journal read, and `retros.Parse` on the live retro give identical output at the base and at the tip.
