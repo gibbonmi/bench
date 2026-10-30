@@ -779,6 +779,79 @@
             "C5"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2r-standards",
+          "performer": "ft358-confirm-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "86d28a1c0b9b0e25f9b79741a8a669daf3bfbf47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c2-standards",
+            "digest": "sha256:34fd988c26ea2020153e934f1e274bb3552f4f4e92d9d4eab5f185a5693ed8e0",
+            "excerpt": "Standards axis, MB-C2 confirming round (repair delta cd86cf1e..592040ea). S1 closed; two new findings.\nS1 closed: internal/roadmap/closure.go:31 counts a row heading only on a Body line read through markdown.Read; the doc comment at :21-24 is true.\nS4 (low-medium, high confidence, auto-fix): closure.go:31 and tree.go:116 + :123 state the row-heading rule (Body line plus roadmapStartRe match) twice, against AGENTS.md one source per fact. Repair: one rowHeading helper in internal/roadmap that both call.\nS5 (low, medium confidence, no-op): internal/maps/fields.go openerRun derives the run from the reader's Text and Info and copies no marker rule; a run-length field on markdown.Line would be cleaner but is a reader API change.\n"
+          },
+          "axis": "Standards",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "592040eab58cc8bdcc388aa0973757a6c86cabd4",
+          "finding_ids": [
+            "S4"
+          ],
+          "supersedes": [
+            "c2-standards"
+          ]
+        },
+        {
+          "id": "c2r-spec",
+          "performer": "ft358-confirm-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "86d28a1c0b9b0e25f9b79741a8a669daf3bfbf47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c2-spec",
+            "digest": "sha256:da5cc9cf26a516ff46454b4eb5729579a0e8dc9ee545518a323ae3ec15f81b97",
+            "excerpt": "Spec axis, MB-C2 confirming round (repair delta cd86cf1e..592040ea). P1 and P2 closed; one new finding.\nP1 closed: internal/coverage/rows.go is 301 lines, numstat 16/16 from the base. P2 closed: Close matches a row only on a Body line, aligned with ParseDocument. C5 matches the corrected spec text and MB102; MB103 holds; bench coverage --check is valid with 100 rows; FA10 and FA11 hold.\nP3 (low, confidence 8, auto-fix): specs/markdown-block-reader/tickets/3-read-roadmap-blocks.md names MB103 in Covers but not in What to build or Acceptance. Repair: add one sentence and one acceptance line.\n"
+          },
+          "axis": "Spec",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "592040eab58cc8bdcc388aa0973757a6c86cabd4",
+          "finding_ids": [
+            "P3"
+          ],
+          "supersedes": [
+            "c2-spec"
+          ]
+        },
+        {
+          "id": "c2r-coverage",
+          "performer": "ft358-confirm-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "86d28a1c0b9b0e25f9b79741a8a669daf3bfbf47",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c2-coverage",
+            "digest": "sha256:9bfa148b2d2a90e112fd456ddbe7535c292166867772663e200f9758f5ac36fe",
+            "excerpt": "Coverage axis, MB-C2 confirming round (repair delta cd86cf1e..592040ea). C1-C5 closed (each round 1 mutant now red); two new findings. Every probe restored; git status clean.\nN1 (low, confidence 8, auto-fix): internal/maps/fields.go:96, :98, :145-147. Silent mutants: run = markdown.FenceMarker; strings.CutPrefix for strings.Cut; openerRun without the outer TrimSpace. Repair: add a four-run opener with a four-run closer, an indented closer, and an opener with a space before its info string plus a longer closer to TestMetadataGrammarFenceRoles.\nN2 (low, confidence 7, auto-fix): internal/roadmap/closure.go:22-23 claims frontmatter parity with ParseDocument, but Read->ReadFragment at closure.go:26 is silent. Repair: add a first-line --- block holding **FT1 — x** to TestCloseSkipsAFencedRowHeading.\n"
+          },
+          "axis": "Coverage",
+          "base": "2c79f46e4dd6031016a82e0cc335762ae3ffc6b8",
+          "tip": "592040eab58cc8bdcc388aa0973757a6c86cabd4",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "c2-coverage"
+          ]
         }
       ]
     }
@@ -985,3 +1058,27 @@ Count: 5. Worst issue: C1.
 - C3: a disabled fence skip gave `sequence = [{Rank:1 Text:live} {Rank:1 Text:fake}]`.
 - C4: the compare `H2Prefix+line.Section` turned both rejected headings red.
 - P1: `internal/coverage/rows.go` ends at 301 lines.
+
+## MB-C2 confirming round 1
+
+Standards closes S1, Spec closes P1 and P2, and Coverage closes C1 to C5. The round reports four new findings. The repair allowance consumed for MB-C2 is 1 of 2, so the next repair is cycle 2 of 2.
+
+### Standards
+
+Count: 2. Worst issue: S4.
+
+- S4, low-medium, high confidence, auto-fix: `internal/roadmap/closure.go:31` and `internal/roadmap/tree.go:116` and `:123` state the row-heading rule twice. Add one `internal/roadmap` helper that both call.
+- S5, low, medium confidence, no-op: `openerRun` in `internal/maps/fields.go` derives the run from the reader and copies no marker rule.
+
+### Spec
+
+Count: 1. Worst issue: P3.
+
+- P3, low, confidence 8, auto-fix: the ticket 3 body did not name MB103. The orchestrator corrects the ticket prose in this commit.
+
+### Coverage
+
+Count: 2. Worst issue: N1.
+
+- N1, low, confidence 8, auto-fix: three closer-label mutants in `internal/maps/fields.go` are silent. Add three cases to `TestMetadataGrammarFenceRoles`. They are a four-run opener with a four-run closer, an indented closer, and a spaced info string with a longer closer.
+- N2, low, confidence 7, auto-fix: the frontmatter parity of `Close` has no test. Add a first-line frontmatter block that holds a row heading to `TestCloseSkipsAFencedRowHeading`.

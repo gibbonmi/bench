@@ -24,7 +24,9 @@ consumes those bounds and renders its heading through the reader's H2 constant.
 `closeDependencies` (`closure.go:47`) consumes `sectionBounds` at `closure.go:48`,
 and `Close` calls it. The sequence
 projection keeps its outcome grammar, and the dependency closure keeps its table
-grammar. The exported signatures stay the same.
+grammar. The exported signatures stay the same. `Close` reads a row heading only
+on a body line, through the same predicate as `ParseDocument`, so a fenced row
+example neither counts as a row nor leaves the index (MB103).
 `rowNextDiagnostics` reads only unfenced lines for the `Next:` marker. It keeps
 its own column-zero and separator grammar.
 
@@ -39,6 +41,7 @@ tests. Do not recreate the deleted helper file or grow `tree_test.go`.
 - [ ] A tilde-fenced `Next:` line after a real one gives no duplicate diagnostic.
 - [ ] `TestProjectSequenceSkipsFencedHeadings` proves that `ProjectSequence` replaces only the live sequence after a tilde-fenced sequence heading.
 - [ ] `TestCommitmentDependencyClosureSkipsFencedHeadings` proves that `Close` removes FT1 from only the live dependency section after a tilde-fenced dependency heading.
+- [ ] `TestCloseSkipsAFencedRowHeading` proves that `Close` removes only the live FT1 row beside a fenced example.
 - [ ] `TestCommitmentSequenceClosure` and `TestCommitmentDependencyClosure` stay green without an edit.
 - [ ] `bench roadmap` prints the same output on the live tree at the base and at the tip.
 - [ ] `tree.go` and `sequence_projection.go` hold no string literal with a run of three backticks, and no literal `## `. The sites today are `tree.go:115`, `:118`, `:137`, `:276`, and `:344`, and `sequence_projection.go:22`, `:29`, and `:36`.
