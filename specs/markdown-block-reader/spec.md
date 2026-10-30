@@ -300,7 +300,7 @@ MB97 cover them.
 The fragment callers are `handoffdoc.OpenFence` and `handoffdoc.UnfencedLines`,
 which read a State body. Each other caller reads a whole file through `Read`,
 `handoffdoc.Parse`, the anchor file read, and the anchor section walk included,
-because the section walk reads the whole comment-free document. The
+because the section walk reads the document as stored and keeps a comment-free body. The
 three modules that ignore the frontmatter fault also read through `ReadFragment`,
 because a fragment has no frontmatter pass. `maps.Blocks` is that read for the
 field scan and for `ParseTicket`.
@@ -787,7 +787,7 @@ FA9 is the check itself, rather than a detector site.
 - `roadmap.ParseDocument`: `BuildContext`, `validateOccurrenceOwner`, `RoadmapCommand`, `RoadmapText`, `ValidateRoadmapTree`, and `roadmapflow.openMass`. `parseSequence`: `RecommendedSequence`, `ParseDocument`, and `SequenceText`. `rowNextDiagnostics`: `ParseDocument`.
 - `roadmap.sequenceBounds`: `parseSequence` and `ProjectSequence`. `sectionBounds`: `sequenceBounds` and `closeDependencies`. `closeDependencies`: `Close`. `ProjectSequence`: `Close`, `Store.protectedCandidate`, and `Store.stage` in `internal/commitment/repository`. The current `bench consumers` sweep at `37ac80b8` resolves these edges.
 - `tickets.ParseTicket`: `preflight.gradeTickets` and `reviewrecord.ReadPlan`.
-- `anchors.scopeRunesMapped`: `sectionRunesMapped`. `MarkdownH2Sections`: `MarkdownH2Section` and `resolveSection`. `StripHTMLComments`: `read`.
+- `anchors.scopeRunesMapped`: `sectionRunesMapped`. `MarkdownH2Sections`: `MarkdownH2Section`. `commentFreeSectionMapped`: `Locate` and `resolveSection`. `StripHTMLComments`: `read`.
 - `reviewrecord.locate`: `fenced` and `Render`.
 - `skillsindex.FrontmatterField`: `Entries`.
 - `learnings.Parse`: `Entries`, `Command`, `roadmap.BuildContext`, and `roadmap.learningCount`.
@@ -866,7 +866,7 @@ The reviewer defers these decisions to the Fable consultation of 2026-10-03.
 13. Glossary, decided (2026-10-03, Fable consultation). The glossary stays outside this spec's writes. `CONTEXT.md` already holds the three terms, so the separate glossary prerequisite is satisfied.
 14. Rune literals, decided (2026-10-03, Fable consultation). The check stops a new string-literal detector only, and a Won't handle line names the legitimate rune users. Ticket 1 deletes the rune test at `internal/prose/prepare.go:104`.
 15. Learnings region, decided (2026-10-03, Fable consultation). The region below the entries marker reads raw lines, because its rule is that nothing belongs there. DL31 stays green without an edit, and MB84 covers it.
-16. Fragments and the frontmatter fault, decided (2026-10-03, Fable consultation). The reader exports `Read` for a document and `ReadFragment` for a section or State body, over one pipeline. The fragment callers are the two handoff State readers and the three modules that ignore the frontmatter fault. The anchor section walk reads the whole comment-free document through `Read`, as the anchor comment strip does. `internal/adopt`, `internal/tickets`, and `internal/reviewrecord` ignore the frontmatter fault and read each line as body, as they do today. MB92 to MB97 cover it.
+16. Fragments and the frontmatter fault, decided (2026-10-03, Fable consultation). The reader exports `Read` for a document and `ReadFragment` for a section or State body, over one pipeline. The fragment callers are the two handoff State readers and the three modules that ignore the frontmatter fault. The anchor section walk reads the document as stored through `Read`, as the anchor comment strip does, and keeps a comment-free section body. `internal/adopt`, `internal/tickets`, and `internal/reviewrecord` ignore the frontmatter fault and read each line as body, as they do today. MB92 to MB97 cover it.
 
 ### Pre-review proof checklist
 

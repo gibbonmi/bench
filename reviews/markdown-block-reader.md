@@ -2594,3 +2594,10 @@ Count: 2. Worst issue: P2.
 Count: 1. Worst issue: C2.
 
 - C2, medium, auto-fix: the anchor section walk takes the line-1 frontmatter rule from the comment-free text. Thus a comment followed by `---` on line 1 hides section `S`. Take the frontmatter state from the original document. Story 85 and row MB109 cover it.
+
+### MB-C4 repair 2 witness reds (ft358-repair-04b, opus / xhigh, repair cycle 2 of 2)
+
+- MB109: the old walk gave `Locate = 0, want line 3` for a first line of a comment followed by `---`.
+- A walk over the comment-free text failed the MB109 row and a closer row, and an evaluator fed the comment-free text failed its section-body case.
+- The empty-range guard, the range offsets, and a body that keeps its comments each failed their own row.
+- A binary built from the chunk base and the tip binary give byte-identical anchor results, and all 435 anchors keep their located lines.
