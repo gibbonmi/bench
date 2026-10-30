@@ -298,19 +298,25 @@ func TestParseReadsHeadingsOnCommentFreeText(t *testing.T) {
 }
 
 // TestParseQuotesTheRawHeading proves that a heading refusal and a converted legacy heading
-// keep the line as the file spells it, comment included.
+// keep the line as the file spells it, comment included. The legacy rows cover the two
+// refusals of the legacy conversion.
 func TestParseQuotesTheRawHeading(t *testing.T) {
 	const notes = "## Notes <!-- c -->"
 	const request = RequestHeadingPrefix + "a b <!-- c -->"
+	const mixed = RequestHeadingPrefix + "abc <!-- c -->"
+	next := legacyNextHeading + " <!-- c -->"
 	main := MainHeading + "\n\nNext command: `bench status`\n\n" + StateHeading + "\n\n"
+	legacy := legacyStateHeading + "\n\nx\n\n"
 	for _, tc := range []struct{ name, content, quote string }{
 		{"unknown heading", main + notes + "\n", notes},
 		{"request digest", main + request + "\n", request},
+		{"legacy mix", legacy + mixed + "\n\n" + StateHeading + "\n", mixed},
+		{"legacy next command", legacy + next + "\n\na\nb\n", next},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := Parse("handoff.md", []byte(tc.content))
 			refusal, ok := err.(*ParseError)
-			if !ok || !strings.HasPrefix(refusal.Reason, "heading "+strconv.Quote(tc.quote)+" ") {
+			if !ok || !strings.Contains(refusal.Reason, strconv.Quote(tc.quote)) {
 				t.Fatalf("%s: Parse refusal at line %d (a refusal: %t), want the heading refusal quoting the raw line", tc.name, refusalLine(err), ok)
 			}
 		})

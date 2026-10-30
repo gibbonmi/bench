@@ -295,7 +295,7 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 			legacy = b.line
 		}
 		if (b.heading == MainHeading || strings.HasPrefix(b.heading, RequestHeadingPrefix)) && section == "" {
-			section = b.heading
+			section = b.raw
 		}
 	}
 	if legacy == 0 {
@@ -317,7 +317,7 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 			state = body
 		case b.heading == legacyNextHeading:
 			if strings.Contains(body, "\n") {
-				return nil, &ParseError{path, b.line, fmt.Sprintf("heading %q carries more than one line; a next command is one line", b.heading)}
+				return nil, &ParseError{path, b.line, fmt.Sprintf("heading %q carries more than one line; a next command is one line", b.raw)}
 			}
 			next = body
 		default:
