@@ -2531,6 +2531,72 @@
           "tip": "9d5e681d32acc80cc0654018f783b1e23cb3a454",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "c5r-standards",
+          "performer": "ft358-confirm-c5-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c5-standards",
+            "digest": "sha256:258dab0ba552aaf237d3ff771d10535a77c2501906d2d74bb08fb6e0634b09ac",
+            "excerpt": "Standards axis, MB-C5 confirming round (repair delta 6ac6dc60..49b8646e). Zero findings.\nS1 closed: internal/markdown exports FrontmatterMarker (markdown.go:22), CommentOpen and CommentClose (comments.go:7-8); the blockRuleKinds table takes every value from these constants, and the tilde kind takes its length from len(markdown.FenceMarker). S2 closed: checkSkillFrontmatter tests the reader's frontmatter class, and checkCommandFirstAnchors reads the reader's heading.\nOptional advice: the markdown.go package doc says a check renders a block through the constants; the tilde character is spelled in markdown.go and in the check table.\n"
+          },
+          "axis": "Standards",
+          "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "tip": "49b8646e405e343497b03e605573e67355b08f28",
+          "finding_ids": [],
+          "supersedes": [
+            "c5-standards"
+          ]
+        },
+        {
+          "id": "c5r-spec",
+          "performer": "ft358-confirm-c5-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c5-spec",
+            "digest": "sha256:80d966bba297375c7e6cfd45e6b8438bfffea1d0e9b8dfb51b42ee0b2b475da7",
+            "excerpt": "Spec axis, MB-C5 confirming round (repair delta 6ac6dc60..49b8646e), reaffirmation. Zero findings.\nThe delta meets the synced export sentence, the check scope sentence, Closed decision 9, FA8, MB98 (five readers), and ticket 11's new acceptance line. The flagged change (an unclosed leading frontmatter opener now gives missing frontmatter) is accepted under Closed decision 8, recorded in FA8, and pinned by TestConformanceReadersUseTheBlockReader. No file grows against the chunk base.\nOptional advice: ticket 11 has a split acceptance list and an older line that names three readers; the phrase \"of the module\" is wider than the files the check reads.\n"
+          },
+          "axis": "Spec",
+          "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "tip": "49b8646e405e343497b03e605573e67355b08f28",
+          "finding_ids": [],
+          "supersedes": [
+            "c5-spec"
+          ]
+        },
+        {
+          "id": "c5r-coverage",
+          "performer": "ft358-confirm-c5-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "54c8d3b4b6c63226ddaf964b83dccfe79a667be1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm-c5-coverage",
+            "digest": "sha256:d6181d1bc9b7ab2c687a0873470f4a97b1fc7a076314856364d0b561918e1108",
+            "excerpt": "Coverage axis, MB-C5 confirming round (repair delta 6ac6dc60..49b8646e), reaffirmation. Zero findings. Every probe restored; git status clean.\nS2 closed: a raw first-H2 prefix and a raw first-line frontmatter check each fail TestConformanceReadersUseTheBlockReader; a removed break fails the live docs-currency run. S1 closed: a wrong constant binding, a longer tilde run, and a changed FrontmatterMarker value each fail the bite tests.\nOptional advice: a shorter tilde run and line.Raw for line.Text in the README first-H2 read pass every test.\n"
+          },
+          "axis": "Coverage",
+          "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+          "tip": "49b8646e405e343497b03e605573e67355b08f28",
+          "finding_ids": [],
+          "supersedes": [
+            "c5-coverage"
+          ]
         }
       ]
     }
@@ -3316,3 +3382,19 @@ Count: 0. The repair also adds two hardening rows from the advice: a body-inert 
 - Body-inert hardening: a `skillDescriptionFolded` without the frontmatter class test read a folded description in the body.
 - Sibling-path hardening: an owner exemption without the path separator gave no diagnostic for a sibling package.
 - S1: the omission of the tilde kind still fails the bite test. The live-tree check stays green, and each kind comes from an `internal/markdown` constant.
+
+## MB-C5 confirming round 1
+
+All three axes pass, and S1 and S2 are closed. MB-C5 used 1 of its 2 repair cycles. MB-C5 is the last chunk, so it runs no chunk checkpoint; the complete checkpoint of the landing grades every chunk again.
+
+### Standards
+
+Count: 0.
+
+### Spec
+
+Count: 0.
+
+### Coverage
+
+Count: 0. The optional advice is in the excerpt.
