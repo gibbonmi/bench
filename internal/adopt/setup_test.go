@@ -73,7 +73,7 @@ func TestSetupPreservesOperatorGateInputs(t *testing.T) {
 	}
 }
 
-// TestSetupTwiceLeavesGateInputsIdentical pins SD4.
+// TestSetupTwiceLeavesGateInputsIdentical pins the exact seeded gate inputs and SD4's identical rerun.
 func TestSetupTwiceLeavesGateInputsIdentical(t *testing.T) {
 	root := setupPromptTestRepo(t)
 	runSetupYes(t)
