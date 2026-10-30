@@ -27,18 +27,18 @@ The spec stage ran one probe set for each row at commit `7b0a83e44`, and the pro
 Where a kept test stayed silent, the review names a move, and the kept test's arrangement already reaches the predicate, the build moves the predicate into the kept test first.
 Where the review names a merge, one test keeps every predicate of the tests it replaces.
 A row whose probe stays silent keeps its test.
-Each chunk checkpoint grades one bit probe for each cut predicate on the kept test at the chunk tip.
+Each chunk checkpoint grades one bit probe on the kept test at the chunk tip for each predicate that a spec-stage probe graded.
 
 ## User stories
 
 Line: opus / high.
-Implementation-line reason: The hardest material chunk is FT411-C2, because its merges and moves edit shared landing fixtures. Spec precision is exact: each row names its candidate, its kept test, and its mutation. The seams are existing tests, so seam uncertainty is low. Test strength is high, because each cut predicate is a checkpoint probe and the worktree count pin reds a miscount. The Claude scorecard routes a code ticket and a mechanical test migration to Opus/medium, so FT411-C1 runs at medium and the harder chunk one step up.
+Implementation-line reason: The hardest material chunk is FT411-C2, because its merges and moves edit shared landing fixtures. Spec precision is exact: each row names its candidate, its kept test, and its mutation. The seams are existing tests, so seam uncertainty is low. Test strength is high, because each probed predicate is a checkpoint probe and the worktree count pin reds a miscount. The Claude scorecard routes a code ticket and a mechanical test migration to Opus/medium, so FT411-C1 runs at medium and the harder chunk one step up.
 Harder chunks: FT411-C2.
 
 ### Cuts that keep coverage
 
 1. As a maintainer, I want each subsumed test cut, so that the gate spends no time on a test that adds no failure detection.
-2. As a reviewer, I want a probe on the kept test for each cut predicate, so that a cut never removes the only test that catches a fault.
+2. As a reviewer, I want a probe on the kept test for each probed predicate of a cut, so that a cut never removes the only test that catches a fault.
 3. As a reviewer, I want each probe to use a mutation that the cut test catches, so that the kept test proves the same coverage and not an easier one.
 4. As a reviewer, I want a moved predicate to land in the kept test before its source test goes, so that a kept test that missed a mutation catches it after the move.
 5. As a reviewer, I want each merged test to keep every predicate of the tests it replaces, so that a merge removes only repeated arrangement.
@@ -167,8 +167,8 @@ The WT-5 move turns the AGENTS.md independent-expectation exception into a recor
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| FT411-C1 / 01-cut-subsumed-repair-tests.md, 02-cut-subsumed-adopt-tests.md, 03-cut-preview-rows-and-guard-kept-tests.md | The adoption and repair suites lose their subsumed tests, each kept test bites on every cut predicate, and the tests that stay keep their witness | TC1–TC24, TC41–TC44 | TestDoctorParsesHelpAndUnknownFlags, TestCompatibilityUndo, TestCompatibilityRecoveryBoundaries, TestSetupGateRejectsIgnoredDeclaredInputs, TestSetupSeedsGateInputsInZeroSignalRepo, TestSetupTwiceLeavesGateInputsIdentical, TestCompleteLifecycleDecisions, TestLifecycleDecisionOrder, TestPrePushHookIgnoresALegacyPin, TestLifecycleUpgradePreviewCompatibility, TestDetectedProjectGateRejectsIgnoredDeclaredInput, TestLifecycleLinkPartitions | no |
-| FT411-C2 / 04-cut-census-effects-and-freshness-tests.md, 05-cut-resume-rows.md, 06-cut-refusal-route-tests.md | The landing suites lose their subsumed tests, each kept test bites on every cut predicate, and the count pin stays exact | TC25–TC40 | TestLandCommandPrintsNoHeadsLineWithoutRecords, TestLandSkipsTheRefreshWithoutBuildInputs, TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion, TestLandCommandStatesTheCensusCountAndDropsTheRecords, TestResumeLandCommandCompletesAnInterruptedMarker, TestResumeLandCommandAcceptsSpecSlugAndPath, TestResumeLandCommandPublicBindsPublishedLandingIdentity, TestLandingFacesFollowTheirRoutes, TestLandReleasesTheLeaseOnRefusal, TestPackageTestCountPin | yes |
+| FT411-C1 / 01-cut-subsumed-repair-tests.md, 02-cut-subsumed-adopt-tests.md, 03-cut-preview-rows-and-guard-kept-tests.md | The adoption and repair suites lose their subsumed tests, each kept test bites on every probed predicate, and the tests that stay keep their witness | TC1–TC24, TC41–TC45 | TestDoctorParsesHelpAndUnknownFlags, TestCompatibilityUndo, TestCompatibilityRecoveryBoundaries, TestSetupGateRejectsIgnoredDeclaredInputs, TestSetupSeedsGateInputsInZeroSignalRepo, TestSetupTwiceLeavesGateInputsIdentical, TestCompleteLifecycleDecisions, TestLifecycleDecisionOrder, TestPrePushHookIgnoresALegacyPin, TestLifecycleUpgradePreviewCompatibility, TestDetectedProjectGateRejectsIgnoredDeclaredInput, TestLifecycleLinkPartitions | no |
+| FT411-C2 / 04-cut-census-effects-and-freshness-tests.md, 05-cut-resume-rows.md, 06-cut-refusal-route-tests.md | The landing suites lose their subsumed tests, each kept test bites on every probed predicate, and the count pin stays exact | TC25–TC40 | TestLandCommandPrintsNoHeadsLineWithoutRecords, TestLandSkipsTheRefreshWithoutBuildInputs, TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion, TestLandCommandStatesTheCensusCountAndDropsTheRecords, TestResumeLandCommandCompletesAnInterruptedMarker, TestResumeLandCommandAcceptsSpecSlugAndPath, TestResumeLandCommandPublicBindsPublishedLandingIdentity, TestLandingFacesFollowTheirRoutes, TestLandReleasesTheLeaseOnRefusal, TestPackageTestCountPin | yes |
 
 Each chunk requirement is a probe on a kept test. The final verification runs the package suites and the two structural checks, so TC9, TC18, and TC35 rest on it and on the gate.
 
@@ -202,6 +202,7 @@ Each chunk requirement is a probe on a kept test. The final verification runs th
         {"id": "tc15", "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'", "probe": "internal/adopt/decision.go: insert an `empty` refusal for an input with no current and no desired asset before `decisions := make([]LifecycleDecision, 0, len(current)+len(desired))`; expect TestCompleteLifecycleDecisions"},
         {"id": "tc16", "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'", "probe": "internal/adopt/decision.go: swap `case lifecycleAdd, lifecycleChange, lifecycleRemove:` for `case lifecycleAdd, lifecycleChange:`; expect TestCompleteLifecycleDecisions"},
         {"id": "tc17", "command": "bench test --package ./internal/adopt --run '^TestLifecycleDecisionOrder$'", "probe": "internal/adopt/decision.go: swap `return decisions[i].Path < decisions[j].Path` for `return false && decisions[i].Path < decisions[j].Path`; expect TestLifecycleDecisionOrder"},
+        {"id": "tc45", "command": "bench test --package ./internal/adopt --run '^TestCompleteLifecycleDecisions$'", "probe": "internal/adopt/decision.go: swap `if !validAssetPath(asset.Path) || asset.Fingerprint == \"\" {` for `if asset.Fingerprint == \"\" {`; expect TestCompleteLifecycleDecisions"},
         {"id": "tc19", "command": "bench test --package ./internal/adopt --run '^TestPrePushHookIgnoresALegacyPin$'", "probe": "internal/adopt/prepush.sh: insert `echo \"topic push\" >&2` before `exit 0`; expect TestPrePushHookIgnoresALegacyPin"},
         {"id": "tc20", "command": "bench test --package ./internal/adopt --run '^TestLifecycleUpgradePreviewCompatibility$/^plan_kinds$'", "probe": "internal/adopt/upgrade.go: swap `if fingerprint == \"\" {` for `if false {`; expect TestLifecycleUpgradePreviewCompatibility"},
         {"id": "tc21", "command": "bench test --package ./internal/adopt --run '^TestLifecycleUpgradePreviewCompatibility$/^plan_kinds$'", "probe": "internal/adopt/upgrade.go: swap `fingerprint := old` for `fingerprint := entry.kind + \":new\" + old[:0]`; expect TestLifecycleUpgradePreviewCompatibility"},
@@ -317,6 +318,7 @@ Each chunk requirement is a probe on a kept test. The final verification runs th
 | TC42 | 6, 30 | A Link observer that follows a dangling destination symlink turns the dangling-leaf partition row red | `internal/adopt/lifecycle_consumption_test.go` (`TestLifecycleLinkPartitions`) | The kept mechanism rows and the pure table stayed silent on this mutation, so the T1-13 cut set fails its probe |
 | TC43 | 5, 10 | A repair that writes the CODEX_HOME trust file turns the merged boundary test red | planned TestCompatibilityRecoveryBoundaries in internal/adopt/repairtest/repair_test.go | A merge that drops the trust-file comparison would pass without this probe, because TC7 reaches only the config file |
 | TC44 | 16 | The preview test keeps its `converged` and `owned file drift` e2e rows | review-owned: the preview test table | These rows prove the real Link plan against a real manifest, and no production mutation separates them from the pure table |
+| TC45 | 2, 3, 13 | A legacy inventory that accepts a desired asset with an escaping path turns the decision table red after the T1-10 cut | `internal/adopt/lifecycle_decision_test.go` (`TestCompleteLifecycleDecisions`) | The cut test refused `../escape`, and the kept legacy refusal rows must still fail on an accepted escape |
 
 Not covered: story 1 — the probe rows TC1 to TC44 and the chunk checkpoints carry it, and time saved is a measurement, not a predicate.
 Not covered: story 31 — the Out of scope section owns it, and no test can red an exclusion.
@@ -366,6 +368,7 @@ Every probe ran through `bench probe --in FT411-spec --mutants <set>` at commit 
 | T1-9 | one extra byte in a repository with a signal | bit | silent (both) |
 | T1-10 | missing fingerprint, duplicate, empty refusal after the preserve check | bit | silent |
 | T1-10 | remove operation dropped, decisions unsorted | bit | bit |
+| T1-10 | path check removed from the inventory map | bit | bit |
 | T1-11 | stderr line before `exit 0` in `prepush.sh` | bit | bit |
 | T1-12 | four count mutations in `upgrade.go` | bit | bit (`plan kinds`) |
 | T1-12 | hook refresh never counted | not run | bit (kept hook row) |
@@ -393,6 +396,17 @@ Six read-only readers in three pairs verified the rows, the enforcement surface,
 - `docs/known-issues.md` holds no row about these packages.
 - Not verified: the full body of `internal/conformance/fixture_bite_test.go`, and the per-row mechanism map of the T1-13 tables.
 
+### Slicing research
+
+Two read-only readers for each chunk checked the six fence-expansion classes at commit `dac4a040a`. Both pairs agreed that no path outside the `Writes:` lines needs a change.
+
+| chunk | agreed in-fence facts | frontier and its closure |
+|---|---|---|
+| FT411-C1 | No helper loses its last caller. No anchor, canary, or fixture pins an edited file. `ordinary_build_census_test.go` keeps about 6 lines of headroom. | One reader doubted the kept witness of the T1-10 hostile row. A probe that removed the path check bit on `TestCompleteLifecycleDecisions`, so TC45 records it. The planned-cell rewrite edits the spec folder, which the fence holds by rule. |
+| FT411-C2 | The count pin goes from 880 to 875 in ticket 04 and to 872 in ticket 06. No removed test is serial or marks a required proof. `land_effects_test.go` is at its budget and shrinks. | One reader found the `refusalroute` import that only the WT-1 test uses. A scratch deletion of that test and its import compiled, and only `TestPackageTestCountPin` failed of 96 census tests. |
+
+Other staged specs also name some of these paths in their `Writes:` lines: `landing-test-efficiency` (`setup_test.go`, `ordinary_build_census_test.go`), `exact-planning-readers` (`ordinary_build_census_test.go`), and `production-test-seam-policy` (`internal/adopt/`). FT411 builds first, and each later build's staleness pass reads the changed tree.
+
 ### Authoring venue
 
 The reviewer directed on 2026-10-29 that this session writes the spec and slices the tickets, in place of the fork that `projects/benchkit.md` names.
@@ -409,7 +423,7 @@ The reviewer directed on 2026-10-29 that this session writes the spec and slices
 
 | source sentence | rows |
 |---|---|
-| `FT411.cut`: each row whose probe proves a kept test red on the same mutation is cut | TC1–TC7, TC10–TC17, TC19–TC23, TC25–TC27, TC29–TC34, TC36–TC40, TC43 |
+| `FT411.cut`: each row whose probe proves a kept test red on the same mutation is cut | TC1–TC7, TC10–TC17, TC19–TC23, TC25–TC27, TC29–TC34, TC36–TC40, TC43, TC45 |
 | `FT411.cut`: a whole-test cut in internal/worktree repins its top-level test count in the same ticket | TC35 |
 | `FT411.probe`: before each cut, a probe proves that the subsuming test turns red on the same mutation | the completion-plan probe of each row above, and the spec-stage evidence table |
 | A row whose probe does not prove a kept test is not cut | TC41, TC42, and the Won't handle lines |
@@ -427,5 +441,5 @@ The reviewer directed on 2026-10-29 that this session writes the spec and slices
 - `Entry reads`: none.
 - `Derived expectations`: the WT-5 list stays independent of the registry, and TC37 records its red.
 - `Consolidated rules`: none.
-- `Quantified obligations`: each review row has one disposition in the table above, and each cut predicate has one checkpoint probe.
+- `Quantified obligations`: each review row has one disposition in the table above, and each predicate that a spec-stage probe graded has one checkpoint probe.
 - `Workflow-step writes`: none.

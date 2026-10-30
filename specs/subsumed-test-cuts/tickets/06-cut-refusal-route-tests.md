@@ -12,7 +12,7 @@ The worktree package loses three refusal-route tests that the follow walk and th
 - WT-5 is a move row. First add the spec's list of the seven reviewer land faces to `TestLandingFacesFollowTheirRoutes` as an independent list, and assert that each listed face's printed route opens with the reviewer marker. Keep the list independent of the registry. Probe `tc37` on the walk and see `bit`, then remove `TestReviewerLandFacesOpenWithTheMarker`.
 - Point the comment at `land_refusal_fixture_test.go:36` that names the WT-1 candidate at `TestLandingFacesFollowTheirRoutes`.
 - Lower `worktreeTestCount` by 3 from its value at this ticket's base. Add no line to `parallel_census_test.go`.
-- Remove each helper that only a removed test used.
+- Remove each helper and import that only a removed test used. The `refusalroute` import of `identity_component_test.go` goes with the WT-1 test, because that test is its only user.
 - `.bench/commitment.json` is in `Writes:` only because the spec-stage close commits the delivery binding inside the graded range. This ticket does not edit it.
 
 The build changes no production file. Run each probe through `bench probe` with `--expect` on the kept test, and read the `restored` cell of each answer.

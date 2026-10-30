@@ -2,7 +2,7 @@
 
 Blocked by: none
 Writes: internal/adopt/compatibility_test.go, internal/adopt/setup_test.go, internal/adopt/decision_test.go, internal/adopt/lifecycle_decision_test.go, internal/adopt/link_hook_test.go, internal/conformance/ordinary_build_census_test.go
-Covers: TC1, TC10, TC11, TC12, TC13, TC14, TC15, TC16, TC17, TC18, TC19
+Covers: TC1, TC10, TC11, TC12, TC13, TC14, TC15, TC16, TC17, TC18, TC19, TC45
 
 ## What to build
 
@@ -19,7 +19,7 @@ The build changes no production file. Run each probe through `bench probe` with 
 ## Acceptance
 
 - [ ] The five candidate tests and `internal/adopt/decision_test.go` no longer exist.
-- [ ] The completion-plan probes `tc1`, `tc10`, `tc11`, `tc16`, `tc17`, and `tc19` read `bit` on their kept tests.
+- [ ] The completion-plan probes `tc1`, `tc10`, `tc11`, `tc16`, `tc17`, `tc19`, and `tc45` read `bit` on their kept tests.
 - [ ] The completion-plan probe `tc12` reads `bit` on `TestSetupTwiceLeavesGateInputsIdentical` after the move.
 - [ ] The completion-plan probes `tc13`, `tc14`, and `tc15` read `bit` on `TestCompleteLifecycleDecisions` after the move.
 - [ ] `bench test --check ordinary-build-census` passes, and `directArchitectureTests` names no absent file.

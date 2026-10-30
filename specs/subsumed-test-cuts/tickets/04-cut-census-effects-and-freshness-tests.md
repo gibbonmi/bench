@@ -13,7 +13,8 @@ The worktree package loses five top-level landing tests that broader tests subsu
 - WT-6 is a move row. First make `TestLandCommandNeverRunsCandidateLandingCodeDuringItsOwnPromotion` assert that the released checkout is absent after the landing. Probe `tc29` on it and see `bit`, then remove `TestLandCommandKeepsOneOwnerProcessThroughPublicationAndRelease`. Its dead process check goes with it.
 - WT-8 is a merge. `TestLandCommandStatesTheCensusCountAndDropsTheRecords` seeds the head records and the output records before one landing. It asserts the count suffix, the dropped record file, the surviving handoff sections, the head breakdown, and the output breakdown. Remove `TestLandCommandPrintsTheCensusHeadBreakdown` and `TestLandingPrintsOutputBreakdown`, and delete the then-empty `land_census_output_test.go`.
 - Lower `worktreeTestCount` by 5 from its value at this ticket's base. Rewrite the doc sentence of `TestPackageTestCountPin` that says the pin proves no test is removed or merged for wall-clock, so that it states the exact-count purpose. Add no line to `parallel_census_test.go`, because it is over its line budget.
-- Remove each helper that only a removed test used.
+- Remove each helper that only a removed test used. Slicing research found none.
+- Keep moved assertions inside the package censuses: use the existing `wantEffects` helper, and write no literal that opens with a production table name and `[`. Add no `exec.Command`, `Setenv`, or `Chdir` call outside the harness files.
 
 The build changes no production file. Run each probe through `bench probe` with `--expect` on the kept test, and read the `restored` cell of each answer.
 
