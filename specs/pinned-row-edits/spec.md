@@ -6,7 +6,9 @@ Roadmap: FT437
 
 Decision source: named reviewed artifact — the bound criterion `FT437-pinned-rows.done` in `.bench/commitment.json`, read with `roadmap/FT437.md` at its pinned identity `sha256:ed986b1d5df9ff39b3f63d5a4c23c5c7100ac4a116a129a5fb94bced2f91cb80`. The row records the two reviewer decisions of 2026-10-29. Under the interim rule of 2026-10-29, the criterion wins over the row text, and here the two agree.
 
-Verification log: pending — the spec review round and the ticket review round have not run.
+Verification log: 2 iteration(s) to accept — the spec round and the ticket round each accepted at iteration 1. The ticket round also graded the coordinator's post-acceptance delta, which moved the link walk below the store root and added PE27 to PE29.
+
+Implementation approval: approved by the reviewer on 2026-10-29, including the one-ticket breakdown, the single chunk PE-C1, and the declared implementation line.
 
 ## Problem
 
