@@ -48,7 +48,7 @@ func MarkdownH2Section(text, title string) string {
 }
 
 // MarkdownH2Sections returns the first matching H2 section body and occurrence
-// count. Headings inside backtick fences do not delimit or count as sections. It
+// count. The block reader's H2 rule decides which lines delimit and count as sections. It
 // projects sectionRunesMapped, the package's one section resolution, so the evaluator
 // and Locate read the same body from the same walk.
 func MarkdownH2Sections(text, title string) (string, int) {

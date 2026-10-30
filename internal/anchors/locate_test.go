@@ -270,3 +270,49 @@ func TestLocateStripsRejoinedComments(t *testing.T) {
 		t.Fatalf("needle after a plain comment: Locate = %d, want line 3", got)
 	}
 }
+
+// TestLocateReadsTheBlockReader pins the block reader's rules under the section walk and the
+// comment strip. A fenced or an indented heading line neither opens nor closes a section, and
+// a section walk reads its text as a fragment, so a leading marker line stays body. The strip
+// reads the whole file, so a comment in the frontmatter stays. Multi-byte text before a section
+// or a comment moves neither the section body nor the source line of a match.
+func TestLocateReadsTheBlockReader(t *testing.T) {
+	for _, test := range []struct {
+		name, doc   string
+		count, line int
+	}{
+		{"a tilde-fenced heading leaves the section open", "## S\n~~~\n## Other\n~~~\nneedle\n## T\n", 1, 5},
+		{"a tilde-fenced heading counts as no section", "~~~\n## S\n~~~\n## S\nneedle\n", 1, 5},
+		{"an indented heading opens no section", "  ## S\nneedle\n", 0, 0},
+		{"an indented heading closes no section", "## S\n  ## T\nneedle\n", 1, 3},
+		{"a leading marker line of a fragment stays body", "---\n## S\n---\nneedle\n---\n", 1, 4},
+		{"a section after multi-byte text keeps its body", "€€€€\n## S\nneedle\n## T\nafter\n", 1, 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if _, count := MarkdownH2Sections(test.doc, "S"); count != test.count {
+				t.Errorf("%s: section count = %d, want %d", test.name, count, test.count)
+			}
+			if got := strings.Contains(MarkdownH2Section(test.doc, "S"), "needle"); got != (test.line > 0) {
+				t.Errorf("%s: section body holds the needle = %t, want %t", test.name, got, test.line > 0)
+			}
+			if got := Locate(RequireInSection, "S", "needle", test.doc); got != test.line {
+				t.Errorf("%s: Locate = %d, want line %d", test.name, got, test.line)
+			}
+		})
+	}
+	const frontmatter = "---\n<!-- kept -->\n---\n<!-- hidden -->\n"
+	for _, test := range []struct {
+		name, doc, needle string
+		line              int
+	}{
+		{"a match after a comment keeps its line after multi-byte text", "€€€€<!-- x -->\nab\nneedle\n", "needle", 3},
+		{"a comment in the frontmatter stays", frontmatter, "kept", 2},
+		{"a comment below the frontmatter hides its needle", frontmatter, "hidden", 0},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := Locate(Require, "", test.needle, test.doc); got != test.line {
+				t.Errorf("%s: Locate = %d, want line %d", test.name, got, test.line)
+			}
+		})
+	}
+}
