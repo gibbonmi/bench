@@ -201,6 +201,11 @@ func TestReadBlockRules(t *testing.T) {
 			want:    []string{"1@0 body |a| raw=|a<!<!-- z -->--|", "comment 1-15", "fault comment line 1"},
 		},
 		{
+			name:    "MB12 a rejoin after a rejoin of two adjacent removals is removed too",
+			content: "<!<!----><!---->----><!<!---->---->",
+			want:    []string{"1@0 body || raw=|<!<!----><!---->----><!<!---->---->|", "comment 0-21", "comment 21-35"},
+		},
+		{
 			name:    "MB71 an open comment inside an open fence reports the comment",
 			content: "```\n<!--",
 			want:    []string{"1@0 opener |```|", "2@4 fenced || raw=|<!--|", "comment 4-8", "fault comment line 2"},
