@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:6c72c6b28d025c0c98a527879153466994ffe1c855fef1ae3dd055075067a043",
+  "plan_digest": "sha256:b9b3d587f8e5b0a278aeda03fdbf9f50b424e699eb649789d12eabe285e94a7b",
   "implementation_session": "",
   "chunks": [
     {
@@ -2169,6 +2169,66 @@
           ]
         }
       ]
+    },
+    {
+      "id": "MB-C5",
+      "base": "15903e2ce3aab9a0db82da0678bf3a7359ec8d58",
+      "tip": "fe458ea701f1b6e1a32919ff8819a4f4eae8debd",
+      "plan_digest": "sha256:b9b3d587f8e5b0a278aeda03fdbf9f50b424e699eb649789d12eabe285e94a7b",
+      "source_digest": "3343f290618c7d56f3650ad7e26e04dd2288e565",
+      "acceptance_rows": [
+        "MB57",
+        "MB58",
+        "MB61",
+        "MB70",
+        "MB86",
+        "MB87",
+        "MB91",
+        "MB97",
+        "MB62",
+        "MB63",
+        "MB64",
+        "MB65",
+        "MB66",
+        "MB67",
+        "MB68",
+        "MB69",
+        "MB98",
+        "MB101"
+      ],
+      "verification": [
+        {
+          "id": "t10-adopt",
+          "performer": "ft358-author-10",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "3343f290618c7d56f3650ad7e26e04dd2288e565",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-10",
+            "digest": "sha256:8720a3bcc4b3aaa48c9c31dc5438b29fff9b3f67396393517a8dcc4f47c2013b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/adopt/marker.go,swap,failed,1,TestMarkersSkipTildeFences,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestMarkersSkipTildeFences$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,378\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestMarkersSkipTildeFences,\"link_plan_test.go:76: MB57 rewrite keeps a tilde-fenced example: err = conflict: AGENTS.md has malformed Bench managed block markers\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fe458ea701f1b6e1a32919ff8819a4f4eae8debd",
+          "requirement": "adopt",
+          "command": "bench test --package ./internal/adopt --run '^TestMarkersSkipTildeFences$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/adopt/marker.go: toggle the fence state on backtick marker lines only; expect TestMarkersSkipTildeFences",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-10",
+              "digest": "sha256:8720a3bcc4b3aaa48c9c31dc5438b29fff9b3f67396393517a8dcc4f47c2013b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/adopt/marker.go,swap,failed,1,TestMarkersSkipTildeFences,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/adopt,^TestMarkersSkipTildeFences$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,378\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/adopt,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/adopt,TestMarkersSkipTildeFences,\"link_plan_test.go:76: MB57 rewrite keeps a tilde-fenced example: err = conflict: AGENTS.md has malformed Bench managed block markers\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -2413,6 +2473,24 @@
     {
       "from": "sha256:fc56090ad4c5b17107165bec91dc5d12946d0aacaebc407a376e940d178c334e",
       "to": "sha256:6c72c6b28d025c0c98a527879153466994ffe1c855fef1ae3dd055075067a043",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
+        ],
+        "MB-C4": [
+          "MB-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6c72c6b28d025c0c98a527879153466994ffe1c855fef1ae3dd055075067a043",
+      "to": "sha256:b9b3d587f8e5b0a278aeda03fdbf9f50b424e699eb649789d12eabe285e94a7b",
       "chunk_ids": {
         "MB-C1": [
           "MB-C1"
