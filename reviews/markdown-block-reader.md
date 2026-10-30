@@ -1530,6 +1530,72 @@
           "supersedes": [
             "c3r-coverage"
           ]
+        },
+        {
+          "id": "c3r3-spec",
+          "performer": "ft358-confirm3-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f6e4939b773f5cf85c949e9084f7a32f43f7b17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm3-c3-spec",
+            "digest": "sha256:046fde85e4e85ab80f3892fd695d46c02c59a6ed1ab8a6a7b58bfc23b1998324",
+            "excerpt": "Spec axis, MB-C3 confirming round 3 (repair delta 73bfbb2d..82fe6fdb). Zero findings.\nP7 closed: every heading refusal in internal/handoffdoc/document.go quotes b.raw (:298 and :305, :320, :352, :356), the same bytes that the base quoted; :305 quotes the legacyStateHeading constant as the base did; matching stays on comment-free text (FA15); document.go is 399 lines; the two new rows reach :305 and :320.\nOptional advice: the test assertion is now Contains, which the legacy-mix row needs.\n"
+          },
+          "axis": "Spec",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r2-spec"
+          ]
+        },
+        {
+          "id": "c3r3-standards",
+          "performer": "ft358-confirm3-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f6e4939b773f5cf85c949e9084f7a32f43f7b17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm3-c3-standards",
+            "digest": "sha256:0d26c69e57a5ae0e53b5e6ad7d977a76b1b5744722e3325eee415cd5ac2cfa94",
+            "excerpt": "Standards axis, MB-C3 confirming round 3 (repair delta 73bfbb2d..82fe6fdb), native reaffirmation. Zero findings.\nThe two refusals quote b.raw (internal/handoffdoc/document.go:298, :320), the field that splitSections sets for refusals; the test builds its headings from the package's own constants; the test doc comment states the current state.\nOptional advice: the assertion is now Contains in place of the heading prefix check; :305 still quotes the legacyStateHeading constant, as at the base.\n"
+          },
+          "axis": "Standards",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r2-standards"
+          ]
+        },
+        {
+          "id": "c3r3-coverage",
+          "performer": "ft358-confirm3-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0f6e4939b773f5cf85c949e9084f7a32f43f7b17",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft358-confirm3-c3-coverage",
+            "digest": "sha256:04535b54fbdbc9c732ad6a6a4375d7e8e8a3cfb71c6d53e023efebe0c9e1103d",
+            "excerpt": "Coverage axis, MB-C3 confirming round 3 (repair delta 73bfbb2d..82fe6fdb), native reaffirmation. Zero findings. Every probe restored; git status clean.\nb.raw back to b.heading at internal/handoffdoc/document.go:298 fails only TestParseQuotesTheRawHeading/legacy_mix; the same swap at :320 fails only TestParseQuotesTheRawHeading/legacy_next_command.\n"
+          },
+          "axis": "Coverage",
+          "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
+          "tip": "82fe6fdb187d5b59833c8d5bdee55c94492fe8d2",
+          "finding_ids": [],
+          "supersedes": [
+            "c3r2-coverage"
+          ]
         }
       ]
     }
@@ -2002,3 +2068,19 @@ Count: 0. The optional advice is in the excerpt.
 ### MB-C3 repair 3 witness reds (ft358-repair-03c, opus / high, repair cycle 3, an overrun)
 
 - P7: the old code failed the legacy-mix row and the legacy next-command row of `TestParseQuotesTheRawHeading`, because each refusal quoted the comment-free heading.
+
+## MB-C3 confirming round 3
+
+All three axes pass, and P7 is closed. MB-C3 took three repair cycles: two from the allowance and one overrun under the reviewer's advance approval.
+
+### Standards
+
+Count: 0.
+
+### Spec
+
+Count: 0.
+
+### Coverage
+
+Count: 0.
