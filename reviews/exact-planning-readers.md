@@ -269,3 +269,28 @@ Count: 7. Worst issue: CV1.
 - CV5 (auto-fix, confidence 8): no test puts a control byte or a space in a continued path. Repair target R14.
 - CV6 (auto-fix, confidence 7): no test makes a window smaller than one rune; such a window must refuse, not split the rune. Repair target R15.
 - CV7 (auto-fix, confidence 7): no test grades the 10-line budget or a `--lines` overflow. Repair targets R3 and R6.
+
+### ER-C1 repair cycle 1
+
+The repair session `ft125-repair-01` (opus / medium) committed the repair at `8b89063e2` and refroze the chunk at `c02a0324c..8b89063e2`.
+This repair uses cycle 1 of the 2 cycles that the bounded repair policy permits for ER-C1.
+F11 stays optional advice.
+
+Witness return (each probe restored its subject):
+
+| witness | subject | mutation | verdict and failing test | target |
+| --- | --- | --- | --- | --- |
+| W1 | `cmd/bench/planning_reads.go` | continuation operand back to the root-relative path | bit: `TestExactReaderCLIReconstruction/from_a_subdirectory` | R1 |
+| W2 | `internal/tickets/registry_data.go` | omit the `cmd/bench` entry | bit: `TestRootConformance` (ticket-grammar) | R2 |
+| W3 | `internal/responsebound/owner.go` | drop the line clause of `withinBound` | bit: `TestExactPageProtocol/frame_of_many_lines` | R3 |
+| W4 | `internal/responsebound/read.go` | `decimal` ignores the parse error | bit: `TestExactLineRanges` | R6 |
+| W5 | `internal/responsebound/file.go` | double the bounded read limit | bit: `TestExactFileStates/repository_file_past_the_control-record_limit` | R11 |
+| W6 | `internal/responsebound/read.go` | drop the kind and the selection from the identity | bit: `TestPlanningReaderHelpAndRefusals/token_from_another_selection` | R12 |
+| W7 | `internal/responsebound/file.go` | drop the file-identity and size clauses of `Unchanged` | invalid: the mutant did not build | R13 |
+| W8 | `internal/responsebound/read.go` | drop the help-fallback check | bit: `TestPlanningReaderHelpAndRefusals/control_byte_in_a_continued_path` | R14 |
+| W9 | `internal/responsebound/read.go` | make the smallest page one byte | bit: `TestExactPageProtocol/window_smaller_than_the_next_rune` | R15 |
+| W10 | `cmd/bench/main.go` | put the read row back to the tree scope | invalid: the test binary started itself again | R1 |
+
+W10 left orphan test processes that sealed the build-cache protection generation.
+The repair session stopped only those processes, and its retried commit passed the lane.
+After the reviewer's minimal-probing direction, delegates run only the plan's named probe and a bite proof for a changed check.
