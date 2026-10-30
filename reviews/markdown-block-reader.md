@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/markdown-block-reader/spec.md",
-  "plan_digest": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
+  "plan_digest": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
   "implementation_session": "",
   "chunks": [
     {
@@ -954,9 +954,9 @@
     {
       "id": "MB-C3",
       "base": "60f0d9ee1fe632cc0ae916661e01dc2a9c869c80",
-      "tip": "e2cda7748aa220e019b688c69a6d3063a5214f89",
-      "plan_digest": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
-      "source_digest": "a80577a8fa012564e7f053eafb36716acdbd45e7",
+      "tip": "ffc1d806ccde0e7e73fe12199dfb574d660911d5",
+      "plan_digest": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
+      "source_digest": "35971c128fe7f207e4c16fa1a02f69237a952aae",
       "acceptance_rows": [
         "MB38",
         "MB39",
@@ -1032,6 +1032,66 @@
               "ref": "claude-agent:bench-writer-high:ft358-author-05",
               "digest": "sha256:45188b7031c63fbc19bf6d387312b9d23a5e332a9f19cc3a4dcaf5d5e14dd2eb",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/handoff/state_file.go,omit,failed,2,TestStateFileRefusesAnUnterminatedComment/open_comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/handoff,^TestStateFileRefusesAnUnterminatedComment$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,831\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/handoff,fail,4,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/handoff,TestStateFileRefusesAnUnterminatedComment/open_comment,\"state_file_test.go:249: open comment: readStateFile refusal kind \\\"the handoff state file opens a section heading\\\" (hint names the opener: false), want \\\"the handoff state file opens an HTML comment it never closes\\\" naming the opener line\",1\n  github.com/gibbonmi/bench/internal/handoff,TestStateFileRefusesAnUnterminatedComment/open_fence_above_it,\"state_file_test.go:249: open fence above it: readStateFile refusal kind \\\"\\\" (hint names the opener: false), want \\\"the handoff state file opens an HTML comment it never closes\\\" naming the opener line\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t6-learnings",
+          "performer": "ft358-author-06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "35971c128fe7f207e4c16fa1a02f69237a952aae",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-06",
+            "digest": "sha256:24af14ac1b97501cebd02531dbe8bda3b52ceae948fe01bdd0fddb4c973da20c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/learnings/learnings.go,swap,failed,3,TestParseReportsAnUnterminatedBlock/comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/learnings,^TestParseReportsAnUnterminatedBlock$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,782\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/learnings,fail,2,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/comment,\"learnings_test.go:389: comment: Parse gives 0 entries and 2 malformed records, want 0 and 3 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/fence,\"learnings_test.go:389: fence: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/frontmatter,\"learnings_test.go:389: frontmatter: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ffc1d806ccde0e7e73fe12199dfb574d660911d5",
+          "requirement": "learnings",
+          "command": "bench test --package ./internal/learnings --run '^TestParseReportsAnUnterminatedBlock$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/learnings: omit the malformed record for the reader fault; expect TestParseReportsAnUnterminatedBlock",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-06",
+              "digest": "sha256:24af14ac1b97501cebd02531dbe8bda3b52ceae948fe01bdd0fddb4c973da20c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/learnings/learnings.go,swap,failed,3,TestParseReportsAnUnterminatedBlock/comment,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/learnings,^TestParseReportsAnUnterminatedBlock$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,782\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/learnings,fail,2,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/comment,\"learnings_test.go:389: comment: Parse gives 0 entries and 2 malformed records, want 0 and 3 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/fence,\"learnings_test.go:389: fence: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\n  github.com/gibbonmi/bench/internal/learnings,TestParseReportsAnUnterminatedBlock/frontmatter,\"learnings_test.go:389: frontmatter: Parse gives 1 entries and 1 malformed records, want 1 and 2 in line order\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "t6-retros",
+          "performer": "ft358-author-06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "35971c128fe7f207e4c16fa1a02f69237a952aae",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft358-author-06",
+            "digest": "sha256:90153edbc2df8f7083b9258d0af1637d7b2af06454703b168348698ab5815f96",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/recommendations.go,swap,failed,1,TestRecommendationsSkipFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/retros,^TestRecommendationsSkipFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/retros,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/retros,TestRecommendationsSkipFencedLines,\"recommendations_test.go:33: fenced lines: Recommendations gives 1 units or other units, want the 3 unfenced units\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "ffc1d806ccde0e7e73fe12199dfb574d660911d5",
+          "requirement": "retros",
+          "command": "bench test --package ./internal/retros --run '^TestRecommendationsSkipFencedLines$'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/retros/recommendations.go: end the improvements on any H2 line, fenced or not; expect TestRecommendationsSkipFencedLines",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft358-author-06",
+              "digest": "sha256:90153edbc2df8f7083b9258d0af1637d7b2af06454703b168348698ab5815f96",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/retros/recommendations.go,swap,failed,1,TestRecommendationsSkipFencedLines,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/retros,^TestRecommendationsSkipFencedLines$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/retros,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/retros,TestRecommendationsSkipFencedLines,\"recommendations_test.go:33: fenced lines: Recommendations gives 1 units or other units, want the 3 unfenced units\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1131,6 +1191,21 @@
         ],
         "MB-C2": [
           "MB-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b12ab9e5b2d403cce066d1e10815d6524f165eecce1b3013a84eef59a7c3e75c",
+      "to": "sha256:85d9574241a6429a3b3866d15ce2f8c10ea7a8832e6c5ba63d9573eb7b0c4aa4",
+      "chunk_ids": {
+        "MB-C1": [
+          "MB-C1"
+        ],
+        "MB-C2": [
+          "MB-C2"
+        ],
+        "MB-C3": [
+          "MB-C3"
         ]
       }
     }
