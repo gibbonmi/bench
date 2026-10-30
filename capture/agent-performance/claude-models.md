@@ -49,6 +49,7 @@ Over 7 paired first rounds the unified shadow found 40 distinct findings against
 | `commit-merge-parent` effort assessment | Opus / xhigh, max / implementer | Three max shadows matched the xhigh design on every code ticket at 1.41 to 1.44 times the tokens and up to 2.3 times the time. Eight review rounds found 17 findings on the xhigh trees, 10 of them repaired. |
 | `review-evidence-file-pages` RE2 control | claude-fable-5-1 / high / reviewer | The narrow round found 8 findings in 399474 tokens and the full control found 6 in 227918 tokens. They agreed on 3, so neither shape covered the other. |
 | `git-query-cache` spec stage | Haiku / high / research and slicing readers; Fable / high / spec and ticket reviewer; Opus / high / prototype writer and slicer | Six reader pairs agreed on each load-bearing path, and one reader in each pair found a gap the other missed. Fable found a count pin that no probe could bite and an unfenced argv file. The Opus prototype measured an 18.4 s median gain before any code change. |
+| `subsumed-test-cuts` spec stage | Sonnet / high / research readers, off the Haiku route; Haiku / high / slicing readers; Opus / medium / spec and ticket reviewer; Opus / xhigh / author, prober, and slicer | Three Sonnet pairs predicted every row, but only coordinator probes settled ten disputed rows. One Haiku reader raised a false hostile-path gap, and a probe closed it. The Opus spec reviewer read the plan parser and found probe-less chunk requirements. |
 
 ## Current decisions
 

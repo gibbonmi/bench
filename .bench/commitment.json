@@ -1479,6 +1479,18 @@
               "path": "roadmap/FT411.md",
               "identity": "sha256:39767ebe69c064d4dd2633f91096e0d888fb3bb1b2c04b9b9a7891a719d1950c"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "subsumed-test-cuts",
+                "path": "specs/subsumed-test-cuts/spec.md",
+                "identity": "sha256:22c540a45384db50868942dcb76b28b7e6e0b477fa791e89202586585389ce2e"
+              },
+              "obligations": [
+                "FT411"
+              ]
+            }
           ]
         },
         {
