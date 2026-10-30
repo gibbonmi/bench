@@ -1124,3 +1124,9 @@ Count: 2. Worst issue: N1.
 
 - N1, low, confidence 8, auto-fix: three closer-label mutants in `internal/maps/fields.go` are silent. Add three cases to `TestMetadataGrammarFenceRoles`. They are a four-run opener with a four-run closer, an indented closer, and a spaced info string with a longer closer.
 - N2, low, confidence 7, auto-fix: the frontmatter parity of `Close` has no test. Add a first-line frontmatter block that holds a row heading to `TestCloseSkipsAFencedRowHeading`.
+
+### MB-C2 repair 2 witness reds (ft358-repair-02b, opus / high, repair cycle 2 of 2)
+
+- S4: `rowHeading` in `internal/roadmap/tree.go` is the one row-heading predicate, and `ParseDocument` and `Close` both call it. The roadmap, roadmapflow, maps, and ownership packages pass.
+- N1: `run = markdown.FenceMarker` failed the four-run case, `strings.CutPrefix` failed the indented case, and `openerRun` without its outer `TrimSpace` failed the spaced-info case. Each failed at `premises_test.go:101`.
+- N2: `markdown.ReadFragment` in `Close` gave `closure = "", closed row FT1 appears 2 times in ROADMAP.md`.
