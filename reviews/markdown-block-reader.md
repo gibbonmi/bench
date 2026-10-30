@@ -2153,3 +2153,11 @@ Count: 0.
 ### Coverage
 
 Count: 0.
+
+### MB-C4, ticket 7 (ft358-author-07, opus / high)
+
+- MB48: the old exact-line opener rule gave a duplicate-fence refusal for a quoted record fence.
+- MB96: a reader that refuses any fault refused a record whose first line is an unclosed `---`.
+- MB49 to MB51: an accepted unterminated fence, a first-opener rule, and a shifted span end each failed their Render test.
+- MB107: a writer without the encoding gave an unterminated-fence refusal after a render of an excerpt that holds a comment opener.
+- The record payloads of all 129 review and spec files decode the same at the base and at the tip.
