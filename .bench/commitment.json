@@ -1494,6 +1494,25 @@
           ]
         },
         {
+          "id": "FT358-block-reader",
+          "criteria": [
+            {
+              "id": "FT358-block-reader.one-reader",
+              "text": "Authored Markdown has one line reader for fences, frontmatter, comments, and sections."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "markdown-block-reader",
+                "path": "specs/markdown-block-reader/spec.md",
+                "identity": "sha256:fc6dcf6d82322cd7ef4723998ebeb6db6b8c4403ab307687057e9251f9c0fd70"
+              }
+            }
+          ]
+        },
+        {
           "id": "FT125-exact-readers",
           "criteria": [
             {
@@ -1641,25 +1660,6 @@
           ],
           "dependencies": [
             "FT360-shared-fixtures"
-          ]
-        },
-        {
-          "id": "FT358-block-reader",
-          "criteria": [
-            {
-              "id": "FT358-block-reader.one-reader",
-              "text": "Authored Markdown has one line reader for fences, frontmatter, comments, and sections."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "markdown-block-reader",
-                "path": "specs/markdown-block-reader/spec.md",
-                "identity": "sha256:fc6dcf6d82322cd7ef4723998ebeb6db6b8c4403ab307687057e9251f9c0fd70"
-              }
-            }
           ]
         },
         {
