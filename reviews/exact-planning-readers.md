@@ -447,3 +447,17 @@ Count: 3. Worst issue: N1.
 - N1 (auto-fix, confidence 7): `internal/responsebound/read.go:223` has no test that reuses a line-range token on another line range. Repair target R19.
 - N2 (auto-fix, confidence 7): `internal/responsebound/file.go:99` has no test for a same-size rewrite with a new mtime. Repair target R20.
 - N3 (auto-fix, confidence 4): the nested-exempt branch of the grammar check has no test. Repair target R16.
+
+### ER-C1 repair cycle 2
+
+The repair session `ft125-repair-01b` (opus / medium) committed the repair at `42cdc1ce2` and refroze the chunk at `c02a0324c..42cdc1ce2`.
+This repair uses cycle 2 of the 2 cycles that the bounded repair policy permits for ER-C1.
+The plan probe answered `bit` with 10 failures.
+
+| witness | performer | subject | mutation | verdict and failing test | target |
+| --- | --- | --- | --- | --- | --- |
+| W1 | ft125-repair-01b | `internal/tickets/registry_data.go` | omit the `internal/worktree` entry | bit: `TestRootConformance` (ticket-grammar) | R16 |
+| C1 | orchestrator | `internal/responsebound/read.go` | drop `r.Selection` from the source identity | bit: `TestPlanningReaderHelpAndRefusals/token_from_another_line_range` | R19 |
+| C2 | orchestrator | `internal/responsebound/file.go` | omit the mtime clause of `Unchanged` | bit: `TestExactSourceReplaced/rewritten_in_place_at_the_same_size` | R20 |
+
+The comment change in `cmd/bench/tree_scope.go` makes the delta more than test-only, so a three-axis confirming round reviews `8b89063e2..42cdc1ce2`.
