@@ -2416,3 +2416,10 @@ Count: 1. Worst issue: P1.
 Count: 1. Worst issue: C1.
 
 - C1, medium, auto-fix (decided): the anchor section walk reads the whole comment-free document through `Read`, as the comment strip does. MB94 now states the frontmatter case, and Closed decision 16 drops the walk from the fragment callers. The repair also adds an FA7 opener test as hardening.
+
+### MB-C4 repair witness reds (ft358-repair-04, opus / xhigh, repair cycle 1 of 2)
+
+- MB94: `ReadFragment` at the section walk gave `section count = 0, want 1` for leading frontmatter that holds a comment opener, and the same for a tilde marker.
+- MB108: the old reader gave no refusal for a record fence followed at once by a second record opener.
+- FA7: the exact-line opener failed the indented and tilde cases, and a prefix test failed all three cases. An empty-info closer test failed the trailing-text closer case.
+- S1 and S2 change comments only. `bench anchors .` gives the same verdicts for all 42 files.
