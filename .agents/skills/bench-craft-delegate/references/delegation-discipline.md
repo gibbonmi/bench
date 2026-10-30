@@ -12,6 +12,7 @@ mutation-probe rule, and the done-claim check.
   writers in one tree. The lever for parallelism is separate worktrees. A build
   that wants serial verdicts and parallel delegates says which one it buys.
 - A user-directed parallel repair batch declares which files its tickets expect to touch in common. The coordinator then orders the ports to keep the conflict surface small.
+- When two concurrent tickets add a new helper to one Go package, the charge names the owner of that helper.
 
 ## Repair-charge template
 

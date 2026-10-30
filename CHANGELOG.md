@@ -6,6 +6,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Implement phase plan and checkpoint rules
+
+- Changed the implement phase guidance. The plan amendment lists each mutation that a ticket names as a probe on its registered check. The docs ticket receives each spec-versus-code divergence that the build settled. The first-ticket charge of each chunk names `bench record ticket --base`. The review record holds each author witness red before the initial review charge. Each chunk checkpoint reports its cost and names the cut.
+- Changed the interim rules for concurrent chunks. A delegated run freezes concurrent chunks in plan order, and a repair delta that holds a sibling chunk's commit takes a three-axis confirming round. A charge names the owner of a new helper that two concurrent tickets add to one Go package.
+
 ### Widen refuses a tracked new entry
 
 - Changed `bench spec widen`. An entry with the `(new)` marker refuses when the checkout HEAD holds its path as a file or a directory and the ticket does not already cover that path. The refusal names each such path and tells you to drop the `(new)` marker, and it writes nothing. Before, the verb added the entry, and an author could overwrite a file that the entry called new.
