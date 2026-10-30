@@ -1,10 +1,11 @@
-// Fenced blocks in the handoff document. The block reader owns the fence rule, so the
-// parser, the section split, and every writer that holds text bound for a section agree
+// Fenced blocks and comments in the handoff document. The block reader owns their rules, so
+// the parser, the section split, and every writer that holds text bound for a section agree
 // about which bytes are prose. This file reads a State body through that reader.
 
 package handoffdoc
 
 import (
+	"fmt"
 	"iter"
 	"strings"
 
@@ -15,6 +16,16 @@ import (
 // read. Nothing derives the fix, so the refusal states it.
 const OpenFenceRepair = "close the fence, so the headings below it read as headings"
 
+// OpenCommentRepair is the fix for a comment that the text never closes, for the same reason.
+const OpenCommentRepair = "close the comment, so the headings below it read as headings"
+
+// ReadState is the one read of a State body. The text is a fragment, so a leading marker line
+// opens no frontmatter, and the fault is the comment or the fence that the body leaves open.
+// Each line carries the heading rule that Parse applies to the document.
+func ReadState(state string) markdown.Document {
+	return markdown.ReadFragment(state)
+}
+
 // OpenFence reports the line that opens a fenced block the text never closes, counting
 // from one, and false when every fence closes. A writer holding text bound for a section
 // calls it before the render: such a fence absorbs every heading below it, so the written
@@ -22,7 +33,26 @@ const OpenFenceRepair = "close the fence, so the headings below it read as headi
 // leading marker line opens no frontmatter. A closer uses the opener's character and a
 // run at least as long, so a shorter run or the other character leaves the block open.
 func OpenFence(text string) (int, bool) {
-	return fenceFault(markdown.ReadFragment(text))
+	return fenceFault(ReadState(text))
+}
+
+// blockFault returns the comment or fence fault that Parse refuses in a reading of content.
+// The reader reports only a frontmatter fault for an unclosed first-line marker, and that
+// reading holds the marker line as body, so the fragment reading names the fault it hides.
+func blockFault(content string, read markdown.Document) *markdown.Fault {
+	if read.Fault != nil && read.Fault.Kind == markdown.FrontmatterFault {
+		return markdown.ReadFragment(content).Fault
+	}
+	return read.Fault
+}
+
+// faultRefusal is the Parse refusal of a comment or fence fault, at the line of its opener.
+func faultRefusal(path string, lines []markdown.Line, fault *markdown.Fault) *ParseError {
+	opener := strings.TrimRight(lines[fault.Line-1].Raw, " \t")
+	if fault.Kind == markdown.CommentFault {
+		return &ParseError{path, fault.Line, fmt.Sprintf("line %q opens an HTML comment that the file never closes; %s", opener, OpenCommentRepair)}
+	}
+	return &ParseError{path, fault.Line, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", opener, OpenFenceRepair)}
 }
 
 // fenceFault reports the opener line of a reading's fence fault. The reader reports a
@@ -43,7 +73,7 @@ func fenceFault(read markdown.Document) (int, bool) {
 // the file before any writer reaches this walk.
 func UnfencedLines(state string) iter.Seq[string] {
 	return func(yield func(string) bool) {
-		for _, line := range markdown.ReadFragment(state).Lines {
+		for _, line := range ReadState(state).Lines {
 			if line.Class != markdown.Body {
 				continue
 			}

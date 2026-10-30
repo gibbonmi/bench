@@ -233,20 +233,26 @@ func TestHandoffStateFileRefusesAnUnclosedFence(t *testing.T) {
 	runIn(t, root, nil)
 }
 
-// MB82, story 68. An open comment hides every heading under it from the State walk, so the
-// draft refuses with a fault that names the opener line. The reader reports the comment
-// ahead of a fence, so a fence above the comment draws the same fault. A closed comment
-// writes.
+// An open comment hides every heading under it from the State walk, so the draft refuses with
+// a fault that names the opener line. The reader reports the comment ahead of a fence, so a
+// fence above the comment draws the same fault, and a State opens no frontmatter, so a
+// leading marker line hides no comment. The heading guard reads each line as the document
+// parser reads it, so a trailing-space H2 line and a heading after a comment refuse. A
+// closed comment writes.
 func TestStateFileRefusesAnUnterminatedComment(t *testing.T) {
-	for _, tc := range []struct{ name, draft, opener string }{
-		{"open comment", "The build is live.\n\n<!-- draft note\n" + handoffdoc.MainHeading + "\n", "<!-- draft note"},
-		{"open fence above it", "```\n  <!-- draft note\n", "<!-- draft note"},
+	const opener = "<!-- draft note"
+	for _, tc := range []struct{ name, draft, kind, hint string }{
+		{"open comment", "The build is live.\n\n" + opener + "\n" + handoffdoc.MainHeading + "\n", faultStateFileComment, stateCommentRepair + opener},
+		{"open fence above it", "```\n  " + opener + "\n", faultStateFileComment, stateCommentRepair + opener},
+		{"leading marker line", "---\n" + opener + "\n", faultStateFileComment, stateCommentRepair + opener},
+		{"trailing-space heading", "The build is live.\n\n## \n", faultStateFileHeading, stateRepair + "##"},
+		{"heading after a comment", "<!-- c -->## x\n", faultStateFileHeading, stateRepair + "<!-- c -->## x"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := readStateFile(stateFile(t, tc.draft))
 			got, ok := err.(refusal)
-			if !ok || got.kind != faultStateFileComment || got.hint != stateCommentRepair+tc.opener {
-				t.Fatalf("%s: readStateFile refusal kind %q (hint names the opener: %t), want %q naming the opener line", tc.name, got.kind, got.hint == stateCommentRepair+tc.opener, faultStateFileComment)
+			if !ok || got.kind != tc.kind || got.hint != tc.hint {
+				t.Fatalf("%s: readStateFile refusal kind %q (hint names the line: %t), want %q naming the line", tc.name, got.kind, got.hint == tc.hint, tc.kind)
 			}
 		})
 	}

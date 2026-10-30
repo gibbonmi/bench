@@ -193,7 +193,7 @@ func TestOpenFenceNamesTheOpeningLine(t *testing.T) {
 	}
 }
 
-// TestParseKeepsANestedFenceInsideState is MB38. A closer uses the opener's character and
+// TestParseKeepsANestedFenceInsideState proves that a closer uses the opener's character and
 // a run at least as long, so the inner three-backtick line and the heading under it stay
 // State. A toggle on any marker line closes the block there and splits a section at "## X".
 func TestParseKeepsANestedFenceInsideState(t *testing.T) {
@@ -237,6 +237,63 @@ func TestParseSkipsAFencedStateHeading(t *testing.T) {
 	}
 }
 
+// TestParseRefusesAFenceBehindAFrontmatterFault proves that an unclosed first-line marker
+// hides no fence. The reader reports only the frontmatter fault there, so Parse reads the
+// fence fault from the fragment reading. The marker line alone stays header.
+func TestParseRefusesAFenceBehindAFrontmatterFault(t *testing.T) {
+	body := MainHeading + "\n\nNext command: `bench status`\n\n" + StateHeading + "\n\n"
+	for _, tc := range []struct {
+		name, content string
+		line          int
+	}{
+		{"open fence", "---\n" + body + "```\n" + RequestHeadingPrefix + "abc\n", 8},
+		{"no fence", "---\n" + body + "The worktree is live.\n", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Parse("handoff.md", []byte(tc.content))
+			refusal, _ := err.(*ParseError)
+			if refusalLine(err) != tc.line || tc.line > 0 && !strings.Contains(refusal.Reason, "fenced block") {
+				t.Fatalf("%s: Parse refusal at line %d, want the fence refusal at line %d (0 is none)", tc.name, refusalLine(err), tc.line)
+			}
+		})
+	}
+}
+
+// TestParseRefusesAnUnterminatedComment proves that an open comment, which hides every
+// section below it, refuses at the line of its opener, behind an unclosed first-line
+// marker too.
+func TestParseRefusesAnUnterminatedComment(t *testing.T) {
+	body := MainHeading + "\n\nNext command: `bench status`\n\n" + StateHeading + "\n\nThe note <!-- draft\n\n" + RequestHeadingPrefix + "abc\n"
+	for _, tc := range []struct {
+		name, content string
+		line          int
+	}{
+		{"open comment", body, 7},
+		{"behind a frontmatter fault", "---\n" + body, 8},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Parse("handoff.md", []byte(tc.content))
+			refusal, ok := err.(*ParseError)
+			if !ok || refusal.Line != tc.line || !strings.Contains(refusal.Reason, "HTML comment") {
+				t.Fatalf("%s: Parse refusal at line %d (a refusal: %t), want the comment refusal at line %d", tc.name, refusalLine(err), ok, tc.line)
+			}
+		})
+	}
+}
+
+// TestParseReadsHeadingsOnCommentFreeText proves that a section heading is read on its
+// comment-free text. A heading inside a closed comment opens no section and stays State,
+// and a heading behind a leading comment opens its section under its own key.
+func TestParseReadsHeadingsOnCommentFreeText(t *testing.T) {
+	state := "Kept:\n\n<!--\n## Notes\n-->"
+	want := &Document{Sections: []Section{{Key: MainKey, State: state}}}
+
+	got, err := Parse("handoff.md", []byte("<!-- lead -->"+MainHeading+"\n\n"+StateHeading+"\n\n"+state+"\n"))
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("commented headings: Parse refused at line %d or changed the sections, want main alone with the commented heading in State", refusalLine(err))
+	}
+}
+
 // refusalLine is the line that a Parse refusal names, or 0 for no refusal. A failure message
 // names the line, not the refusal text, because that text quotes a source line.
 func refusalLine(err error) int {
@@ -246,9 +303,9 @@ func refusalLine(err error) int {
 	return 0
 }
 
-// TestOpenFenceUsesTheCloseRule is MB39, MB40, and MB93. A State body is a fragment, so a
-// leading marker line opens no frontmatter, and only a closer of the opener's character
-// and at least its run closes a block. The comment case is the other side of the fault
+// TestOpenFenceUsesTheCloseRule proves that a State body is a fragment, so a leading
+// marker line opens no frontmatter, and only a closer of the opener's character and at
+// least its run closes a block. The comment case is the other side of the fault
 // kind: the reader reports the comment ahead of the fence, so no fence is reported.
 func TestOpenFenceUsesTheCloseRule(t *testing.T) {
 	for _, tc := range []struct {

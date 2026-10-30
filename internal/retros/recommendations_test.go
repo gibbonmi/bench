@@ -18,19 +18,23 @@ func TestRecommendationsKeepsImprovementParagraphsAndListItemsSeparate(t *testin
 	}
 }
 
-// TestRecommendationsSkipFencedLines is MB46 and MB47. A fenced H2 line leaves the
-// improvements open, so the items after it count. A fence marker line and a fenced item are
-// no unit, and each marker line ends the open unit. A live H2 heading ends the unit and the
-// section.
+// TestRecommendationsSkipFencedLines proves that a fenced H2 line leaves the improvements open,
+// so the items after it count. A fence marker line and a fenced item are no unit, and each
+// marker line ends the open unit. A live H2 heading ends the unit and the section. An H2 line
+// inside a closed comment also leaves the section open, though the commented lines stay unit
+// text, and a heading inside a closed frontmatter block opens no section.
 func TestRecommendationsSkipFencedLines(t *testing.T) {
-	content := []byte("## Agent-experience improvements\n\n- First\n```\n## Notes\n- quoted\n```\nafter the fence\n\n- Last\n## Other\n- outside\n")
-	want := []Recommendation{
-		{Body: "First", Line: 3},
-		{Body: "after the fence", Line: 8},
-		{Body: "Last", Line: 10},
-	}
-	if got := Recommendations(content); !reflect.DeepEqual(got, want) {
-		t.Fatalf("fenced lines: Recommendations gives %d units or other units, want the %d unfenced units", len(got), len(want))
+	for _, tc := range []struct {
+		name, content string
+		want          []Recommendation
+	}{
+		{"fenced lines", "## Agent-experience improvements\n\n- First\n```\n## Notes\n- quoted\n```\nafter the fence\n\n- Last\n## Other\n- outside\n", []Recommendation{{"First", 3}, {"after the fence", 8}, {"Last", 10}}},
+		{"commented heading", "## Agent-experience improvements\n\n### Process <!--\n## Other\n-->\n\n- After\n", []Recommendation{{"## Other\n-->", 4}, {"After", 7}}},
+		{"frontmatter heading", "---\n## Agent-experience improvements\n- quoted\n---\n", nil},
+	} {
+		if got := Recommendations([]byte(tc.content)); !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("%s: Recommendations gives %d units or other units, want the %d units outside every fence and frontmatter block", tc.name, len(got), len(tc.want))
+		}
 	}
 }
 

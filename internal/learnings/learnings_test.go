@@ -355,23 +355,30 @@ func TestCommandSurfacesAnUndatedNoteAppendedToAScaffoldedJournal(t *testing.T) 
 	}
 }
 
-// TestParseKeepsAFencedHeadingInTheBody is MB41. A fenced dated heading stays in its entry
-// body, and a fenced resolved bullet links no commit. A fenced heading above every entry is
-// no entry, no malformed heading, and no journal heading.
+// TestParseKeepsAFencedHeadingInTheBody proves that a fenced or commented dated heading stays in
+// its body, a fenced resolved bullet links no commit, a frontmatter heading declares nothing, a
+// heading behind a comment parses, and a body keeps its source bytes, each carriage return included.
 func TestParseKeepsAFencedHeadingInTheBody(t *testing.T) {
-	body := "```\n## 2026-01-02 — quoted [open]\n- **Resolved by:** quoted\n```\n- **Resolved by:** abc"
-	entries, malformed := Parse([]byte("## 2026-01-01 — first [open]\n" + body + "\n"))
-	if len(entries) != 1 || entries[0].Body != body || entries[0].ResolvedBy != "abc" || len(malformed) != 0 {
-		t.Fatalf("fenced body heading: Parse gives %d entries and %d malformed records, want one entry that keeps its body and links the unfenced commit", len(entries), len(malformed))
-	}
-	quoted := []byte("```\n## 2026-01-03 — quoted [open]\n```\n")
-	if entries, malformed := Parse(quoted); len(entries) != 0 || len(malformed) != 0 || UnsupportedSchemaReason(quoted) == "" {
-		t.Fatalf("fenced top heading: Parse gives %d entries and %d malformed records, want none and the unsupported-schema reason", len(entries), len(malformed))
+	const first, quoted = "## 2026-01-01 — first [open]", "## 2026-01-02 — quoted [open]"
+	body := "```\n" + quoted + "\n- **Resolved by:** quoted\n```\n<!--\n" + quoted + "\n-->\n- **Resolved by:** abc"
+	for _, tc := range []struct {
+		name, in string
+		want     []Entry
+	}{
+		{"fenced and commented body headings", first + "\n" + body + "\n", []Entry{{"2026-01-01", "first", "open", body, "abc", 1}}},
+		{"frontmatter and comment-led headings", "---\n" + quoted + "\n---\n<!-- c -->" + first + "\nx", []Entry{{"2026-01-01", "first", "open", "x", "", 4}}},
+		{"CRLF bodies", first + "\r\nx\r\n\r\n## 2026-01-03 — last [open]\r\ny\r\n", []Entry{{"2026-01-01", "first", "open", "x\r\n\r", "", 1}, {"2026-01-03", "last", "open", "y\r", "", 4}}},
+		{"quoted top headings", "---\n" + quoted + "\n---\n```\n" + quoted + "\n```\n", nil},
+	} {
+		entries, malformed := Parse([]byte(tc.in))
+		if journal := UnsupportedSchemaReason([]byte(tc.in)) == ""; !reflect.DeepEqual(entries, tc.want) || len(malformed) != 0 || journal != (tc.want != nil) {
+			t.Errorf("%s: Parse gives %d entries and %d malformed records (a journal heading: %t), want %d entries with their source bodies and none malformed", tc.name, len(entries), len(malformed), journal, len(tc.want))
+		}
 	}
 }
 
-// TestParseReportsAnUnterminatedBlock is MB42, MB43, and MB44. Each fault kind gives one
-// malformed record at its opener line, after each record of a line at or above it.
+// TestParseReportsAnUnterminatedBlock proves that each fault kind gives one malformed record
+// at its opener line, after each record of a line at or above it.
 func TestParseReportsAnUnterminatedBlock(t *testing.T) {
 	const first, lost = "## 2026-01-01 — first [open]", "- 2026-08-21 — lost"
 	for _, tc := range []struct {

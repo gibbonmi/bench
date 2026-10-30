@@ -4,10 +4,11 @@
 // section, removes a section by key, and ensures "main". It also owns the locked
 // read-modify-write that lets two live phases write the file at once.
 //
-// The package imports the standard library and the block reader only. Three packages
-// read this grammar — the handoff command, the worktree retirement path, and the
-// status row — and internal/worktree cannot import internal/handoff. A grammar
-// that lived in either consumer would be re-derived in the other.
+// The package imports the standard library, the block reader, and the file primitives
+// of internal/bounds and internal/durablefile, and none of its readers. Three packages
+// read this grammar — the handoff command, the worktree retirement path, and the status
+// row — and internal/worktree cannot import internal/handoff. A grammar that lived in
+// either consumer would be re-derived in the other.
 package handoffdoc
 
 import (
@@ -197,17 +198,17 @@ func labelLine(label, value string) string {
 // heading, a body line that is neither a label line nor part of State, and a
 // document with no main section. Each refusal names the file and the line.
 //
-// Fenced blocks are skipped when locating a heading. A heading inside a fence is
-// prose about the document, not a section of it. A fence that is still open at the
-// end of the file is refused on the line that opened it, because such a fence makes
-// every heading below it prose and leaves the document one section.
+// Fenced blocks and comments are skipped when locating a heading. A heading inside one
+// is prose about the document, not a section of it. A fence or a comment that is still
+// open at the end of the file is refused on the line that opened it, also behind an
+// unclosed first-line marker, because it hides every heading below it.
 //
 // A document in the pre-section shape reads as main alone. See convertLegacy.
 func Parse(path string, content []byte) (*Document, error) {
 	read := markdown.Read(string(content))
 	doc := &Document{}
-	if opened, open := fenceFault(read); open {
-		return nil, &ParseError{path, opened, fmt.Sprintf("line %q opens a fenced block that the file never closes; %s", strings.TrimRight(read.Lines[opened-1].Raw, " \t"), OpenFenceRepair)}
+	if fault := blockFault(string(content), read); fault != nil {
+		return nil, faultRefusal(path, read.Lines, fault)
 	}
 	blocks, header := splitSections(read.Lines)
 	doc.Header = strings.Trim(strings.Join(header, "\n"), "\n")
@@ -254,9 +255,9 @@ type block struct {
 // heading. It returns the blocks in file order, so main keeps whatever place the
 // file gave it and Shape stays last.
 //
-// The block reader names the H2 headings, so a heading inside a fence stays body. The
-// caller has already refused a fence the file never closes, so no block here absorbs the
-// sections below one.
+// The block reader names the H2 headings on comment-free text, so a heading inside a fence
+// or a comment stays body. The caller has already refused a fence or a comment the file
+// never closes, so no block here absorbs the sections below one.
 func splitSections(lines []markdown.Line) (blocks []block, header []string) {
 	for _, line := range lines {
 		if !line.Heading {
@@ -267,7 +268,7 @@ func splitSections(lines []markdown.Line) (blocks []block, header []string) {
 			}
 			continue
 		}
-		blocks = append(blocks, block{heading: strings.TrimRight(line.Raw, " \t"), line: line.Number})
+		blocks = append(blocks, block{heading: strings.TrimRight(line.Text, " \t"), line: line.Number})
 	}
 	return blocks, header
 }

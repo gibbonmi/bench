@@ -45,6 +45,20 @@ func resolvedBy(line string) (string, bool) {
 	return strings.TrimSpace(value), ok
 }
 
+// sourceBody returns the source text of lines[from:to] with the empty lines at each end
+// trimmed. It slices the source, not the reader's lines, so a CRLF body keeps each carriage
+// return that the reader strips from a line.
+func sourceBody(content string, lines []markdown.Line, from, to int) string {
+	if from >= to {
+		return ""
+	}
+	end := len(content)
+	if to < len(lines) {
+		end = lines[to].Offset
+	}
+	return strings.Trim(content[lines[from].Offset:end], "\n")
+}
+
 // faultReasons names the malformed reason of each block-reader fault kind.
 var faultReasons = map[markdown.FaultKind]string{
 	markdown.FenceFault:       "unterminated fenced block",
