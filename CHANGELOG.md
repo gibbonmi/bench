@@ -6,6 +6,17 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Repair, review, and spec reword rules
+
+- Changed the repair rules. After a production repair, each axis that issued a finding re-reviews in full, and each other axis gives a native reaffirmation that reads only the repair delta. An initial-round finding at severity 3 or lower that is not a correctness defect goes to optional advice and takes no repair cycle. A repair charge names only the probes of the plan, and the one coordinator probe carries the finding mutants. A repair charge never skips a named-check plan probe. One fresh repair session takes every small accepted finding of a chunk round, routed to the ticket that holds most of their paths. Before, each affected ticket took its own repair session.
+- Changed the review rules. After a held finding whose cause is a repeatable pattern, the axis searches for that pattern, and an out-of-fence hit goes to `bench learning`. The Coverage axis checks each registry of an extended family. A finding that asks for a new stop or refusal first cites the validator's current diagnostic for that input. On a shared tree, only the Coverage axis probes, and the orchestrator reads code only through `git show` at the frozen tip while it probes.
+- Changed `craft-spec`. A reworded spec sentence keeps each predicate of the old sentence, and new content joins as new sentences unless the decision source deletes a clause. The spec review grades a reword against that rule.
+
+### Implement phase plan and checkpoint rules
+
+- Changed the implement phase guidance. The plan amendment lists each mutation that a ticket names as a probe on its registered check. The docs ticket receives each spec-versus-code divergence that the build settled. The first-ticket charge of each chunk names `bench record ticket --base`. The review record holds each author witness red before the initial review charge. Each chunk checkpoint reports its cost and names the cut.
+- Changed the interim rules for concurrent chunks. A delegated run freezes concurrent chunks in plan order, and a repair delta that holds a sibling chunk's commit takes a three-axis confirming round. A charge names the owner of a new helper that two concurrent tickets add to one Go package.
+
 ### Widen refuses a tracked new entry
 
 - Changed `bench spec widen`. An entry with the `(new)` marker refuses when the checkout HEAD holds its path as a file or a directory and the ticket does not already cover that path. The refusal names each such path and tells you to drop the `(new)` marker, and it writes nothing. Before, the verb added the entry, and an author could overwrite a file that the entry called new.
