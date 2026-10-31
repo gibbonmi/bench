@@ -2168,3 +2168,13 @@ The Spec and Coverage axes found three defects that the repairs introduced, and 
 - N1 (auto-fix, confidence 6): the related read action uses the raw label, so a row labelled `primary` reads the primary checkout. Repair target R10 applies the new spec rule.
 - N2 (auto-fix, confidence 6): one label that the action grammar rejects empties the help of the whole related page. Repair target R10 drops only that row's read action.
 - C10 (auto-fix, confidence 8): no multi-page related walk runs from a subdirectory, and a mutant that puts the root-relative path in the continuation stayed silent. Repair target R11 adds that walk with a slug and a relative path.
+
+## ER-C4 repair cycle 3 witness reds
+
+The repair delta is `49ad0e978..b8a27b497`. On the reviewer direction for minimal probing, the R10 and R11 reds come from hand mutants and focused test runs, not from `bench probe`.
+
+- R10: a mutant that makes the label rule always accept failed all three new cases of `TestRelatedWorktreeActions` at `cmd/bench/worktree_leaves_test.go:262`. The primary keyword and a twin label got the read action, and a label that the action owner rejects emptied the help.
+- R11: a mutant that puts the root-relative spec path in the continuation failed `TestRelatedSpecOperandResolvesFromTheCaller` at `cmd/bench/planning_reader_commands_test.go:29` with "source changed since the cursor".
+- The plan probe ER-C4-projection-red answered `bit` with 11 failed cases, and the record holds it as `ER-C4-r3-ER-C4-projection-red`.
+
+The repair reports one defect outside its fence. The new `usage.PrimaryTreeTarget` is a second source of the `primary` keyword beside `primaryTarget` in `internal/treetarget/identify.go`, and `internal/treetarget/flag.go` spells `<label|primary>` by hand. The orchestrator accepts it as repair target R12 under `--auto-approve`. The next repair cycle takes R12 together with any finding from confirming round 2.
