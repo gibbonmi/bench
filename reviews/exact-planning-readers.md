@@ -1558,3 +1558,10 @@ The Spec and Coverage axes each found one defect that cycle 3 introduced, and re
 - C8 (auto-fix, confidence 8): no test grades the GenDecl `First` and `Last` wiring at `internal/outline/declaration.go:76`; a swap mutant stayed silent. Repair target R15 asserts the lines of every declaration family.
 
 Optional advice, with no finding ID: Standards A1 and A2.
+
+## ER-C3 repair cycle 4 witness reds
+
+The repair delta is `acf39804f..5cd178b34`, and it changes only `internal/outline/declaration.go` and its test.
+
+- R14: before the fix, `TestDeclarationSpans` failed at `declaration_test.go:90`, because `Directed` read the directive-adjusted lines 102, 101, and 103. A swap of `PositionFor(p, false).Line` to `positions.Line(p)` answered `bit`.
+- R15: the probe that swaps `First: first, Last: last` to `First: last, Last: first` answered `bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes`.
