@@ -259,12 +259,24 @@ The build-entry amendment combined the planned chunks ES-C1 and ES-C2 into ES-C1
 
 ### Completion plan
 
-This version 1 plan records the author verification and the final checks.
-The orchestrator amends it to version 2 before the first author dispatch.
+This version 2 plan records the author verification, the final checks, and the delegated run.
+The orchestrator records each ticket author's assignment before that author's dispatch.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ft375-build-run-1",
+    "orchestrator_session": "session_01JK5CPdJaS9Xn1VAmFL1sNN",
+    "author_limit": 1,
+    "assignments": {
+      "01-writes-landed-row.md": [],
+      "02-closure-prediction.md": [],
+      "03-map-sources-row.md": [],
+      "04-entry-take-rule.md": []
+    }
+  },
   "chunks": [
     {
       "id": "ES-C1",
@@ -276,17 +288,20 @@ The orchestrator amends it to version 2 before the first author dispatch.
         {
           "id": "writes-landed",
           "command": "bench test --package ./internal/preflight --run 'WritesLanded|TicketGrammarRowsCarryOwnDetails|TicketGatedRowsNotApplicableWithoutTickets|DecideAllGreen|DecideChargeRows|SourceTip|WritesResolveEarlierChunkDeletion|CommittedDeletion|CommandBuildRendersFourGrammarRows'",
-          "probe": "Drop --first-parent -m from the deleting-commit query, and record that TestWritesLandedShapes turns red on the landing-merge case."
+          "probe": "Drop --first-parent -m from the deleting-commit query, and record that TestWritesLandedShapes turns red on the landing-merge case.",
+          "ticket": "01-writes-landed-row.md"
         },
         {
           "id": "precedence",
           "command": "bench test --package ./internal/preflight --run 'WritesLandedPrecedence'",
-          "probe": "Grade LandedDeletions before DeletedPaths in the check, and record that TestWritesLandedPrecedence turns red on the folded explicit-range case of ES33."
+          "probe": "Grade LandedDeletions before DeletedPaths in the check, and record that TestWritesLandedPrecedence turns red on the folded explicit-range case of ES33.",
+          "ticket": "01-writes-landed-row.md"
         },
         {
           "id": "closure-prediction",
           "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --run 'CommitmentCloses|ClosedRowPathsMatchClosure|CommitmentDeliver|CommitmentLightClosure|CommitmentClosureRefusesObligationFreeBinding'",
-          "probe": "Skip the RowOwner step in the store method, and record that TestClosedRowPathsMatchClosure turns red on the refused obligation source of ES14."
+          "probe": "Skip the RowOwner step in the store method, and record that TestClosedRowPathsMatchClosure turns red on the refused obligation source of ES14.",
+          "ticket": "02-closure-prediction.md"
         }
       ]
     },
@@ -300,17 +315,20 @@ The orchestrator amends it to version 2 before the first author dispatch.
         {
           "id": "map-sources",
           "command": "bench test --package ./internal/preflight --run 'MapSources|SourceTipOmittedKeepsTodaysVerdict|DecideChargeRows'",
-          "probe": "Grade the map sources with the working-tree resolver, and record that TestMapSourcesClosureDeletion turns red."
+          "probe": "Grade the map sources with the working-tree resolver, and record that TestMapSourcesClosureDeletion turns red.",
+          "ticket": "03-map-sources-row.md"
         },
         {
           "id": "shared-grammar",
           "command": "bench test --package ./internal/maps --package ./internal/preflight --run 'MapSources|ValidateDecisionMapTree'",
-          "probe": "Drop the lexical path rule from the shared grammar, and record that TestMapSourcesGrammar turns red on the escaping-path case of ES52."
+          "probe": "Drop the lexical path rule from the shared grammar, and record that TestMapSourcesGrammar turns red on the escaping-path case of ES52.",
+          "ticket": "03-map-sources-row.md"
         },
         {
           "id": "take-rule",
           "command": "bench test --package ./internal/anchors --run 'TicketSlicingAnchors'",
-          "probe": "Restore the old completion-plan-only take-rule sentence, and record that TestTicketSlicingAnchors turns red."
+          "probe": "Restore the old completion-plan-only take-rule sentence, and record that TestTicketSlicingAnchors turns red.",
+          "ticket": "04-entry-take-rule.md"
         }
       ]
     }
