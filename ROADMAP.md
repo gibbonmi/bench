@@ -22,11 +22,13 @@ and review cost that recent builds paid.
 
 **FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
 
-**FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
+**FT125 (LOW) — the residual planning readers: TOON field and row selectors, a review-record reader by ID, and the page-index repository path.**
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 
 **FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
+
+**FT478 (LOW) — the landing census counts sanctioned `rg` reads apart from the raw heads.**
 
 ## Delivery queue
 
@@ -56,11 +58,11 @@ and the small cuts. The rows below hold the rest.
 
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
-**FT358 (MEDIUM) — authored Markdown has one line reader for fences, frontmatter, comments, and sections.**
-
 **FT363 (MEDIUM) — the clean modes share one member-set applier.**
 
 **FT365 (LOW) — conformance tests derive restated tables from their owners and share one Go-rule scanner.**
+
+**FT479 (LOW) — the response-bound help fallback and the path containment test each have one owner predicate.**
 
 **FT368 (LOW, decision required) — the survey's speculative surfaces each get a keep or cut verdict.**
 
@@ -123,6 +125,10 @@ and the small cuts. The rows below hold the rest.
 **FT89 (LOW) — resolve the remaining guidance contradictions.**
 
 **FT427 (LOW) — the guidance names the worktree build after create, and says that the commit lane grades prose.**
+
+**FT481 (LOW) — the review-implementation guidance says that the review preflight takes the record commit as its source tip.**
+
+**FT480 (LOW) — the spec-stage research fan-out reads the provider scorecard before it selects the reader line.**
 
 **FT428 (LOW, decision required) — the phase-close guidance gives the full `bench handoff` grammar from one owner.**
 
