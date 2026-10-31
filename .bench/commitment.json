@@ -1608,6 +1608,18 @@
               "path": "roadmap/FT344.md",
               "identity": "sha256:b927fd97a505b7ffdb373a8fb7eff0ebce1a5274ead4f6777a835efb8278ab04"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "rebuild-remedy-owner",
+                "path": "specs/rebuild-remedy-owner/spec.md",
+                "identity": "sha256:31ecf8517c0a4c1f511789fec8effb4494446397d7e446ca6d6f09da37f066ca"
+              },
+              "obligations": [
+                "FT344"
+              ]
+            }
           ]
         },
         {
