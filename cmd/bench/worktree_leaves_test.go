@@ -10,6 +10,8 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
+	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -89,6 +91,50 @@ func TestWorktreeReadIsATreeScopedQuery(t *testing.T) {
 	}
 	if !slices.Contains(axiRegistryMemberNames(t), "worktree read") {
 		t.Fatal("worktree read is no AXI query member")
+	}
+}
+
+// ER29: a worktree read whose identity-row target does not resolve back to the read tree
+// refuses before any content and names root read, so no page offers a continuation that
+// reads another tree or refuses. The primary keyword in the primary checkout still pages
+// and continues, which TestWorktreeReadIsATreeScopedQuery grades.
+func TestWorktreeReadRefusesATargetThatNamesAnotherTree(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		tree func(t *testing.T, root string, active intent.Assignment) string
+	}{
+		{"an unassigned linked tree", func(t *testing.T, root string, _ intent.Assignment) string {
+			linked := filepath.Join(t.TempDir(), "unassigned")
+			gittest.MustRun(t, root, "worktree", "add", "-q", "-b", "unassigned", linked)
+			return linked
+		}},
+		{"two active assignments with one label", func(t *testing.T, root string, active intent.Assignment) string {
+			twin := putRelatedAssignment(t, root, relatedID(101), intent.StateActive, filepath.Join(root, "absent", "twin"))
+			twin.Label = active.Label
+			if err := intent.PutAssignment(root, twin); err != nil {
+				t.Fatal(err)
+			}
+			return active.Worktree
+		}},
+		{"an assignment labelled primary", func(t *testing.T, root string, active intent.Assignment) string {
+			active.Label = "primary"
+			if err := intent.PutAssignment(root, active); err != nil {
+				t.Fatal(err)
+			}
+			return active.Worktree
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, active := relatedFixture(t, 0)
+			tree := tc.tree(t, root, active)
+			writeAXIFixture(t, filepath.Join(tree, "page.txt"), strings.Repeat("page text\n", 600))
+			t.Chdir(tree)
+			var stdout bytes.Buffer
+			code := (Command{Stdout: &stdout}).Run([]string{"worktree", "read", "page.txt"})
+			if body := withoutTreeRow(stdout.String()); code != 1 || !strings.HasPrefix(stdout.String(), "tree[1]{target,head,dirty}:\n") || !strings.HasPrefix(body, "error: ") || !strings.Contains(body, "bench read <path>") || strings.Contains(body, "page text") {
+				t.Fatalf("worktree read in %s = %q exit %d, want the identity row and a refusal that names bench read <path> with no content", tc.name, stdout.String(), code)
+			}
+		})
 	}
 }
 

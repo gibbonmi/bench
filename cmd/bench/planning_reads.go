@@ -114,7 +114,9 @@ func readCommand(args []string) (string, int) {
 // tree-target flag or from the caller's directory. The page budget counts the identity row
 // that the dispatcher prints first. Each command that a page offers names the tree by its
 // target and the file by its root-relative path, so it reads the same file from any checkout
-// of the repository.
+// of the repository. A target that does not resolve back to the tree at root, such as an
+// unassigned tree or a label that two assignments share, refuses before any content and
+// names root read as the route.
 func worktreeReadCommand(root string, args []string) (string, int) {
 	read, refusal, code := treeFileReader.parse(args)
 	if refusal != "" {
@@ -124,6 +126,10 @@ func worktreeReadCommand(root string, args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	identity := treetarget.Identify(root)
+	resolved, err := treetarget.Resolve(root, identity.Target)
+	if here, hereErr := canonicalpath.Resolve(root); err != nil || hereErr != nil || resolved != here {
+		return toon.Errorf("no tree target names this tree", "read the file with "+readGrammar.Cmd+" <path>") + "\n", 1
+	}
 	command := append(strings.Fields(worktreeReadGrammar.Cmd)[1:], treeTargetFlag, identity.Target)
 	return treeFileReader.page(read, root, responsebound.ReadRequest{Command: command, Frame: identityRow(identity)})
 }

@@ -52,17 +52,11 @@ func Run(call Call) int {
 		fmt.Fprintln(call.Stderr, toon.NotInRepo())
 		return 1
 	}
-	target, err := targetRoot(call.Root, value)
+	dir, err := Resolve(call.Root, value)
 	if errors.Is(err, worktree.ErrTreeTargetPath) {
 		fmt.Fprintln(call.Stdout, valueUsage(command, value))
 		return 2
 	}
-	if err != nil {
-		return worktree.PrintTreeTargetRefusal(call.Stderr, command, err)
-	}
-	// A root that the ledger recorded through a link runs in its physical spelling, so the
-	// child reads one tree whatever spelling reached it.
-	dir, err := canonicalpath.Resolve(target)
 	if err != nil {
 		return worktree.PrintTreeTargetRefusal(call.Stderr, command, err)
 	}
@@ -74,11 +68,21 @@ func Run(call Call) int {
 	return worktree.RunTreeChild(command, argv, dir, call.Home, call.Stdin, call.Stdout, call.Stderr)
 }
 
-// targetRoot answers the root of the tree that value names. The keyword names the primary
-// checkout, the first registered worktree, and every other value names a worktree label.
-func targetRoot(root, value string) (string, error) {
+// Resolve answers the root of the tree that the tree-target value names, from root, the
+// repository root of any checkout. The keyword names the primary checkout, the first
+// registered worktree, and every other value names a worktree label. A root that the ledger
+// recorded through a link answers its physical spelling, so a child reads one tree whatever
+// spelling reached it, and a caller compares two roots by their resolved spellings.
+func Resolve(root, value string) (string, error) {
+	var target string
+	var err error
 	if value != primaryTarget {
-		return worktree.TreeTarget(root, value)
+		target, err = worktree.TreeTarget(root, value)
+	} else {
+		target, err = git.PrimaryCheckout(root)
 	}
-	return git.PrimaryCheckout(root)
+	if err != nil {
+		return "", err
+	}
+	return canonicalpath.Resolve(target)
 }
