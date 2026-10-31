@@ -714,3 +714,37 @@ The plan probes `writes-landed` and `precedence` answered `bit` again at that co
 | `internal/spec/widen.go` | send an unresolved default branch to the unreadable arm | `TestSpecWidenRefusesAnUnresolvedDefaultBranch` | C5 |
 
 The coordinator confirmation refused, because the delta after the reviewed tip holds the ticket 01 widen. The three axes therefore reaffirm the delta `07922d543..b1182c17a`.
+
+## ES-C3 ticket 03 author witness reds
+
+The ticket 03 author `ft375-author-03` (opus / medium) reported these witness reds at ticket commit `e4b141c0f`.
+Each mutation ran in `bench probe`, answered `bit`, and restored its subject. The plan probes `map-sources` and `shared-grammar` answered `bit`.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/maps/validation.go` | grade with the working-tree resolver | `TestMapSourcesTipExistence/checkout_only` | ES06 |
+| `internal/maps/validation.go` | drop the lexical path rule | `TestMapSourcesGrammar` | ES52 |
+| `internal/maps/validation.go` | admit a missing source | `TestMapSourcesTipExistence` | ES04 |
+| `internal/maps/validation.go` | refuse a kept source | `TestMapSourcesTipExistence/kept_source` | ES05 |
+| `internal/maps/validation.go` | admit a link entry | `TestMapSourcesHostileEntries/link_source` | ES23 |
+| `internal/maps/validation.go` | close every `roadmap/` source | `TestMapSourcesPrediction/no_binding` | ES15 |
+| `internal/maps/validation.go` | admit a closure deletion | `TestMapSourcesClosureDeletion` | ES01 |
+| `internal/maps/validation.go` | drop the map path prefix | `TestMapSourcesClosureDeletion` | ES20 |
+| `internal/maps/validation.go` | keep only Path faults | `TestMapSourcesGrammar` | ES08, ES09 |
+| `internal/maps/validation.go` | resolve a URL as a tree path | `TestMapSourcesGrammar` | ES10 |
+| `internal/maps/validation.go` | make the working-tree wrapper return nothing | `TestMapSourcesCollectIndependentRecordFailures` | ES11 |
+| `internal/preflight/map_sources.go` | drop the prediction error | `TestMapSourcesPrediction` | ES16, ES17 |
+| `internal/preflight/map_sources.go` | turn off the candidate filter | `TestMapSourcesTipExistence/skipped_names` | ES19 |
+| `internal/preflight/map_sources.go` | turn off the link-candidate guard | `TestMapSourcesHostileEntries/link_candidate_map` | ES53 |
+| `internal/preflight/map_sources.go` | drop the blob read error | `TestMapSourcesHostileEntries/over-limit_map` | ES22 |
+| `internal/preflight/map_sources.go` | read the checkout map | `TestMapSourcesTipExistence/uncommitted_repoint` | ES07 |
+| `internal/preflight/map_sources.go` | walk only `specs` | `TestMapSourcesClosureDeletion` | ES02 |
+| `internal/preflight/map_sources.go` | walk only the own spec folder | `TestMapSourcesClosureDeletion` | ES03 |
+| `internal/preflight/map_sources.go` | read an absent `decisions/` as an error | `TestMapSourcesTipExistence/absent_folders` | ES18 |
+| `internal/preflight/decision.go` | omit the row | `TestSourceTipOmittedKeepsTodaysVerdict/build` | ES41 |
+| `internal/preflight/decision.go` | put the row before `binary-seal` | `TestDecideChargeRows` | ES42 |
+| `internal/preflight/decision.go` | add the row outside build mode | `TestMapSourcesBuildOnly` | ES21 |
+| `internal/preflight/decision.go` | drop the row from the audit form | `TestMapSourcesKeepsAuditManual` | ES46 |
+| `internal/maps/tree_validation.go` | drop each conjunct of the candidate predicate | `TestDecisionMapCandidatePath` | ES19 |
+
+The author also demonstrated the mode guard, the tip-tree read error, the cleaning step, the exact-path match, the folder skip, and the compiled flag. ES48 went from a `map-sources` red on `roadmap/FT375.md` to green after the repoint.

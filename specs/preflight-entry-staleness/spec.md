@@ -191,6 +191,7 @@ A refusal or a policy that does not parse returns its error.
 
 `internal/maps` keeps one Sources record grammar: the record split, the field order, the locator rule, the URL rule, and the lexical path rule (`internal/maps/validation.go:143`, `internal/maps/validation.go:238`).
 The lexical path rule refuses an empty, absolute, or escaping path before a resolver runs.
+The lexical path rule also runs before the working-tree resolver reads the repository root, so an escaping path under a root that does not resolve reports `escapes the repository`.
 The lexical path rule gives the resolver the cleaned slash path, so `./x` and `a/../x` reach the resolver as `x`.
 A resolver answers whether the path names a regular file, and it gives its own reason text when it does not.
 The working-tree resolver keeps each current reason of `validateSourcePath`, the `escapes the repository` reason for a link that leads outside the repository included (`internal/maps/validation.go:271-273`).
@@ -221,6 +222,8 @@ It predicts the closure of the deliverable at `SpecPath` from the policy at that
 It grades each candidate map with the published-tree resolver, in candidate path order.
 `map-sources` is red with the diagnostics joined by `; ` when the list is not empty, and green otherwise.
 Each diagnostic reads `<map>: Sources Path <path> <reason>` or `<map>: <grammar message>`.
+A prediction error reads `delivery closure of <spec> not predictable: <error>`, and the row still grades each map with no predicted deletion.
+A candidate entry with another mode reads `<map>: candidate map has tree mode <mode>, not a regular file`.
 
 ### Guidance
 
