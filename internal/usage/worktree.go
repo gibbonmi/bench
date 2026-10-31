@@ -11,6 +11,9 @@ import (
 // resolver reads it before any label, so a label that equals it names no worktree.
 const PrimaryTreeTarget = "primary"
 
+// TreeTargetOperand is the grammar operand of the tree-target flag.
+const TreeTargetOperand = "<label|" + PrimaryTreeTarget + ">"
+
 const (
 	WorktreeList        = "bench worktree list"
 	WorktreeListPaths   = WorktreeList + " --view paths --target <target> [--target <target>]..."
@@ -18,7 +21,7 @@ const (
 	WorktreePath        = "bench worktree path <target>"
 	WorktreeExec        = "bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]"
 	WorktreeShow        = "bench worktree show <target> <rev>:<path>"
-	WorktreeRead        = "bench worktree read [--in <label|" + PrimaryTreeTarget + ">] <path> [--section <literal-H2-title> | " + responsebound.LinesFlag + " " + responsebound.LineRangeUsage + "] " + responsebound.CursorUsage
+	WorktreeRead        = "bench worktree read [--in " + TreeTargetOperand + "] <path> [--section <literal-H2-title> | " + responsebound.LinesFlag + " " + responsebound.LineRangeUsage + "] " + responsebound.CursorUsage
 	WorktreeBuild       = "bench worktree build <target>"
 	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item> [--from <target>]"
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"

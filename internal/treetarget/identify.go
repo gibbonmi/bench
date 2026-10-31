@@ -16,11 +16,12 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // primaryTarget names the primary checkout, both as the target cell of the identity row
-// and as the tree-target keyword.
-const primaryTarget = "primary"
+// and as the tree-target keyword. The usage package owns the keyword.
+const primaryTarget = usage.PrimaryTreeTarget
 
 // rowName is the block name of the identity row.
 const rowName = "tree"

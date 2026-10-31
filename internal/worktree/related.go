@@ -147,17 +147,21 @@ func relatedProjection(j joins, run *git.Run, root string, ledger intent.Ledger,
 // namesTreeAlone answers the predicate that a related row's label passes when the read action
 // can name that row's tree alone. The label is not the primary keyword, which the tree resolver
 // reads before any label. No other active assignment of assignments carries it, because the
-// resolver refuses an ambiguous label. And the action owner accepts the read action that
-// carries it, so a rejected label drops only its own action from the help.
+// resolver refuses an ambiguous label. The label selection of the tree resolver selects one
+// active assignment for it. And the action owner accepts the read action that carries it, so a
+// rejected label drops only its own action from the help.
 func namesTreeAlone(assignments []intent.Assignment) func(label string) bool {
 	empty, _ := axi.RenderHelp(nil)
+	load := func() ([]intent.Assignment, error) { return assignments, nil }
 	return func(label string) bool {
 		if label == usage.PrimaryTreeTarget {
 			return false
 		}
-		if len(matchingAssignments(assignments, func(a intent.Assignment) bool { return a.Label == label && landingActiveState(a.State) })) != 1 {
+		selected, err := labelSelection(load, label)
+		if err != nil || len(selected) != 1 || !landingActiveState(selected[0].State) {
 			return false
 		}
+		// The action owner renders an empty help table for an action that it rejects.
 		help, err := axi.RenderHelp([]axi.Action{readAction(label)})
 		return err == nil && help != empty
 	}
