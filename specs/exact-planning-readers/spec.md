@@ -211,6 +211,7 @@ Content is a JSON string cell for valid UTF-8, with controls escaped reversibly.
 Invalid UTF-8 uses a base64 cell with the encoding named explicitly.
 Cursors always count raw selected bytes, never rendered characters or base64 characters.
 For valid UTF-8, split only at rune boundaries.
+For a valid UTF-8 selection, a supplied cursor offset must fall on a rune boundary; an offset inside a rune refuses as an invalid cursor.
 Decoding and concatenating page content must recover the exact selected bytes.
 
 A story's typed projection has one versioned coverage-owned serialization.
@@ -414,7 +415,7 @@ They do not invent dependencies on unrelated unlanded capabilities.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | ER-C1 / 1.md | Native raw-file and artifact pages reconstruct exact bytes through the CLI and expose bounded continuation grammar. | ER1, ER16-ER28, ER35-ER40, ER44-ER46 | planned page/file and real CLI reconstruction families | yes |
-| ER-C2 / 2a.md, 2b.md | Canonical Markdown selections and typed story obligations read through the spec CLI. | ER2-ER10 | planned Markdown/spec/story families and real CLI reconstruction | no |
+| ER-C2 / 2a.md, 2b.md | Canonical Markdown selections and typed story obligations read through the spec CLI. | ER2-ER10, ER49 | planned Markdown/spec/story families and real CLI reconstruction | no |
 | ER-C3 / 3a.md, 3b.md | Go syntax selections return complete declarations with deterministic narrowing. | ER11-ER15 | planned declaration families and real CLI reconstruction | no |
 | ER-C4 / 4a.md, 4b.md | Owned worktree reads and binding-based related navigation use the same exact page contract. | ER29-ER34, ER48 | planned related filtering and worktree CLI families | no |
 | ER-C5 / 5a.md, 5b.md, 5c.md | Eligible raw reads remain allowed with native advice and attributable census evidence. | ER41-ER43, ER47 | planned advice/census families and preserved guard refusals | no |
@@ -550,6 +551,8 @@ These future reds are required evidence, not observations made during specificat
 | ER47 | 26 | Native reader output records identify their complete supported read form | planned TestExactReaderOutputHeads in cmd/bench/census_output_test.go | A root-only spec or outline head conflates exact reads with other operations. |
 
 | ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | planned TestRelatedContinuationRefusesChangedProjection in cmd/bench/planning_reader_commands_test.go | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
+
+| ER49 | 17 | A cursor inside a rune of a valid UTF-8 selection refuses before content | planned TestExactPageProtocol in internal/responsebound/read_test.go | A byte cursor that lands inside a rune silently switches the remaining pages to base64. |
 
 ### Edge inventory
 
