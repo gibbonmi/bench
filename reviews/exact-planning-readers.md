@@ -569,6 +569,72 @@
           "supersedes": [
             "ER-C2-coverage-1"
           ]
+        },
+        {
+          "id": "ER-C2-standards-3",
+          "performer": "ft125-review-c2-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e94b9f152b3b7408efe2e33adabed30496300c8b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-standards-3",
+            "digest": "sha256:0e28e1e31b5afcc4c9683315c17a71cafa5d8de93e03e085471ee8a88f938c60",
+            "excerpt": "Standards confirming round 2 ER-C2, repair delta db5efd2c8..a3994b202: 0 findings. N2 closed (projection.go text type is the one source of projected text fields). N1 closed (helpRow.Child removed; rowInsertion reads ChildScopes). N6 closed (Prefix and Suffix separate; one registry field; 400 lines).\nAdvice (no finding): A1 refusal no longer names the row span; A2 story.go:113 reports errInvalidText for any encode error; A3 Encode returns nil on failure for a hand-built projection.\n"
+          },
+          "axis": "Standards",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "a3994b2028302752772deae813cc0b4a98306516",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C2-standards-2"
+          ]
+        },
+        {
+          "id": "ER-C2-spec-3",
+          "performer": "ft125-review-c2-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e94b9f152b3b7408efe2e33adabed30496300c8b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-spec-3",
+            "digest": "sha256:dfb3e750f27e4f17e733cdfa611aaa3808ca6ee9d7f03aa9eb102fafb72deb3f",
+            "excerpt": "Spec reaffirmation ER-C2, repair delta db5efd2c8..a3994b202: 0 findings. ER2-ER10 and ER49 unchanged; the invalid-UTF-8 story refusal names --section; root help omits [--in] only on spec show; spec line 338 met.\nAdvice (no finding): the refusal no longer names the row byte span.\n"
+          },
+          "axis": "Spec",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "a3994b2028302752772deae813cc0b4a98306516",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C2-spec-2"
+          ]
+        },
+        {
+          "id": "ER-C2-coverage-3",
+          "performer": "ft125-review-c2-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e94b9f152b3b7408efe2e33adabed30496300c8b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-coverage-3",
+            "digest": "sha256:fce5194df434fefbe9c0ae15fc345fbceb6e3520e82874dcf5fb51f342496f9c",
+            "excerpt": "Coverage reaffirmation ER-C2, repair delta db5efd2c8..a3994b202: 0 findings; no probe. The MarshalText refusal is graded by story_test.go:129-130; the help-row scope is graded by command_help_test.go:17 and help_inventory_test.go:163-165.\nAdvice (no finding): only the Behavior cell is fed invalid UTF-8, so a revert of ID, SeamCell, or Rationale to string would survive; this predates the delta.\n"
+          },
+          "axis": "Coverage",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "a3994b2028302752772deae813cc0b4a98306516",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C2-coverage-2"
+          ]
         }
       ]
     }
