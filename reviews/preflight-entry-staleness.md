@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-entry-staleness/spec.md",
-  "plan_digest": "sha256:50eb41bdb6840594f54a53ecc80090806128a7bf20c7538c8b530c5debfdd0c1",
+  "plan_digest": "sha256:f17e037a03998c85e64816e9b5d2a268b4a83bfe01b26c457fa91bf1375ed4f0",
   "implementation_session": "",
   "chunks": [
     {
@@ -609,6 +609,18 @@
       "chunk_ids": {
         "ES-C1": [
           "ES-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:50eb41bdb6840594f54a53ecc80090806128a7bf20c7538c8b530c5debfdd0c1",
+      "to": "sha256:f17e037a03998c85e64816e9b5d2a268b4a83bfe01b26c457fa91bf1375ed4f0",
+      "chunk_ids": {
+        "ES-C1": [
+          "ES-C1"
+        ],
+        "ES-C3": [
+          "ES-C3"
         ]
       }
     }
