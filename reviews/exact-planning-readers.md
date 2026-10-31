@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:937fb02df13a153ed543df044dfa80f036cd069eb2ae888786c93c02781689a9",
+  "plan_digest": "sha256:ad21e619336dee172ad73a62f171513c96051a56749ffaa92aa19139b2711ae1",
   "implementation_session": "",
   "chunks": [
     {
@@ -1687,9 +1687,9 @@
     {
       "id": "ER-C5",
       "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
-      "tip": "a41c9fb92f8f5b2914604b04b8f8437c904d3557",
-      "plan_digest": "sha256:937fb02df13a153ed543df044dfa80f036cd069eb2ae888786c93c02781689a9",
-      "source_digest": "8d5e775c10b90e45af2830e0c8cc7088428adbac",
+      "tip": "d6187944424b45a21fb291a7f80ab49230c99897",
+      "plan_digest": "sha256:ad21e619336dee172ad73a62f171513c96051a56749ffaa92aa19139b2711ae1",
+      "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
       "acceptance_rows": [
         "ER47",
         "ER41",
@@ -2336,6 +2336,27 @@
           "ER-C5"
         ]
       }
+    },
+    {
+      "from": "sha256:937fb02df13a153ed543df044dfa80f036cd069eb2ae888786c93c02781689a9",
+      "to": "sha256:ad21e619336dee172ad73a62f171513c96051a56749ffaa92aa19139b2711ae1",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ],
+        "ER-C5": [
+          "ER-C5"
+        ]
+      }
     }
   ]
 }
@@ -2805,3 +2826,12 @@ The final ordinary verification `bench test --package ./...` ran at `4a39e071a` 
 `TestAdmissionClasses` refuses the route needle that ticket 5c added for the reference file, because the needle is over 6 words or names no route token.
 The author's focused test selection did not reach that test, and no review axis ran it.
 Repair cycle 3 takes it on ticket 5c as target R8 under `--auto-approve`.
+
+## ER-C5 repair cycle 3 witness reds
+
+The repair delta is `15e2b8c24..d61879444`. The census account anchor now uses the route needle "the matching `bench read` form on stderr".
+The new needle has 6 words and the `bench ` route token, and it still matches the reference sentence.
+
+- R8: the red is the `TestAdmissionClasses` failure at `locate_test.go:23`, which refused the old needle as a route needle.
+- R8: a `bench probe` swap back to the old needle failed `TestAdmissionClasses` with that message, and the tree restored the swap.
+- R8: a `bench probe` swap of the reference sentence failed `TestRootConformance` with the anchor diagnostic, so the new needle still guards the sentence.
