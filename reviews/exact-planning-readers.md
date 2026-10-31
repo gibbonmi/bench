@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
+  "plan_digest": "sha256:7afb8bed4d5af651fec330a4ebe3a9cd2b86714ec381c96b06fc9fa753ec389e",
   "implementation_session": "",
   "chunks": [
     {
@@ -1229,9 +1229,9 @@
     {
       "id": "ER-C4",
       "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
-      "tip": "c0d81ce6987265dfb06c08e2f33019c79f990dfd",
-      "plan_digest": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
-      "source_digest": "273358bc8adf894d162e89e92754df71a2d1d597",
+      "tip": "b8a27b497ece163343be10624afbbaab3aa09af0",
+      "plan_digest": "sha256:7afb8bed4d5af651fec330a4ebe3a9cd2b86714ec381c96b06fc9fa753ec389e",
+      "source_digest": "bc0eb6e2fe36b1618788281276f4e0b3f3316a68",
       "acceptance_rows": [
         "ER29",
         "ER30",
@@ -1329,6 +1329,36 @@
               "ref": "claude-agent:bench-writer-medium:ft125-repair-4b2",
               "digest": "sha256:07c72c154ca19ccd1f4320ade8129118fcc24ade2712706b2970633a3a8d90c7",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/planning_reads.go,swap,failed,3,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_assignment_labelled_primary,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,179,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_assignment_labelled_primary,\"worktree_leaves_test.go:135: worktree read in an assignment labelled primary = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  primary,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_bytes,source_byt… (1020 bytes)\",5\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_unassigned_linked_tree,\"worktree_leaves_test.go:135: worktree read in an unassigned linked tree = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  unassigned,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes… (1020 bytes)\",5\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/two_active_assignments_with_one_label,\"worktree_leaves_test.go:135: worktree read in two active assignments with one label = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  related 0064,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_byte… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ER-C4-r3-ER-C4-projection-red",
+          "performer": "ft125-repair-4b3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bc0eb6e2fe36b1618788281276f4e0b3f3316a68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-repair-4b3",
+            "digest": "sha256:fcaa5e62ff641b9eefd6ababc26fff9f23e55b414ab6b69d1f55449e0170b46c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,11,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedContinuationRefusesChangedProjection,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,4273\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,11995,12\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  \\\\\\\\\\\"0402cde0fd68cf0193b90db04451549ff43401e17e735fd83585876ea2f185c6\\\\\\\\\\\",relat… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_leaves,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  6d1474fedbf1491f77fcf010715df0ffa42c0e4911e659d3457848768bddf6c2,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_label_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  a4ffd8ffb8e090a36bff01ae638fbb12757e6ec9180f664412ad1db3bf3380bb,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_lease_appears,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  6d4c7a6268bc9994acd8ffe9f87235dc26f2c91683e5d8410db603d63622b2bb,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_path_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  5140626fec60fcba104a75215bf1b2389bcdb875769e4724e53e16dadce2a1f5,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_request_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  cc93360593bba92cbb4dbbe938ec2317dc8e5451f2d9c5e2d996933c71d557b1,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_state_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  78e0a0f645210dc6d5b37f240571648d223eb2a27d287b2ac87ec435b3565511,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_tree_disappears,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  aabc7f5e2217fa9dce3f747c255c66d197299644ad17b9d3c8808347a39fed66,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_ignored_file_appears,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  d2ac853a538b266d003779c436f0b4f120fc072013bf8f392af0bcc9ea92f62f,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_unbound_assignment_joins,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  ecd7329ef5af63a63c30247e21cc0df219fee5a79f1a883bdd0008f7741fc8e5,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/the_branch_stops_being_landed,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  5ffdeaa1459e1e6c965f2be24e54460fa9c0fe3eda5f2eaf6eba92675fd357ed,related,t… (1020 bytes)\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "b8a27b497ece163343be10624afbbaab3aa09af0",
+          "requirement": "ER-C4-projection-red",
+          "command": "bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "replace complete related projection identity with commitment-only identity",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-repair-4b3",
+              "digest": "sha256:fcaa5e62ff641b9eefd6ababc26fff9f23e55b414ab6b69d1f55449e0170b46c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,11,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedContinuationRefusesChangedProjection,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,4273\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,11995,12\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  \\\\\\\\\\\"0402cde0fd68cf0193b90db04451549ff43401e17e735fd83585876ea2f185c6\\\\\\\\\\\",relat… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_leaves,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  6d1474fedbf1491f77fcf010715df0ffa42c0e4911e659d3457848768bddf6c2,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_label_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  a4ffd8ffb8e090a36bff01ae638fbb12757e6ec9180f664412ad1db3bf3380bb,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_lease_appears,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  6d4c7a6268bc9994acd8ffe9f87235dc26f2c91683e5d8410db603d63622b2bb,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_path_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  5140626fec60fcba104a75215bf1b2389bcdb875769e4724e53e16dadce2a1f5,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_request_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  cc93360593bba92cbb4dbbe938ec2317dc8e5451f2d9c5e2d996933c71d557b1,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_state_changes,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  78e0a0f645210dc6d5b37f240571648d223eb2a27d287b2ac87ec435b3565511,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_tree_disappears,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  aabc7f5e2217fa9dce3f747c255c66d197299644ad17b9d3c8808347a39fed66,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_ignored_file_appears,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  d2ac853a538b266d003779c436f0b4f120fc072013bf8f392af0bcc9ea92f62f,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_unbound_assignment_joins,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  ecd7329ef5af63a63c30247e21cc0df219fee5a79f1a883bdd0008f7741fc8e5,related,t… (1020 bytes)\",4\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/the_branch_stops_being_landed,\"selected_queries_test.go:355: continuation = main.axiCommandResult{stdout:\\\"page[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes,complete}:\\\\\\\\n  5ffdeaa1459e1e6c965f2be24e54460fa9c0fe3eda5f2eaf6eba92675fd357ed,related,t… (1020 bytes)\",4\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1739,6 +1769,24 @@
     {
       "from": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
       "to": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
+      "to": "sha256:7afb8bed4d5af651fec330a4ebe3a9cd2b86714ec381c96b06fc9fa753ec389e",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
