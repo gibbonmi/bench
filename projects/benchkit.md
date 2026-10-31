@@ -551,7 +551,7 @@ also matches, so raising or lowering a budget is an edit here and nowhere else.
 |---|---|
 | `.bench/BENCH.md` | 192 |
 | `.agents/commands/bench-implement-spec.md` | 97 |
-| `.agents/commands/bench-write-spec.md` | 87 |
+| `.agents/commands/bench-write-spec.md` | 88 |
 | `.agents/commands/bench-debug.md` | 170 |
 | `.agents/skills/bench-craft-tickets/SKILL.md` | 100 |
 | `.agents/skills/bench-craft-spec/SKILL.md` | 155 |
