@@ -1866,6 +1866,72 @@
           "supersedes": [
             "ER-C5-coverage-1"
           ]
+        },
+        {
+          "id": "ER-C5-standards-3",
+          "performer": "ft125-review-c5-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8d5e775c10b90e45af2830e0c8cc7088428adbac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-standards-3",
+            "digest": "sha256:50b1690159ffd53efa2f7ca828916e8b9d35ea58605753da02c9d6f975ee666c",
+            "excerpt": "Standards axis, ER-C5 confirming round 2 (repair delta 06fae8759..a41c9fb92).\nClosed: ST3. eligibleRead (cmd/bench/planning_read_advice.go:26) is the only eligibility rule; recordFollowOn (cmd/bench/guards.go:250) calls it once, for readOwner (guards.go:251) and the advice gate (guards.go:168, 186). Census comments (internal/census/read_advice.go:48-50, 111-114, 161-165) call ObserveRead the structural shape observation. The cycle 2 red backs the row at planning_read_advice_test.go:93-96.\nNew findings: none.\nOptional advice: two edited comment lines exceed the 100-column width (cmd/bench/guards.go:239, internal/census/read_advice.go:50); recordReadWith (read_advice.go:174) runs ObserveRead again.\nOutcome: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "a41c9fb92f8f5b2914604b04b8f8437c904d3557",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-standards-2"
+          ]
+        },
+        {
+          "id": "ER-C5-spec-3",
+          "performer": "ft125-review-c5-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8d5e775c10b90e45af2830e0c8cc7088428adbac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-spec-3",
+            "digest": "sha256:7dd5beeac0973126c994832c02ece73a892cb2b4e9ca94000b59ee1d555c1afe",
+            "excerpt": "Spec axis, ER-C5 confirming round 2 reaffirmation (repair delta 06fae8759..a41c9fb92).\nReaffirm, no new findings. eligibleRead (cmd/bench/planning_read_advice.go:23-31) gates both the advice and readOwner (cmd/bench/guards.go:250-251); spec lines 298-319 hold; the new row (planning_read_advice_test.go:51-54) strengthens ER42; ER41 and ER43 untouched and passing; the needle at internal/anchors/registry_planning_readers.go:10 is intact at .bench/BENCH-reference.md:40.\nOptional advice (severity 2): .bench/BENCH-reference.md:40 can read as allowing only in-repository reads; \"names the matching form for one named file inside the repository\" would be exact.\nOutcome: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "a41c9fb92f8f5b2914604b04b8f8437c904d3557",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-spec-2"
+          ]
+        },
+        {
+          "id": "ER-C5-coverage-3",
+          "performer": "ft125-review-c5-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "8d5e775c10b90e45af2830e0c8cc7088428adbac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-coverage-3",
+            "digest": "sha256:d0ba4bf3ce0d0c15626156cf0ee7f61e033b5785e490ff894cad2864f280a052",
+            "excerpt": "Coverage axis, ER-C5 confirming round 2 (repair delta 06fae8759..a41c9fb92).\nClosed: C3. The owned cat /etc/hosts row runs from creation.Path and asserts cat=1 (cmd/bench/planning_read_advice_test.go:51-53); the R6 mutant turned it red at :53. Both outputs of the single eligibleRead call (cmd/bench/guards.go:250-252) are graded, and the path bound (planning_read_advice.go:51-52) by the no-advice rows (:105-108).\nNew findings: none.\nProbe: planning_read_advice.go:48 swap if !observed { to if false {: bit, TestGuardProjectionCensusExclusion 3 subtests at guard_projection_test.go:55; restored=yes.\nOptional advice: TestRawReadAdvice does not grade the !observed branch alone; an ls \u003cpooled> row would.\nOutcome: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "a41c9fb92f8f5b2914604b04b8f8437c904d3557",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-coverage-2"
+          ]
         }
       ]
     }
@@ -2726,3 +2792,9 @@ The census comments call `ObserveRead` the structural read-shape observation, an
 - R6: the red message was `owned outside read breakdown = "cat=2", want no owned record, cat=1`.
 - R7: no new row. The anchored needle in the reference still matches, and the anchor tests pass.
 - The tree restored the hand mutant before the commit.
+
+## ER-C5 confirming round 2
+
+The repair delta is `06fae8759..a41c9fb92`. Each axis ran on opus / high.
+Standards and Coverage re-reviewed in full, and Spec gave a delta-only reaffirmation. Every axis passes: ST3 and C3 are closed, and no axis has a new finding.
+ER-C5 used both repair cycles of its allowance. The orchestrator decision that one eligibility rule decides both the advice and the owned census record stays open to reviewer veto.
