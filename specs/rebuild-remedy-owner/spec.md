@@ -6,7 +6,7 @@ Roadmap: FT344
 
 Decision source: named reviewed artifact — the bound criterion `FT344-remedy.one-owner` in `.bench/commitment.json`, read with `roadmap/FT344.md` at its pinned identity `sha256:b927fd97a505b7ffdb373a8fb7eff0ebce1a5274ead4f6777a835efb8278ab04`, plus the reviewer decision of 2026-10-31 in the `/bench-write-spec FT344` conversation (D1: the shell copy keeps the `cd` form).
 
-Verification log: 3 iteration(s) to accept — the spec round took 2 iterations: iteration 1 rejected on RB12, which sat in the RB-C2 acceptance cell while RB-C1 claimed it, and iteration 2 accepted the repair. The ticket round took 1 iteration and folded five prose findings.
+Verification log: 3 iteration(s) to accept — the spec round took 2 iterations: iteration 1 rejected on RB12, which sat in the RB-C2 acceptance cell while RB-C1 claimed it, and iteration 2 accepted the repair. The ticket round took 1 iteration and folded five prose findings. Reviewer sign-off 2026-10-31.
 
 ## Problem
 
