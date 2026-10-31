@@ -364,20 +364,20 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT344-remedy
-2. FT406-rebuild
-3. FT366-rg-guard
-4. FT380-residual
-5. FT354-strict-json
-6. FT363-member-set
-7. FT365-conformance
-8. FT414-preconditions
-9. FT437-pinned-rows
-10. FT439-comment-correction
-11. FT354-shell-args
-12. FT343-seam-policy
-13. FT446-cache-store
-14. FT369-charge-slicing
+1. FT437-pinned-rows
+2. FT344-remedy
+3. FT439-comment-correction
+4. FT354-strict-json
+5. FT406-rebuild
+6. FT366-rg-guard
+7. FT380-residual
+8. FT363-member-set
+9. FT354-shell-args
+10. FT343-seam-policy
+11. FT446-cache-store
+12. FT414-preconditions
+13. FT369-charge-slicing
+14. FT365-conformance
 15. FT341-in-only
 16. FT420-concurrent-chunks
 17. FT387-overflow

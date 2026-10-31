@@ -1567,6 +1567,34 @@
           ]
         },
         {
+          "id": "FT437-pinned-rows",
+          "criteria": [
+            {
+              "id": "FT437-pinned-rows.done",
+              "text": "An approved plan that carries a pinned row's new identity, together with the row edit, records the decision in one plan and one commit, and a pinned-row edit with no exact approved plan still refuses."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT437",
+              "path": "roadmap/FT437.md",
+              "identity": "sha256:ed986b1d5df9ff39b3f63d5a4c23c5c7100ac4a116a129a5fb94bced2f91cb80"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "pinned-row-edits",
+                "path": "specs/pinned-row-edits/spec.md",
+                "identity": "sha256:a02e080262846ab9554ec281f2fa90e0d68dec5da01cd10a7bb9e10b946e4236"
+              },
+              "obligations": [
+                "FT437"
+              ]
+            }
+          ]
+        },
+        {
           "id": "FT344-remedy",
           "criteria": [
             {
@@ -1579,6 +1607,41 @@
               "id": "FT344",
               "path": "roadmap/FT344.md",
               "identity": "sha256:b927fd97a505b7ffdb373a8fb7eff0ebce1a5274ead4f6777a835efb8278ab04"
+            }
+          ]
+        },
+        {
+          "id": "FT439-comment-correction",
+          "criteria": [
+            {
+              "id": "FT439-comment-correction.done",
+              "text": "A comment-only correction after a chunk freeze keeps its verifications and its review chain."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT439",
+              "path": "roadmap/FT439.md",
+              "identity": "sha256:8bd6b4fe1bfaa7193b00715fed1d003cb2212467a025a1b13bd5da9bdc6600d9"
+            }
+          ]
+        },
+        {
+          "id": "FT354-strict-json",
+          "criteria": [
+            {
+              "id": "FT354-strict-json.one-owner",
+              "text": "Every strict JSON read goes through the one jsonfile owner."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "strict-json-ownership",
+                "path": "specs/strict-json-ownership/spec.md",
+                "identity": "sha256:9741209379b687f9a3ca1b816dd83af57dea627341dd9140a892b9d083a574d6"
+              }
             }
           ]
         },
@@ -1634,25 +1697,6 @@
           ]
         },
         {
-          "id": "FT354-strict-json",
-          "criteria": [
-            {
-              "id": "FT354-strict-json.one-owner",
-              "text": "Every strict JSON read goes through the one jsonfile owner."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "strict-json-ownership",
-                "path": "specs/strict-json-ownership/spec.md",
-                "identity": "sha256:9741209379b687f9a3ca1b816dd83af57dea627341dd9140a892b9d083a574d6"
-              }
-            }
-          ]
-        },
-        {
           "id": "FT363-member-set",
           "criteria": [
             {
@@ -1672,95 +1716,6 @@
           ],
           "dependencies": [
             "FT360-shared-fixtures"
-          ]
-        },
-        {
-          "id": "FT365-conformance",
-          "criteria": [
-            {
-              "id": "FT365-conformance.derived",
-              "text": "Conformance tests derive restated tables from their owners and share one Go-rule scanner."
-            }
-          ],
-          "sources": [],
-          "deliverables": [
-            {
-              "source": {
-                "id": "conformance-observation-follow-on",
-                "path": "specs/conformance-observation-follow-on/spec.md",
-                "identity": "sha256:781e3174532b2074fd314ed1956d5b3e6fdf8e474d297180e375fb2fba07a6cf"
-              }
-            },
-            {
-              "source": {
-                "id": "independent-expectation-audit",
-                "path": "specs/independent-expectation-audit/spec.md",
-                "identity": "sha256:a046d4864b35200cf2d927c7c06c89e740ba41e059a69ec6145d2b161a8e96b0"
-              }
-            }
-          ],
-          "dependencies": [
-            "FT402"
-          ]
-        },
-        {
-          "id": "FT414-preconditions",
-          "criteria": [
-            {
-              "id": "FT414-preconditions.stated",
-              "text": "The record, commit, and landing verbs state their preconditions before an attempt."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT414",
-              "path": "roadmap/FT414.md",
-              "identity": "sha256:de3916872764dfd7d0519d93f954c961e4296399283c5defffa43718b66d6f46"
-            }
-          ]
-        },
-        {
-          "id": "FT437-pinned-rows",
-          "criteria": [
-            {
-              "id": "FT437-pinned-rows.done",
-              "text": "An approved plan that carries a pinned row's new identity, together with the row edit, records the decision in one plan and one commit, and a pinned-row edit with no exact approved plan still refuses."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT437",
-              "path": "roadmap/FT437.md",
-              "identity": "sha256:ed986b1d5df9ff39b3f63d5a4c23c5c7100ac4a116a129a5fb94bced2f91cb80"
-            }
-          ],
-          "deliverables": [
-            {
-              "source": {
-                "id": "pinned-row-edits",
-                "path": "specs/pinned-row-edits/spec.md",
-                "identity": "sha256:a02e080262846ab9554ec281f2fa90e0d68dec5da01cd10a7bb9e10b946e4236"
-              },
-              "obligations": [
-                "FT437"
-              ]
-            }
-          ]
-        },
-        {
-          "id": "FT439-comment-correction",
-          "criteria": [
-            {
-              "id": "FT439-comment-correction.done",
-              "text": "A comment-only correction after a chunk freeze keeps its verifications and its review chain."
-            }
-          ],
-          "sources": [
-            {
-              "id": "FT439",
-              "path": "roadmap/FT439.md",
-              "identity": "sha256:8bd6b4fe1bfaa7193b00715fed1d003cb2212467a025a1b13bd5da9bdc6600d9"
-            }
           ]
         },
         {
@@ -1812,6 +1767,22 @@
           ]
         },
         {
+          "id": "FT414-preconditions",
+          "criteria": [
+            {
+              "id": "FT414-preconditions.stated",
+              "text": "The record, commit, and landing verbs state their preconditions before an attempt."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT414",
+              "path": "roadmap/FT414.md",
+              "identity": "sha256:de3916872764dfd7d0519d93f954c961e4296399283c5defffa43718b66d6f46"
+            }
+          ]
+        },
+        {
           "id": "FT369-charge-slicing",
           "criteria": [
             {
@@ -1825,6 +1796,35 @@
               "path": "roadmap/FT369.md",
               "identity": "sha256:1bdad28bf7b7da8d4fb63ecb56c16df82caf2344fce142f85798126f71ca080f"
             }
+          ]
+        },
+        {
+          "id": "FT365-conformance",
+          "criteria": [
+            {
+              "id": "FT365-conformance.derived",
+              "text": "Conformance tests derive restated tables from their owners and share one Go-rule scanner."
+            }
+          ],
+          "sources": [],
+          "deliverables": [
+            {
+              "source": {
+                "id": "conformance-observation-follow-on",
+                "path": "specs/conformance-observation-follow-on/spec.md",
+                "identity": "sha256:781e3174532b2074fd314ed1956d5b3e6fdf8e474d297180e375fb2fba07a6cf"
+              }
+            },
+            {
+              "source": {
+                "id": "independent-expectation-audit",
+                "path": "specs/independent-expectation-audit/spec.md",
+                "identity": "sha256:a046d4864b35200cf2d927c7c06c89e740ba41e059a69ec6145d2b161a8e96b0"
+              }
+            }
+          ],
+          "dependencies": [
+            "FT402"
           ]
         },
         {
