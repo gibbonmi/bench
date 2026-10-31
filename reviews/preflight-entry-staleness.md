@@ -127,7 +127,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "es-c1-r1-standards",
+          "performer": "ft375-review-standards-1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a45b01c8b6c245008776cbb22fb6a64dcfce5af7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-standards-1",
+            "digest": "sha256:407754341f678a2373d05d3fd0afc5b5d7bb82a1f6d80be7fa36b8b1795bd19f",
+            "excerpt": "Standards axis, ES-C1, frozen tip d9d130308, evidence 602131f7 current.\nS1 internal/preflight/writes_landed.go:42 defaultBranchTip repeats the ResolvedDefault+ResolveCommit pair of internal/git/default_branch.go:39-47, internal/preflight/default_branch.go:95-104, internal/spec/widen.go:213-220. Rule: one source per fact. Confidence 7. ask-user.\nS2 internal/preflight/writes_landed_test.go:30 commitEverything equals commitAll at internal/preflight/staleness/drift_test.go:44; writes_landed_test.go:226 manualRequired re-reads the staleness row that table()/decision() read. Rule: one source per fact, fixture harnesses single-sourced. Confidence 7. ask-user.\nS3 internal/preflight/writes_landed.go:24 candidate filter repeats walkWrites cases; unkillable; spec mandates it. Confidence 5. no-op.\nS4 internal/preflight/writes_landed_test.go:7-8,70,88,133,183,206,138-156 spec row IDs in comments and test names. Rule: craft-comments provenance. Confidence 6. auto-fix.\nS5 internal/commitment/delivery.go:46 closing returns 5 values. Judgment call. Confidence 3. no-op.\nCount 5. Worst S1.\n"
+          },
+          "axis": "Standards",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "d9d130308c0b42a4118cbf4b63ad43534c395d61",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "es-c1-r1-spec",
+          "performer": "ft375-review-spec-1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a45b01c8b6c245008776cbb22fb6a64dcfce5af7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-spec-1",
+            "digest": "sha256:dac654fc3f2ecffe9a4402a9657b11d6b53f32cd09d3386b25604f1594eed4a9",
+            "excerpt": "Spec axis, ES-C1, frozen tip d9d130308, evidence 602131f7 current.\nP1 internal/preflight/writes_landed_test.go:155-170 ES32 fixture never puts the entry in LandedDeletions, so it does not show step 1 wins over step 4 when both hold; code correct at fence_writes.go:70-73; ES32 met as written. Confidence 3. no-op.\nCount 1. Worst P1. Audited ES13, ES14, ES24-ES40, ES45 against the frozen diff; no other miss; no scope creep.\n"
+          },
+          "axis": "Spec",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "d9d130308c0b42a4118cbf4b63ad43534c395d61",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "es-c1-r1-coverage",
+          "performer": "ft375-review-coverage-1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "a45b01c8b6c245008776cbb22fb6a64dcfce5af7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-coverage-1",
+            "digest": "sha256:e9200500f274d859c0ba4b2cff433348268d420382f6a110d650ea55ead83c1b",
+            "excerpt": "Coverage axis, ES-C1, frozen tip d9d130308, evidence 602131f7 current.\nC1 internal/preflight/fence_writes.go:70 seen[named] repeated-entry guard untested; probe omit '|| seen[named]' over ./internal/preflight: silent. Confidence 7. auto-fix.\nC2 internal/preflight/writes_landed.go:509 exists[entry] filter equivalent at row level; probe silent. Confidence 4. no-op.\nC3 internal/preflight/writes_landed.go:549 failed-query guard; probe drop 'err == nil &&': silent; near-equivalent. Confidence 4. no-op.\nCount 3. Worst C1. Probes 3: silent, silent, silent. Tree clean after probes.\n"
+          },
+          "axis": "Coverage",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "d9d130308c0b42a4118cbf4b63ad43534c395d61",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -201,3 +270,31 @@ The plan probe `closure-prediction` answered `bit` in `bench probe`.
 | `internal/commitment/repository/closure.go` | return an error when the tree holds no policy | `TestClosedRowPathsMatchClosure/no-policy` | ES14 branch |
 | `internal/commitment/repository/closure.go` | drop the error of `Closes` | `TestClosedRowPathsMatchClosure/obligation-free` | ES14 branch |
 | `internal/commitment/repository/closure.go` | skip the row-owner step in `ClosedRowPaths` | `TestClosedRowPathsMatchClosure/refused-source` | ES14 |
+
+## ES-C1 round 1 pickup
+
+The three axes reviewed the frozen pair `fbcd16dfa..d9d130308` on sonnet / high. The round found 9 raw findings and 4 repair targets, and every target falls on ticket 01.
+
+## Standards
+
+Count: 5. Worst issue: S1.
+
+- S1 (auto-fix, confidence 7): `internal/preflight/writes_landed.go:42` repeats the default-branch tip lookup of `internal/git/default_branch.go:39-47`, `internal/preflight/default_branch.go:95-104`, and `internal/spec/widen.go:213-220`. One shared lookup in `internal/git` replaces each copy, and each caller keeps its own failure handling.
+- S2 (auto-fix, confidence 7): `internal/preflight/writes_landed_test.go:30` and `:226` repeat the commit helper and the `manual_required` read of `internal/preflight/staleness/drift_test.go:30-44`. One shared helper in `internal/preflight/preflighttest` replaces both copies.
+- S4 (auto-fix, confidence 6): `internal/preflight/writes_landed_test.go` names spec row IDs in comments and test names. Name the behavior instead.
+- S3 (no-op): the spec requires the gatherer filter at `writes_landed.go:24`.
+- S5 (no-op): the five return values of `closing` are a judgment call.
+
+## Spec
+
+Count: 1. Worst issue: P1.
+
+- P1 (no-op, confidence 3): the ES32 fixture does not hold both step 1 and step 4 for one entry. The code grades step 1 first, and ES32 is met as written.
+
+## Coverage
+
+Count: 3. Worst issue: C1.
+
+- C1 (auto-fix, confidence 7): no test covers a repeated `Writes:` entry. A probe that omits the `seen[named]` guard at `internal/preflight/fence_writes.go:70` answered `silent`.
+- C2 (no-op): the `exists[entry]` filter is an equivalent mutant at row level.
+- C3 (no-op): the failed-query guard is a near-equivalent mutant.
