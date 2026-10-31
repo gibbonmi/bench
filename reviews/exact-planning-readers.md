@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:cdb3b23c390c3ca7611de0f98ccad926d48997c6becfd0baf2c73dc31ac20a26",
+  "plan_digest": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
   "implementation_session": "",
   "chunks": [
     {
@@ -1229,9 +1229,9 @@
     {
       "id": "ER-C4",
       "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
-      "tip": "f8b62b63dddb12aa3caeb620b5317ddec665f63d",
-      "plan_digest": "sha256:cdb3b23c390c3ca7611de0f98ccad926d48997c6becfd0baf2c73dc31ac20a26",
-      "source_digest": "b2a135cff5bedeaa0d13c6ee839196d8fb7ec18c",
+      "tip": "a9a22b7a27b42b841978e3a52702251aedea66f7",
+      "plan_digest": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
+      "source_digest": "95b612152a60899ee780b1809bccd94a4b6c6c71",
       "acceptance_rows": [
         "ER29",
         "ER30",
@@ -1241,7 +1241,38 @@
         "ER34",
         "ER48"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "ER-C4-4b-ER-C4-projection-red",
+          "performer": "ft125-author-4b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "95b612152a60899ee780b1809bccd94a4b6c6c71",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-author-4b",
+            "digest": "sha256:a5470b4177a4bdd0162493125f02c035a576fb494ddb55aa35b42d809450858b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,11,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedContinuationRefusesChangedProjection,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2218\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5454,12\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_leaves,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_label_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_lease_appears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_path_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_request_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_state_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_tree_disappears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_ignored_file_appears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_unbound_assignment_joins,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/the_branch_stops_being_landed,\"selected_queries_test.go:335: the change left the related projection equal\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "a9a22b7a27b42b841978e3a52702251aedea66f7",
+          "requirement": "ER-C4-projection-red",
+          "command": "bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "replace complete related projection identity with commitment-only identity",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-author-4b",
+              "digest": "sha256:a5470b4177a4bdd0162493125f02c035a576fb494ddb55aa35b42d809450858b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,11,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedContinuationRefusesChangedProjection,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2218\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5454,12\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_leaves,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_label_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_lease_appears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_path_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_request_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_state_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_tree_disappears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_ignored_file_appears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_unbound_assignment_joins,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/the_branch_stops_being_landed,\"selected_queries_test.go:335: the change left the related projection equal\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
       "reviews": []
     }
   ],
@@ -1451,6 +1482,24 @@
         ],
         "ER-C3": [
           "ER-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cdb3b23c390c3ca7611de0f98ccad926d48997c6becfd0baf2c73dc31ac20a26",
+      "to": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
         ]
       }
     }
