@@ -1517,6 +1517,74 @@
           "supersedes": [
             "ER-C4-coverage-1"
           ]
+        },
+        {
+          "id": "ER-C4-standards-3",
+          "performer": "ft125-review-c4-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bc0eb6e2fe36b1618788281276f4e0b3f3316a68",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-standards-3",
+            "digest": "sha256:6b384ea665c11ac3b7b09ff485692955c749deba7386d78f74039385ef6b7420",
+            "excerpt": "Standards axis, ER-C4 confirming round 2 reaffirmation (repair delta 49ad0e978..b8a27b497).\nN3 (auto-fix, conf 4) internal/worktree/related.go:158 namesTreeAlone copies the tree-target label-selection policy of internal/worktree/tree_target.go:33-50 (exact label, active class first, one survivor) and has drifted: it omits the lineSafe gate at tree_target.go:33. Fix: one labelSelection function that TreeTarget and namesTreeAlone both call.\nThe rest of the delta reaffirms: the readable predicate, the one readAction source, usage.PrimaryTreeTarget as the WorktreeRead usage source, the render probe through the axi owner, and the putLinkedRelated/bindRelated fixture split.\nOptional advice: comment that the help-not-empty probe at related.go:297-298 depends on RenderHelp returning an empty table on a rejected action.\nOutcome: fail (N3).\n"
+          },
+          "axis": "Standards",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "b8a27b497ece163343be10624afbbaab3aa09af0",
+          "finding_ids": [
+            "N3"
+          ],
+          "supersedes": [
+            "ER-C4-standards-2"
+          ]
+        },
+        {
+          "id": "ER-C4-spec-3",
+          "performer": "ft125-review-c4-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bc0eb6e2fe36b1618788281276f4e0b3f3316a68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-spec-3",
+            "digest": "sha256:33b4398f17078b68dbb358713299890bdd492a09ec45857f82ff0366402fed9e",
+            "excerpt": "Spec axis, ER-C4 confirming round 2 (repair delta 49ad0e978..b8a27b497).\nN1 closed: namesTreeAlone (internal/worktree/related.go:151-163) refuses usage.PrimaryTreeTarget and requires exactly one active ledger assignment with the label (spec 152).\nN2 closed: a label the action owner rejects drops only that row's read action (related.go:160-161, list.go:220); other rows keep their actions (spec 153); worktree_leaves_test.go:233-262.\nNew findings: none. The repair stays inside the 4b Writes paths and the spec 150-154 reach.\nRow audit: ER29 ER30 ER31 met (untouched); ER32 ER33 ER34 met; ER48 met (plan probe bit again).\nOptional advice: the action grammar allows tab, CR, LF while TreeTarget refuses control characters through sanitize.LineSafe (confidence 3); worktree_leaves_test.go:233 cites ER34 for the read-action label rule.\nOutcome: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "b8a27b497ece163343be10624afbbaab3aa09af0",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C4-spec-2"
+          ]
+        },
+        {
+          "id": "ER-C4-coverage-3",
+          "performer": "ft125-review-c4-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bc0eb6e2fe36b1618788281276f4e0b3f3316a68",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-coverage-3",
+            "digest": "sha256:d94d6ff6561007ab926c7ce67c26cd66424fa5e9c5eefd72b70eeadf7c007f99",
+            "excerpt": "Coverage axis, ER-C4 confirming round 2 (repair delta 49ad0e978..b8a27b497).\nC10 closed: TestRelatedSpecOperandResolvesFromTheCaller (cmd/bench/worktree_leaves_test.go:272-297) walks every continuation from sub with a relative path, an absolute path and a slug, requires at least 2 pages and 41 matches; a root-relative continuation turns it red.\nR10 coverage closed: TestRelatedWorktreeActions cases at worktree_leaves_test.go:237-265 each fail one spec 152-153 condition (primary keyword, active twin, grammar-rejected label); the exact help-row match at line 261 grades the keep-other-actions rule.\nNew findings: none. Probes: none (graded by reading under the minimal-probe direction).\nOptional advice: no fixture gives a non-active assignment the label of an active row, so the landingActiveState qualifier at related.go:294 is ungraded.\nOutcome: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "b8a27b497ece163343be10624afbbaab3aa09af0",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C4-coverage-2"
+          ]
         }
       ]
     }
@@ -2178,3 +2246,11 @@ The repair delta is `49ad0e978..b8a27b497`. On the reviewer direction for minima
 - The plan probe ER-C4-projection-red answered `bit` with 11 failed cases, and the record holds it as `ER-C4-r3-ER-C4-projection-red`.
 
 The repair reports one defect outside its fence. The new `usage.PrimaryTreeTarget` is a second source of the `primary` keyword beside `primaryTarget` in `internal/treetarget/identify.go`, and `internal/treetarget/flag.go` spells `<label|primary>` by hand. The orchestrator accepts it as repair target R12 under `--auto-approve`. The next repair cycle takes R12 together with any finding from confirming round 2.
+
+## ER-C4 confirming round 2
+
+The repair delta is `49ad0e978..b8a27b497`. Each axis ran on opus / high.
+Spec and Coverage re-reviewed in full and pass: N1, N2, and C10 are closed. Standards gave a delta-only reaffirmation under the bounded repair policy and found one defect that the repair introduced.
+Repair cycle 4 takes R12 and R13 on ticket 4b under `--auto-approve`.
+
+- N3 (auto-fix, confidence 4): `namesTreeAlone` copies the label-selection rule of `internal/worktree/tree_target.go`, and the copy omits the `lineSafe` gate. Repair target R13 moves that selection into one function that `TreeTarget` and the related read rule both call. This also closes the Spec advice about a label with a control character and the Coverage advice about the ungraded active qualifier.
