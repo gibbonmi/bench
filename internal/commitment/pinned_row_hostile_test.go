@@ -61,7 +61,7 @@ func TestPinnedRowPlanRefusesAHostileWorkingFile(t *testing.T) {
 		}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			root, worktree, current := pinnedRows(t)
+			root, worktree, current := commitmenttest.PinnedRows(t)
 			source := current.Milestones[0].Outcomes[0].Sources[0]
 			row.plant(t, worktree, source.Path)
 			before := commitmenttest.MilestoneState(t, root, worktree)

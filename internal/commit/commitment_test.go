@@ -236,7 +236,7 @@ func TestCommitmentApprovedRowEdit(t *testing.T) {
 				if got == "" {
 					got = string(published)
 				}
-				want := "commitment source " + strconv.Quote("FT1") + " changed from " + commitment.Identity([]byte(approved)) + " to " + commitment.Identity([]byte(got))
+				want := commitmenttest.ChangedFrom(policy.Milestones[0].Outcomes[0].Sources[0], got)
 				// The approval check refuses before the protected-commitment check, so the
 				// refusal keeps the face of the approval check.
 				const protected = "candidate changes protected commitment"

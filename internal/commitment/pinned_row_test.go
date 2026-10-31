@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -17,20 +16,6 @@ import (
 // pinnedEdit is a row body that no published row holds.
 const pinnedEdit = "**FT1 — A**\n\nRecord the settled A decision.\n"
 
-// pinnedRows commits on main the protected milestone whose outcomes A then B pin FT1 and FT2,
-// and returns the root, one owned assignment worktree of it, and the published policy.
-func pinnedRows(t *testing.T) (root, worktree string, published commitment.Policy) {
-	t.Helper()
-	root = gittest.RepoOnBranch(t, "main")
-	commitmenttest.SeedProtected(t, root)
-	commitmenttest.Commit(t, root, "protect the rows")
-	published, _, err := commitrepo.Store{Root: root}.Policy()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return root, commitmenttest.Assignment(t, root, "pinned-row"), published
-}
-
 // repin returns policy with the first source of outcome index bound at the identity of body.
 func repin(policy commitment.Policy, index int, body string) commitment.Policy {
 	outcomes := append([]commitment.Outcome(nil), policy.Milestones[0].Outcomes...)
@@ -39,12 +24,6 @@ func repin(policy commitment.Policy, index int, body string) commitment.Policy {
 	policy.Milestones = []commitment.Milestone{policy.Milestones[0]}
 	policy.Milestones[0].Outcomes = outcomes
 	return policy
-}
-
-// changedFrom is the refusal of the source of outcome index in proposed whose read bytes are got.
-func changedFrom(proposed commitment.Policy, index int, got string) string {
-	source := proposed.Milestones[0].Outcomes[index].Sources[0]
-	return "commitment source " + strconv.Quote(source.ID) + " changed from " + source.Identity + " to " + commitment.Identity([]byte(got))
 }
 
 // Plan accepts the new identity of each pinned row whose working file holds the new bytes
@@ -62,7 +41,7 @@ func TestPinnedRowPlanReadsTheWorkingFile(t *testing.T) {
 		{name: "linked-parent", bodies: []string{pinnedEdit}, linked: true},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			_, worktree, proposed := pinnedRows(t)
+			_, worktree, proposed := commitmenttest.PinnedRows(t)
 			for i, body := range row.bodies {
 				commitmenttest.Write(t, worktree, proposed.Milestones[0].Outcomes[i].Sources[0].Path, body)
 				proposed = repin(proposed, i, body)
@@ -103,7 +82,7 @@ func TestPinnedRowPlanRefusesBytesTheWorkingFileLacks(t *testing.T) {
 		}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			root, worktree, current := pinnedRows(t)
+			root, worktree, current := commitmenttest.PinnedRows(t)
 			path := current.Milestones[0].Outcomes[0].Sources[0].Path
 			data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
 			if err != nil {
@@ -114,7 +93,7 @@ func TestPinnedRowPlanRefusesBytesTheWorkingFileLacks(t *testing.T) {
 			proposed := repin(current, 0, pinnedEdit)
 			before := commitmenttest.MilestoneState(t, root, worktree)
 			_, err = (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, proposed))
-			want := changedFrom(proposed, 0, got)
+			want := commitmenttest.ChangedFrom(proposed.Milestones[0].Outcomes[0].Sources[0], got)
 			if err == nil || err.Error() != want || commitmenttest.MilestoneState(t, root, worktree) != before {
 				t.Fatalf("Plan = %v, want %q that writes nothing", err, want)
 			}
@@ -134,7 +113,7 @@ func TestPinnedRowApproveRereadsTheWorkingFile(t *testing.T) {
 		{name: "changed-after-plan", after: later},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			_, worktree, current := pinnedRows(t)
+			_, worktree, current := commitmenttest.PinnedRows(t)
 			path := current.Milestones[0].Outcomes[0].Sources[0].Path
 			commitmenttest.Write(t, worktree, path, pinnedEdit)
 			proposed := repin(current, 0, pinnedEdit)
@@ -166,7 +145,7 @@ func TestPinnedRowApproveRereadsTheWorkingFile(t *testing.T) {
 				}
 				return
 			}
-			want := changedFrom(proposed, 0, row.after)
+			want := commitmenttest.ChangedFrom(proposed.Milestones[0].Outcomes[0].Sources[0], row.after)
 			if err == nil || !strings.Contains(err.Error(), want) || !bytes.Equal(staged, before) {
 				t.Fatalf("Approve(a row that changed after the plan) = %v, want %q that leaves the policy file unchanged", err, want)
 			}
@@ -185,7 +164,7 @@ func TestPinnedRowPlanNormalizesTheOccurrenceLedger(t *testing.T) {
 		{name: "two-ledgers", body: kept + "Occurrences: alpha-1\nOccurrences: beta-2\n", identity: kept, want: "has a malformed occurrence ledger"},
 	} {
 		t.Run(row.name, func(t *testing.T) {
-			_, worktree, current := pinnedRows(t)
+			_, worktree, current := commitmenttest.PinnedRows(t)
 			commitmenttest.Write(t, worktree, current.Milestones[0].Outcomes[0].Sources[0].Path, row.body)
 			_, err := (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, repin(current, 0, row.identity)))
 			if row.want == "" && err != nil {
