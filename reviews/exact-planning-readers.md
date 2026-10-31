@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:730af70f9af8885e7d595e72f5e217f8cc64fdafea422c09a8c9118b14a79a1b",
+  "plan_digest": "sha256:937fb02df13a153ed543df044dfa80f036cd069eb2ae888786c93c02781689a9",
   "implementation_session": "",
   "chunks": [
     {
@@ -1687,9 +1687,9 @@
     {
       "id": "ER-C5",
       "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
-      "tip": "4b1800d7020bb2777924e836f1dc303ac1b6eefe",
-      "plan_digest": "sha256:730af70f9af8885e7d595e72f5e217f8cc64fdafea422c09a8c9118b14a79a1b",
-      "source_digest": "e9d552e7b25a5aa1c20fa4b890c975cb0b5384b0",
+      "tip": "a41c9fb92f8f5b2914604b04b8f8437c904d3557",
+      "plan_digest": "sha256:937fb02df13a153ed543df044dfa80f036cd069eb2ae888786c93c02781689a9",
+      "source_digest": "8d5e775c10b90e45af2830e0c8cc7088428adbac",
       "acceptance_rows": [
         "ER47",
         "ER41",
@@ -2249,6 +2249,27 @@
           "ER-C5"
         ]
       }
+    },
+    {
+      "from": "sha256:730af70f9af8885e7d595e72f5e217f8cc64fdafea422c09a8c9118b14a79a1b",
+      "to": "sha256:937fb02df13a153ed543df044dfa80f036cd069eb2ae888786c93c02781689a9",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ],
+        "ER-C5": [
+          "ER-C5"
+        ]
+      }
     }
   ]
 }
@@ -2694,3 +2715,14 @@ ST1, ST2, S1, C1, and C2 are closed, and the Spec axis passes. Repair cycle 2 ta
 The orchestrator keeps the behavior: one eligibility rule decides both the advice and the owned record, as spec line 312 states. This decision is open to reviewer veto.
 Repair target R6 gives that rule one owner, updates the census comments, and adds the owned outside-repository row.
 Repair target R7 takes the Spec advice: the census account in the reference file names a file inside the repository, and its anchored needle stays.
+
+## ER-C5 repair cycle 2 witness reds
+
+The repair delta is `06fae8759..a41c9fb92`. The `eligibleRead` function now owns the one eligibility rule for the advice and the owned record.
+The census comments call `ObserveRead` the structural read-shape observation, and the reference names a file inside the repository.
+
+- R6: the new owned `cat /etc/hosts` row of `TestRawReadAdvice` passes on the repaired code.
+- R6: a hand mutant passed the shape-only flag to `readOwner`. The row went red at `planning_read_advice_test.go:53`.
+- R6: the red message was `owned outside read breakdown = "cat=2", want no owned record, cat=1`.
+- R7: no new row. The anchored needle in the reference still matches, and the anchor tests pass.
+- The tree restored the hand mutant before the commit.
