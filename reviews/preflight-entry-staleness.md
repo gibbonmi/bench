@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/preflight-entry-staleness/spec.md",
-  "plan_digest": "sha256:b3537a007ee8d6dd73d751adeb6e25496249eff858254bfda5d6b76ee69a1155",
+  "plan_digest": "sha256:50eb41bdb6840594f54a53ecc80090806128a7bf20c7538c8b530c5debfdd0c1",
   "implementation_session": "",
   "chunks": [
     {
@@ -452,6 +452,111 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ES-C3",
+      "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+      "tip": "e4b141c0fbfff657a81c5041d0d4669cee291a88",
+      "plan_digest": "sha256:50eb41bdb6840594f54a53ecc80090806128a7bf20c7538c8b530c5debfdd0c1",
+      "source_digest": "93764a581f0e8f2dd1ca937a56ca8450d70c323f",
+      "acceptance_rows": [
+        "ES01",
+        "ES02",
+        "ES03",
+        "ES04",
+        "ES05",
+        "ES06",
+        "ES07",
+        "ES08",
+        "ES09",
+        "ES10",
+        "ES11",
+        "ES12",
+        "ES15",
+        "ES16",
+        "ES17",
+        "ES18",
+        "ES19",
+        "ES20",
+        "ES21",
+        "ES22",
+        "ES23",
+        "ES41",
+        "ES42",
+        "ES46",
+        "ES48",
+        "ES49",
+        "ES52",
+        "ES53",
+        "ES43",
+        "ES44",
+        "ES47",
+        "ES50",
+        "ES51"
+      ],
+      "verification": [
+        {
+          "id": "es-c3-t03-map-sources",
+          "performer": "ft375-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "93764a581f0e8f2dd1ca937a56ca8450d70c323f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-author-03",
+            "digest": "sha256:60cd712bbd7fbe5313de398e0008e075d3a77c9d2ae34f23092d9b17b23ad4b9",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesClosureDeletion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesClosureDeletion$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,516\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,53,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesClosureDeletion,\"map_sources_test.go:72: map-sources detail = \\\"\\\", want \\\"decisions/active.md: Sources Path roadmap/FT1.md is deleted by the delivery closure of specs/example/spec.md; specs/example/decisions/compiled.md: Sources Path roadmap/FT1.md is deleted… (411 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e4b141c0fbfff657a81c5041d0d4669cee291a88",
+          "requirement": "map-sources",
+          "command": "bench test --package ./internal/preflight --run 'MapSources|SourceTipOmittedKeepsTodaysVerdict|DecideChargeRows'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Grade the map sources with the working-tree resolver, and record that TestMapSourcesClosureDeletion turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-author-03",
+              "digest": "sha256:60cd712bbd7fbe5313de398e0008e075d3a77c9d2ae34f23092d9b17b23ad4b9",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesClosureDeletion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesClosureDeletion$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,516\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,53,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesClosureDeletion,\"map_sources_test.go:72: map-sources detail = \\\"\\\", want \\\"decisions/active.md: Sources Path roadmap/FT1.md is deleted by the delivery closure of specs/example/spec.md; specs/example/decisions/compiled.md: Sources Path roadmap/FT1.md is deleted… (411 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "es-c3-t03-shared-grammar",
+          "performer": "ft375-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "93764a581f0e8f2dd1ca937a56ca8450d70c323f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-author-03",
+            "digest": "sha256:810464fe1f8a225c81f59f90e5c1d87509d984940abf97d97b86f821ffe8a78a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesGrammar,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesGrammar$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,51,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesGrammar,\"map_sources_test.go:149: map-sources detail = \\\"decisions/m.md: Sources docs/kept.md missing Drift; decisions/m.md: Sources entry must start with Path or URL; decisions/m.md: Sources Path ../outside.md must name an existing regular file; dec… (555 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e4b141c0fbfff657a81c5041d0d4669cee291a88",
+          "requirement": "shared-grammar",
+          "command": "bench test --package ./internal/maps --package ./internal/preflight --run 'MapSources|ValidateDecisionMapTree'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the lexical path rule from the shared grammar, and record that TestMapSourcesGrammar turns red on the escaping-path case of ES52.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-author-03",
+              "digest": "sha256:810464fe1f8a225c81f59f90e5c1d87509d984940abf97d97b86f821ffe8a78a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesGrammar,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesGrammar$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,51,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesGrammar,\"map_sources_test.go:149: map-sources detail = \\\"decisions/m.md: Sources docs/kept.md missing Drift; decisions/m.md: Sources entry must start with Path or URL; decisions/m.md: Sources Path ../outside.md must name an existing regular file; dec… (555 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -492,6 +597,15 @@
     {
       "from": "sha256:de3f820102ea29b8180f39876d5892962f0165e94df8b6612c2e12b7bcefcb4b",
       "to": "sha256:b3537a007ee8d6dd73d751adeb6e25496249eff858254bfda5d6b76ee69a1155",
+      "chunk_ids": {
+        "ES-C1": [
+          "ES-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b3537a007ee8d6dd73d751adeb6e25496249eff858254bfda5d6b76ee69a1155",
+      "to": "sha256:50eb41bdb6840594f54a53ecc80090806128a7bf20c7538c8b530c5debfdd0c1",
       "chunk_ids": {
         "ES-C1": [
           "ES-C1"
