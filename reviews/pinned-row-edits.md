@@ -415,16 +415,185 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "pe-c1-standards-2",
+          "performer": "ft437-review-standards-02",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft437-review-standards-02",
+            "digest": "sha256:cf25880d5cadd85590400561c142f432dc4de8e0ab853f8af420b06fc1e5d13f",
+            "excerpt": "Standards confirming round, PE-C1, opus/medium, repair delta 5fb78f311..42537669f. S1 closed: one fixture commitmenttest.PinnedRows (commitmenttest/repo.go:179-191), no pasted copy. S2 closed: one builder commitmenttest.ChangedFrom (repo.go:193-196) at all three sites; production keeps its own text at sources.go:254. New findings: none. Advice (3): two older seeds differ in base and steps.\n"
+          },
+          "axis": "Standards",
+          "base": "fba398122a3165ab735ed509aa85b05136ea716b",
+          "tip": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "finding_ids": [],
+          "supersedes": [
+            "pe-c1-standards-1"
+          ]
+        },
+        {
+          "id": "pe-c1-spec-2",
+          "performer": "ft437-review-spec-02",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft437-review-spec-02",
+            "digest": "sha256:d39149f9d19802980921f3bcb5661572e0a8f121bc6b086fefe570a198a0c727",
+            "excerpt": "Spec confirming round, PE-C1, opus/medium. P1 closed: PE21, PE22, PE25 name protectedCandidate and its face; true of candidate.go:79-80 and the tests. P2 closed: repository/head_binding_test.go:269 refuses the face. P3 closed: the sentence is true; only the validateSourceAt argument changes (candidate.go:274). C1 scope closed: the subtests test spec.md:84 and add no behavior. New findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "fba398122a3165ab735ed509aa85b05136ea716b",
+          "tip": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "finding_ids": [],
+          "supersedes": [
+            "pe-c1-spec-1"
+          ]
+        },
+        {
+          "id": "pe-c1-coverage-2",
+          "performer": "ft437-review-coverage-02",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft437-review-coverage-02",
+            "digest": "sha256:e264bb733cf03b7cc5478d1c7eecc55a673f9aab2b773f5a9ae6080d2ac21ecf",
+            "excerpt": "Coverage confirming round, PE-C1, opus/medium. C1 closed: moved-id and new-id-at-current-path (internal/commitment/head_binding_test.go:57-85) require the exact ChangedFrom error for main bytes, so they pin the read location; agrees with the coordinator probe. No assertion weakened by S1/S2; PE25 is stricter. New gaps: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "fba398122a3165ab735ed509aa85b05136ea716b",
+          "tip": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "finding_ids": [],
+          "supersedes": [
+            "pe-c1-coverage-1"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+    "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+    "reconciliation": {
+      "PE01": "covered",
+      "PE02": "covered",
+      "PE03": "covered",
+      "PE04": "covered",
+      "PE05": "covered",
+      "PE06": "covered",
+      "PE07": "covered",
+      "PE08": "covered",
+      "PE09": "covered",
+      "PE10": "covered",
+      "PE11": "covered",
+      "PE12": "covered",
+      "PE13": "covered",
+      "PE14": "covered",
+      "PE15": "covered",
+      "PE16": "covered",
+      "PE17": "covered",
+      "PE18": "covered",
+      "PE19": "covered",
+      "PE20": "covered",
+      "PE21": "covered",
+      "PE22": "covered",
+      "PE23": "covered",
+      "PE24": "covered",
+      "PE25": "covered",
+      "PE26": "covered",
+      "PE27": "covered",
+      "PE28": "covered",
+      "PE29": "covered"
+    },
+    "verification": [
+      {
+        "id": "pe-final-commitment-packages",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:e7a23fd10ca0476df16a29c4554e66032222174b6b82a77fe9694c161f2bff59",
+          "excerpt": "packages[4]: internal/commitment pass 209; commitcmd pass 25; commitmenttest no-tests; repository pass 207. failures[0].\n"
+        },
+        "requirement": "commitment-packages",
+        "command": "bench test --package ./internal/commitment/...",
+        "exit_code": 0
+      },
+      {
+        "id": "pe-final-commit-package",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:a8bd67cfb98b5388d514c8958bb6c6304c96f2942a50eab68d9af2dce53cb5d2",
+          "excerpt": "packages[1]: internal/commit pass 136. failures[0].\n"
+        },
+        "requirement": "commit-package",
+        "command": "bench test --package ./internal/commit",
+        "exit_code": 0
+      },
+      {
+        "id": "pe-final-walk-owners",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:98f3793549a457d1f4ddc0a7173a6ae60510c09e28222ff78c06629ceef1b258",
+          "excerpt": "packages[2]: internal/bounds pass 64; internal/roadmap pass 208. failures[0].\n"
+        },
+        "requirement": "walk-owners",
+        "command": "bench test --package ./internal/bounds --package ./internal/roadmap",
+        "exit_code": 0
+      },
+      {
+        "id": "pe-final-coverage",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:3835620dcbce11b55694d587c3af70bf7f7565ebeccfb6a2380ef4d26c4bf318",
+          "excerpt": "ok: coverage map valid — 29 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check pinned-row-edits",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -471,3 +640,7 @@ Findings: 1 accepted. Worst issue: C1.
 - Standards S4: `internal/bounds` holds two link walks with the same body. The spec decides to keep the absolute walk and the root-relative walk separate.
 - Coverage C2: the hostile-file refusals match only the `refused:` prefix.
 - Coverage C3: no test reaches the `Lstat` error branch that is not a missing file, and the plan still refuses.
+
+## PE-C1 confirming round
+
+Repair cycle 1 of 2 is consumed. The repair commit `42537669f` closes S1, S2, P2, and C1, and plan commit `94a17943c` closes P1 and P3. The coordinator probe of both halves of the `ChangedSource` match bit on both mutants. The confirmation record refused, because `internal/commitment/commitmenttest/repo.go` is not a Go test file. For that reason the three axes ran a confirming round over the repair delta. Each axis passed with no new finding.
