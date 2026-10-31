@@ -1090,6 +1090,74 @@
           "supersedes": [
             "ER-C3-coverage-3"
           ]
+        },
+        {
+          "id": "ER-C3-standards-5",
+          "performer": "ft125-review-c3-standards-5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5815f829b4bb12e77a7520efdaf51848f7743536",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-standards-5",
+            "digest": "sha256:62355564c05f6ee59f299b3c78cdbe3f5219fda00e3ce2af2431a39e53ffa634",
+            "excerpt": "Standards axis, ER-C3 confirming round 4 (repair delta acf39804f..5cd178b34). 0 blocking findings; 2 optional advice items.\nAdvice 1 (severity 2, conf 6): internal/outline/declaration_test.go:63 the test-local type span hides the production function span.\nAdvice 2 (severity 2, conf 3): single-line rows of the span table have no named mutation of their own; they are fixture layout facts.\nOne source per fact holds: physicalLine is the only line computation in internal/outline. Comment register and expected values checked.\n"
+          },
+          "axis": "Standards",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "5cd178b342f484da44c6e9bfd681d980551d48a5",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-standards-4"
+          ]
+        },
+        {
+          "id": "ER-C3-spec-5",
+          "performer": "ft125-review-c3-spec-5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5815f829b4bb12e77a7520efdaf51848f7743536",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-spec-5",
+            "digest": "sha256:cbe272ea817d8302df1cbff031657d334c27bb91c19f1bb9c0f74456bdeb1aa8",
+            "excerpt": "Spec axis, ER-C3 confirming round 4 (repair delta acf39804f..5cd178b34). F1 closed (conf 9). 0 new findings.\nEvery line value in the --symbol flow goes through physicalLine (PositionFor(p, false).Line): FuncDecl Line, GenDecl Line, span First/Last. The candidate row and the same-file --lines route use physical lines, which match SelectLines. ER11-ER15 unchanged apart from the line values; the span test is stricter.\n"
+          },
+          "axis": "Spec",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "5cd178b342f484da44c6e9bfd681d980551d48a5",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-spec-4"
+          ]
+        },
+        {
+          "id": "ER-C3-coverage-5",
+          "performer": "ft125-review-c3-coverage-5",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5815f829b4bb12e77a7520efdaf51848f7743536",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-coverage-5",
+            "digest": "sha256:ecb9b94d582b71611ae359ed1b8e825a1975788d4a331121452c1cd7771f3e2e",
+            "excerpt": "Coverage axis, ER-C3 confirming round 4 (repair delta acf39804f..5cd178b34). C8 closed. 1 new finding; worst C9. No probe run.\nC9 (auto-fix, conf 8) internal/outline/declaration.go:77 the GenDecl Line call to physicalLine is ungraded under a //line directive, because no GenDecl follows the directive in declarationSource; a revert to positions.Line(name.Pos()) passes. Missing test: a GenDecl row after the directive.\nFuncDecl Line and span First/Last are graded by the Directed fixture row.\n"
+          },
+          "axis": "Coverage",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "5cd178b342f484da44c6e9bfd681d980551d48a5",
+          "finding_ids": [
+            "C9"
+          ],
+          "supersedes": [
+            "ER-C3-coverage-4"
+          ]
         }
       ]
     }
@@ -1565,3 +1633,12 @@ The repair delta is `acf39804f..5cd178b34`, and it changes only `internal/outlin
 
 - R14: before the fix, `TestDeclarationSpans` failed at `declaration_test.go:90`, because `Directed` read the directive-adjusted lines 102, 101, and 103. A swap of `PositionFor(p, false).Line` to `positions.Line(p)` answered `bit`.
 - R15: the probe that swaps `First: first, Last: last` to `First: last, Last: first` answered `bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes`.
+
+## ER-C3 confirming round 4
+
+The repair delta is `acf39804f..5cd178b34`. Each axis ran on opus / high.
+Spec F1 and Coverage C8 are closed, and the Standards and Spec axes pass.
+
+- C9 (auto-fix, confidence 8): no grouped declaration follows the `//line` directive in the fixture, so the GenDecl `Line` call to `physicalLine` at `internal/outline/declaration.go:77` is ungraded. Repair target R16 adds that test row. The repair is test-only, so a coordinator probe closes it through `bench record confirmation`.
+
+Optional advice, with no finding ID: the test-local `span` type hides the production `span` function. R16 renames the test type, because the repair already edits that table.
