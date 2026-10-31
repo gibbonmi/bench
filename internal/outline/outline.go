@@ -9,7 +9,7 @@
 // invocation emits the summary `outline_dirs[N]{dir,symbols}:` instead. This summary
 // carries one row per scanned top-level directory with that directory's total symbol
 // count, so a cold probe costs a screen. Every form emits its complete answer; no form
-// truncates to a silent prefix.
+// truncates to a silent prefix. Every form ends with derived continuation help.
 //
 // The tool LOCATES candidate seams; it does not IDENTIFY the project's blessed seams.
 // `projects/<name>.md` owns that identification. The tool is a line-regex indexer, not

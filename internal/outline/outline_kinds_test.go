@@ -124,8 +124,8 @@ func TestUnscannableTestdataFilesStillEmitFixtureRows(t *testing.T) {
 
 // oldOutline and newOutline are the two pinned renderings of writeKindFixtureTree:
 // oldOutline is the kind vocabulary without helper, double, and fixture, and newOutline is
-// the one this package emits. The pair pins the byte delta: any change to an
-// outline row reds this test.
+// the one this package emits. Both end with the same --symbol help, because each lists a
+// Go declaration. The pair pins the byte delta: any change to an outline row reds this test.
 const oldOutline = `outline[9]{file,line,kind,name}:
   pkg/doubles_test.go,"2",type,FakeClock
   pkg/doubles_test.go,"3",type,stubStore
@@ -139,6 +139,8 @@ const oldOutline = `outline[9]{file,line,kind,name}:
 outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_symbols,omitted_symbols,truncated}:
   "4","4","0","9","9","0","false"
 outline_skips[0]{file,reason}:
+help[1]{cmd,why}:
+  bench outline --symbol <name>,read one listed Go declaration
 `
 
 const newOutline = `outline[10]{file,line,kind,name}:
@@ -155,6 +157,8 @@ const newOutline = `outline[10]{file,line,kind,name}:
 outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_symbols,omitted_symbols,truncated}:
   "4","4","0","10","10","0","false"
 outline_skips[0]{file,reason}:
+help[1]{cmd,why}:
+  bench outline --symbol <name>,read one listed Go declaration
 `
 
 // OI4: the old-to-new fixture pair reds on any outline byte delta. The

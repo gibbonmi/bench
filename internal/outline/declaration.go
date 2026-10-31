@@ -8,7 +8,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
 	"path"
 	"path/filepath"
 	"slices"
@@ -180,6 +179,11 @@ func (s symbolRead) matches(d Declaration) bool {
 	return d.Name == s.name && d.Receiver == s.receiver && (!s.pointer || d.Pointer)
 }
 
+// inSymbolScope reports whether a --symbol read parses rel: a Go file that is not a fixture.
+func inSymbolScope(rel string) bool {
+	return path.Ext(rel) == ".go" && !IsFixture(rel)
+}
+
 // candidate is one matching declaration with the file that holds it.
 type candidate struct {
 	Declaration
@@ -191,13 +195,15 @@ type candidate struct {
 // page of its original source bytes. A file that the read policy refuses or that is not
 // valid Go refuses the call, because it can hold the declaration. No match is one
 // present-false page. Several matches refuse with each candidate and its narrowing command,
-// and with no declaration body. Candidates order by file, source offset, and qualified name.
+// and with no declaration body. A bare name with no package-level match refuses the same
+// way with each same-name method as a candidate. Candidates order by file, source offset,
+// and qualified name.
 func (s symbolRead) page(root string, files []string, command []string) (string, int) {
-	var found []candidate
+	var found, methods []candidate
 	scope := sha256.New()
 	var scopeBytes int64
 	for _, rel := range files {
-		if path.Ext(rel) != ".go" || IsFixture(rel) {
+		if !inSymbolScope(rel) {
 			continue
 		}
 		content, reason, ok := ReadScannable(filepath.Join(root, filepath.FromSlash(rel)))
@@ -214,14 +220,17 @@ func (s symbolRead) page(root string, files []string, command []string) (string,
 			return toon.Errorf(rel+" is not valid Go", err.Error()) + "\n", 1
 		}
 		for _, d := range declarations {
-			if s.matches(d) {
+			switch {
+			case s.matches(d):
 				found = append(found, candidate{d, rel, content})
+			case s.receiver == "" && d.Name == s.name && d.Receiver != "":
+				methods = append(methods, candidate{d, rel, content})
 			}
 		}
 	}
-	slices.SortFunc(found, func(a, b candidate) int {
-		return cmp.Or(strings.Compare(a.file, b.file), cmp.Compare(a.Start, b.Start), strings.Compare(a.Qualified(), b.Qualified()))
-	})
+	if len(found) == 0 && len(methods) > 0 {
+		return ambiguous(root, s.text, methods)
+	}
 	request := responsebound.ReadRequest{Command: command, Kind: declarationKind, Selection: s.text, Scope: root, Offset: s.offset, Token: s.token, Continued: s.continued}
 	switch len(found) {
 	case 0:
@@ -243,24 +252,29 @@ func (s symbolRead) page(root string, files []string, command []string) (string,
 	return page.Output, 0
 }
 
-// ambiguous refuses a selector that names several declarations. It lists each candidate and
-// offers one command per candidate that names its file from the caller's directory and its
-// qualified name.
+// ambiguous refuses a selector that names several declarations, or only methods. It lists
+// each candidate with its line, in file, source offset, and qualified-name order. Each
+// candidate offers one command that names its file from the caller's directory and its
+// qualified name. When two candidates share a file and a qualified name, no selector can
+// narrow to one of them, so each one offers a `bench read` of its file instead.
 func ambiguous(root, text string, found []candidate) (string, int) {
-	cwd, _ := os.Getwd()
+	slices.SortFunc(found, func(a, b candidate) int {
+		return cmp.Or(strings.Compare(a.file, b.file), cmp.Compare(a.Start, b.Start), strings.Compare(a.Qualified(), b.Qualified()))
+	})
+	shared := map[[2]string]int{}
+	for _, c := range found {
+		shared[[2]string{c.file, c.Qualified()}]++
+	}
 	rows := make([][]any, 0, len(found))
 	var actions []axi.Action
 	for _, c := range found {
 		rows = append(rows, []any{c.file, c.Line, c.Qualified(), c.Kind})
-		operand, err := filepath.Rel(cwd, filepath.Join(root, filepath.FromSlash(c.file)))
-		if err != nil {
-			operand = c.file
+		operand := fromCaller(root, c.file)
+		if shared[[2]string{c.file, c.Qualified()}] > 1 {
+			actions = append(actions, axi.ExecutableInvocation("read this file at the listed lines", knownArguments([]string{"read", operand})...))
+			continue
 		}
-		var arguments []axi.InvocationArgument
-		for _, argument := range commandArgv(operand, SymbolFlag, c.Qualified()) {
-			arguments = append(arguments, axi.KnownArgument(argument))
-		}
-		actions = append(actions, axi.ExecutableInvocation("read this declaration", arguments...))
+		actions = append(actions, axi.ExecutableInvocation("read this declaration", knownArguments(commandArgv(operand, SymbolFlag, c.Qualified()))...))
 	}
 	table, err := toon.TableTyped("candidates", []string{"file", "line", "name", "kind"}, rows)
 	if err != nil {
@@ -277,15 +291,10 @@ func ambiguous(root, text string, found []candidate) (string, int) {
 // Each continuation repeats it, so it names the same scope from the caller's directory.
 func symbolCommand(positionals []string, flags map[string]string) []string {
 	command := append(commandArgv(positionals...), SymbolFlag, flags[SymbolFlag])
-	for _, filter := range []string{"--production", "--test"} {
-		if _, ok := flags[filter]; ok {
-			command = append(command, filter)
-		}
-	}
-	return command
+	return append(command, filterArgs(flags)...)
 }
 
 // commandArgv answers the outline argv after `bench`, with extra after the command name.
 func commandArgv(extra ...string) []string {
-	return append(strings.Fields(grammar.Cmd)[1:], extra...)
+	return append(strings.Fields(commandName)[1:], extra...)
 }

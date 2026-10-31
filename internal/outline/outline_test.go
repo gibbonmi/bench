@@ -57,6 +57,18 @@ func TestBareFormSummarizesTopLevelDirectories(t *testing.T) {
 	if strings.Contains(out, "outline[") || strings.Contains(out, "a/deep") {
 		t.Fatalf("bare form did not collapse to top level:\n%s", headOf(out))
 	}
+	// The help narrows into each listed directory from the caller's directory. The root
+	// files have no directory to narrow into.
+	const help = "help[2]{cmd,why}:\n  bench outline a,list the symbols under this directory\n  bench outline b,list the symbols under this directory\n"
+	if !strings.HasSuffix(out, help) {
+		t.Fatalf("bare form help =\n%s\nwant suffix\n%s", out, help)
+	}
+	t.Chdir(filepath.Join(root, "a"))
+	nested, code := Command(nil)
+	const nestedHelp = "help[2]{cmd,why}:\n  bench outline .,list the symbols under this directory\n  bench outline ../b,list the symbols under this directory\n"
+	if code != 0 || !strings.HasSuffix(nested, nestedHelp) {
+		t.Fatalf("bare form from a subdirectory code=%d =\n%s\nwant suffix\n%s", code, nested, nestedHelp)
+	}
 }
 
 // H13: a path argument keeps emitting symbol rows scoped to that path, including a path
@@ -129,6 +141,18 @@ func TestEmptyStatesDistinguishAbsentFromPresentButEmpty(t *testing.T) {
 	full, code := Command([]string{"--full"})
 	if code != 0 || !strings.HasPrefix(full, "outline[0]{file,line,kind,name}:\n") {
 		t.Fatalf("row-bearing empty state = %d\n%s", code, headOf(full))
+	}
+	// Each empty state is terminal, and so is a symbol table that lists no Go declaration.
+	writeOutlineFile(t, root, "notes.md", "# Notes\n")
+	gitAddOutline(t, root)
+	headings, code := Command([]string{"notes.md"})
+	for _, out := range []string{absent, present, full, headings} {
+		if !strings.HasSuffix(out, "outline_skips[0]{file,reason}:\nhelp[0]{cmd,why}:\n") {
+			t.Fatalf("terminal result offers a continuation:\n%s", out)
+		}
+	}
+	if code != 0 || !strings.Contains(headings, "notes.md,\"1\",heading,Notes") {
+		t.Fatalf("heading table code=%d:\n%s", code, headings)
 	}
 }
 
