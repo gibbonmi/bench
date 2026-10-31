@@ -52,6 +52,11 @@ var Single = "single" // trailing
 // Directed follows a line directive.
 func Directed() {
 }
+
+// Late groups after the directive.
+var (
+	Late = 1
+)
 `
 
 // TestDeclarationSpans grades each span against independently authored source text: it
@@ -60,12 +65,12 @@ func Directed() {
 // a group has the complete group. The name line and the first and last span lines are the
 // physical lines of the fixture, also after a //line directive.
 func TestDeclarationSpans(t *testing.T) {
-	type span struct {
+	type spanWant struct {
 		text              string
 		line, first, last int
 	}
 	group := "// Limits groups two constants.\nconst (\n\t// Low is low.\n\tLow  = 1\n\tHigh = 2\n)"
-	want := map[string]span{
+	want := map[string]spanWant{
 		"Run":          {"func // Run starts the work.\n// It has two doc lines.\nfunc Run() { fmt.Println(\"run\") }", 10, 8, 10},
 		"Adjacent":     {"func func Adjacent() {}", 11, 11, 11},
 		"Store":        {"type // Store holds values.\ntype Store struct{ values map[string]int }", 14, 13, 14},
@@ -77,14 +82,15 @@ func TestDeclarationSpans(t *testing.T) {
 		"High":         {"const " + group, 30, 26, 31},
 		"Single":       {"var var Single = \"single\"", 33, 33, 33},
 		"Directed":     {"func // Directed follows a line directive.\nfunc Directed() {\n}", 37, 36, 38},
+		"Late":         {"var // Late groups after the directive.\nvar (\n\tLate = 1\n)", 42, 40, 43},
 	}
 	declarations, err := Declarations("fixture.go", []byte(declarationSource))
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := map[string]span{}
+	got := map[string]spanWant{}
 	for _, d := range declarations {
-		got[d.Qualified()] = span{d.Kind + " " + declarationSource[d.Start:d.End], d.Line, d.First, d.Last}
+		got[d.Qualified()] = spanWant{d.Kind + " " + declarationSource[d.Start:d.End], d.Line, d.First, d.Last}
 	}
 	if !maps.Equal(got, want) {
 		t.Fatalf("declaration spans =\n%+v\nwant\n%+v", got, want)
