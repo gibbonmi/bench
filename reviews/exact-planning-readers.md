@@ -2480,3 +2480,17 @@ Repair cycle 4 takes R12 and R13 on ticket 4b under `--auto-approve`.
 The repair delta is `ae5e3459a..34b20e6f2`, and it adds no test, so it has no witness red. Each axis ran on opus / high.
 Standards re-reviewed in full, and Spec and Coverage gave delta-only reaffirmations. Every axis passes: N3 and R12 are closed, and no axis has a new finding.
 ER-C4 used four repair cycles; cycles 3 and 4 ran past the two-cycle allowance under `--auto-approve`.
+
+## ER-C5 author witness reds
+
+The chunk pair is `34b20e6f2..9a7404cfb`. Ticket 5a is a move with no covered row, so it has no witness red.
+
+- 5b, ER47: before the qualifier, `TestExactReaderOutputHeads` failed at `cmd/bench/census_output_test.go:110` with `outputHead(["spec" "show" "demo"]) = "bench spec", want "bench spec show"`. The plan probe ER-C5-head-red answered `bit`.
+- 5c, ER41 and ER43: against a stub, `TestRawReadAdvice` failed at `cmd/bench/planning_read_advice_test.go:29` because the range advice was empty.
+- 5c, ER42: against a stub, `TestReaderCensusAttribution` failed at `internal/census/read_advice_test.go:41` with no record file for an owned eligible read. It also failed at line 37, because a malformed assignment ID returned no error.
+
+The authors report three spec-versus-code points for the review:
+
+- The 5b ticket marks `internal/outline/command.go` as new, but the file existed. Ticket 5b did not create `internal/spec/command.go`, because the spec owner already exports the show grammar.
+- Raw-read advice always names `bench read <path>`. For a raw read of a path in the worktree pool, `bench read` refuses an outside path, and `bench worktree read --in <label>` is the matching form.
+- `head -n N` advice names `--lines 1:N`, which refuses when the file has fewer than N lines. The spec accepts the same limit for a sed line print.
