@@ -334,7 +334,8 @@ main.go has 415 lines and must retain commandRegistry in place.
 Move only `commandsGrammar`, `commandsCommand`, and `commandsProbeIsStale` into commands.go.
 Keep the new registry and help edits within a 400-line main.go result.
 Every conformance source reader that parses commandRegistry still reads main.go.
-`command_registry.go` has 399 lines; put all new adapter logic in planning_reads.go, so that file does not grow.
+`command_registry.go` had 399 lines; put all new adapter logic in planning_reads.go.
+That file may reach its 400-line cap only for one registry field that a reader form needs.
 
 `command_registry_test.go` has 784 lines and no new default growth allowance.
 Move its existing envelope types and runner plus fixture helpers into axi_query_envelope_test.go.
