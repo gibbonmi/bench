@@ -1550,6 +1550,18 @@
               "identity": "sha256:837124cb6340ce3d9ae84b287b9ac023cd055677b5622382b1ec3ccd4fcae7b6"
             }
           ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "preflight-entry-staleness",
+                "path": "specs/preflight-entry-staleness/spec.md",
+                "identity": "sha256:fd3289b793b74d14dab60f3ba8fea6c5c706077ffb38ff330f31f4f3ab5f8200"
+              },
+              "obligations": [
+                "FT375"
+              ]
+            }
+          ],
           "dependencies": [
             "FT293-closure-removal"
           ]
