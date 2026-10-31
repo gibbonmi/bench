@@ -10,9 +10,9 @@
     {
       "id": "ES-C1",
       "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
-      "tip": "d9d130308c0b42a4118cbf4b63ad43534c395d61",
-      "plan_digest": "sha256:00eccbd9db08f8b3abfebba2213f8183f1f1fd339b94f9a790bf6c2bee72f41c",
-      "source_digest": "a45b01c8b6c245008776cbb22fb6a64dcfce5af7",
+      "tip": "07922d5437750b982cb74a31792286b933c6e463",
+      "plan_digest": "sha256:de3f820102ea29b8180f39876d5892962f0165e94df8b6612c2e12b7bcefcb4b",
+      "source_digest": "6ed05a0723fbfe51f5f39953e48115a85ad3cf8a",
       "acceptance_rows": [
         "ES24",
         "ES25",
@@ -123,6 +123,66 @@
               "ref": "claude-agent:bench-writer-medium:ft375-author-02",
               "digest": "sha256:a0b2674ada3bf3e8b7369b7382f562f9e50cb19fda32279472a9c380c6c3c185",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,TestClosedRowPathsMatchClosure/refused-source,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,^TestClosedRowPathsMatchClosure$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,400\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,49,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestClosedRowPathsMatchClosure/refused-source,\"closure_test.go:162: ClosedRowPaths = [roadmap/FT1.md decisions/DEC1.md], \u003cnil>; want [roadmap/FT1.md]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "es-c1-r1-writes-landed",
+          "performer": "ft375-repair-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6ed05a0723fbfe51f5f39953e48115a85ad3cf8a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-repair-01",
+            "digest": "sha256:6c556a75f36f7922475e24ca7d100ef9a07e516ddb77cafe024402ab283eb1cf",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/writes_landed.go,omit,failed,1,TestWritesLandedShapes,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestWritesLandedShapes$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,130,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestWritesLandedShapes,\"writes_landed_test.go:114: writes-landed row = \\\"  writes-landed,red,\\\\\\\\\\\"Writes: entry names a path that a landed commit deleted: one.md: shapes/side.md (731414e4d2647b1db18362fd43ebdc59c048140c), one.md: shapes/old.md (fef7d76255b05c60a0cc972… (561 bytes)\",14\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "07922d5437750b982cb74a31792286b933c6e463",
+          "requirement": "writes-landed",
+          "command": "bench test --package ./internal/preflight --run 'WritesLanded|TicketGrammarRowsCarryOwnDetails|TicketGatedRowsNotApplicableWithoutTickets|DecideAllGreen|DecideChargeRows|SourceTip|WritesResolveEarlierChunkDeletion|CommittedDeletion|CommandBuildRendersFourGrammarRows'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop --first-parent -m from the deleting-commit query, and record that TestWritesLandedShapes turns red on the landing-merge case.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-repair-01",
+              "digest": "sha256:6c556a75f36f7922475e24ca7d100ef9a07e516ddb77cafe024402ab283eb1cf",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/writes_landed.go,omit,failed,1,TestWritesLandedShapes,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestWritesLandedShapes$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,513\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,130,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestWritesLandedShapes,\"writes_landed_test.go:114: writes-landed row = \\\"  writes-landed,red,\\\\\\\\\\\"Writes: entry names a path that a landed commit deleted: one.md: shapes/side.md (731414e4d2647b1db18362fd43ebdc59c048140c), one.md: shapes/old.md (fef7d76255b05c60a0cc972… (561 bytes)\",14\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "es-c1-r1-precedence",
+          "performer": "ft375-repair-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6ed05a0723fbfe51f5f39953e48115a85ad3cf8a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-repair-01",
+            "digest": "sha256:d873e5ef436338d327bfb6f4cc09279787d5c3f9c269987a335761fc3d3cc717",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/fence_writes.go,swap,failed,1,TestWritesLandedPrecedence/deletion_inside_the_explicit_range,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestWritesLandedPrecedence$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,519\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,362,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestWritesLandedPrecedence/deletion_inside_the_explicit_range,\"writes_landed_test.go:167: writes-landed row = \\\"  writes-landed,red,\\\\\\\\\\\"Writes: entry names a path that a landed commit deleted: one.md: docs/gone.md (20b60a23ec5ed532d25d8442b8a56ed72b865d8d)\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\"\\\", want \\\"\\\":\",8\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "07922d5437750b982cb74a31792286b933c6e463",
+          "requirement": "precedence",
+          "command": "bench test --package ./internal/preflight --run 'WritesLandedPrecedence'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Grade LandedDeletions before DeletedPaths in the check, and record that TestWritesLandedPrecedence turns red on the folded explicit-range case of ES33.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-repair-01",
+              "digest": "sha256:d873e5ef436338d327bfb6f4cc09279787d5c3f9c269987a335761fc3d3cc717",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/fence_writes.go,swap,failed,1,TestWritesLandedPrecedence/deletion_inside_the_explicit_range,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestWritesLandedPrecedence$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,519\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,362,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestWritesLandedPrecedence/deletion_inside_the_explicit_range,\"writes_landed_test.go:167: writes-landed row = \\\"  writes-landed,red,\\\\\\\\\\\"Writes: entry names a path that a landed commit deleted: one.md: docs/gone.md (20b60a23ec5ed532d25d8442b8a56ed72b865d8d)\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\"\\\", want \\\"\\\":\",8\nskips[0]{package,test,reason}:\n"
             }
           }
         }
