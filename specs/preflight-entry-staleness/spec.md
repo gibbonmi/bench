@@ -181,7 +181,7 @@ It holds the `activeDeliverable` lookup, the obligation-free refusal, and the ob
 It does not hold the already-delivered refusal (`internal/commitment/delivery.go:26`), because that refusal reads the delivery fact.
 `Deliver` calls it for its closed set and keeps its delivery-fact steps, the already-delivered refusal included.
 
-The repository store gets one method that reads the policy at a tree, the way `policyAt` does (`internal/commitment/repository/repository.go:261`).
+The repository store gets one method, `ClosedRowPaths(tree, deliverable string) ([]string, error)`, that reads the policy at a tree, the way `policyAt` does (`internal/commitment/repository/repository.go:261`).
 The method calls the pure function for the deliverable and returns each closed source path that `roadmap.RowOwner` admits (`internal/roadmap/closure.go:17`).
 `Store.Closure` uses the same row-owner step for its deletion edits, so the preflight and the landing share one derivation.
 A policy that the tree does not hold, or a deliverable that the active milestone does not approve, gives no path.
@@ -276,7 +276,7 @@ The orchestrator amends it to version 2 before the first author dispatch.
       "verification": [
         {
           "id": "writes-landed",
-          "command": "bench test --package ./internal/preflight --run 'WritesLanded|TicketGrammarRowsCarryOwnDetails|TicketGatedRowsNotApplicableWithoutTickets|DecideAllGreen|DecideChargeRows|SourceTip'",
+          "command": "bench test --package ./internal/preflight --run 'WritesLanded|TicketGrammarRowsCarryOwnDetails|TicketGatedRowsNotApplicableWithoutTickets|DecideAllGreen|DecideChargeRows|SourceTip|WritesResolveEarlierChunkDeletion|CommittedDeletion|CommandBuildRendersFourGrammarRows'",
           "probe": "Drop --first-parent -m from the deleting-commit query, and record that TestWritesLandedShapes turns red on the landing-merge case."
         },
         {
@@ -493,8 +493,8 @@ Won't handle: the stale `binary-seal` after a Go commit and the spill under `ben
 - `internal/maps/maps_graph_test.go:79-87` calls `validateSourcePath` directly, and the `tests/canary/decision-map-integrity/source-*` units pin the exact working-tree messages. The working-tree resolver keeps those messages.
 - Readers that keep their answer: `internal/preflight/binary_seal_test.go:38` (`binary-seal` stays after `kit-pin`), `internal/preflight/verdict_summary_test.go:74` (counts derive from `Decide`), and `internal/preflight/charge_test.go:350` (`legacyBaseline` takes its counts from `Decide` and renders red rows only).
 - The `testdata/legacy-charge` fixtures hold no row count and no `writes-resolve` text, so they keep their bytes.
-- Readers of the `writes-resolve` detail: `internal/preflight/decision_test.go:320-346`, `internal/preflight/decision_test.go:417-424`, `internal/preflight/command_build_test.go:237-240`, and `internal/preflight/command_review_test.go:420-437`. Each fixture names a never-tracked path or runs review mode, so each keeps its text. `uncertain` until ticket 01 runs them.
-- Readers of the deletion facts: `internal/preflight/fence_writes_test.go:20` and `internal/preflight/deletion_preflight_test.go:11-55`. The review-mode cases keep their answer. The build-mode `record without a chunk` case names a path that no default-branch commit deleted, so it stays a `writes-resolve` red. `uncertain` until ticket 01 runs it.
+- Readers of the `writes-resolve` detail: `internal/preflight/decision_test.go:320-346`, `internal/preflight/decision_test.go:417-424`, `internal/preflight/command_build_test.go:237-240`, and `internal/preflight/command_review_test.go:420-437`. Each fixture names a never-tracked path (`internal/preflight/command_build_test.go:239`) or runs review mode, so each keeps its text. The ES-C1 checkpoint command runs them.
+- Readers of the deletion facts: `internal/preflight/fence_writes_test.go:20` and `internal/preflight/deletion_preflight_test.go:11-55`. The review-mode cases keep their answer. The build-mode `record without a chunk` case (`internal/preflight/fence_writes_test.go:29`) seeds through `seedDeletionReview`, which deletes on a feature branch (`internal/preflight/deletion_preflight_test.go:88-89`), so it stays a `writes-resolve` red. The ES-C1 checkpoint command runs it.
 - Readers of the take rule: `.agents/commands/bench-implement-spec.md:15` and `:17`, and `.agents/skills/bench-implement-spec/references/staleness-pass.md:22-34`. `.claude/commands` is a link to `.agents/commands`, so no copy exists. `.bench/BENCH.md:63` lists no red row.
 - Readers of the Sources grammar: `internal/maps/validation.go:121` (`readinessDiagnostics`), `internal/maps/freshness.go:39` (`sourcePathLocators`, unchanged), and `internal/conformance/decision_map_integrity_test.go:106-141` with `tests/canary/decision-map-integrity/` (messages unchanged).
 - Readers of the candidate rule: `internal/maps/maps.go:81` (`scanActiveMap`), `internal/maps/tree_validation.go:59`, and `internal/status/status.go:846`.

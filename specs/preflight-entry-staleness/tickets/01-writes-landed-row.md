@@ -22,7 +22,13 @@ Make these changes:
 - Put every new command test in `writes_landed_test.go`. Make each fixture history with `preflighttest.RunGit`. If a shared history helper is needed, put it in a new file under `internal/preflight/preflighttest`, because `fixture.go` has 6 lines of headroom. `FenceWrites` marks every entry `(new)`, so write a plain-entry ticket body.
 - Take each expected commit identity from `git rev-parse` of the commit that the fixture made. Write each expected detail as a literal.
 
-The existing `fence_writes_test.go`, `deletion_preflight_test.go`, `command_build_test.go`, and `command_review_test.go` fixtures delete their paths on a feature branch or name never-tracked paths (`internal/preflight/deletion_preflight_test.go:88-89`), so they keep their answers. Run them, and if one goes red, stop and report it.
+Four existing test files keep their answers, so they are not on the `Writes:` line:
+
+- `fence_writes_test.go` seeds through `seedDeletionReview` (`internal/preflight/fence_writes_test.go:33`), which deletes on a feature branch (`internal/preflight/deletion_preflight_test.go:88-89`), so the default-branch tip still holds the path.
+- `command_build_test.go` names a never-tracked path (`internal/preflight/command_build_test.go:239`).
+- `deletion_preflight_test.go` and `command_review_test.go` run review mode, and the fact is filled in build mode only.
+
+The ES-C1 checkpoint command runs `TestWritesResolveEarlierChunkDeletion`, the committed-deletion tests, and `TestCommandBuildRendersFourGrammarRows`. If one goes red, stop and report it.
 
 ## Acceptance
 
