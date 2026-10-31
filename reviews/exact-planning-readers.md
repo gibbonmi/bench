@@ -2798,3 +2798,10 @@ The census comments call `ObserveRead` the structural read-shape observation, an
 The repair delta is `06fae8759..a41c9fb92`. Each axis ran on opus / high.
 Standards and Coverage re-reviewed in full, and Spec gave a delta-only reaffirmation. Every axis passes: ST3 and C3 are closed, and no axis has a new finding.
 ER-C5 used both repair cycles of its allowance. The orchestrator decision that one eligibility rule decides both the advice and the owned census record stays open to reviewer veto.
+
+## ER-C5 final verification red
+
+The final ordinary verification `bench test --package ./...` ran at `4a39e071a` and failed in one package.
+`TestAdmissionClasses` refuses the route needle that ticket 5c added for the reference file, because the needle is over 6 words or names no route token.
+The author's focused test selection did not reach that test, and no review axis ran it.
+Repair cycle 3 takes it on ticket 5c as target R8 under `--auto-approve`.
