@@ -1796,6 +1796,76 @@
             "C2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ER-C5-standards-2",
+          "performer": "ft125-review-c5-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e9d552e7b25a5aa1c20fa4b890c975cb0b5384b0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-standards-2",
+            "digest": "sha256:f361e3d25047260709b70acb6a1cbcd6244c398280dee89b9c2c8b28d7edfb41",
+            "excerpt": "Standards axis, ER-C5 confirming round 1 (repair delta c4d4e647e..4b1800d70).\nClosed: ST1 (resolved calls sanitize.LineSafe, internal/census/read_advice.go:86; rows at cmd/bench/planning_read_advice_test.go:226-227). Closed: ST2 (positive is gone; countedOperand and sedRead parse through responsebound.ParsePositive and ParseLineRange, read_advice.go:129, 147-152).\nST3 (auto-fix, conf 6) cmd/bench/guards.go:251-252: readOwner now gets the narrowed eligible flag, so an owned out-of-repository raw read writes no census record; no test grades that case, and the census docs (read_advice.go:15, 47, 160) still call ObserveRead the eligible-read answer, so eligibility has two definitions. Fix: pass observed to readOwner, or record the decision, add a test row, and update the census docs.\nNo other new defect: repositoryRead reuses repositoryPath and canonicalpath; fixture changes still grade the census record.\nOptional advice: recordFollowOn now also decides advice eligibility, which its name does not say (cmd/bench/guards.go:236-254).\nOutcome: fail (ST3).\n"
+          },
+          "axis": "Standards",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "4b1800d7020bb2777924e836f1dc303ac1b6eefe",
+          "finding_ids": [
+            "ST3"
+          ],
+          "supersedes": [
+            "ER-C5-standards-1"
+          ]
+        },
+        {
+          "id": "ER-C5-spec-2",
+          "performer": "ft125-review-c5-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e9d552e7b25a5aa1c20fa4b890c975cb0b5384b0",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-spec-2",
+            "digest": "sha256:12dab9aa7072241f78740978adc96dac57cca83cc50bfbed01db674c2753f912",
+            "excerpt": "Spec axis, ER-C5 confirming round 1 (repair delta c4d4e647e..4b1800d70).\nS1 closed: recordFollowOn sets eligible = observed && repositoryRead(root, read) (cmd/bench/guards.go:251), and repositoryRead uses the repositoryPath owner of bench read (cmd/bench/planning_read_advice.go:24-27, planning_reads.go:88-95). Advice is suppressed for /etc/hosts, ../outside and the pooled path and kept for in-repo absolute and subdirectory reads (planning_read_advice_test.go:101-104, 196-200); a read outside any repository gets none (guards.go:247-250); pool attribution is unchanged (test:184, internal/census/read_advice.go:168).\nNo new findings.\nRow audit: ER41 pass; ER42 pass; ER43 pass; ER47 untouched and passing.\nOptional advice: .bench/BENCH-reference.md:40 still says \"a raw read of one named file\"; \"one named file inside the repository\" keeps the anchored needle (severity 2). The no-repository branch (guards.go:248-249) has no test.\nOutcome: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "4b1800d7020bb2777924e836f1dc303ac1b6eefe",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-spec-1"
+          ]
+        },
+        {
+          "id": "ER-C5-coverage-2",
+          "performer": "ft125-review-c5-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "e9d552e7b25a5aa1c20fa4b890c975cb0b5384b0",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-coverage-2",
+            "digest": "sha256:90fb53e40900bd2aab42901014b540c8db194b58fa906cf5fc9956336d71848f",
+            "excerpt": "Coverage axis, ER-C5 confirming round 1 (repair delta c4d4e647e..4b1800d70).\nClosed: C1 (sed -i 3p and sed -e 3p rows, cmd/bench/planning_read_advice_test.go:97-98) and C2 (xargs cat notes.md row, :96).\nGraded: LineSafe (C1-control rows :99-100), ParsePositive (head -n 0, head -n -2, tail -n +5), ParseLineRange (sed -n '7,3p'), repositoryRead (/etc/hosts, ../outside, pooled rows), observed && (guard_projection_test.go:169), pool attribution after a non-local read (cat=2 at :116).\nC3 (auto-fix, conf 8) cmd/bench/guards.go:252: no test grades the no-record path for a non-local read in an owned worktree; every non-local row runs from the unowned primary checkout. Fix: a cat /etc/hosts row from creation.Path expecting empty stderr and HeadBreakdown still cat=1.\nProbe: guards.go:252 swap readOwner(root, eligible) to readOwner(root, observed), ./cmd/bench 584 tests: silent; restored=yes.\nAdvice: the firstErr/lastErr check at read_advice.go:149 is an equivalent mutant; no row exercises sed -n '0p' or a leading-zero bound.\nOutcome: fail (C3).\n"
+          },
+          "axis": "Coverage",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "4b1800d7020bb2777924e836f1dc303ac1b6eefe",
+          "finding_ids": [
+            "C3"
+          ],
+          "supersedes": [
+            "ER-C5-coverage-1"
+          ]
         }
       ]
     }
@@ -2612,3 +2682,15 @@ The repair delta is `c4d4e647e..4b1800d70`. The new `TestRawReadAdvice` rows ran
 - R5: the `xargs cat notes.md` row passes on the old code.
 - R5: a hand mutant that removed the `ViaXargs` check turned the row red at `guard_projection_test.go:55` with `bench read notes.md` advice.
 - The tree restored both hand mutants before the commit.
+
+## ER-C5 confirming round 1
+
+The repair delta is `c4d4e647e..4b1800d70`. Each axis ran on opus / high and re-reviewed in full.
+ST1, ST2, S1, C1, and C2 are closed, and the Spec axis passes. Repair cycle 2 takes the two new findings on ticket 5c under `--auto-approve`.
+
+- ST3 (auto-fix, confidence 6): an owned read outside the repository now writes no census record. The census comments still call the shape check the eligible read, so eligibility has two definitions.
+- C3 (auto-fix, confidence 8): no test grades the no-record path for an owned read outside the repository.
+
+The orchestrator keeps the behavior: one eligibility rule decides both the advice and the owned record, as spec line 312 states. This decision is open to reviewer veto.
+Repair target R6 gives that rule one owner, updates the census comments, and adds the owned outside-repository row.
+Repair target R7 takes the Spec advice: the census account in the reference file names a file inside the repository, and its anchored needle stays.
