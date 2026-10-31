@@ -50,6 +50,17 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			setupSuccess: func(t *testing.T, root string) { writeAXIFixture(t, filepath.Join(root, "fixture.txt"), "fixture\n") },
 			setupEmpty:   func(t *testing.T, root string) { writeAXIFixture(t, filepath.Join(root, "empty.txt"), "") },
 		},
+		// spec show pages the selected spec bytes like read; a present empty spec is the
+		// definitive empty page.
+		"spec show": {
+			route: []string{"spec", "show"}, successArgv: []string{"spec", "show", "fixture", "--section", "stories"}, emptyArgv: []string{"spec", "show", "empty"},
+			blocks:        []string{"page", "content", "help"},
+			successMarker: "content[1]{data}:\n", emptyMarker: "content[0]{data}:\n", usage: "usage: bench spec show",
+			setupSuccess: setupAXICoverage,
+			setupEmpty: func(t *testing.T, root string) {
+				writeAXIFixture(t, filepath.Join(root, "specs", "empty", "spec.md"), "")
+			},
+		},
 		"worktree list": {
 			route: []string{"worktree", "list"}, successArgv: []string{"worktree", "list"}, emptyArgv: []string{"worktree", "list"},
 			blocks:        []string{"worktrees", "help"},

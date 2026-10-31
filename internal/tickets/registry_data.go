@@ -19,6 +19,7 @@ var commandPackages = []string{
 	"internal/maps",
 	"internal/probe",
 	"internal/roadmap",
+	"internal/spec",
 	"internal/worktree",
 }
 

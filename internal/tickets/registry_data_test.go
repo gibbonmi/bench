@@ -25,6 +25,7 @@ func TestCommandPackageCoversAtASegmentBoundary(t *testing.T) {
 	for path, want := range map[string]bool{
 		"internal/harnesses/harnesses.go": true,
 		"cmd/bench/main.go":               true,
+		"internal/spec/read.go":           true,
 		"internal/toon/toon.go":           false,
 		"internal/harnessesx/x.go":        false,
 	} {

@@ -94,19 +94,19 @@ func TestSpecImplementedIsAnUnknownSubcommand(t *testing.T) {
 }
 
 // TestSpecUsageNamesTheSurvivingSubcommands pins FA3's bare-argv half: the usage line
-// offers retire, history, and widen only.
+// offers show, retire, history, and widen only.
 func TestSpecUsageNamesTheSurvivingSubcommands(t *testing.T) {
 	out, code, _ := Command(nil)
 	if code != 2 {
 		t.Fatalf("code = %d, want 2", code)
 	}
-	if !strings.Contains(out, "expected a subcommand: retire, history, widen)") {
-		t.Errorf("out = %q, want the retire/history/widen usage line", out)
+	if !strings.Contains(out, "expected a subcommand: show, retire, history, widen)") {
+		t.Errorf("out = %q, want the show/retire/history/widen usage line", out)
 	}
 }
 
 func TestSpecHelpPrintsThePublicSubcommandInventory(t *testing.T) {
-	const want = "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n  widen <slug> --ticket <basename> [--decision <reference>] <entry>...\n"
+	const want = "usage: bench spec <subcommand>\n\nsubcommands:\n  show <slug-or-path> [--section stories|status|<literal-H2-title>] [--offset <byte-offset> --source <identity>]\n  retire <slug>\n  history <slug>\n  widen <slug> --ticket <basename> [--decision <reference>] <entry>...\n"
 	for _, arg := range []string{"--help", "-h"} {
 		out, code, _ := Command([]string{arg})
 		if code != 0 {

@@ -73,6 +73,16 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 		"spaced name.txt": strings.Repeat("a name with a space\n", 400),
 		"nested/deep.txt": strings.Repeat("nested line\n", 700),
 	}
+	// A long section holds a fenced heading, so its pages must cross the hidden heading and
+	// stop before the next visible one.
+	const (
+		before = "# Guide\n\n## Before\nbefore\n"
+		after  = "## After\nafter\n"
+	)
+	long := "## Long\r\n" + strings.Repeat("section text ✓\n", 300) + "```text\n## Hidden\n```\n" + strings.Repeat("more text\n", 200)
+	stories := "## User stories\n\nLine: opus / medium.\n\n### Group\n\n" + strings.Repeat("1. As an agent, I want a long story.\n", 150) + "\n"
+	files["guide.md"] = before + long + after
+	files["specs/long/spec.md"] = "# Long spec\n\nStatus: staged\n\n" + stories + "## Implementation decisions\n\nnone\n"
 	for name, content := range files {
 		writeAXIFixture(t, filepath.Join(root, name), content)
 	}
@@ -89,19 +99,29 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 	type readCase struct {
 		cwd, file string
 		argv      []string
+		// section is the selected text when the case selects less than the whole file.
+		section string
 	}
 	nested := filepath.Join(root, "nested")
 	cases := map[string]readCase{}
 	for name := range files {
-		cases[name] = readCase{root, name, []string{"read", name}}
+		cases[name] = readCase{root, name, []string{"read", name}, ""}
 	}
-	cases["from a subdirectory"] = readCase{nested, "nested/deep.txt", []string{"read", "deep.txt"}}
-	cases["parent from a subdirectory"] = readCase{nested, "mixed.txt", []string{"read", "../mixed.txt"}}
-	cases["spill"] = readCase{root, "", []string{"read", spill.Path, "--artifact"}}
-	cases["exported evidence"] = readCase{root, "", []string{"read", exported, "--artifact"}}
+	cases["from a subdirectory"] = readCase{nested, "nested/deep.txt", []string{"read", "deep.txt"}, ""}
+	cases["parent from a subdirectory"] = readCase{nested, "mixed.txt", []string{"read", "../mixed.txt"}, ""}
+	cases["spill"] = readCase{root, "", []string{"read", spill.Path, "--artifact"}, ""}
+	cases["exported evidence"] = readCase{root, "", []string{"read", exported, "--artifact"}, ""}
+	cases["section"] = readCase{root, "", []string{"read", "guide.md", "--section", "Long"}, long}
+	cases["section from a subdirectory"] = readCase{nested, "", []string{"read", "../guide.md", "--section", "Long"}, long}
+	cases["spec show stories"] = readCase{nested, "", []string{"spec", "show", "long", "--section", "stories"}, stories}
+	cases["spec show literal section"] = readCase{root, "", []string{"spec", "show", "specs/long/spec.md", "--section", "User stories"}, stories}
+	cases["spec show file"] = readCase{root, "specs/long/spec.md", []string{"spec", "show", "long"}, ""}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
 			want, ok := files[c.file]
+			if c.section != "" {
+				want, ok = c.section, true
+			}
 			if !ok {
 				data, err := os.ReadFile(c.argv[1])
 				if err != nil {
@@ -140,9 +160,25 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "page.txt"), strings.Repeat("page text\n", 600))
 	writeAXIFixture(t, filepath.Join(root, "control\x01.txt"), strings.Repeat("page text\n", 600))
-	help := runAXICommandAt(t, root, []string{"read", "--help"})
-	if help.code != 0 || !strings.Contains(help.stdout, "usage: bench read <path>") || !strings.Contains(help.stdout, responsebound.CursorUsage) || !responsebound.Fits(help.stdout) {
-		t.Fatalf("read --help = stdout=%q exit=%d, want the bounded cursor grammar", help.stdout, help.code)
+	writeAXIFixture(t, filepath.Join(root, "dup.md"), "## Dup\na\n## Dup\nb\n")
+	writeAXIFixture(t, filepath.Join(root, "specs", "plain", "spec.md"), "# Plain\n\n## Notes\n")
+	for _, argv := range [][]string{{"read", "--help"}, {"spec", "show", "--help"}} {
+		help := runAXICommandAt(t, root, argv)
+		if help.code != 0 || !strings.HasPrefix(help.stdout, "usage: bench "+argv[0]) || !strings.Contains(help.stdout, "--section") || !strings.Contains(help.stdout, responsebound.CursorUsage) || !responsebound.Fits(help.stdout) {
+			t.Fatalf("%q = stdout=%q exit=%d, want the bounded cursor grammar", argv, help.stdout, help.code)
+		}
+	}
+	for _, absence := range []struct {
+		argv []string
+		want string
+	}{
+		{[]string{"read", "dup.md", "--section", "Missing"}, "selection[1]{kind,selector,present}:\n  section,Missing,false\nhelp[0]{cmd,why}:\n"},
+		{[]string{"spec", "show", "plain", "--section", "stories"}, "selection[1]{kind,selector,present}:\n  stories,stories,false\nhelp[0]{cmd,why}:\n"},
+		{[]string{"spec", "show", "plain", "--section", "status"}, "selection[1]{kind,selector,present}:\n  status,status,false\nhelp[0]{cmd,why}:\n"},
+	} {
+		if result := runAXICommandAt(t, root, absence.argv); result.code != 0 || result.stdout != absence.want {
+			t.Fatalf("%q = stdout=%q exit=%d, want the explicit absence %q", absence.argv, result.stdout, result.code, absence.want)
+		}
 	}
 	sourceOf := func(argv []string) string {
 		t.Helper()
@@ -183,6 +219,12 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		{"unbound source", []string{"read", "page.txt", "--offset", "0", "--source", strings.Repeat("0", 64)}, 1, "error: source changed since the cursor"},
 		{"cursor out of range", []string{"read", "page.txt", "--offset", "6000", "--source", token}, 1, "error: cursor out of range"},
 		{"lines beyond the file", []string{"read", "page.txt", "--lines", "600:601"}, 1, "error: line range unavailable"},
+		{"section with lines", []string{"read", "dup.md", "--section", "Dup", "--lines", "1:2"}, 2, "usage: bench read"},
+		{"section with artifact", []string{"read", "/dup.md", "--section", "Dup", "--artifact"}, 2, "usage: bench read"},
+		{"repeated heading", []string{"read", "dup.md", "--section", "Dup"}, 1, "error: section unavailable"},
+		{"spec show offset without source", []string{"spec", "show", "plain", "--offset", "0"}, 2, "usage: bench spec show"},
+		{"spec show missing spec", []string{"spec", "show", "missing"}, 1, "error: spec not found"},
+		{"spec show unbound source", []string{"spec", "show", "plain", "--offset", "0", "--source", token}, 1, "error: source changed since the cursor"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			result := runAXICommandAt(t, root, tc.argv)

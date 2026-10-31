@@ -501,12 +501,12 @@ These future reds are required evidence, not observations made during specificat
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
 | ER1 | 1 | A file read reconstructs the exact source bytes | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A summarizer or newline-normalizing adapter produces different bytes. |
-| ER2 | 2 | A literal visible H2 selection includes its heading and ends before the next visible H2 | planned TestExactMarkdownSelections in internal/spec/read_test.go | Whole-file or regex slicing leaks the neighboring section. |
-| ER3 | 2 | A heading hidden in a fence or HTML comment is not selected | planned TestExactMarkdownSelections in internal/spec/read_test.go | An independent heading detector selects authored examples as owning headings. |
-| ER4 | 2 | Repeated visible matching H2 headings refuse as ambiguous | planned TestExactMarkdownSelections in internal/spec/read_test.go | Choosing the first occurrence conceals the ambiguity. |
-| ER5 | 3 | The stories shortcut returns the actual User stories H2 span | planned TestExactSpecSelections in internal/spec/read_test.go | An invented summary drops the author line or grouped story text. |
+| ER2 | 2 | A literal visible H2 selection includes its heading and ends before the next visible H2 | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | Whole-file or regex slicing leaks the neighboring section. |
+| ER3 | 2 | A heading hidden in a fence or HTML comment is not selected | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | An independent heading detector selects authored examples as owning headings. |
+| ER4 | 2 | Repeated visible matching H2 headings refuse as ambiguous | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | Choosing the first occurrence conceals the ambiguity. |
+| ER5 | 3 | The stories shortcut returns the actual User stories H2 span | `internal/spec/read_test.go` (`TestExactSpecSelections`) | An invented summary drops the author line or grouped story text. |
 | ER6 | 3 | The coverage shortcut returns the authoritative coverage-map span | planned TestExactStoryProjection in internal/coverage/story_test.go | A second table detector disagrees with the validator boundary. |
-| ER7 | 3 | The status shortcut returns the metadata owner's selected raw Status line | planned TestExactSpecSelections in internal/spec/read_test.go | Choosing a fenced or earlier status changes existing last-visible-line semantics. |
+| ER7 | 3 | The status shortcut returns the metadata owner's selected raw Status line | `internal/spec/read_test.go` (`TestExactSpecSelections`) | Choosing a fenced or earlier status changes existing last-visible-line semantics. |
 | ER8 | 4 | A story projection contains its exact authored text and all typed matching rows with named seams | planned TestExactStoryProjection in internal/coverage/story_test.go | A display-only Rows projection loses row identity, membership, or rationale. |
 | ER9 | 4 | Malformed or ambiguous story membership refuses rather than returning a partial projection | planned TestExactStoryProjection in internal/coverage/story_test.go | Ignoring validator faults makes an invalid map look like a complete obligation. |
 | ER10 | 5 | An absent story returns present false and no rows | planned TestExactStoryProjection in internal/coverage/story_test.go | An empty string alone cannot identify a missing story. |

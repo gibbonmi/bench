@@ -124,7 +124,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench probe [--in <label|primary>] <file> ((--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) [--expect <test>] | --mutants <path>) (--package <expr> [--package <expr>]... [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--full]  grade one or several mutants of one file: write each, run one focused test or check, restore the file after each run, and report bit, silent, invalid, or restore-failed
   bench outline [--in <label|primary>] [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
   bench consumers [--in <label|primary>] <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
-  bench read <path> [--lines <first>:<last>] [--artifact] [--offset <byte-offset> --source <identity>]  exact file or artifact bytes as bounded TOON pages; each page names its source identity, byte offset, and exact continuation
+  bench read <path> [--section <literal-H2-title> | --lines <first>:<last>] [--artifact] [--offset <byte-offset> --source <identity>]  exact file or artifact bytes as bounded TOON pages; each page names its source identity, byte offset, and exact continuation
   bench doctor [--fix] | --compat <codex-cli|codex-desktop> [--fix | --undo <repair-id>]  report shim health or inspect one Codex interface
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--in <label|primary>] [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
@@ -162,6 +162,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
   bench spec [--in <label|primary>] widen <slug> --ticket <basename> [--decision <reference>] <entry>...  add paths inside the signed-off scope to one ticket's Writes: line (no commit)
+  bench spec [--in <label|primary>] show <slug-or-path> [--section stories|status|<literal-H2-title>] [--offset <byte-offset> --source <identity>]  exact spec bytes, one visible H2 section, the User stories section, or the raw Status: line as bounded TOON pages
   bench version              print the installed Bench version (os/arch)
 `
 

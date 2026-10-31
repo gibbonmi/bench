@@ -68,16 +68,37 @@ func headerLines(content []byte) []markdown.Line {
 	return slices.DeleteFunc(lines, func(line markdown.Line) bool { return line.Class != markdown.Body })
 }
 
+const (
+	statusPrefix  = "Status:"
+	roadmapPrefix = "Roadmap:"
+)
+
 func metadata(content []byte) (status, roadmapID string) {
-	for _, line := range headerLines(content) {
-		switch raw := line.Raw; {
-		case strings.HasPrefix(raw, "Status:"):
-			status = strings.TrimSpace(strings.TrimPrefix(raw, "Status:"))
-		case strings.HasPrefix(raw, "Roadmap:"):
-			roadmapID = strings.TrimSpace(strings.TrimPrefix(raw, "Roadmap:"))
+	statusLine, roadmapLine := metadataLines(content)
+	return fieldValue(statusLine, statusPrefix), fieldValue(roadmapLine, roadmapPrefix)
+}
+
+// metadataLines selects the last visible Status: line and the last visible Roadmap: line,
+// or nil for a field that no visible line declares.
+func metadataLines(content []byte) (status, roadmap *markdown.Line) {
+	lines := headerLines(content)
+	for i := range lines {
+		switch raw := lines[i].Raw; {
+		case strings.HasPrefix(raw, statusPrefix):
+			status = &lines[i]
+		case strings.HasPrefix(raw, roadmapPrefix):
+			roadmap = &lines[i]
 		}
 	}
-	return status, roadmapID
+	return status, roadmap
+}
+
+// fieldValue answers the trimmed value of a metadata line, or "" for no line.
+func fieldValue(line *markdown.Line, prefix string) string {
+	if line == nil {
+		return ""
+	}
+	return strings.TrimSpace(strings.TrimPrefix(line.Raw, prefix))
 }
 
 // ErrPersistedFieldsInvalid is the sentinel that each PersistedFields refusal wraps.
@@ -225,10 +246,12 @@ func deriveImplemented(content []byte) ([]byte, int) {
 	return slices.Concat(content[:at], []byte(StatusImplemented), content[at+len("staged"):]), matches
 }
 
-// Command implements `bench spec <subcommand> <slug>`. Its help lists `retire`, `history`,
-// and `widen`. `retire` deletes a merged spec and its review pickup. `history` reports the
-// commits that retired or deleted it — a read-only AXI query; see history.go. `widen` adds
-// paths to one ticket's Writes: line inside the signed-off scope; see widen.go.
+// Command implements `bench spec <subcommand> <slug>`. Its help lists `show`, `retire`,
+// `history`, and `widen`. The root command adapter dispatches `show` with ShowGrammar, so
+// it can compose the spec selections with other owners; see read.go. `retire` deletes a
+// merged spec and its review pickup. `history` reports the commits that retired or deleted
+// it; see history.go. `widen` adds paths to one ticket's Writes: line inside the
+// signed-off scope; see widen.go.
 //
 // The slug's specs/<slug>/spec.md fallback is anchored at the repo root, so it
 // resolves from any cwd inside the repo, while a path argument stays cwd-relative. A
@@ -237,11 +260,11 @@ func deriveImplemented(content []byte) ([]byte, int) {
 // file and the reason. retireOperand is the operand a retire parsed, or "" for other runs.
 func Command(args []string) (out string, code int, retireOperand string) {
 	if len(args) == 0 {
-		return toon.Usage("bench spec", "expected a subcommand: retire, history, widen") + "\n", 2, ""
+		return toon.Usage("bench spec", "expected a subcommand: "+ShowSubcommand+", retire, history, widen") + "\n", 2, ""
 	}
 	switch args[0] {
 	case "-h", "--help":
-		return "usage: bench spec <subcommand>\n\nsubcommands:\n  retire <slug>\n  history <slug>\n  " + strings.TrimPrefix(WidenUsage, "bench spec ") + "\n", 0, ""
+		return "usage: bench spec <subcommand>\n\nsubcommands:\n  " + strings.TrimPrefix(ShowUsage, "bench spec ") + "\n  retire <slug>\n  history <slug>\n  " + strings.TrimPrefix(WidenUsage, "bench spec ") + "\n", 0, ""
 	case "retire":
 		arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", args[1:])
 		if ok {

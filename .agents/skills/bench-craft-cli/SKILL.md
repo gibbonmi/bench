@@ -7,8 +7,7 @@ index: building an agent-facing CLI
 # AXI — Agent eXperience Interface
 
 AXI is the output contract for a CLI an agent drives through the shell. It aims for accurate action at low token cost.
-Apply it per surface: a declared query may conform while operational siblings keep their own documented contract. Full spec:
-https://axi.md
+Apply it per surface: a declared query may conform while operational siblings keep their own documented contract. Full spec: https://axi.md
 
 ## The principles
 
@@ -84,6 +83,7 @@ applies to each surface. Commands not listed retain their own contracts.
 | `bench coverage` | Successful default extraction offers one check action per mapped coverage row: `bench coverage --check <spec>`. For repairable mapped rows, that exact command is the retry with why `retry after repairing coverage map`. `coverage --check` and every refusal retain their error contracts and append no disclosure. |
 | `bench harnesses` | Project the compiled harness record, or observe one named session record with `--record` and `--format`. Each view is a terminal read, so the disposition is always `help[0]`. |
 | `bench read` | A nonterminal page offers one exact continuation with the same selector, source token, and next byte offset. A terminal page ends with `help[0]`. |
+| `bench spec show` | Page a spec, one visible H2 section, the stories section, or the raw status line like `bench read`. An absent selection is a `present` false row with `help[0]`. |
 | `bench roadmap` | Default index omits bodies; request selected complete rows with `bench roadmap --context --row <ID,...>` or the complete snapshot with `bench roadmap --context --full`. |
 | `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action. Each id cell holds the address for the `<target>` slot. |
 
