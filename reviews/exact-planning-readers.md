@@ -2033,3 +2033,9 @@ The repair delta is `a9a22b7a2..1f19bea23`.
 
 R4 (ST5) is a no-op: the fix needs a new field in `cmd/bench/command_registry.go`, which is at its 400-line cap. This decision is open to reviewer veto.
 R6 (S1) changes route: the spec now refuses a read whose identity-row label does not resolve back to the read tree. Repair cycle 2 takes it.
+
+## ER-C4 repair cycle 2 witness reds
+
+The repair delta is `4aa5700ff..c0d81ce69`; its code changes are in `cmd/bench/planning_reads.go`, `internal/treetarget/run.go`, and `cmd/bench/worktree_leaves_test.go`.
+
+- R6: the witness probe that turns the resolve-back refusal off answered `bit`. All three cases of `TestWorktreeReadRefusesATargetThatNamesAnotherTree` paged content, with the labels `primary`, `unassigned`, and `related 0064`.
