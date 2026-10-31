@@ -187,3 +187,17 @@ The two plan probes `writes-landed` and `precedence` answered `bit` in `bench pr
 | `internal/preflight/decision.go` | omit the row from the audit form | `TestWritesLandedKeepsAuditManual` | ES45 |
 
 An `exempt` flag on a red row does not change `requiredGreen`, so the ES45 witness omits the row from the audit form. The build amendment of the ES45 and ES46 cells records that divergence.
+
+## ES-C1 ticket 02 author witness reds
+
+The ticket 02 author `ft375-author-02` (opus / medium) reported these witness reds at ticket commit `d9d130308`.
+The author applied each mutation by hand, saw the named test fail, and restored each subject.
+The plan probe `closure-prediction` answered `bit` in `bench probe`.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/commitment/delivery.go` | force the obligation filter of `closing` to true | `TestCommitmentCloses/partial` | ES13 |
+| `internal/commitment/delivery.go` | return an error for a deliverable that the milestone does not approve | `TestClosedRowPathsMatchClosure/unapproved` | ES14 branch |
+| `internal/commitment/repository/closure.go` | return an error when the tree holds no policy | `TestClosedRowPathsMatchClosure/no-policy` | ES14 branch |
+| `internal/commitment/repository/closure.go` | drop the error of `Closes` | `TestClosedRowPathsMatchClosure/obligation-free` | ES14 branch |
+| `internal/commitment/repository/closure.go` | skip the row-owner step in `ClosedRowPaths` | `TestClosedRowPathsMatchClosure/refused-source` | ES14 |
