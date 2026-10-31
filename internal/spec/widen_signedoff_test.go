@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/tickets"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 func TestSpecWidenRefusesWithoutSignedOffTickets(t *testing.T) {
@@ -41,6 +42,22 @@ func TestSpecWidenRefusesWithoutSignedOffTickets(t *testing.T) {
 			requireRefusal(t, root, before, out, code, "holds no ticket of specs/s")
 		})
 	}
+}
+
+// An unresolved default branch refuses with its own message, so an absent tip never reads
+// as an unreadable one. Two local branches, neither named main, and no origin leave the
+// default branch unresolved.
+func TestSpecWidenRefusesAnUnresolvedDefaultBranch(t *testing.T) {
+	primary := widenPrimary(t, map[string]string{widenTicketPath: widenTicket("internal/x/y.go")}, "internal/x/y.go")
+	root := retireWorktree(t, primary)
+	gittest.MustRun(t, primary, "branch", "-m", "main", "trunk")
+	before := readTicket(t, root)
+	out, code := runWiden(t, root, "internal/x/z.go")
+	want := toon.Errorf("default branch is unresolved", "widen reads the signed-off scope from the default-branch tip") + "\n"
+	if out != want {
+		t.Fatalf("out = %q, want %q", out, want)
+	}
+	requireRefusal(t, root, before, out, code)
 }
 
 // The signed-off ticket set is the tracked-ticket enumeration of the tip, so a later copy
