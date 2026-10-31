@@ -255,6 +255,75 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "es-c1-r2-standards",
+          "performer": "ft375-review-standards-2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6ed05a0723fbfe51f5f39953e48115a85ad3cf8a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-standards-2",
+            "digest": "sha256:d1eda7980628adfc3c63d330e7d617296362bc4da82adb3fa1e47b7936f6a389",
+            "excerpt": "Standards axis, ES-C1 confirming round after repair 1, evidence b26574f8 current, tip a5ab7ce4b.\nS1 closed: git.DefaultTip internal/git/default_branch.go:44 serves DefaultContains, landedDeletions, defaultTipEqualPaths, signedOffScope; each keeps its handling.\nS2 closed: preflighttest/history.go:92,101,118; drift_test.go:16-21 alias is single-source.\nS4 closed: no spec row IDs remain.\nNew findings: none. Count 0.\n"
+          },
+          "axis": "Standards",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "07922d5437750b982cb74a31792286b933c6e463",
+          "finding_ids": [],
+          "supersedes": [
+            "es-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "es-c1-r2-spec",
+          "performer": "ft375-review-spec-2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6ed05a0723fbfe51f5f39953e48115a85ad3cf8a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-spec-2",
+            "digest": "sha256:f9de822f6cd079c236815b27d60a1fb35af8309d95029edcb1ecab31080afd0c",
+            "excerpt": "Spec axis, ES-C1 reaffirmation over repair delta d9d130308..07922d543, evidence b26574f8 current.\nNo spec predicate changed answer: ES34 fail-closed, DefaultContains messages, defaultTipEqualPaths and signedOffScope answers, detail texts, precedence, query flags, coverage citations all hold.\nP2 (process, confidence 4): widen outside signed-off directories needs a decision. Orchestrator disposition no-op: bench spec widen --decision recorded both paths as decided (commit f90e68848).\nReaffirmed. Count 1 (no-op).\n"
+          },
+          "axis": "Spec",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "07922d5437750b982cb74a31792286b933c6e463",
+          "finding_ids": [],
+          "supersedes": [
+            "es-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "es-c1-r2-coverage",
+          "performer": "ft375-review-coverage-2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6ed05a0723fbfe51f5f39953e48115a85ad3cf8a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-coverage-2",
+            "digest": "sha256:32b05fbad9db0d188b6071ecf95e5df53e78e8716330f32ee6a168c11a14e111",
+            "excerpt": "Coverage axis, ES-C1 confirming round after repair 1, evidence b26574f8 current, tree clean after probes.\nC1 closed: TestWritesLandedPrecedence/repeated_entry at internal/preflight/writes_landed_test.go:137.\nC4 internal/preflight/default_branch.go:41 unresolved arm of defaultTipEqualPaths untested; probe swap errors.Is guard: silent over ./internal/preflight/... Confidence 7. auto-fix.\nC5 internal/spec/widen.go:214 unresolved refusal of signedOffScope unpinned; probe same swap: silent over ./internal/spec/... ./cmd/... Confidence 6. auto-fix.\nProbe 3 internal/git/default_branch.go DefaultContains same swap: bit (TestMergeRefusesAnUnresolvedDefaultBranch).\nCount 2. Worst C4.\n"
+          },
+          "axis": "Coverage",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "07922d5437750b982cb74a31792286b933c6e463",
+          "finding_ids": [
+            "C4",
+            "C5"
+          ],
+          "supersedes": [
+            "es-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -376,3 +445,11 @@ The plan probes `writes-landed` and `precedence` answered `bit` again at that co
 | subject | mutation | failing witness | finding |
 | --- | --- | --- | --- |
 | `internal/preflight/fence_writes.go` | omit the `seen[named]` repeated-entry guard | `TestWritesLandedPrecedence/repeated_entry` | C1 |
+
+## ES-C1 confirming round 1 pickup
+
+Standards closed S1, S2, and S4 and found no new finding. Spec reaffirmed the repair delta; its process finding P2 is a no-op, because `bench spec widen --decision` recorded the two outside paths as decided.
+Coverage closed C1 and found two new gaps that the repair delta reaches. ES-C1 takes repair cycle 2 of 2 as a test-only repair.
+
+- C4 (auto-fix, confidence 7): no test pins the unresolved arm of `defaultTipEqualPaths` at `internal/preflight/default_branch.go:41`. A probe that turns an unresolved default branch into a bootstrap failure answered `silent`.
+- C5 (auto-fix, confidence 6): no test pins the unresolved refusal of `signedOffScope` at `internal/spec/widen.go:214`. The same probe answered `silent`.
