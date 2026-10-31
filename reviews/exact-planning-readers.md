@@ -295,6 +295,72 @@
           "supersedes": [
             "ER-C1-coverage-1"
           ]
+        },
+        {
+          "id": "ER-C1-spec-3",
+          "performer": "ft125-review-c1-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dbcf3ecb2c7616dff026f789db2ac0da2d3c7250",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-spec-3",
+            "digest": "sha256:0b670f21c691affaea6a1715fd9b53bb55139a61caadb47ea764a104ce70b627",
+            "excerpt": "Spec confirming round 2 ER-C1, repair delta 8b89063e2..42cdc1ce2: 0 new findings. N3 closed (tree_scope.go:22-24 matches spec line 106). N2 deferred to the re-slice plan commit. N1 (cursor inside a rune) unchanged and parked for a reviewer decision; it does not block. The delta changes no accepted behavior of ER1, ER16-ER28, ER35-ER40, ER44-ER46.\n"
+          },
+          "axis": "Spec",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C1-spec-2"
+          ]
+        },
+        {
+          "id": "ER-C1-coverage-3",
+          "performer": "ft125-review-c1-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dbcf3ecb2c7616dff026f789db2ac0da2d3c7250",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-coverage-3",
+            "digest": "sha256:71e1303839103e4f91c3bbd2eaa6287ea2e1655c94524b08b85a999f1f76824b",
+            "excerpt": "Coverage confirming round 2 ER-C1, repair delta 8b89063e2..42cdc1ce2: 0 new findings. N1 closed (planning_reader_commands_test.go:178, agrees with probe C1). N2 closed (file_test.go:105-117, agrees with probe C2). N3 closed (ticket_grammar_test.go:49,111-115, agrees with W1). No probe run; reading decided each finding.\n"
+          },
+          "axis": "Coverage",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C1-coverage-2"
+          ]
+        },
+        {
+          "id": "ER-C1-standards-3",
+          "performer": "ft125-review-c1-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "dbcf3ecb2c7616dff026f789db2ac0da2d3c7250",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c1-standards-3",
+            "digest": "sha256:904407edbae5d5d68137486dde252cb025ad79ca125dcf4527847e0b62ed2622",
+            "excerpt": "Standards confirming round 2 ER-C1, repair delta 8b89063e2..42cdc1ce2: 0 findings. N1 closed (ticket_grammar_test.go:47-50,238-242; every approved query graded at least as strictly as at 97ef9ee0e). N2 closed (tree_scope.go:22-24). N4 closed (read_test.go:37-45). N5 closed (planning_reader_commands_test.go:144).\nAdvice (no finding): tree_scope.go:24 says root read reads only the caller's checkout, but read --artifact reads an absolute path; reword when ticket 4a edits tree_scope.go.\n"
+          },
+          "axis": "Standards",
+          "base": "c02a0324c839ab93f360781d06da7e8b7c179179",
+          "tip": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C1-standards-2"
+          ]
         }
       ]
     }
