@@ -17,15 +17,15 @@ func landedDeletions(root, mode string, parsed []tickets.Ticket, exists map[stri
 		return nil
 	}
 	landed := map[string]string{}
-	tip, resolved := "", false
+	tip := ""
 	for _, ticket := range parsed {
 		for _, entry := range ticket.Writes {
 			write, err := tickets.ParseWrite(entry)
 			if err != nil || write.Kind != tickets.WriteExisting || exists[entry] {
 				continue
 			}
-			if !resolved {
-				if tip, resolved = defaultBranchTip(root); !resolved {
+			if tip == "" {
+				if _, tip, err = git.DefaultTip(root); err != nil {
 					return landed
 				}
 			}
@@ -35,17 +35,6 @@ func landedDeletions(root, mode string, parsed []tickets.Ticket, exists map[stri
 		}
 	}
 	return landed
-}
-
-// defaultBranchTip resolves the default branch through git.ResolvedDefault and its tip
-// through git.ResolveCommit. Either failure answers false.
-func defaultBranchTip(root string) (string, bool) {
-	branch, ok := git.ResolvedDefault(root)
-	if !ok {
-		return "", false
-	}
-	tip, err := git.ResolveCommit(root, branch)
-	return tip, err == nil
 }
 
 // deletingCommit answers the newest first-parent commit of tip that deleted path, when tip

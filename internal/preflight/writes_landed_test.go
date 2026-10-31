@@ -8,9 +8,6 @@ import (
 	"github.com/gibbonmi/bench/internal/reviewrecord"
 )
 
-// The tests in this file drive the actual preflight command over a fixture history. Each
-// expected commit is the identity that the fixture made, and each expected row is a literal.
-
 // seedLanded builds the conformant fixture and runs history on main. It then commits a
 // ticket on main that also writes each plain entry, restarts the feature branch at main
 // with the fenced change, and returns the slug.
@@ -26,26 +23,18 @@ func seedLanded(t *testing.T, history func(), entries ...string) string {
 	return slug
 }
 
-// commitEverything commits every change of the working tree and returns the new head.
-func commitEverything(t *testing.T, message string) string {
-	t.Helper()
-	preflighttest.RunGit(t, "add", "-A")
-	preflighttest.RunGit(t, "commit", "-q", "-m", message)
-	return preflighttest.RunGit(t, "rev-parse", "HEAD")
-}
-
 // addPath commits path on the current branch and returns the commit.
 func addPath(t *testing.T, path string) string {
 	t.Helper()
 	preflighttest.MustWriteFile(t, path, "landed work\n")
-	return commitEverything(t, "add "+path)
+	return preflighttest.CommitAll(t, "add "+path)
 }
 
 // deletePath commits the deletion of path on the current branch and returns the commit.
 func deletePath(t *testing.T, path string) string {
 	t.Helper()
 	preflighttest.RunGit(t, "rm", "-q", path)
-	return commitEverything(t, "delete "+path)
+	return preflighttest.CommitAll(t, "delete "+path)
 }
 
 // landedRow and resolveRow are the rendered red rows of writes-landed and writes-resolve
@@ -67,9 +56,9 @@ func requireRow(t *testing.T, out, check, want string) {
 	}
 }
 
-// TestWritesLandedBareEntry covers ES24, ES25, and ES37. A bare build preflight with no
-// recorded chunk names the plain entry that a default-branch commit deleted in
-// writes-landed, with the full deleting commit, and keeps writes-resolve green.
+// TestWritesLandedBareEntry checks that a bare build preflight with no recorded chunk names
+// the plain entry that a default-branch commit deleted in writes-landed, with the full
+// deleting commit, and keeps writes-resolve green.
 func TestWritesLandedBareEntry(t *testing.T) {
 	var deletion string
 	slug := seedLanded(t, func() {
@@ -85,11 +74,11 @@ func TestWritesLandedBareEntry(t *testing.T) {
 	requireRow(t, out, "writes-resolve", "")
 }
 
-// TestWritesLandedShapes covers ES26, ES27, ES28, ES29, ES31, and ES35. A deletion that
-// only a merge resolution made, a side-branch deletion that a merge brought in, and a
-// rename each name the commit that the first-parent history of main answers. A
-// never-tracked path, a path that the default-branch tip holds again, and a glob-shaped
-// path beside a deleted sibling stay writes-resolve reds.
+// TestWritesLandedShapes checks that a deletion that only a merge resolution made, a
+// side-branch deletion that a merge brought in, and a rename each name the commit that the
+// first-parent history of main answers. A never-tracked path, a path that the
+// default-branch tip holds again, and a glob-shaped path beside a deleted sibling stay
+// writes-resolve reds.
 func TestWritesLandedShapes(t *testing.T) {
 	var resolution, sideMerge, rename string
 	slug := seedLanded(t, func() {
@@ -109,7 +98,7 @@ func TestWritesLandedShapes(t *testing.T) {
 
 		addPath(t, "shapes/old.md")
 		preflighttest.RunGit(t, "mv", "shapes/old.md", "shapes/new.md")
-		rename = commitEverything(t, "rename shapes/old.md")
+		rename = preflighttest.CommitAll(t, "rename shapes/old.md")
 
 		addPath(t, "shapes/restored.md")
 		deletePath(t, "shapes/restored.md")
@@ -130,12 +119,12 @@ func TestWritesLandedShapes(t *testing.T) {
 	requireRow(t, out, "writes-resolve", resolveRow("one.md: shapes/never.md", "one.md: shapes/restored.md", "one.md: d/gl*ob x"))
 }
 
-// TestWritesLandedPrecedence covers ES30, ES32, ES33, and ES34. Each entry gets one answer:
-// a mixed set reds both rows, an earlier-chunk deletion and a deletion inside the explicit
-// --base range are green in both rows, and an unresolved default branch leaves a landed
-// entry in writes-resolve.
+// TestWritesLandedPrecedence checks that each entry gets one answer: a mixed set reds both
+// rows, a repeated landed entry is named once, an earlier-chunk deletion and a deletion
+// inside the explicit --base range are green in both rows, and an unresolved default branch
+// leaves a landed entry in writes-resolve.
 func TestWritesLandedPrecedence(t *testing.T) {
-	t.Run("ES30 mixed set", func(t *testing.T) {
+	t.Run("mixed set", func(t *testing.T) {
 		var deletion string
 		slug := seedLanded(t, func() {
 			addPath(t, "docs/gone.md")
@@ -145,7 +134,17 @@ func TestWritesLandedPrecedence(t *testing.T) {
 		requireRow(t, out, "writes-landed", landedRow("one.md: docs/gone.md ("+deletion+")"))
 		requireRow(t, out, "writes-resolve", resolveRow("one.md: docs/typo.md"))
 	})
-	t.Run("ES32 earlier chunk deletion", func(t *testing.T) {
+	t.Run("repeated entry", func(t *testing.T) {
+		var deletion string
+		slug := seedLanded(t, func() {
+			addPath(t, "docs/gone.md")
+			deletion = deletePath(t, "docs/gone.md")
+		}, "docs/gone.md", "docs/gone.md")
+		out, _ := Command([]string{"build", slug})
+		requireRow(t, out, "writes-landed", landedRow("one.md: docs/gone.md ("+deletion+")"))
+		requireRow(t, out, "writes-resolve", "")
+	})
+	t.Run("earlier chunk deletion", func(t *testing.T) {
 		slug := seedLanded(t, func() { addPath(t, "docs/chunk.md") }, "docs/chunk.md")
 		base := preflighttest.RunGit(t, "rev-parse", "HEAD")
 		deletion := deletePath(t, "docs/chunk.md")
@@ -153,12 +152,12 @@ func TestWritesLandedPrecedence(t *testing.T) {
 			Version: 2, Spec: "specs/" + slug + "/spec.md", PlanDigest: "sha256:plan",
 			Chunks: []reviewrecord.Chunk{{ID: "C1", Base: base, Tip: deletion, PlanDigest: "sha256:plan", SourceDigest: deletion}},
 		}))
-		commitEverything(t, "record the chunk")
+		preflighttest.CommitAll(t, "record the chunk")
 		out, _ := Command([]string{"build", slug})
 		requireRow(t, out, "writes-landed", "")
 		requireRow(t, out, "writes-resolve", "")
 	})
-	t.Run("ES33 deletion inside the explicit range", func(t *testing.T) {
+	t.Run("deletion inside the explicit range", func(t *testing.T) {
 		var before string
 		slug := seedLanded(t, func() {
 			before = addPath(t, "docs/gone.md")
@@ -168,7 +167,7 @@ func TestWritesLandedPrecedence(t *testing.T) {
 		requireRow(t, out, "writes-landed", "")
 		requireRow(t, out, "writes-resolve", "")
 	})
-	t.Run("ES34 unresolved default branch", func(t *testing.T) {
+	t.Run("unresolved default branch", func(t *testing.T) {
 		slug := seedLanded(t, func() {
 			addPath(t, "docs/gone.md")
 			deletePath(t, "docs/gone.md")
@@ -180,9 +179,9 @@ func TestWritesLandedPrecedence(t *testing.T) {
 	})
 }
 
-// TestWritesLandedReviewMode covers ES38 and ES40. The review preflight renders no
-// writes-landed row, and it keeps a landed entry in writes-resolve, in the bare form and
-// when the explicit --base comes after the deletion.
+// TestWritesLandedReviewMode checks that the review preflight renders no writes-landed row,
+// and it keeps a landed entry in writes-resolve, in the bare form and when the explicit
+// --base comes after the deletion.
 func TestWritesLandedReviewMode(t *testing.T) {
 	slug := seedLanded(t, func() {
 		addPath(t, "docs/gone.md")
@@ -203,9 +202,8 @@ func TestWritesLandedReviewMode(t *testing.T) {
 	}
 }
 
-// TestWritesLandedKeepsAuditManual covers ES45. The audit form grades the writes-landed
-// row of its explicit pair, and it requires the manual staleness pass while that row is
-// red.
+// TestWritesLandedKeepsAuditManual checks that the audit form grades the writes-landed row
+// of its explicit pair, and it requires the manual staleness pass while that row is red.
 func TestWritesLandedKeepsAuditManual(t *testing.T) {
 	var deletion string
 	slug := seedLanded(t, func() {
@@ -217,22 +215,7 @@ func TestWritesLandedKeepsAuditManual(t *testing.T) {
 		t.Fatalf("audit exit = %d, want 1:\n%s", code, out)
 	}
 	requireRow(t, out, "writes-landed", landedRow("one.md: docs/gone.md ("+deletion+")"))
-	if manual := manualRequired(t, out); manual != "true" {
-		t.Errorf("manual_required = %s, want true while writes-landed is red:\n%s", manual, out)
+	if manual := preflighttest.StalenessRow(t, out)["manual_required"]; manual != true {
+		t.Errorf("manual_required = %v, want true while writes-landed is red:\n%s", manual, out)
 	}
-}
-
-// manualRequired is the manual_required cell of the staleness table of one audit response.
-func manualRequired(t *testing.T, out string) string {
-	t.Helper()
-	const header = "staleness[1]{complete,manual_required,baseline,tip}:\n  "
-	_, row, found := strings.Cut(out, header)
-	if !found {
-		t.Fatalf("response holds no staleness table:\n%s", out)
-	}
-	cells := strings.Split(row, ",")
-	if len(cells) < 2 {
-		t.Fatalf("staleness row %q holds no manual_required cell", row)
-	}
-	return cells[1]
 }
