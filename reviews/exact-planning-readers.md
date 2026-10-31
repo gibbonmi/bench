@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:c3646a6ef58df990a5974d6541cb51d0de4d6bef2d7d341ebea6016443355f4e",
+  "plan_digest": "sha256:0cc2184bd97d3c1cd481fe91e8dc0d203ee5cd75032788ecbc0ea8b98f5e9733",
   "implementation_session": "",
   "chunks": [
     {
@@ -363,6 +363,57 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ER-C2",
+      "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+      "tip": "e6d0635cd71e1af596195368787d6861b0ab385d",
+      "plan_digest": "sha256:0cc2184bd97d3c1cd481fe91e8dc0d203ee5cd75032788ecbc0ea8b98f5e9733",
+      "source_digest": "cfbc9e40247ef4776f319c69023985d3d8efdc24",
+      "acceptance_rows": [
+        "ER2",
+        "ER3",
+        "ER4",
+        "ER5",
+        "ER7",
+        "ER6",
+        "ER8",
+        "ER9",
+        "ER10"
+      ],
+      "verification": [
+        {
+          "id": "ER-C2-hidden-heading-red",
+          "performer": "ft125-author-2a",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cfbc9e40247ef4776f319c69023985d3d8efdc24",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-author-2a",
+            "digest": "sha256:7038a8e87b0ed57840d5f88d2eaf57e2cc9cf8d3f53d8fe39bd76223772e0b65",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/read.go,swap,failed,1,TestExactMarkdownSelections,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestExactMarkdownSelections,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,359\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestExactMarkdownSelections,\"read_test.go:53: section with hidden headings: err = selection refused: 3 visible H2 headings are titled \\\"Alpha\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e6d0635cd71e1af596195368787d6861b0ab385d",
+          "requirement": "ER-C2-hidden-heading-red",
+          "command": "bench test --package ./internal/spec --run TestExactMarkdownSelections",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/spec/read.go: accept a fenced or commented H2 line as an owning heading; expect TestExactMarkdownSelections",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-author-2a",
+              "digest": "sha256:7038a8e87b0ed57840d5f88d2eaf57e2cc9cf8d3f53d8fe39bd76223772e0b65",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/spec/read.go,swap,failed,1,TestExactMarkdownSelections,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/spec,TestExactMarkdownSelections,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,359\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/spec,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/spec,TestExactMarkdownSelections,\"read_test.go:53: section with hidden headings: err = selection refused: 3 visible H2 headings are titled \\\"Alpha\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -394,6 +445,15 @@
     {
       "from": "sha256:55aeb8d80f7f8919bdf93fa364e239f8fe50a778da8f3249a15e85b2cca4f6f9",
       "to": "sha256:c3646a6ef58df990a5974d6541cb51d0de4d6bef2d7d341ebea6016443355f4e",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c3646a6ef58df990a5974d6541cb51d0de4d6bef2d7d341ebea6016443355f4e",
+      "to": "sha256:0cc2184bd97d3c1cd481fe91e8dc0d203ee5cd75032788ecbc0ea8b98f5e9733",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
