@@ -23,10 +23,11 @@ const declarationKind = "declaration"
 
 // Declaration is one top-level Go declaration that a --symbol read can select. Name is the
 // declared identifier. Receiver is the base type name of a method's receiver, and Pointer
-// marks a pointer receiver. Line is the 1-based line of the name. Start and End are the byte
-// offsets of the span: from the attached Doc group, or from the keyword when no Doc group is
-// attached, through the declaration End. First and Last are the 1-based lines of Start and
-// End. Each name of a grouped declaration has the span of the complete group.
+// marks a pointer receiver. Line is the 1-based physical line of the name. Start and End are
+// the byte offsets of the span: from the attached Doc group, or from the keyword when no Doc
+// group is attached, through the declaration End. First and Last are the 1-based physical
+// lines of Start and End. Each name of a grouped declaration has the span of the complete
+// group.
 type Declaration struct {
 	Name, Receiver, Kind string
 	Pointer              bool
@@ -60,7 +61,7 @@ func Declarations(name string, content []byte) ([]Declaration, error) {
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.FuncDecl:
-			item := Declaration{Name: d.Name.Name, Kind: "func", Line: positions.Line(d.Name.Pos())}
+			item := Declaration{Name: d.Name.Name, Kind: "func", Line: physicalLine(positions, d.Name.Pos())}
 			if d.Recv != nil && len(d.Recv.List) > 0 {
 				item.Kind = "method"
 				item.Receiver, item.Pointer = receiver(d.Recv.List[0].Type)
@@ -73,14 +74,14 @@ func Declarations(name string, content []byte) ([]Declaration, error) {
 			}
 			start, end, first, last := span(positions, d.Doc, d)
 			for _, name := range specNames(d) {
-				declarations = append(declarations, Declaration{Name: name.Name, Kind: d.Tok.String(), Line: positions.Line(name.Pos()), Start: start, End: end, First: first, Last: last})
+				declarations = append(declarations, Declaration{Name: name.Name, Kind: d.Tok.String(), Line: physicalLine(positions, name.Pos()), Start: start, End: end, First: first, Last: last})
 			}
 		}
 	}
 	return declarations, nil
 }
 
-// span answers the byte offsets of decl, and the 1-based lines of those offsets: from its
+// span answers the byte offsets of decl, and the physical lines of those offsets: from its
 // attached Doc group when it has one, and otherwise from its keyword, through its End. A
 // comment that the parser does not attach, such as one that a blank line separates, stays
 // outside.
@@ -89,7 +90,13 @@ func span(positions *token.File, doc *ast.CommentGroup, decl ast.Decl) (int, int
 	if doc != nil {
 		start = doc.Pos()
 	}
-	return positions.Offset(start), positions.Offset(decl.End()), positions.Line(start), positions.Line(decl.End())
+	return positions.Offset(start), positions.Offset(decl.End()), physicalLine(positions, start), physicalLine(positions, decl.End())
+}
+
+// physicalLine answers the 1-based physical line of p in its file. It ignores //line and
+// /*line directives, so each line that the outline names is a line that `bench read` selects.
+func physicalLine(positions *token.File, p token.Pos) int {
+	return positions.PositionFor(p, false).Line
 }
 
 // specNames answers the declared names of a type, const, or var declaration in source order.

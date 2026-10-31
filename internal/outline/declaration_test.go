@@ -13,7 +13,7 @@ import (
 )
 
 // declarationSource holds each declaration family, an unattached comment, adjacent
-// declarations, a grouped declaration, and a trailing line comment.
+// declarations, a grouped declaration, a trailing line comment, and a //line directive.
 const declarationSource = `// Package fixture holds declarations.
 package fixture
 
@@ -47,36 +47,47 @@ const (
 )
 
 var Single = "single" // trailing
+//line other.go:100
+
+// Directed follows a line directive.
+func Directed() {
+}
 `
 
 // TestDeclarationSpans grades each span against independently authored source text: it
 // starts at the attached doc comment and ends at the declaration end, and it excludes the
 // unattached comment, the adjacent declaration, and the trailing line comment. Each name of
-// a group has the complete group.
+// a group has the complete group. The name line and the first and last span lines are the
+// physical lines of the fixture, also after a //line directive.
 func TestDeclarationSpans(t *testing.T) {
+	type span struct {
+		text              string
+		line, first, last int
+	}
 	group := "// Limits groups two constants.\nconst (\n\t// Low is low.\n\tLow  = 1\n\tHigh = 2\n)"
-	want := map[string]string{
-		"Run":          "func // Run starts the work.\n// It has two doc lines.\nfunc Run() { fmt.Println(\"run\") }",
-		"Adjacent":     "func func Adjacent() {}",
-		"Store":        "type // Store holds values.\ntype Store struct{ values map[string]int }",
-		"(*Store).Get": "method // Get reads a value.\nfunc (s *Store) Get(key string) int { return s.values[key] }",
-		"Store.Len":    "method func (s Store) Len() int { return len(s.values) }",
-		"(*List).Push": "method // Push appends.\nfunc (l *List[T]) Push(item T) { l.items = append(l.items, item) }",
-		"Map.Get":      "method func (m Map[K, V]) Get(key K) V { return m.values[key] }",
-		"Low":          "const " + group,
-		"High":         "const " + group,
-		"Single":       "var var Single = \"single\"",
+	want := map[string]span{
+		"Run":          {"func // Run starts the work.\n// It has two doc lines.\nfunc Run() { fmt.Println(\"run\") }", 10, 8, 10},
+		"Adjacent":     {"func func Adjacent() {}", 11, 11, 11},
+		"Store":        {"type // Store holds values.\ntype Store struct{ values map[string]int }", 14, 13, 14},
+		"(*Store).Get": {"method // Get reads a value.\nfunc (s *Store) Get(key string) int { return s.values[key] }", 17, 16, 17},
+		"Store.Len":    {"method func (s Store) Len() int { return len(s.values) }", 19, 19, 19},
+		"(*List).Push": {"method // Push appends.\nfunc (l *List[T]) Push(item T) { l.items = append(l.items, item) }", 22, 21, 22},
+		"Map.Get":      {"method func (m Map[K, V]) Get(key K) V { return m.values[key] }", 24, 24, 24},
+		"Low":          {"const " + group, 29, 26, 31},
+		"High":         {"const " + group, 30, 26, 31},
+		"Single":       {"var var Single = \"single\"", 33, 33, 33},
+		"Directed":     {"func // Directed follows a line directive.\nfunc Directed() {\n}", 37, 36, 38},
 	}
 	declarations, err := Declarations("fixture.go", []byte(declarationSource))
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := map[string]string{}
+	got := map[string]span{}
 	for _, d := range declarations {
-		got[d.Qualified()] = d.Kind + " " + declarationSource[d.Start:d.End]
+		got[d.Qualified()] = span{d.Kind + " " + declarationSource[d.Start:d.End], d.Line, d.First, d.Last}
 	}
 	if !maps.Equal(got, want) {
-		t.Fatalf("declaration spans =\n%q\nwant\n%q", got, want)
+		t.Fatalf("declaration spans =\n%+v\nwant\n%+v", got, want)
 	}
 }
 
