@@ -17,6 +17,7 @@ var commandPackages = []string{
 	"internal/harnesses",
 	"internal/learnings",
 	"internal/maps",
+	"internal/outline",
 	"internal/probe",
 	"internal/roadmap",
 	"internal/spec",

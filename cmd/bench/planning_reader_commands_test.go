@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -88,6 +89,11 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 	for name, content := range files {
 		writeAXIFixture(t, filepath.Join(root, name), content)
 	}
+	// A tracked declaration longer than one page starts at its doc comment and stops before
+	// its neighbor.
+	declaration := "// Long spans pages.\nfunc Long() {\n" + strings.Repeat("\tprintln(\"declaration line ✓\")\n", 300) + "}"
+	writeAXIFixture(t, filepath.Join(root, "decl", "decl.go"), "package decl\n\n// An unattached comment.\n\n"+declaration+"\n\nfunc Next() {}\n")
+	gittest.MustRun(t, root, "add", "decl")
 	var spillResponse bytes.Buffer
 	owner := responsebound.New(worktree.Home(), &spillResponse, &spillResponse, func() string { return "" }, false)
 	_, _ = owner.Stdout().Write([]byte(strings.Repeat("spilled line\n", 400)))
@@ -118,6 +124,7 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 	cases["spec show stories"] = readCase{nested, "", []string{"spec", "show", "long", "--section", "stories"}, stories}
 	cases["spec show literal section"] = readCase{root, "", []string{"spec", "show", "specs/long/spec.md", "--section", "User stories"}, stories}
 	cases["spec show file"] = readCase{root, "specs/long/spec.md", []string{"spec", "show", "long"}, ""}
+	cases["outline symbol from a subdirectory"] = readCase{nested, "", []string{"outline", "../decl", "--symbol", "Long"}, declaration}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
 			want, ok := files[c.file]

@@ -96,10 +96,10 @@ func TestBareFormKeepsItsBytesWithoutAFilter(t *testing.T) {
 	}
 }
 
-// OF5: the help text names both filter flags.
+// OF5: the help text names both filter flags, and the symbol form with its cursor flags.
 func TestHelpNamesTheFilterFlags(t *testing.T) {
 	out, code := Command([]string{"--help"})
-	if code != 0 || !strings.HasPrefix(out, "usage: bench outline [path] [--full] [--production|--test]\n") {
+	if code != 0 || !strings.HasPrefix(out, "usage: bench outline [path] [--full] [--production|--test]\nusage: bench outline [path] --symbol <name-or-receiver.method> [--production|--test] [--offset <byte-offset> --source <identity>]\n") {
 		t.Fatalf("help code=%d does not name the filter flags:\n%s", code, out)
 	}
 }

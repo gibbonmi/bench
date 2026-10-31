@@ -3,6 +3,8 @@ package main
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/gittest"
 )
 
 func axiEnvelopeCases() map[string]axiEnvelopeCase {
@@ -49,6 +51,18 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			successMarker: "content[1]{data}:\n", emptyMarker: "content[0]{data}:\n", usage: "usage: bench read",
 			setupSuccess: func(t *testing.T, root string) { writeAXIFixture(t, filepath.Join(root, "fixture.txt"), "fixture\n") },
 			setupEmpty:   func(t *testing.T, root string) { writeAXIFixture(t, filepath.Join(root, "empty.txt"), "") },
+		},
+		// outline --symbol pages one tracked declaration; an absent name is the definitive
+		// empty page.
+		"outline": {
+			route: []string{"outline"}, successArgv: []string{"outline", "--symbol", "Symbol"}, emptyArgv: []string{"outline", "--symbol", "Missing"},
+			blocks:        []string{"page", "content", "help"},
+			successMarker: "content[1]{data}:\n", emptyMarker: "content[0]{data}:\n", usage: "usage: bench outline",
+			setupSuccess: func(t *testing.T, root string) {
+				setupAXIEmptyConsumers(t, root)
+				gittest.MustRun(t, root, "add", ".")
+			},
+			setupEmpty: noSetup,
 		},
 		// spec show pages the selected spec bytes like read; a present empty spec is the
 		// definitive empty page.

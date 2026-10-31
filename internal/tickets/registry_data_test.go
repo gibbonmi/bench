@@ -26,6 +26,7 @@ func TestCommandPackageCoversAtASegmentBoundary(t *testing.T) {
 		"internal/harnesses/harnesses.go": true,
 		"cmd/bench/main.go":               true,
 		"internal/spec/read.go":           true,
+		"internal/outline/declaration.go": true,
 		"internal/toon/toon.go":           false,
 		"internal/harnessesx/x.go":        false,
 	} {

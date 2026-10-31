@@ -97,7 +97,7 @@ The pre-push hook guards the default branch. This line only states the binding.)
   missing `go` on `PATH` is a named refusal.
 - **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench consumers`, `bench harnesses`,
-  `bench roadmap`, `bench read`, `bench spec show`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, and `bench worktree list`, and the
+  `bench roadmap`, `bench read`, `bench spec show`, `bench outline`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, `bench worktree list`, and the
   shared flat-table emitter). This is the agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract. It emits TOON
   stdout, definitive empty states, structured errors on stdout, and exit 0/1/2. The
@@ -122,6 +122,9 @@ The pre-push hook guards the default branch. This line only states the binding.)
   manifest and qualifies no evidence. `bench read --section` and `bench spec show`
   select a visible H2 section through the Markdown block reader, so a fenced or
   commented heading owns no section.
+
+  `bench outline --symbol` pages one complete Go declaration from Go syntax positions,
+  with its attached documentation.
 - **The ambient dashboard** (`bench status`). This is the single deterministic renderer
   the SessionStart hook and the user both call. It ranks the signals that fire on a
   fixed severity ladder and leads with the next action. It reads gate state from the

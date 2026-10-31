@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -14,9 +15,12 @@ import (
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
 // Help is helpText without its trailing newline, because the caller appends one.
 var grammar = usage.Grammar{
-	Cmd:     "bench outline",
-	Help:    strings.TrimSuffix(helpText(), "\n"),
-	Flags:   []usage.Flag{{Name: "--full"}, {Name: "--production"}, {Name: "--test"}},
+	Cmd:  "bench outline",
+	Help: strings.TrimSuffix(helpText(), "\n"),
+	Flags: []usage.Flag{{Name: "--full"}, {Name: "--production"}, {Name: "--test"},
+		{Name: SymbolFlag, HasValue: true, NoEmptyValue: true},
+		{Name: responsebound.OffsetFlag, HasValue: true, NoEmptyValue: true},
+		{Name: responsebound.SourceFlag, HasValue: true, NoEmptyValue: true}},
 	MaxArgs: 1,
 }
 
@@ -32,8 +36,17 @@ const Suffix = " [path] [--full] [--production|--test]"
 
 const usageLine = "usage: bench outline" + Suffix
 
+// SymbolFlag selects one complete Go declaration. SymbolSuffix is the grammar of that form
+// after the command name, and its usage line and its `bench help` row both read it.
+const (
+	SymbolFlag   = "--symbol"
+	SymbolSuffix = " [path] " + SymbolFlag + " <name-or-receiver.method> [--production|--test] " + responsebound.CursorUsage
+)
+
+const symbolUsageLine = "usage: bench outline" + SymbolSuffix
+
 func helpText() string {
-	return usageLine + "\n" + promise + "\n"
+	return usageLine + "\n" + symbolUsageLine + "\n" + promise + "\n"
 }
 
 // Command implements `bench outline [path] [--full] [--production|--test]`. It walks the
@@ -43,7 +56,8 @@ func helpText() string {
 // the bare form. Each form has the
 // definitive empty state when nothing matches, a structured stdout error with exit 1
 // outside a repo or on a git failure, and usage on stdout with exit 2 for an unknown
-// flag, a second positional argument, or both filter flags.
+// flag, a second positional argument, or both filter flags. The --symbol form pages one
+// complete Go declaration of the same scope; see symbolRead.
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -56,6 +70,10 @@ func Command(args []string) (string, int) {
 	// It refuses before repository discovery rather than letting one flag win silently.
 	if production && test {
 		return usageLine + " (--production and --test are mutually exclusive)\n", 2
+	}
+	selection, symbolic, refusal := parseSymbolCall(parsed.Flags, full)
+	if refusal != "" {
+		return symbolUsageLine + " (" + refusal + ")\n", 2
 	}
 	var path string
 	havePath := len(parsed.Positionals) == 1
@@ -74,6 +92,9 @@ func Command(args []string) (string, int) {
 	}
 	if production || test {
 		files = testScope(files, test)
+	}
+	if symbolic {
+		return selection.page(root, files, symbolCommand(parsed.Positionals, parsed.Flags))
 	}
 
 	var rows, skips [][]string

@@ -19,7 +19,7 @@ var approvedAXIQueries = map[string][]string{
 	"anchors": nil, "learnings": nil, "maps": nil, "guards": nil, "diff": nil, "coverage": nil,
 	"assessment": {"list", "show", "compare"}, "consumers": nil,
 	"harnesses": nil, "spec": {"show"},
-	"roadmap": nil, "read": nil,
+	"roadmap": nil, "read": nil, "outline": nil,
 	"worktree": {"list"},
 }
 

@@ -15,7 +15,8 @@
 // `projects/<name>.md` owns that identification. The tool is a line-regex indexer, not
 // a language parser. It does not track comments, string literals, or Markdown code
 // fences, so a commented-out or fenced declaration indexes as a benign candidate. The
-// agent confirms the candidate by reading the line.
+// agent confirms the candidate by reading the line. The `--symbol` form is the exception: it
+// parses Go syntax and pages the original bytes of one complete declaration.
 //
 // `--production` drops every Go test file from the walk, and `--test` keeps only the Go
 // test files. A filter scopes the walk as the path argument does, so every form and its
