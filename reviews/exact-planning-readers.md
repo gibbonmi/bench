@@ -1932,16 +1932,223 @@
           "supersedes": [
             "ER-C5-coverage-2"
           ]
+        },
+        {
+          "id": "ER-C5-standards-4",
+          "performer": "ft125-review-c5-standards-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-standards-4",
+            "digest": "sha256:0f18495ed26d8340d08853ee90ed6d960e0612971a86d25098d05425b9cd9792",
+            "excerpt": "Standards axis, ER-C5 confirming round 3 reaffirmation (repair delta 15e2b8c24..d61879444).\nReaffirmed. The shortened Route needle (internal/anchors/registry_planning_readers.go:10) has 6 words with the code span as one word and keeps the bench route token, so it passes the Route rule (internal/anchors/locate_test.go:98-100); it matches one sentence at .bench/BENCH-reference.md:40; no second source.\nOutcome: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "d6187944424b45a21fb291a7f80ab49230c99897",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-standards-3"
+          ]
+        },
+        {
+          "id": "ER-C5-spec-4",
+          "performer": "ft125-review-c5-spec-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-spec-4",
+            "digest": "sha256:06ee580f2ae633aabecddc31036a3572c84446d7dc6a7f541e80d64596a86d68",
+            "excerpt": "Spec axis, ER-C5 confirming round 3 reaffirmation (repair delta 15e2b8c24..d61879444).\nReaffirmed. The new needle is a substring of .bench/BENCH-reference.md:40 and matches nowhere else in .bench; the delta does not touch the reference file, so ticket 5c:17 holds; the probe at reviews/exact-planning-readers.md:2835-2837 shows a swap of that sentence fails the gate.\nOutcome: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "d6187944424b45a21fb291a7f80ab49230c99897",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-spec-3"
+          ]
+        },
+        {
+          "id": "ER-C5-coverage-4",
+          "performer": "ft125-review-c5-coverage-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-coverage-4",
+            "digest": "sha256:618f237127aa6b73254acfc281cd296cf3a4630c8d311145bcb3eb0178eb5c6d",
+            "excerpt": "Coverage axis, ER-C5 confirming round 3 reaffirmation (repair delta 15e2b8c24..d61879444).\nReaffirmed. The new needle still guards .bench/BENCH-reference.md:40 as its only match and meets routeMaxWords=6 (internal/anchors/locate_test.go:77,99); the cycle 3 reds (reviews/exact-planning-readers.md:2835-2837) grade both the anchor and the sentence. No tests or probes run.\nOutcome: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "d6187944424b45a21fb291a7f80ab49230c99897",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C5-coverage-3"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+    "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+    "reconciliation": {
+      "ER1": "covered",
+      "ER10": "covered",
+      "ER11": "covered",
+      "ER12": "covered",
+      "ER13": "covered",
+      "ER14": "covered",
+      "ER15": "covered",
+      "ER16": "covered",
+      "ER17": "covered",
+      "ER18": "covered",
+      "ER19": "covered",
+      "ER2": "covered",
+      "ER20": "covered",
+      "ER21": "covered",
+      "ER22": "covered",
+      "ER23": "covered",
+      "ER24": "covered",
+      "ER25": "covered",
+      "ER26": "covered",
+      "ER27": "covered",
+      "ER28": "covered",
+      "ER29": "covered",
+      "ER3": "covered",
+      "ER30": "covered",
+      "ER31": "covered",
+      "ER32": "covered",
+      "ER33": "covered",
+      "ER34": "covered",
+      "ER35": "covered",
+      "ER36": "covered",
+      "ER37": "covered",
+      "ER38": "covered",
+      "ER39": "covered",
+      "ER4": "covered",
+      "ER40": "covered",
+      "ER41": "covered",
+      "ER42": "covered",
+      "ER43": "covered",
+      "ER44": "covered",
+      "ER45": "covered",
+      "ER46": "covered",
+      "ER47": "covered",
+      "ER48": "covered",
+      "ER49": "covered",
+      "ER5": "covered",
+      "ER6": "covered",
+      "ER7": "covered",
+      "ER8": "covered",
+      "ER9": "covered"
+    },
+    "verification": [
+      {
+        "id": "ER-final-ordinary-1",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:orchestrator",
+          "digest": "sha256:9bea404ee42fed2650a48bd67d7e05fdb8496bdd37dcedd2242a69cfcaeabe99",
+          "excerpt": "packages[140]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench,pass,2,22\n  github.com/gibbonmi/bench/cmd/bench,pass,50646,585\n  github.com/gibbonmi/bench/internal/adopt,pass,22851,231\n  github.com/gibbonmi/bench/internal/adopt/repairtest,pass,2769,24\n  github.com/gibbonmi/bench/internal/adopt/transaction,pass,107,39\n  github.com/gibbonmi/bench/internal/anchors,pass,258,140\n  github.com/gibbonmi/bench/internal/assessment,pass,1230,199\n  github.com/gibbonmi/bench/internal/axi,pass,6,27\n  github.com/gibbonmi/bench/internal/axi/axitest,pass,2,14\n  github.com/gibbonmi/bench/internal/benchguard,pass,3,29\n  github.com/gibbonmi/bench/internal/benchhome,pass,2,5\n  github.com/gibbonmi/bench/internal/bounds,pass,4010,64\n  github.com/gibbonmi/bench/internal/brokermanifest,pass,2,5\n  github.com/gibbonmi/bench/internal/canary,pass,8,32\n  github.com/gibbonmi/bench/internal/canonicalpath,pass,2,12\n  github.com/gibbonmi/bench/internal/capability,pass,3,25\n  github.com/gibbonmi/bench/internal/capturetx,pass,189,27\n  github.com/gibbonmi/bench/internal/census,pass,124,75\n  github.com/gibbonmi/bench/internal/chargeevidence,pass,23,122\n  github.com/gibbonmi/bench/internal/commentgap,pass,256,42\n  github.com/gibbonmi/bench/internal/commit,pass,16849,132\n  github.com/gibbonmi/bench/internal/commitment,pass,6926,179\n  github.com/gibbonmi/bench/internal/commitment/commitcmd,pass,1720,25\n  github.com/gibbonmi/bench/internal/commitment/commitmenttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/commitment/repository,pass,10173,197\n  github.com/gibbonmi/bench/internal/compatibility,pass,5,42\n  github.com/gibbonmi/bench/internal/compatibility/compatibilitytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/conformance,pass,50304,1181\n  github.com/gibbonmi/bench/internal/conformance/registry,pass,2,4\n  github.com/gibbonmi/bench/internal/consumers,pass,2892,66\n  github.com/gibbonmi/bench/internal/coverage,pass,3243,155\n  github.com/gibbonmi/bench/internal/dashboard,pass,5073,23\n  github.com/gibbonmi/bench/internal/diff,pass,7389,101\n  github.com/gibbonmi/bench/internal/durablefile,pass,16,16\n  github.com/gibbonmi/bench/internal/durablefile/durablefiletest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/env,pass,1559,50\n  github.com/gibbonmi/bench/internal/freshness,pass,13557,80\n  github.com/gibbonmi/bench/internal/freshness/check,no-tests,0,0\n  github.com/gibbonmi/bench/internal/gate,pass,185263,810\n  github.com/gibbonmi/bench/internal/gate/authorization,pass,274,18\n  github.com/gibbonmi/bench/internal/gate/backgroundstate,pass,927,15\n  github.com/gibbonmi/bench/internal/gate/greenmarker,pass,47,4\n  github.com/gibbonmi/bench/internal/gate/prospectiveartifact,pass,427,43\n  github.com/gibbonmi/bench/internal/git,pass,1644,209\n  github.com/gibbonmi/bench/internal/gitguard,pass,15177,250\n  github.com/gibbonmi/bench/internal/gittest,pass,310,19\n  github.com/gibbonmi/bench/internal/gocache,pass,285,49\n  github.com/gibbonmi/bench/internal/gocache/cleanprobe,no-tests,0,0\n  github.com/gibbonmi/bench/internal/guards,pass,6354,54\n  github.com/gibbonmi/bench/internal/handoff,pass,3026,62\n  github.com/gibbonmi/bench/internal/handoffdoc,pass,33,52\n  github.com/gibbonmi/bench/internal/harness,pass,35,14\n  github.com/gibbonmi/bench/internal/harnesses,pass,8,42\n  github.com/gibbonmi/bench/internal/harnesstranscript,pass,2,8\n  github.com/gibbonmi/bench/internal/intent,pass,1505,85\n  github.com/gibbonmi/bench/internal/intent/admissionpolicy,pass,3,28\n  github.com/gibbonmi/bench/internal/intent/ledger,pass,2,1\n  github.com/gibbonmi/bench/internal/jsonfile,pass,2,9\n  github.com/gibbonmi/bench/internal/landing,pass,14857,247\n  github.com/gibbonmi/bench/internal/landing/published,no-tests,0,0\n  github.com/gibbonmi/bench/internal/landing/settlepolicy,pass,3,20\n  github.com/gibbonmi/bench/internal/landing/stackpolicy,pass,2,7\n  github.com/gibbonmi/bench/internal/learnings,pass,50,65\n  github.com/gibbonmi/bench/internal/lines,pass,5,111\n  github.com/gibbonmi/bench/internal/maps,pass,111,98\n  github.com/gibbonmi/bench/internal/markdown,pass,6,42\n  github.com/gibbonmi/bench/internal/modelid,pass,2,22\n  github.com/gibbonmi/bench/internal/modelid/modelidtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/models,pass,503,15\n  github.com/gibbonmi/bench/internal/otelrecord,pass,208,57\n  github.com/gibbonmi/bench/internal/outline,pass,196,29\n  github.com/gibbonmi/bench/internal/packagesurface,pass,3,16\n  github.com/gibbonmi/bench/internal/poolkey,pass,18,10\n  github.com/gibbonmi/bench/internal/preflight,pass,25679,340\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,19058,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,11261,178\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5104,70\n  github.com/gibbonmi/bench/internal/preprelease,pass,2033,15\n  github.com/gibbonmi/bench/internal/probe,pass,62002,338\n  github.com/gibbonmi/bench/internal/probe/probetest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/prose,pass,464,80\n  github.com/gibbonmi/bench/internal/publication,pass,1077,29\n  github.com/gibbonmi/bench/internal/puritycensus,pass,2,8\n  github.com/gibbonmi/bench/internal/refresh,pass,24,8\n  github.com/gibbonmi/bench/internal/refusalroute,pass,7,26\n  github.com/gibbonmi/bench/internal/refusalroute/routetest,pass,2,8\n  github.com/gibbonmi/bench/internal/releaseevidence,pass,319,17\n  github.com/gibbonmi/bench/internal/releasepreflight,pass,3446,22\n  github.com/gibbonmi/bench/internal/repairpilot,pass,164,136\n  github.com/gibbonmi/bench/internal/responsebound,pass,476,108\n  github.com/gibbonmi/bench/internal/responsebound/responseboundtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/retros,pass,8,32\n  github.com/gibbonmi/bench/internal/reviewrecord,pass,4289,129\n  github.com/gibbonmi/bench/internal/reviewrecord/carry,pass,1046,19\n  github.com/gibbonmi/bench/internal/reviewrecord/recordcmd,pass,32383,302\n  github.com/gibbonmi/bench/internal/reviewrecord/recordtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/roadmap,pass,2255,208\n  github.com/gibbonmi/bench/internal/roadmap/roadmaptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/roadmapflow,pass,141,9\n  github.com/gibbonmi/bench/internal/runbinary,pass,22496,38\n  github.com/gibbonmi/bench/internal/sanitize,pass,2,6\n  github.com/gibbonmi/bench/internal/sessioninspect,pass,128,11\n  github.com/gibbonmi/bench/internal/shellcommand,pass,2,50\n  github.com/gibbonmi/bench/internal/shift,pass,10088,121\n  github.com/gibbonmi/bench/internal/skillsindex,pass,131,71\n  github.com/gibbonmi/bench/internal/spec,pass,2204,194\n  github.com/gibbonmi/bench/internal/status,pass,9810,156\n  github.com/gibbonmi/bench/internal/stophook,pass,87,24\n  github.com/gibbonmi/bench/internal/structure,pass,305,34\n  github.com/gibbonmi/bench/internal/subprocess,pass,4626,45\n  github.com/gibbonmi/bench/internal/subprocess/processtest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/subprocess/protection,pass,55,62\n  github.com/gibbonmi/bench/internal/terminal,no-tests,0,0\n  github.com/gibbonmi/bench/internal/testcensus,pass,2,1\n  github.com/gibbonmi/bench/internal/testgap,pass,313,21\n  github.com/gibbonmi/bench/internal/testlines,pass,2,13\n  github.com/gibbonmi/bench/internal/testrepo,pass,39,14\n  github.com/gibbonmi/bench/internal/testreport,pass,79965,283\n  github.com/gibbonmi/bench/internal/tickets,pass,3,52\n  github.com/gibbonmi/bench/internal/toon,pass,2,8\n  github.com/gibbonmi/bench/internal/treetarget,pass,3419,54\n  github.com/gibbonmi/bench/internal/treetarget/kittest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/treetarget/treetargettest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/usage,pass,2,31\n  github.com/gibbonmi/bench/internal/visibletree,pass,19,2\n  github.com/gibbonmi/bench/internal/worktree,pass,82870,1591\n  github.com/gibbonmi/bench/internal/worktree/landingpolicy,pass,2,46\n  github.com/gibbonmi/bench/internal/worktree/lifecyclepolicy,pass,4,94\n  github.com/gibbonmi/bench/internal/worktree/reclaimpolicy,pass,3,42\n  github.com/gibbonmi/bench/internal/writeguard,pass,3,28\n  github.com/gibbonmi/bench/tests/canary/guard-classifier-table/word-test-drops-xargs/files/internal/conformance,pass,1,0\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-dot-import-package-alias/files/internal/sample,no-tests,0,0\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-multiple-dot-import-wait/files/internal/sample,no-tests,0,0\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/bounds-parenthesized-wait/files/internal/sample,no-tests,0,0\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/default-branch-refabricated/files/internal/git,no-tests,0,0\n  github.com/gibbonmi/bench/tests/canary/package-core-guard/default-branch-refabricated/files/internal/roadmap,no-tests,0,0\nfailures[0]{package,test,line,lines}:\nskips[14]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/capability,TestCapabilityWritesLineBeforeSkip/file_transport/skips,\"capability_test.go:115: requires a host fifo\"\n  github.com/gibbonmi/bench/internal/capability,TestCapabilityWritesLineBeforeSkip/stdout_fallback/skips,\"capability_test.go:133: requires a host fifo\"\n  github.com/gibbonmi/bench/internal/capability,TestEnvironmentWritesLineBeforeSkip/skips,\"capability_test.go:149: subject root has no bin/bench.sh\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableClassification/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/fifo/skips,\"unavailable_test.go:33: fifo capability unavailable: mkfifo a: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableReason/symlink/skips,\"unavailable_test.go:33: symlink capability unavailable: symlink a b: operation not permitted\"\n  github.com/gibbonmi/bench/internal/capability,TestUnavailableWritesBeforeSkip/skips,\"unavailable_test.go:33: fifo capability unavailable: operation not permitted\"\n  github.com/gibbonmi/bench/internal/chargeevidence,TestEvidenceStoreKinds/CE94_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/descendant-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/landing,TestLandPreAuthorizationRefusalTable/direct-device,\"capability: privilege: cannot create a character device: operation not permitted\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+        },
+        "requirement": "ER-final-ordinary",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "ER-final-system-1",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:orchestrator",
+          "digest": "sha256:9c202fd2bc021e24d2d5a6af7bcdc0b9cc90c8a0e69f6661985ce3a4c836efd5",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,285,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,55994,285\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "ER-final-system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "ER-final-query-1",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:orchestrator",
+          "digest": "sha256:0f39325dafb27993373284fdd380ae0a62ad69979ae242e9d5f3b8e377a18d28",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  axi-query-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,13,1\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "ER-final-query",
+        "command": "bench test --check axi-query-registry",
+        "exit_code": 0
+      },
+      {
+        "id": "ER-final-routing-1",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:orchestrator",
+          "digest": "sha256:89492ea4cbf056745ed0afaed745a1cc427fe55302b7783dcc9d52db8a1bbd44",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,27,1\nfailures[0]{package,test,line,lines}:\n"
+        },
+        "requirement": "ER-final-routing",
+        "command": "bench test --check subcommand-routing",
+        "exit_code": 0
+      },
+      {
+        "id": "ER-final-coverage-1",
+        "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "215758289d764263ac700ad8a8775598248dcd25",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:orchestrator",
+          "digest": "sha256:ae15928ff9ecbe221667eba5a6b995aa41a039cf380eb6d56f5e03638a07dfe5",
+          "excerpt": "ok: coverage map valid — 49 row(s)\nuncited: 1 row(s) with no seam-cell citation — ER44 (review-owned scope comparison by design)\n"
+        },
+        "requirement": "ER-final-coverage",
+        "command": "bench coverage specs/exact-planning-readers/spec.md --check",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -2835,3 +3042,12 @@ The new needle has 6 words and the `bench ` route token, and it still matches th
 - R8: the red is the `TestAdmissionClasses` failure at `locate_test.go:23`, which refused the old needle as a route needle.
 - R8: a `bench probe` swap back to the old needle failed `TestAdmissionClasses` with that message, and the tree restored the swap.
 - R8: a `bench probe` swap of the reference sentence failed `TestRootConformance` with the anchor diagnostic, so the new needle still guards the sentence.
+
+## ER-C5 confirming round 3 and final reconciliation
+
+The repair delta is `15e2b8c24..d61879444`. Each axis gave a delta-only reaffirmation on opus / high, and each passes.
+ER-C5 used three repair cycles; cycle 3 ran past the two-cycle allowance under `--auto-approve`.
+
+The five final verifications pass at `e4b498ee7`, and the completion entry covers 49 rows.
+ER44 has no test citation by design, because the spec grades it through the review scope comparison.
+The ticket 5b note that marks the outline command file as new is a stale ticket note with no behavior effect.
