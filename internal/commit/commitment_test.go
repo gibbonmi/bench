@@ -237,8 +237,11 @@ func TestCommitmentApprovedRowEdit(t *testing.T) {
 					got = string(published)
 				}
 				want := "commitment source " + strconv.Quote("FT1") + " changed from " + commitment.Identity([]byte(approved)) + " to " + commitment.Identity([]byte(got))
-				if errOut := refuseCommit(t, root, row.paths...); !strings.Contains(errOut, want) {
-					t.Fatalf("commit stderr = %q, want %q", errOut, want)
+				// The approval check refuses before the protected-commitment check, so the
+				// refusal keeps the face of the approval check.
+				const protected = "candidate changes protected commitment"
+				if errOut := refuseCommit(t, root, row.paths...); !strings.Contains(errOut, want) || strings.Contains(errOut, protected) {
+					t.Fatalf("commit stderr = %q, want %q from the approval check, not %q", errOut, want, protected)
 				}
 				return
 			}
