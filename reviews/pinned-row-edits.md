@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/pinned-row-edits/spec.md",
-  "plan_digest": "sha256:7f79cd015f4f0d8108f19c6a266efb37c99dc32558e1f1744c4e4d703f69336e",
+  "plan_digest": "sha256:403f9717792add2a8526f4b0564e0f52260a4a6f2e6f07ca167773e76b05023e",
   "implementation_session": "",
   "chunks": [
     {
       "id": "PE-C1",
       "base": "fba398122a3165ab735ed509aa85b05136ea716b",
-      "tip": "5fb78f311a1458299ddb06dd07105a52e28e026e",
-      "plan_digest": "sha256:7f79cd015f4f0d8108f19c6a266efb37c99dc32558e1f1744c4e4d703f69336e",
-      "source_digest": "3e2273e3108a461ca260be080473ed19a4529566",
+      "tip": "42537669f1fe01765198242087ecdf08fa4a9380",
+      "plan_digest": "sha256:403f9717792add2a8526f4b0564e0f52260a4a6f2e6f07ca167773e76b05023e",
+      "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
       "acceptance_rows": [
         "PE01",
         "PE02",
@@ -194,6 +194,156 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro.go,swap,failed,2,TestRetroRefusesSymlinkedDestinationComponents/missing,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,Retro,passed,43\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,810\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,559,43\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRefusesSymlinkedDestinationComponents/missing,\"retro_test.go:139: retro through missing symlink = \\\"error: cannot write capture/retros/linked.md — mkdirat capture/retros: statat capture/retros: path escapes from parent\\\\\\\\n\\\"/1, want a symbolic-link refusal\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRefusesSymlinkedDestinationComponents/outside,\"retro_test.go:139: retro through outside symlink = \\\"error: cannot write capture/retros/linked.md — mkdirat capture/retros: statat capture/retros: path escapes from parent\\\\\\\\n\\\"/1, want a symbolic-link refusal\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "pe-c1-t1-rep1-plan-approve",
+          "performer": "ft437-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+            "digest": "sha256:df8cd178e77402ba40265a6232541b9c7850a542c2ca4a8c27e3902b51f63e78",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestPinnedRowPlanReadsTheWorkingFile/linked-parent,4,1,0,null,yes\n  2,bit,swap,failed,4,TestPinnedRowPlanRefusesAHostileWorkingFile/empty,8,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment,^TestPinnedRowPlanReadsTheWorkingFile$|^TestPinnedRowPlanRefusesAHostileWorkingFile$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "requirement": "plan-approve",
+          "command": "bench test --package ./internal/commitment --run 'PinnedRow|HeadBinding'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make readTree return the default-branch tip for a changed outcome source, and record that TestPinnedRowPlanReadsTheWorkingFile turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+              "digest": "sha256:df8cd178e77402ba40265a6232541b9c7850a542c2ca4a8c27e3902b51f63e78",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestPinnedRowPlanReadsTheWorkingFile/linked-parent,4,1,0,null,yes\n  2,bit,swap,failed,4,TestPinnedRowPlanRefusesAHostileWorkingFile/empty,8,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment,^TestPinnedRowPlanReadsTheWorkingFile$|^TestPinnedRowPlanRefusesAHostileWorkingFile$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "pe-c1-t1-rep1-hostile-read",
+          "performer": "ft437-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+            "digest": "sha256:df8cd178e77402ba40265a6232541b9c7850a542c2ca4a8c27e3902b51f63e78",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestPinnedRowPlanReadsTheWorkingFile/linked-parent,4,1,0,null,yes\n  2,bit,swap,failed,4,TestPinnedRowPlanRefusesAHostileWorkingFile/empty,8,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment,^TestPinnedRowPlanReadsTheWorkingFile$|^TestPinnedRowPlanRefusesAHostileWorkingFile$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "requirement": "hostile-read",
+          "command": "bench test --package ./internal/commitment --run 'PinnedRowPlanRefusesAHostileWorkingFile'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Replace the guarded working read with a plain os.ReadFile, and record that TestPinnedRowPlanRefusesAHostileWorkingFile turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+              "digest": "sha256:df8cd178e77402ba40265a6232541b9c7850a542c2ca4a8c27e3902b51f63e78",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestPinnedRowPlanReadsTheWorkingFile/linked-parent,4,1,0,null,yes\n  2,bit,swap,failed,4,TestPinnedRowPlanRefusesAHostileWorkingFile/empty,8,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commitment,^TestPinnedRowPlanReadsTheWorkingFile$|^TestPinnedRowPlanRefusesAHostileWorkingFile$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "pe-c1-t1-rep1-commit",
+          "performer": "ft437-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+            "digest": "sha256:f5ec3ee91818a4217110703dc320494cc101e90d04974df2f48f53745b41be96",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCommitmentApprovedRowEdit/policy-only,4,1,0,null,yes\n  2,bit,swap,failed,2,TestAdmitPublicationGradesAChangedRowAtTheComposedTree/approved,3,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit ./internal/commitment/repository,^TestCommitmentApprovedRowEdit$|^TestAdmitPublicationGradesAChangedRowAtTheComposedTree$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "requirement": "commit",
+          "command": "bench test --package ./internal/commit --run 'CommitmentApprovedRowEdit|CommitmentProtectedScope'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make approvedTransition skip the source read of a changed outcome source, and record that TestCommitmentApprovedRowEdit turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+              "digest": "sha256:f5ec3ee91818a4217110703dc320494cc101e90d04974df2f48f53745b41be96",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCommitmentApprovedRowEdit/policy-only,4,1,0,null,yes\n  2,bit,swap,failed,2,TestAdmitPublicationGradesAChangedRowAtTheComposedTree/approved,3,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit ./internal/commitment/repository,^TestCommitmentApprovedRowEdit$|^TestAdmitPublicationGradesAChangedRowAtTheComposedTree$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "pe-c1-t1-rep1-landing",
+          "performer": "ft437-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+            "digest": "sha256:f5ec3ee91818a4217110703dc320494cc101e90d04974df2f48f53745b41be96",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCommitmentApprovedRowEdit/policy-only,4,1,0,null,yes\n  2,bit,swap,failed,2,TestAdmitPublicationGradesAChangedRowAtTheComposedTree/approved,3,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit ./internal/commitment/repository,^TestCommitmentApprovedRowEdit$|^TestAdmitPublicationGradesAChangedRowAtTheComposedTree$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "requirement": "landing",
+          "command": "bench test --package ./internal/commitment/repository --run 'AdmitPublication|AuthorizeCandidate'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make approvedTransition read the default-branch tip for a changed outcome source, and record that TestAdmitPublicationGradesAChangedRowAtTheComposedTree turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+              "digest": "sha256:f5ec3ee91818a4217110703dc320494cc101e90d04974df2f48f53745b41be96",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCommitmentApprovedRowEdit/policy-only,4,1,0,null,yes\n  2,bit,swap,failed,2,TestAdmitPublicationGradesAChangedRowAtTheComposedTree/approved,3,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit ./internal/commitment/repository,^TestCommitmentApprovedRowEdit$|^TestAdmitPublicationGradesAChangedRowAtTheComposedTree$,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "pe-c1-t1-rep1-retro-walk",
+          "performer": "ft437-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e8a8c55c547fac104283d73a89d2d25fed9a883",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+            "digest": "sha256:063b9909fb29e762a87e098a51c0682ac4e937847af1bd2ee4a557059d50fd98",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro.go,swap,failed,2,TestRetroRefusesSymlinkedDestinationComponents/missing,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestRetroRefusesSymlinkedDestinationComponents$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,808\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,27,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRefusesSymlinkedDestinationComponents/missing,\"retro_test.go:139: retro through missing symlink = \\\"error: cannot write capture/retros/linked.md — mkdirat capture/retros: statat capture/retros: path escapes from parent\\\\\\\\n\\\"/1, want a symbolic-link refusal\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRefusesSymlinkedDestinationComponents/outside,\"retro_test.go:139: retro through outside symlink = \\\"error: cannot write capture/retros/linked.md — mkdirat capture/retros: statat capture/retros: path escapes from parent\\\\\\\\n\\\"/1, want a symbolic-link refusal\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "42537669f1fe01765198242087ecdf08fa4a9380",
+          "requirement": "retro-walk",
+          "command": "bench test --package ./internal/roadmap --run 'Retro'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the call of the moved component walk from the retro write, and record that TestRetroRefusesSymlinkedDestinationComponents turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft437-author-01-rep1",
+              "digest": "sha256:063b9909fb29e762a87e098a51c0682ac4e937847af1bd2ee4a557059d50fd98",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/roadmap/retro.go,swap,failed,2,TestRetroRefusesSymlinkedDestinationComponents/missing,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/roadmap,^TestRetroRefusesSymlinkedDestinationComponents$,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,808\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/roadmap,fail,27,3\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRefusesSymlinkedDestinationComponents/missing,\"retro_test.go:139: retro through missing symlink = \\\"error: cannot write capture/retros/linked.md — mkdirat capture/retros: statat capture/retros: path escapes from parent\\\\\\\\n\\\"/1, want a symbolic-link refusal\",1\n  github.com/gibbonmi/bench/internal/roadmap,TestRetroRefusesSymlinkedDestinationComponents/outside,\"retro_test.go:139: retro through outside symlink = \\\"error: cannot write capture/retros/linked.md — mkdirat capture/retros: statat capture/retros: path escapes from parent\\\\\\\\n\\\"/1, want a symbolic-link refusal\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -275,7 +425,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:7f79cd015f4f0d8108f19c6a266efb37c99dc32558e1f1744c4e4d703f69336e",
+      "to": "sha256:403f9717792add2a8526f4b0564e0f52260a4a6f2e6f07ca167773e76b05023e",
+      "chunk_ids": {
+        "PE-C1": [
+          "PE-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
