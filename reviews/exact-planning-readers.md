@@ -1189,6 +1189,41 @@
             "ER-C3-coverage-4"
           ]
         }
+      ],
+      "confirmations": [
+        {
+          "id": "ER-C3-confirm-c9",
+          "performer": "session_01JK5CPbT18o2hCYe8SVhPcj",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4502a770bf2e9f8fb3dcaac34164f2a1f5a2a8e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj",
+            "digest": "sha256:6c63cbcbc7aff3489855f0d88595dafe7f25a0d9df711fd964b68728564badf7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,288\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:96: declaration spans =\",44\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "reviewed_tip": "5cd178b342f484da44c6e9bfd681d980551d48a5",
+          "repaired_tip": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "finding_ids": [
+            "C9"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "internal/outline/declaration.go: GenDecl Line uses positions.Line(name.Pos()) instead of physicalLine; expect TestDeclarationSpans",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:session_01JK5CPbT18o2hCYe8SVhPcj",
+              "digest": "sha256:6c63cbcbc7aff3489855f0d88595dafe7f25a0d9df711fd964b68728564badf7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,288\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:96: declaration spans =\",44\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
