@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -217,36 +218,80 @@ func (reader fileReader) page(read fileRead, root string, request responsebound.
 	return pageSource(request, source)
 }
 
+// specShow is one parsed `bench spec show` call: its operand, its cursor, and at most one
+// selector.
+type specShow struct {
+	operand, section   string
+	sectioned, storied bool
+	number             int
+	offset             int64
+	token              string
+	continued          bool
+}
+
+// parseSpecShow reads one spec show call through the spec owner's grammar, or answers its
+// help or usage refusal line with the exit code. specShowCommand and the census head read
+// every call through it.
+func parseSpecShow(args []string) (specShow, string, int) {
+	parsed, line, code := usage.Parse(spec.ShowGrammar, args)
+	if line != "" {
+		return specShow{}, line + "\n", code
+	}
+	refuse := func(reason string) (specShow, string, int) {
+		line, code := usageRefusal(spec.ShowGrammar, reason)
+		return specShow{}, line, code
+	}
+	show := specShow{operand: parsed.Positionals[0]}
+	var err error
+	if show.offset, show.token, show.continued, err = responsebound.ParseCursor(parsed.Flags); err != nil {
+		return refuse(err.Error())
+	}
+	show.section, show.sectioned = parsed.Flags[spec.SectionFlag]
+	story, storied := parsed.Flags[spec.StoryFlag]
+	show.storied = storied
+	switch {
+	case show.sectioned && storied:
+		return refuse(spec.SectionFlag + " and " + spec.StoryFlag + " are mutually exclusive")
+	case storied:
+		if show.number, err = responsebound.ParsePositive(story); err != nil {
+			return refuse(spec.StoryFlag + " takes " + err.Error())
+		}
+	}
+	return show, "", 0
+}
+
+// specShowHead answers the census output head of a spec show call that its grammar accepts:
+// the grammar's command name. Another spec subcommand, and a refused show call, answer false.
+func specShowHead(args []string) (string, bool) {
+	if len(args) == 0 || args[0] != spec.ShowSubcommand {
+		return "", false
+	}
+	_, line, _ := parseSpecShow(args[1:])
+	return spec.ShowGrammar.Cmd, line == ""
+}
+
+// readFormHeads are the native exact reads whose complete read form the command or leaf name
+// does not give. Each answers the head of a call in its form; the root and the worktree file
+// readers need none, because their command and leaf names already give the form.
+var readFormHeads = []func(args []string) (string, bool){specShowHead, outline.SymbolHead}
+
 // specShowCommand pages one selection of one spec: the whole file, one literal visible H2
 // section, the User stories section, the accepted coverage map, the raw Status: line, or one
 // story's typed coverage obligations. The spec owner declares the grammar and selects its
 // spans, the coverage owner bounds the map and projects each story, and the page owner renders
 // each page. Spec does not import coverage, so this adapter composes them.
 func specShowCommand(args []string) (string, int) {
-	parsed, line, code := usage.Parse(spec.ShowGrammar, args)
+	show, line, code := parseSpecShow(args)
 	if line != "" {
-		return line + "\n", code
+		return line, code
 	}
-	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
-	if err != nil {
-		return usageRefusal(spec.ShowGrammar, err.Error())
-	}
-	section, sectioned := parsed.Flags[spec.SectionFlag]
-	story, storied := parsed.Flags[spec.StoryFlag]
-	number := 0
-	switch {
-	case sectioned && storied:
-		return usageRefusal(spec.ShowGrammar, spec.SectionFlag+" and "+spec.StoryFlag+" are mutually exclusive")
-	case storied:
-		if number, err = responsebound.ParsePositive(story); err != nil {
-			return usageRefusal(spec.ShowGrammar, spec.StoryFlag+" takes "+err.Error())
-		}
-	}
+	offset, token, continued := show.offset, show.token, show.continued
+	section, sectioned, storied, number := show.section, show.sectioned, show.storied, show.number
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	operand := parsed.Positionals[0]
+	operand := show.operand
 	_, resolved, tried, ok, err := spec.Resolve(root, operand)
 	if err != nil {
 		return toon.Errorf("spec not readable: "+err.Error(), "fix the file or pass another spec") + "\n", 1

@@ -556,7 +556,7 @@ These future reds are required evidence, not observations made during specificat
 | ER45 | 29 | The real CLI reconstruction fails when continuation skips one source byte | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A producer-derived expectation repeats the same cursor omission and stays green. |
 | ER46 | 30 | New command forms satisfy the existing real-envelope membership and routing checks | `cmd/bench/planning_reader_commands_test.go` (`TestPlanningReaderHelpAndRefusals`) | Owner-only tests do not detect missing root registration or tree routing. |
 
-| ER47 | 26 | Native reader output records identify their complete supported read form | planned TestExactReaderOutputHeads in cmd/bench/census_output_test.go | A root-only spec or outline head conflates exact reads with other operations. |
+| ER47 | 26 | Native reader output records identify their complete supported read form | `cmd/bench/census_output_test.go` (`TestExactReaderOutputHeads`) | A root-only spec or outline head conflates exact reads with other operations. |
 
 | ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | `cmd/bench/selected_queries_test.go` (`TestRelatedContinuationRefusesChangedProjection`) | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
 

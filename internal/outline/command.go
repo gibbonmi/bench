@@ -71,6 +71,49 @@ func usageRefusal(line, reason string) (string, int) {
 	return line + " (" + reason + ")\n", 2
 }
 
+// call is one outline call that both grammars accept: the parsed arguments, the --full
+// flag, the two filters, and the --symbol selection when the call selects a declaration.
+type call struct {
+	parsed                           usage.Result
+	full, production, test, symbolic bool
+	selection                        symbolRead
+}
+
+// parseCall reads one outline call, or answers its help or usage refusal line with the exit
+// code. Command and SymbolHead read every call through it, so one parse decides both the
+// response and the census head.
+func parseCall(args []string) (call, string, int) {
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return call{}, line + "\n", code
+	}
+	accepted := call{parsed: parsed}
+	_, accepted.full = parsed.Flags["--full"]
+	_, accepted.production = parsed.Flags[ProductionFlag]
+	_, accepted.test = parsed.Flags[TestFlag]
+	// The two filters name opposite scopes, so a call with both is a mistyped invocation.
+	// It refuses before repository discovery rather than letting one flag win silently.
+	if accepted.production && accepted.test {
+		line, code := usageRefusal(usageLine, ProductionFlag+" and "+TestFlag+" are mutually exclusive")
+		return call{}, line, code
+	}
+	selection, symbolic, refusal := parseSymbolCall(parsed.Flags, accepted.full)
+	if refusal != "" {
+		line, code := usageRefusal(symbolUsageLine, refusal)
+		return call{}, line, code
+	}
+	accepted.selection, accepted.symbolic = selection, symbolic
+	return accepted, "", 0
+}
+
+// SymbolHead answers the census output head of an outline call that selects one declaration:
+// the command name with SymbolFlag. A call of another form, and a call that the grammar
+// refuses, answers false and keeps the command's root head.
+func SymbolHead(args []string) (string, bool) {
+	accepted, line, _ := parseCall(args)
+	return commandName + " " + SymbolFlag, line == "" && accepted.symbolic
+}
+
 // Command implements both outline grammars. `bench outline [path] [--full]
 // [--production|--test]` walks the tracked files, scoped to an optional path and an
 // optional filter, and dispatches each through walkSymbols. It drops any row a control byte
@@ -84,22 +127,12 @@ func usageRefusal(line, reason string) (string, int) {
 // flags. The --symbol grammar also refuses with exit 2 for a cursor flag without --symbol,
 // --symbol with --full, a malformed cursor, or a selector that is not a Go name.
 func Command(args []string) (string, int) {
-	parsed, line, code := usage.Parse(grammar, args)
+	accepted, line, code := parseCall(args)
 	if line != "" {
-		return line + "\n", code
+		return line, code
 	}
-	_, full := parsed.Flags["--full"]
-	_, production := parsed.Flags[ProductionFlag]
-	_, test := parsed.Flags[TestFlag]
-	// The two filters name opposite scopes, so a call with both is a mistyped invocation.
-	// It refuses before repository discovery rather than letting one flag win silently.
-	if production && test {
-		return usageRefusal(usageLine, ProductionFlag+" and "+TestFlag+" are mutually exclusive")
-	}
-	selection, symbolic, refusal := parseSymbolCall(parsed.Flags, full)
-	if refusal != "" {
-		return usageRefusal(symbolUsageLine, refusal)
-	}
+	parsed, full, production, test := accepted.parsed, accepted.full, accepted.production, accepted.test
+	selection, symbolic := accepted.selection, accepted.symbolic
 	var path string
 	havePath := len(parsed.Positionals) == 1
 	if havePath {

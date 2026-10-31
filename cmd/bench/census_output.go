@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -28,17 +29,26 @@ func (c Command) runBounded(definition commandDefinition, verb string, args []st
 	if retainsResponse(definition, leaf) {
 		_ = retainResponse(owner, verb, args, exit, root())
 	}
-	_ = recordOutput(owner.Size(), outputHead(definition, leaf), resolved, root())
+	_ = recordOutput(owner.Size(), outputHead(definition, leaf, args), resolved, root())
 	return exit
 }
 
 // outputHead names the verb of one call in its census output record: `bench`, the command
-// name, and the leaf word when the call names a leaf of the command's family.
-func outputHead(definition commandDefinition, leaf commandLeaf) string {
-	if leaf.Name == "" {
-		return "bench " + definition.Name
+// name, and the leaf word when the call names a leaf of the command's family. A native exact
+// read whose form the name does not give takes the complete head that its grammar owner
+// derives, when that head extends this command's name. args are the arguments after the
+// command name.
+func outputHead(definition commandDefinition, leaf commandLeaf, args []string) string {
+	if leaf.Name != "" {
+		return "bench " + definition.Name + " " + leaf.Name
 	}
-	return "bench " + definition.Name + " " + leaf.Name
+	root := "bench " + definition.Name
+	for _, form := range readFormHeads {
+		if head, ok := form(args); ok && strings.HasPrefix(head, root+" ") {
+			return head
+		}
+	}
+	return root
 }
 
 // reportAssignment hands the dispatcher the assignment that a verb resolved for its own

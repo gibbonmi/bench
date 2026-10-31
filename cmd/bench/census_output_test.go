@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchhome"
@@ -68,6 +69,46 @@ func TestDispatcherRecordsOutputInAssignment(t *testing.T) {
 	want := fmt.Sprintf("bench family print=1/%d", len(numberedLines(11)))
 	if got := census.OutputBreakdown(home, repo, creation.Assignment.ID); got != want {
 		t.Fatalf("output breakdown = %q, want %q", got, want)
+	}
+}
+
+// ER47: each native exact reader's census head names its complete read form. Spec show and
+// outline --symbol gain the qualifier, in any flag order and on a continuation page. A
+// whole-file outline, another spec subcommand, a refused call, and other verbs keep the head
+// they had. The expected heads are authored here, so omitting the qualifier at outputHead
+// turns the rows red.
+func TestExactReaderOutputHeads(t *testing.T) {
+	cursor := []string{"--offset", "4096", "--source", "sha256:" + strings.Repeat("a", 64)}
+	cases := []struct {
+		args []string
+		want string
+	}{
+		{[]string{"read", "README.md"}, "bench read"},
+		{[]string{"worktree", "read", "README.md"}, "bench worktree read"},
+		{[]string{"spec", "show", "demo"}, "bench spec show"},
+		{append([]string{"spec", "show", "demo"}, cursor...), "bench spec show"},
+		{[]string{"spec", "history", "demo"}, "bench spec"},
+		{[]string{"spec", "show", "demo", "--section", "A", "--story", "1"}, "bench spec"},
+		{[]string{"spec", "show", "demo", "--bogus"}, "bench spec"},
+		{[]string{"outline", "--symbol", "Command", "internal/outline"}, "bench outline --symbol"},
+		{[]string{"outline", "internal/outline", "--symbol", "Command"}, "bench outline --symbol"},
+		{append([]string{"outline", "internal/outline", "--symbol", "Command"}, cursor...), "bench outline --symbol"},
+		{[]string{"outline", "--symbol=Command", "internal/outline"}, "bench outline"},
+		{[]string{"outline", "--symbol", "Command", "--full"}, "bench outline"},
+		{[]string{"outline", "internal/outline"}, "bench outline"},
+		{[]string{"outline", "--full"}, "bench outline"},
+		{[]string{"worktree", "list"}, "bench worktree list"},
+		{[]string{"gate"}, "bench gate"},
+	}
+	for _, c := range cases {
+		definition, ok := commandByName(c.args[0])
+		if !ok {
+			t.Fatalf("no command %q", c.args[0])
+		}
+		leaf, _ := leafNamed(definition.Leaves, c.args[1:])
+		if got := outputHead(definition, leaf, c.args[1:]); got != c.want {
+			t.Errorf("outputHead(%q) = %q, want %q", c.args, got, c.want)
+		}
 	}
 }
 
