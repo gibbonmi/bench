@@ -18,16 +18,21 @@ func rawReadAdvice(read census.Read) string {
 	return "ADVICE: " + form + " reads the same text through the native reader. This command still runs."
 }
 
-// repositoryRead reports whether an observed read names a file inside the repository at root,
-// through the same path owner that bench read refuses an outside operand with. A read outside
-// the repository, such as a pool path read from another checkout, gets no advice.
-func repositoryRead(root string, read census.Read) bool {
+// eligibleRead is the one eligibility rule for a raw read, and it decides both the advice and
+// the owned census record. A read is eligible when census.ObserveRead observed its shape and
+// its file resolves inside the repository at root. The path owner is the one that bench read
+// refuses an outside operand with. A read outside the repository, such as a pool path read
+// from another checkout, gets no advice and no owned record.
+func eligibleRead(root string, read census.Read, observed bool) bool {
+	if !observed {
+		return false
+	}
 	_, _, ok := repositoryPath(root, read.Path, "")
 	return ok
 }
 
 // readOwner answers the verified assignment that owns the tree at root, for the census
-// record of an eligible read. A read that is not eligible, and a read in the primary
+// record of an eligible read. A read that eligibleRead refuses, and a read in the primary
 // checkout or in an unowned tree, get no assignment.
 func readOwner(root string, eligible bool) string {
 	if !eligible {

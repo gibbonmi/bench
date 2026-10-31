@@ -18,8 +18,8 @@ import (
 // other sed programs, unresolved and controlled operands, and unknown parses exit 0 with no
 // advice. A read whose file resolves outside the current repository, such as a pool path read
 // from the primary root, gets no advice either. A pool denial keeps its exit and its exact
-// diagnostic. An owned read records under its verified assignment, a primary read records
-// nothing, and a pool-path read keeps its pool attribution.
+// diagnostic. An owned read records under its verified assignment, an owned read outside the
+// repository and a primary read record nothing, and a pool-path read keeps its pool attribution.
 func TestRawReadAdvice(t *testing.T) {
 	home, repo, creation := censusAssignment(t, "raw-read-advice")
 	target := filepath.Join(poolkey.Pools(home), "repository", "assignment")
@@ -47,6 +47,10 @@ func TestRawReadAdvice(t *testing.T) {
 	checkGuardEnvelope(t, guardBenchFollowOn, read)
 	if got := census.HeadBreakdown(home, repo, creation.Assignment.ID); got != "cat=1" {
 		t.Fatalf("owned read breakdown = %q, want cat=1", got)
+	}
+	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{{name: "owned read outside the repository", in: envelope("cat /etc/hosts")}})
+	if got := census.HeadBreakdown(home, repo, creation.Assignment.ID); got != "cat=1" {
+		t.Fatalf("owned outside read breakdown = %q, want no owned record, cat=1", got)
 	}
 
 	inside := filepath.Join(repo, "README.md")

@@ -12,9 +12,10 @@ import (
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
-// Read is one eligible raw read that a native file reader can replace: the resolved head
-// of the raw call, the file operand, and the physical-line range the call prints. First and
-// Last are zero for a read of the whole file.
+// Read is one observed raw-read shape that a native file reader can replace: the resolved
+// head of the raw call, the file operand, and the physical-line range the call prints. First
+// and Last are zero for a read of the whole file. The shape alone does not make a read
+// eligible; the command adapter adds the repository bound.
 type Read struct {
 	Head        string
 	Path        string
@@ -44,8 +45,9 @@ var readForms = map[string]func([]string) (Read, bool){
 	"sed":  sedRead,
 }
 
-// ObserveRead answers the eligible raw read that command makes. The command is exactly one
-// simple command of plain words, with no control operator and no redirection, so a stdin
+// ObserveRead is the structural read-shape observation: it answers the raw read that command
+// makes, and the command adapter decides eligibility with the repository bound. The command
+// is exactly one simple command of plain words, with no control operator and no redirection, so a stdin
 // read, a heredoc, a here-string, a pipeline, and a chain are not reads. The shellcommand
 // parse folds the quotes, so text inside an example's quotes is one operand of another
 // head. The routine prefix resolves the head, and an xargs prefix reads its operands from
@@ -157,9 +159,10 @@ func sedRead(operands []string) (Read, bool) {
 }
 
 // RecordRead appends at most one raw-call record for one invocation. The pool-path
-// attribution of Record writes first. When it writes nothing, an eligible read under the
-// verified assignment that the caller supplies writes one record under that assignment.
-// An empty assignment is an unowned read, and it writes nothing.
+// attribution of Record writes first. When it writes nothing, an observed read shape under
+// the verified assignment that the caller supplies writes one record under that assignment.
+// The caller supplies an assignment only for an eligible read. An empty assignment writes
+// nothing.
 func RecordRead(command, root, home, assignment string, now time.Time) error {
 	return recordReadWith(command, root, home, assignment, now, benchguard.DefaultResolver())
 }
