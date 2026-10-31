@@ -586,7 +586,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "es-c3-r1-standards",
+          "performer": "ft375-review-standards-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "330d88edb201cef88a7376f26a18ad2fba64074d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-standards-c3",
+            "digest": "sha256:c78656a6d2947dc55d3f1c1bb50ce89ffa5ce7449acd52a30f1c763ac67eacc7",
+            "excerpt": "Standards axis, ES-C3, frozen delta b1182c17a..e1ef5087f, evidence 3b32cf77 current.\nS1 internal/preflight/map_sources_test.go:51 the `red` name of rowOf's found flag hides an absent row; want-\"\" cases cannot tell a missing row from green. Confidence 6. auto-fix.\nS2 internal/preflight/map_sources_hostile_test.go:14 controlLimit copies bounds.ControlRecordLimit (internal/bounds/bounds.go:65) with no recorded red. Confidence 5. auto-fix.\nS3 internal/maps/tree_validation.go:106 vs :30 dot-folder skip derived twice; walk skip guards other readers. Confidence 4. no-op.\nAdvice (confidence 3 or lower): S4 path import shadowed in validation.go; S5 reason-text literals; S6 Sources literal in preflighttest/decision_maps.go.\nCount 3 findings plus advice. Worst S1.\n"
+          },
+          "axis": "Standards",
+          "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "tip": "e1ef5087ff392eab38fce2ef5728b139655802b3",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "es-c3-r1-spec",
+          "performer": "ft375-review-spec-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "330d88edb201cef88a7376f26a18ad2fba64074d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-spec-c3",
+            "digest": "sha256:2f4ecfb8584631b8c35e5e126b2fc043eb7c10977c4def1a1c1aa5f952aa40da",
+            "excerpt": "Spec axis, ES-C3, frozen delta b1182c17a..e1ef5087f, evidence 3b32cf77 current, coverage mapped 53 rows.\nEvery ES-C3 row matches the code: resolver modes and reasons, lexical rule order, candidate predicate, bounded read, ClosedRowPaths prediction, detail format, row position and counts, dogfood repoint, take rule, staleness-pass sentences, CHANGELOG entry.\nAdvice (confidence 3 or lower): the tip-tree read error text is not stated in the spec; one CHANGELOG phrase reads as an exclusion.\nFindings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "tip": "e1ef5087ff392eab38fce2ef5728b139655802b3",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "es-c3-r1-coverage",
+          "performer": "ft375-review-coverage-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "330d88edb201cef88a7376f26a18ad2fba64074d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-coverage-c3",
+            "digest": "sha256:826128fd89e104aff8ef278febeaf0cb18b8cb34f7be7066396ba4c8c5dac212",
+            "excerpt": "Coverage axis, ES-C3, frozen delta b1182c17a..e1ef5087f, evidence 3b32cf77 current, tree clean after probes.\nC1 internal/maps/validation.go:349 directory and submodule refusal of the published-tree resolver untested; probe IsRegularFile -> Mode != SymlinkMode: silent. Confidence 8. auto-fix.\nC2 internal/maps/validation.go:349 mode 100755 source green untested; probe IsRegularFile -> Mode == \"100644\": silent. Confidence 8. auto-fix.\nC3 internal/preflight/gather.go:140 pinned source tip untested for map-sources; probe resolvedSource.Tip -> \"HEAD\": silent. Confidence 7. auto-fix.\nCount 3. Worst C1.\n"
+          },
+          "axis": "Coverage",
+          "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "tip": "e1ef5087ff392eab38fce2ef5728b139655802b3",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -812,3 +880,37 @@ The amended plan probe `take-rule` answered `bit` in the `docs-currency-workflow
 | --- | --- | --- | --- |
 | `internal/anchors/registry_ticket_passes.go` | omit the Forbid row of the old take-rule sentence | `TestTicketSlicingAnchors` | ES51 |
 | `.agents/commands/bench-implement-spec.md` | restore the old take-rule sentence | `TestRootConformance` in the `docs-currency-workflow` check | ES51 |
+
+## ES-C3 round 1 pickup
+
+The three axes reviewed the frozen pair `b1182c17a..e1ef5087f` on sonnet / high. The round found 6 findings and 5 repair targets, and every target is a test change in ticket 03. ES-C3 takes repair cycle 1 of 2 as a test-only repair.
+
+### Standards
+
+Count: 3. Worst issue: S1.
+
+- S1 (auto-fix, confidence 6): `internal/preflight/map_sources_test.go:51` names the found flag of `rowOf` as `red`, so an absent `map-sources` row passes as green.
+- S2 (auto-fix, confidence 5): `internal/preflight/map_sources_hostile_test.go:14` repeats `bounds.ControlRecordLimit` with no recorded red. Use the constant.
+- S3 (no-op, confidence 4): the walk skip of a dot folder also guards two other readers.
+
+### Spec
+
+Count: 0. Every ES-C3 row matches the code.
+
+### Coverage
+
+Count: 3. Worst issue: C1.
+
+- C1 (auto-fix, confidence 8): no test gives a directory or submodule `Path:` source to the published-tree resolver at `internal/maps/validation.go:349`. The probe answered `silent`.
+- C2 (auto-fix, confidence 8): no test keeps a mode `100755` source green. The probe answered `silent`.
+- C3 (auto-fix, confidence 7): no test grades `map-sources` at a pinned source tip that differs from HEAD (`internal/preflight/gather.go:140`). The probe answered `silent`.
+
+### Advice
+
+These notes take no repair cycle:
+
+- the shadowed `path` import in `internal/maps/validation.go`
+- the reason-text literals of the new tests
+- the Sources literal in `internal/preflight/preflighttest/decision_maps.go`
+- the tip-tree read error text that the spec does not state
+- one `CHANGELOG.md` phrase that reads as an exclusion
