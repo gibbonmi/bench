@@ -499,6 +499,76 @@
             "CV6"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ER-C2-standards-2",
+          "performer": "ft125-review-c2-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cdcd212455dea2300a1ac2a787eda877bacbd185",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-standards-2",
+            "digest": "sha256:2c235b122c0538eab21947bdf4c477247a8f9a4277c31f449822c6692e4cb442",
+            "excerpt": "Standards confirming round ER-C2, repair delta 38604b3c8..db5efd2c8: ST1 ST2 ST4 ST5 ST6 ST8 closed. New: 6; worst N2.\nN1 cmd/bench/command_registry.go:57, main.go:120 helpRow.Child repeats the child that ChildScopes declares; auto-fix; conf 4\nN2 internal/coverage/story.go:109,116 and projection.go:52,55 the projected text-field set is listed twice; auto-fix; conf 5\nN6 cmd/bench/command_registry.go:56 the Prefix, Suffix fold hides a second registry field against spec line 338; auto-fix with N1; conf 4\nAdvice (no repair): N3 ChildScopes membership written two ways; N4 generic name record in projection.go:44; N5 read_test.go:156 branches on a case name.\n"
+          },
+          "axis": "Standards",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "db5efd2c87ddd56f96ef9aa04c95aa77f12a05ab",
+          "finding_ids": [
+            "N1",
+            "N2",
+            "N6"
+          ],
+          "supersedes": [
+            "ER-C2-standards-1"
+          ]
+        },
+        {
+          "id": "ER-C2-spec-2",
+          "performer": "ft125-review-c2-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cdcd212455dea2300a1ac2a787eda877bacbd185",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-spec-2",
+            "digest": "sha256:31f6b2cf04b00d0b8ad39076e8a468c10f393295aab7ce90081dd6ce7b0d38da",
+            "excerpt": "Spec confirming round ER-C2, repair delta 38604b3c8..db5efd2c8: S1-S6 closed; rows ER2-ER10 and ER49 pass; spec show prints no tree row and refuses --in; Check and retire/history/widen unchanged.\nAdvice (no repair): N1 an outside path holding invalid UTF-8 refuses as not readable before the outside-repository check, with no content exposed; N2 the second registry field goes to Standards.\n"
+          },
+          "axis": "Spec",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "db5efd2c87ddd56f96ef9aa04c95aa77f12a05ab",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C2-spec-1"
+          ]
+        },
+        {
+          "id": "ER-C2-coverage-2",
+          "performer": "ft125-review-c2-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "cdcd212455dea2300a1ac2a787eda877bacbd185",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-coverage-2",
+            "digest": "sha256:02c2ecd97b7370389d3c57a8505e8155a76c1379caa602b1f55b608a71718f73",
+            "excerpt": "Coverage confirming round ER-C2, repair delta 38604b3c8..db5efd2c8: CV1-CV6 closed. Probes: story.go fault refusal off bit TestExactStoryProjection; planning_reads.go outside-repository refusal off bit; StorySchema binding at planning_reads.go:220 removed silent.\nAdvice (no repair): NF1 the spec show projection binding survives its mutant; identity() is graded at the owner (read_test.go changed projection); a CLI test would re-derive the identity.\n"
+          },
+          "axis": "Coverage",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "db5efd2c87ddd56f96ef9aa04c95aa77f12a05ab",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C2-coverage-1"
+          ]
         }
       ]
     }
@@ -762,3 +832,20 @@ Count: 6. Worst issue: CV1.
 - CV4 (auto-fix, confidence 7): no CLI test refuses a duplicate `spec show` section. Repair target R7.
 - CV5 (auto-fix, confidence 8): no test reads the page `kind` cell. Repair target R7.
 - CV6 (auto-fix, confidence 8): no owner test reaches the coverage guard in `spec.Show`. Repair target R7.
+
+## ER-C2 confirming round 1
+
+The repair delta is `38604b3c8..db5efd2c8`. Each axis ran on opus / high.
+Every round 1 target is closed. The Spec and Coverage axes pass.
+The Standards axis found two duplications that the repair introduced, and repair cycle 2 of 2 takes them on ticket 2b.
+
+### Standards
+
+Count: 3 findings and 3 advice items. Worst issue: N2.
+
+- N2 (auto-fix, confidence 5): `internal/coverage/story.go:109,116` and `internal/coverage/projection.go:52,55` each list the projected text fields. Repair target R11 gives that set one source.
+- N1 (auto-fix, confidence 4): `helpRow.Child` repeats the child that `ChildScopes` declares. Repair target R12 removes `Child`, and the help row finds its child from the `ChildScopes` keys by its suffix prefix.
+- N6 (auto-fix, confidence 4): the `Prefix, Suffix` fold hides that second field against spec line 338. Repair target R12 removes the need for the fold.
+
+Optional advice, with no finding ID: N3, N4, and N5 in the Standards excerpt, Spec N1 and N2, and Coverage NF1.
+The Coverage probe of the `spec show` projection binding survived; the owner test of `identity()` grades the field.
