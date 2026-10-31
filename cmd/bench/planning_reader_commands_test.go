@@ -23,43 +23,13 @@ import (
 // decoded bytes and the page count.
 func readPages(t *testing.T, cwd string, argv []string) ([]byte, int) {
 	t.Helper()
-	var rebuilt []byte
-	for pages := 1; pages < 1000; pages++ {
+	return axitest.WalkPages(t, argv, func(argv []string) string {
 		result := runAXICommandAt(t, cwd, argv)
 		if result.code != 0 || result.stderr != "" || !responsebound.Fits(result.stdout) {
 			t.Fatalf("%q = stdout=%q stderr=%q exit=%d, want one bounded page", argv, result.stdout, result.stderr, result.code)
 		}
-		document, err := axitest.DecodeDocument(result.stdout)
-		if err != nil {
-			t.Fatal(err)
-		}
-		rows, err := document.Rows("page")
-		if err != nil {
-			t.Fatal(err)
-		}
-		page := rows[0].(map[string]any)
-		contents, err := document.Rows("content")
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, content := range contents {
-			data, err := responsebound.DecodeContent(page["encoding"].(string), content.(map[string]any)["data"].(string))
-			if err != nil {
-				t.Fatal(err)
-			}
-			rebuilt = append(rebuilt, data...)
-		}
-		if page["complete"] == true {
-			return rebuilt, pages
-		}
-		next, err := axitest.RecoverHelpCommandArgv(result.stdout)
-		if err != nil || len(next) < 2 || next[0] != "bench" {
-			t.Fatalf("nonterminal page %q has no executable successor: %v", result.stdout, err)
-		}
-		argv = next[1:]
-	}
-	t.Fatalf("%q did not terminate", argv)
-	return nil, 0
+		return result.stdout
+	}, responsebound.DecodeContent)
 }
 
 // TestExactReaderCLIReconstruction reconstructs independently authored bytes through the real

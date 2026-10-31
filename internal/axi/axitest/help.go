@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"testing"
 
 	toon "github.com/toon-format/toon-go"
 )
@@ -60,4 +61,48 @@ func shellArgv(command string) ([]string, error) {
 		argv[i] = string(parts[i])
 	}
 	return argv, nil
+}
+
+// WalkPages follows one paged read from argv, which omits the leading `bench`, through each
+// continuation that its pages offer, and answers the rebuilt content bytes and the page
+// count. run executes one argv, makes the caller's own checks, and answers the page document
+// without any identity row. decode decodes one content cell in the encoding of its page. A
+// nonterminal page must offer an executable successor, and a walk that does not end within
+// 1000 pages fails.
+func WalkPages(t testing.TB, argv []string, run func(argv []string) string, decode func(encoding, data string) ([]byte, error)) ([]byte, int) {
+	t.Helper()
+	var rebuilt []byte
+	for pages := 1; pages < 1000; pages++ {
+		stdout := run(argv)
+		document, err := DecodeDocument(stdout)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := document.Rows("page")
+		if err != nil {
+			t.Fatal(err)
+		}
+		page := rows[0].(map[string]any)
+		contents, err := document.Rows("content")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, content := range contents {
+			data, err := decode(page["encoding"].(string), content.(map[string]any)["data"].(string))
+			if err != nil {
+				t.Fatal(err)
+			}
+			rebuilt = append(rebuilt, data...)
+		}
+		if page["complete"] == true {
+			return rebuilt, pages
+		}
+		next, err := RecoverHelpCommandArgv(stdout)
+		if err != nil || len(next) < 2 || next[0] != "bench" {
+			t.Fatalf("nonterminal page %q has no executable successor: %v", stdout, err)
+		}
+		argv = next[1:]
+	}
+	t.Fatalf("%q did not terminate", argv)
+	return nil, 0
 }

@@ -51,14 +51,21 @@ type listRow struct {
 	cleanLanded bool
 }
 
-// ListCommand implements the read-only AXI worktree population query.
+// ListCommand implements the read-only AXI worktree population query from the repository
+// root.
 func ListCommand(root, _ string, args []string) (string, int) {
+	return ListCommandFrom(root, root, args)
+}
+
+// ListCommandFrom implements the worktree population query from cwd, the caller's directory,
+// where a path operand of the related view names its spec.
+func ListCommandFrom(root, cwd string, args []string) (string, int) {
 	if selectsWorktrees(args) {
 		return listSelectedWorktrees(root, args)
 	}
 	j, run := defaultJoins(), &git.Run{}
 	if relatesWorktrees(args) {
-		return listRelatedWorktrees(j, run, root, args)
+		return listRelatedWorktrees(j, run, root, cwd, args)
 	}
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
@@ -105,7 +112,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		}
 		rows = append(rows, row)
 	}
-	out, err := renderListRows(j, run, root, rows, assignments)
+	out, err := renderListRows(j, run, root, rows, assignments, false)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -127,9 +134,10 @@ func assignmentRows(j joins, run *git.Run, root string, assignments []intent.Ass
 }
 
 // renderListRows renders the worktrees table of rows and its ordered help actions. The help
-// offers the batch clean when an active assignment of assignments has landed. Each list view
-// that renders the worktrees table renders it here.
-func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignments []intent.Assignment) (string, error) {
+// offers the batch clean when an active assignment of assignments has landed, and read adds
+// the read action of each active row with a present tree. Each list view that renders the
+// worktrees table renders it here.
+func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignments []intent.Assignment, read bool) (string, error) {
 	values := make([][]any, 0, len(rows))
 	for _, row := range rows {
 		values = append(values, row.values)
@@ -148,7 +156,7 @@ func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignme
 	if err != nil {
 		return "", err
 	}
-	actions := actionsForRows(rows)
+	actions := actionsForRows(rows, read)
 	if landed {
 		actions = append(actions, recoverMissingTree(true, "", "").action())
 	}
@@ -160,7 +168,7 @@ func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignme
 }
 
 // assignmentsReadRefusal is the response of each list view when the intent ledger cannot
-// be read, so the bare and selected views name one repair.
+// be read, so the default, selected, and related views name one repair.
 func assignmentsReadRefusal() string {
 	return toon.Errorf("cannot read worktree assignments", "repair the Bench intent ledger and retry") + "\n"
 }
@@ -168,9 +176,10 @@ func assignmentsReadRefusal() string {
 // actionsForRows derives the help rows from the row states. An active row with a present
 // tree gives a path action and an exec action with a `<target>` slot, because the id cell
 // already holds its address. The actions of each such row are identical, so the help
-// render collapses them to one pair. The other states keep a row-specific action, because
-// their operand appears in no cell.
-func actionsForRows(rows []listRow) []axi.Action {
+// render collapses them to one pair. With read, such a row also gives a read action that
+// names its label, because the tree-target flag takes a label. The other states keep a
+// row-specific action, because their operand appears in no cell.
+func actionsForRows(rows []listRow, read bool) []axi.Action {
 	actions := make([]axi.Action, 0, len(rows))
 	for _, row := range rows {
 		if len(row.values) < 4 {
@@ -208,6 +217,9 @@ func actionsForRows(rows []listRow) []axi.Action {
 			actions = append(actions,
 				axi.ExecutableInvocation("inspect an active worktree by its id", axi.KnownArgument("worktree"), axi.KnownArgument("path"), axi.FutureInput("target")),
 				axi.ExecutableInvocation("run a command in an active worktree by its id", axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.FutureInput("target"), axi.KnownArgument("--"), axi.FutureInput("command")))
+			if label, _ := row.values[listLabelCell].(string); read && label != "" {
+				actions = append(actions, axi.ExecutableInvocation("read a file in an active worktree by its label", axi.KnownArgument("worktree"), axi.KnownArgument("read"), axi.KnownArgument("--in"), axi.KnownArgument(label), axi.FutureInput("path")))
+			}
 			continue
 		}
 		if row.values[3] == "foreign" && row.orphanPath != "" {
@@ -220,6 +232,7 @@ func actionsForRows(rows []listRow) []axi.Action {
 // The cells an action reads by position. The field list above declares the order, so a
 // reader compares the two in one place.
 const (
+	listLabelCell   = 1
 	listRequestCell = 2
 	listTreeCell    = 5
 	listLandedCell  = 7

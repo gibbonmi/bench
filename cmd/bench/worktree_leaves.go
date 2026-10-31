@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/usage"
@@ -39,7 +40,9 @@ var worktreeLeaves = []commandLeaf{
 		return worktree.BuildCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
 	{Name: "list", Grammar: usage.WorktreeList, Root: rootBoundary, Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, root string, args []string) int {
-		out, code := worktree.ListCommand(root, worktree.Home(), args)
+		// A path operand of the related view names its spec from the caller's directory.
+		cwd, _ := os.Getwd()
+		out, code := worktree.ListCommandFrom(root, cwd, args)
 		fmt.Fprint(c.Stdout, out)
 		return code
 	}},

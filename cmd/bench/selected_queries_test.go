@@ -12,6 +12,7 @@ import (
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -19,25 +20,10 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// putSelectedAssignment records one complete assignment whose tree is absent, so the
-// selected view answers a non-active record that the active-path resolver refuses.
-func putSelectedAssignment(t *testing.T, root, id, owner string) intent.Assignment {
-	t.Helper()
-	assignment := intent.Assignment{
-		Schema: intent.AssignmentRecordSchema, ID: id, OwnerID: owner,
-		Request: intent.RequestDigest("selected-route-" + id), RequestToken: "selected-route-" + id,
-		Label: "selected route " + id[:1], Start: gittest.Output(t, root, "rev-parse", "HEAD"),
-		Branch: intent.AssignmentBranchRef(owner, id), Worktree: filepath.Join(root, "missing tree "+id[:1]), State: intent.StateComplete,
-	}
-	if err := intent.PutAssignment(root, assignment); err != nil {
-		t.Fatal(err)
-	}
-	return assignment
-}
-
 func TestSelectedWorktreeCommandRoutes(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
-	assignment := putSelectedAssignment(t, root, strings.Repeat("a", 32), strings.Repeat("b", 32))
+	id := strings.Repeat("a", 32)
+	assignment := putRelatedAssignment(t, root, id, intent.StateComplete, filepath.Join(root, "missing tree "+id[:1]))
 	for _, executable := range []string{"bench", filepath.Join(root, ".bench", "bin", "bench")} {
 		for _, target := range []string{"bad\x1btarget", "space target", "--target", "$(touch sentinel)"} {
 			result := runAXICommandAsAt(t, filepath.Join(root, "nested", "deep"), executable, []string{"worktree", "list", "--view", "paths", "--target", target, "--target", assignment.ID})
@@ -79,12 +65,11 @@ func TestSelectedWorktreeHelpDiscovery(t *testing.T) {
 // Three resolved targets give 1 table header, 3 rows, 1 help header, and 1 help row: 6 lines.
 func TestSelectedWorktreeWithinResponseBound(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
-	owner := strings.Repeat("b", 32)
 	argv := []string{"worktree", "list", "--view", "paths"}
 	for _, id := range []string{strings.Repeat("a", 32), strings.Repeat("c", 32), strings.Repeat("d", 32)} {
-		argv = append(argv, "--target", putSelectedAssignment(t, root, id, owner).ID)
+		argv = append(argv, "--target", putRelatedAssignment(t, root, id, intent.StateComplete, filepath.Join(root, "missing tree "+id[:1])).ID)
 	}
-	putSelectedAssignment(t, root, strings.Repeat("e", 32), owner)
+	putRelatedAssignment(t, root, strings.Repeat("e", 32), intent.StateComplete, filepath.Join(root, "missing tree e"))
 	t.Chdir(root)
 	var stdout, stderr bytes.Buffer
 	code := Command{Stdout: &stdout, Stderr: &stderr, Executable: "bench"}.Run(argv)
@@ -191,7 +176,10 @@ func TestSelectedHistoryWithinResponseBound(t *testing.T) {
 // relatedID is the assignment identity of related fixture row i.
 func relatedID(i int) string { return fmt.Sprintf("%032x", i) }
 
-// putRelatedAssignment records assignment id with the given state and tree.
+// putRelatedAssignment records assignment id with the given state and tree. Its owner, label,
+// and request derive from id. The selected-view tests record complete assignments whose
+// tree is absent, so the selected view answers a non-active record that the active-path
+// resolver refuses.
 func putRelatedAssignment(t *testing.T, root, id string, state intent.AssignmentState, tree string) intent.Assignment {
 	t.Helper()
 	owner := strings.Repeat("b", 32)
@@ -207,15 +195,15 @@ func putRelatedAssignment(t *testing.T, root, id string, state intent.Assignment
 	return assignment
 }
 
-// relatedFixture records forty complete assignments with absent trees and one active
-// assignment in a real linked worktree, all bound to specs/x/spec.md, and binds one more
-// assignment that the ledger does not hold yet. The projection spans several pages.
-func relatedFixture(t *testing.T) (string, intent.Assignment) {
+// relatedFixture records complete assignments with absent trees and one active assignment
+// in a real linked worktree, all bound to specs/x/spec.md, and binds one more assignment
+// that the ledger does not hold yet. Forty complete assignments span several pages.
+func relatedFixture(t *testing.T, complete int) (string, intent.Assignment) {
 	t.Helper()
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, ".git", "info", "exclude"), "*.ignored\n")
 	var bindings []intent.DeliveryBinding
-	for i := 1; i <= 40; i++ {
+	for i := 1; i <= complete; i++ {
 		bindings = append(bindings, intent.DeliveryBinding{Assignment: putRelatedAssignment(t, root, relatedID(i), intent.StateComplete, filepath.Join(root, "absent", relatedID(i))).ID})
 	}
 	linked := filepath.Join(t.TempDir(), "linked")
@@ -232,9 +220,9 @@ func relatedFixture(t *testing.T) (string, intent.Assignment) {
 	return root, active
 }
 
-// relatedPage runs one related page from root and answers its source token, its
-// continuation argv, and its completion.
-func relatedPage(t *testing.T, root string, argv []string) (string, []string, bool) {
+// relatedPage runs one related page from root and answers its continuation argv and its
+// completion.
+func relatedPage(t *testing.T, root string, argv []string) ([]string, bool) {
 	t.Helper()
 	result := runAXICommandAt(t, root, argv)
 	document, err := axitest.DecodeDocument(result.stdout)
@@ -245,12 +233,23 @@ func relatedPage(t *testing.T, root string, argv []string) (string, []string, bo
 	if err != nil {
 		t.Fatal(err)
 	}
-	page := rows[0].(map[string]any)
-	next, _ := axitest.RecoverHelpCommandArgv(result.stdout)
-	if page["complete"] == true {
-		return page["source"].(string), nil, true
+	if rows[0].(map[string]any)["complete"] == true {
+		return nil, true
 	}
-	return page["source"].(string), next[1:], false
+	next, _ := axitest.RecoverHelpCommandArgv(result.stdout)
+	return next[1:], false
+}
+
+// relatedDocument follows every page of one related view from dir and decodes the rebuilt
+// projection.
+func relatedDocument(t *testing.T, dir string, argv []string) (string, axitest.Document) {
+	t.Helper()
+	content, _ := readPages(t, dir, argv)
+	document, err := axitest.DecodeDocument(string(content))
+	if err != nil {
+		t.Fatalf("decode %q: %v", content, err)
+	}
+	return string(content), document
 }
 
 // ER48: a related continuation refuses before content when its projection changed since
@@ -313,12 +312,13 @@ func TestRelatedContinuationRefusesChangedProjection(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root, active := relatedFixture(t)
+			root, active := relatedFixture(t, 40)
 			first := []string{"worktree", "list", "--spec", "x"}
-			token, next, complete := relatedPage(t, root, first)
+			next, complete := relatedPage(t, root, first)
 			if complete {
 				t.Fatal("the related fixture fits one page, want a continuation")
 			}
+			projection, _ := relatedDocument(t, root, first)
 			before, err := intent.Read(root)
 			if err != nil {
 				t.Fatal(err)
@@ -331,8 +331,8 @@ func TestRelatedContinuationRefusesChangedProjection(t *testing.T) {
 			if was, is := fmt.Sprintf("%+v", *before.Commitment), fmt.Sprintf("%+v", *after.Commitment); was != is {
 				t.Fatalf("commitment changed: %s -> %s", was, is)
 			}
-			if fresh, _, _ := relatedPage(t, root, first); fresh == token {
-				t.Fatal("the change left the related projection equal")
+			if fresh, _ := relatedDocument(t, root, first); fresh == projection {
+				t.Fatalf("the change left the related projection equal: %q", fresh)
 			}
 			result := runAXICommandAt(t, root, next)
 			if result.code != 1 || !strings.HasPrefix(result.stdout, "error: source changed since the cursor") || strings.Contains(result.stdout, "content[") {
@@ -342,9 +342,14 @@ func TestRelatedContinuationRefusesChangedProjection(t *testing.T) {
 	}
 }
 
-// The related view refuses the selected-view flags, and its help names its own grammar.
+// The related view refuses the selected-view flags, and its help names its own grammar. A
+// cursor refusal names the reason of the cursor owner.
 func TestRelatedWorktreeHelpAndRefusals(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
+	_, _, _, cursor := responsebound.ParseCursor(map[string]string{responsebound.OffsetFlag: "0"})
+	if cursor == nil {
+		t.Fatal("an offset without its source token parses")
+	}
 	for _, tc := range []struct {
 		argv []string
 		code int
@@ -354,7 +359,7 @@ func TestRelatedWorktreeHelpAndRefusals(t *testing.T) {
 		{[]string{"worktree", "list", "--spec", "x", "--help"}, 0, "usage: " + usage.WorktreeListRelated + "\n"},
 		{[]string{"worktree", "list", "--spec", "x", "--view", "paths"}, 2, "--spec"},
 		{[]string{"worktree", "list", "--spec", "x", "--target", "a", "--target", "b"}, 2, "--spec"},
-		{[]string{"worktree", "list", "--spec", "x", "--offset", "0"}, 2, "usage: " + usage.WorktreeListRelated + "\n"},
+		{[]string{"worktree", "list", "--spec", "x", "--offset", "0"}, 2, "usage: " + usage.WorktreeListRelated + " (" + cursor.Error() + ")\n"},
 		{[]string{"worktree", "list", "--spec", "specs/x"}, 1, "error: specs/x is not a spec path"},
 	} {
 		if result := runAXICommandAt(t, root, tc.argv); result.code != tc.code || !strings.Contains(result.stdout, tc.want) {

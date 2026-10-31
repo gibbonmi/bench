@@ -15,7 +15,8 @@ import (
 // state gives it: a binding's deliverable, or a continuation's declared scope that holds the
 // spec folder or lies within it. A label, a branch, or a path that names the spec relates
 // nothing. An assignment with no scope is excluded and counted as unbound, and the matched
-// rows follow assignment-ID order.
+// rows follow assignment-ID order. A slug names its live folder spec, and a path operand
+// names its spec from the caller's directory.
 func TestRelatedWorktreeFilter(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -85,17 +86,22 @@ func TestRelatedWorktreeFilter(t *testing.T) {
 			}
 		})
 	}
-	for operand, want := range map[string]string{
-		"x":                            "specs/x/spec.md",
-		"x.md":                         "specs/x/spec.md",
-		"./specs/x/spec.md":            "specs/x/spec.md",
-		"specs/x":                      "",
-		"../specs/x/spec.md":           "",
-		filepath.Join(root, "spec.md"): "",
+	sub := filepath.Join(root, "sub")
+	for _, tc := range []struct{ cwd, operand, want string }{
+		{root, "x", "specs/x/spec.md"},
+		{root, "x.md", "specs/x/spec.md"},
+		{sub, "x", "specs/x/spec.md"},
+		{root, "./specs/x/spec.md", "specs/x/spec.md"},
+		{sub, "../specs/x/spec.md", "specs/x/spec.md"},
+		{sub, filepath.Join(root, "specs", "x", "spec.md"), "specs/x/spec.md"},
+		{root, "specs/x", ""},
+		{root, "../specs/x/spec.md", ""},
+		{sub, "specs/x", ""},
+		{root, filepath.Join(filepath.Dir(root), "spec.md"), ""},
 	} {
-		got, err := relatedSpec(operand)
-		if got != want || (err != nil) != (want == "") {
-			t.Fatalf("relatedSpec(%q) = %q, %v, want %q", operand, got, err, want)
+		got, err := relatedSpec(root, tc.cwd, tc.operand)
+		if (err != nil) != (tc.want == "") || err == nil && got != tc.want {
+			t.Fatalf("relatedSpec(%q) from %s = %q, %v, want %q", tc.operand, tc.cwd, got, err, tc.want)
 		}
 	}
 }

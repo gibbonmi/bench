@@ -30,20 +30,11 @@ const (
 // treeTargetFlag is the one spelling of the tree-target flag.
 const treeTargetFlag = "--in"
 
-// leadsWithTreeTarget reports whether args name a tree target. The flag counts only as the
-// first argument after the verb, or after the leaf name of a family leaf. In any other
-// position the verb's own grammar reads it.
+// leadsWithTreeTarget reports whether args name a tree target. args are the arguments after
+// the verb, or after the leaf name of a family leaf, and the flag counts only as the first of
+// them. In any other position the verb's own grammar reads it.
 func leadsWithTreeTarget(args []string) bool {
 	return len(args) > 0 && args[0] == treeTargetFlag
-}
-
-// leafCall splits a call that names a family leaf into the leaf name and the arguments
-// after it. Every other call answers no leaf and args whole.
-func (definition commandDefinition) leafCall(args []string) (string, []string) {
-	if leaf, ok := leafNamed(definition.Leaves, args); ok {
-		return leaf.Name, args[1:]
-	}
-	return "", args
 }
 
 // refusesTreeTarget answers the repository refusal. A repository-scoped call that gets the
@@ -71,12 +62,12 @@ func (definition commandDefinition) refusesTreeTarget(c Command, args []string) 
 // stays empty, and a child start that needs it fails with its own error.
 func (c Command) runInTreeTarget(definition commandDefinition, args []string) (int, bool) {
 	leaf, rest := definition.leafCall(args)
-	if definition.scope(args) != scopeTree || !leadsWithTreeTarget(rest) {
+	if leaf.Scope != scopeTree || !leadsWithTreeTarget(rest) {
 		return 0, false
 	}
 	running, _ := os.Executable()
 	return treetarget.Run(treetarget.Call{
-		Name: definition.Name, Leaf: leaf, Flag: treeTargetFlag, Args: rest[1:],
+		Name: definition.Name, Leaf: leaf.Name, Flag: treeTargetFlag, Args: rest[1:],
 		Root: boundaryRoot(), Home: worktree.Home(),
 		Wrapper: os.Getenv(env.WrapperEnv), Running: running,
 		Stdin: c.Stdin, Stdout: c.Stdout, Stderr: c.Stderr,
@@ -127,10 +118,18 @@ func (definition commandDefinition) treeTargetLine() string {
 // scope answers the scope of one call. A call that names a family leaf takes the scope of
 // that leaf, and every other call takes the scope of the child form that it names.
 func (definition commandDefinition) scope(args []string) treeScope {
+	leaf, _ := definition.leafCall(args)
+	return leaf.Scope
+}
+
+// leafCall answers the one leaf lookup of a call: the family leaf that it names and the
+// arguments after the leaf name. Every other call answers a leaf with no name, the scope of
+// the child form that the call names, and args whole.
+func (definition commandDefinition) leafCall(args []string) (commandLeaf, []string) {
 	if leaf, ok := leafNamed(definition.Leaves, args); ok {
-		return leaf.Scope
+		return leaf, args[1:]
 	}
-	return definition.childScope(formArgument(args))
+	return commandLeaf{Scope: definition.childScope(formArgument(args))}, args
 }
 
 // childScope answers the scope of one child form: the scope that the definition declares

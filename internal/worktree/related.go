@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/canonicalpath"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -46,24 +47,28 @@ func relatesWorktrees(args []string) bool {
 	return usage.FlagPresent(relatedWorktreeGrammar, args, relatedSpecFlag)
 }
 
-// listRelatedWorktrees pages the related projection of one spec. The page identity binds
+// listRelatedWorktrees pages the related projection of one spec, whose path operand names it
+// from cwd. The page identity binds
 // the complete projection, so a continuation refuses before content when any row, count, or
 // action changed since the cursor, even when the commitment data stayed equal. Each offered
 // action still resolves and authorizes its target through its own verb.
-func listRelatedWorktrees(j joins, run *git.Run, root string, args []string) (string, int) {
+func listRelatedWorktrees(j joins, run *git.Run, root, cwd string, args []string) (string, int) {
 	parsed, line, code := usage.Parse(relatedWorktreeGrammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
-	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
-	if err != nil || parsed.EndedFlags {
+	if parsed.EndedFlags {
 		return relatedWorktreeGrammar.Help + "\n", 2
+	}
+	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
+	if err != nil {
+		return relatedWorktreeGrammar.Help + " (" + err.Error() + ")\n", 2
 	}
 	if !inRepository(root) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	operand := parsed.Flags[relatedSpecFlag]
-	specPath, err := relatedSpec(operand)
+	specPath, err := relatedSpec(root, cwd, operand)
 	if err != nil {
 		return toon.Errorf(err.Error(), "pass a spec slug or a path to a spec markdown file inside the repository") + "\n", 1
 	}
@@ -91,10 +96,15 @@ func listRelatedWorktrees(j joins, run *git.Run, root string, args []string) (st
 }
 
 // relatedSpec answers the repository-relative spec path that operand names: a slug names its
-// live folder spec, and a path names itself from the repository root. The spec need not
-// exist, because the commitment bindings, not the file, carry the relationship.
-func relatedSpec(operand string) (string, error) {
+// live folder spec, and a path names itself from cwd, the caller's directory. The spec need
+// not exist, because the commitment bindings, not the file, carry the relationship.
+func relatedSpec(root, cwd, operand string) (string, error) {
 	specPath := spec.LiveSpecPath(operand)
+	// LiveSpecPath keeps a path operand as written and moves a slug into the specs tree, so
+	// an unchanged operand is a path.
+	if specPath == filepath.ToSlash(filepath.Clean(operand)) {
+		_, specPath = canonicalpath.Operand(root, cwd, operand)
+	}
 	if !filepath.IsLocal(specPath) || path.Base(specPath) != "spec.md" {
 		return "", fmt.Errorf("%s is not a spec path inside the repository", specPath)
 	}
@@ -126,7 +136,7 @@ func relatedProjection(j joins, run *git.Run, root string, ledger intent.Ledger,
 		return nil, err
 	}
 	def, defaultResolved := git.ResolvedDefault(root)
-	rows, err := renderListRows(j, run, root, assignmentRows(j, run, root, matched, def, defaultResolved), matched)
+	rows, err := renderListRows(j, run, root, assignmentRows(j, run, root, matched, def, defaultResolved), matched, true)
 	if err != nil {
 		return nil, err
 	}

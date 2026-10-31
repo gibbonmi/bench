@@ -95,7 +95,7 @@ The pre-push hook guards the default branch. This line only states the binding.)
   `go clean -cache`, and prints one `go_build_cache_clean` table of the bytes and the
   files it removed. An absent directory reports zero at exit 0 and creates nothing. A
   missing `go` on `PATH` is a named refusal.
-- **The AXI query surface** is the approved query set. It holds `bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
+- **The AXI query surface** is the approved query set and its emitter. It holds `bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench consumers`, `bench harnesses`,
   `bench roadmap`, `bench read`, `bench spec show`, `bench outline`, `bench assessment list`, `bench assessment show`, `bench assessment compare`, `bench worktree list`, `bench worktree read`, and the
   shared flat-table emitter. This is the agent-facing read-only

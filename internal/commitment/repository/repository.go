@@ -86,7 +86,7 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 
 // RunScopes names the deliverable that binds the assignment, or else its declared
 // continuation scope. An assignment that the commitment state does not bind has no scope,
-// and the answer is empty: a missing binding proves no relationship either way.
+// and the answer is empty.
 func RunScopes(state *intent.CommitmentState, assignment string) []string {
 	if state == nil {
 		return nil

@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -147,4 +149,61 @@ var keptWorktreeGrammars = []string{
 	"bench worktree merge",
 	usage.WorktreeReset,
 	"bench worktree land",
+}
+
+// helpRows answers the help rows of one decoded document.
+func helpRows(t *testing.T, document axitest.Document) []any {
+	t.Helper()
+	rows, err := document.Rows("help")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rows
+}
+
+// ER32, ER34: the related view offers the actions of the default view, which one action
+// owner derives from each row state, and adds one read action for each active row with a
+// present tree. The fixture's one active row has a present tree and a landed branch, so
+// the default view offers path, exec, and the batch clean. The default view keeps its
+// actions without the read action.
+func TestRelatedWorktreeActions(t *testing.T) {
+	root, active := relatedFixture(t, 0)
+	result := runAXICommandAt(t, root, []string{"worktree", "list"})
+	defaults, err := axitest.DecodeDocument(result.stdout)
+	if result.code != 0 || err != nil {
+		t.Fatalf("worktree list = %#v, %v", result, err)
+	}
+	want := helpRows(t, defaults)
+	read := map[string]any{"cmd": "bench worktree read --in " + axi.ShellQuote(active.Label) + " <path>", "why": "read a file in an active worktree by its label"}
+	if len(want) != 3 || !strings.HasPrefix(want[0].(map[string]any)["cmd"].(string), "bench worktree path ") || !strings.HasPrefix(want[1].(map[string]any)["cmd"].(string), "bench worktree exec ") || want[2].(map[string]any)["cmd"] != "bench worktree clean --landed" {
+		t.Fatalf("default actions = %#v, want path, exec, and the batch clean", want)
+	}
+	want = append(want[:2:2], read, want[2])
+	_, related := relatedDocument(t, root, []string{"worktree", "list", "--spec", "x"})
+	if got := helpRows(t, related); fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("related actions = %#v, want %#v", got, want)
+	}
+}
+
+// ER32: a --spec path names its spec from the caller's directory, an absolute path inside
+// the repository names the same spec, and a slug names its live folder spec from anywhere.
+func TestRelatedSpecOperandResolvesFromTheCaller(t *testing.T) {
+	root, _ := relatedFixture(t, 0)
+	sub := filepath.Join(root, "sub")
+	writeAXIFixture(t, filepath.Join(sub, "keep.txt"), "")
+	for _, tc := range []struct{ dir, operand string }{
+		{sub, "../specs/x/spec.md"},
+		{sub, filepath.Join(root, "specs", "x", "spec.md")},
+		{sub, "x"},
+		{root, "specs/x/spec.md"},
+	} {
+		_, document := relatedDocument(t, tc.dir, []string{"worktree", "list", "--spec", tc.operand})
+		summary, err := document.Rows("related")
+		if err != nil || len(summary) != 1 {
+			t.Fatalf("--spec %q from %s summary = %#v, %v", tc.operand, tc.dir, summary, err)
+		}
+		if cells := summary[0].(map[string]any); fmt.Sprint(cells["spec"], ",", cells["matched"]) != "specs/x/spec.md,1" {
+			t.Fatalf("--spec %q from %s summary = %#v, want specs/x/spec.md with one match", tc.operand, tc.dir, cells)
+		}
+	}
 }
