@@ -4,7 +4,8 @@ package anchors
 // map seam cell, and they forbid the retired chunk ticket review, the known-issues copies,
 // and the retired closure-era forms: each step of the writes proposal and the breakdown,
 // the closure and fence-writes rows, the spec fence section, and the delegate sentence
-// that called the fence a refusal boundary, in any case or emphasis.
+// that called the fence a refusal boundary, in any case or emphasis. They also forbid the
+// retired build-entry take rule that took only a completion-plan red.
 var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: RequireInSection, Class: Command, Section: "Slicing rules", Needle: "The slicer runs `bench preflight build <slug>` after each change to a ticket or an acceptance row.", Diagnostic: "ticket slicing: build preflight reruns after each ticket or acceptance row change"},
 	{Group: AfterImplementSpec, File: mapDiscipline, Kind: RequireInSection, Class: Command, Section: "Per row", Needle: "The seam cell cites that function as `` `<path>_test.go` (`<Name>`) ``, so `bench coverage --check` and build preflight resolve the name against the tree.", Diagnostic: "map discipline: an existing test seam cites its function in the resolvable form"},
@@ -23,6 +24,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "writes proposal", Diagnostic: "closure removal: the known-issues file kept a row that names the writes proposal"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Section: "", Needle: "-closure", Diagnostic: "closure removal: the implement-spec staleness route kept a closure row"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Section: "", Needle: "fence-writes", Diagnostic: "closure removal: the implement-spec staleness route kept the fence-writes row"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Section: "", Needle: "If every red row is `completion-plan`, the staleness pass below takes the red.", Diagnostic: "build-entry staleness: the implement-spec take rule dropped the writes-landed and map-sources rows"},
 	{Group: AfterImplementSpec, File: craftSpecSkill, Kind: Forbid, Section: "", Needle: "## Ownership fences", Diagnostic: "closure removal: the craft-spec template kept the spec fence section"},
 	{Group: AfterImplementSpec, File: delegationDiscipline, Kind: ForbidCaseFoldedEmphasis, Section: "", Needle: "is a refusal boundary", Diagnostic: "closure removal: the delegate guidance called the fence a refusal boundary"},
 }

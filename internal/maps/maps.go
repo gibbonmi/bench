@@ -78,7 +78,7 @@ func scanActive(root string) activeScan { return scanActiveMap(root, "") }
 // filter reaches `--count` as well as the table.
 func scanActiveMap(root, only string) activeScan {
 	dir := filepath.Join(root, DecisionsDir)
-	candidates, state, reason := discoverDirectoryCandidates(root, dir, false)
+	candidates, state, reason := discoverDirectoryCandidates(root, dir)
 	if state != bounds.StateParsed {
 		if state == bounds.StateAbsent {
 			return activeScan{state: bounds.StateParsed, names: map[string]bool{}}

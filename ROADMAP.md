@@ -18,8 +18,6 @@ findings in the owner details.
 The reviewer put these rows first on 2026-10-03. They cut the repair, spec, slicing,
 and review cost that recent builds paid.
 
-**FT375 (MEDIUM) — the build preflight grades each spec decision map's `Sources:`, and the staleness pass takes a `writes-resolve` red from landed deletions.**
-
 **FT369 (MEDIUM) — the delegate charge and the slicing checks close the 2026-09-30 batch's fence and venue gaps.**
 
 **FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
@@ -360,21 +358,20 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT375-residual
-2. FT344-remedy
-3. FT406-rebuild
-4. FT366-rg-guard
-5. FT380-residual
-6. FT354-strict-json
-7. FT363-member-set
-8. FT365-conformance
-9. FT414-preconditions
-10. FT437-pinned-rows
-11. FT439-comment-correction
-12. FT354-shell-args
-13. FT343-seam-policy
-14. FT446-cache-store
-15. FT369-charge-slicing
-16. FT341-in-only
-17. FT420-concurrent-chunks
-18. FT387-overflow
+1. FT344-remedy
+2. FT406-rebuild
+3. FT366-rg-guard
+4. FT380-residual
+5. FT354-strict-json
+6. FT363-member-set
+7. FT365-conformance
+8. FT414-preconditions
+9. FT437-pinned-rows
+10. FT439-comment-correction
+11. FT354-shell-args
+12. FT343-seam-policy
+13. FT446-cache-store
+14. FT369-charge-slicing
+15. FT341-in-only
+16. FT420-concurrent-chunks
+17. FT387-overflow

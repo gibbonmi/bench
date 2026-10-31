@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -210,11 +211,10 @@ func headTracks(root, p string) (bool, error) {
 // symbolic link is no ticket. A tip without a ticket of the slug refuses, so an absent
 // scope never reads as an open one.
 func signedOffScope(root, slug string) ([]string, string) {
-	branch, ok := git.ResolvedDefault(root)
-	if !ok {
+	branch, tip, err := git.DefaultTip(root)
+	if errors.Is(err, git.ErrDefaultUnresolved) {
 		return nil, toon.Errorf("default branch is unresolved", "widen reads the signed-off scope from the default-branch tip")
 	}
-	tip, err := git.ResolveCommit(root, branch)
 	if err != nil {
 		return nil, toon.Errorf("default branch tip is unreadable: "+branch, err.Error())
 	}

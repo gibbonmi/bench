@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Build-entry staleness from landed work
+
+- Added the `writes-landed` and `map-sources` rows to `bench preflight build`. `writes-landed` is red when a `Writes:` entry names a path that a landed commit deleted, and it names that commit. `map-sources` grades each spec decision-map source against the published tree, without each path that the predicted closure of the deliverable deletes. Its red names the map, the path, and the reason, and a closure prediction that fails also makes it red. The build entry of `/bench-implement-spec` now takes a red into the staleness pass when every red row is `completion-plan`, `writes-landed`, or `map-sources`. Before, it took only a `completion-plan` red and stopped for work that had already landed.
+
 ### Repair, review, and spec reword rules
 
 - Changed the repair rules. After a production repair, each axis that issued a finding re-reviews in full, and each other axis gives a native reaffirmation that reads only the repair delta. An initial-round finding at severity 3 or lower that is not a correctness defect goes to optional advice and takes no repair cycle. A repair charge names only the probes of the plan, and the one coordinator probe carries the finding mutants. A repair charge never skips a named-check plan probe. One fresh repair session takes every small accepted finding of a chunk round, routed to the ticket that holds most of their paths. Before, each affected ticket took its own repair session.

@@ -2275,6 +2275,14 @@
       "identity": "sha256:b4f5d534bc72a368e67e9c81420743238d819d40e2dbd6c223e0aac85c60ab2f",
       "source": "785c02d407b6986aad73075145044b4b8d28db7e",
       "evidence": "2ea43a34ef5763acbb41e7524f84af8d7e3f4381"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT375-residual",
+      "binding": "preflight-entry-staleness",
+      "identity": "sha256:fd3289b793b74d14dab60f3ba8fea6c5c706077ffb38ff330f31f4f3ab5f8200",
+      "source": "43725ded45b4e86ef7a536bfba5ef22d305cef9e",
+      "evidence": "14122d548c3f82ae00e7aaa7e0616ad23d868670"
     }
   ]
 }

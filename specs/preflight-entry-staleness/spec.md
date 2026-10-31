@@ -1,6 +1,6 @@
 # Build-entry staleness from landed work
 
-Status: staged
+Status: implemented
 
 Roadmap: FT375
 
@@ -49,8 +49,8 @@ The row name is the one classification source, so no reader parses a detail stri
 ## User stories
 
 Line: opus / medium.
-Implementation-line reason: the hardest material chunks are ES-C2 and ES-C3, which move one closure derivation and one Sources grammar behind shared seams across `internal/commitment`, `internal/maps`, and `internal/preflight`. The spec fixes each predicate, each detail text, and each seam, and the seams are existing owners. The command-level tests over real repositories red each wrong branch. The project `Lines` section routes gate and conformance logic to mid effort, because a wrong preflight row is a wrong oracle. Ticket 04 edits guidance prose, so the leverage override of `craft-line` runs its author at high effort.
-Harder chunks: ES-C2, ES-C3.
+Implementation-line reason: the hardest material chunks are ES-C1, which holds the closure prediction, and ES-C3, which move one closure derivation and one Sources grammar behind shared seams across `internal/commitment`, `internal/maps`, and `internal/preflight`. The spec fixes each predicate, each detail text, and each seam, and the seams are existing owners. The command-level tests over real repositories red each wrong branch. The project `Lines` section routes gate and conformance logic to mid effort, because a wrong preflight row is a wrong oracle. Ticket 04 edits guidance prose, so the leverage override of `craft-line` runs its author at high effort.
+Harder chunks: ES-C1, ES-C3.
 
 ### `map-sources` grades decision-map sources against the published tree
 
@@ -122,7 +122,7 @@ Harder chunks: ES-C2, ES-C3.
 `Decide` adds `writes-landed` directly after `writes-resolve` in build mode only, through `ticketRow` (`internal/preflight/decision.go:268`).
 `Decide` adds `map-sources` directly after `binary-seal` in build mode only, so `binary-seal` stays directly after `kit-pin` (`internal/preflight/binary_seal_test.go:38`).
 `map-sources` reads no ticket, so it does not go through `ticketRow` and is never not applicable.
-Neither row carries `exempt`, so a red or a not-applicable new row keeps `requiredGreen` false (`internal/preflight/decision.go:254`).
+Neither row carries `exempt`, so a not-applicable new row keeps `requiredGreen` false, and a red row keeps it false in every case (`internal/preflight/decision.go:254`).
 That value feeds the audit's `manual_required` through `staleness.Decide` (`internal/preflight/command.go:199`).
 The `Decide` doc comment names both build-only rows and their positions.
 A bare build verdict then renders 14 rows, and a review verdict keeps 11 rows (`internal/preflight/source_tip_test.go:13`).
@@ -191,6 +191,7 @@ A refusal or a policy that does not parse returns its error.
 
 `internal/maps` keeps one Sources record grammar: the record split, the field order, the locator rule, the URL rule, and the lexical path rule (`internal/maps/validation.go:143`, `internal/maps/validation.go:238`).
 The lexical path rule refuses an empty, absolute, or escaping path before a resolver runs.
+The lexical path rule also runs before the working-tree resolver reads the repository root, so an escaping path under a root that does not resolve reports `escapes the repository`.
 The lexical path rule gives the resolver the cleaned slash path, so `./x` and `a/../x` reach the resolver as `x`.
 A resolver answers whether the path names a regular file, and it gives its own reason text when it does not.
 The working-tree resolver keeps each current reason of `validateSourcePath`, the `escapes the repository` reason for a link that leads outside the repository included (`internal/maps/validation.go:271-273`).
@@ -221,6 +222,8 @@ It predicts the closure of the deliverable at `SpecPath` from the policy at that
 It grades each candidate map with the published-tree resolver, in candidate path order.
 `map-sources` is red with the diagnostics joined by `; ` when the list is not empty, and green otherwise.
 Each diagnostic reads `<map>: Sources Path <path> <reason>` or `<map>: <grammar message>`.
+A prediction error reads `delivery closure of <spec> not predictable: <error>`, and the row still grades each map with no predicted deletion.
+A candidate entry with another mode reads `<map>: candidate map has tree mode <mode>, not a regular file`.
 
 ### Guidance
 
@@ -248,97 +251,22 @@ The `## [Unreleased]` section of `CHANGELOG.md` gets one entry that names `write
 
 ## Implementation chunks
 
-ES-C1 ships the `Writes:` classification alone, because its row is green on every current build and needs no other seam.
-ES-C2 ships the closure prediction alone, because it is a seam that ES-C3 consumes, and its review closes before a consumer ticket starts.
+ES-C1 ships the `Writes:` classification and the closure prediction. The `Writes:` row is green on every current build, and the closure prediction is a seam that ES-C3 consumes. One review of both tickets closes before a consumer ticket starts.
 ES-C3 ships the map row, the take rule, and the dogfood repoint, because the take rule names both rows.
-ES-C1 and ES-C2 share no write, so their authors can work at the same time.
+The build-entry amendment combined the planned chunks ES-C1 and ES-C2 into ES-C1, so that one review round and one chunk checkpoint cover both tickets. The old-to-new chunk map is ES-C1 to ES-C1, ES-C2 to ES-C1, and ES-C3 to ES-C3.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| ES-C1 / 01-writes-landed-row.md | The build preflight names a `Writes:` entry that landed work deleted in its own row | ES24, ES25, ES26, ES27, ES28, ES29, ES30, ES31, ES32, ES33, ES34, ES35, ES36, ES37, ES38, ES39, ES40, ES45 | TestWritesLandedBareEntry, TestWritesLandedShapes, TestWritesLandedPrecedence, TestWritesLandedReviewMode, TestWritesLandedKeepsAuditManual, TestTicketGrammarRowsCarryOwnDetails, TestTicketGatedRowsNotApplicableWithoutTickets, TestDecideAllGreen, TestDecideChargeRows, TestSourceTipOmittedKeepsTodaysVerdict, TestSourceTipAcceptedByBothModes | no |
-| ES-C2 / 02-closure-prediction.md | The commitment owner predicts the closed row paths of a deliverable without completion evidence, from the derivation that the landing uses | ES13, ES14 | TestCommitmentCloses, TestClosedRowPathsMatchClosure | yes |
+| ES-C1 / 01-writes-landed-row.md, 02-closure-prediction.md | The build preflight names a `Writes:` entry that landed work deleted in its own row, and the commitment owner predicts the closed row paths of a deliverable without completion evidence, from the derivation that the landing uses | ES13, ES14, ES24, ES25, ES26, ES27, ES28, ES29, ES30, ES31, ES32, ES33, ES34, ES35, ES36, ES37, ES38, ES39, ES40, ES45 | TestWritesLandedBareEntry, TestWritesLandedShapes, TestWritesLandedPrecedence, TestWritesLandedReviewMode, TestWritesLandedKeepsAuditManual, TestTicketGrammarRowsCarryOwnDetails, TestTicketGatedRowsNotApplicableWithoutTickets, TestDecideAllGreen, TestDecideChargeRows, TestSourceTipOmittedKeepsTodaysVerdict, TestSourceTipAcceptedByBothModes, TestCommitmentCloses, TestClosedRowPathsMatchClosure | yes |
 | ES-C3 / 03-map-sources-row.md, 04-entry-take-rule.md | The build preflight grades every decision-map source against the published tree, and the build entry takes both new reds | ES01, ES02, ES03, ES04, ES05, ES06, ES07, ES08, ES09, ES10, ES11, ES12, ES15, ES16, ES17, ES18, ES19, ES20, ES21, ES22, ES23, ES41, ES42, ES43, ES44, ES46, ES47, ES48, ES49, ES50, ES51, ES52, ES53 | TestMapSourcesClosureDeletion, TestMapSourcesTipExistence, TestMapSourcesGrammar, TestMapSourcesPrediction, TestMapSourcesBuildOnly, TestMapSourcesKeepsAuditManual, TestMapSourcesCollectIndependentRecordFailures, TestSourceTipOmittedKeepsTodaysVerdict, TestDecideChargeRows, TestTicketSlicingAnchors | yes |
 
 ### Completion plan
 
-This version 1 plan records the author verification and the final checks.
-The orchestrator amends it to version 2 before the first author dispatch.
+This version 2 plan records the author verification, the final checks, and the delegated run.
+The orchestrator records each ticket author's assignment before that author's dispatch.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "ES-C1",
-      "tickets": [
-        "01-writes-landed-row.md"
-      ],
-      "verification": [
-        {
-          "id": "writes-landed",
-          "command": "bench test --package ./internal/preflight --run 'WritesLanded|TicketGrammarRowsCarryOwnDetails|TicketGatedRowsNotApplicableWithoutTickets|DecideAllGreen|DecideChargeRows|SourceTip|WritesResolveEarlierChunkDeletion|CommittedDeletion|CommandBuildRendersFourGrammarRows'",
-          "probe": "Drop --first-parent -m from the deleting-commit query, and record that TestWritesLandedShapes turns red on the landing-merge case."
-        },
-        {
-          "id": "precedence",
-          "command": "bench test --package ./internal/preflight --run 'WritesLandedPrecedence'",
-          "probe": "Grade LandedDeletions before DeletedPaths in the check, and record that TestWritesLandedPrecedence turns red on the folded explicit-range case of ES33."
-        }
-      ]
-    },
-    {
-      "id": "ES-C2",
-      "tickets": [
-        "02-closure-prediction.md"
-      ],
-      "verification": [
-        {
-          "id": "closure-prediction",
-          "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --run 'CommitmentCloses|ClosedRowPathsMatchClosure|CommitmentDeliver|CommitmentLightClosure|CommitmentClosureRefusesObligationFreeBinding'",
-          "probe": "Skip the RowOwner step in the store method, and record that TestClosedRowPathsMatchClosure turns red on the refused obligation source of ES14."
-        }
-      ]
-    },
-    {
-      "id": "ES-C3",
-      "tickets": [
-        "03-map-sources-row.md",
-        "04-entry-take-rule.md"
-      ],
-      "verification": [
-        {
-          "id": "map-sources",
-          "command": "bench test --package ./internal/preflight --run 'MapSources|SourceTipOmittedKeepsTodaysVerdict|DecideChargeRows'",
-          "probe": "Grade the map sources with the working-tree resolver, and record that TestMapSourcesClosureDeletion turns red."
-        },
-        {
-          "id": "shared-grammar",
-          "command": "bench test --package ./internal/maps --package ./internal/preflight --run 'MapSources|ValidateDecisionMapTree'",
-          "probe": "Drop the lexical path rule from the shared grammar, and record that TestMapSourcesGrammar turns red on the escaping-path case of ES52."
-        },
-        {
-          "id": "take-rule",
-          "command": "bench test --package ./internal/anchors --run 'TicketSlicingAnchors'",
-          "probe": "Restore the old completion-plan-only take-rule sentence, and record that TestTicketSlicingAnchors turns red."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "preflight-packages",
-      "command": "bench test --package ./internal/preflight/..."
-    },
-    {
-      "id": "owner-packages",
-      "command": "bench test --package ./internal/commitment/... --package ./internal/maps --package ./internal/anchors --package ./internal/landing/..."
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check preflight-entry-staleness"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft375-build-run-1","orchestrator_session":"session_01JK5CPdJaS9Xn1VAmFL1sNN","author_limit":1,"assignments":{"01-writes-landed-row.md":[{"session":"ft375-author-01","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"medium","source":"9e92763a6ddf75050efbaf62444a6a6912b6065b","native_ref":"claude-agent:bench-writer-medium:ft375-author-01"},{"session":"ft375-repair-01","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"medium","source":"78a4a8898f2a011aa141527e4379649ca7181f78","native_ref":"claude-agent:bench-writer-medium:ft375-repair-01","predecessor":"ft375-author-01","trigger":"user-directed","stopped":"claude-agent:ft375-author-01:completed","preserved":"a7cfab215f73c7c62d2db3249470ee666ca97eff"},{"session":"ft375-repair-02","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"medium","source":"a5ab7ce4b1098e82d6464ada018323982cfd8e8b","native_ref":"claude-agent:bench-writer-medium:ft375-repair-02","predecessor":"ft375-repair-01","trigger":"user-directed","stopped":"claude-agent:ft375-repair-01:completed","preserved":"07922d5437750b982cb74a31792286b933c6e463"}],"02-closure-prediction.md":[{"session":"ft375-author-02","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"medium","source":"e3996502ca7f3d48f2f8a119cbde6bdea74c997f","native_ref":"claude-agent:bench-writer-medium:ft375-author-02"}],"03-map-sources-row.md":[{"session":"ft375-author-03","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"medium","source":"590d57ca56d19ceeef08796dc4e41a2c8bd54720","native_ref":"claude-agent:bench-writer-medium:ft375-author-03"},{"session":"ft375-repair-03","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"medium","source":"cb3ad8a173bc5022679130f4acef738f7185e654","native_ref":"claude-agent:bench-writer-medium:ft375-repair-03","predecessor":"ft375-author-03","trigger":"user-directed","stopped":"claude-agent:ft375-author-03:completed","preserved":"e4b141c0fbfff657a81c5041d0d4669cee291a88"}],"04-entry-take-rule.md":[{"session":"ft375-author-04","assignment":"96255eac9dd05579811ab18bdf1ee377","model":"opus","effort":"high","source":"a6e4cf10b69da01d0ff93854efe803741ba698e9","native_ref":"claude-agent:bench-writer-high:ft375-author-04"}]}},"chunks":[{"id":"ES-C1","tickets":["01-writes-landed-row.md","02-closure-prediction.md"],"verification":[{"id":"writes-landed","command":"bench test --package ./internal/preflight --run 'WritesLanded|TicketGrammarRowsCarryOwnDetails|TicketGatedRowsNotApplicableWithoutTickets|DecideAllGreen|DecideChargeRows|SourceTip|WritesResolveEarlierChunkDeletion|CommittedDeletion|CommandBuildRendersFourGrammarRows'","probe":"Drop --first-parent -m from the deleting-commit query, and record that TestWritesLandedShapes turns red on the landing-merge case.","ticket":"01-writes-landed-row.md"},{"id":"precedence","command":"bench test --package ./internal/preflight --run 'WritesLandedPrecedence'","probe":"Grade LandedDeletions before DeletedPaths in the check, and record that TestWritesLandedPrecedence turns red on the folded explicit-range case of ES33.","ticket":"01-writes-landed-row.md"},{"id":"closure-prediction","command":"bench test --package ./internal/commitment --package ./internal/commitment/repository --run 'CommitmentCloses|ClosedRowPathsMatchClosure|CommitmentDeliver|CommitmentLightClosure|CommitmentClosureRefusesObligationFreeBinding'","probe":"Skip the RowOwner step in the store method, and record that TestClosedRowPathsMatchClosure turns red on the refused obligation source of ES14.","ticket":"02-closure-prediction.md"}]},{"id":"ES-C3","tickets":["03-map-sources-row.md","04-entry-take-rule.md"],"verification":[{"id":"map-sources","command":"bench test --package ./internal/preflight --run 'MapSources|SourceTipOmittedKeepsTodaysVerdict|DecideChargeRows'","probe":"Grade the map sources with the working-tree resolver, and record that TestMapSourcesClosureDeletion turns red.","ticket":"03-map-sources-row.md"},{"id":"shared-grammar","command":"bench test --package ./internal/maps --package ./internal/preflight --run 'MapSources|ValidateDecisionMapTree'","probe":"Drop the lexical path rule from the shared grammar, and record that TestMapSourcesGrammar turns red on the escaping-path case of ES52.","ticket":"03-map-sources-row.md"},{"id":"take-rule","command":"bench test --check docs-currency-workflow","probe":"Restore the old completion-plan-only take-rule sentence in .agents/commands/bench-implement-spec.md, and record that the docs-currency-workflow check turns red.","ticket":"04-entry-take-rule.md"}]}],"final_verification":[{"id":"preflight-packages","command":"bench test --package ./internal/preflight/..."},{"id":"owner-packages","command":"bench test --package ./internal/commitment/... --package ./internal/maps --package ./internal/anchors --package ./internal/landing/..."},{"id":"coverage","command":"bench coverage --check preflight-entry-staleness"}]}
 ```
 
 ## Testing decisions
@@ -373,59 +301,59 @@ The orchestrator amends it to version 2 before the first author dispatch.
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| ES01 | 1 | A bare build preflight reds `map-sources` when a compiled map cites `roadmap/FT1.md` and the approved binding closes FT1 | planned TestMapSourcesClosureDeletion in internal/preflight/map_sources_test.go | A row that reads only the tip tree finds `roadmap/FT1.md` and stays green |
-| ES02 | 2 | The same red appears when only an active map in `decisions/` cites `roadmap/FT1.md` | planned TestMapSourcesClosureDeletion in internal/preflight/map_sources_test.go | A walk of only `specs/<slug>/decisions/` misses the FT293 shape |
-| ES03 | 3 | The same red appears when only the compiled map of another spec folder cites `roadmap/FT1.md` | planned TestMapSourcesClosureDeletion in internal/preflight/map_sources_test.go | A walk of only the active spec folder misses that map |
-| ES04 | 4 | `map-sources` reds a `Path:` source that the source tip does not hold | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A row that grades only predicted deletions passes a file that is already gone |
-| ES05 | 5 | `map-sources` is green when each `Path:` source is a regular file at the tip and the closure keeps it | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A row that reds every `roadmap/` source over-matches |
-| ES06 | 6 | `map-sources` reds a `Path:` source that only the checkout holds as an uncommitted file | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A working-tree lookup passes a file that the landing never publishes |
-| ES07 | 6 | `map-sources` keeps the red when the checkout holds an uncommitted repoint of the map | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A row that reads the checkout map passes a repoint that the tip does not hold |
-| ES08 | 7 | `map-sources` reds a Sources record without a `Drift:` field with the detail `Sources <path> missing Drift` | planned TestMapSourcesGrammar in internal/preflight/map_sources_test.go | A parse that collects only `Path:` locators skips the broken record and stays green |
-| ES09 | 7 | `map-sources` reds a Sources entry that starts with neither `Path:` nor `URL:` | planned TestMapSourcesGrammar in internal/preflight/map_sources_test.go | A locator filter drops the entry and stays green |
-| ES10 | 8 | `map-sources` is green for a well-formed `URL:` record | planned TestMapSourcesGrammar in internal/preflight/map_sources_test.go | A resolver that treats a URL as a tree path reds every web source |
+| ES01 | 1 | A bare build preflight reds `map-sources` when a compiled map cites `roadmap/FT1.md` and the approved binding closes FT1 | `internal/preflight/map_sources_test.go` (`TestMapSourcesClosureDeletion`) | A row that reads only the tip tree finds `roadmap/FT1.md` and stays green |
+| ES02 | 2 | The same red appears when only an active map in `decisions/` cites `roadmap/FT1.md` | `internal/preflight/map_sources_test.go` (`TestMapSourcesClosureDeletion`) | A walk of only `specs/<slug>/decisions/` misses the FT293 shape |
+| ES03 | 3 | The same red appears when only the compiled map of another spec folder cites `roadmap/FT1.md` | `internal/preflight/map_sources_test.go` (`TestMapSourcesClosureDeletion`) | A walk of only the active spec folder misses that map |
+| ES04 | 4 | `map-sources` reds a `Path:` source that the source tip does not hold | `internal/preflight/map_sources_test.go` (`TestMapSourcesTipExistence`) | A row that grades only predicted deletions passes a file that is already gone |
+| ES05 | 5 | `map-sources` is green when each `Path:` source is a regular file at the tip and the closure keeps it | `internal/preflight/map_sources_test.go` (`TestMapSourcesTipExistence`) | A row that reds every `roadmap/` source over-matches |
+| ES06 | 6 | `map-sources` reds a `Path:` source that only the checkout holds as an uncommitted file | `internal/preflight/map_sources_test.go` (`TestMapSourcesTipExistence`) | A working-tree lookup passes a file that the landing never publishes |
+| ES07 | 6 | `map-sources` keeps the red when the checkout holds an uncommitted repoint of the map | `internal/preflight/map_sources_test.go` (`TestMapSourcesTipExistence`) | A row that reads the checkout map passes a repoint that the tip does not hold |
+| ES08 | 7 | `map-sources` reds a Sources record without a `Drift:` field with the detail `Sources <path> missing Drift` | `internal/preflight/map_sources_test.go` (`TestMapSourcesGrammar`) | A parse that collects only `Path:` locators skips the broken record and stays green |
+| ES09 | 7 | `map-sources` reds a Sources entry that starts with neither `Path:` nor `URL:` | `internal/preflight/map_sources_test.go` (`TestMapSourcesGrammar`) | A locator filter drops the entry and stays green |
+| ES10 | 8 | `map-sources` is green for a well-formed `URL:` record | `internal/preflight/map_sources_test.go` (`TestMapSourcesGrammar`) | A resolver that treats a URL as a tree path reds every web source |
 | ES11 | 9 | The working-tree grammar still reports each independent record failure of a Sources body | `internal/maps/maps_graph_test.go` (`TestMapSourcesCollectIndependentRecordFailures`) | A kept-rule witness: the grammar move must keep the gate messages |
 | ES12 | 9 | No production file under `internal/preflight` holds a Sources record literal | review-owned: `rg -n '"Path: \|"URL: \|"## Sources' internal/preflight --glob '!*_test.go'` returns no hit | A second splitter in the preflight is a second source for one grammar |
-| ES13 | 10 | The pure closure function returns the obligation sources that `Deliver` closes for the same policy and deliverable | planned TestCommitmentCloses in internal/commitment/delivery_test.go | Two derivations of the closed set can disagree on an obligation filter |
-| ES14 | 10 | For a binding whose obligations hold a row source and a source whose path `roadmap.RowOwner` refuses, the store method returns only the row path, and `Store.Closure` deletes exactly that path | planned TestClosedRowPathsMatchClosure in internal/commitment/repository/closure_test.go | A store method that skips the row-owner step returns the refused path, which the landing never deletes |
-| ES15 | 11 | `map-sources` is green for a map that cites a present `roadmap/` file when no approved binding names the spec | planned TestMapSourcesPrediction in internal/preflight/map_sources_test.go | A prediction that closes every roadmap row reds a source that the landing keeps |
-| ES16 | 12 | `map-sources` reds with the text `names no obligation` when the binding of the spec names no obligation | planned TestMapSourcesPrediction in internal/preflight/map_sources_test.go | A prediction that turns its error into no deletion stays green |
-| ES17 | 13 | `map-sources` reds when the commitment policy at the tip does not parse | planned TestMapSourcesPrediction in internal/preflight/map_sources_test.go | A prediction that reads a broken policy as absent stays green |
-| ES18 | 14 | `map-sources` is green when the tip holds neither `decisions/` nor a `specs/*/decisions/` folder | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A walk that treats an absent folder as an error reds every linked repository |
-| ES19 | 14 | `map-sources` is green when `decisions/` holds only `README.md` and a dot file that cite missing paths | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A candidate rule apart from the shared predicate grades a file that the gate skips |
-| ES20 | 15 | The red detail of ES01 reads `<map>: Sources Path roadmap/FT1.md is deleted by the delivery closure of specs/example/spec.md` | planned TestMapSourcesClosureDeletion in internal/preflight/map_sources_test.go | A detail without the map path makes the staleness pass search every map |
-| ES21 | 16 | A review preflight over the ES01 tree prints no `map-sources` row | planned TestMapSourcesBuildOnly in internal/preflight/map_sources_test.go | A row added outside the build-mode branch changes every review verdict |
-| ES22 | 18 | `map-sources` reds a map that the tip holds one byte over the control-record limit | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | An unbounded read or a skipped map stays green |
-| ES23 | 17 | `map-sources` reds a `Path:` source whose tip entry is a symbolic link to a regular file | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A resolver that follows the link grades bytes outside the published entry |
-| ES24 | 20 | A bare build preflight with no recorded chunk reds `writes-landed` for a plain entry whose path a default-branch commit deleted | planned TestWritesLandedBareEntry in internal/preflight/writes_landed_test.go | Today the bare form reds `writes-resolve` for that entry |
-| ES25 | 19 | In the ES24 case, `writes-resolve` is green | planned TestWritesLandedBareEntry in internal/preflight/writes_landed_test.go | A row that copies the entry into both rows still stops the phase |
-| ES26 | 21 | `writes-landed` reds an entry whose path only the resolution of a merge into the default branch deleted | planned TestWritesLandedShapes in internal/preflight/writes_landed_test.go | A query without `--first-parent -m` finds no deleting commit |
-| ES27 | 22 | `writes-landed` reds an entry whose path a side-branch commit deleted before a merge into the default branch | planned TestWritesLandedShapes in internal/preflight/writes_landed_test.go | A query that walks the first-parent commits without the first-parent diff of each merge misses a merged deletion |
-| ES28 | 23 | `writes-landed` reds an entry whose path a default-branch rename moved away | planned TestWritesLandedShapes in internal/preflight/writes_landed_test.go | A classifier that admits only a plain deletion and not the old side of a rename leaves the moved path a `writes-resolve` red |
-| ES29 | 24 | `writes-resolve` reds an entry whose path no default-branch commit tracked | planned TestWritesLandedShapes in internal/preflight/writes_landed_test.go | A classifier that calls every absent path landed hides a typing error |
-| ES30 | 26 | With one landed entry and one never-tracked entry, `writes-landed` and `writes-resolve` are both red | planned TestWritesLandedPrecedence in internal/preflight/writes_landed_test.go | A check that classifies the whole red by its first entry takes a typing error |
-| ES31 | 25 | `writes-resolve` reds an entry whose path the default-branch tip holds again after its deletion | planned TestWritesLandedShapes in internal/preflight/writes_landed_test.go | A query that reads only the deleting commit calls a restored path landed |
-| ES32 | 27 | An entry whose path an earlier recorded chunk deleted is green in both rows | planned TestWritesLandedPrecedence in internal/preflight/writes_landed_test.go | A kept-rule witness: the row split must keep the earlier-chunk answer of `BuildDeletedPaths` |
-| ES33 | 28 | An entry whose path a default-branch commit deleted, which the build folded inside its explicit `--base` range, is green in both rows | planned TestWritesLandedPrecedence in internal/preflight/writes_landed_test.go | A check that grades `LandedDeletions` before `DeletedPaths` reds an entry that the range already resolves |
-| ES34 | 30 | With no resolvable default branch, a landed entry reds `writes-resolve` | planned TestWritesLandedPrecedence in internal/preflight/writes_landed_test.go | A missing fact that reads as landed lets the build take an unknown red |
-| ES35 | 29 | `writes-resolve` reds a never-tracked entry `d/gl*ob x` when a default-branch commit deleted its sibling `d/glXob x` | planned TestWritesLandedShapes in internal/preflight/writes_landed_test.go | A query with a glob pathspec matches the deleted sibling and calls the entry landed |
+| ES13 | 10 | The pure closure function returns the obligation sources that `Deliver` closes for the same policy and deliverable | `internal/commitment/delivery_test.go` (`TestCommitmentCloses`) | Two derivations of the closed set can disagree on an obligation filter |
+| ES14 | 10 | For a binding whose obligations hold a row source and a source whose path `roadmap.RowOwner` refuses, the store method returns only the row path, and `Store.Closure` deletes exactly that path | `internal/commitment/repository/closure_test.go` (`TestClosedRowPathsMatchClosure`) | A store method that skips the row-owner step returns the refused path, which the landing never deletes |
+| ES15 | 11 | `map-sources` is green for a map that cites a present `roadmap/` file when no approved binding names the spec | `internal/preflight/map_sources_test.go` (`TestMapSourcesPrediction`) | A prediction that closes every roadmap row reds a source that the landing keeps |
+| ES16 | 12 | `map-sources` reds with the text `names no obligation` when the binding of the spec names no obligation | `internal/preflight/map_sources_test.go` (`TestMapSourcesPrediction`) | A prediction that turns its error into no deletion stays green |
+| ES17 | 13 | `map-sources` reds when the commitment policy at the tip does not parse | `internal/preflight/map_sources_test.go` (`TestMapSourcesPrediction`) | A prediction that reads a broken policy as absent stays green |
+| ES18 | 14 | `map-sources` is green when the tip holds neither `decisions/` nor a `specs/*/decisions/` folder | `internal/preflight/map_sources_test.go` (`TestMapSourcesTipExistence`) | A walk that treats an absent folder as an error reds every linked repository |
+| ES19 | 14 | `map-sources` is green when `decisions/` holds only `README.md` and a dot file that cite missing paths | `internal/preflight/map_sources_test.go` (`TestMapSourcesTipExistence`) | A candidate rule apart from the shared predicate grades a file that the gate skips |
+| ES20 | 15 | The red detail of ES01 reads `<map>: Sources Path roadmap/FT1.md is deleted by the delivery closure of specs/example/spec.md` | `internal/preflight/map_sources_test.go` (`TestMapSourcesClosureDeletion`) | A detail without the map path makes the staleness pass search every map |
+| ES21 | 16 | A review preflight over the ES01 tree prints no `map-sources` row | `internal/preflight/map_sources_test.go` (`TestMapSourcesBuildOnly`) | A row added outside the build-mode branch changes every review verdict |
+| ES22 | 18 | `map-sources` reds a map that the tip holds one byte over the control-record limit | `internal/preflight/map_sources_hostile_test.go` (`TestMapSourcesHostileEntries`) | An unbounded read or a skipped map stays green |
+| ES23 | 17 | `map-sources` reds a `Path:` source whose tip entry is a symbolic link to a regular file | `internal/preflight/map_sources_hostile_test.go` (`TestMapSourcesHostileEntries`) | A resolver that follows the link grades bytes outside the published entry |
+| ES24 | 20 | A bare build preflight with no recorded chunk reds `writes-landed` for a plain entry whose path a default-branch commit deleted | `internal/preflight/writes_landed_test.go` (`TestWritesLandedBareEntry`) | Today the bare form reds `writes-resolve` for that entry |
+| ES25 | 19 | In the ES24 case, `writes-resolve` is green | `internal/preflight/writes_landed_test.go` (`TestWritesLandedBareEntry`) | A row that copies the entry into both rows still stops the phase |
+| ES26 | 21 | `writes-landed` reds an entry whose path only the resolution of a merge into the default branch deleted | `internal/preflight/writes_landed_test.go` (`TestWritesLandedShapes`) | A query without `--first-parent -m` finds no deleting commit |
+| ES27 | 22 | `writes-landed` reds an entry whose path a side-branch commit deleted before a merge into the default branch | `internal/preflight/writes_landed_test.go` (`TestWritesLandedShapes`) | A query that walks the first-parent commits without the first-parent diff of each merge misses a merged deletion |
+| ES28 | 23 | `writes-landed` reds an entry whose path a default-branch rename moved away | `internal/preflight/writes_landed_test.go` (`TestWritesLandedShapes`) | A classifier that admits only a plain deletion and not the old side of a rename leaves the moved path a `writes-resolve` red |
+| ES29 | 24 | `writes-resolve` reds an entry whose path no default-branch commit tracked | `internal/preflight/writes_landed_test.go` (`TestWritesLandedShapes`) | A classifier that calls every absent path landed hides a typing error |
+| ES30 | 26 | With one landed entry and one never-tracked entry, `writes-landed` and `writes-resolve` are both red | `internal/preflight/writes_landed_test.go` (`TestWritesLandedPrecedence`) | A check that classifies the whole red by its first entry takes a typing error |
+| ES31 | 25 | `writes-resolve` reds an entry whose path the default-branch tip holds again after its deletion | `internal/preflight/writes_landed_test.go` (`TestWritesLandedShapes`) | A query that reads only the deleting commit calls a restored path landed |
+| ES32 | 27 | An entry whose path an earlier recorded chunk deleted is green in both rows | `internal/preflight/writes_landed_test.go` (`TestWritesLandedPrecedence`) | A kept-rule witness: the row split must keep the earlier-chunk answer of `BuildDeletedPaths` |
+| ES33 | 28 | An entry whose path a default-branch commit deleted, which the build folded inside its explicit `--base` range, is green in both rows | `internal/preflight/writes_landed_test.go` (`TestWritesLandedPrecedence`) | A check that grades `LandedDeletions` before `DeletedPaths` reds an entry that the range already resolves |
+| ES34 | 30 | With no resolvable default branch, a landed entry reds `writes-resolve` | `internal/preflight/writes_landed_test.go` (`TestWritesLandedPrecedence`) | A missing fact that reads as landed lets the build take an unknown red |
+| ES35 | 29 | `writes-resolve` reds a never-tracked entry `d/gl*ob x` when a default-branch commit deleted its sibling `d/glXob x` | `internal/preflight/writes_landed_test.go` (`TestWritesLandedShapes`) | A query with a glob pathspec matches the deleted sibling and calls the entry landed |
 | ES36 | 31 | `writes-resolve` keeps the detail `Writes: entry names no tree path and carries no (new) marker: <ticket>: <entry>` | `internal/preflight/decision_test.go` (`TestTicketGrammarRowsCarryOwnDetails`) | A kept-rule witness: a rewrite of the kept text breaks each reader of it |
-| ES37 | 32 | The ES24 detail reads `Writes: entry names a path that a landed commit deleted: one.md: <path> (<commit>)` with the full deleting commit | planned TestWritesLandedBareEntry in internal/preflight/writes_landed_test.go | A detail without the commit makes the staleness pass search the history |
-| ES38 | 33 | A review preflight over the ES24 tree prints no `writes-landed` row and reds `writes-resolve` for the entry | planned TestWritesLandedReviewMode in internal/preflight/writes_landed_test.go | A classifier that runs in review mode changes the chunk review verdict |
+| ES37 | 32 | The ES24 detail reads `Writes: entry names a path that a landed commit deleted: one.md: <path> (<commit>)` with the full deleting commit | `internal/preflight/writes_landed_test.go` (`TestWritesLandedBareEntry`) | A detail without the commit makes the staleness pass search the history |
+| ES38 | 33 | A review preflight over the ES24 tree prints no `writes-landed` row and reds `writes-resolve` for the entry | `internal/preflight/writes_landed_test.go` (`TestWritesLandedReviewMode`) | A classifier that runs in review mode changes the chunk review verdict |
 | ES39 | 34 | In build mode without a tickets folder, `writes-landed` is not applicable between `writes-resolve` and `kit-pin` | `internal/preflight/decision_test.go` (`TestTicketGatedRowsNotApplicableWithoutTickets`) | A row outside `ticketRow` grades a fresh build that has no tickets |
-| ES40 | 33 | A review preflight whose explicit `--base` comes after the deletion reds `writes-resolve` for the landed entry | planned TestWritesLandedReviewMode in internal/preflight/writes_landed_test.go | A gatherer that fills the fact in review mode moves the entry out of `writes-resolve` |
+| ES40 | 33 | A review preflight whose explicit `--base` comes after the deletion reds `writes-resolve` for the landed entry | `internal/preflight/writes_landed_test.go` (`TestWritesLandedReviewMode`) | A gatherer that fills the fact in review mode moves the entry out of `writes-resolve` |
 | ES41 | 16 | A bare build verdict counts 14 rows and a bare review verdict counts 11 rows | `internal/preflight/source_tip_test.go` (`TestSourceTipOmittedKeepsTodaysVerdict`) | A row added to both modes changes the review count |
 | ES42 | 16 | The charge verdict rows hold `writes-landed` after `writes-resolve` and `map-sources` after `binary-seal` | `internal/preflight/charge_cells_test.go` (`TestDecideChargeRows`) | A row in the wrong position moves the first red that the charge refusal names |
 | ES43 | 35 | `.agents/commands/bench-implement-spec.md` holds the sentence `` If every red row is `completion-plan`, `writes-landed`, or `map-sources`, the staleness pass below takes the red. `` | review-owned: line 15 of `.agents/commands/bench-implement-spec.md` | A sentence that drops a row name stops the build for landed work |
 | ES44 | 36 | `.agents/commands/bench-implement-spec.md` holds the sentence `Any other red stops the phase.` directly after the take-rule sentence | review-owned: line 15 of `.agents/commands/bench-implement-spec.md` | A paragraph that drops the stop takes every red into the staleness pass |
 | ES51 | 37 | `.agents/commands/bench-implement-spec.md` holds no sentence `` If every red row is `completion-plan`, the staleness pass below takes the red. `` | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A revert to the old take rule stops the build for landed work |
-| ES45 | 39 | `--audit-spec` reports `manual_required` true while `writes-landed` is red | planned TestWritesLandedKeepsAuditManual in internal/preflight/writes_landed_test.go | An `exempt` flag on the row lets the audit omit the staleness pass |
-| ES46 | 39 | `--audit-spec` reports `manual_required` true while `map-sources` is red | planned TestMapSourcesKeepsAuditManual in internal/preflight/map_sources_test.go | An `exempt` flag on the row lets the audit omit the staleness pass |
+| ES45 | 39 | `--audit-spec` reports `manual_required` true while `writes-landed` is red | `internal/preflight/writes_landed_test.go` (`TestWritesLandedKeepsAuditManual`) | An audit form that omits the row lets the audit omit the staleness pass |
+| ES46 | 39 | `--audit-spec` reports `manual_required` true while `map-sources` is red | `internal/preflight/map_sources_test.go` (`TestMapSourcesKeepsAuditManual`) | An audit form that omits the row lets the audit omit the staleness pass |
 | ES47 | 38 | The `Orchestrator review` section of `staleness-pass.md` states the repoint of a taken `map-sources` record and names the widen rule of `.bench/BENCH.md` | review-owned: the `Orchestrator review` section of `.agents/skills/bench-implement-spec/references/staleness-pass.md` | A pass without the rule repoints a record outside the fence and the landing refuses it |
 | ES48 | 40 | `decisions/architecture-planning.md` holds no `Path:` record that cites `roadmap/FT375.md` | review-owned: `bench preflight build preflight-entry-staleness` after ticket 03 prints no `map-sources` red | The kept record reds this build's own final landing under `decision-map-integrity` |
 | ES49 | 41 | The repoint of ES48 lands in ticket 03 or in an earlier ticket | review-owned: the ticket 03 `Writes:` line names `decisions/architecture-planning.md` | A later repoint makes each charge preparation after ticket 03 refuse on `map-sources` |
 | ES50 | 42 | The `## [Unreleased]` section of `CHANGELOG.md` holds one entry that names `writes-landed`, `map-sources`, and the take rule | review-owned: the `## [Unreleased]` section of `CHANGELOG.md` | A missing entry leaves the change only in code after the row file retires |
-| ES52 | 7 | `map-sources` reds a Sources record `Path: ../outside.md` with the shared escape diagnostic | planned TestMapSourcesGrammar in internal/preflight/map_sources_test.go | A published-tree grade without the shared lexical rule looks up the raw path and reports only a missing file |
-| ES53 | 18 | `map-sources` reds a candidate map whose tip entry is a symbolic link | planned TestMapSourcesTipExistence in internal/preflight/map_sources_test.go | A read of the link entry gives its target string, which holds no Sources section and grades green |
+| ES52 | 7 | `map-sources` reds a Sources record `Path: ../outside.md` with the shared escape diagnostic | `internal/preflight/map_sources_test.go` (`TestMapSourcesGrammar`) | A published-tree grade without the shared lexical rule looks up the raw path and reports only a missing file |
+| ES53 | 18 | `map-sources` reds a candidate map whose tip entry is a symbolic link | `internal/preflight/map_sources_hostile_test.go` (`TestMapSourcesHostileEntries`) | A read of the link entry gives its target string, which holds no Sources section and grades green |
 
 Not covered: story 43 — the reviewed exclusion of the known-issues seam-research row takes an `Out of scope` line and no behavior.
 Not covered: story 44 — the reviewed exclusion of `(deleted)` entries keeps the current review-base rule, which `TestWritesResolveEarlierChunkDeletion` already grades.

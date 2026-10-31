@@ -71,11 +71,9 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 	}
 	edits := []Edit{{Path: commitment.PolicyPath, Mode: commitment.PlanningMode, Data: policy}}
 	var rows []string
-	for _, source := range closed {
-		if roadmap.RowOwner(source.ID, source.Path) {
-			rows = append(rows, source.ID)
-			edits = append(edits, Edit{Path: source.Path, Delete: true})
-		}
+	for _, source := range rowSources(closed) {
+		rows = append(rows, source.ID)
+		edits = append(edits, Edit{Path: source.Path, Delete: true})
 	}
 	index, present, err := roadmap.RevisionIndexIn(store.Run, store.Root, tree)
 	if err != nil {
@@ -92,6 +90,39 @@ func (store Store) Closure(tree string, delivery Delivery) ([]Edit, error) {
 		edits = append(edits, Edit{Path: roadmap.RoadmapFile, Mode: commitment.PlanningMode, Data: closedIndex})
 	}
 	return edits, nil
+}
+
+// ClosedRowPaths returns the path of each roadmap row file that the delivery of the
+// approved deliverable deletes from tree, before any completion evidence exists. A tree
+// that holds no policy gives no path, and a policy that does not parse returns its error.
+// commitment.Closes decides the closed set and its refusals, and rowSources keeps the
+// row-owner step of Closure, so the prediction is the landing's deletion set.
+func (store Store) ClosedRowPaths(tree, deliverable string) ([]string, error) {
+	policy, _, err := store.policyAt(tree)
+	if err != nil || policy == nil {
+		return nil, err
+	}
+	closed, err := commitment.Closes(*policy, deliverable)
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, source := range rowSources(closed) {
+		paths = append(paths, source.Path)
+	}
+	return paths, nil
+}
+
+// rowSources returns each closed source that roadmap.RowOwner admits as the detail owner
+// of its row. A closure deletes exactly these paths and closes exactly these rows.
+func rowSources(closed []commitment.SourceBinding) []commitment.SourceBinding {
+	var rows []commitment.SourceBinding
+	for _, source := range closed {
+		if roadmap.RowOwner(source.ID, source.Path) {
+			rows = append(rows, source)
+		}
+	}
+	return rows
 }
 
 // ReconcileDelivered releases each local claim, binding, and chunk gap record whose outcome

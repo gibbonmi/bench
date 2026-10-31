@@ -34,14 +34,29 @@ func ResolvedDefault(root string) (string, bool) {
 	return "", false
 }
 
+// ErrDefaultUnresolved is the DefaultTip error when no default branch resolves.
+var ErrDefaultUnresolved = errors.New("default branch is unresolved")
+
+// DefaultTip is the one lookup of the default-branch tip. It returns the branch that
+// ResolvedDefault answers and the commit identity that ResolveCommit reads for it. An
+// unresolved branch answers ErrDefaultUnresolved. A resolved branch with an unreadable tip
+// answers the branch and the ResolveCommit error, so each caller keeps its own message.
+func DefaultTip(root string) (branch, tip string, err error) {
+	branch, ok := ResolvedDefault(root)
+	if !ok {
+		return "", "", ErrDefaultUnresolved
+	}
+	tip, err = ResolveCommit(root, branch)
+	return branch, tip, err
+}
+
 // DefaultContains reports whether the history of the default-branch tip contains commit.
 // A query that cannot run is an error that names the failed step, never a "no".
 func DefaultContains(root, commit string) (bool, error) {
-	branch, ok := ResolvedDefault(root)
-	if !ok {
-		return false, errors.New("default branch is unresolved")
+	_, tip, err := DefaultTip(root)
+	if errors.Is(err, ErrDefaultUnresolved) {
+		return false, err
 	}
-	tip, err := ResolveCommit(root, branch)
 	if err != nil {
 		return false, errors.New("default branch tip is unreadable")
 	}

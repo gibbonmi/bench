@@ -40,36 +40,17 @@ func write(t *testing.T, files map[string]string) {
 	}
 }
 
-// commitAll commits every change of the working tree and returns the new head.
-func commitAll(t *testing.T, message string) string {
-	t.Helper()
-	preflighttest.RunGit(t, "add", "-A")
-	preflighttest.RunGit(t, "commit", "-q", "-m", message)
-	return preflighttest.RunGit(t, "rev-parse", "HEAD")
-}
+// commitAll and table are the shared commit helper and response-table decoder that every
+// test file of this package calls.
+var (
+	commitAll = preflighttest.CommitAll
+	table     = preflighttest.ResponseTable
+)
 
 // object is the object ID that commit holds at path.
 func object(t *testing.T, commit, path string) string {
 	t.Helper()
 	return preflighttest.RunGit(t, "rev-parse", commit+":"+path)
-}
-
-// table decodes one table of a response. A table opens at the start of a line, and its rows
-// are indented, so the first unindented line after the header closes it.
-func table(t *testing.T, out, name string) []map[string]any {
-	t.Helper()
-	var block strings.Builder
-	for _, line := range strings.SplitAfter(out, "\n") {
-		if block.Len() == 0 && strings.HasPrefix(line, name+"[") || block.Len() > 0 && strings.HasPrefix(line, "  ") {
-			block.WriteString(line)
-		} else if block.Len() > 0 {
-			break
-		}
-	}
-	if block.Len() == 0 {
-		t.Fatalf("response holds no %s table:\n%s", name, out)
-	}
-	return preflighttest.TableRows(t, preflighttest.DecodeMap(t, block.String()), name)
 }
 
 // driftRows is each drift row as before|after|kind|before_object|after_object, sorted.
@@ -121,7 +102,7 @@ func TestDriftObjects(t *testing.T) {
 		t.Fatalf("SS10 unchanged members = (%d), want a green spec-drift row and a complete empty drift table:\n%s", code, out)
 	}
 	// The seeded inventory declares no claim, so a clean drift result is still no complete audit.
-	if row := table(t, out, "staleness")[0]; row["complete"] != false || row["manual_required"] != true {
+	if row := preflighttest.StalenessRow(t, out); row["complete"] != false || row["manual_required"] != true {
 		t.Fatalf("SS10 staleness = %v, want complete false and manual review over an empty inventory:\n%s", row, out)
 	}
 
@@ -160,7 +141,7 @@ func TestDriftIdentity(t *testing.T) {
 
 	base, tip := preflighttest.RunGit(t, "rev-parse", "main"), preflighttest.RunGit(t, "rev-parse", "HEAD")
 	out, _ := audit(t, slug, "main", "HEAD")
-	source, staleness := table(t, out, "source")[0], table(t, out, "staleness")[0]
+	source, staleness := table(t, out, "source")[0], preflighttest.StalenessRow(t, out)
 	if source["base"] != base || source["tip"] != tip || staleness["baseline"] != base || staleness["tip"] != tip {
 		t.Fatalf("SS7 identities = %v and %v, want the resolved %s and %s:\n%s", source, staleness, base, tip, out)
 	}
@@ -270,7 +251,7 @@ func TestAuditMovement(t *testing.T) {
 		// The pair holds no drift, so only the readiness red can make the audit exit 1.
 		_, slug := preflighttest.SeedAdmitted(t)
 		out, code := audit(t, slug, preflighttest.RunGit(t, "rev-parse", "HEAD"), preflighttest.RunGit(t, "rev-parse", "main"))
-		if code != 1 || !strings.Contains(out, "tip-current,red") || table(t, out, "staleness")[0]["manual_required"] != true {
+		if code != 1 || !strings.Contains(out, "tip-current,red") || preflighttest.StalenessRow(t, out)["manual_required"] != true {
 			t.Fatalf("stale pin = (%d), want the red tip-current row and manual review:\n%s", code, out)
 		}
 	})
@@ -282,7 +263,7 @@ func TestAuditTrust(t *testing.T) {
 		root, slug := preflighttest.SeedAdmitted(t)
 		tip := breakSeal(t, root)
 		out, code := audit(t, slug, tip, tip)
-		if code != 1 || !strings.Contains(out, "binary-seal,red") || table(t, out, "staleness")[0]["manual_required"] != true {
+		if code != 1 || !strings.Contains(out, "binary-seal,red") || preflighttest.StalenessRow(t, out)["manual_required"] != true {
 			t.Fatalf("refused seal = (%d), want the red binary-seal row and manual review:\n%s", code, out)
 		}
 	})

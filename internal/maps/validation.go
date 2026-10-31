@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // ValidateDecisionMap validates one map at its repository-relative path.
 func ValidateDecisionMap(root, path string, compiled bool, content []byte) (DecisionMap, []Diagnostic) {
-	topic := strings.TrimSuffix(filepath.Base(path), ".md")
 	tickets, ticketFolderDiagnostics := splitTickets(root, path)
-	m, parsed := parseDecisionMap(topic, content)
+	m, parsed := parseDecisionMap(mapTopic(path), content)
 	m.Tickets = tickets
 	parsed = append(parsed, ticketFolderDiagnostics...)
 	if len(tickets) == 0 {
@@ -34,6 +35,9 @@ func ValidateDecisionMap(root, path string, compiled bool, content []byte) (Deci
 	}
 	return m, diagnostics
 }
+
+// mapTopic names the map at a repository-relative path by its basename without ".md".
+func mapTopic(path string) string { return strings.TrimSuffix(filepath.Base(path), ".md") }
 
 func graphDiagnostics(m DecisionMap) []Diagnostic {
 	var diagnostics []Diagnostic
@@ -140,7 +144,31 @@ func markdownBullets(body string) bool {
 	return seenBullet
 }
 
+// SourceResolver answers whether a cleaned repository-relative slash path names a regular
+// file. It returns the empty string when it does, and its own reason text when it does not.
+type SourceResolver func(path string) string
+
+// SourceDiagnostics grades the Sources section of the map at the repository-relative path
+// with resolve, and prefixes each diagnostic with that path. It reads no other section, so
+// the map's own structure stays the gate's grade.
+func SourceDiagnostics(path string, content []byte, resolve SourceResolver) []Diagnostic {
+	m, _ := parseDecisionMap(mapTopic(path), content)
+	var diagnostics []Diagnostic
+	for _, diagnostic := range sourceRecordDiagnostics(m.Sources, resolve) {
+		diagnostics = append(diagnostics, Diagnostic{Message: path + ": " + diagnostic.Message})
+	}
+	return diagnostics
+}
+
+// sourceDiagnostics grades one Sources body against the checkout at root.
 func sourceDiagnostics(root, body string) []Diagnostic {
+	return sourceRecordDiagnostics(body, workingTreeResolver(root))
+}
+
+// sourceRecordDiagnostics is the one Sources record grammar: the record split, the field
+// order, the locator rule, the URL rule, and the lexical path rule. resolve answers each
+// Path locator that the lexical rule admits.
+func sourceRecordDiagnostics(body string, resolve SourceResolver) []Diagnostic {
 	var diagnostics []Diagnostic
 	var record []string
 	validate := func(lines []string) {
@@ -204,7 +232,7 @@ func sourceDiagnostics(root, body string) []Diagnostic {
 			diagnostics = append(diagnostics, Diagnostic{Message: "Sources " + value + " missing Drift"})
 		}
 		if isPath {
-			if reason := validateSourcePath(root, value); reason != "" {
+			if reason := sourcePathReason(value, resolve); reason != "" {
 				diagnostics = append(diagnostics, Diagnostic{Message: "Sources Path " + value + " " + reason})
 			}
 		} else if !validSourceURL(value) {
@@ -246,37 +274,86 @@ func sourceLocator(value string) string {
 	return value
 }
 
+// The Path reasons that the lexical rule and the resolvers share: no regular file at the
+// path, and a path that leads outside the repository.
+const (
+	notRegularFile    = "must name an existing regular file"
+	escapesRepository = "escapes the repository"
+)
+
+// validateSourcePath grades one Path locator against the checkout at root.
 func validateSourcePath(root, source string) string {
+	return sourcePathReason(source, workingTreeResolver(root))
+}
+
+// sourcePathReason runs the lexical path rule and then resolve on the cleaned slash path.
+func sourcePathReason(source string, resolve SourceResolver) string {
+	clean, reason := lexicalSourcePath(source)
+	if reason != "" {
+		return reason
+	}
+	return resolve(clean)
+}
+
+// lexicalSourcePath refuses an empty, absolute, or escaping locator before any resolver
+// reads it, and gives the cleaned slash path, so ./x and a/../x both reach a resolver as x.
+func lexicalSourcePath(source string) (string, string) {
 	if source == "" || filepath.IsAbs(source) {
-		return "must be a non-empty repository-relative path"
+		return "", "must be a non-empty repository-relative path"
 	}
-	root, err := canonicalpath.Resolve(root)
-	if err != nil {
-		return "root cannot be resolved"
+	clean := path.Clean(filepath.ToSlash(source))
+	if clean == ".." || strings.HasPrefix(clean, "../") {
+		return "", escapesRepository
 	}
-	path := filepath.Join(root, source)
-	if relative, err := filepath.Rel(root, path); err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return "escapes the repository"
-	}
-	info, err := os.Lstat(path)
-	if err != nil {
-		return "must name an existing regular file"
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		path, err = filepath.EvalSymlinks(path)
+	return clean, ""
+}
+
+// workingTreeResolver resolves a cleaned path against the checkout at root. It follows a
+// link, and a link that leads outside the repository escapes it.
+func workingTreeResolver(root string) SourceResolver {
+	return func(source string) string {
+		root, err := canonicalpath.Resolve(root)
 		if err != nil {
-			return "must name an existing regular file"
+			return "root cannot be resolved"
 		}
+		path := filepath.Join(root, filepath.FromSlash(source))
+		info, err := os.Lstat(path)
+		if err != nil {
+			return notRegularFile
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			path, err = filepath.EvalSymlinks(path)
+			if err != nil {
+				return notRegularFile
+			}
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+			return escapesRepository
+		}
+		info, err = os.Stat(path)
+		if err != nil || !info.Mode().IsRegular() {
+			return notRegularFile
+		}
+		return ""
 	}
-	relative, err := filepath.Rel(root, path)
-	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return "escapes the repository"
+}
+
+// PublishedTreeResolver resolves a cleaned path against its tree entry at commit in root. It
+// admits a regular-file entry, mode 100644 or 100755, that the delivery closure of
+// deliverable keeps; deleted holds each path that the closure deletes. A missing, link,
+// directory, or submodule entry is no regular file.
+func PublishedTreeResolver(root, commit, deliverable string, deleted []string) SourceResolver {
+	return func(source string) string {
+		entries, err := git.ListTree(root, commit, "--", ":(literal)"+source)
+		if err != nil || !slices.ContainsFunc(entries, func(entry git.TreeEntry) bool { return entry.Path == source && entry.IsRegularFile() }) {
+			return notRegularFile
+		}
+		if slices.Contains(deleted, source) {
+			return "is deleted by the delivery closure of " + deliverable
+		}
+		return ""
 	}
-	info, err = os.Stat(path)
-	if err != nil || !info.Mode().IsRegular() {
-		return "must name an existing regular file"
-	}
-	return ""
 }
 
 func validSourceURL(raw string) bool {

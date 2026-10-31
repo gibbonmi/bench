@@ -1,7 +1,7 @@
 # Name a Writes entry that landed work deleted in its own preflight row
 
 Blocked by: none
-Writes: internal/preflight/decision.go, internal/preflight/fence_writes.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/default_branch.go, internal/preflight/tree_probe.go, internal/preflight/writes_landed.go (new), internal/preflight/writes_landed_test.go (new), internal/preflight/decision_test.go, internal/preflight/source_tip_test.go, internal/preflight/charge_cells_test.go, internal/preflight/preflighttest
+Writes: internal/preflight/decision.go, internal/preflight/fence_writes.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/default_branch.go, internal/preflight/tree_probe.go, internal/preflight/writes_landed.go (new), internal/preflight/writes_landed_test.go (new), internal/preflight/decision_test.go, internal/preflight/source_tip_test.go, internal/preflight/charge_cells_test.go, internal/preflight/preflighttest, internal/git/default_branch.go, internal/spec/widen.go, internal/preflight/staleness/drift_test.go, internal/preflight/default_branch_test.go (new), internal/spec/widen_signedoff_test.go
 Covers: ES24, ES25, ES26, ES27, ES28, ES29, ES30, ES31, ES32, ES33, ES34, ES35, ES36, ES37, ES38, ES39, ES40, ES45
 
 ## What to build
@@ -24,7 +24,7 @@ Make these changes:
 
 Four existing test files keep their answers, so they are not on the `Writes:` line:
 
-- `fence_writes_test.go` seeds through `seedDeletionReview` (`internal/preflight/fence_writes_test.go:33`), which deletes on a feature branch (`internal/preflight/deletion_preflight_test.go:88-89`), so the default-branch tip still holds the path.
+- `fence_writes_test.go` seeds through `seedDeletionReview` (`internal/preflight/fence_writes_test.go:34`), which deletes on a feature branch (`internal/preflight/deletion_preflight_test.go:88-89`), so the default-branch tip still holds the path.
 - `command_build_test.go` names a never-tracked path (`internal/preflight/command_build_test.go:239`).
 - `deletion_preflight_test.go` and `command_review_test.go` run review mode, and the fact is filled in build mode only.
 
