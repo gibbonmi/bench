@@ -367,3 +367,12 @@ Count: 3. Worst issue: C1.
 - C1 (auto-fix, confidence 7): no test covers a repeated `Writes:` entry. A probe that omits the `seen[named]` guard at `internal/preflight/fence_writes.go:70` answered `silent`.
 - C2 (no-op): the `exists[entry]` filter is an equivalent mutant at row level.
 - C3 (no-op): the failed-query guard is a near-equivalent mutant.
+
+## ES-C1 repair cycle 1 witness reds
+
+The repair session `ft375-repair-01` (opus / medium) repaired S1, S2, S4, and C1 at repair commit `07922d543`. ES-C1 has used 1 of its 2 repair cycles.
+The plan probes `writes-landed` and `precedence` answered `bit` again at that commit.
+
+| subject | mutation | failing witness | finding |
+| --- | --- | --- | --- |
+| `internal/preflight/fence_writes.go` | omit the `seen[named]` repeated-entry guard | `TestWritesLandedPrecedence/repeated_entry` | C1 |
