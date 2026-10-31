@@ -522,3 +522,15 @@ Coverage closed C1 and found two new gaps that the repair delta reaches. ES-C1 t
 
 - C4 (auto-fix, confidence 7): no test pins the unresolved arm of `defaultTipEqualPaths` at `internal/preflight/default_branch.go:41`. A probe that turns an unresolved default branch into a bootstrap failure answered `silent`.
 - C5 (auto-fix, confidence 6): no test pins the unresolved refusal of `signedOffScope` at `internal/spec/widen.go:214`. The same probe answered `silent`.
+
+## ES-C1 repair cycle 2 witness reds
+
+The repair session `ft375-repair-02` (opus / medium) added tests for C4 and C5 at repair commit `b1182c17a`. ES-C1 has used 2 of its 2 repair cycles.
+The plan probes `writes-landed` and `precedence` answered `bit` again at that commit. The coordinator probe of C4 answered `bit` at the same commit.
+
+| subject | mutation | failing witness | finding |
+| --- | --- | --- | --- |
+| `internal/preflight/default_branch.go` | send an unresolved default branch to the unreadable arm | `TestDefaultTipEqualPathsUnresolvedAnswersNone` | C4 |
+| `internal/spec/widen.go` | send an unresolved default branch to the unreadable arm | `TestSpecWidenRefusesAnUnresolvedDefaultBranch` | C5 |
+
+The coordinator confirmation refused, because the delta after the reviewed tip holds the ticket 01 widen. The three axes therefore reaffirm the delta `07922d543..b1182c17a`.
