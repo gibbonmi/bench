@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -42,20 +43,42 @@ func seedClosureMaps(t *testing.T) string {
 	})
 }
 
-// mapSourcesDetail runs one preflight and returns the detail of its map-sources row, empty
-// when the verdict renders the row green.
-func mapSourcesDetail(t *testing.T, args ...string) string {
+// mapSourcesDetail is pinnedMapSourcesDetail of the bare build preflight of slug.
+func mapSourcesDetail(t *testing.T, slug string) string {
 	t.Helper()
+	return pinnedMapSourcesDetail(t, slug, "", "")
+}
+
+// pinnedMapSourcesDetail runs the build preflight of slug with an optional explicit base and
+// source-tip pin, and returns the detail of its map-sources row, empty when that row is
+// green. The render prints only red rows, so the verdict of the same tree decides whether
+// the row exists, and a verdict without a map-sources row fails the test.
+func pinnedMapSourcesDetail(t *testing.T, slug, base, pin string) string {
+	t.Helper()
+	verdict, decided := pinnedVerdicts(t, modeBuild, slug, base, pin)["map-sources"]
+	if !decided {
+		t.Fatal("the build verdict holds no map-sources row")
+	}
+	args := []string{"build", slug}
+	if base != "" {
+		args = append(args, "--base", base)
+	}
+	if pin != "" {
+		args = append(args, "--source-tip", pin)
+	}
 	out, _ := Command(args)
 	summaryCounts(t, out)
-	if _, red := rowOf(t, out, "map-sources"); !red {
+	if verdict == verdictGreen {
 		return ""
 	}
-	for _, row := range preflighttest.ResponseTable(t, out, "checks") {
-		if row["check"] == "map-sources" {
-			return row["detail"].(string)
+	if _, rendered := rowOf(t, out, "map-sources"); rendered {
+		for _, row := range preflighttest.ResponseTable(t, out, "checks") {
+			if row["check"] == "map-sources" {
+				return row["detail"].(string)
+			}
 		}
 	}
+	t.Fatalf("map-sources verdict is %s, but the render holds no map-sources row:\n%s", verdict, out)
 	return ""
 }
 
@@ -68,15 +91,15 @@ func TestMapSourcesClosureDeletion(t *testing.T) {
 	want := "decisions/active.md: Sources Path roadmap/FT1.md" + closedRow +
 		"; specs/example/decisions/compiled.md: Sources Path roadmap/FT1.md" + closedRow +
 		"; specs/other/decisions/other.md: Sources Path roadmap/FT1.md" + closedRow
-	if got := mapSourcesDetail(t, "build", slug); got != want {
+	if got := mapSourcesDetail(t, slug); got != want {
 		t.Fatalf("map-sources detail = %q, want %q", got, want)
 	}
 }
 
 // TestMapSourcesTipExistence checks that the row grades the map and the sources that the
 // source tip holds: a source that only the checkout holds and a map that only the checkout
-// repoints stay red, a kept source is green in its cleaned spellings, and an absent map
-// folder or a skipped name is green.
+// repoints stay red, a kept source is green in its cleaned spellings and as an executable
+// file, and an absent map folder or a skipped name is green.
 func TestMapSourcesTipExistence(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
@@ -90,8 +113,18 @@ func TestMapSourcesTipExistence(t *testing.T) {
 			}},
 		{name: "kept source",
 			setup: func(t *testing.T, _ string) {
+				preflighttest.MustWriteFile(t, "docs/run.sh", "#!/bin/sh\n")
+				if err := os.Chmod("docs/run.sh", 0o755); err != nil {
+					t.Fatal(err)
+				}
 				preflighttest.WriteDecisionMap(t, "decisions/m.md", preflighttest.PathRecord("docs/kept.md"),
-					preflighttest.PathRecord("./docs/kept.md"), preflighttest.PathRecord("docs/../docs/kept.md"))
+					preflighttest.PathRecord("./docs/kept.md"), preflighttest.PathRecord("docs/../docs/kept.md"),
+					preflighttest.PathRecord("docs/run.sh"))
+			},
+			after: func(t *testing.T) {
+				if mode := preflighttest.RunGit(t, "ls-tree", "--format=%(objectmode)", "HEAD", "--", "docs/run.sh"); mode != "100755" {
+					t.Fatalf("docs/run.sh tree mode = %q, want 100755", mode)
+				}
 			}},
 		{name: "checkout only", want: "decisions/m.md: Sources Path docs/local.md" + missingFile,
 			setup: func(t *testing.T, _ string) {
@@ -119,7 +152,7 @@ func TestMapSourcesTipExistence(t *testing.T) {
 			if tc.after != nil {
 				tc.after(t)
 			}
-			if got := mapSourcesDetail(t, "build", slug); got != tc.want {
+			if got := mapSourcesDetail(t, slug); got != tc.want {
 				t.Fatalf("map-sources detail = %q, want %q", got, tc.want)
 			}
 		})
@@ -145,7 +178,23 @@ func TestMapSourcesGrammar(t *testing.T) {
 		"; decisions/m.md: Sources entry must start with Path or URL" +
 		"; decisions/m.md: Sources Path ../outside.md escapes the repository" +
 		"; decisions/m.md: Sources Path ." + missingFile
-	if got := mapSourcesDetail(t, "build", slug); got != want {
+	if got := mapSourcesDetail(t, slug); got != want {
+		t.Fatalf("map-sources detail = %q, want %q", got, want)
+	}
+}
+
+// TestMapSourcesPinnedTip checks that a build preflight with an explicit base and a
+// source-tip pin at an older commit grades the maps of the derived source tip, not those of
+// the pin: the pin cites one missing source, the derived tip another.
+func TestMapSourcesPinnedTip(t *testing.T) {
+	slug := seedMaps(t, func(t *testing.T, _ string) {
+		preflighttest.WriteDecisionMap(t, "decisions/m.md", preflighttest.PathRecord("docs/pinned.md"))
+	})
+	pin := preflighttest.RunGit(t, "rev-parse", "HEAD")
+	preflighttest.WriteDecisionMap(t, "decisions/m.md", preflighttest.PathRecord("docs/derived.md"))
+	preflighttest.CommitAll(t, "repoint the map")
+	want := "decisions/m.md: Sources Path docs/derived.md" + missingFile
+	if got := pinnedMapSourcesDetail(t, slug, "main", pin); got != want {
 		t.Fatalf("map-sources detail = %q, want %q", got, want)
 	}
 }
@@ -186,7 +235,7 @@ func TestMapSourcesPrediction(t *testing.T) {
 				}
 				preflighttest.WriteDecisionMap(t, "decisions/m.md", records...)
 			})
-			got := mapSourcesDetail(t, "build", slug)
+			got := mapSourcesDetail(t, slug)
 			if tc.refusal == "" {
 				if got != "" {
 					t.Fatalf("map-sources detail = %q, want green", got)
