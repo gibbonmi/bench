@@ -148,6 +148,7 @@ No ambiguous candidate body is guessed.
 `worktree list --spec` is incompatible with the selected-view and repeated-target forms.
 Keep the existing default and selected views' bytes and authority.
 Related navigation names read, path, exec, or clean actions according to existing assignment state.
+The related read action is `bench worktree read --in <label> <path>` for an active row with a present tree, and the default view does not gain it.
 A missing or inactive read target still refuses through the current tree resolver.
 
 ### Exact source selections
@@ -226,6 +227,7 @@ Budget the actual rendered TOON after both JSON and TOON escaping.
 Include page metadata, the complete help continuation, and the dispatcher tree frame in that budget.
 Use the existing line and byte limits, currently 10 lines and 4096 bytes.
 Nonterminal pages contain one fully executable continuation with the same selector, source token, and next offset.
+A `worktree read` continuation repeats the caller's own `--in` operand; a call without `--in` gets a continuation without `--in`.
 Terminal pages explicitly have no successor.
 
 Help exposes all cursor flags before a content result could spill.
@@ -605,6 +607,7 @@ No implementation is authorized by this planning artifact.
 - `cmd/bench/planning_read_advice_test.go`
 - `cmd/bench/planning_reader_commands_test.go`
 - `cmd/bench/planning_reads.go`
+- `cmd/bench/selected_queries_test.go`
 - `cmd/bench/tree_scope.go`
 - `cmd/bench/tree_scope_test.go`
 - `cmd/bench/worktree_leaves.go`
@@ -614,6 +617,7 @@ No implementation is authorized by this planning artifact.
 - `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/anchors/registry_planning_readers.go`
 - `internal/anchors/registry_retained_workflow.go`
+- `internal/axi/axitest/help.go`
 - `internal/bounds/classify.go`
 - `internal/bounds/open.go`
 - `internal/bounds/open_test.go`
@@ -672,8 +676,10 @@ No implementation is authorized by this planning artifact.
 - `internal/worktree/list_actions_test.go`
 - `internal/worktree/list_selected.go`
 - `internal/worktree/list_selected_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `internal/worktree/related.go`
 - `internal/worktree/related_test.go`
+- `internal/worktree/verb_runner_check_test.go`
 - `projects/benchkit.md`
 - `reviews/exact-planning-readers.md`
 - `tests/canary/docs-currency-token-diet/benchref-imported`

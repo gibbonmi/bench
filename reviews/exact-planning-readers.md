@@ -1273,7 +1273,91 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ER-C4-standards-1",
+          "performer": "ft125-review-c4-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95b612152a60899ee780b1809bccd94a4b6c6c71",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-standards",
+            "digest": "sha256:bb3b4d5447fbcb563d99f3103742ccc486be2a111edc3cfc3f0f950da2428c5d",
+            "excerpt": "Standards axis, chunk ER-C4 (4a, 4b), frozen pair bb867e2..a9a22b7a2. 13 findings; worst ST1.\nST1 (auto-fix, conf 8) internal/usage/worktree.go:12,16 hand-spells the cursor and line-range grammar; responsebound owns CursorUsage, LinesFlag, LineRangeUsage, and usage can import responsebound without a cycle.\nST2 (ask-user, conf 6) internal/usage/worktree.go:16 hand-spells [--in \u003clabel|primary>] and --section; owners unreachable from usage.\nST3 (auto-fix, conf 8) internal/systemtest/tree_target_test.go:75-114 treeReadPages copies readPages in cmd/bench/planning_reader_commands_test.go:24-63.\nST4 (auto-fix, conf 6) cmd/bench/selected_queries_test.go:195,213 and internal/systemtest/tree_target_test.go:231 write the same assignment fixture twice; putRelatedAssignment duplicates putSelectedAssignment.\nST5 (auto-fix, conf 5) cmd/bench/planning_reads.go:126-128 computes Frame from a second treetarget.Identify call.\nST6 (auto-fix, conf 6) internal/worktree/list.go:162-163 stale assignmentsReadRefusal doc.\nST7 (auto-fix, conf 5) projects/benchkit.md:98-101 split sentence calls the emitter part of the approved query set.\nST8 (auto-fix, conf 4) cmd/bench/tree_scope.go:33-35 comment claims a leaf split the function does not do.\nST9 (auto-fix, conf 3) cmd/bench/tree_scope.go:73-74 two leafNamed lookups.\nST10 (auto-fix, conf 4) internal/worktree/related.go:59-60 drops the ParseCursor reason.\nST11 (auto-fix, conf 4) repository.go:87-89 and related.go:105-109 repeat one rationale.\nST12 (auto-fix, conf 3) .agents/skills/bench-craft-cli/SKILL.md:89 unclear attachment of \"like bench read\".\nST13 (no-op, conf 3) cmd/bench/worktree_leaves.go:96 hand-listed leaf names predate the diff.\n"
+          },
+          "axis": "Standards",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "a9a22b7a27b42b841978e3a52702251aedea66f7",
+          "finding_ids": [
+            "ST1",
+            "ST2",
+            "ST3",
+            "ST4",
+            "ST5",
+            "ST6",
+            "ST7",
+            "ST8",
+            "ST9",
+            "ST10",
+            "ST11",
+            "ST12",
+            "ST13"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C4-spec-1",
+          "performer": "ft125-review-c4-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95b612152a60899ee780b1809bccd94a4b6c6c71",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-spec",
+            "digest": "sha256:ec1636bb01bcdfdc0b3990f724753f2cf02f4c2db393e064d190b9f234eb4d15",
+            "excerpt": "Spec axis, chunk ER-C4 (base bb867e2c, tip a9a22b7a). 6 findings; worst S1.\nS1 (ask-user, conf 7) cmd/bench/planning_reads.go:126-127 a worktree read continuation always carries --in \u003cIdentify(root).Target>; in an unassigned or ambiguous tree the continuation refuses (spec line 228).\nS2 (ask-user, conf 6) internal/usage/worktree.go:16 the WorktreeRead usage restates --in \u003clabel|primary> instead of deriving the tree-target flag once (spec line 122).\nS3 (ask-user, conf 4) internal/worktree/related.go:96-97 a --spec path operand resolves from the repository root, not the caller's directory (spec lines 84, 110).\nS4 (ask-user, conf 5) internal/worktree/list.go:151 the related view offers no read action (spec line 150).\nS5 (auto-fix, conf 7) spec Ownership fences omit three paths that in-chunk widens added to 4b.\nS6 (auto-fix, conf 5) cmd/bench/selected_queries_test.go:334-335 the ER48 precondition compares the source token, so the probe red stops at the precondition.\nRow audit: ER29 met (S1 caveat); ER30 met; ER31 met; ER32 met; ER33 met; ER34 met; ER48 met with S6.\nDecisions: 1 S1; 2 S2; 3 S3; 4 accepted; 5 accepted; 6 accepted; 7 accepted; 8 accepted.\n"
+          },
+          "axis": "Spec",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "a9a22b7a27b42b841978e3a52702251aedea66f7",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C4-coverage-1",
+          "performer": "ft125-review-c4-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "95b612152a60899ee780b1809bccd94a4b6c6c71",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-coverage",
+            "digest": "sha256:27a50a25e36ca06915b917df7c84d84c7b4aaaf19867277ee2cabae6df924d29",
+            "excerpt": "Coverage axis, chunk ER-C4 (base bb867e2cc, tip a9a22b7a2). 1 finding; worst C1.\nC1 (auto-fix, conf 8) internal/worktree/related.go:129-133 no test grades the related projection's navigation actions (spec lines 150, 276).\nProbe: internal/worktree/related.go, 2 mutants, ./internal/worktree ./cmd/bench --run TestRelated; mutant 1 (help block cut) silent; mutant 2 (nil assignments to renderListRows) silent; both restored.\nGraded by reading: family-leaf child argv, Frame counted by the page bound, missing target refusal, continuation --in target, scope matching, unbound counting, assignment-ID order, --spec refusals, default and selected view bytes.\nImplementation command contributed: partly (the test plan never isolates an actions-only change).\n"
+          },
+          "axis": "Coverage",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "a9a22b7a27b42b841978e3a52702251aedea66f7",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1804,3 +1888,41 @@ Spec F1 and Coverage C8 are closed, and the Standards and Spec axes pass.
 - C9 (auto-fix, confidence 8): no grouped declaration follows the `//line` directive in the fixture, so the GenDecl `Line` call to `physicalLine` at `internal/outline/declaration.go:77` is ungraded. Repair target R16 adds that test row. The repair is test-only, so a coordinator probe closes it through `bench record confirmation`.
 
 Optional advice, with no finding ID: the test-local `span` type hides the production `span` function. R16 renames the test type, because the repair already edits that table.
+
+## ER-C4 review round 1
+
+The frozen pair is `bb867e2cc..a9a22b7a2`. Each axis ran on opus / high.
+The round has 20 raw findings and 11 repair targets after duplicates merge.
+The orchestrator decided every finding under `--auto-approve`, and repair cycle 1 of 2 takes the targets on ticket 4b.
+
+### Standards
+
+Count: 13. Worst issue: ST1.
+
+- ST1 (auto-fix, confidence 8): `internal/usage/worktree.go:12,16` spells the cursor and line-range grammar again. Repair target R1 builds both lines from the `responsebound` owners.
+- ST2 (no-op, confidence 6): the same lines spell `--in <label|primary>` and `--section`. Their owners are out of reach of `usage`, and the leaf test ties the literal to `treeTargetInsertion`. This decision is open to reviewer veto.
+- ST3 (auto-fix, confidence 8): `treeReadPages` copies the page loop of `readPages`. Repair target R2 gives that loop one helper in `internal/axi/axitest`.
+- ST4 (auto-fix, confidence 6): `putRelatedAssignment` duplicates `putSelectedAssignment` in `cmd/bench/selected_queries_test.go`. Repair target R3 keeps one helper in that file. The copy in the system test stays, because no shared test package reaches both.
+- ST5 (auto-fix, confidence 5): `Frame` comes from a second `treetarget.Identify` call. Repair target R4.
+- ST6, ST8, ST11, ST12 (auto-fix, confidence 3 to 6): stale or unclear comments and guidance text. Repair target R5.
+- ST7 (auto-fix, confidence 5): the split profile sentence calls the emitter part of the query set. Repair target R5.
+- ST9 (auto-fix, confidence 3): two `leafNamed` lookups. Repair target R5.
+- ST10 (auto-fix, confidence 4): the related view drops the cursor refusal reason. Repair target R5.
+- ST13 (no-op, confidence 3): the hand-listed leaf names predate the diff.
+
+### Spec
+
+Count: 6. Worst issue: S1.
+
+- S1 (auto-fix, confidence 7): a `worktree read` continuation always carries the identity-row target, so it refuses in an unassigned or ambiguous tree. The spec now says that a continuation repeats the caller's own `--in` operand, and a call without `--in` gets none. Repair target R6.
+- S2 (no-op, confidence 6): the same defect as ST2.
+- S3 (auto-fix, confidence 4): a `--spec` path resolves from the repository root. Repair target R7 resolves it from the caller's directory in the `cmd/bench` adapter.
+- S4 (auto-fix, confidence 5): the related view offers no read action. The spec now names `bench worktree read --in <label> <path>` for an active row with a present tree. Repair target R8.
+- S5 (auto-fix, confidence 7): the fence list omits widened paths. The plan commit adds them.
+- S6 (auto-fix, confidence 5): the ER48 precondition compares the source token. Repair target R9 compares the decoded projection, and the plan probe runs again.
+
+### Coverage
+
+Count: 1. Worst issue: C1.
+
+- C1 (auto-fix, confidence 8): no test grades the related navigation actions; two mutants stayed silent. Repair target R8 adds that test with the read action.
