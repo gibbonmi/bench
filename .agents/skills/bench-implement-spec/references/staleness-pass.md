@@ -63,6 +63,9 @@ it removes landed work. A late occurrence that the spec neither covers nor
 excludes gets an `Out of scope` line or an acceptance row. A defect outside the
 spec goes to `bench learning`. A finding outside the plan-expansion scope of
 `.bench/BENCH.md`, including a material acceptance change, stops the phase.
+A taken `map-sources` red repoints each named record to a source that the
+published tree holds. When that repoint edits a path outside the signed-off
+`Writes:` lines, the path takes the widen rule of `.bench/BENCH.md`.
 
 A gap in the planning metadata is not an approval. An amendment of that
 metadata moves the reviewed subject, so it takes the enabling plan commit. The
