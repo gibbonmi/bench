@@ -1974,3 +1974,14 @@ Count: 6. Worst issue: S1.
 Count: 1. Worst issue: C1.
 
 - C1 (auto-fix, confidence 8): no test grades the related navigation actions; two mutants stayed silent. Repair target R8 adds that test with the read action.
+
+## ER-C4 repair cycle 1 witness reds
+
+The repair delta is `a9a22b7a2..1f19bea23`.
+
+- R7: before the fix, `TestRelatedWorktreeFilter` failed with "../specs/x/spec.md is not a spec path inside the repository".
+- R8: before the fix, the related actions had no read row. The witness probe that passes `false` for the read flag in `internal/worktree/related.go` answered `bit` at `TestRelatedWorktreeActions`.
+- R9: the plan probe ER-C4-projection-red answered `bit`; all 11 cases now fail at the refusal assertion, not at the precondition.
+
+R4 (ST5) is a no-op: the fix needs a new field in `cmd/bench/command_registry.go`, which is at its 400-line cap. This decision is open to reviewer veto.
+R6 (S1) changes route: the spec now refuses a read whose identity-row label does not resolve back to the read tree. Repair cycle 2 takes it.

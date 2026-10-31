@@ -227,7 +227,8 @@ Budget the actual rendered TOON after both JSON and TOON escaping.
 Include page metadata, the complete help continuation, and the dispatcher tree frame in that budget.
 Use the existing line and byte limits, currently 10 lines and 4096 bytes.
 Nonterminal pages contain one fully executable continuation with the same selector, source token, and next offset.
-A `worktree read` continuation repeats the caller's own `--in` operand; a call without `--in` gets a continuation without `--in`.
+A `worktree read` continuation carries `--in` with the label of the read tree's identity row.
+When that label does not resolve back to the read tree, the read refuses before content and names `bench read`.
 Terminal pages explicitly have no successor.
 
 Help exposes all cursor flags before a content result could spill.
