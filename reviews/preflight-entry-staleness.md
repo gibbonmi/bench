@@ -714,6 +714,45 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "es-c3-confirm-r1",
+          "performer": "session_01JK5CPdJaS9Xn1VAmFL1sNN",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "da2cd667f5956c8282eb29d4c43bdae702f401e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:session_01JK5CPdJaS9Xn1VAmFL1sNN",
+            "digest": "sha256:607edc5b6427c4844aca781c465a0a6137a846b43ed5f7cdfabf8ac93364eb46",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,2,TestMapSourcesHostileEntries/directory_source,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesHostileEntries$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,651\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,451,7\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesHostileEntries/directory_source,\"map_sources_hostile_test.go:79: map-sources detail = \\\"\\\", want \\\"decisions/m.md: Sources Path docs must name an existing regular file\\\"\",1\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesHostileEntries/submodule_source,\"map_sources_hostile_test.go:79: map-sources detail = \\\"\\\", want \\\"decisions/m.md: Sources Path vendor/sub must name an existing regular file\\\"\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "reviewed_tip": "e1ef5087ff392eab38fce2ef5728b139655802b3",
+          "repaired_tip": "20ff0ec64cc14d2b73b75daeaad232e9dde40ce6",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "internal/maps/validation.go: the published-tree resolver accepts any non-link mode (entry.IsRegularFile() -> entry.Mode != git.SymlinkMode); expect TestMapSourcesHostileEntries",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:session_01JK5CPdJaS9Xn1VAmFL1sNN",
+              "digest": "sha256:607edc5b6427c4844aca781c465a0a6137a846b43ed5f7cdfabf8ac93364eb46",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,2,TestMapSourcesHostileEntries/directory_source,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesHostileEntries$,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,651\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,451,7\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesHostileEntries/directory_source,\"map_sources_hostile_test.go:79: map-sources detail = \\\"\\\", want \\\"decisions/m.md: Sources Path docs must name an existing regular file\\\"\",1\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesHostileEntries/submodule_source,\"map_sources_hostile_test.go:79: map-sources detail = \\\"\\\", want \\\"decisions/m.md: Sources Path vendor/sub must name an existing regular file\\\"\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -986,3 +1025,17 @@ These notes take no repair cycle:
 - the Sources literal in `internal/preflight/preflighttest/decision_maps.go`
 - the tip-tree read error text that the spec does not state
 - one `CHANGELOG.md` phrase that reads as an exclusion
+
+## ES-C3 repair cycle 1 witness reds
+
+The repair session `ft375-repair-03` (opus / medium) repaired S1, S2, C1, C2, and C3 at repair commit `20ff0ec64`. ES-C3 has used 1 of its 2 repair cycles.
+The plan probes `map-sources` and `shared-grammar` answered `bit` again. The coordinator probe of C1 answered `bit`, and `bench record confirmation` closes the five findings.
+
+| subject | mutation | failing witness | finding |
+| --- | --- | --- | --- |
+| `internal/maps/validation.go` | accept any mode that is not a link | `TestMapSourcesHostileEntries/directory_source` and `/submodule_source` | C1 |
+| `internal/maps/validation.go` | accept only mode `100644` | `TestMapSourcesTipExistence/kept_source` | C2 |
+| `internal/preflight/decision.go` | drop the `map-sources` row | `TestMapSourcesTipExistence/kept_source` | S1 |
+| `internal/preflight/gather.go` | grade the pinned commit in place of the derived tip | `TestMapSourcesPinnedTip` | C3 |
+
+The C3 probe of the review swapped the derived tip for `HEAD`. The derived tip is always HEAD or the snapshot head, so that mutant is equivalent. `--source-tip` is only compared with the derived tip by `tip-current`. The new test proves that `map-sources` grades the derived tip and not the pinned commit.
