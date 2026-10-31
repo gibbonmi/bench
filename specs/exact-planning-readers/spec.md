@@ -405,7 +405,8 @@ No existing guard, phase registry, or evidence qualification policy is reassigne
 ## Implementation chunks
 
 The independent SPEC review accepted source ab74806ee43dfcbc339050d88b8c358ad7a12db3 before ticket slicing.
-These five green outcomes have one ticket each; independent graph review accepted source 5b87e01c9a109f07ef7c33d019cf18d6496aea11.
+Independent graph review accepted the first five-ticket graph at source 5b87e01c9a109f07ef7c33d019cf18d6496aea11.
+On 2026-10-30 the reviewer approved a re-slice of tickets 2-5 into nine tickets under the current slicing rules, with the same rows and no new behavior.
 Shared page and command-registry writes order each later chunk after its preceding reader delivery.
 Same-file overlaps with other accepted plans require the reviewed earlier owner version or explicit composition before starting.
 They do not invent dependencies on unrelated unlanded capabilities.
@@ -413,10 +414,10 @@ They do not invent dependencies on unrelated unlanded capabilities.
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | ER-C1 / 1.md | Native raw-file and artifact pages reconstruct exact bytes through the CLI and expose bounded continuation grammar. | ER1, ER16-ER28, ER35-ER40, ER44-ER46 | planned page/file and real CLI reconstruction families | yes |
-| ER-C2 / 2.md | Canonical Markdown selections and typed story obligations read through the spec CLI. | ER2-ER10 | planned Markdown/spec/story families and real CLI reconstruction | no |
-| ER-C3 / 3.md | Go syntax selections return complete declarations with deterministic narrowing. | ER11-ER15 | planned declaration families and real CLI reconstruction | no |
-| ER-C4 / 4.md | Owned worktree reads and binding-based related navigation use the same exact page contract. | ER29-ER34, ER48 | planned related filtering and worktree CLI families | no |
-| ER-C5 / 5.md | Eligible raw reads remain allowed with native advice and attributable census evidence. | ER41-ER43, ER47 | planned advice/census families and preserved guard refusals | no |
+| ER-C2 / 2a.md, 2b.md | Canonical Markdown selections and typed story obligations read through the spec CLI. | ER2-ER10 | planned Markdown/spec/story families and real CLI reconstruction | no |
+| ER-C3 / 3a.md, 3b.md | Go syntax selections return complete declarations with deterministic narrowing. | ER11-ER15 | planned declaration families and real CLI reconstruction | no |
+| ER-C4 / 4a.md, 4b.md | Owned worktree reads and binding-based related navigation use the same exact page contract. | ER29-ER34, ER48 | planned related filtering and worktree CLI families | no |
+| ER-C5 / 5a.md, 5b.md, 5c.md | Eligible raw reads remain allowed with native advice and attributable census evidence. | ER41-ER43, ER47 | planned advice/census families and preserved guard refusals | no |
 
 ER-C1 includes source splits and complete query-registry closure for its first usable read form.
 Each later chunk adds its own approved query and all profile, anchor, fixture, and registry closure on the same green outcome.
@@ -430,7 +431,7 @@ ER-C5 changes no existing denial policy and has no dependency on a future guard 
 
 ### Completion plan
 
-This version-2 plan binds the five ticket checkpoints, their required verification inventories, and the delegated run.
+This version-2 plan binds the ten ticket checkpoints, their required verification inventories, and the delegated run.
 Each ticket author's assignment is recorded through the existing validator before dispatch.
 This graph does not invent execution identity.
 Each chunk reviews its frozen predecessor and current tips before the next ticket starts.
@@ -442,7 +443,7 @@ Query-membership and help-grammar omission witnesses also remain required for ea
 No runtime result is asserted by this plan.
 
 ```bench-completion-plan
-{"version":2,"execution":{"mode":"delegate","run_id":"ft125-build-run-1","orchestrator_session":"session_01JK5CPbT18o2hCYe8SVhPcj","author_limit":1,"assignments":{"1.md":[{"session":"ft125-author-01","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"f5352555da41f53785a4b77497802085ec82c9b2","native_ref":"claude-agent:bench-writer-medium:ft125-author-01"},{"session":"ft125-repair-01","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"b295ebc4d74a7ef6167cc2ffe9154d12478b32a7","native_ref":"claude-agent:bench-writer-medium:ft125-repair-01","predecessor":"ft125-author-01","trigger":"user-directed","stopped":"claude-agent:ft125-author-01:completed","preserved":"97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e"},{"session":"ft125-repair-01b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"ef70293043d55953e36dcf6145e524a477ea94db","native_ref":"claude-agent:bench-writer-medium:ft125-repair-01b","predecessor":"ft125-repair-01","trigger":"user-directed","stopped":"claude-agent:ft125-repair-01:completed","preserved":"8b89063e28fc3b5ede6b0d6250d23089eee0e0c9"}],"2.md":[],"3.md":[],"4.md":[],"5.md":[]}},"chunks":[{"id":"ER-C1","tickets":["1.md"],"verification":[{"id":"ER-C1-successor-red","command":"bench test --package ./cmd/bench --run TestExactReaderCLIReconstruction","probe":"skip one source byte in continuation successor","ticket":"1.md"}]},{"id":"ER-C2","tickets":["2.md"],"verification":[{"id":"ER-C2-hidden-heading-red","command":"bench test --package ./internal/spec --run TestExactMarkdownSelections","probe":"internal/spec/read.go: accept a fenced or commented H2 line as an owning heading; expect TestExactMarkdownSelections","ticket":"2.md"}]},{"id":"ER-C3","tickets":["3.md"],"verification":[{"id":"ER-C3-doc-span-red","command":"bench test --package ./internal/outline --run TestDeclarationSpans","probe":"internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans","ticket":"3.md"}]},{"id":"ER-C4","tickets":["4.md"],"verification":[{"id":"ER-C4-projection-red","command":"bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection","probe":"replace complete related projection identity with commitment-only identity","ticket":"4.md"}]},{"id":"ER-C5","tickets":["5.md"],"verification":[{"id":"ER-C5-head-red","command":"bench test --package ./cmd/bench --run TestExactReaderOutputHeads","probe":"omit the native read-form qualifier at outputHead","ticket":"5.md"}]}],"final_verification":[{"id":"ER-final-ordinary","command":"bench test --package ./..."},{"id":"ER-final-system","command":"bench test --check system"},{"id":"ER-final-query","command":"bench test --check axi-query-registry"},{"id":"ER-final-routing","command":"bench test --check subcommand-routing"},{"id":"ER-final-coverage","command":"bench coverage specs/exact-planning-readers/spec.md --check"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft125-build-run-1","orchestrator_session":"session_01JK5CPbT18o2hCYe8SVhPcj","author_limit":1,"assignments":{"1.md":[{"session":"ft125-author-01","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"f5352555da41f53785a4b77497802085ec82c9b2","native_ref":"claude-agent:bench-writer-medium:ft125-author-01"},{"session":"ft125-repair-01","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"b295ebc4d74a7ef6167cc2ffe9154d12478b32a7","native_ref":"claude-agent:bench-writer-medium:ft125-repair-01","predecessor":"ft125-author-01","trigger":"user-directed","stopped":"claude-agent:ft125-author-01:completed","preserved":"97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e"},{"session":"ft125-repair-01b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"ef70293043d55953e36dcf6145e524a477ea94db","native_ref":"claude-agent:bench-writer-medium:ft125-repair-01b","predecessor":"ft125-repair-01","trigger":"user-directed","stopped":"claude-agent:ft125-repair-01:completed","preserved":"8b89063e28fc3b5ede6b0d6250d23089eee0e0c9"}],"2a.md":[],"2b.md":[],"3a.md":[],"3b.md":[],"4a.md":[],"4b.md":[],"5a.md":[],"5b.md":[],"5c.md":[]}},"chunks":[{"id":"ER-C1","tickets":["1.md"],"verification":[{"id":"ER-C1-successor-red","command":"bench test --package ./cmd/bench --run TestExactReaderCLIReconstruction","probe":"skip one source byte in continuation successor","ticket":"1.md"}]},{"id":"ER-C2","tickets":["2a.md","2b.md"],"verification":[{"id":"ER-C2-hidden-heading-red","command":"bench test --package ./internal/spec --run TestExactMarkdownSelections","probe":"internal/spec/read.go: accept a fenced or commented H2 line as an owning heading; expect TestExactMarkdownSelections","ticket":"2a.md"}]},{"id":"ER-C3","tickets":["3a.md","3b.md"],"verification":[{"id":"ER-C3-doc-span-red","command":"bench test --package ./internal/outline --run TestDeclarationSpans","probe":"internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans","ticket":"3b.md"}]},{"id":"ER-C4","tickets":["4a.md","4b.md"],"verification":[{"id":"ER-C4-projection-red","command":"bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection","probe":"replace complete related projection identity with commitment-only identity","ticket":"4b.md"}]},{"id":"ER-C5","tickets":["5a.md","5b.md","5c.md"],"verification":[{"id":"ER-C5-head-red","command":"bench test --package ./cmd/bench --run TestExactReaderOutputHeads","probe":"omit the native read-form qualifier at outputHead","ticket":"5b.md"}]}],"final_verification":[{"id":"ER-final-ordinary","command":"bench test --package ./..."},{"id":"ER-final-system","command":"bench test --check system"},{"id":"ER-final-query","command":"bench test --check axi-query-registry"},{"id":"ER-final-routing","command":"bench test --check subcommand-routing"},{"id":"ER-final-coverage","command":"bench coverage specs/exact-planning-readers/spec.md --check"}]}
 ```
 
 ## Testing decisions
@@ -589,9 +590,11 @@ No implementation is authorized by this planning artifact.
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/commands.go`
+- `cmd/bench/guard_projection_test.go`
 - `cmd/bench/guards.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main.go`
+- `cmd/bench/main_test.go`
 - `cmd/bench/planning_read_advice.go`
 - `cmd/bench/planning_read_advice_test.go`
 - `cmd/bench/planning_reader_commands_test.go`
@@ -610,20 +613,20 @@ No implementation is authorized by this planning artifact.
 - `internal/bounds/open_test.go`
 - `internal/census/census.go`
 - `internal/census/census_test.go`
-- `internal/census/output.go`
 - `internal/census/raw_calls.go`
 - `internal/census/read_advice.go`
 - `internal/census/read_advice_test.go`
 - `internal/commitment/repository/repository.go`
 - `internal/commitment/repository/run_scope.go`
-- `internal/conformance/axi_query_bite_test.go`
 - `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/bounds_policy_test.go`
 - `internal/conformance/docs_workflow_checks_test.go`
 - `internal/conformance/fixture_bite_test.go`
 - `internal/conformance/help_inventory_single_source_test.go`
 - `internal/conformance/ordinary_build_census_test.go`
 - `internal/conformance/retained_workflow_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/ticket_grammar_test.go`
 - `internal/coverage/command.go`
 - `internal/coverage/coverage.go`
 - `internal/coverage/coverage_test.go`
@@ -636,7 +639,10 @@ No implementation is authorized by this planning artifact.
 - `internal/outline/declaration.go`
 - `internal/outline/declaration_test.go`
 - `internal/outline/outline.go`
+- `internal/outline/outline_filter_test.go`
+- `internal/outline/outline_kinds_test.go`
 - `internal/outline/outline_test.go`
+- `internal/outline/read.go`
 - `internal/responsebound/file.go`
 - `internal/responsebound/file_test.go`
 - `internal/responsebound/owner.go`
@@ -646,8 +652,6 @@ No implementation is authorized by this planning artifact.
 - `internal/spec/command.go`
 - `internal/spec/read.go`
 - `internal/spec/read_test.go`
-- `internal/spec/resolve.go`
-- `internal/spec/retire.go`
 - `internal/spec/spec.go`
 - `internal/spec/spec_test.go`
 - `internal/systemtest/tree_target_test.go`
@@ -655,6 +659,8 @@ No implementation is authorized by this planning artifact.
 - `internal/tickets/registry_data_test.go`
 - `internal/treetarget/family_test.go`
 - `internal/treetarget/run.go`
+- `internal/treetarget/run_test.go`
+- `internal/usage/command_name_test.go`
 - `internal/usage/worktree.go`
 - `internal/worktree/list.go`
 - `internal/worktree/list_actions_test.go`
@@ -709,7 +715,7 @@ No external consumer absence is asserted from an in-tree search.
 The required planning lane and document checks freeze this complete spec before independent review.
 The original independent three-axis review and this bounded repair are retained in [the spec review record](assets/spec-review.md).
 Runtime tests, omission probes, benchmarks, and source relocations remain future work.
-The independent graph review accepted all five tickets; dispatch still requires the complete version-2 execution binding and fresh authors.
+The reviewer approved the ten-ticket graph; each dispatch still requires its version-2 assignment and a fresh author.
 The separate preflight pair keeps closure and staleness policy authority.
 Ticket slicing must recheck overlapping source obligations and preserve each first green registry closure.
 
@@ -718,7 +724,7 @@ Ticket slicing must recheck overlapping source obligations and preserve each fir
 | implementation line | opus / medium for every chunk, by reviewer direction on 2026-10-30 |
 | test purpose | Exact owner-level predicates plus one real CLI reconstruction family |
 | source authority | Canonical Markdown, coverage, Go syntax, response limits, and worktree binding owners |
-| graph | Five serial green tickets accepted at 5b87e01c9a109f07ef7c33d019cf18d6496aea11 |
+| graph | Ten serial green tickets, re-sliced from the five accepted at 5b87e01c9a109f07ef7c33d019cf18d6496aea11 |
 | evidence limits | Static source and document checks only; no runtime or read-savings claim |
 
 ### Accepted ticket graph
@@ -726,10 +732,15 @@ Ticket slicing must recheck overlapping source obligations and preserve each fir
 | ticket | title | Blocked by | delivered outcome |
 | --- | --- | --- | --- |
 | 1.md | Deliver exact native file and artifact pages | none | Accepted ER-C1 vertical outcome with its own verification and review checkpoint |
-| 2.md | Read canonical spec sections and story obligations | 1.md | Accepted ER-C2 vertical outcome with its own verification and review checkpoint |
-| 3.md | Read complete Go declarations from syntax spans | 1.md, 2.md | Accepted ER-C3 vertical outcome with its own verification and review checkpoint |
-| 4.md | Read owned worktrees and source-bound related navigation | 1.md, 2.md, 3.md | Accepted ER-C4 vertical outcome with its own verification and review checkpoint |
-| 5.md | Advise eligible raw reads through the existing census | 1.md, 2.md, 3.md, 4.md | Accepted ER-C5 vertical outcome with its own verification and review checkpoint |
+| 2a.md | Read literal H2 sections and spec shortcuts | 1.md | Vertical outcome in ER-C2 |
+| 2b.md | Read typed story obligations through spec show | 2a.md | Vertical outcome in ER-C2 |
+| 3a.md | Move the outline command into its own file | none | Prefactor with no behavior change in ER-C3 |
+| 3b.md | Read complete Go declarations with outline --symbol | 2b.md, 3a.md | Vertical outcome in ER-C3 |
+| 4a.md | Read an owned worktree through worktree read --in | 2a.md, 3b.md | Vertical outcome in ER-C4 |
+| 4b.md | List spec-related worktrees through binding scopes | 4a.md | Vertical outcome in ER-C4 |
+| 5a.md | Move the census raw-call family into its own file | none | Prefactor with no behavior change in ER-C5 |
+| 5b.md | Name native read forms in census output heads | 3b.md, 4a.md | Vertical outcome in ER-C5 |
+| 5c.md | Advise eligible raw reads with census attribution | 4a.md, 5a.md, 5b.md | Vertical outcome in ER-C5 |
 
 All preceding overlapping tickets are explicit blockers, including shared registry, profile, anchor, fixture, and command-adapter writes.
 The canonical Markdown and coverage-adapter delivery named above has landed.
