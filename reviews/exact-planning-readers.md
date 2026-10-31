@@ -990,6 +990,76 @@
           "supersedes": [
             "ER-C3-coverage-2"
           ]
+        },
+        {
+          "id": "ER-C3-standards-4",
+          "performer": "ft125-review-c3-standards-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0bb85b341fa2614fb8d1573bab9706111815d22d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-standards-4",
+            "digest": "sha256:3dc78a0b5a4caf8089c0ac25aec92e21ddca559ce04fb16a93d6672943f6e162",
+            "excerpt": "Standards axis, ER-C3 confirming round 3 (repair delta a7c146622..acf39804f). N4 and N5 closed. 0 findings.\nAdvice A1 (severity 2, conf 6): internal/responsebound/file.go:113 LineRangeUsage spells \":\" again beside lineRangeSeparator.\nAdvice A2 (severity 2, conf 4): internal/outline/declaration.go:87 span returns four positional ints.\nThe three repair extras (LineRangeUsage, private separator, single artifactFlag const) are acceptable.\n"
+          },
+          "axis": "Standards",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "acf39804ff59fa90fd5404ee1acfae32ce59e547",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-standards-3"
+          ]
+        },
+        {
+          "id": "ER-C3-spec-4",
+          "performer": "ft125-review-c3-spec-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0bb85b341fa2614fb8d1573bab9706111815d22d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-spec-4",
+            "digest": "sha256:beee8dc59352f5a3428a8ebfcb835f9b336b9cb11ab571272505182c89bae3c7",
+            "excerpt": "Spec axis, ER-C3 confirming round 3 (repair delta a7c146622..acf39804f). No-behavior-change claim holds for usage, refusal, ParseLineRange error, and range format text. 1 finding.\nF1 (auto-fix, conf 8) internal/outline/declaration.go span uses positions.Line, which applies //line directives, so the same-file --lines route reads directive-adjusted lines instead of physical lines (spec lines 145, 156). Fix: PositionFor(p, false).Line. Low severity; rare input.\nThe candidate Line column was already directive-adjusted before this delta.\n"
+          },
+          "axis": "Spec",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "acf39804ff59fa90fd5404ee1acfae32ce59e547",
+          "finding_ids": [
+            "F1"
+          ],
+          "supersedes": [
+            "ER-C3-spec-3"
+          ]
+        },
+        {
+          "id": "ER-C3-coverage-4",
+          "performer": "ft125-review-c3-coverage-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "0bb85b341fa2614fb8d1573bab9706111815d22d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-coverage-4",
+            "digest": "sha256:9bd2b554d353bff08f390a54a69aa445e653a69dc1141b1a40de13223bc98d7e",
+            "excerpt": "Coverage axis, ER-C3 confirming round 3 (repair delta a7c146622..acf39804f). 1 finding; worst C8.\nC8 (auto-fix, conf 8) internal/outline/declaration.go:76 GenDecl First/Last wiring is ungraded; probe row 2 (swap First and Last) silent over ./internal/outline/... and ./cmd/bench.\nProbe: internal/outline/declaration.go, 4 mutants; baseline passed; all restored.\n1 drop GenDecl First/Last: invalid (build failed).\n2 swap GenDecl First/Last: silent.\n3 swap FuncDecl First/Last: bit.\n4 span First from decl.Pos(): bit.\nLineRange and ParseLineRange round trip, the read usage text, and HelpAction.Argv stay graded.\n"
+          },
+          "axis": "Coverage",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "acf39804ff59fa90fd5404ee1acfae32ce59e547",
+          "finding_ids": [
+            "C8"
+          ],
+          "supersedes": [
+            "ER-C3-coverage-3"
+          ]
         }
       ]
     }
@@ -1427,3 +1497,19 @@ Count: 2 findings. Worst issue: N4.
 - N5 (auto-fix, confidence 5): `cmd/bench/planning_reader_commands_test.go:170-178` and `internal/outline/declaration_test.go:116-130` each turn a help action into its argv. Repair target R13 gives that step one helper in `internal/axi/axitest`.
 
 The 3b fence widens to `internal/responsebound/file.go` and `internal/axi/axitest/help.go`; the second path cites the `--auto-approve` decision.
+
+## ER-C3 confirming round 3
+
+The repair delta is `a7c146622..acf39804f`. Each axis ran on opus / high.
+Standards N4 and N5 are closed, and the Standards axis passes.
+The Spec and Coverage axes each found one defect that cycle 3 introduced, and repair cycle 4 takes both on ticket 3b under `--auto-approve`.
+
+### Spec
+
+- F1 (auto-fix, confidence 8): `span` in `internal/outline/declaration.go` takes lines from `positions.Line`, which applies `//line` directives. The same-file `--lines` route must name physical lines. Repair target R14 uses the unadjusted position for each line that the outline names.
+
+### Coverage
+
+- C8 (auto-fix, confidence 8): no test grades the GenDecl `First` and `Last` wiring at `internal/outline/declaration.go:76`; a swap mutant stayed silent. Repair target R15 asserts the lines of every declaration family.
+
+Optional advice, with no finding ID: Standards A1 and A2.
