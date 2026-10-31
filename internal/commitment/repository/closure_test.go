@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -113,6 +114,70 @@ func TestCommitmentClosureRefusesObligationFreeBinding(t *testing.T) {
 	edits, err := (commitrepo.Store{Root: root}).Closure(head, commitrepo.Delivery{Spec: closureSpec, Source: head})
 	if err == nil || !strings.Contains(err.Error(), "names no obligation") {
 		t.Fatalf("Closure = %+v, %v; want the names-no-obligation refusal", edits, err)
+	}
+}
+
+// ClosedRowPaths predicts the row files that Closure deletes, from the same derivation. A
+// binding whose obligations hold the FT1 row and a decision source that roadmap.RowOwner
+// refuses predicts the FT1 row file alone, and Closure deletes exactly that file. A tree
+// with no policy and an unapproved deliverable give no path. An obligation-free binding
+// and a policy that does not parse return their error.
+func TestClosedRowPathsMatchClosure(t *testing.T) {
+	const refused, refusedBody = "decisions/DEC1.md", "# DEC1\n"
+	withRefused := func(t testing.TB, root string) {
+		commitmenttest.SeedClosure(t, root, closureSpec)
+		commitmenttest.Write(t, root, refused, refusedBody)
+		commitmenttest.EditPolicy(t, root, func(policy *commitment.Policy) {
+			delivery := &policy.Milestones[0].Outcomes[0]
+			delivery.Sources = append(delivery.Sources, commitment.SourceBinding{ID: "DEC1", Path: refused, Identity: commitment.Identity([]byte(refusedBody))})
+			delivery.Deliverables[0].Obligations = append(delivery.Deliverables[0].Obligations, "DEC1")
+		})
+	}
+	for _, row := range []struct {
+		name, deliverable, refusal string
+		seed                       func(testing.TB, string)
+		want                       []string
+	}{
+		{name: "refused-source", deliverable: closureSpec, seed: withRefused, want: []string{"roadmap/FT1.md"}},
+		{name: "no-policy", deliverable: closureSpec, seed: func(testing.TB, string) {}},
+		{name: "unapproved", deliverable: "specs/other/spec.md", seed: withRefused},
+		{name: "obligation-free", deliverable: closureSpec, refusal: "names no obligation",
+			seed: func(t testing.TB, root string) { commitmenttest.SeedTicketsOnly(t, root, closureSpec) }},
+		{name: "unparsed-policy", deliverable: closureSpec, refusal: "commitment policy",
+			seed: func(t testing.TB, root string) {
+				commitmenttest.Write(t, root, commitment.PolicyPath, "not a policy\n")
+			}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root, head := closureRoot(t, row.seed)
+			store := commitrepo.Store{Root: root}
+			paths, err := store.ClosedRowPaths(head, row.deliverable)
+			if row.refusal != "" {
+				if err == nil || !strings.Contains(err.Error(), row.refusal) || paths != nil {
+					t.Fatalf("ClosedRowPaths = %v, %v; want the %q refusal", paths, err, row.refusal)
+				}
+				return
+			}
+			if err != nil || !slices.Equal(paths, row.want) {
+				t.Fatalf("ClosedRowPaths = %v, %v; want %v", paths, err, row.want)
+			}
+			if row.want == nil {
+				return
+			}
+			edits, err := store.Closure(head, commitrepo.Delivery{Spec: row.deliverable, Source: head})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var deleted []string
+			for _, edit := range edits {
+				if edit.Delete {
+					deleted = append(deleted, edit.Path)
+				}
+			}
+			if !slices.Equal(deleted, row.want) {
+				t.Fatalf("Closure deletes %v, want %v", deleted, row.want)
+			}
+		})
 	}
 }
 

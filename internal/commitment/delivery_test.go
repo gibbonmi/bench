@@ -69,6 +69,51 @@ func TestCommitmentDeliver(t *testing.T) {
 	}
 }
 
+// Closes returns the obligation sources of the approved binding, the set that Deliver
+// closes for the same policy and deliverable. It reads no delivery fact, so an already
+// delivered binding keeps its answer. An unapproved path closes nothing, and an
+// obligation-free binding refuses as Deliver does.
+func TestCommitmentCloses(t *testing.T) {
+	delivered, _, err := commitment.Deliver(deliveryPolicy("FT1"), deliverySpec, "source", "evidence")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range []struct {
+		name, path, refusal string
+		policy              commitment.Policy
+		want                []string
+	}{
+		{name: "partial", path: deliverySpec, policy: deliveryPolicy("FT1"), want: []string{"FT1"}},
+		{name: "complete", path: deliverySpec, policy: deliveryPolicy("FT1", "FT3"), want: []string{"FT1", "FT3"}},
+		{name: "already-delivered", path: deliverySpec, policy: delivered, want: []string{"FT1"}},
+		{name: "unapproved-path", path: "specs/other/spec.md", policy: deliveryPolicy("FT1")},
+		{name: "obligation-free", path: deliverySpec, policy: deliveryPolicy(), refusal: "names no obligation"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			closed, err := commitment.Closes(row.policy, row.path)
+			var ids []string
+			for _, source := range closed {
+				ids = append(ids, source.ID)
+			}
+			if row.refusal != "" {
+				if err == nil || !strings.Contains(err.Error(), row.refusal) || closed != nil {
+					t.Fatalf("Closes = %v, %v; want the %q refusal", ids, err, row.refusal)
+				}
+				return
+			}
+			if err != nil || !slices.Equal(ids, row.want) {
+				t.Fatalf("Closes = %v, %v; want %v", ids, err, row.want)
+			}
+			if row.name == "already-delivered" {
+				return
+			}
+			if _, deliverClosed, err := commitment.Deliver(row.policy, row.path, "source", "evidence"); err != nil || !slices.Equal(deliverClosed, closed) {
+				t.Fatalf("Deliver closed = %+v, %v; want the Closes set %+v", deliverClosed, err, closed)
+			}
+		})
+	}
+}
+
 // An outcome with no source is its own obligation, so its delivery records one fact that
 // satisfies no source and completes only that outcome. The delivery of a binding with no
 // obligation of an outcome that has sources refuses. PathDelivered names only a delivered

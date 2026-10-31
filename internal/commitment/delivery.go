@@ -15,16 +15,41 @@ import (
 // delivery of a binding that names no obligation of an outcome with sources refuses,
 // because it can close no source; a plan must first name its obligations.
 func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBinding, error) {
-	outcome, binding, found, err := activeDeliverable(policy, path)
+	outcome, binding, closed, found, err := closing(policy, path)
 	if err != nil || !found {
 		return policy, nil, err
-	}
-	if obligationFree(outcome, binding) {
-		return policy, nil, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("deliverable %q of outcome %q names no obligation", path, outcome.ID)}
 	}
 	fact := DeliveryFact{Milestone: policy.ActiveMilestone, Outcome: outcome.ID, Binding: binding.Source.ID, Identity: binding.Source.Identity, Source: source, Evidence: evidence}
 	if deliveredKeys(policy)[fact.key()] {
 		return policy, nil, fmt.Errorf("deliverable %q is already delivered", path)
+	}
+	policy.Deliveries = append(slices.Clone(policy.Deliveries), fact)
+	if err := Validate(policy); err != nil {
+		return Policy{}, nil, err
+	}
+	return policy, closed, nil
+}
+
+// Closes returns the outcome sources that the delivery of the approved deliverable at path
+// closes, without a delivery fact. A path that the active milestone does not approve
+// closes no source. The delivery of a binding that names no obligation of an outcome with
+// sources refuses, as Deliver does. Closes does not read the recorded deliveries, so it
+// answers for a deliverable that is already delivered too.
+func Closes(policy Policy, path string) ([]SourceBinding, error) {
+	_, _, closed, _, err := closing(policy, path)
+	return closed, err
+}
+
+// closing resolves the active outcome and binding that approve path and the outcome
+// sources that the binding's obligations close. It reports false for a path that the
+// active milestone does not approve.
+func closing(policy Policy, path string) (Outcome, DeliveryBinding, []SourceBinding, bool, error) {
+	outcome, binding, found, err := activeDeliverable(policy, path)
+	if err != nil || !found {
+		return Outcome{}, DeliveryBinding{}, nil, false, err
+	}
+	if obligationFree(outcome, binding) {
+		return Outcome{}, DeliveryBinding{}, nil, false, refusalroute.Raised{Name: refusalroute.CommitmentDecision, Err: fmt.Errorf("deliverable %q of outcome %q names no obligation", path, outcome.ID)}
 	}
 	var closed []SourceBinding
 	for _, candidate := range outcome.Sources {
@@ -32,11 +57,7 @@ func Deliver(policy Policy, path, source, evidence string) (Policy, []SourceBind
 			closed = append(closed, candidate)
 		}
 	}
-	policy.Deliveries = append(slices.Clone(policy.Deliveries), fact)
-	if err := Validate(policy); err != nil {
-		return Policy{}, nil, err
-	}
-	return policy, closed, nil
+	return outcome, binding, closed, true, nil
 }
 
 // obligationFree reports whether binding can close no source of outcome.
