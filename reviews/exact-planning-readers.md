@@ -683,7 +683,88 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ER-C3-standards-1",
+          "performer": "ft125-review-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "daca723a52b3b69e039cdc2749a9d34c6bde64f6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-standards",
+            "digest": "sha256:ab4d2f098bb73dea7f51c1fc42d3b80a75ee4a28de5cb6c1f966bf375057b9a3",
+            "excerpt": "Standards axis, chunk ER-C3 (3a, 3b), frozen pair a3994b202..048ec2ac7. 7 findings; worst ST1.\nST1 .agents/skills/bench-craft-cli/SKILL.md:94 joins an unrelated sentence to keep the 120-line budget. ask-user, conf 6.\nST2 internal/outline/declaration.go:280, command.go:43 filter flag names re-listed by literal. auto-fix, conf 5.\nST3 internal/outline/command.go:46 symbolUsageLine spells the command name a third time. auto-fix, conf 4.\nST4 internal/outline/command.go:76 second usage-refusal builder beside usageRefusal. auto-fix, conf 4.\nST5 internal/outline/declaration.go:200 \".go\" spelled again beside langTable. auto-fix, conf 3.\nST6 internal/outline/command.go:52-60 Command doc omits the --symbol grammar and refusals. auto-fix, conf 4.\nST7 cmd/bench/axi_query_cases_test.go:47 reused fixture name misstates its role. no-op, conf 3.\nChecked clean: the 3a move is byte-identical with every error return; no second walk, size limit, fixture rule, scope filter, or cursor parser; file sizes under 400; registry and pins correct.\nImplementation command contributed: possibly for ST1 (ticket 3b does not say SKILL.md is at its budget).\n"
+          },
+          "axis": "Standards",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "048ec2ac73a20b2520c3370786f27640d0e424fe",
+          "finding_ids": [
+            "ST1",
+            "ST2",
+            "ST3",
+            "ST4",
+            "ST5",
+            "ST6",
+            "ST7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C3-spec-1",
+          "performer": "ft125-review-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "daca723a52b3b69e039cdc2749a9d34c6bde64f6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-spec",
+            "digest": "sha256:fb3fc35a1adb416df649cecba0483bba1bdbbcc757650133ce35ca8ceac41c7d",
+            "excerpt": "Spec axis, chunk ER-C3 (base a3994b20, tip 048ec2ac). 3 findings; worst S1.\nS1 spec line 359; internal/outline/command.go:149; .agents/skills/bench-craft-cli/SKILL.md:86,91. Legacy outline forms (bare, path, --full) on the approved outline root return no help[N] block; spec line 359 requires derived AXI continuation help. ask-user, conf 7.\nS2 internal/outline/declaration.go:179-181 against spec lines 138, 143 and ER13. A bare name that matches only a method returns a definitive present=false page instead of candidates. ask-user, conf 5.\nS3 internal/outline/declaration.go:249-273 against spec line 143. Two same-name declarations in one file get a narrowing route that does not narrow. ask-user, conf 6, low severity.\nRow audit: ER11 met; ER12 met; ER13 met with S2 and S3; ER14 met; ER15 met; Go edge inventory met; ticket 3a changed no behavior.\nDecisions: 1 finding S1; 2 partly accepted (bare-name exclusion is S2); 3 accepted; 4 accepted; 5 accepted; 6 accepted as tree convention; 7 accepted.\nImplementation command contributed: yes for S1 (ticket 3b line 42 omits the spec line 359 help requirement; no acceptance row maps line 359).\n"
+          },
+          "axis": "Spec",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "048ec2ac73a20b2520c3370786f27640d0e424fe",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C3-coverage-1",
+          "performer": "ft125-review-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "daca723a52b3b69e039cdc2749a9d34c6bde64f6",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-coverage",
+            "digest": "sha256:2aac0f34fa76770c4e923ee7f53b6dd5a9882dee9f4a11e42d2000b066abe3cd",
+            "excerpt": "Coverage axis, chunk ER-C3 (base a3994b2, tip 048ec2ac7). 7 findings; worst C1+C2.\nC1 internal/outline/declaration.go:279 symbolCommand drops the caller's path positional from the continuation; probe P1 silent (restored yes). Accept, conf 9.\nC2 internal/outline/declaration.go:280-284 continuation must repeat --production/--test; no filtered multi-page test. Accept, conf 8.\nC3 internal/outline/declaration.go:255-258 narrowing operand relative to cwd ungraded from a subdirectory. Accept, conf 8.\nC4 internal/outline/declaration.go:179-181,:260 two same-name candidates in one file get an identical narrowing command that never narrows. Reviewer decision, conf 8.\nC5 internal/outline/declaration.go:120 IndexListExpr receiver branch ungraded (Map[K, V]). Accept, conf 8.\nC6 internal/outline/declaration.go:204-206,:200 oversized or unreadable in-scope Go file refusal ungraded; IsFixture skip ungraded. Accept (a); (b) reviewer note, conf 7.\nC7 internal/outline/declaration.go:148 one cursor flag without --symbol refusal ungraded. Accept, conf 7.\nProbes: P1 internal/outline/declaration.go drop positionals in symbolCommand, ./cmd/bench TestExactReaderCLIReconstruction: silent, restored yes.\nImplementation command contributed: yes (continuation tests use one unique selection and no filter; ambiguity tests run only from root and across files).\n"
+          },
+          "axis": "Coverage",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "048ec2ac73a20b2520c3370786f27640d0e424fe",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1001,3 +1082,41 @@ Count: 3 findings and 3 advice items. Worst issue: N2.
 
 Optional advice, with no finding ID: N3, N4, and N5 in the Standards excerpt, Spec N1 and N2, and Coverage NF1.
 The Coverage probe of the `spec show` projection binding survived; the owner test of `identity()` grades the field.
+
+## ER-C3 review round 1
+
+The frozen pair is `a3994b202..048ec2ac7`. Each axis ran on opus / high.
+The round has 17 raw findings and 9 repair targets after duplicates merge.
+The orchestrator decided every finding under `--auto-approve`, and repair cycle 1 of 2 takes the targets on ticket 3b.
+
+### Standards
+
+Count: 7. Worst issue: ST1.
+
+- ST1 (no-op, confidence 6): `.agents/skills/bench-craft-cli/SKILL.md:94` joins a line to keep the 120-line budget. This decision is the same as ER-C2 ST3.
+- ST2 (auto-fix, confidence 5): `internal/outline/declaration.go:280` and `command.go:43` list the filter flags again by literal. Repair target R6.
+- ST3 (auto-fix, confidence 4): `internal/outline/command.go:46` spells the command name a third time. Repair target R6.
+- ST4 (auto-fix, confidence 4): `internal/outline/command.go:76` builds a second usage refusal. Repair target R6 gives the outline package one refusal helper.
+- ST5 (advice, confidence 3): `internal/outline/declaration.go:200` spells `.go` again.
+- ST6 (auto-fix, confidence 4): `internal/outline/command.go:52-60` keeps a stale `Command` doc. Repair target R6.
+- ST7 (no-op, confidence 3): the reused envelope fixture name.
+
+### Spec
+
+Count: 3. Worst issue: S1.
+
+- S1 (auto-fix, confidence 7): the legacy outline forms return no `help[N]` block against spec line 359. The ticket 3b acceptance line is corrected. Repair target R1.
+- S2 (auto-fix, confidence 5): a bare name that matches only a method returns a false absence. The spec now makes each same-name method an ambiguous candidate. Repair target R2.
+- S3 (auto-fix, confidence 6): two same-name candidates in one file get a route that does not narrow. The spec now routes them to `bench read` with the candidate line. Repair target R3. This decision is open to reviewer veto.
+
+### Coverage
+
+Count: 7. Worst issue: C1.
+
+- C1 (auto-fix, confidence 9): `internal/outline/declaration.go:279` drops the caller's path from the continuation; probe P1 stayed silent. Repair target R4.
+- C2 (auto-fix, confidence 8): the continuation drops `--production` or `--test`. Repair target R4.
+- C3 (auto-fix, confidence 8): no ambiguous call runs from a subdirectory. Repair target R5.
+- C4 (auto-fix, confidence 8): the same defect as S3. Repair target R3.
+- C5 (auto-fix, confidence 8): no test reaches the `IndexListExpr` receiver branch. Repair target R7.
+- C6 (auto-fix, confidence 7): no test puts an oversized Go file or a `testdata` Go file in scope. The fixture skip keeps the tree convention of `bench outline`. Repair target R8.
+- C7 (auto-fix, confidence 7): no test gives one cursor flag without `--symbol`. Repair target R9.
