@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:55aeb8d80f7f8919bdf93fa364e239f8fe50a778da8f3249a15e85b2cca4f6f9",
+  "plan_digest": "sha256:c3646a6ef58df990a5974d6541cb51d0de4d6bef2d7d341ebea6016443355f4e",
   "implementation_session": "",
   "chunks": [
     {
@@ -385,6 +385,15 @@
     {
       "from": "sha256:3ac7ce83999acc3cf7e20f551f4a8a52889192313d46706167b7c957a273b330",
       "to": "sha256:55aeb8d80f7f8919bdf93fa364e239f8fe50a778da8f3249a15e85b2cca4f6f9",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:55aeb8d80f7f8919bdf93fa364e239f8fe50a778da8f3249a15e85b2cca4f6f9",
+      "to": "sha256:c3646a6ef58df990a5974d6541cb51d0de4d6bef2d7d341ebea6016443355f4e",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
