@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:6dbcc172e9ddc9173f87952568ca7ea1444aa2ac6cf9e84e84f7b58d8a1471da",
+  "plan_digest": "sha256:730af70f9af8885e7d595e72f5e217f8cc64fdafea422c09a8c9118b14a79a1b",
   "implementation_session": "",
   "chunks": [
     {
@@ -1687,9 +1687,9 @@
     {
       "id": "ER-C5",
       "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
-      "tip": "9a7404cfbe7c4e86f4837b3b079274049efe2f8e",
-      "plan_digest": "sha256:6dbcc172e9ddc9173f87952568ca7ea1444aa2ac6cf9e84e84f7b58d8a1471da",
-      "source_digest": "304670d6498ceae79ed4fad1dfc3e53288646491",
+      "tip": "4b1800d7020bb2777924e836f1dc303ac1b6eefe",
+      "plan_digest": "sha256:730af70f9af8885e7d595e72f5e217f8cc64fdafea422c09a8c9118b14a79a1b",
+      "source_digest": "e9d552e7b25a5aa1c20fa4b890c975cb0b5384b0",
       "acceptance_rows": [
         "ER47",
         "ER41",
@@ -2158,6 +2158,27 @@
           "ER-C5"
         ]
       }
+    },
+    {
+      "from": "sha256:6dbcc172e9ddc9173f87952568ca7ea1444aa2ac6cf9e84e84f7b58d8a1471da",
+      "to": "sha256:730af70f9af8885e7d595e72f5e217f8cc64fdafea422c09a8c9118b14a79a1b",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ],
+        "ER-C5": [
+          "ER-C5"
+        ]
+      }
     }
   ]
 }
@@ -2576,3 +2597,18 @@ The round has 5 findings, and each is a repair target. The orchestrator accepted
 - C2 (auto-fix, confidence 9): no test grades the xargs exclusion. Repair target R5 adds the `xargs cat notes.md` row.
 
 The Spec axis found that the ticket 5b note and the `head -n N` range limit are not defects.
+
+## ER-C5 repair cycle 1 witness reds
+
+The repair delta is `c4d4e647e..4b1800d70`. The new `TestRawReadAdvice` rows ran once against the old code before the fix.
+
+- R1: `TestRawReadAdvice/cat_notes\u009b.md` failed at `guard_projection_test.go:55`. The old control check missed C1 controls, so stderr held advice, not empty.
+- R1: the `cat notes\u0085.md` row failed at the same line with the same advice.
+- R2: no new row. The zero, signed, reversed and `$` rows keep their outcomes through the `responsebound` parsers.
+- R3: `TestRawReadAdvice/cat_/etc/hosts` failed at `guard_projection_test.go:55`. Stderr held `bench read /etc/hosts` advice, not empty.
+- R3: the `cat ../outside` row and the absolute pool-path row failed at the same line with advice on stderr.
+- R4: the `sed -i 3p notes.md` and `sed -e 3p notes.md` rows pass on the old code.
+- R4: a hand mutant that removed the sed `-n` check turned both rows red at `guard_projection_test.go:55` with `--lines 3:3` advice.
+- R5: the `xargs cat notes.md` row passes on the old code.
+- R5: a hand mutant that removed the `ViaXargs` check turned the row red at `guard_projection_test.go:55` with `bench read notes.md` advice.
+- The tree restored both hand mutants before the commit.
