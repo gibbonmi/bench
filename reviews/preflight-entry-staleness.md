@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/preflight-entry-staleness/spec.md",
-  "plan_digest": "sha256:61921ea7fbf2edf0094bea10f19540d2e33106ef92d140f0c1b3de8d63ee5bf9",
+  "plan_digest": "sha256:00eccbd9db08f8b3abfebba2213f8183f1f1fd339b94f9a790bf6c2bee72f41c",
   "implementation_session": "",
   "chunks": [
     {
       "id": "ES-C1",
       "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
-      "tip": "a7cfab215f73c7c62d2db3249470ee666ca97eff",
-      "plan_digest": "sha256:9cce72026531bfc0a7a156d706d2a333f67c68a342dfeb0c584aae3679f2ab3b",
-      "source_digest": "7552417da12a6904c2e4fdc2e580c4df9d3c5ec5",
+      "tip": "d9d130308c0b42a4118cbf4b63ad43534c395d61",
+      "plan_digest": "sha256:00eccbd9db08f8b3abfebba2213f8183f1f1fd339b94f9a790bf6c2bee72f41c",
+      "source_digest": "a45b01c8b6c245008776cbb22fb6a64dcfce5af7",
       "acceptance_rows": [
         "ES24",
         "ES25",
@@ -95,6 +95,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/fence_writes.go,swap,failed,1,TestWritesLandedPrecedence/ES33_deletion_inside_the_explicit_range,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestWritesLandedPrecedence$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,524\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,300,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestWritesLandedPrecedence/ES33_deletion_inside_the_explicit_range,\"writes_landed_test.go:168: writes-landed row = \\\"  writes-landed,red,\\\\\\\\\\\"Writes: entry names a path that a landed commit deleted: one.md: docs/gone.md (4441837e613cd6a6bfa43d6bb2b718682d1b4f37)\\\\\\\\\\\",\\\\\\\\\\\"\\\\\\\\\\\"\\\", want \\\"\\\":\",8\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "es-c1-t02-closure-prediction",
+          "performer": "ft375-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a45b01c8b6c245008776cbb22fb6a64dcfce5af7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-author-02",
+            "digest": "sha256:a0b2674ada3bf3e8b7369b7382f562f9e50cb19fda32279472a9c380c6c3c185",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,TestClosedRowPathsMatchClosure/refused-source,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,^TestClosedRowPathsMatchClosure$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,400\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,49,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestClosedRowPathsMatchClosure/refused-source,\"closure_test.go:162: ClosedRowPaths = [roadmap/FT1.md decisions/DEC1.md], \u003cnil>; want [roadmap/FT1.md]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d9d130308c0b42a4118cbf4b63ad43534c395d61",
+          "requirement": "closure-prediction",
+          "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --run 'CommitmentCloses|ClosedRowPathsMatchClosure|CommitmentDeliver|CommitmentLightClosure|CommitmentClosureRefusesObligationFreeBinding'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the RowOwner step in the store method, and record that TestClosedRowPathsMatchClosure turns red on the refused obligation source of ES14.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-author-02",
+              "digest": "sha256:a0b2674ada3bf3e8b7369b7382f562f9e50cb19fda32279472a9c380c6c3c185",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/commitment/repository/closure.go,swap,failed,1,TestClosedRowPathsMatchClosure/refused-source,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commitment/repository,^TestClosedRowPathsMatchClosure$,passed,6\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,400\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commitment/repository,fail,49,6\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commitment/repository,TestClosedRowPathsMatchClosure/refused-source,\"closure_test.go:162: ClosedRowPaths = [roadmap/FT1.md decisions/DEC1.md], \u003cnil>; want [roadmap/FT1.md]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -111,6 +141,15 @@
     {
       "from": "sha256:9cce72026531bfc0a7a156d706d2a333f67c68a342dfeb0c584aae3679f2ab3b",
       "to": "sha256:61921ea7fbf2edf0094bea10f19540d2e33106ef92d140f0c1b3de8d63ee5bf9",
+      "chunk_ids": {
+        "ES-C1": [
+          "ES-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:61921ea7fbf2edf0094bea10f19540d2e33106ef92d140f0c1b3de8d63ee5bf9",
+      "to": "sha256:00eccbd9db08f8b3abfebba2213f8183f1f1fd339b94f9a790bf6c2bee72f41c",
       "chunk_ids": {
         "ES-C1": [
           "ES-C1"
