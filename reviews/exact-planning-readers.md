@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:92c9126fb28977b40f73530b3cdd36404a67ab71bff64af9b87d282ab20a30f6",
+  "plan_digest": "sha256:903c4a055b23ddac8950aa516f30749490e329ac7f9062bad0c820b81a6feb5d",
   "implementation_session": "",
   "chunks": [
     {
@@ -641,9 +641,9 @@
     {
       "id": "ER-C3",
       "base": "a3994b2028302752772deae813cc0b4a98306516",
-      "tip": "41d0dc2b63dfb6db9b8508af45ffe0462ab1e299",
-      "plan_digest": "sha256:92c9126fb28977b40f73530b3cdd36404a67ab71bff64af9b87d282ab20a30f6",
-      "source_digest": "78a51de12a0ec38da08c032c82d1e16b108990e7",
+      "tip": "048ec2ac73a20b2520c3370786f27640d0e424fe",
+      "plan_digest": "sha256:903c4a055b23ddac8950aa516f30749490e329ac7f9062bad0c820b81a6feb5d",
+      "source_digest": "daca723a52b3b69e039cdc2749a9d34c6bde64f6",
       "acceptance_rows": [
         "ER11",
         "ER12",
@@ -651,7 +651,38 @@
         "ER14",
         "ER15"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "ER-C3-3b-ER-C3-doc-span-red",
+          "performer": "ft125-author-3b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "daca723a52b3b69e039cdc2749a9d34c6bde64f6",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-author-3b",
+            "digest": "sha256:dfb50590c8bcdcc53367ae5f85cac0b95904643c941ec015105b02a6896571df",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,287\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:73: declaration spans =\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "048ec2ac73a20b2520c3370786f27640d0e424fe",
+          "requirement": "ER-C3-doc-span-red",
+          "command": "bench test --package ./internal/outline --run TestDeclarationSpans",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-author-3b",
+              "digest": "sha256:dfb50590c8bcdcc53367ae5f85cac0b95904643c941ec015105b02a6896571df",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,287\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:73: declaration spans =\",4\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
       "reviews": []
     }
   ],
@@ -756,6 +787,21 @@
         ],
         "ER-C2": [
           "ER-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:92c9126fb28977b40f73530b3cdd36404a67ab71bff64af9b87d282ab20a30f6",
+      "to": "sha256:903c4a055b23ddac8950aa516f30749490e329ac7f9062bad0c820b81a6feb5d",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
         ]
       }
     }
