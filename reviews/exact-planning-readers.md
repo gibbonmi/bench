@@ -891,6 +891,75 @@
           "supersedes": [
             "ER-C3-coverage-1"
           ]
+        },
+        {
+          "id": "ER-C3-standards-3",
+          "performer": "ft125-review-c3-standards-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5f5692828054c1392d6b3c43683ddeb1c71dfba9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-standards-3",
+            "digest": "sha256:45f6addd4bd722f55a3cfc8e6a8bc1bb1fcd17397143dbbdae4535493711ea09",
+            "excerpt": "Standards axis, ER-C3 confirming round 2 (repair delta c37e30b5d..a7c146622). N1 closed (one builder symbolCall[T], two callers). 2 new findings; worst N4.\nN4 (ask-user, conf 4) internal/outline/declaration.go:275,:313-316 lineAt and the \"%d:%d\" format re-derive the line-range knowledge that responsebound owns (SelectLines, ParseLineRange); the token.File in span already numbers lines; the --lines literal restates linesFlag.\nN5 (ask-user, conf 5) cmd/bench/planning_reader_commands_test.go:170-178 pastes the help-to-argv helper a second time beside candidateRoutes in internal/outline/declaration_test.go:116-130 and restates axitest helpFields.\n"
+          },
+          "axis": "Standards",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "a7c146622a2f570a6d7f54de341a4b70f90783e0",
+          "finding_ids": [
+            "N4",
+            "N5"
+          ],
+          "supersedes": [
+            "ER-C3-standards-2"
+          ]
+        },
+        {
+          "id": "ER-C3-spec-3",
+          "performer": "ft125-review-c3-spec-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5f5692828054c1392d6b3c43683ddeb1c71dfba9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-spec-3",
+            "digest": "sha256:dc0d49f28e1520041c46a86cdd5d01e63871f973fd26857767ae4035e1887798",
+            "excerpt": "Spec axis, ER-C3 confirming round 2 (repair delta c37e30b5d..a7c146622). Pass; 0 findings.\nThe same-file route bench read \u003ccwd-relative file> --lines \u003cfirst>:\u003clast> covers the doc line through the End line, matches the SelectLines line model, and runs from the caller's directory. Spec lines 143 and 145 met.\nLegacy help and the continuation argv are unchanged in order; S1 and S2 stay closed. ER11-ER15 unchanged or met.\nAdvice (conf 2): two declarations on one physical line share one N:N range.\n"
+          },
+          "axis": "Spec",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "a7c146622a2f570a6d7f54de341a4b70f90783e0",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-spec-2"
+          ]
+        },
+        {
+          "id": "ER-C3-coverage-3",
+          "performer": "ft125-review-c3-coverage-3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5f5692828054c1392d6b3c43683ddeb1c71dfba9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-coverage-3",
+            "digest": "sha256:611b92b9d9889df6fd4f86d1fae9460639916f5ed76764bfe232256faa4cbc15",
+            "excerpt": "Coverage axis, ER-C3 confirming round 2 (repair delta c37e30b5d..a7c146622). Pass; 0 findings.\nProbe: internal/outline/declaration.go, 6 mutants, ./internal/outline ./cmd/bench, ^(TestDeclarationSelection|TestExactReaderCLIReconstruction)$; baseline passed; all restored.\n1,2 drop --lines from the same-file route: bit / bit.\n3,4 lineAt off by one: bit / bit.\n5,6 first line uses the keyword line: bit / bit.\nsymbolCall is graded by exact help pins in outline_filter_test.go and outline_kinds_test.go and by the round 1 continuation probe rows (by reading).\n"
+          },
+          "axis": "Coverage",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "a7c146622a2f570a6d7f54de341a4b70f90783e0",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-coverage-2"
+          ]
         }
       ]
     }
@@ -1297,3 +1366,19 @@ Count: 1 finding, no-op. The orchestrator accepts the Spec advice: the same-file
 
 Optional advice, with no finding ID: Standards N2 and N3, Spec and Coverage N1, and the "1 declarations" wording.
 The shared N1 says that the derived `--symbol` help can lead to a refusal, and that refusal names its recovery.
+
+## ER-C3 confirming round 2
+
+The repair delta is `c37e30b5d..a7c146622`. Each axis ran on opus / high.
+Standards N1 is closed. The Spec and Coverage axes pass, and the Coverage probe of six mutants bit on each mutant.
+The Standards axis found two duplications that cycle 2 introduced.
+Both repair cycles are used, so repair cycle 3 runs under the `--auto-approve` advance approval and takes them on ticket 3b.
+
+### Standards
+
+Count: 2 findings. Worst issue: N4.
+
+- N4 (auto-fix, confidence 4): `internal/outline/declaration.go:275,313-316` derives the line range a second time beside `responsebound.SelectLines` and `ParseLineRange`. Repair target R12 takes the lines from the `go/token` file and gives the range format and the `--lines` flag one owner in `internal/responsebound`.
+- N5 (auto-fix, confidence 5): `cmd/bench/planning_reader_commands_test.go:170-178` and `internal/outline/declaration_test.go:116-130` each turn a help action into its argv. Repair target R13 gives that step one helper in `internal/axi/axitest`.
+
+The 3b fence widens to `internal/responsebound/file.go` and `internal/axi/axitest/help.go`; the second path cites the `--auto-approve` decision.
