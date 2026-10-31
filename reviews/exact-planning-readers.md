@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:4154270fc06cc072566293971b1589d3629a5c6a1b64c5433562119eb1b0b47f",
+  "plan_digest": "sha256:f3dcfd68610c1016da89a3b0924ffebfd75248b0355e5ab764fc1368117cc47d",
   "implementation_session": "",
   "chunks": [
     {
@@ -641,9 +641,9 @@
     {
       "id": "ER-C3",
       "base": "a3994b2028302752772deae813cc0b4a98306516",
-      "tip": "a7c146622a2f570a6d7f54de341a4b70f90783e0",
-      "plan_digest": "sha256:4154270fc06cc072566293971b1589d3629a5c6a1b64c5433562119eb1b0b47f",
-      "source_digest": "5f5692828054c1392d6b3c43683ddeb1c71dfba9",
+      "tip": "acf39804ff59fa90fd5404ee1acfae32ce59e547",
+      "plan_digest": "sha256:f3dcfd68610c1016da89a3b0924ffebfd75248b0355e5ab764fc1368117cc47d",
+      "source_digest": "0bb85b341fa2614fb8d1573bab9706111815d22d",
       "acceptance_rows": [
         "ER11",
         "ER12",
@@ -739,6 +739,36 @@
               "ref": "claude-agent:bench-writer-medium:ft125-repair-3b2",
               "digest": "sha256:e3c37a3ca2b5ed18b6f7aebe1e7074fe26f9414685a7080ff3b6c29e0231f612",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,287\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:80: declaration spans =\",4\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ER-C3-r3-ER-C3-doc-span-red",
+          "performer": "ft125-repair-3b3",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0bb85b341fa2614fb8d1573bab9706111815d22d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-repair-3b3",
+            "digest": "sha256:e24273c38947b07cb5626c3535cf0f4a7f52817b888f64a97af83c796d9c37bd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,287\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:79: declaration spans =\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "acf39804ff59fa90fd5404ee1acfae32ce59e547",
+          "requirement": "ER-C3-doc-span-red",
+          "command": "bench test --package ./internal/outline --run TestDeclarationSpans",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-repair-3b3",
+              "digest": "sha256:e24273c38947b07cb5626c3535cf0f4a7f52817b888f64a97af83c796d9c37bd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/outline/declaration.go,swap,failed,1,TestDeclarationSpans,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/outline,TestDeclarationSpans,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,287\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/outline,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/outline,TestDeclarationSpans,\"declaration_test.go:79: declaration spans =\",4\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1101,6 +1131,21 @@
     {
       "from": "sha256:f5d1e40b75672b64efc77c9a8cfcacabc7838a766aebeb6032231ca986078a6d",
       "to": "sha256:4154270fc06cc072566293971b1589d3629a5c6a1b64c5433562119eb1b0b47f",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4154270fc06cc072566293971b1589d3629a5c6a1b64c5433562119eb1b0b47f",
+      "to": "sha256:f3dcfd68610c1016da89a3b0924ffebfd75248b0355e5ab764fc1368117cc47d",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
