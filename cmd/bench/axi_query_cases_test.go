@@ -80,6 +80,15 @@ func axiEnvelopeCases() map[string]axiEnvelopeCase {
 			blocks:        []string{"worktrees", "help"},
 			successMarker: "worktrees[1]{id,label,request,state,source,tree,lease,landed,ignored}:\n", emptyMarker: "worktrees[0]{id,label,request,state,source,tree,lease,landed,ignored}:\n", usage: "usage: bench worktree list", setupSuccess: setupAXIWorktree, setupEmpty: noSetup,
 		},
+		// worktree read pages the bytes of the caller's tree like read when no tree target
+		// leads; a present empty file is the definitive empty page.
+		"worktree read": {
+			route: []string{"worktree", "read"}, successArgv: []string{"worktree", "read", "fixture.txt"}, deepSuccessArgv: []string{"worktree", "read", "../../fixture.txt"}, emptyArgv: []string{"worktree", "read", "empty.txt"},
+			blocks:        []string{"page", "content", "help"},
+			successMarker: "content[1]{data}:\n", emptyMarker: "content[0]{data}:\n", usage: "usage: bench worktree read",
+			setupSuccess: func(t *testing.T, root string) { writeAXIFixture(t, filepath.Join(root, "fixture.txt"), "fixture\n") },
+			setupEmpty:   func(t *testing.T, root string) { writeAXIFixture(t, filepath.Join(root, "empty.txt"), "") },
+		},
 		// harnesses projects a record compiled into the binary, so it declares no empty
 		// case and no refusal case. See recordBacked.
 		"harnesses": {

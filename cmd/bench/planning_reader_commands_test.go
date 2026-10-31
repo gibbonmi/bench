@@ -250,7 +250,7 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	writeAXIFixture(t, filepath.Join(root, "control\x01.txt"), strings.Repeat("page text\n", 600))
 	writeAXIFixture(t, filepath.Join(root, "dup.md"), "## Dup\na\n## Dup\nb\n")
 	writeAXIFixture(t, filepath.Join(root, "specs", "plain", "spec.md"), "# Plain\n\n## Notes\n")
-	for _, argv := range [][]string{{"read", "--help"}, {"spec", "show", "--help"}} {
+	for _, argv := range [][]string{{"read", "--help"}, {"spec", "show", "--help"}, {"worktree", "read", "--help"}} {
 		help := runAXICommandAt(t, root, argv)
 		if help.code != 0 || !strings.HasPrefix(help.stdout, "usage: bench "+argv[0]) || !strings.Contains(help.stdout, "--section") || !strings.Contains(help.stdout, responsebound.CursorUsage) || !responsebound.Fits(help.stdout) {
 			t.Fatalf("%q = stdout=%q exit=%d, want the bounded cursor grammar", argv, help.stdout, help.code)
@@ -355,6 +355,13 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		{"spec show repeated heading", []string{"spec", "show", "dup", "--section", "Dup"}, 1, "error: section unavailable"},
 		{"spec show invalid story", []string{"spec", "show", "invalid", "--story", "1"}, 1, "error: spec not readable"},
 		{"spec show outside the repository", []string{"spec", "show", "../outside/spec.md"}, 1, "error: ../outside/spec.md is outside the repository"},
+		{"worktree read late tree target", []string{"worktree", "read", "page.txt", "--in", "primary"}, 2, "usage: bench worktree read"},
+		{"worktree read artifact", []string{"worktree", "read", "/page.txt", "--artifact"}, 2, "usage: bench worktree read"},
+		{"worktree read section with lines", []string{"worktree", "read", "dup.md", "--section", "Dup", "--lines", "1:2"}, 2, "usage: bench worktree read"},
+		{"worktree read malformed lines", []string{"worktree", "read", "page.txt", "--lines", "2:1"}, 2, "usage: bench worktree read"},
+		{"worktree read lines beyond the file", []string{"worktree", "read", "page.txt", "--lines", "600:601"}, 1, "error: line range unavailable"},
+		{"worktree read repeated heading", []string{"worktree", "read", "dup.md", "--section", "Dup"}, 1, "error: section unavailable"},
+		{"worktree read outside the tree", []string{"worktree", "read", "../outside.txt"}, 1, "error: ../outside.txt is outside the repository"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			result := runAXICommandAt(t, root, tc.argv)

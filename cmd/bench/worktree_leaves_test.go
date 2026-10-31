@@ -2,9 +2,13 @@ package main
 
 import (
 	"bytes"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
+	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -55,6 +59,34 @@ func TestWorktreeRootRequiredLeavesRefuseOutsideARepository(t *testing.T) {
 				t.Fatalf("worktree %s outside a repository = stdout=%q stderr=%q exit=%d, want stderr=%q and exit 1", name, result.stdout, result.stderr, result.code, wantErr)
 			}
 		})
+	}
+}
+
+// ER29: the worktree reader is a tree-scoped query leaf. A target that names no active
+// assignment refuses through the tree resolver before any child starts. In the caller's
+// tree the identity row leads, the framed page fits the response bound, and the
+// continuation names the tree and the root-relative path. No call here follows the
+// continuation, because its tree target starts a child.
+func TestWorktreeReadIsATreeScopedQuery(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	writeAXIFixture(t, filepath.Join(root, "page.txt"), strings.Repeat("page text\n", 600))
+	writeAXIFixture(t, filepath.Join(root, "sub", "other.txt"), "")
+	t.Chdir(filepath.Join(root, "sub"))
+	var stdout, stderr bytes.Buffer
+	if code := (Command{Stdout: &stdout, Stderr: &stderr}).Run([]string{"worktree", "read", "--in", "beta", "page.txt"}); code != 1 || stdout.String() != "" || stderr.String() != "bench worktree read --in: target is unassigned\nnext=bench worktree list\n" {
+		t.Fatalf("worktree read --in beta = %q %q exit %d, want the unassigned target refusal", stdout.String(), stderr.String(), code)
+	}
+	stdout.Reset()
+	code := (Command{Stdout: &stdout}).Run([]string{"worktree", "read", "../page.txt"})
+	if out := stdout.String(); code != 0 || !strings.HasPrefix(out, "tree[1]{target,head,dirty}:\n  primary,") || !responsebound.Fits(out) {
+		t.Fatalf("worktree read = %q exit %d, want the identity row first and the framed page within the bound", out, code)
+	}
+	next, err := axitest.RecoverHelpCommandArgv(withoutTreeRow(stdout.String()))
+	if want := []string{"bench", "worktree", "read", "--in", "primary", "page.txt", "--offset"}; err != nil || len(next) < len(want) || !slices.Equal(next[:len(want)], want) {
+		t.Fatalf("worktree read continuation = %q (%v), want it to begin %q", next, err, want)
+	}
+	if !slices.Contains(axiRegistryMemberNames(t), "worktree read") {
+		t.Fatal("worktree read is no AXI query member")
 	}
 }
 

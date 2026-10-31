@@ -10,9 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/treetarget/kittest"
 	"github.com/gibbonmi/bench/internal/treetarget/treetargettest"
 )
@@ -61,13 +63,72 @@ func treeRowCells(stdout string) string {
 	return strings.Join(cells, ",")
 }
 
+// treeReadPages follows argv and every continuation that its pages offer through the
+// selected executable from dir. Each response fits the response bound with its identity
+// row, and a nonempty row must match the row cells of each page. It answers the decoded
+// bytes and the page count.
+func treeReadPages(t *testing.T, fixture recordedPublicationRepo, dir, row string, argv ...string) ([]byte, int) {
+	t.Helper()
+	var rebuilt []byte
+	for pages := 1; pages < 1000; pages++ {
+		result := runTreeTarget(t, fixture, dir, argv...)
+		if result.code != 0 || result.stderr != "" || treeRowCells(result.stdout) != row || !responsebound.Fits(result.stdout) {
+			t.Fatalf("bench %q = (%d, %q, %q), want the row %q and one bounded page", argv, result.code, result.stdout, result.stderr, row)
+		}
+		document, err := axitest.DecodeDocument(treetargettest.WithoutRow(result.stdout))
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := document.Rows("page")
+		if err != nil {
+			t.Fatal(err)
+		}
+		page := rows[0].(map[string]any)
+		contents, err := document.Rows("content")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, content := range contents {
+			data, err := responsebound.DecodeContent(page["encoding"].(string), content.(map[string]any)["data"].(string))
+			if err != nil {
+				t.Fatal(err)
+			}
+			rebuilt = append(rebuilt, data...)
+		}
+		if page["complete"] == true {
+			return rebuilt, pages
+		}
+		next, err := axitest.RecoverHelpCommandArgv(treetargettest.WithoutRow(result.stdout))
+		if err != nil || len(next) < 2 || next[0] != "bench" {
+			t.Fatalf("nonterminal page %q has no executable successor: %v", result.stdout, err)
+		}
+		argv = next[1:]
+	}
+	t.Fatalf("bench %q did not terminate", argv)
+	return nil, 0
+}
+
+// The worktree read rows read pagesDoc, which only the alpha branch holds. Its long section
+// crosses several pages and a fenced heading, and its lines end in CRLF.
+const pagesDoc = "pages.md"
+
+var pagesLong = "## Long\n" + strings.Repeat("long line é\r\n", 600) + "```text\n## Hidden\n```\n\n"
+
+var pagesBody = "# Pages\n\n## Before\nbefore\n\n" + pagesLong + "## After\nafter without newline"
+
 // TT26, TT28, TT41, TT54, TT55: a tree-scoped verb names its tree in its first block. A tree
 // target runs the verb in the named tree, from the primary checkout and from a worktree,
 // and a relative operand resolves in that tree. The exec route and directory inference
 // still name the tree that they run in.
+//
+// ER29, ER30, ER31: the worktree reader runs in the named tree through its child, and every
+// page and continuation names that tree. A section read reconstructs the span that root read
+// selects in that tree, a line range keeps its CRLF terminators, an invalid range refuses
+// without content, and a target with no active assignment refuses before any child starts.
 func TestTreeTargetRunsInNamedWorktree(t *testing.T) {
 	t.Parallel()
 	fixture, alpha := treeTargetFixture(t)
+	systemCommit(t, alpha.path, pagesDoc, pagesBody, "pages only in alpha")
 	primaryRow := "primary," + systemGitOutput(t, fixture.root, "rev-parse", "HEAD") + ",false"
 	alphaRow := "alpha," + systemGitOutput(t, alpha.path, "rev-parse", "HEAD") + ",false"
 	for _, row := range []struct {
@@ -87,6 +148,34 @@ func TestTreeTargetRunsInNamedWorktree(t *testing.T) {
 			}
 		})
 	}
+	read := []string{"worktree", "read", "--in", "alpha", pagesDoc}
+	t.Run("ER29 a worktree read reconstructs every page through the child", func(t *testing.T) {
+		if got, pages := treeReadPages(t, fixture, fixture.root, alphaRow, read...); string(got) != pagesBody || pages < 2 {
+			t.Fatalf("worktree read --in alpha = %d pages of %q, want several pages of %q", pages, got, pagesBody)
+		}
+	})
+	t.Run("ER30 a worktree section read matches the root reader in that tree", func(t *testing.T) {
+		got, pages := treeReadPages(t, fixture, fixture.root, alphaRow, append(read, "--section", "Long")...)
+		root, _ := treeReadPages(t, fixture, alpha.path, "", "read", pagesDoc, "--section", "Long")
+		if string(got) != pagesLong || string(root) != pagesLong || pages < 2 {
+			t.Fatalf("section Long = %d pages of %q, root read = %q, want several pages of %q", pages, got, root, pagesLong)
+		}
+	})
+	t.Run("ER31 a worktree line range keeps its terminators", func(t *testing.T) {
+		if got, _ := treeReadPages(t, fixture, fixture.root, alphaRow, append(read, "--lines", "6:8")...); string(got) != "## Long\nlong line é\r\nlong line é\r\n" {
+			t.Fatalf("lines 6:8 = %q, want the heading and two CRLF lines", got)
+		}
+		result := runTreeTarget(t, fixture, fixture.root, append(read, "--lines", "1:99999")...)
+		if result.code != 1 || treeRowCells(result.stdout) != alphaRow || !strings.HasPrefix(treetargettest.WithoutRow(result.stdout), "error: line range unavailable") || strings.Contains(result.stdout, "content[") {
+			t.Fatalf("lines 1:99999 = (%d, %q, %q), want the line-range refusal with no content", result.code, result.stdout, result.stderr)
+		}
+	})
+	t.Run("ER29 an unassigned target refuses before any child", func(t *testing.T) {
+		result := runTreeTarget(t, fixture, fixture.root, "worktree", "read", "--in", "beta", pagesDoc)
+		if want := "bench worktree read --in: target is unassigned\nnext=bench worktree list\n"; result.code != 1 || result.stdout != "" || result.stderr != want {
+			t.Fatalf("worktree read --in beta = (%d, %q, %q), want (1, \"\", %q)", result.code, result.stdout, result.stderr, want)
+		}
+	})
 }
 
 // TT50, BC64: the real executable, with BENCH_KIT set to the kit root, refuses a kit

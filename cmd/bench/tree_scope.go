@@ -22,7 +22,8 @@ const (
 	scopeTree treeScope = iota + 1
 	// scopeRepository marks a leaf that takes no tree target: it reads or writes only Git
 	// refs, the worktree ledger, git-ignored capture files, or state under the Bench home,
-	// or, as root read does, it reads only the checkout of the caller.
+	// or, as root read does, it reads only the checkout of the caller or an absolute
+	// artifact path.
 	scopeRepository
 )
 
@@ -30,9 +31,19 @@ const (
 const treeTargetFlag = "--in"
 
 // leadsWithTreeTarget reports whether args name a tree target. The flag counts only as the
-// first argument after the verb. In any other position the verb's own grammar reads it.
+// first argument after the verb, or after the leaf name of a family leaf. In any other
+// position the verb's own grammar reads it.
 func leadsWithTreeTarget(args []string) bool {
 	return len(args) > 0 && args[0] == treeTargetFlag
+}
+
+// leafCall splits a call that names a family leaf into the leaf name and the arguments
+// after it. Every other call answers no leaf and args whole.
+func (definition commandDefinition) leafCall(args []string) (string, []string) {
+	if leaf, ok := leafNamed(definition.Leaves, args); ok {
+		return leaf.Name, args[1:]
+	}
+	return "", args
 }
 
 // refusesTreeTarget answers the repository refusal. A repository-scoped call that gets the
@@ -52,19 +63,20 @@ func (definition commandDefinition) refusesTreeTarget(c Command, args []string) 
 }
 
 // runInTreeTarget runs a tree-scoped call that names its tree target as one child in that
-// tree, and answers the child's exit and true. Every other call answers false and runs in
-// this process, so a repository-scoped child of a tree-scoped definition reaches the
-// repository refusal. The running executable goes by its absolute path, because the child
-// directory is another tree, where the spelling of argv[0] can name another file. When
-// that path is unknown it stays empty, and a child start that needs it fails with its own
-// error.
+// tree, and answers the child's exit and true. A tree-scoped family leaf takes the target
+// after its leaf name. Every other call answers false and runs in this process, so a
+// repository-scoped child of a tree-scoped definition reaches the repository refusal. The
+// running executable goes by its absolute path, because the child directory is another
+// tree, where the spelling of argv[0] can name another file. When that path is unknown it
+// stays empty, and a child start that needs it fails with its own error.
 func (c Command) runInTreeTarget(definition commandDefinition, args []string) (int, bool) {
-	if definition.scope(args) != scopeTree || !leadsWithTreeTarget(args) {
+	leaf, rest := definition.leafCall(args)
+	if definition.scope(args) != scopeTree || !leadsWithTreeTarget(rest) {
 		return 0, false
 	}
 	running, _ := os.Executable()
 	return treetarget.Run(treetarget.Call{
-		Name: definition.Name, Flag: treeTargetFlag, Args: args[1:],
+		Name: definition.Name, Leaf: leaf, Flag: treeTargetFlag, Args: rest[1:],
 		Root: boundaryRoot(), Home: worktree.Home(),
 		Wrapper: os.Getenv(env.WrapperEnv), Running: running,
 		Stdin: c.Stdin, Stdout: c.Stdout, Stderr: c.Stderr,
@@ -143,7 +155,13 @@ func (definition commandDefinition) treeRow(args []string) string {
 	if root == "" {
 		return ""
 	}
-	row, err := treetarget.Row(treetarget.Identify(root))
+	return identityRow(treetarget.Identify(root))
+}
+
+// identityRow answers the identity row block of one tree. The dispatcher prints it, and a
+// tree-scoped reader counts it in its page budget.
+func identityRow(identity treetarget.Identity) string {
+	row, err := treetarget.Row(identity)
 	if err != nil {
 		return ""
 	}

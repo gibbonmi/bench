@@ -20,7 +20,7 @@ var approvedAXIQueries = map[string][]string{
 	"assessment": {"list", "show", "compare"}, "consumers": nil,
 	"harnesses": nil, "spec": {"show"},
 	"roadmap": nil, "read": nil, "outline": nil,
-	"worktree": {"list"},
+	"worktree": {"list", "read"},
 }
 
 var axiChildName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)

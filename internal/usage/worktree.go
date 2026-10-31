@@ -12,6 +12,7 @@ const (
 	WorktreePath        = "bench worktree path <target>"
 	WorktreeExec        = "bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]"
 	WorktreeShow        = "bench worktree show <target> <rev>:<path>"
+	WorktreeRead        = "bench worktree read [--in <label|primary>] <path> [--section <literal-H2-title> | --lines <first>:<last>] [--offset <byte-offset> --source <identity>]"
 	WorktreeBuild       = "bench worktree build <target>"
 	WorktreeCreate      = "bench worktree create [--refresh] --request <opaque-id> --label <work-item> [--from <target>]"
 	WorktreeRelease     = "bench worktree release --request <opaque-id> <path>"
@@ -38,6 +39,7 @@ var worktreeCommands = []string{
 	WorktreePath,
 	WorktreeExec,
 	WorktreeShow,
+	WorktreeRead,
 	WorktreeBuild,
 	WorktreeCreate,
 	WorktreeRelease,

@@ -5,6 +5,7 @@ import "testing"
 func TestCommandNameStopsAtTheFirstOperandFlagOrGroup(t *testing.T) {
 	for _, tc := range []struct{ line, want string }{
 		{WorktreeShow, "bench worktree show"},
+		{WorktreeRead, "bench worktree read"},
 		{WorktreeLand, "bench worktree land"},
 		{WorktreeReset, "bench worktree reset"},
 		{WorktreeMerge, "bench worktree merge"},

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/git"
@@ -15,6 +16,9 @@ import (
 type Call struct {
 	// Name is the verb, and Flag is the tree-target flag that the dispatcher consumed.
 	Name, Flag string
+	// Leaf is the family leaf that the call names before the flag, or empty for a root
+	// verb. The child argv holds the verb and the leaf as two tokens.
+	Leaf string
 	// Args holds the flag value and then the verb's own arguments.
 	Args []string
 	// Root is the repository root of the calling directory, or empty outside a repository.
@@ -34,7 +38,11 @@ type Call struct {
 // child's exit, or the exit of the refusal that starts no child. The parent prints no row
 // and applies no response bound: the child names its own tree and bounds its own response.
 func Run(call Call) int {
-	command := "bench " + call.Name + " " + call.Flag
+	words := []string{call.Name}
+	if call.Leaf != "" {
+		words = append(words, call.Leaf)
+	}
+	command := "bench " + strings.Join(words, " ") + " " + call.Flag
 	value, rest, usage := targetValue(command, call.Args)
 	if usage != "" {
 		fmt.Fprintln(call.Stdout, usage)
@@ -62,7 +70,7 @@ func Run(call Call) int {
 	if refusal != "" {
 		return worktree.PrintTreeBuildRefusal(call.Stderr, command, value, refusal)
 	}
-	argv := append([]string{executable, call.Name}, rest...)
+	argv := append(append([]string{executable}, words...), rest...)
 	return worktree.RunTreeChild(command, argv, dir, call.Home, call.Stdin, call.Stdout, call.Stderr)
 }
 

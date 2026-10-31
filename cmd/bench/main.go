@@ -109,7 +109,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "help", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(), Bound: boundResponse, Scope: scopeRepository, Kind: commandHelp},
 	{Name: "repair", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 25, Suffix: " [--prune]", Description: "explicitly install the pinned platform binary or prune stale cache entries"}), Bound: boundExempt(boundReasonWrapper), Scope: scopeRepository, WrapperOnly: true},
 	{Name: "version", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 43, Description: "print the installed Bench version (os/arch)"}), Bound: boundResponse, Scope: scopeRepository, Run: versionCommand},
-	{Name: "worktree", AXI: axiApprovedChildren("list"), Inventory: publicInventory(worktreeHelpRows()...), Bound: boundResponse, Leaves: worktreeLeaves, LeafUsage: usage.WorktreeUsage},
+	{Name: "worktree", AXI: axiApprovedChildren("list", "read"), Inventory: publicInventory(worktreeHelpRows()...), Bound: boundResponse, Leaves: worktreeLeaves, LeafUsage: usage.WorktreeUsage},
 	{Name: "resume-clean", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " " + shift.Arguments(), Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},

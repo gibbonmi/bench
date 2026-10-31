@@ -30,6 +30,11 @@ var worktreeLeaves = []commandLeaf{
 	{Name: "show", Grammar: usage.WorktreeShow, Root: rootRequired, Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, root string, args []string) int {
 		return worktree.ShowCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
+	{Name: "read", Grammar: usage.WorktreeRead, Root: rootBoundary, Bound: boundResponse, Scope: scopeTree, Run: func(c Command, root string, args []string) int {
+		out, code := worktreeReadCommand(root, args)
+		fmt.Fprint(c.Stdout, out)
+		return code
+	}},
 	{Name: "build", Grammar: usage.WorktreeBuild, Root: rootRequired, Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, root string, args []string) int {
 		return worktree.BuildCommand(root, worktree.Home(), args, c.Stdout, c.Stderr)
 	}},
@@ -77,6 +82,7 @@ func worktreeHelpRows() []helpRow {
 		{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path for the file tools"},
 		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
 		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeShow), Description: "print one blob from a revision of an active owned worktree"},
+		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeRead), Description: "exact file, line-range, or H2 section bytes of one owned worktree as bounded TOON pages"},
 		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeBuild), Description: "build an active owned worktree's tree into its own dist/bench"},
 		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExecGate), Description: "run one active owned worktree's gate"},
 		{Order: 35, Suffix: " reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>", Description: "replace one lost request token after identity proof"},
@@ -86,7 +92,7 @@ func worktreeHelpRows() []helpRow {
 		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandResume), Description: "resume incomplete post-publication landing work"},
 		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandStack), Description: "compose, gate once, and publish two or more owned worktrees in order"},
 		{Order: 36, Suffix: worktreeSuffix(usage.WorktreeLandStackResume), Description: "resume incomplete post-publication stack work"},
-		{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar"},
+		{Order: 37, Suffix: " --help", Description: "show exact list, path, exec, show, read, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar"},
 	}
 }
 

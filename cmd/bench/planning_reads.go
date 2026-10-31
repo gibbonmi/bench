@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/treetarget"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -24,18 +25,55 @@ const artifactFlag = "--artifact"
 // read this line.
 const readUsage = "bench read <path> [" + spec.SectionFlag + " <literal-H2-title> | " + responsebound.LinesFlag + " " + responsebound.LineRangeUsage + "] [" + artifactFlag + "] " + responsebound.CursorUsage
 
+// fileReadFlags are the selector and cursor flags of each exact file reader. Root read adds
+// the artifact flag.
+var fileReadFlags = []usage.Flag{
+	{Name: spec.SectionFlag, HasValue: true, NoEmptyValue: true},
+	{Name: responsebound.LinesFlag, HasValue: true, NoEmptyValue: true},
+	{Name: responsebound.OffsetFlag, HasValue: true, NoEmptyValue: true},
+	{Name: responsebound.SourceFlag, HasValue: true, NoEmptyValue: true},
+}
+
 var readGrammar = usage.Grammar{
 	Cmd:     usage.CommandName(readUsage),
 	Help:    "usage: " + readUsage,
 	MinArgs: 1,
 	MaxArgs: 1,
-	Flags: []usage.Flag{
-		{Name: spec.SectionFlag, HasValue: true, NoEmptyValue: true},
-		{Name: responsebound.LinesFlag, HasValue: true, NoEmptyValue: true},
-		{Name: artifactFlag},
-		{Name: responsebound.OffsetFlag, HasValue: true, NoEmptyValue: true},
-		{Name: responsebound.SourceFlag, HasValue: true, NoEmptyValue: true},
-	},
+	Flags:   append([]usage.Flag{{Name: artifactFlag}}, fileReadFlags...),
+}
+
+// worktreeReadGrammar is the grammar of `bench worktree read` in the tree that it reads. The
+// dispatcher consumes the tree-target flag before the leaf parses its arguments.
+var worktreeReadGrammar = usage.Grammar{
+	Cmd:     usage.CommandName(usage.WorktreeRead),
+	Help:    "usage: " + usage.WorktreeRead,
+	MinArgs: 1,
+	MaxArgs: 1,
+	Flags:   fileReadFlags,
+}
+
+// fileReader is one exact file reader command: its grammar, the hint of its outside-path
+// refusal, and whether each command that a page offers names the root-relative path rather
+// than the caller's operand.
+type fileReader struct {
+	grammar      usage.Grammar
+	outside      string
+	rootRelative bool
+}
+
+var (
+	rootFileReader = fileReader{grammar: readGrammar, outside: "read a repository path, or pass " + artifactFlag + " with an absolute artifact path"}
+	treeFileReader = fileReader{grammar: worktreeReadGrammar, outside: "read a path inside the tree", rootRelative: true}
+)
+
+// fileRead is one parsed exact file read: its operand, its cursor, and at most one selector.
+type fileRead struct {
+	operand, lines, section     string
+	ranged, sectioned, artifact bool
+	first, last                 int
+	offset                      int64
+	token                       string
+	continued                   bool
 }
 
 // usageRefusal renders a usage refusal of one parsed exact-reader call: the grammar's help
@@ -60,71 +98,114 @@ func repositoryPath(root, operand, hint string) (string, string, bool) {
 // read grants the artifact no evidence authority: it verifies no manifest and qualifies
 // nothing.
 func readCommand(args []string) (string, int) {
-	parsed, line, code := usage.Parse(readGrammar, args)
-	if line != "" {
-		return line + "\n", code
-	}
-	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
-	if err != nil {
-		return usageRefusal(readGrammar, err.Error())
-	}
-	_, artifact := parsed.Flags[artifactFlag]
-	lines, ranged := parsed.Flags[responsebound.LinesFlag]
-	section, sectioned := parsed.Flags[spec.SectionFlag]
-	first, last := 0, 0
-	switch {
-	case sectioned && (ranged || artifact):
-		return usageRefusal(readGrammar, spec.SectionFlag+" takes neither "+responsebound.LinesFlag+" nor "+artifactFlag)
-	case artifact && ranged:
-		return usageRefusal(readGrammar, responsebound.LinesFlag+" and "+artifactFlag+" are mutually exclusive")
-	case artifact && !filepath.IsAbs(parsed.Positionals[0]):
-		return usageRefusal(readGrammar, artifactFlag+" takes an absolute path")
-	case ranged:
-		if first, last, err = responsebound.ParseLineRange(lines); err != nil {
-			return usageRefusal(readGrammar, err.Error())
-		}
+	read, refusal, code := rootFileReader.parse(args)
+	if refusal != "" {
+		return refusal, code
 	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	request := responsebound.ReadRequest{Kind: "file", Scope: root, Offset: offset, Token: token, Continued: continued}
-	// The identity keeps the root-relative path, and every command the page offers keeps
-	// the caller's own operand, so it names the same file from the caller's directory.
-	path := filepath.Clean(parsed.Positionals[0])
-	request.Command = append(strings.Fields(readGrammar.Cmd)[1:], path)
-	if artifact {
+	return rootFileReader.page(read, root, responsebound.ReadRequest{Command: strings.Fields(readGrammar.Cmd)[1:]})
+}
+
+// worktreeReadCommand pages the exact bytes of one file, one physical-line range, or one
+// literal visible H2 section in the tree at root, which the dispatcher resolved from the
+// tree-target flag or from the caller's directory. The page budget counts the identity row
+// that the dispatcher prints first. Each command that a page offers names the tree by its
+// target and the file by its root-relative path, so it reads the same file from any checkout
+// of the repository.
+func worktreeReadCommand(root string, args []string) (string, int) {
+	read, refusal, code := treeFileReader.parse(args)
+	if refusal != "" {
+		return refusal, code
+	}
+	if root == "" {
+		return toon.NotInRepo() + "\n", 1
+	}
+	identity := treetarget.Identify(root)
+	command := append(strings.Fields(worktreeReadGrammar.Cmd)[1:], treeTargetFlag, identity.Target)
+	return treeFileReader.page(read, root, responsebound.ReadRequest{Command: command, Frame: identityRow(identity)})
+}
+
+// parse reads one exact file read through the reader's grammar, or answers its usage
+// refusal at exit 2.
+func (reader fileReader) parse(args []string) (fileRead, string, int) {
+	refuse := func(reason string) (fileRead, string, int) {
+		line, code := usageRefusal(reader.grammar, reason)
+		return fileRead{}, line, code
+	}
+	parsed, line, code := usage.Parse(reader.grammar, args)
+	if line != "" {
+		return fileRead{}, line + "\n", code
+	}
+	read := fileRead{operand: parsed.Positionals[0]}
+	var err error
+	if read.offset, read.token, read.continued, err = responsebound.ParseCursor(parsed.Flags); err != nil {
+		return refuse(err.Error())
+	}
+	_, read.artifact = parsed.Flags[artifactFlag]
+	read.lines, read.ranged = parsed.Flags[responsebound.LinesFlag]
+	read.section, read.sectioned = parsed.Flags[spec.SectionFlag]
+	switch {
+	case read.sectioned && (read.ranged || read.artifact):
+		return refuse(spec.SectionFlag + " takes neither " + responsebound.LinesFlag + " nor " + artifactFlag)
+	case read.artifact && read.ranged:
+		return refuse(responsebound.LinesFlag + " and " + artifactFlag + " are mutually exclusive")
+	case read.artifact && !filepath.IsAbs(read.operand):
+		return refuse(artifactFlag + " takes an absolute path")
+	case read.ranged:
+		if read.first, read.last, err = responsebound.ParseLineRange(read.lines); err != nil {
+			return refuse(err.Error())
+		}
+	}
+	return read, "", 0
+}
+
+// page pages one parsed read of the tree at root. request holds the reader argv that each
+// offered command repeats before the path, and the frame that prints before the page.
+func (reader fileReader) page(read fileRead, root string, request responsebound.ReadRequest) (string, int) {
+	request.Kind, request.Scope, request.Offset, request.Token, request.Continued = "file", root, read.offset, read.token, read.continued
+	// The identity keeps the root-relative path. Every command that the root reader offers
+	// keeps the caller's own operand, so it names the same file from the caller's directory.
+	path := filepath.Clean(read.operand)
+	named := path
+	if read.artifact {
 		request.Kind, request.Scope, request.Path = "artifact", "", path
 	} else {
-		relative, refusal, local := repositoryPath(root, parsed.Positionals[0], "read a repository path, or pass "+artifactFlag+" with an absolute artifact path")
+		relative, refusal, local := repositoryPath(root, read.operand, reader.outside)
 		if !local {
 			return refusal, 1
 		}
 		request.Path = relative
 		path = filepath.Join(root, request.Path)
+		if reader.rootRelative {
+			named = relative
+		}
 	}
-	source, err := responsebound.OpenSource(path, artifact)
+	request.Command = append(request.Command, named)
+	source, err := responsebound.OpenSource(path, read.artifact)
 	if err != nil {
 		return readSourceRefusal(request.Path, err)
 	}
 	defer source.Close()
 	request.Digest, request.SourceSize, request.Payload, request.Size = source.Digest, source.Size, source, source.Size
 	switch {
-	case ranged:
-		selected, err := responsebound.SelectLines(source.Bytes(), first, last)
+	case read.ranged:
+		selected, err := responsebound.SelectLines(source.Bytes(), read.first, read.last)
 		if err != nil {
 			return toon.Errorf("line range unavailable", err.Error()) + "\n", 1
 		}
-		request.Kind, request.Selection = "lines", lines
+		request.Kind, request.Selection = "lines", read.lines
 		request.Payload, request.Size = bytes.NewReader(selected), int64(len(selected))
-		request.Command = append(request.Command, responsebound.LinesFlag, lines)
-	case sectioned:
-		selection, err := spec.Section(source.Bytes(), section)
+		request.Command = append(request.Command, responsebound.LinesFlag, read.lines)
+	case read.sectioned:
+		selection, err := spec.Section(source.Bytes(), read.section)
 		if err != nil {
 			return toon.Errorf("section unavailable", err.Error()) + "\n", 1
 		}
-		return pageSelection(request, source, selection, spec.SectionFlag, section)
-	case artifact:
+		return pageSelection(request, source, selection, spec.SectionFlag, read.section)
+	case read.artifact:
 		request.Command = append(request.Command, artifactFlag)
 	}
 	return pageSource(request, source)

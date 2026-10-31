@@ -137,6 +137,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree path <target>  print one active owned worktree's absolute path for the file tools
   bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]  run a child directly in an active owned worktree
   bench worktree show <target> <rev>:<path>  print one blob from a revision of an active owned worktree
+  bench worktree read [--in <label|primary>] <path> [--section <literal-H2-title> | --lines <first>:<last>] [--offset <byte-offset> --source <identity>]  exact file, line-range, or H2 section bytes of one owned worktree as bounded TOON pages
   bench worktree build <target>  build an active owned worktree's tree into its own dist/bench
   bench worktree exec <target> -- bench gate  run one active owned worktree's gate
   bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
@@ -146,7 +147,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
   bench worktree land --stack <file> [--source-tip <request>=<commit>]...  compose, gate once, and publish two or more owned worktrees in order
   bench worktree land --resume <published-commit> --stack <file> [--source-tip <request>=<commit>]...  resume incomplete post-publication stack work
-  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
+  bench worktree --help      show exact list, path, exec, show, read, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] --outcome <id> "<objective>" gated loop in a pooled worktree; commit on green
   bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug> [--base <commit>]] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench record [--in <label|primary>] assignment <slug> --source <commit> --ticket <basename> --performer <session> --assignment <id> --model <model> --effort <effort> --ref <native-dispatch-ref> --run <run-id> --orchestrator <session> --author-limit <positive> [--review-mode unified] [--predecessor <session> --trigger <trigger> --stopped <ref> --preserved <ref> [--reassessment <ref>]]  append one author dispatch to a ticket's history in the version 2 completion plan at HEAD

@@ -66,8 +66,7 @@ Apply it per surface: a declared query may conform while operational siblings ke
 
 ## Bench application
 
-This table is the complete approved Bench AXI query set and says how the contract
-applies to each surface. Commands not listed retain their own contracts.
+This table is the complete approved Bench AXI query set.
 
 | approved query | contextual disclosure |
 | --- | --- |
@@ -87,6 +86,7 @@ applies to each surface. Commands not listed retain their own contracts.
 | `bench spec show` | Page a spec, one visible H2 section, the stories section, the coverage map, or the raw status line like `bench read`. `--story <n>` pages one story with its typed coverage rows. An absent selection is a `present` false row with `help[0]`. |
 | `bench roadmap` | Default index omits bodies; request selected complete rows with `bench roadmap --context --row <ID,...>` or the complete snapshot with `bench roadmap --context --full`. |
 | `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action. Each id cell holds the address for the `<target>` slot. |
+| `bench worktree read` | Page a file, a line range, or a visible H2 section of the tree that `--in` names like `bench read`. Each continuation names that tree. |
 
 Every approved result ends with `help[N]{cmd,why}:`; an honest empty envelope is
 `help[0]{cmd,why}:`. Derive one state-derived action per matching row. Collapse
