@@ -49,8 +49,8 @@ The row name is the one classification source, so no reader parses a detail stri
 ## User stories
 
 Line: opus / medium.
-Implementation-line reason: the hardest material chunks are ES-C2 and ES-C3, which move one closure derivation and one Sources grammar behind shared seams across `internal/commitment`, `internal/maps`, and `internal/preflight`. The spec fixes each predicate, each detail text, and each seam, and the seams are existing owners. The command-level tests over real repositories red each wrong branch. The project `Lines` section routes gate and conformance logic to mid effort, because a wrong preflight row is a wrong oracle. Ticket 04 edits guidance prose, so the leverage override of `craft-line` runs its author at high effort.
-Harder chunks: ES-C2, ES-C3.
+Implementation-line reason: the hardest material chunks are ES-C1, which holds the closure prediction, and ES-C3, which move one closure derivation and one Sources grammar behind shared seams across `internal/commitment`, `internal/maps`, and `internal/preflight`. The spec fixes each predicate, each detail text, and each seam, and the seams are existing owners. The command-level tests over real repositories red each wrong branch. The project `Lines` section routes gate and conformance logic to mid effort, because a wrong preflight row is a wrong oracle. Ticket 04 edits guidance prose, so the leverage override of `craft-line` runs its author at high effort.
+Harder chunks: ES-C1, ES-C3.
 
 ### `map-sources` grades decision-map sources against the published tree
 
@@ -248,15 +248,13 @@ The `## [Unreleased]` section of `CHANGELOG.md` gets one entry that names `write
 
 ## Implementation chunks
 
-ES-C1 ships the `Writes:` classification alone, because its row is green on every current build and needs no other seam.
-ES-C2 ships the closure prediction alone, because it is a seam that ES-C3 consumes, and its review closes before a consumer ticket starts.
+ES-C1 ships the `Writes:` classification and the closure prediction. The `Writes:` row is green on every current build, and the closure prediction is a seam that ES-C3 consumes. One review of both tickets closes before a consumer ticket starts.
 ES-C3 ships the map row, the take rule, and the dogfood repoint, because the take rule names both rows.
-ES-C1 and ES-C2 share no write, so their authors can work at the same time.
+The build-entry amendment combined the planned chunks ES-C1 and ES-C2 into ES-C1, so that one review round and one chunk checkpoint cover both tickets. The old-to-new chunk map is ES-C1 to ES-C1, ES-C2 to ES-C1, and ES-C3 to ES-C3.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| ES-C1 / 01-writes-landed-row.md | The build preflight names a `Writes:` entry that landed work deleted in its own row | ES24, ES25, ES26, ES27, ES28, ES29, ES30, ES31, ES32, ES33, ES34, ES35, ES36, ES37, ES38, ES39, ES40, ES45 | TestWritesLandedBareEntry, TestWritesLandedShapes, TestWritesLandedPrecedence, TestWritesLandedReviewMode, TestWritesLandedKeepsAuditManual, TestTicketGrammarRowsCarryOwnDetails, TestTicketGatedRowsNotApplicableWithoutTickets, TestDecideAllGreen, TestDecideChargeRows, TestSourceTipOmittedKeepsTodaysVerdict, TestSourceTipAcceptedByBothModes | no |
-| ES-C2 / 02-closure-prediction.md | The commitment owner predicts the closed row paths of a deliverable without completion evidence, from the derivation that the landing uses | ES13, ES14 | TestCommitmentCloses, TestClosedRowPathsMatchClosure | yes |
+| ES-C1 / 01-writes-landed-row.md, 02-closure-prediction.md | The build preflight names a `Writes:` entry that landed work deleted in its own row, and the commitment owner predicts the closed row paths of a deliverable without completion evidence, from the derivation that the landing uses | ES13, ES14, ES24, ES25, ES26, ES27, ES28, ES29, ES30, ES31, ES32, ES33, ES34, ES35, ES36, ES37, ES38, ES39, ES40, ES45 | TestWritesLandedBareEntry, TestWritesLandedShapes, TestWritesLandedPrecedence, TestWritesLandedReviewMode, TestWritesLandedKeepsAuditManual, TestTicketGrammarRowsCarryOwnDetails, TestTicketGatedRowsNotApplicableWithoutTickets, TestDecideAllGreen, TestDecideChargeRows, TestSourceTipOmittedKeepsTodaysVerdict, TestSourceTipAcceptedByBothModes, TestCommitmentCloses, TestClosedRowPathsMatchClosure | yes |
 | ES-C3 / 03-map-sources-row.md, 04-entry-take-rule.md | The build preflight grades every decision-map source against the published tree, and the build entry takes both new reds | ES01, ES02, ES03, ES04, ES05, ES06, ES07, ES08, ES09, ES10, ES11, ES12, ES15, ES16, ES17, ES18, ES19, ES20, ES21, ES22, ES23, ES41, ES42, ES43, ES44, ES46, ES47, ES48, ES49, ES50, ES51, ES52, ES53 | TestMapSourcesClosureDeletion, TestMapSourcesTipExistence, TestMapSourcesGrammar, TestMapSourcesPrediction, TestMapSourcesBuildOnly, TestMapSourcesKeepsAuditManual, TestMapSourcesCollectIndependentRecordFailures, TestSourceTipOmittedKeepsTodaysVerdict, TestDecideChargeRows, TestTicketSlicingAnchors | yes |
 
 ### Completion plan
@@ -271,7 +269,8 @@ The orchestrator amends it to version 2 before the first author dispatch.
     {
       "id": "ES-C1",
       "tickets": [
-        "01-writes-landed-row.md"
+        "01-writes-landed-row.md",
+        "02-closure-prediction.md"
       ],
       "verification": [
         {
@@ -283,15 +282,7 @@ The orchestrator amends it to version 2 before the first author dispatch.
           "id": "precedence",
           "command": "bench test --package ./internal/preflight --run 'WritesLandedPrecedence'",
           "probe": "Grade LandedDeletions before DeletedPaths in the check, and record that TestWritesLandedPrecedence turns red on the folded explicit-range case of ES33."
-        }
-      ]
-    },
-    {
-      "id": "ES-C2",
-      "tickets": [
-        "02-closure-prediction.md"
-      ],
-      "verification": [
+        },
         {
           "id": "closure-prediction",
           "command": "bench test --package ./internal/commitment --package ./internal/commitment/repository --run 'CommitmentCloses|ClosedRowPathsMatchClosure|CommitmentDeliver|CommitmentLightClosure|CommitmentClosureRefusesObligationFreeBinding'",

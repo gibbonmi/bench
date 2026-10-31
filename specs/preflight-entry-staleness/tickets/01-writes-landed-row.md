@@ -24,7 +24,7 @@ Make these changes:
 
 Four existing test files keep their answers, so they are not on the `Writes:` line:
 
-- `fence_writes_test.go` seeds through `seedDeletionReview` (`internal/preflight/fence_writes_test.go:33`), which deletes on a feature branch (`internal/preflight/deletion_preflight_test.go:88-89`), so the default-branch tip still holds the path.
+- `fence_writes_test.go` seeds through `seedDeletionReview` (`internal/preflight/fence_writes_test.go:34`), which deletes on a feature branch (`internal/preflight/deletion_preflight_test.go:88-89`), so the default-branch tip still holds the path.
 - `command_build_test.go` names a never-tracked path (`internal/preflight/command_build_test.go:239`).
 - `deletion_preflight_test.go` and `command_review_test.go` run review mode, and the fact is filled in build mode only.
 
