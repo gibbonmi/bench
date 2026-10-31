@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Known issues in the spec phase
+
+- Changed `/bench-write-spec`. At phase entry, the invoking session reads `docs/known-issues.md` and names each row whose issue can affect a step of the phase. Each charge of an affected step names that path and each affected row by its issue, and the session applies the workaround at its own steps. Before, only one research question read the file.
+
 ### Build-entry staleness from landed work
 
 - Added the `writes-landed` and `map-sources` rows to `bench preflight build`. `writes-landed` is red when a `Writes:` entry names a path that a landed commit deleted, and it names that commit. `map-sources` grades each spec decision-map source against the published tree, without each path that the predicted closure of the deliverable deletes. Its red names the map, the path, and the reason, and a closure prediction that fails also makes it red. The build entry of `/bench-implement-spec` now takes a red into the staleness pass when every red row is `completion-plan`, `writes-landed`, or `map-sources`. Before, it took only a `completion-plan` red and stopped for work that had already landed.

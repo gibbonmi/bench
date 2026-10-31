@@ -31,7 +31,7 @@ const (
 
 // stateRepair is the one instruction every State refusal ends in. The scan refuses a line
 // the writer owns, and the repair is the same whichever token fault it names.
-const stateRepair = "rewrite or drop this line, then rerun bench handoff: "
+const stateRepair = "rewrite or drop this line" + stateRerun
 
 // scanState refuses a State that pins a commit the section's tip does not contain. Such a
 // pin is a stale resume target: a cold session reads it, checks out work that the phase

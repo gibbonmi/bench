@@ -22,11 +22,13 @@ and review cost that recent builds paid.
 
 **FT352 (MEDIUM, decision required) — the orchestrator reads its own context size, and a spec can then restore a gated ticket fork.**
 
-**FT125 (LOW) — section, story, symbol, and worktree readers return precise slices.**
+**FT125 (LOW) — the residual planning readers: TOON field and row selectors, a review-record reader by ID, and the page-index repository path.**
 
 **FT204 (LOW, decision required) — one bounded transcript/session query.**
 
 **FT231 (EXPERIMENT, decision required) — a measurement harness and the instrumentation it reads.**
+
+**FT478 (LOW) — the landing census counts sanctioned `rg` reads apart from the raw heads.**
 
 ## Delivery queue
 
@@ -56,11 +58,11 @@ and the small cuts. The rows below hold the rest.
 
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
-**FT358 (MEDIUM) — authored Markdown has one line reader for fences, frontmatter, comments, and sections.**
-
 **FT363 (MEDIUM) — the clean modes share one member-set applier.**
 
 **FT365 (LOW) — conformance tests derive restated tables from their owners and share one Go-rule scanner.**
+
+**FT479 (LOW) — the response-bound help fallback and the path containment test each have one owner predicate.**
 
 **FT368 (LOW, decision required) — the survey's speculative surfaces each get a keep or cut verdict.**
 
@@ -123,6 +125,10 @@ and the small cuts. The rows below hold the rest.
 **FT89 (LOW) — resolve the remaining guidance contradictions.**
 
 **FT427 (LOW) — the guidance names the worktree build after create, and says that the commit lane grades prose.**
+
+**FT481 (LOW) — the review-implementation guidance says that the review preflight takes the record commit as its source tip.**
+
+**FT480 (LOW) — the spec-stage research fan-out reads the provider scorecard before it selects the reader line.**
 
 **FT428 (LOW, decision required) — the phase-close guidance gives the full `bench handoff` grammar from one owner.**
 
@@ -358,20 +364,20 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT344-remedy
-2. FT406-rebuild
-3. FT366-rg-guard
-4. FT380-residual
-5. FT354-strict-json
-6. FT363-member-set
-7. FT365-conformance
-8. FT414-preconditions
-9. FT437-pinned-rows
-10. FT439-comment-correction
-11. FT354-shell-args
-12. FT343-seam-policy
-13. FT446-cache-store
-14. FT369-charge-slicing
+1. FT437-pinned-rows
+2. FT344-remedy
+3. FT439-comment-correction
+4. FT354-strict-json
+5. FT406-rebuild
+6. FT366-rg-guard
+7. FT380-residual
+8. FT363-member-set
+9. FT354-shell-args
+10. FT343-seam-policy
+11. FT446-cache-store
+12. FT414-preconditions
+13. FT369-charge-slicing
+14. FT365-conformance
 15. FT341-in-only
 16. FT420-concurrent-chunks
 17. FT387-overflow
