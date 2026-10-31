@@ -224,17 +224,53 @@ func TestRelatedWorktreeActions(t *testing.T) {
 	if len(want) != 3 || !strings.HasPrefix(want[0].(map[string]any)["cmd"].(string), "bench worktree path ") || !strings.HasPrefix(want[1].(map[string]any)["cmd"].(string), "bench worktree exec ") || want[2].(map[string]any)["cmd"] != "bench worktree clean --landed" {
 		t.Fatalf("default actions = %#v, want path, exec, and the batch clean", want)
 	}
-	want = append(want[:2:2], read, want[2])
+	path, exec, clean := want[0], want[1], want[2]
 	_, related := relatedDocument(t, root, []string{"worktree", "list", "--spec", "x"})
-	if got := helpRows(t, related); fmt.Sprint(got) != fmt.Sprint(want) {
+	if got, want := helpRows(t, related), []any{path, exec, read, clean}; fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Fatalf("related actions = %#v, want %#v", got, want)
+	}
+
+	// ER34: the read action appears only when its label names the row's tree alone. A row
+	// whose label is the primary keyword, another active assignment's label, or a value that
+	// the action owner rejects keeps its path and exec actions, and the other row keeps its
+	// read action.
+	for _, tc := range []struct {
+		name  string
+		label func(t *testing.T, root string, active intent.Assignment) string
+	}{
+		{"the primary keyword", func(*testing.T, string, intent.Assignment) string { return usage.PrimaryTreeTarget }},
+		{"an unrelated active twin's label", func(t *testing.T, root string, active intent.Assignment) string {
+			twin := putRelatedAssignment(t, root, relatedID(101), intent.StateActive, filepath.Join(root, "absent", "twin"))
+			twin.Label = active.Label
+			if err := intent.PutAssignment(root, twin); err != nil {
+				t.Fatal(err)
+			}
+			return active.Label
+		}},
+		{"a label the action owner rejects", func(*testing.T, string, intent.Assignment) string { return "a <label>" }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, active := relatedFixture(t, 0)
+			active.Label = tc.label(t, root, active)
+			if err := intent.PutAssignment(root, active); err != nil {
+				t.Fatal(err)
+			}
+			other := putLinkedRelated(t, root, 102)
+			read := map[string]any{"cmd": "bench worktree read --in " + axi.ShellQuote(other.Label) + " <path>", "why": read["why"]}
+			_, related := relatedDocument(t, root, []string{"worktree", "list", "--spec", "x"})
+			if got, want := helpRows(t, related), []any{path, exec, read, clean}; fmt.Sprint(got) != fmt.Sprint(want) {
+				t.Fatalf("related actions with %s = %#v, want %#v", tc.name, got, want)
+			}
+		})
 	}
 }
 
 // ER32: a --spec path names its spec from the caller's directory, an absolute path inside
 // the repository names the same spec, and a slug names its live folder spec from anywhere.
+// The projection spans several pages, and the walk follows every continuation from the
+// caller's directory, so a continuation must repeat the caller's own operand.
 func TestRelatedSpecOperandResolvesFromTheCaller(t *testing.T) {
-	root, _ := relatedFixture(t, 0)
+	root, _ := relatedFixture(t, 40)
 	sub := filepath.Join(root, "sub")
 	writeAXIFixture(t, filepath.Join(sub, "keep.txt"), "")
 	for _, tc := range []struct{ dir, operand string }{
@@ -243,13 +279,20 @@ func TestRelatedSpecOperandResolvesFromTheCaller(t *testing.T) {
 		{sub, "x"},
 		{root, "specs/x/spec.md"},
 	} {
-		_, document := relatedDocument(t, tc.dir, []string{"worktree", "list", "--spec", tc.operand})
+		content, pages := readPages(t, tc.dir, []string{"worktree", "list", "--spec", tc.operand})
+		if pages < 2 {
+			t.Fatalf("--spec %q from %s fits %d page, want a continuation", tc.operand, tc.dir, pages)
+		}
+		document, err := axitest.DecodeDocument(string(content))
+		if err != nil {
+			t.Fatalf("decode %q: %v", content, err)
+		}
 		summary, err := document.Rows("related")
 		if err != nil || len(summary) != 1 {
 			t.Fatalf("--spec %q from %s summary = %#v, %v", tc.operand, tc.dir, summary, err)
 		}
-		if cells := summary[0].(map[string]any); fmt.Sprint(cells["spec"], ",", cells["matched"]) != "specs/x/spec.md,1" {
-			t.Fatalf("--spec %q from %s summary = %#v, want specs/x/spec.md with one match", tc.operand, tc.dir, cells)
+		if cells := summary[0].(map[string]any); fmt.Sprint(cells["spec"], ",", cells["matched"]) != "specs/x/spec.md,41" {
+			t.Fatalf("--spec %q from %s summary = %#v, want specs/x/spec.md with 41 matches", tc.operand, tc.dir, cells)
 		}
 	}
 }

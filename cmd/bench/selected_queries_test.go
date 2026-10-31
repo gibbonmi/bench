@@ -202,22 +202,38 @@ func relatedFixture(t *testing.T, complete int) (string, intent.Assignment) {
 	t.Helper()
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, ".git", "info", "exclude"), "*.ignored\n")
-	var bindings []intent.DeliveryBinding
+	var ids []string
 	for i := 1; i <= complete; i++ {
-		bindings = append(bindings, intent.DeliveryBinding{Assignment: putRelatedAssignment(t, root, relatedID(i), intent.StateComplete, filepath.Join(root, "absent", relatedID(i))).ID})
+		ids = append(ids, putRelatedAssignment(t, root, relatedID(i), intent.StateComplete, filepath.Join(root, "absent", relatedID(i))).ID)
 	}
+	active := putLinkedRelated(t, root, 100)
+	bindRelated(t, root, append(ids, relatedID(200))...)
+	return root, active
+}
+
+// putLinkedRelated records related fixture row i as an active assignment in a real linked
+// worktree on its own assignment branch, and binds it to specs/x/spec.md.
+func putLinkedRelated(t *testing.T, root string, i int) intent.Assignment {
+	t.Helper()
 	linked := filepath.Join(t.TempDir(), "linked")
-	branch := intent.AssignmentBranchRef(strings.Repeat("b", 32), relatedID(100))
+	branch := intent.AssignmentBranchRef(strings.Repeat("b", 32), relatedID(i))
 	gittest.MustRun(t, root, "worktree", "add", "-q", "-b", strings.TrimPrefix(branch, "refs/heads/"), linked)
-	active := putRelatedAssignment(t, root, relatedID(100), intent.StateActive, linked)
-	bindings = append(bindings, intent.DeliveryBinding{Assignment: active.ID}, intent.DeliveryBinding{Assignment: relatedID(200)})
+	active := putRelatedAssignment(t, root, relatedID(i), intent.StateActive, linked)
+	bindRelated(t, root, active.ID)
+	return active
+}
+
+// bindRelated binds each assignment of ids to specs/x/spec.md.
+func bindRelated(t *testing.T, root string, ids ...string) {
+	t.Helper()
 	commitmenttest.EditCommitment(t, root, func(state *intent.CommitmentState) {
-		for _, binding := range bindings {
-			binding.Request, binding.Milestone, binding.Outcome, binding.Deliverable, binding.Identity = intent.RequestDigest("related-"+binding.Assignment), "fixture", "related-"+binding.Assignment, "specs/x/spec.md", "fixture"
-			state.Bindings = append(state.Bindings, binding)
+		for _, id := range ids {
+			state.Bindings = append(state.Bindings, intent.DeliveryBinding{
+				Assignment: id, Request: intent.RequestDigest("related-" + id), Milestone: "fixture",
+				Outcome: "related-" + id, Deliverable: "specs/x/spec.md", Identity: "fixture",
+			})
 		}
 	})
-	return root, active
 }
 
 // relatedPage runs one related page from root and answers its continuation argv and its

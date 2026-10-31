@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/git"
@@ -136,9 +137,28 @@ func relatedProjection(j joins, run *git.Run, root string, ledger intent.Ledger,
 		return nil, err
 	}
 	def, defaultResolved := git.ResolvedDefault(root)
-	rows, err := renderListRows(j, run, root, assignmentRows(j, run, root, matched, def, defaultResolved), matched, true)
+	rows, err := renderListRows(j, run, root, assignmentRows(j, run, root, matched, def, defaultResolved), matched, namesTreeAlone(ledger.Assignments))
 	if err != nil {
 		return nil, err
 	}
 	return []byte(summary + rows), nil
+}
+
+// namesTreeAlone answers the predicate that a related row's label passes when the read action
+// can name that row's tree alone. The label is not the primary keyword, which the tree resolver
+// reads before any label. No other active assignment of assignments carries it, because the
+// resolver refuses an ambiguous label. And the action owner accepts the read action that
+// carries it, so a rejected label drops only its own action from the help.
+func namesTreeAlone(assignments []intent.Assignment) func(label string) bool {
+	empty, _ := axi.RenderHelp(nil)
+	return func(label string) bool {
+		if label == usage.PrimaryTreeTarget {
+			return false
+		}
+		if len(matchingAssignments(assignments, func(a intent.Assignment) bool { return a.Label == label && landingActiveState(a.State) })) != 1 {
+			return false
+		}
+		help, err := axi.RenderHelp([]axi.Action{readAction(label)})
+		return err == nil && help != empty
+	}
 }

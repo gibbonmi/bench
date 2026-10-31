@@ -112,7 +112,7 @@ func ListCommandFrom(root, cwd string, args []string) (string, int) {
 		}
 		rows = append(rows, row)
 	}
-	out, err := renderListRows(j, run, root, rows, assignments, false)
+	out, err := renderListRows(j, run, root, rows, assignments, nil)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
@@ -134,10 +134,10 @@ func assignmentRows(j joins, run *git.Run, root string, assignments []intent.Ass
 }
 
 // renderListRows renders the worktrees table of rows and its ordered help actions. The help
-// offers the batch clean when an active assignment of assignments has landed, and read adds
-// the read action of each active row with a present tree. Each list view that renders the
-// worktrees table renders it here.
-func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignments []intent.Assignment, read bool) (string, error) {
+// offers the batch clean when an active assignment of assignments has landed, and a non-nil
+// readable adds the read action of each active row with a present tree whose label it
+// accepts. Each list view that renders the worktrees table renders it here.
+func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignments []intent.Assignment, readable func(label string) bool) (string, error) {
 	values := make([][]any, 0, len(rows))
 	for _, row := range rows {
 		values = append(values, row.values)
@@ -156,7 +156,7 @@ func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignme
 	if err != nil {
 		return "", err
 	}
-	actions := actionsForRows(rows, read)
+	actions := actionsForRows(rows, readable)
 	if landed {
 		actions = append(actions, recoverMissingTree(true, "", "").action())
 	}
@@ -176,10 +176,10 @@ func assignmentsReadRefusal() string {
 // actionsForRows derives the help rows from the row states. An active row with a present
 // tree gives a path action and an exec action with a `<target>` slot, because the id cell
 // already holds its address. The actions of each such row are identical, so the help
-// render collapses them to one pair. With read, such a row also gives a read action that
-// names its label, because the tree-target flag takes a label. The other states keep a
-// row-specific action, because their operand appears in no cell.
-func actionsForRows(rows []listRow, read bool) []axi.Action {
+// render collapses them to one pair. When readable accepts its label, such a row also gives
+// a read action that names that label, because the tree-target flag takes a label. The other
+// states keep a row-specific action, because their operand appears in no cell.
+func actionsForRows(rows []listRow, readable func(label string) bool) []axi.Action {
 	actions := make([]axi.Action, 0, len(rows))
 	for _, row := range rows {
 		if len(row.values) < 4 {
@@ -217,8 +217,8 @@ func actionsForRows(rows []listRow, read bool) []axi.Action {
 			actions = append(actions,
 				axi.ExecutableInvocation("inspect an active worktree by its id", axi.KnownArgument("worktree"), axi.KnownArgument("path"), axi.FutureInput("target")),
 				axi.ExecutableInvocation("run a command in an active worktree by its id", axi.KnownArgument("worktree"), axi.KnownArgument("exec"), axi.FutureInput("target"), axi.KnownArgument("--"), axi.FutureInput("command")))
-			if label, _ := row.values[listLabelCell].(string); read && label != "" {
-				actions = append(actions, axi.ExecutableInvocation("read a file in an active worktree by its label", axi.KnownArgument("worktree"), axi.KnownArgument("read"), axi.KnownArgument("--in"), axi.KnownArgument(label), axi.FutureInput("path")))
+			if label, _ := row.values[listLabelCell].(string); readable != nil && label != "" && readable(label) {
+				actions = append(actions, readAction(label))
 			}
 			continue
 		}
@@ -227,6 +227,11 @@ func actionsForRows(rows []listRow, read bool) []axi.Action {
 		}
 	}
 	return actions
+}
+
+// readAction is the read action of the active tree that label names.
+func readAction(label string) axi.Action {
+	return axi.ExecutableInvocation("read a file in an active worktree by its label", axi.KnownArgument("worktree"), axi.KnownArgument("read"), axi.KnownArgument("--in"), axi.KnownArgument(label), axi.FutureInput("path"))
 }
 
 // The cells an action reads by position. The field list above declares the order, so a
