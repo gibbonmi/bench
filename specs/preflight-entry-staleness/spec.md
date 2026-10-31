@@ -6,7 +6,7 @@ Roadmap: FT375
 
 Decision source: named reviewed artifact — the bound criteria `FT375-residual.map-sources` and `FT375-residual.writes-resolve` in `.bench/commitment.json`, read with `roadmap/FT375.md` at its pinned identity `sha256:837124cb6340ce3d9ae84b287b9ac023cd055677b5622382b1ec3ccd4fcae7b6`, plus the two reviewer decisions of 2026-10-31 in the `/bench-write-spec FT375` conversation (D1 map scope, D2 row split).
 
-Verification log: 0 iteration(s) to accept — pending
+Verification log: 2 iteration(s) to accept — the spec round took 1 iteration, and the ticket round took 1 iteration, whose review notes the ticket fold commit holds. Reviewer sign-off 2026-10-31, given by the `/bench-implement-spec preflight-entry-staleness --full` call.
 
 ## Problem
 
