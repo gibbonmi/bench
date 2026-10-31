@@ -142,7 +142,7 @@ An explicit Go file selects that file; a directory or omitted path searches its 
 Existing production/test filters retain their meaning.
 Each ambiguous candidate names its file and qualified declaration, with a directly executable narrowing route.
 A bare name selects a package-level declaration; when no package-level declaration matches, each same-name method is an ambiguous candidate, not an absence.
-When two candidates share a file and a qualified name, the candidate names its line, and its narrowing route reads that file with `bench read`.
+When two candidates share a file and a qualified name, the candidate names its line, and its narrowing route reads the declaration's line range with `bench read --lines`.
 No ambiguous candidate body is guessed.
 
 `worktree list --spec` is incompatible with the selected-view and repeated-target forms.

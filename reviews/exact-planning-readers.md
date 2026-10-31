@@ -793,6 +793,74 @@
             "C7"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ER-C3-standards-2",
+          "performer": "ft125-review-c3-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dbc94351cf2019179f68fb3f792483a2a530816",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-standards-2",
+            "digest": "sha256:e7a1c68c906d0f321c751068d79ae72c554dc3837b8d96a41f93d5b11cd189fb",
+            "excerpt": "Standards axis, ER-C3 confirming round 1 (repair delta 048ec2ac7..c37e30b5d). ST2, ST3, ST4, ST6 closed; none reopened.\nN1 (auto-fix, conf 4) internal/outline/command.go:191-193 legacyHelp builds the --symbol continuation argv by hand in the same order as symbolCommand at declaration.go:292-294; one builder should take the name slot.\nN2 (advice, conf 3) command.go:162,:174 form decision computed twice; legacyHelp takes six parameters.\nN3 (advice, conf 2) declaration_test.go:115-124 candidateRoutes re-renders a one-row help table to fit RecoverHelpCommandArgv.\nNo-op (conf 3): the literal read verb at declaration.go:274.\nCount 3 new; worst N1.\n"
+          },
+          "axis": "Standards",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "c37e30b5d5503d0a1a0373c70a42b1913c9233e9",
+          "finding_ids": [
+            "N1"
+          ],
+          "supersedes": [
+            "ER-C3-standards-1"
+          ]
+        },
+        {
+          "id": "ER-C3-spec-2",
+          "performer": "ft125-review-c3-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dbc94351cf2019179f68fb3f792483a2a530816",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-spec-2",
+            "digest": "sha256:dc2389e13592264158daeb4694a7d52858b2130fc69a109df875711d0978c59c",
+            "excerpt": "Spec axis, ER-C3 confirming round 1 (repair delta 048ec2ac7..c37e30b5d). S1, S2, S3 closed. ER11-ER15 met.\nOpen calls: single method-only candidate as ambiguity accepted (wording \"1 declarations\" cosmetic); one \u003cname> help row on symbol tables accepted with a note (SKILL.md:86 does not state the shared-slot convention, flagged for reviewer veto); no help for root files or empty directories accepted.\nN1 (no-op, conf 4) internal/outline/command.go:188-195 legacyHelp offers --symbol \u003cname> even when outline_skips lists an in-scope Go file, so every name refuses; the refusal names its recovery.\nAdvice (conf 4): the same-file route could use bench read --lines \u003cfirst>:\u003clast> to narrow to the candidate.\nCount 1 new; worst N1.\n"
+          },
+          "axis": "Spec",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "c37e30b5d5503d0a1a0373c70a42b1913c9233e9",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-spec-1"
+          ]
+        },
+        {
+          "id": "ER-C3-coverage-2",
+          "performer": "ft125-review-c3-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "5dbc94351cf2019179f68fb3f792483a2a530816",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c3-coverage-2",
+            "digest": "sha256:5c6aa60e33caac1df68fa9f4d2d3b26175a90030ed97a5080f242e368fc3a74a",
+            "excerpt": "Coverage axis, ER-C3 confirming round 1 (repair delta 048ec2ac7..c37e30b5d). C1-C7 closed; 0 reopened.\nProbe: internal/outline/declaration.go, 4 mutants, ./internal/outline ./cmd/bench, TestExactReaderCLIReconstruction|TestDeclarationSelection; baseline passed; all restored.\n1 drop path positional in symbolCommand: bit (TestExactReaderCLIReconstruction/outline_symbol_from_a_subdirectory).\n2 drop filter args in symbolCommand: bit (TestExactReaderCLIReconstruction/outline_symbol_with_a_filter).\n3 method fallback never matches: bit (TestDeclarationSelection).\n4 same-file read route off: bit (TestDeclarationSelection).\nS1 legacyHelp graded by exact pins in outline_kinds_test.go, outline_filter_test.go, outline_test.go (by reading).\nN1 (advice, conf 5) internal/outline/command.go:186-196 legacyHelp offers --symbol \u003cname> when an in-scope Go file is skipped, so every name refuses; the refusal names its recovery.\nCount 1 new; worst N1.\n"
+          },
+          "axis": "Coverage",
+          "base": "a3994b2028302752772deae813cc0b4a98306516",
+          "tip": "c37e30b5d5503d0a1a0373c70a42b1913c9233e9",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C3-coverage-1"
+          ]
         }
       ]
     }
@@ -1165,3 +1233,22 @@ Count: 7. Worst issue: C1.
 - C5 (auto-fix, confidence 8): no test reaches the `IndexListExpr` receiver branch. Repair target R7.
 - C6 (auto-fix, confidence 7): no test puts an oversized Go file or a `testdata` Go file in scope. The fixture skip keeps the tree convention of `bench outline`. Repair target R8.
 - C7 (auto-fix, confidence 7): no test gives one cursor flag without `--symbol`. Repair target R9.
+
+## ER-C3 confirming round 1
+
+The repair delta is `048ec2ac7..c37e30b5d`. Each axis ran on opus / high.
+Every round 1 target is closed. The Spec and Coverage axes pass, and the Coverage probe of four mutants bit on each mutant.
+The Standards axis found one duplication that the repair introduced, and repair cycle 2 of 2 takes it on ticket 3b.
+
+### Standards
+
+Count: 3 findings. Worst issue: N1.
+
+- N1 (auto-fix, confidence 4): `internal/outline/command.go:191-193` builds the `--symbol` continuation argv in the same order as `symbolCommand` at `declaration.go:292-294`. Repair target R10 gives that argv one builder.
+
+### Spec
+
+Count: 1 finding, no-op. The orchestrator accepts the Spec advice: the same-file route reads the declaration's line range with `bench read --lines`, so the route narrows to the candidate. The spec sentence is corrected. Repair target R11.
+
+Optional advice, with no finding ID: Standards N2 and N3, Spec and Coverage N1, and the "1 declarations" wording.
+The shared N1 says that the derived `--symbol` help can lead to a refusal, and that refusal names its recovery.
