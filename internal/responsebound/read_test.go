@@ -160,6 +160,43 @@ func TestExactPageProtocol(t *testing.T) {
 		})
 	}
 
+	// A cursor inside a rune of a valid UTF-8 selection refuses before content, since no page
+	// offered it. An invalid UTF-8 selection keeps its byte cursor anywhere.
+	t.Run("cursor inside a rune", func(t *testing.T) {
+		for _, tc := range []struct {
+			name, payload string
+			want          string
+		}{
+			{"valid selection", strings.Repeat("é😀", 40), "invalid cursor"},
+			{"invalid selection", strings.Repeat("é😀", 40) + "\xff", ""},
+		} {
+			request := pageRequest(readFrame, []byte(tc.payload))
+			request.Offset, request.Token, request.Continued = int64(len("é😀")+1), request.identity(), true
+			page, err := PageRead(request)
+			var refusal *ReadRefusal
+			switch {
+			case tc.want != "" && (!errors.As(err, &refusal) || refusal.Kind != tc.want || page.Output != ""):
+				t.Fatalf("%s: PageRead = %q, %v; want refusal %q and no content", tc.name, page.Output, err, tc.want)
+			case tc.want == "" && (err != nil || cell(decodePage(t, page.Output).row, "encoding") != "base64"):
+				t.Fatalf("%s: PageRead = %q, %v; want a base64 page at the byte cursor", tc.name, page.Output, err)
+			}
+		}
+	})
+
+	// An absent selection is one terminal page with present false and no content.
+	t.Run("absent selection", func(t *testing.T) {
+		request := pageRequest(readFrame, nil)
+		request.Absent = true
+		page, err := PageRead(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		decoded := decodePage(t, page.Output)
+		if cell(decoded.row, "present") != "false" || cell(decoded.row, "complete") != "true" || len(decoded.data) != 0 || decoded.argv != nil || !strings.Contains(page.Output, "content[0]") {
+			t.Fatalf("absent page = %q, want present false, complete, no content, and no successor", page.Output)
+		}
+	})
+
 	// A frame leaves room for one byte of the next rune but not for the whole rune, so the
 	// page refuses rather than split it.
 	t.Run("window smaller than the next rune", func(t *testing.T) {

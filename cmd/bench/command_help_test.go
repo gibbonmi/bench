@@ -14,7 +14,7 @@ func TestHelpSpecRowsNameShowRetireHistoryAndWiden(t *testing.T) {
 	if strings.Contains(help, "bench spec implemented") {
 		t.Errorf("bench help still advertises a retired subcommand:\n%s", help)
 	}
-	for _, want := range []string{"bench spec [--in <label|primary>] show <slug-or-path>", "bench spec [--in <label|primary>] retire <slug>", "bench spec [--in <label|primary>] history <slug>", "bench spec [--in <label|primary>] widen <slug>"} {
+	for _, want := range []string{"bench spec show <slug-or-path>", "bench spec [--in <label|primary>] retire <slug>", "bench spec [--in <label|primary>] history <slug>", "bench spec [--in <label|primary>] widen <slug>"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("bench help is missing %q:\n%s", want, help)
 		}

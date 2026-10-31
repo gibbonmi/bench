@@ -12,19 +12,23 @@ import (
 
 // ShowSubcommand names the show child. SectionFlag selects one literal visible H2 title or
 // one shortcut, and `bench read --section` takes the same flag. StoriesShortcut selects the User stories
-// section, and StatusShortcut selects the raw Status: line that the metadata owner chooses.
+// section, StatusShortcut selects the raw Status: line that the metadata owner chooses, and
+// CoverageShortcut selects the accepted coverage map that the coverage owner bounds. StoryFlag
+// selects one numbered story with its typed coverage rows, which the coverage owner projects.
 const (
-	ShowSubcommand  = "show"
-	SectionFlag     = "--section"
-	StoriesShortcut = "stories"
-	StatusShortcut  = "status"
+	ShowSubcommand   = "show"
+	SectionFlag      = "--section"
+	StoryFlag        = "--story"
+	StoriesShortcut  = "stories"
+	CoverageShortcut = "coverage"
+	StatusShortcut   = "status"
 	// StoriesSection is the title of the H2 section that holds a spec's user stories.
 	StoriesSection = "User stories"
 )
 
 // ShowUsage is the one grammar of `bench spec show`. Its help, its root help row, and its
 // parser read this line.
-const ShowUsage = "bench spec " + ShowSubcommand + " <slug-or-path> [" + SectionFlag + " " + StoriesShortcut + "|" + StatusShortcut + "|<literal-H2-title>] " + responsebound.CursorUsage
+const ShowUsage = "bench spec " + ShowSubcommand + " <slug-or-path> [" + SectionFlag + " " + StoriesShortcut + "|" + CoverageShortcut + "|" + StatusShortcut + "|<literal-H2-title> | " + StoryFlag + " <positive>] " + responsebound.CursorUsage
 
 // ShowGrammar parses `bench spec show`.
 var ShowGrammar = usage.Grammar{
@@ -34,6 +38,7 @@ var ShowGrammar = usage.Grammar{
 	MaxArgs: 1,
 	Flags: []usage.Flag{
 		{Name: SectionFlag, HasValue: true, NoEmptyValue: true},
+		{Name: StoryFlag, HasValue: true, NoEmptyValue: true},
 		{Name: responsebound.OffsetFlag, HasValue: true, NoEmptyValue: true},
 		{Name: responsebound.SourceFlag, HasValue: true, NoEmptyValue: true},
 	},
@@ -41,10 +46,12 @@ var ShowGrammar = usage.Grammar{
 
 // The selection kinds of the spec owner.
 const (
-	KindFile    = "file"
-	KindSection = "section"
-	KindStories = "stories"
-	KindStatus  = "status"
+	KindFile     = "file"
+	KindSection  = "section"
+	KindStories  = "stories"
+	KindStatus   = "status"
+	KindCoverage = "coverage"
+	KindStory    = "story"
 )
 
 // Selection is one exact span of source bytes, from Start up to but not including End. An
@@ -64,9 +71,13 @@ var ErrSelection = errors.New("selection refused")
 
 // Show selects the spec bytes that one show selector names: the whole file for an empty
 // selector, the User stories section for the stories shortcut, the metadata owner's raw
-// Status: line for the status shortcut, and otherwise one literal visible H2 section.
+// Status: line for the status shortcut, and otherwise one literal visible H2 section. The
+// coverage owner bounds the coverage shortcut, so Show refuses it rather than read it as a
+// literal title.
 func Show(content []byte, selector string) (Selection, error) {
 	switch selector {
+	case CoverageShortcut:
+		return Selection{}, fmt.Errorf("%w: the coverage owner selects the %s shortcut", ErrSelection, CoverageShortcut)
 	case "":
 		return Selection{Kind: KindFile, Present: true, End: len(content)}, nil
 	case StoriesShortcut:

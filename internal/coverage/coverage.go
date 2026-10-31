@@ -118,27 +118,22 @@ func Check(p parsed) []string {
 		if strings.Contains(stripBackticks(s.cell(r, fieldBehavior)), ";") {
 			v = append(v, fmt.Sprintf("coverage map row %d behavior states more than one predicate (';' outside backticks); split the row", rn))
 		}
-		story := parenRe.ReplaceAllString(s.cell(r, fieldStory), "")
-		if story == "" || edgeRe.MatchString(story) {
-			continue
-		}
-		if !storyRefRe.MatchString(story) {
+		story, parts, ok := storyReference(s.cell(r, fieldStory))
+		if !ok {
 			v = append(v, fmt.Sprintf("coverage map row %d has an unrecognized story reference '%s'", rn, story))
 			continue
 		}
 		fanOut := 0
-		for _, part := range strings.Split(story, ",") {
-			m := storyPartRe.FindStringSubmatch(trimSpaceTab(part))
-			start, _ := strconv.Atoi(m[1])
-			if m[2] == "" {
+		for _, part := range parts {
+			start, end := part.start, part.end
+			if !part.ranged {
 				v = append(v, p.checkStoryMember(rn, start)...)
 				referenced[start] = true
 				fanOut++
 				continue
 			}
-			end, _ := strconv.Atoi(m[2])
 			if end < start {
-				v = append(v, fmt.Sprintf("coverage map row %d has a story range with end before start '%s-%s'", rn, m[1], m[2]))
+				v = append(v, fmt.Sprintf("coverage map row %d has a story range with end before start '%s-%s'", rn, part.startText, part.endText))
 				continue
 			}
 			// A range stands for every number it spans, not just its endpoints. A spec

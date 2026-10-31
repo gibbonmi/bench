@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -47,14 +48,20 @@ func (definition commandDefinition) refusesTreeTarget(c Command, args []string) 
 }
 
 // runInTreeTarget runs a tree-scoped call that names its tree target as one child in that
-// tree, and answers the child's exit and true. Every other call answers false and runs in
-// this process. The running executable goes by its absolute path, because the child
-// directory is another tree, where the spelling of argv[0] can name another file. When
-// that path is unknown it stays empty, and a child start that needs it fails with its own
-// error.
+// tree, and answers the child's exit and true. A targeted call of the definition's
+// UntargetedForm, such as `spec show`, which reads the caller's checkout and whose page
+// continuation names no target, prints the usage line of that form and answers exit 2 and true, before any child starts. Every
+// other call answers false and runs in this process. The running executable goes by its
+// absolute path, because the child directory is another tree, where the spelling of argv[0]
+// can name another file. When that path is unknown it stays empty, and a child start that
+// needs it fails with its own error.
 func (c Command) runInTreeTarget(definition commandDefinition, args []string) (int, bool) {
 	if definition.Scope != scopeTree || !leadsWithTreeTarget(args) {
 		return 0, false
+	}
+	if form := definition.UntargetedForm; form != "" && formArgument(args) == form {
+		fmt.Fprintln(c.Stdout, toon.Usage("bench "+definition.Name+" "+form, treeTargetFlag))
+		return 2, true
 	}
 	running, _ := os.Executable()
 	return treetarget.Run(treetarget.Call{
@@ -73,6 +80,16 @@ func (definition commandDefinition) treeTargetInsertion() string {
 		return ""
 	}
 	return " [" + treeTargetFlag + " " + treetarget.Operand + "]"
+}
+
+// rowInsertion answers the tree-target insertion of one root help row of definition. A row
+// whose first token is the definition's UntargetedForm takes none, so the help and the
+// refusal read one field.
+func (definition commandDefinition) rowInsertion(row helpRow) string {
+	if form := strings.Fields(row.Suffix); definition.UntargetedForm != "" && len(form) > 0 && form[0] == definition.UntargetedForm {
+		return ""
+	}
+	return definition.treeTargetInsertion()
 }
 
 // runNamingTarget runs one call of definition. A help form that answers at exit 0 then

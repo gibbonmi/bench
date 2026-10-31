@@ -106,7 +106,7 @@ func TestSpecUsageNamesTheSurvivingSubcommands(t *testing.T) {
 }
 
 func TestSpecHelpPrintsThePublicSubcommandInventory(t *testing.T) {
-	const want = "usage: bench spec <subcommand>\n\nsubcommands:\n  show <slug-or-path> [--section stories|status|<literal-H2-title>] [--offset <byte-offset> --source <identity>]\n  retire <slug>\n  history <slug>\n  widen <slug> --ticket <basename> [--decision <reference>] <entry>...\n"
+	want := "usage: bench spec <subcommand>\n\nsubcommands:\n  " + strings.TrimPrefix(ShowUsage, "bench spec ") + "\n  retire <slug>\n  history <slug>\n  widen <slug> --ticket <basename> [--decision <reference>] <entry>...\n"
 	for _, arg := range []string{"--help", "-h"} {
 		out, code, _ := Command([]string{arg})
 		if code != 0 {

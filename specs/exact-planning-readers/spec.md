@@ -506,11 +506,11 @@ These future reds are required evidence, not observations made during specificat
 | ER3 | 2 | A heading hidden in a fence or HTML comment is not selected | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | An independent heading detector selects authored examples as owning headings. |
 | ER4 | 2 | Repeated visible matching H2 headings refuse as ambiguous | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | Choosing the first occurrence conceals the ambiguity. |
 | ER5 | 3 | The stories shortcut returns the actual User stories H2 span | `internal/spec/read_test.go` (`TestExactSpecSelections`) | An invented summary drops the author line or grouped story text. |
-| ER6 | 3 | The coverage shortcut returns the authoritative coverage-map span | planned TestExactStoryProjection in internal/coverage/story_test.go | A second table detector disagrees with the validator boundary. |
+| ER6 | 3 | The coverage shortcut returns the authoritative coverage-map span | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | A second table detector disagrees with the validator boundary. |
 | ER7 | 3 | The status shortcut returns the metadata owner's selected raw Status line | `internal/spec/read_test.go` (`TestExactSpecSelections`) | Choosing a fenced or earlier status changes existing last-visible-line semantics. |
-| ER8 | 4 | A story projection contains its exact authored text and all typed matching rows with named seams | planned TestExactStoryProjection in internal/coverage/story_test.go | A display-only Rows projection loses row identity, membership, or rationale. |
-| ER9 | 4 | Malformed or ambiguous story membership refuses rather than returning a partial projection | planned TestExactStoryProjection in internal/coverage/story_test.go | Ignoring validator faults makes an invalid map look like a complete obligation. |
-| ER10 | 5 | An absent story returns present false and no rows | planned TestExactStoryProjection in internal/coverage/story_test.go | An empty string alone cannot identify a missing story. |
+| ER8 | 4 | A story projection contains its exact authored text and all typed matching rows with named seams | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | A display-only Rows projection loses row identity, membership, or rationale. |
+| ER9 | 4 | Malformed or ambiguous story membership refuses rather than returning a partial projection | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | Ignoring validator faults makes an invalid map look like a complete obligation. |
+| ER10 | 5 | An absent story returns present false and no rows | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | An empty string alone cannot identify a missing story. |
 | ER11 | 6 | A declaration span begins at its attached doc comment and ends at the AST declaration end | planned TestDeclarationSpans in internal/outline/declaration_test.go | Regex locations cannot prove a complete body or attached documentation. |
 | ER12 | 7 | A selected declaration excludes neighboring comments and declarations | planned TestDeclarationSpans in internal/outline/declaration_test.go | Taking a line window includes an unrelated producer. |
 | ER13 | 8 | Ambiguous same-name declarations return deterministic candidates without a guessed body | planned TestDeclarationSelection in internal/outline/declaration_test.go | A first-match implementation chooses the wrong file or receiver. |
@@ -552,7 +552,7 @@ These future reds are required evidence, not observations made during specificat
 
 | ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | planned TestRelatedContinuationRefusesChangedProjection in cmd/bench/planning_reader_commands_test.go | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
 
-| ER49 | 17 | A cursor inside a rune of a valid UTF-8 selection refuses before content | planned TestExactPageProtocol in internal/responsebound/read_test.go | A byte cursor that lands inside a rune silently switches the remaining pages to base64. |
+| ER49 | 17 | A cursor inside a rune of a valid UTF-8 selection refuses before content | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | A byte cursor that lands inside a rune silently switches the remaining pages to base64. |
 
 ### Edge inventory
 

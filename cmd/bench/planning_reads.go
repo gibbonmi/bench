@@ -6,10 +6,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
+	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -121,8 +122,10 @@ func readCommand(args []string) (string, int) {
 }
 
 // specShowCommand pages one selection of one spec: the whole file, one literal visible H2
-// section, the User stories section, or the raw Status: line. The spec owner declares the
-// grammar and selects the bytes, and the page owner renders each page.
+// section, the User stories section, the accepted coverage map, the raw Status: line, or one
+// story's typed coverage obligations. The spec owner declares the grammar and selects its
+// spans, the coverage owner bounds the map and projects each story, and the page owner renders
+// each page. Spec does not import coverage, so this adapter composes them.
 func specShowCommand(args []string) (string, int) {
 	parsed, line, code := usage.Parse(spec.ShowGrammar, args)
 	if line != "" {
@@ -131,6 +134,17 @@ func specShowCommand(args []string) (string, int) {
 	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
 	if err != nil {
 		return spec.ShowGrammar.Help + " (" + err.Error() + ")\n", 2
+	}
+	section, sectioned := parsed.Flags[spec.SectionFlag]
+	story, storied := parsed.Flags[spec.StoryFlag]
+	number := 0
+	switch {
+	case sectioned && storied:
+		return spec.ShowGrammar.Help + " (" + spec.SectionFlag + " and " + spec.StoryFlag + " are mutually exclusive)\n", 2
+	case storied:
+		if number, err = responsebound.ParsePositive(story); err != nil {
+			return spec.ShowGrammar.Help + " (" + spec.StoryFlag + " takes " + err.Error() + ")\n", 2
+		}
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -152,7 +166,9 @@ func specShowCommand(args []string) (string, int) {
 	}
 	defer source.Close()
 	request.Digest, request.SourceSize = source.Digest, source.Size
-	section, sectioned := parsed.Flags[spec.SectionFlag]
+	if storied || section == spec.CoverageShortcut {
+		return pageCoverage(request, source, section, number)
+	}
 	selection, err := spec.Show(source.Bytes(), section)
 	if err != nil {
 		return toon.Errorf("section unavailable", err.Error()) + "\n", 1
@@ -164,6 +180,31 @@ func specShowCommand(args []string) (string, int) {
 	return pageSelection(request, source, selection, selector...)
 }
 
+// pageCoverage pages the coverage owner's selection of an open spec: the accepted coverage map
+// for the coverage shortcut, and otherwise the versioned typed projection of the story
+// numbered number. A malformed map and a repeated story number refuse before any content.
+func pageCoverage(request responsebound.ReadRequest, source *responsebound.Source, section string, number int) (string, int) {
+	document, err := coverage.Describe(source.Bytes())
+	if err != nil {
+		return toon.Errorf("coverage unavailable", err.Error()) + "\n", 1
+	}
+	if section == spec.CoverageShortcut {
+		selection := spec.Selection{Kind: spec.KindCoverage, Selector: section, Present: document.MapPresent, Start: document.Map.Start, End: document.Map.End}
+		return pageSelection(request, source, selection, spec.SectionFlag, section)
+	}
+	projection, err := document.Story(number)
+	if err != nil {
+		return toon.Errorf("story unavailable", err.Error()) + "\n", 1
+	}
+	var payload []byte
+	if projection.Present {
+		payload = projection.Encode()
+	}
+	selector := strconv.Itoa(number)
+	request.Kind, request.Selection = spec.KindStory, selector
+	return pagePayload(request, source, projection.Present, payload, spec.StoryFlag, selector)
+}
+
 // specCommand routes `bench spec show` to its exact reader, which composes the spec owner's
 // selections with the page owner, and every other spec subcommand to the spec owner.
 func specCommand(c Command, args []string) int {
@@ -173,28 +214,18 @@ func specCommand(c Command, args []string) int {
 	return retireListingCommand(spec.Command)(c, args)
 }
 
-// absenceFields are the columns of an absent selection, which no page represents.
-var absenceFields = []string{"kind", "selector", "present"}
-
-// pageSelection pages one present selection of an open source, and every command the page
-// offers repeats the selector arguments. A first read of an absent selection answers its
-// explicit absence at exit 0. A continuation of an absent selection pages the empty
-// selection, so the page owner refuses its cursor, because no page of that source offered it.
+// pageSelection pages one selection of an open source, and every command the page offers
+// repeats the selector arguments.
 func pageSelection(request responsebound.ReadRequest, source *responsebound.Source, selection spec.Selection, selector ...string) (string, int) {
-	if !selection.Present && !request.Continued {
-		if err := source.Unchanged(); err != nil {
-			return readSourceRefusal(request.Path, err)
-		}
-		absence, err := toon.TableTyped("selection", absenceFields, [][]any{{selection.Kind, selection.Selector, false}})
-		if err != nil {
-			return toon.RenderError(err) + "\n", 1
-		}
-		help, _ := axi.RenderHelp(nil)
-		return absence + help, 0
-	}
-	selected := selection.Bytes(source.Bytes())
 	request.Kind, request.Selection = selection.Kind, selection.Selector
-	request.Payload, request.Size = bytes.NewReader(selected), int64(len(selected))
+	return pagePayload(request, source, selection.Present, selection.Bytes(source.Bytes()), selector...)
+}
+
+// pagePayload pages the selected payload of an open source. The page owner answers an absent
+// selection as one terminal page with present false and no content.
+func pagePayload(request responsebound.ReadRequest, source *responsebound.Source, present bool, payload []byte, selector ...string) (string, int) {
+	request.Absent = !present
+	request.Payload, request.Size = bytes.NewReader(payload), int64(len(payload))
 	request.Command = append(request.Command, selector...)
 	return pageSource(request, source)
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -139,6 +141,56 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 		})
 	}
 
+	// A typed story payload spans pages, and its decoded fields match the authored story and
+	// rows, and each span slices the authored line from the spec bytes.
+	t.Run("spec show story", func(t *testing.T) {
+		const story = "1. As an agent, I want typed obligations."
+		var spec strings.Builder
+		spec.WriteString("# Typed\n\n## User stories\n\n" + story + "\n2. As an agent, I want another story.\n\n## Testing decisions\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n")
+		var lines []string
+		for i := 1; i <= 41; i++ {
+			number := 1
+			if i == 41 {
+				number = 2
+			}
+			line := fmt.Sprintf("| TY%d | %d | Behavior %d keeps a long authored description so the payload spans pages | planned TestTyped%d in typed_test.go | It catches failure %d. |", i, number, i, i, i)
+			lines = append(lines, line)
+			spec.WriteString(line + "\n")
+		}
+		writeAXIFixture(t, filepath.Join(root, "specs", "typed", "spec.md"), spec.String())
+		got, pages := readPages(t, nested, []string{"spec", "show", "typed", "--story", "1"})
+		type span struct{ Start, End int }
+		var payload struct {
+			Schema  string
+			Present bool
+			Story   struct {
+				Number int
+				Text   string
+				Span   span
+			}
+			Rows []struct {
+				ID                  string
+				Stories             []int
+				Behavior, Rationale string
+				SeamCell            string `json:"seam_cell"`
+				Span                span
+			}
+		}
+		if err := json.Unmarshal(got, &payload); err != nil || pages < 2 {
+			t.Fatalf("story payload over %d pages = %q: %v, want one JSON payload across pages", pages, got, err)
+		}
+		authored := spec.String()
+		if !payload.Present || payload.Story.Number != 1 || payload.Story.Text != story || authored[payload.Story.Span.Start:payload.Story.Span.End] != story || len(payload.Rows) != 40 {
+			t.Fatalf("story payload = %+v, want story 1 and its 40 rows", payload)
+		}
+		for i, row := range payload.Rows {
+			n := i + 1
+			if row.ID != fmt.Sprintf("TY%d", n) || !slices.Equal(row.Stories, []int{1}) || row.Behavior != fmt.Sprintf("Behavior %d keeps a long authored description so the payload spans pages", n) || row.SeamCell != fmt.Sprintf("planned TestTyped%d in typed_test.go", n) || row.Rationale != fmt.Sprintf("It catches failure %d.", n) || authored[row.Span.Start:row.Span.End] != lines[i] {
+				t.Fatalf("row %d = %+v, want the authored row", n, row)
+			}
+		}
+	})
+
 	t.Run("changed source", func(t *testing.T) {
 		first := runAXICommandAt(t, root, []string{"read", "mixed.txt"})
 		next, err := axitest.RecoverHelpCommandArgv(first.stdout)
@@ -168,17 +220,33 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 			t.Fatalf("%q = stdout=%q exit=%d, want the bounded cursor grammar", argv, help.stdout, help.code)
 		}
 	}
-	for _, absence := range []struct {
-		argv []string
-		want string
-	}{
-		{[]string{"read", "dup.md", "--section", "Missing"}, "selection[1]{kind,selector,present}:\n  section,Missing,false\nhelp[0]{cmd,why}:\n"},
-		{[]string{"spec", "show", "plain", "--section", "stories"}, "selection[1]{kind,selector,present}:\n  stories,stories,false\nhelp[0]{cmd,why}:\n"},
-		{[]string{"spec", "show", "plain", "--section", "status"}, "selection[1]{kind,selector,present}:\n  status,status,false\nhelp[0]{cmd,why}:\n"},
+	writeAXIFixture(t, filepath.Join(root, "specs", "mapped", "spec.md"), "# Mapped\n\n## User stories\n\n1. One.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| MP1 | 1 | A behavior | a seam | a reason |\n")
+	writeAXIFixture(t, filepath.Join(root, "specs", "repeated", "spec.md"), "# Repeated\n\n## User stories\n\n1. One.\n1. Again.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| RP1 | 1 | A behavior | a seam | a reason |\n")
+	writeAXIFixture(t, filepath.Join(root, "specs", "malformed", "spec.md"), "# Malformed\n\n## User stories\n\n1. One.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| ML1 | 7 | A behavior | a seam | a reason |\n")
+	// Every absent selection is one terminal page with present false, no content, and no
+	// successor.
+	for _, argv := range [][]string{
+		{"read", "dup.md", "--section", "Missing"},
+		{"spec", "show", "plain", "--section", "stories"},
+		{"spec", "show", "plain", "--section", "status"},
+		{"spec", "show", "plain", "--section", "coverage"},
+		{"spec", "show", "plain", "--story", "1"},
+		{"spec", "show", "mapped", "--story", "2"},
 	} {
-		if result := runAXICommandAt(t, root, absence.argv); result.code != 0 || result.stdout != absence.want {
-			t.Fatalf("%q = stdout=%q exit=%d, want the explicit absence %q", absence.argv, result.stdout, result.code, absence.want)
+		result := runAXICommandAt(t, root, argv)
+		document, err := axitest.DecodeDocument(result.stdout)
+		if result.code != 0 || err != nil {
+			t.Fatalf("%q = stdout=%q exit=%d: %v, want an absence page", argv, result.stdout, result.code, err)
 		}
+		rows, _ := document.Rows("page")
+		contents, _ := document.Rows("content")
+		actions, _ := document.HelpActions()
+		if len(rows) != 1 || rows[0].(map[string]any)["present"] != false || rows[0].(map[string]any)["complete"] != true || len(contents) != 0 || len(actions) != 0 {
+			t.Fatalf("%q = %q, want one present-false terminal page with no content", argv, result.stdout)
+		}
+	}
+	if got, _ := readPages(t, root, []string{"spec", "show", "mapped", "--section", "coverage"}); !strings.HasPrefix(string(got), "### Acceptance coverage map\n") || !strings.HasSuffix(string(got), "| MP1 | 1 | A behavior | a seam | a reason |\n") {
+		t.Fatalf("coverage shortcut = %q, want the authored map heading through its table", got)
 	}
 	sourceOf := func(argv []string) string {
 		t.Helper()
@@ -225,6 +293,13 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		{"spec show offset without source", []string{"spec", "show", "plain", "--offset", "0"}, 2, "usage: bench spec show"},
 		{"spec show missing spec", []string{"spec", "show", "missing"}, 1, "error: spec not found"},
 		{"spec show unbound source", []string{"spec", "show", "plain", "--offset", "0", "--source", token}, 1, "error: source changed since the cursor"},
+		{"spec show story with section", []string{"spec", "show", "mapped", "--section", "stories", "--story", "1"}, 2, "usage: bench spec show"},
+		{"spec show story zero", []string{"spec", "show", "mapped", "--story", "0"}, 2, "usage: bench spec show"},
+		{"spec show nondecimal story", []string{"spec", "show", "mapped", "--story", "one"}, 2, "usage: bench spec show"},
+		{"spec show tree target", []string{"spec", "--in", "primary", "show", "mapped"}, 2, "usage: bench spec show"},
+		{"spec show repeated story", []string{"spec", "show", "repeated", "--story", "1"}, 1, "error: story unavailable"},
+		{"spec show malformed map story", []string{"spec", "show", "malformed", "--story", "1"}, 1, "error: coverage unavailable"},
+		{"spec show malformed map", []string{"spec", "show", "malformed", "--section", "coverage"}, 1, "error: coverage unavailable"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			result := runAXICommandAt(t, root, tc.argv)

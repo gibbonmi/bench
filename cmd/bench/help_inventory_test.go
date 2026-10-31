@@ -162,7 +162,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
   bench spec [--in <label|primary>] widen <slug> --ticket <basename> [--decision <reference>] <entry>...  add paths inside the signed-off scope to one ticket's Writes: line (no commit)
-  bench spec [--in <label|primary>] show <slug-or-path> [--section stories|status|<literal-H2-title>] [--offset <byte-offset> --source <identity>]  exact spec bytes, one visible H2 section, the User stories section, or the raw Status: line as bounded TOON pages
+  bench spec show <slug-or-path> [--section stories|coverage|status|<literal-H2-title> | --story <positive>] [--offset <byte-offset> --source <identity>]  exact spec bytes, one visible H2 section, the User stories or coverage map section, the raw Status: line, or one story with its typed coverage rows as bounded TOON pages
   bench version              print the installed Bench version (os/arch)
 `
 

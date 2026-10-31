@@ -1,6 +1,7 @@
 package responsebound
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -55,6 +56,9 @@ type ReadRequest struct {
 	// Payload holds the selected bytes, and Size is their count.
 	Payload io.ReaderAt
 	Size    int64
+	// Absent reports a selection that the source does not hold. Its one page has present
+	// false, no content, and no successor, and its payload is empty.
+	Absent bool
 	// Offset and Token are the cursor. Continued reports that the call supplied them.
 	Offset    int64
 	Token     string
@@ -104,6 +108,16 @@ func decimal(text string) (int64, error) {
 	return strconv.ParseInt(text, 10, 64)
 }
 
+// ParsePositive reads one positive selector number, such as a story number, through the one
+// exact-reader decimal grammar.
+func ParsePositive(text string) (int, error) {
+	value, err := decimal(text)
+	if err != nil || value < 1 {
+		return 0, fmt.Errorf("%q is not a positive decimal", text)
+	}
+	return int(value), nil
+}
+
 // PageRead answers one bounded page of the selection, or a refusal before any content. The
 // page carries the source identity, the selection kind, presence, the encoding, the byte
 // offset, the selected and source byte counts, the next offset, and completion. A
@@ -117,6 +131,9 @@ func PageRead(r ReadRequest) (ReadPage, error) {
 	}
 	if r.Offset < 0 || r.Offset > r.Size || r.Offset == r.Size && r.Size > 0 {
 		return ReadPage{}, &ReadRefusal{Kind: "cursor out of range", Hint: fmt.Sprintf("offset %d is outside the %d selected bytes; read again from the first page: %s", r.Offset, r.Size, r.firstPage())}
+	}
+	if err := r.runeBoundary(); err != nil {
+		return ReadPage{}, err
 	}
 	window := make([]byte, min(r.Size-r.Offset, bounds.ResponseBytes))
 	if len(window) > 0 {
@@ -155,7 +172,7 @@ func (r ReadRequest) render(token string, window []byte) (ReadPage, bool, error)
 	consumed, encoding, data := encodeWindow(window, r.Offset+int64(len(window)) == r.Size)
 	next := r.Offset + int64(consumed)
 	complete := next == r.Size
-	page, err := toon.TableTyped("page", pageFields, [][]any{{token, r.Kind, true, encoding, r.Offset, next, r.Size, r.SourceSize, complete}})
+	page, err := toon.TableTyped("page", pageFields, [][]any{{token, r.Kind, !r.Absent, encoding, r.Offset, next, r.Size, r.SourceSize, complete}})
 	if err != nil {
 		return ReadPage{}, false, &ReadRefusal{Kind: "page metadata unrepresentable", Hint: err.Error()}
 	}
@@ -177,6 +194,32 @@ func (r ReadRequest) render(token string, window []byte) (ReadPage, bool, error)
 	}
 	output := page + content + help
 	return ReadPage{Output: output, Next: next, Complete: complete}, Fits(r.Frame + output), nil
+}
+
+// runeBoundary refuses a cursor offset inside a rune of a valid UTF-8 selection, because each
+// page of such a selection ends at a rune boundary, so no page offered that offset. An
+// invalid UTF-8 selection travels as base64 with byte cursors, so any offset in it holds. Only
+// an offset at a continuation byte reads the whole selection to decide its validity.
+func (r ReadRequest) runeBoundary() error {
+	if r.Offset == 0 || r.Offset >= r.Size {
+		return nil
+	}
+	var at [1]byte
+	if n, _ := r.Payload.ReadAt(at[:], r.Offset); n == 1 && utf8.RuneStart(at[0]) {
+		return nil
+	}
+	reader := bufio.NewReader(io.NewSectionReader(r.Payload, 0, r.Size))
+	for {
+		char, size, err := reader.ReadRune()
+		switch {
+		case err == io.EOF:
+			return &ReadRefusal{Kind: "invalid cursor", Hint: fmt.Sprintf("offset %d falls inside a character of the UTF-8 selection; read again from the first page: %s", r.Offset, r.firstPage())}
+		case err != nil:
+			return &ReadRefusal{Kind: "selection unreadable", Hint: err.Error()}
+		case char == utf8.RuneError && size == 1:
+			return nil
+		}
+	}
 }
 
 // encodeWindow encodes the page window. A nonfinal window that ends inside a rune stops at
