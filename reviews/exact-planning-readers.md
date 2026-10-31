@@ -414,7 +414,93 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ER-C2-standards-1",
+          "performer": "ft125-review-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "693e553de5250b7780219515215e7c3382ac4b0e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-standards",
+            "digest": "sha256:438c4ebaafc18300ab5e2fb783c9d92029b194012bfbf18dffa3ec9b6c9a2acf",
+            "excerpt": "Standards axis ER-C2 42cdc1ce2..38604b3c8: 9 findings; worst ST6.\nST1 internal/coverage/coverage.go:57 stale comment after the submatch moved; auto-fix; conf 8\nST2 cmd/bench/planning_reads.go:136,143,146 usage refusal built inline beside readUsageRefusal; auto-fix; conf 6\nST3 .agents/skills/bench-craft-cli/SKILL.md:10 unrelated line join; auto-fix; conf 5\nST4 cmd/bench/tree_scope.go:53, internal/spec/read.go:14 long comment lines and a registry member named in a generic comment; auto-fix; conf 6\nST5 internal/spec/spec.go:1-6 package doc omits show; auto-fix; conf 4\nST6 cmd/bench/command_registry.go:128 UntargetedForm is a second encoding of per-child tree scope, matched by the first help token; spec show keeps tree-row behavior; ask-user; conf 5\nST7 cmd/bench/planning_reads.go:210-215 spec subcommand set split across two switches; ask-user; conf 4\nST8 internal/coverage/story.go:14 Span repeats markdown.Span; auto-fix; conf 4\nST9 other duplication edges examined; no-op; conf 3\n"
+          },
+          "axis": "Standards",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "38604b3c80fcd38c1c8705deafbf58cd528ce8e4",
+          "finding_ids": [
+            "ST1",
+            "ST2",
+            "ST3",
+            "ST4",
+            "ST5",
+            "ST6",
+            "ST7",
+            "ST8",
+            "ST9"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C2-spec-1",
+          "performer": "ft125-review-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "693e553de5250b7780219515215e7c3382ac4b0e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-spec",
+            "digest": "sha256:1a349f53f5f4ba5ec3e135a65c8876bc0f008b501e9b87bf7a423ac058a2c5df",
+            "excerpt": "Spec axis ER-C2 42cdc1ce2..38604b3c8: 7 findings; worst S1. Rows ER2-ER8, ER10, ER49 met; ER9 partial. Author decisions 1-6 accepted. Check and retire/history/widen unchanged.\nS1 internal/coverage/story.go:52-53, rows.go:151,183 a Markdown fault in the map yields a partial projection; auto-fix; conf 6\nS2 cmd/bench/command_registry.go:128 grew 399 to 400 against spec line 337; ask-user; conf 7\nS3 .agents/skills/bench-craft-cli/SKILL.md:86 AXI row omits coverage and story selections; auto-fix; conf 6\nS4 cmd/bench/planning_reads.go:154,161 spec show pages a path outside the repository; ask-user; conf 5\nS5 cmd/bench/planning_reads.go:204, internal/responsebound/read.go:266 story identity omits StorySchema; auto-fix; conf 5\nS6 internal/coverage/projection.go:51 invalid UTF-8 story text replaced by U+FFFD; ask-user; conf 4\nS7 projects/benchkit.md:101 dropped TOON; auto-fix unless gate-forced; conf 4\n"
+          },
+          "axis": "Spec",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "38604b3c80fcd38c1c8705deafbf58cd528ce8e4",
+          "finding_ids": [
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C2-coverage-1",
+          "performer": "ft125-review-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "693e553de5250b7780219515215e7c3382ac4b0e",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c2-coverage",
+            "digest": "sha256:3b5ba46ccb0fceff44b288a2c24cf13e048925dd71218f8facf88fd7ae68cf45",
+            "excerpt": "Coverage axis ER-C2 42cdc1ce2..38604b3c8: 6 findings; worst CV1. No probes; reading decided each.\nCV1 internal/coverage/story.go:52-59, rows.go:146-151 a fence fault does not refuse coverage or story selections; repair; conf 7\nCV2 internal/coverage/story.go:109 repeated row member ungraded; auto-fix; conf 8\nCV3 internal/responsebound/read.go:219 size==1 half of the valid-UTF-8 test ungraded (authored U+FFFD); auto-fix; conf 9\nCV4 cmd/bench/planning_reads.go:172-175 spec show section refusal ungraded at the CLI; auto-fix; conf 7\nCV5 internal/spec/read.go:85, planning_reads.go:192,204 page kind cell ungraded; auto-fix; conf 8\nCV6 internal/spec/read.go:79-80 defensive coverage guard ungraded; low; conf 8\n"
+          },
+          "axis": "Coverage",
+          "base": "42cdc1ce21132ff4334188be4c8fc03b85d80c86",
+          "tip": "38604b3c80fcd38c1c8705deafbf58cd528ce8e4",
+          "finding_ids": [
+            "CV1",
+            "CV2",
+            "CV3",
+            "CV4",
+            "CV5",
+            "CV6"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -621,3 +707,46 @@ The plan probe answered `bit` with 10 failures.
 | C2 | orchestrator | `internal/responsebound/file.go` | omit the mtime clause of `Unchanged` | bit: `TestExactSourceReplaced/rewritten_in_place_at_the_same_size` | R20 |
 
 The comment change in `cmd/bench/tree_scope.go` makes the delta more than test-only, so a three-axis confirming round reviews `8b89063e2..42cdc1ce2`.
+
+## ER-C2 review round 1
+
+The frozen pair is `42cdc1ce2..38604b3c8`. Each axis ran on opus / high.
+The round has 22 raw findings and 11 repair targets after duplicates merge.
+The orchestrator decided every finding under `--auto-approve`, and repair cycle 1 of 2 takes the targets on ticket 2b.
+
+### Standards
+
+Count: 9. Worst issue: ST6.
+
+- ST1 (auto-fix, confidence 8): `internal/coverage/coverage.go:57` keeps a stale comment. Repair target R10.
+- ST2 (auto-fix, confidence 6): `cmd/bench/planning_reads.go:136,143,146` builds the usage refusal again inline. Repair target R8.
+- ST3 (no-op, confidence 5): the SKILL.md line join keeps the skill within its 120-line budget.
+- ST4 (auto-fix, confidence 6): `cmd/bench/tree_scope.go:53` and `internal/spec/read.go:14` hold long comment lines, and one comment names a registry member. Repair target R10.
+- ST5 (auto-fix, confidence 4): `internal/spec/spec.go:1-6` omits `show` from the package doc. Repair target R10.
+- ST6 (auto-fix, confidence 5): `UntargetedForm` encodes per-child tree scope a second time, and `spec show` still prints an unbudgeted tree row. Repair target R2.
+- ST7 (no-op, confidence 4): the split subcommand switch follows from the rule that spec does not import coverage.
+- ST8 (auto-fix, confidence 4): `internal/coverage/story.go:14` repeats `markdown.Span`. Repair target R9.
+- ST9 (no-op, confidence 3): other duplication edges need no change.
+
+### Spec
+
+Count: 7. Worst issue: S1.
+
+- S1 (auto-fix, confidence 6): a Markdown fault in the map yields a partial story projection. Repair target R1.
+- S2 (auto-fix, confidence 7): `cmd/bench/command_registry.go` grew from 399 to 400 lines against spec line 337. Repair target R2, and the plan commit amends the sentence.
+- S3 (auto-fix, confidence 6): the craft-cli AXI row omits the coverage and story selections. Repair target R6.
+- S4 (auto-fix, confidence 5): `spec show` pages a path outside the repository. Repair target R3.
+- S5 (auto-fix, confidence 5): the story page identity omits `coverage.StorySchema`. Repair target R4.
+- S6 (auto-fix, confidence 4): invalid UTF-8 in a story's text or cells is replaced by U+FFFD. Repair target R5.
+- S7 (no-op, confidence 4): the dropped "TOON" keeps the profile sentence within the 26-word prose limit.
+
+### Coverage
+
+Count: 6. Worst issue: CV1.
+
+- CV1 (auto-fix, confidence 7): the same defect as S1. Repair target R1.
+- CV2 (auto-fix, confidence 8): no test repeats a member inside one row. Repair target R7.
+- CV3 (auto-fix, confidence 9): no test puts an authored U+FFFD in a valid selection under ER49. Repair target R7.
+- CV4 (auto-fix, confidence 7): no CLI test refuses a duplicate `spec show` section. Repair target R7.
+- CV5 (auto-fix, confidence 8): no test reads the page `kind` cell. Repair target R7.
+- CV6 (auto-fix, confidence 8): no owner test reaches the coverage guard in `spec.Show`. Repair target R7.
