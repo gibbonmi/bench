@@ -135,7 +135,8 @@ func candidateRoutes(t *testing.T, args ...string) (string, [][]string) {
 // TestDeclarationSelection grades the narrowing of --symbol over the tracked Go scope:
 // ambiguity answers its candidates in file order with no body, and a receiver, a path, a
 // file, or a filter narrows to one body. A bare name that only methods declare is
-// ambiguous, and two candidates that share a file and a qualified name route to that file.
+// ambiguous, and two candidates that share a file and a qualified name each route to the
+// lines of their own span in that file.
 // Absence is a present-false page, a malformed or oversized file in scope refuses, an
 // invalid fixture does not, and --symbol with --full refuses as usage.
 func TestDeclarationSelection(t *testing.T) {
@@ -146,7 +147,7 @@ func TestDeclarationSelection(t *testing.T) {
 	writeOutlineFile(t, root, "a/testdata/broken.go", "package x\n\nfunc Get( {\n")
 	writeOutlineFile(t, root, "b/b_test.go", "package b\n\nfunc Only() {}\n")
 	writeOutlineFile(t, root, "bad/bad.go", "package bad\n\nfunc Broken( {\n")
-	writeOutlineFile(t, root, "d/init.go", "package d\n\nfunc init() {}\n\nfunc init() {}\n")
+	writeOutlineFile(t, root, "d/init.go", "package d\n\nfunc init() {}\n\n// init runs last.\nfunc init() {\n}\n")
 	gitAddOutline(t, root)
 
 	out, code := Command([]string{"--symbol", "Get"})
@@ -166,11 +167,12 @@ func TestDeclarationSelection(t *testing.T) {
 			t.Fatalf("route %q read %q, want %q", routes[i], text, want)
 		}
 	}
-	// Two init functions share a file and a qualified name, so each names its line and the
-	// one route reads that file.
+	// Two init functions share a file and a qualified name, so each names its line and its
+	// route reads the lines of its own span, from its doc comment through its end.
 	out, routes = candidateRoutes(t, "--symbol", "init")
-	if !strings.Contains(out, "d/init.go,3,init,func") || !strings.Contains(out, "d/init.go,5,init,func") || !reflect.DeepEqual(routes, [][]string{{"read", "d/init.go"}}) {
-		t.Fatalf("same-file init out=%q routes=%q, want each line and one bench read route", out, routes)
+	if !strings.Contains(out, "d/init.go,3,init,func") || !strings.Contains(out, "d/init.go,6,init,func") ||
+		!reflect.DeepEqual(routes, [][]string{{"read", "d/init.go", "--lines", "3:3"}, {"read", "d/init.go", "--lines", "5:7"}}) {
+		t.Fatalf("same-file init out=%q routes=%q, want each line and a bench read route of each span", out, routes)
 	}
 	// From a subdirectory, each route names its file from that directory and runs there.
 	t.Chdir(filepath.Join(root, "b"))
@@ -183,7 +185,7 @@ func TestDeclarationSelection(t *testing.T) {
 			t.Fatalf("route %q from b read %q", route, text)
 		}
 	}
-	if _, routes = candidateRoutes(t, "--symbol", "init"); !reflect.DeepEqual(routes, [][]string{{"read", "../d/init.go"}}) {
+	if _, routes = candidateRoutes(t, "--symbol", "init"); !reflect.DeepEqual(routes, [][]string{{"read", "../d/init.go", "--lines", "3:3"}, {"read", "../d/init.go", "--lines", "5:7"}}) {
 		t.Fatalf("same-file route from b = %q, want the cwd-relative file", routes)
 	}
 	t.Chdir(root)

@@ -184,17 +184,16 @@ func Command(args []string) (string, int) {
 // symbols, named from the caller's directory. Root-level files have no directory to narrow
 // into. Any other result is terminal and offers nothing.
 func legacyHelp(root string, symbolTable bool, parsed usage.Result, rows [][]string, dirOrder []string, dirCount map[string]int) []axi.Action {
-	filters := filterArgs(parsed.Flags)
 	if symbolTable {
 		for _, row := range rows {
 			if inSymbolScope(row[0]) {
-				arguments := knownArguments(append(commandArgv(parsed.Positionals...), SymbolFlag))
-				arguments = append(arguments, axi.FutureInput("name"))
-				return []axi.Action{axi.ExecutableInvocation("read one listed Go declaration", append(arguments, knownArguments(filters)...)...)}
+				arguments := symbolCall(parsed.Positionals, parsed.Flags, axi.FutureInput("name"), axi.KnownArgument)
+				return []axi.Action{axi.ExecutableInvocation("read one listed Go declaration", arguments...)}
 			}
 		}
 		return nil
 	}
+	filters := filterArgs(parsed.Flags)
 	var actions []axi.Action
 	for _, dir := range dirOrder {
 		if dir == "." || dirCount[dir] == 0 {

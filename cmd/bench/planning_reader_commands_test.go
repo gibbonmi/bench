@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -150,6 +151,36 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 			}
 		})
 	}
+
+	// Two declarations that share a file and a qualified name refuse as ambiguous, and each
+	// candidate's route reads the lines of its own span through the read command.
+	t.Run("outline same-file candidate routes", func(t *testing.T) {
+		first, second := "func init() {}\n", "// init runs last.\nfunc init() {\n}\n"
+		writeAXIFixture(t, filepath.Join(root, "dup", "dup.go"), "package dup\n\n"+first+"\n"+second)
+		gittest.MustRun(t, root, "add", "dup")
+		result := runAXICommandAt(t, nested, []string{"outline", "--symbol", "init"})
+		document, err := axitest.DecodeDocument(result.stdout)
+		if result.code != 1 || err != nil {
+			t.Fatalf("outline --symbol init = exit %d stdout=%q err=%v, want an ambiguity refusal", result.code, result.stdout, err)
+		}
+		actions, err := document.HelpActions()
+		if err != nil || len(actions) != 2 {
+			t.Fatalf("help = %v err=%v, want one route per candidate", actions, err)
+		}
+		for i, want := range []string{first, second} {
+			help, err := toon.Table("help", []string{"cmd", "why"}, [][]string{{actions[i].Cmd, actions[i].Why}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			argv, err := axitest.RecoverHelpCommandArgv(help)
+			if err != nil || len(argv) < 2 || argv[0] != "bench" {
+				t.Fatalf("route %q: %v", actions[i].Cmd, err)
+			}
+			if got, _ := readPages(t, nested, argv[1:]); string(got) != want {
+				t.Fatalf("route %q read %q, want %q", argv, got, want)
+			}
+		}
+	})
 
 	// A typed story payload spans pages, and its decoded fields match the authored story and
 	// rows, and each span slices the authored line from the spec bytes.

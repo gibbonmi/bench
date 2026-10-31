@@ -256,7 +256,8 @@ func (s symbolRead) page(root string, files []string, command []string) (string,
 // each candidate with its line, in file, source offset, and qualified-name order. Each
 // candidate offers one command that names its file from the caller's directory and its
 // qualified name. When two candidates share a file and a qualified name, no selector can
-// narrow to one of them, so each one offers a `bench read` of its file instead.
+// narrow to one of them, so each one offers a `bench read` of the lines of its own span in
+// its file instead.
 func ambiguous(root, text string, found []candidate) (string, int) {
 	slices.SortFunc(found, func(a, b candidate) int {
 		return cmp.Or(strings.Compare(a.file, b.file), cmp.Compare(a.Start, b.Start), strings.Compare(a.Qualified(), b.Qualified()))
@@ -271,7 +272,8 @@ func ambiguous(root, text string, found []candidate) (string, int) {
 		rows = append(rows, []any{c.file, c.Line, c.Qualified(), c.Kind})
 		operand := fromCaller(root, c.file)
 		if shared[[2]string{c.file, c.Qualified()}] > 1 {
-			actions = append(actions, axi.ExecutableInvocation("read this file at the listed lines", knownArguments([]string{"read", operand})...))
+			lines := fmt.Sprintf("%d:%d", lineAt(c.content, c.Start), lineAt(c.content, c.End))
+			actions = append(actions, axi.ExecutableInvocation("read the lines of this declaration", knownArguments([]string{"read", operand, "--lines", lines})...))
 			continue
 		}
 		actions = append(actions, axi.ExecutableInvocation("read this declaration", knownArguments(commandArgv(operand, SymbolFlag, c.Qualified()))...))
@@ -290,8 +292,27 @@ func ambiguous(root, text string, found []candidate) (string, int) {
 // symbolCommand is the caller's own --symbol call after `bench`, without the cursor flags.
 // Each continuation repeats it, so it names the same scope from the caller's directory.
 func symbolCommand(positionals []string, flags map[string]string) []string {
-	command := append(commandArgv(positionals...), SymbolFlag, flags[SymbolFlag])
-	return append(command, filterArgs(flags)...)
+	return symbolCall(positionals, flags, flags[SymbolFlag], func(argument string) string { return argument })
+}
+
+// symbolCall answers a --symbol call after `bench` in the caller's scope: the command, the
+// positionals, the flag, name, and the caller's filters. known wraps each argument except
+// name, so a caller passes either a known value or a future-input slot as name.
+func symbolCall[T any](positionals []string, flags map[string]string, name T, known func(string) T) []T {
+	var call []T
+	for _, argument := range append(commandArgv(positionals...), SymbolFlag) {
+		call = append(call, known(argument))
+	}
+	call = append(call, name)
+	for _, filter := range filterArgs(flags) {
+		call = append(call, known(filter))
+	}
+	return call
+}
+
+// lineAt answers the 1-based line of content that holds the byte offset.
+func lineAt(content []byte, offset int) int {
+	return bytes.Count(content[:offset], []byte("\n")) + 1
 }
 
 // commandArgv answers the outline argv after `bench`, with extra after the command name.
