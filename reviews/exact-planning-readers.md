@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:8a9529c21a16e96ce758b339f70fe4c83f403db2156cb2275ed9004fc344fb0b",
+  "plan_digest": "sha256:68fb8006eec43f3b04c09a87c6ef57ca2847b37e6e8f0d224db4ea1a5e260252",
   "implementation_session": "",
   "chunks": [
     {
@@ -1687,16 +1687,47 @@
     {
       "id": "ER-C5",
       "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
-      "tip": "ed206c85019277839d10e1540bc4258d4546bbdc",
-      "plan_digest": "sha256:8a9529c21a16e96ce758b339f70fe4c83f403db2156cb2275ed9004fc344fb0b",
-      "source_digest": "eb7e12eab1f2c44c53d27d80448a0d860da4ab3c",
+      "tip": "f4f4ae650b0f222a79e16b0f730e499e6359113a",
+      "plan_digest": "sha256:68fb8006eec43f3b04c09a87c6ef57ca2847b37e6e8f0d224db4ea1a5e260252",
+      "source_digest": "2246edbc963f9d47e59ee94c93d6b717b578e9b1",
       "acceptance_rows": [
         "ER47",
         "ER41",
         "ER42",
         "ER43"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "id": "ER-C5-5b-ER-C5-head-red",
+          "performer": "ft125-author-5b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2246edbc963f9d47e59ee94c93d6b717b578e9b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-author-5b",
+            "digest": "sha256:4132d2a12e14c45a6f24f60346e5edf174df794a630804d89a87382252bb87a6",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/census_output.go,swap,failed,1,TestExactReaderOutputHeads,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExactReaderOutputHeads,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,346\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderOutputHeads,\"census_output_test.go:110: outputHead([\\\"spec\\\" \\\"show\\\" \\\"demo\\\"]) = \\\"bench spec\\\", want \\\"bench spec show\\\"\",5\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f4f4ae650b0f222a79e16b0f730e499e6359113a",
+          "requirement": "ER-C5-head-red",
+          "command": "bench test --package ./cmd/bench --run TestExactReaderOutputHeads",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit the native read-form qualifier at outputHead",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-author-5b",
+              "digest": "sha256:4132d2a12e14c45a6f24f60346e5edf174df794a630804d89a87382252bb87a6",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/census_output.go,swap,failed,1,TestExactReaderOutputHeads,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestExactReaderOutputHeads,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,346\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestExactReaderOutputHeads,\"census_output_test.go:110: outputHead([\\\"spec\\\" \\\"show\\\" \\\"demo\\\"]) = \\\"bench spec\\\", want \\\"bench spec show\\\"\",5\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
       "reviews": []
     }
   ],
@@ -2014,6 +2045,27 @@
         ],
         "ER-C4": [
           "ER-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8a9529c21a16e96ce758b339f70fe4c83f403db2156cb2275ed9004fc344fb0b",
+      "to": "sha256:68fb8006eec43f3b04c09a87c6ef57ca2847b37e6e8f0d224db4ea1a5e260252",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ],
+        "ER-C5": [
+          "ER-C5"
         ]
       }
     }
