@@ -1615,6 +1615,72 @@
           "supersedes": [
             "ER-C4-coverage-2"
           ]
+        },
+        {
+          "id": "ER-C4-standards-4",
+          "performer": "ft125-review-c4-standards-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "43bd8160f625efdd035d9d8ae95b634b6e919d81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-standards-4",
+            "digest": "sha256:3e889587a0f8385736f7bcd2327a0cc597eb8d6caf037f4999a22567c96ef19b",
+            "excerpt": "Standards axis, ER-C4 confirming round 3 (repair delta ae5e3459a..34b20e6f2).\nClosed: N3. labelSelection (internal/worktree/tree_target.go:58-71) is the one label-selection rule; TreeTarget (tree_target.go:33) and namesTreeAlone (internal/worktree/related.go:160) both call it, so the lineSafe gate reaches the related rule. Moved code keeps its refusal order and error handling; related.go:161 keeps the exactly-one-active meaning.\nClosed: R12. usage.TreeTargetOperand (internal/usage/worktree.go:15) builds from PrimaryTreeTarget; treetarget.Operand (flag.go:13), primaryTarget (identify.go:24) and WorktreeRead (worktree.go:24) read from usage. No other spelling of the keyword or operand in non-test internal and cmd code; responsebound/store.go:25 and anchors/registry_planning_readers.go:8 are different facts.\nNew findings: none.\nOptional advice: the doc comment at related.go:149-152 uses two clauses for one check.\nOutcome: pass.\n"
+          },
+          "axis": "Standards",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C4-standards-3"
+          ]
+        },
+        {
+          "id": "ER-C4-spec-4",
+          "performer": "ft125-review-c4-spec-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "43bd8160f625efdd035d9d8ae95b634b6e919d81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-spec-4",
+            "digest": "sha256:43c867a70d6e46e933fa582d8808e793e1d273fd4ff34bb303eda7768a8a4bd6",
+            "excerpt": "Spec axis, ER-C4 confirming round 3 reaffirmation (repair delta ae5e3459a..34b20e6f2).\nReaffirm. Help and usage bytes are unchanged: usage.TreeTargetOperand builds the same \"\u003clabel|primary>\" bytes, and WorktreeRead keeps its text (internal/usage/worktree.go:15,24); the primary keyword has one source (internal/treetarget/identify.go:34).\nTreeTarget refusals keep their order: lineSafe, load, exact label narrowed to active; path-shape, ambiguity and state refusals unchanged (internal/worktree/tree_target.go:33,121-134).\nThe related read predicate meets spec lines 151-154: false for primary, exactly one active match, and the lineSafe gate drops the action only for a label the resolver already refuses; other actions and rows stay (internal/worktree/related.go:82-83).\nOutcome: pass.\n"
+          },
+          "axis": "Spec",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C4-spec-3"
+          ]
+        },
+        {
+          "id": "ER-C4-coverage-4",
+          "performer": "ft125-review-c4-coverage-4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "43bd8160f625efdd035d9d8ae95b634b6e919d81",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-coverage-4",
+            "digest": "sha256:03e9a944f511759795e2522f491e6e3cc36a41cec218e0f5015fa4a81f385294",
+            "excerpt": "Coverage axis, ER-C4 confirming round 3 reaffirmation (repair delta ae5e3459a..34b20e6f2).\nReaffirm, no new findings. R12 keeps the values: Operand \u003clabel|primary> (internal/usage/worktree.go:15, internal/treetarget/flag.go:13) and primaryTarget primary (identify.go:24), graded through cmd/bench/tree_scope_test.go:204 and internal/treetarget/family_test.go:29.\nR13 labelSelection (internal/worktree/tree_target.go:58): through TreeTarget, run_test.go:191 (TT36) grades lineSafe, tree_target_test.go:35-40 the active narrowing and ambiguity, tree_target_test.go:54-58 the exact match; through namesTreeAlone (related.go:160), cmd/bench/worktree_leaves_test.go:229-262 grades the positive case, primary, the active twin and the rejected label.\nAdvice (sev 3): the err and !landingActiveState branches at related.go:161 are defensive and unreached; the only caller passes active rows.\nNo probe. Outcome: pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C4-coverage-3"
+          ]
         }
       ]
     }
@@ -2302,3 +2368,9 @@ Spec and Coverage re-reviewed in full and pass: N1, N2, and C10 are closed. Stan
 Repair cycle 4 takes R12 and R13 on ticket 4b under `--auto-approve`.
 
 - N3 (auto-fix, confidence 4): `namesTreeAlone` copies the label-selection rule of `internal/worktree/tree_target.go`, and the copy omits the `lineSafe` gate. Repair target R13 moves that selection into one function that `TreeTarget` and the related read rule both call. This also closes the Spec advice about a label with a control character and the Coverage advice about the ungraded active qualifier.
+
+## ER-C4 confirming round 3
+
+The repair delta is `ae5e3459a..34b20e6f2`, and it adds no test, so it has no witness red. Each axis ran on opus / high.
+Standards re-reviewed in full, and Spec and Coverage gave delta-only reaffirmations. Every axis passes: N3 and R12 are closed, and no axis has a new finding.
+ER-C4 used four repair cycles; cycles 3 and 4 ran past the two-cycle allowance under `--auto-approve`.
