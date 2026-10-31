@@ -117,6 +117,11 @@ type Facts struct {
 	// default-branch tip lacks the path too. Only build mode fills it. writes-landed grades it.
 	LandedDeletions map[string]string
 
+	// MapSourceDiagnostics is the ordered list of Sources faults of every candidate decision
+	// map at SourceTip, graded against the published tree and the predicted delivery closure
+	// of SpecPath. Only build mode fills it. map-sources grades it.
+	MapSourceDiagnostics []string
+
 	// Audit is the staleness collection of the explicit pair. Only the audit form gathers it.
 	// staleness.Decide grades it, and Decide reads none of it.
 	Audit staleness.AuditFacts
@@ -202,14 +207,17 @@ type Verdict struct {
 // paths-authorized, runs every ticket row for real only when
 // specs/<slug>/tickets/ exists, and never runs diff-nonempty.
 //
-// Three rows are conditional. tip-current appears only when --source-tip
+// Four rows are conditional. tip-current appears only when --source-tip
 // pinned a tip, directly after base-current, so the two halves of the
 // source identity are graded together, ahead of every check that
 // presupposes that identity. writes-landed appears only in build mode,
 // directly after writes-resolve, because only the build entry tells a
 // `Writes:` entry that landed work deleted from a typing error.
 // binary-seal appears only in build mode, directly after kit-pin, because
-// it guards the transaction a build is about to open.
+// it guards the transaction a build is about to open. map-sources appears
+// only in build mode, directly after binary-seal, and reads no ticket, so
+// it is never not applicable: a decision-map source that the published tree
+// does not keep stops the build before its first chunk.
 func Decide(f Facts) Verdict {
 	checks := []CheckResult{baseCurrentCheck(f)}
 	if f.PinnedSourceTip != "" {
@@ -228,7 +236,7 @@ func Decide(f Facts) Verdict {
 	checks = append(checks, ticketRow(f, "kit-pin", kitPinCheck))
 	if f.Mode == modeBuild {
 		// A root that publishes no binary is outside the seal's own scope.
-		checks = append(checks, exempt(binarySealCheck(f)))
+		checks = append(checks, exempt(binarySealCheck(f)), mapSourcesCheck(f))
 	}
 	checks = append(checks,
 		ticketRow(f, "rows-owned", rowsOwnedCheck),
@@ -355,6 +363,14 @@ func blockersResolveCheck(f Facts) CheckResult {
 		return red("blockers-resolve", "blocker cycle(s): "+strings.Join(f.BlockerCycles, "; "))
 	}
 	return green("blockers-resolve")
+}
+
+// mapSourcesCheck reds each Sources fault of the candidate decision maps at the source tip.
+func mapSourcesCheck(f Facts) CheckResult {
+	if len(f.MapSourceDiagnostics) > 0 {
+		return red("map-sources", strings.Join(f.MapSourceDiagnostics, "; "))
+	}
+	return green("map-sources")
 }
 
 func diffNonemptyCheck(f Facts) CheckResult {

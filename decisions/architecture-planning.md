@@ -42,9 +42,9 @@ Use craft-cli, craft-spec, and craft-seams for each outcome.
 - Path: `.agents/skills/bench-craft-delegate/references/delegation-discipline.md`
   Supports: the decision that supersedes ownership-closure prediction.
   Drift: a change to its `Writes:` expectation rule.
-- Path: `roadmap/FT375.md`
-  Supports: the staleness faces that the shipped audit left open.
-  Drift: a change to its residual scope.
+- Path: `.agents/skills/bench-implement-spec/references/staleness-pass.md`
+  Supports: the omission rule and the taken red rows of the build-entry staleness pass.
+  Drift: a change to its omission rule or its taken red rows.
 - Path: `roadmap/FT318.md`
   Supports: the assignment and record operation gaps.
   Drift: a change to its remaining forms.

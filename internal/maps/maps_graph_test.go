@@ -174,6 +174,47 @@ func TestMapSourcesRequireExactRecordShape(t *testing.T) {
 	}
 }
 
+// TestDecisionMapCandidatePath checks the one candidate rule over repository paths, the
+// form a tree listing gives: an active map, a compiled map, and each refused shape.
+func TestDecisionMapCandidatePath(t *testing.T) {
+	for path, want := range map[string][2]bool{
+		"decisions/active.md":                 {false, true},
+		"specs/folder/decisions/compiled.md":  {true, true},
+		"decisions/.hidden.md":                {false, false},
+		"decisions/README.md":                 {false, false},
+		"decisions/notes.txt":                 {false, false},
+		"decisions/active/assets/nested.md":   {false, false},
+		"specs/.hidden/decisions/compiled.md": {false, false},
+		"specs/folder/notes/compiled.md":      {false, false},
+		"specs/folder/decisions/README.md":    {true, false},
+		"other/decisions/active.md":           {false, false},
+		"notes/active.md":                     {false, false},
+		"decisions.md":                        {false, false},
+	} {
+		if compiled, admitted := DecisionMapCandidatePath(path); [2]bool{compiled, admitted} != want {
+			t.Errorf("DecisionMapCandidatePath(%q) = (%t, %t), want %v", path, compiled, admitted, want)
+		}
+	}
+}
+
+// TestDiscoverDecisionMapCandidatesSkipsFolders checks that the walk passes only file
+// entries to the candidate rule, so a folder with a map-shaped name is no candidate.
+func TestDiscoverDecisionMapCandidatesSkipsFolders(t *testing.T) {
+	root := t.TempDir()
+	for _, dir := range []string{"decisions/folder.md", "specs/x/decisions/folder.md"} {
+		if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(root, "decisions", "active.md"), []byte("# map\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := DiscoverDecisionMapCandidates(root)
+	if want := []DecisionMapCandidate{{Path: "decisions/active.md"}}; err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("DiscoverDecisionMapCandidates = %#v, %v; want %#v", got, err, want)
+	}
+}
+
 func hasDiagnostic(diagnostics []Diagnostic, want string) bool {
 	for _, diagnostic := range diagnostics {
 		if strings.Contains(diagnostic.Message, want) {

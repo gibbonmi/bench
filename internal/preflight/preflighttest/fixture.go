@@ -193,17 +193,12 @@ func SeedConformant(t *testing.T) (root, slug string) {
 // main with one fenced change and returns the charge arguments over that tip.
 func CommitChargeSource(t *testing.T, root, slug string, files map[string]string) []string {
 	t.Helper()
-	RunGit(t, "checkout", "-q", "main")
-	for path, body := range files {
-		MustWriteFile(t, path, body)
-	}
-	commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
-	RunGit(t, "add", "-A")
-	RunGit(t, "commit", "-q", "-m", "charge source")
-	RunGit(t, "checkout", "-q", "-B", "feature")
-	MustWriteFile(t, "internal/"+slug+"/foo.go", "package example\n\nfunc Foo(ctx int) int { return ctx }\n")
-	RunGit(t, "add", "-A")
-	RunGit(t, "commit", "-q", "-m", "fenced change")
+	RestartFeature(t, slug, func() {
+		for path, body := range files {
+			MustWriteFile(t, path, body)
+		}
+		commitmenttest.SeedAdmission(t, root, "specs/"+slug+"/spec.md")
+	})
 	return ChargeArgs(t, root, slug)
 }
 
