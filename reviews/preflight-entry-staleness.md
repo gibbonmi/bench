@@ -456,9 +456,9 @@
     {
       "id": "ES-C3",
       "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
-      "tip": "e1ef5087ff392eab38fce2ef5728b139655802b3",
-      "plan_digest": "sha256:082a04b6cc454015caa8343c3365e0784283c18855af56f386923dc555f6078d",
-      "source_digest": "330d88edb201cef88a7376f26a18ad2fba64074d",
+      "tip": "20ff0ec64cc14d2b73b75daeaad232e9dde40ce6",
+      "plan_digest": "sha256:c30527df77491dda29220ec226a9039152fbc8b15e6da5919a1fae306d16a7bd",
+      "source_digest": "da2cd667f5956c8282eb29d4c43bdae702f401e9",
       "acceptance_rows": [
         "ES01",
         "ES02",
@@ -582,6 +582,66 @@
               "ref": "claude-agent:bench-writer-high:ft375-author-04",
               "digest": "sha256:c5a9deeb8195b49cd80e683474f1a721444eec209f4ca8a40896b48cf9aa9f5f",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,462\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3650,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: build-entry staleness: the implement-spec take rule dropped the writes-landed and map-sources rows\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "es-c3-r1-map-sources",
+          "performer": "ft375-repair-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "da2cd667f5956c8282eb29d4c43bdae702f401e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-repair-03",
+            "digest": "sha256:ec90086621516698be245b063de5e6084dd8af5425074a25cb6a801a24504736",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,insert,failed,1,TestMapSourcesClosureDeletion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesClosureDeletion$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,516\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,79,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesClosureDeletion,\"map_sources_test.go:95: map-sources detail = \\\"\\\", want \\\"decisions/active.md: Sources Path roadmap/FT1.md is deleted by the delivery closure of specs/example/spec.md; specs/example/decisions/compiled.md: Sources Path roadmap/FT1.md is deleted… (411 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "20ff0ec64cc14d2b73b75daeaad232e9dde40ce6",
+          "requirement": "map-sources",
+          "command": "bench test --package ./internal/preflight --run 'MapSources|SourceTipOmittedKeepsTodaysVerdict|DecideChargeRows'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Grade the map sources with the working-tree resolver, and record that TestMapSourcesClosureDeletion turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-repair-03",
+              "digest": "sha256:ec90086621516698be245b063de5e6084dd8af5425074a25cb6a801a24504736",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,insert,failed,1,TestMapSourcesClosureDeletion,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesClosureDeletion$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,516\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,79,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesClosureDeletion,\"map_sources_test.go:95: map-sources detail = \\\"\\\", want \\\"decisions/active.md: Sources Path roadmap/FT1.md is deleted by the delivery closure of specs/example/spec.md; specs/example/decisions/compiled.md: Sources Path roadmap/FT1.md is deleted… (411 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "es-c3-r1-shared-grammar",
+          "performer": "ft375-repair-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "da2cd667f5956c8282eb29d4c43bdae702f401e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft375-repair-03",
+            "digest": "sha256:beaa589d9fb1ccc8f99e1f7f8bfa7486861629497e35c2f638e7795f349d91ca",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesGrammar,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesGrammar$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,76,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesGrammar,\"map_sources_test.go:182: map-sources detail = \\\"decisions/m.md: Sources docs/kept.md missing Drift; decisions/m.md: Sources entry must start with Path or URL; decisions/m.md: Sources Path ../outside.md must name an existing regular file; dec… (555 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "20ff0ec64cc14d2b73b75daeaad232e9dde40ce6",
+          "requirement": "shared-grammar",
+          "command": "bench test --package ./internal/maps --package ./internal/preflight --run 'MapSources|ValidateDecisionMapTree'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the lexical path rule from the shared grammar, and record that TestMapSourcesGrammar turns red on the escaping-path case of ES52.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft375-repair-03",
+              "digest": "sha256:beaa589d9fb1ccc8f99e1f7f8bfa7486861629497e35c2f638e7795f349d91ca",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesGrammar,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesGrammar$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,76,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesGrammar,\"map_sources_test.go:182: map-sources detail = \\\"decisions/m.md: Sources docs/kept.md missing Drift; decisions/m.md: Sources entry must start with Path or URL; decisions/m.md: Sources Path ../outside.md must name an existing regular file; dec… (555 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
