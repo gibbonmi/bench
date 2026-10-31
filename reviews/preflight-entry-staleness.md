@@ -109,3 +109,31 @@
   }
 }
 ```
+
+## ES-C1 ticket 01 author witness reds
+
+The ticket 01 author `ft375-author-01` (opus / medium) reported these witness reds at ticket commit `a7cfab215`.
+The author applied each mutation by hand, saw the named test fail, and restored each subject byte for byte.
+The two plan probes `writes-landed` and `precedence` answered `bit` in `bench probe`.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/preflight/decision.go` | drop the `writes-landed` row from `Decide` | `TestWritesLandedBareEntry` | ES24 |
+| `internal/preflight/fence_writes.go` | also send a landed entry to the `writes-resolve` red | `TestWritesLandedBareEntry` | ES25 |
+| `internal/preflight/writes_landed.go` | drop `--first-parent -m` from the deleting-commit query | `TestWritesLandedShapes` | ES26, ES27 |
+| `internal/preflight/writes_landed.go` | replace `--no-renames` with `--find-renames --full-diff` | `TestWritesLandedShapes` | ES28 |
+| `internal/preflight/writes_landed.go` | accept an empty deleting-commit answer | `TestWritesLandedShapes` | ES29 |
+| `internal/preflight/fence_writes.go` | classify the whole red by the landed set | `TestWritesLandedPrecedence/ES30` | ES30 |
+| `internal/preflight/writes_landed.go` | ignore the tip `ls-tree` listing | `TestWritesLandedShapes` | ES31 |
+| `internal/preflight/fence_writes.go` | drop `BuildDeletedPaths` from step 1 | `TestWritesLandedPrecedence/ES32` | ES32 |
+| `internal/preflight/fence_writes.go` | grade `LandedDeletions` before `DeletedPaths` | `TestWritesLandedPrecedence/ES33` | ES33 |
+| `internal/preflight/writes_landed.go` | replace the default-branch lookup with `HEAD` | `TestWritesLandedPrecedence/ES34` | ES34 |
+| `internal/preflight/writes_landed.go` | use the raw path in place of the `:(literal)` pathspec | `TestWritesLandedShapes` | ES35 |
+| `internal/preflight/fence_writes.go` | change the kept `writes-resolve` detail text | `TestTicketGrammarRowsCarryOwnDetails` | ES36 |
+| `internal/preflight/fence_writes.go` | drop the commit from the `writes-landed` detail | `TestWritesLandedBareEntry` | ES37 |
+| `internal/preflight/decision.go` | add the row in every mode | `TestWritesLandedReviewMode` | ES38 |
+| `internal/preflight/decision.go` | add the row outside `ticketRow` | `TestTicketGatedRowsNotApplicableWithoutTickets` | ES39 |
+| `internal/preflight/writes_landed.go` | remove the build-mode guard of the gatherer | `TestWritesLandedReviewMode` | ES40 |
+| `internal/preflight/decision.go` | omit the row from the audit form | `TestWritesLandedKeepsAuditManual` | ES45 |
+
+An `exempt` flag on a red row does not change `requiredGreen`, so the ES45 witness omits the row from the audit form. The build amendment of the ES45 and ES46 cells records that divergence.
