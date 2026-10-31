@@ -802,3 +802,13 @@ Each mutation ran in `bench probe`, answered `bit`, and restored its subject. Th
 | `internal/maps/tree_validation.go` | drop each conjunct of the candidate predicate | `TestDecisionMapCandidatePath` | ES19 |
 
 The author also demonstrated the mode guard, the tip-tree read error, the cleaning step, the exact-path match, the folder skip, and the compiled flag. ES48 went from a `map-sources` red on `roadmap/FT375.md` to green after the repoint.
+
+## ES-C3 ticket 04 author witness reds
+
+The ticket 04 author `ft375-author-04` (opus / high) reported this witness red at ticket commit `4cc110ccd`.
+The amended plan probe `take-rule` answered `bit` in the `docs-currency-workflow` check at `448862fdd`.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/anchors/registry_ticket_passes.go` | omit the Forbid row of the old take-rule sentence | `TestTicketSlicingAnchors` | ES51 |
+| `.agents/commands/bench-implement-spec.md` | restore the old take-rule sentence | `TestRootConformance` in the `docs-currency-workflow` check | ES51 |
