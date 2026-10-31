@@ -456,9 +456,9 @@
     {
       "id": "ES-C3",
       "base": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
-      "tip": "e4b141c0fbfff657a81c5041d0d4669cee291a88",
-      "plan_digest": "sha256:50eb41bdb6840594f54a53ecc80090806128a7bf20c7538c8b530c5debfdd0c1",
-      "source_digest": "93764a581f0e8f2dd1ca937a56ca8450d70c323f",
+      "tip": "e1ef5087ff392eab38fce2ef5728b139655802b3",
+      "plan_digest": "sha256:082a04b6cc454015caa8343c3365e0784283c18855af56f386923dc555f6078d",
+      "source_digest": "330d88edb201cef88a7376f26a18ad2fba64074d",
       "acceptance_rows": [
         "ES01",
         "ES02",
@@ -552,6 +552,36 @@
               "ref": "claude-agent:bench-writer-medium:ft375-author-03",
               "digest": "sha256:810464fe1f8a225c81f59f90e5c1d87509d984940abf97d97b86f821ffe8a78a",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/maps/validation.go,swap,failed,1,TestMapSourcesGrammar,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestMapSourcesGrammar$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,506\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,51,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestMapSourcesGrammar,\"map_sources_test.go:149: map-sources detail = \\\"decisions/m.md: Sources docs/kept.md missing Drift; decisions/m.md: Sources entry must start with Path or URL; decisions/m.md: Sources Path ../outside.md must name an existing regular file; dec… (555 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "es-c3-t04-take-rule",
+          "performer": "ft375-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "330d88edb201cef88a7376f26a18ad2fba64074d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft375-author-04",
+            "digest": "sha256:c5a9deeb8195b49cd80e683474f1a721444eec209f4ca8a40896b48cf9aa9f5f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,462\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3650,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: build-entry staleness: the implement-spec take rule dropped the writes-landed and map-sources rows\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e1ef5087ff392eab38fce2ef5728b139655802b3",
+          "requirement": "take-rule",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the old completion-plan-only take-rule sentence in .agents/commands/bench-implement-spec.md, and record that the docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft375-author-04",
+              "digest": "sha256:c5a9deeb8195b49cd80e683474f1a721444eec209f4ca8a40896b48cf9aa9f5f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,462\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3650,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: build-entry staleness: the implement-spec take rule dropped the writes-landed and map-sources rows\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
