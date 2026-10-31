@@ -1,7 +1,7 @@
 # Read a changed pinned row at its publishing location
 
 Blocked by: none
-Writes: internal/commitment/delivery.go, internal/commitment/repository/sources.go, internal/commitment/repository/candidate.go, internal/commitment/repository/repository.go, internal/commitment/repository/closure.go, internal/bounds/classify.go, internal/roadmap/retro.go, internal/commitment/pinned_row_test.go (new), internal/commitment/pinned_row_hostile_test.go (new), internal/commitment/head_binding_test.go, internal/commit/commitment_test.go, internal/commitment/repository/head_binding_test.go, internal/conformance/testdata/fixture-skip-classes.json, tests/canary/package-core-guard/bounds-classify-limit-restated, tests/canary/package-core-guard/bounds-read-limit-restated, CHANGELOG.md, .bench/commitment.json
+Writes: internal/commitment/delivery.go, internal/commitment/repository/sources.go, internal/commitment/repository/candidate.go, internal/commitment/repository/repository.go, internal/commitment/repository/closure.go, internal/bounds/classify.go, internal/roadmap/retro.go, internal/commitment/pinned_row_test.go (new), internal/commitment/pinned_row_hostile_test.go (new), internal/commitment/head_binding_test.go, internal/commit/commitment_test.go, internal/commitment/repository/head_binding_test.go, internal/conformance/testdata/fixture-skip-classes.json, tests/canary/package-core-guard/bounds-classify-limit-restated, tests/canary/package-core-guard/bounds-read-limit-restated, CHANGELOG.md, .bench/commitment.json, internal/commitment/commitmenttest/repo.go
 Covers: PE01, PE02, PE03, PE04, PE05, PE06, PE07, PE08, PE09, PE10, PE11, PE12, PE13, PE14, PE15, PE16, PE17, PE18, PE19, PE20, PE21, PE22, PE23, PE24, PE25, PE26, PE27, PE28, PE29
 
 ## What to build

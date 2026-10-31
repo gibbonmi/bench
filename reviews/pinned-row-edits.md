@@ -196,7 +196,77 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "pe-c1-standards-1",
+          "performer": "ft437-review-standards-01",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e2273e3108a461ca260be080473ed19a4529566",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft437-review-standards-01",
+            "digest": "sha256:67208fd953f14370a81a4fc92eef22182228c4c45164641de924cc056af6f566",
+            "excerpt": "Standards axis, PE-C1, opus/medium. 4 findings.\nS1 (7, auto-fix): internal/commitment/repository/head_binding_test.go:168-177 pastes the pinnedRows fixture of internal/commitment/pinned_row_test.go:22-31; AGENTS.md one source per fact (fixture harness pasted N times). Move it into commitmenttest.\nS2 (6, auto-fix): the \"commitment source %q changed from X to Y\" expectation is built three times (pinned_row_test.go:45-48, commit/commitment_test.go:239, repository/head_binding_test.go:165); head_binding_test.go already holds changedStage at :59-62.\nS3 (5, advice): readTree(..., checkout bool) flag argument with bare literals (sources.go:148, candidate.go:211).\nS4 (3, advice): two link walks in internal/bounds/classify.go:151-167 and :170-185.\n"
+          },
+          "axis": "Standards",
+          "base": "fba398122a3165ab735ed509aa85b05136ea716b",
+          "tip": "5fb78f311a1458299ddb06dd07105a52e28e026e",
+          "finding_ids": [
+            "S1",
+            "S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pe-c1-spec-1",
+          "performer": "ft437-review-spec-01",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e2273e3108a461ca260be080473ed19a4529566",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft437-review-spec-01",
+            "digest": "sha256:fa17c2c48d96cc4f01ea2cbb56361b243ba85002e2a50a253e099fccc898314b",
+            "excerpt": "Spec axis, PE-C1, opus/medium. 3 findings. All 29 rows map to code and tests; read-location table matches readTree; PE26 and PE29 hold.\nP1 (9, auto-fix): PE21, PE22, PE25 why-clauses are false: under a transition protectedCandidate re-reads the candidate sources and refuses with the same changed-from text, wrapped as \"candidate changes protected commitment\". The author's negative assertion (commit/commitment_test.go:120-122) is within the acceptance.\nP2 (7, auto-fix): the PE25 landing subtest checks only strings.Contains; a skipped landing read stays green. Mirror the negative assertion.\nP3 (6, auto-fix): spec \"No change reaches ... protectedCandidate\" is false: candidate.go edits its signature for sourceRead.\n"
+          },
+          "axis": "Spec",
+          "base": "fba398122a3165ab735ed509aa85b05136ea716b",
+          "tip": "5fb78f311a1458299ddb06dd07105a52e28e026e",
+          "finding_ids": [
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "pe-c1-coverage-1",
+          "performer": "ft437-review-coverage-01",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3e2273e3108a461ca260be080473ed19a4529566",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft437-review-coverage-01",
+            "digest": "sha256:98273e2a2c0000a3cdc13d4a5ce2e23e451f200678fc33f6c87983ba27bcfdd5",
+            "excerpt": "Coverage axis, PE-C1, opus/medium. 3 findings, none blocking. Hostile checklist fully decided; identity parity pinned by PE15/PE16; refusals write nothing. No test or probe run.\nC1 (4, auto-fix): internal/commitment/delivery.go:207 ChangedSource: removing the ID half or the Path half survives; no test moves an id to a new path or binds a new id at a current path.\nC2 (7 survive, low impact, advice): sources.go:66-72 refusal detail checked only by prefix.\nC3 (6, advice): classify.go:159 non-NotExist Lstat error branch untested; plan still refuses.\n"
+          },
+          "axis": "Coverage",
+          "base": "fba398122a3165ab735ed509aa85b05136ea716b",
+          "tip": "5fb78f311a1458299ddb06dd07105a52e28e026e",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -208,3 +278,35 @@
   }
 }
 ```
+
+## PE-C1 review round 1
+
+The three axes ran on opus at medium effort over `fba398122..5fb78f311`. The repair allowance of PE-C1 is two cycles, and this round consumes none. Cycle 1 repairs the accepted findings below.
+
+## Standards
+
+Findings: 2 accepted. Worst issue: S1.
+
+- S1, auto-fix, confidence 7: `internal/commitment/repository/head_binding_test.go:168` pastes the `pinnedRows` fixture of `internal/commitment/pinned_row_test.go:22`. The AGENTS.md one-source rule names a fixture harness pasted N times. Move the fixture into `commitmenttest` and call it from both packages.
+- S2, auto-fix, confidence 6: three tests build the `changed from` expectation each in their own way. The repository test file already holds the `changedStage` builder. Build the expectation in one place.
+
+## Spec
+
+Findings: 3 accepted. Worst issue: P1.
+
+- P1, auto-fix, confidence 9: the catch clauses of PE21, PE22, and PE25 are false. Under a transition, `protectedCandidate` refuses the same input with the same `changed from` text and wraps it as `candidate changes protected commitment`. The clauses must name the face check as the catch.
+- P2, auto-fix, confidence 7: the PE25 landing subtest checks only the substring. Add the negative assertion of the face, as the commit rows do.
+- P3, auto-fix, confidence 6: the sentence "No change reaches ... `protectedCandidate`" is false, because the change edits its signature. State that only the signature changes.
+
+## Coverage
+
+Findings: 1 accepted. Worst issue: C1.
+
+- C1, auto-fix, confidence 4: no test makes a mutation of either half of the id-and-path match of `ChangedSource` fail (`internal/commitment/delivery.go:207`). Add one subtest that moves an id to a new path and one that binds a new id at a current path. Each subtest must make plan keep its old read location. This is the one hardening cycle of PE-C1.
+
+## Advice
+
+- Standards S3: `readTree` takes a bare bool flag, and `false` needs a comment at one caller. A named mode would read better.
+- Standards S4: `internal/bounds` holds two link walks with the same body. The spec decides to keep the absolute walk and the root-relative walk separate.
+- Coverage C2: the hostile-file refusals match only the `refused:` prefix.
+- Coverage C3: no test reaches the `Lstat` error branch that is not a missing file, and the plan still refuses.
