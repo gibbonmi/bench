@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:71c5dc96a08e5da08f8ca56fa3b527a9824b8004342e8eb46bfabc6b696c6ed9",
+  "plan_digest": "sha256:8a9529c21a16e96ce758b339f70fe4c83f403db2156cb2275ed9004fc344fb0b",
   "implementation_session": "",
   "chunks": [
     {
@@ -1683,6 +1683,21 @@
           ]
         }
       ]
+    },
+    {
+      "id": "ER-C5",
+      "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+      "tip": "ed206c85019277839d10e1540bc4258d4546bbdc",
+      "plan_digest": "sha256:8a9529c21a16e96ce758b339f70fe4c83f403db2156cb2275ed9004fc344fb0b",
+      "source_digest": "eb7e12eab1f2c44c53d27d80448a0d860da4ab3c",
+      "acceptance_rows": [
+        "ER47",
+        "ER41",
+        "ER42",
+        "ER43"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1969,6 +1984,24 @@
     {
       "from": "sha256:7afb8bed4d5af651fec330a4ebe3a9cd2b86714ec381c96b06fc9fa753ec389e",
       "to": "sha256:71c5dc96a08e5da08f8ca56fa3b527a9824b8004342e8eb46bfabc6b696c6ed9",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:71c5dc96a08e5da08f8ca56fa3b527a9824b8004342e8eb46bfabc6b696c6ed9",
+      "to": "sha256:8a9529c21a16e96ce758b339f70fe4c83f403db2156cb2275ed9004fc344fb0b",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
