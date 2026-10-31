@@ -3,6 +3,8 @@ package coverage
 import (
 	"bytes"
 	"encoding/json"
+
+	"github.com/gibbonmi/bench/internal/markdown"
 )
 
 // StorySchema names the one versioned serialization of a story projection.
@@ -18,20 +20,28 @@ type storyPayload struct {
 }
 
 type storyRecord struct {
-	Number int    `json:"number"`
-	Text   string `json:"text"`
-	Span   Span   `json:"span"`
+	Number int        `json:"number"`
+	Text   string     `json:"text"`
+	Span   spanRecord `json:"span"`
 }
 
 // rowRecord is one serialized row. A legacy schema without a row column omits the id.
 type rowRecord struct {
-	ID        string `json:"id,omitempty"`
-	Stories   []int  `json:"stories"`
-	Behavior  string `json:"behavior"`
-	SeamCell  string `json:"seam_cell"`
-	Rationale string `json:"rationale"`
-	Span      Span   `json:"span"`
+	ID        string     `json:"id,omitempty"`
+	Stories   []int      `json:"stories"`
+	Behavior  string     `json:"behavior"`
+	SeamCell  string     `json:"seam_cell"`
+	Rationale string     `json:"rationale"`
+	Span      spanRecord `json:"span"`
 }
+
+// spanRecord is one serialized source span.
+type spanRecord struct {
+	Start int `json:"start"`
+	End   int `json:"end"`
+}
+
+func record(span markdown.Span) spanRecord { return spanRecord{Start: span.Start, End: span.End} }
 
 // Encode answers the StorySchema serialization of the projection: one JSON object with the
 // story's exact text, its matching rows in authored order, and their original source spans.
@@ -39,10 +49,10 @@ type rowRecord struct {
 func (p StoryProjection) Encode() []byte {
 	payload := storyPayload{Schema: StorySchema, Present: p.Present, Rows: []rowRecord{}}
 	if p.Present {
-		payload.Story = &storyRecord{Number: p.Story.Number, Text: p.Story.Text, Span: p.Story.Span}
+		payload.Story = &storyRecord{Number: p.Story.Number, Text: p.Story.Text, Span: record(p.Story.Span)}
 	}
 	for _, row := range p.Rows {
-		payload.Rows = append(payload.Rows, rowRecord{ID: row.ID, Stories: row.Stories, Behavior: row.Behavior, SeamCell: row.Seam, Rationale: row.Rationale, Span: row.Span})
+		payload.Rows = append(payload.Rows, rowRecord{ID: row.ID, Stories: row.Stories, Behavior: row.Behavior, SeamCell: row.Seam, Rationale: row.Rationale, Span: record(row.Span)})
 	}
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)

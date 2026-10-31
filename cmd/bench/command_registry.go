@@ -52,11 +52,11 @@ const (
 )
 
 type helpRow struct {
-	Order       int
-	Prefix      string
-	Suffix      string
-	Gap         int
-	Description string
+	Order          int
+	Prefix, Suffix string
+	Child          string // the child form that the row advertises, which sets its tree scope
+	Gap            int
+	Description    string
 }
 
 type commandInventory struct {
@@ -120,12 +120,12 @@ const (
 )
 
 type commandDefinition struct {
-	Name           string
-	AXI            commandAXIDisposition
-	Inventory      commandInventory
-	Bound          boundDisposition
-	Scope          treeScope
-	UntargetedForm string // the one form of a tree-scoped definition that takes no tree target
+	Name        string
+	AXI         commandAXIDisposition
+	Inventory   commandInventory
+	Bound       boundDisposition
+	Scope       treeScope
+	ChildScopes map[string]treeScope // the scope of each child form that differs from Scope
 	// Leaves is the family table of a command whose first argument names a leaf. Each
 	// leaf declares its own bound disposition on its row. The dispatcher and the bound
 	// both read this one table, so no family runs a leaf that the bound does not see.

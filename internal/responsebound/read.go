@@ -48,6 +48,9 @@ type ReadRequest struct {
 	Command []string
 	// Kind names the selection kind, and Selection is the selector's identity within it.
 	Kind, Selection string
+	// Projection names the versioned serialization that the payload holds, or is empty for
+	// a payload of source bytes. A cursor from another projection refuses.
+	Projection string
 	// Scope names the repository or worktree identity, and Path the resolved path.
 	Scope, Path string
 	// Digest is the SHA-256 of the complete source bytes, and SourceSize is their count.
@@ -259,11 +262,11 @@ func DecodeContent(encoding, cell string) ([]byte, error) {
 	return nil, fmt.Errorf("unknown page encoding %q", encoding)
 }
 
-// identity hashes the length-framed schema, scope, path, selection, and complete-source
-// digest. It is a reader identity, not an evidence digest.
+// identity hashes the length-framed schema, scope, path, selection, projection, and
+// complete-source digest. It is a reader identity, not an evidence digest.
 func (r ReadRequest) identity() string {
 	hash := sha256.New()
-	for _, field := range []string{readSchema, r.Scope, r.Path, r.Kind, r.Selection, hex.EncodeToString(r.Digest[:])} {
+	for _, field := range []string{readSchema, r.Scope, r.Path, r.Kind, r.Selection, r.Projection, hex.EncodeToString(r.Digest[:])} {
 		fmt.Fprintf(hash, "%d:%s,", len(field), field)
 	}
 	return hex.EncodeToString(hash.Sum(nil))

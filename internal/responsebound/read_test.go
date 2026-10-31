@@ -143,6 +143,7 @@ func TestExactPageProtocol(t *testing.T) {
 		want   string
 	}{
 		{"changed source", 0, strings.Repeat("0", 64), readFrame, "source changed since the cursor"},
+		{"changed projection", 0, token, readFrame, "source changed since the cursor"},
 		{"offset at the end", 6, token, readFrame, "cursor out of range"},
 		{"offset past the end", 7, token, readFrame, "cursor out of range"},
 		{"negative offset", -1, token, readFrame, "cursor out of range"},
@@ -152,6 +153,9 @@ func TestExactPageProtocol(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			request := pageRequest(tc.frame, payload)
 			request.Offset, request.Token, request.Continued = tc.offset, tc.token, true
+			if tc.name == "changed projection" {
+				request.Projection = "bench-other-projection/1"
+			}
 			page, err := PageRead(request)
 			var refusal *ReadRefusal
 			if !errors.As(err, &refusal) || refusal.Kind != tc.want || page.Output != "" {
@@ -169,6 +173,7 @@ func TestExactPageProtocol(t *testing.T) {
 		}{
 			{"valid selection", strings.Repeat("é😀", 40), "invalid cursor"},
 			{"invalid selection", strings.Repeat("é😀", 40) + "\xff", ""},
+			{"valid selection with an authored replacement character", strings.Repeat("é😀", 40) + "\xef\xbf\xbd", "invalid cursor"},
 		} {
 			request := pageRequest(readFrame, []byte(tc.payload))
 			request.Offset, request.Token, request.Continued = int64(len("é😀")+1), request.identity(), true

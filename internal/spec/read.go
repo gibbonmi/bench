@@ -11,10 +11,11 @@ import (
 )
 
 // ShowSubcommand names the show child. SectionFlag selects one literal visible H2 title or
-// one shortcut, and `bench read --section` takes the same flag. StoriesShortcut selects the User stories
-// section, StatusShortcut selects the raw Status: line that the metadata owner chooses, and
-// CoverageShortcut selects the accepted coverage map that the coverage owner bounds. StoryFlag
-// selects one numbered story with its typed coverage rows, which the coverage owner projects.
+// one shortcut, and `bench read --section` takes the same flag. StoriesShortcut selects the
+// User stories section, StatusShortcut selects the raw Status: line that the metadata owner
+// chooses, and CoverageShortcut selects the accepted coverage map that the coverage owner
+// bounds. StoryFlag selects one numbered story with its typed coverage rows, which the
+// coverage owner projects.
 const (
 	ShowSubcommand   = "show"
 	SectionFlag      = "--section"
@@ -104,7 +105,7 @@ func Section(content []byte, title string) (Selection, error) {
 	selection := Selection{Kind: KindSection, Selector: title}
 	doc := markdown.Read(string(content))
 	if doc.Fault != nil {
-		return Selection{}, fmt.Errorf("%w: the Markdown block that opens on line %d is unterminated", ErrSelection, doc.Fault.Line)
+		return Selection{}, fmt.Errorf("%w: %s", ErrSelection, FaultReason(doc.Fault))
 	}
 	matches, open := 0, false
 	for _, line := range doc.Lines {
@@ -124,6 +125,12 @@ func Section(content []byte, title string) (Selection, error) {
 	}
 	selection.Present = matches == 1
 	return selection, nil
+}
+
+// FaultReason answers the refusal reason of a Markdown fault. A fault leaves the rest of the
+// content unread, so every exact selection of the spec refuses with this reason.
+func FaultReason(fault *markdown.Fault) string {
+	return fmt.Sprintf("the Markdown block that opens on line %d is unterminated", fault.Line)
 }
 
 // physicalLineEnd answers the offset after the physical line that starts at start, its

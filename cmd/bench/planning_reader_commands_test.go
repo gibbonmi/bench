@@ -206,8 +206,8 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 }
 
 // TestPlanningReaderHelpAndRefusals grades the cursor grammar in bounded help, the usage and
-// operational refusals, and the registered repository-scoped route of `bench read`, whose
-// grammar takes no tree target.
+// operational refusals, and the registered repository-scoped routes of `bench read` and
+// `bench spec show`, whose grammars take no tree target and print no tree row.
 func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	root := newAXIEnvelopeRepo(t)
 	writeAXIFixture(t, filepath.Join(root, "page.txt"), strings.Repeat("page text\n", 600))
@@ -223,16 +223,25 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 	writeAXIFixture(t, filepath.Join(root, "specs", "mapped", "spec.md"), "# Mapped\n\n## User stories\n\n1. One.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| MP1 | 1 | A behavior | a seam | a reason |\n")
 	writeAXIFixture(t, filepath.Join(root, "specs", "repeated", "spec.md"), "# Repeated\n\n## User stories\n\n1. One.\n1. Again.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| RP1 | 1 | A behavior | a seam | a reason |\n")
 	writeAXIFixture(t, filepath.Join(root, "specs", "malformed", "spec.md"), "# Malformed\n\n## User stories\n\n1. One.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| ML1 | 7 | A behavior | a seam | a reason |\n")
-	// Every absent selection is one terminal page with present false, no content, and no
-	// successor.
-	for _, argv := range [][]string{
-		{"read", "dup.md", "--section", "Missing"},
-		{"spec", "show", "plain", "--section", "stories"},
-		{"spec", "show", "plain", "--section", "status"},
-		{"spec", "show", "plain", "--section", "coverage"},
-		{"spec", "show", "plain", "--story", "1"},
-		{"spec", "show", "mapped", "--story", "2"},
+	writeAXIFixture(t, filepath.Join(root, "specs", "fenced", "spec.md"), "# Fenced\n\n## User stories\n\n1. One.\n\n```text\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| FN1 | 1 | A behavior | a seam | a reason |\n")
+	writeAXIFixture(t, filepath.Join(root, "specs", "dup", "spec.md"), "# Dup\n\n## Dup\na\n## Dup\nb\n")
+	const invalidStories = "## User stories\n\n1. One \xff story.\n\n### Acceptance coverage map\n\n| row | story | behavior | seam | why it catches the failure |\n| --- | --- | --- | --- | --- |\n| IV1 | 1 | A behavior | a seam | a reason |\n"
+	writeAXIFixture(t, filepath.Join(root, "specs", "invalid", "spec.md"), "# Invalid\n\n"+invalidStories)
+	writeAXIFixture(t, filepath.Join(filepath.Dir(root), "outside", "spec.md"), "# Outside\n")
+	// Every absent selection is one terminal page of its selection kind with present false, no
+	// content, and no successor.
+	for _, tc := range []struct {
+		argv []string
+		kind string
+	}{
+		{[]string{"read", "dup.md", "--section", "Missing"}, "section"},
+		{[]string{"spec", "show", "plain", "--section", "stories"}, "stories"},
+		{[]string{"spec", "show", "plain", "--section", "status"}, "status"},
+		{[]string{"spec", "show", "plain", "--section", "coverage"}, "coverage"},
+		{[]string{"spec", "show", "plain", "--story", "1"}, "story"},
+		{[]string{"spec", "show", "mapped", "--story", "2"}, "story"},
 	} {
+		argv := tc.argv
 		result := runAXICommandAt(t, root, argv)
 		document, err := axitest.DecodeDocument(result.stdout)
 		if result.code != 0 || err != nil {
@@ -241,9 +250,14 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		rows, _ := document.Rows("page")
 		contents, _ := document.Rows("content")
 		actions, _ := document.HelpActions()
-		if len(rows) != 1 || rows[0].(map[string]any)["present"] != false || rows[0].(map[string]any)["complete"] != true || len(contents) != 0 || len(actions) != 0 {
-			t.Fatalf("%q = %q, want one present-false terminal page with no content", argv, result.stdout)
+		if len(rows) != 1 || rows[0].(map[string]any)["kind"] != tc.kind || rows[0].(map[string]any)["present"] != false || rows[0].(map[string]any)["complete"] != true || len(contents) != 0 || len(actions) != 0 {
+			t.Fatalf("%q = %q, want one present-false terminal %s page with no content", argv, result.stdout, tc.kind)
 		}
+	}
+	// The spec reader refuses a spec that holds invalid UTF-8, and the exact bytes of its
+	// stories stay readable through the literal section of the file reader.
+	if got, _ := readPages(t, root, []string{"read", "specs/invalid/spec.md", "--section", "User stories"}); string(got) != invalidStories {
+		t.Fatalf("invalid stories section = %q, want the exact authored bytes", got)
 	}
 	if got, _ := readPages(t, root, []string{"spec", "show", "mapped", "--section", "coverage"}); !strings.HasPrefix(string(got), "### Acceptance coverage map\n") || !strings.HasSuffix(string(got), "| MP1 | 1 | A behavior | a seam | a reason |\n") {
 		t.Fatalf("coverage shortcut = %q, want the authored map heading through its table", got)
@@ -300,6 +314,11 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		{"spec show repeated story", []string{"spec", "show", "repeated", "--story", "1"}, 1, "error: story unavailable"},
 		{"spec show malformed map story", []string{"spec", "show", "malformed", "--story", "1"}, 1, "error: coverage unavailable"},
 		{"spec show malformed map", []string{"spec", "show", "malformed", "--section", "coverage"}, 1, "error: coverage unavailable"},
+		{"spec show fault story", []string{"spec", "show", "fenced", "--story", "1"}, 1, "error: coverage unavailable"},
+		{"spec show fault map", []string{"spec", "show", "fenced", "--section", "coverage"}, 1, "error: coverage unavailable"},
+		{"spec show repeated heading", []string{"spec", "show", "dup", "--section", "Dup"}, 1, "error: section unavailable"},
+		{"spec show invalid story", []string{"spec", "show", "invalid", "--story", "1"}, 1, "error: spec not readable"},
+		{"spec show outside the repository", []string{"spec", "show", "../outside/spec.md"}, 1, "error: ../outside/spec.md is outside the repository"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			result := runAXICommandAt(t, root, tc.argv)
@@ -317,6 +336,10 @@ func TestPlanningReaderHelpAndRefusals(t *testing.T) {
 		}
 		if !slices.Contains(axiRegistryMemberNames(t), "read") {
 			t.Fatal("read is no AXI query member")
+		}
+		stdout.Reset()
+		if code := (Command{Stdout: &stdout}).Run([]string{"spec", "show", "plain"}); code != 0 || !strings.HasPrefix(stdout.String(), "page[1]{") {
+			t.Fatalf("spec show = %q exit %d, want the page block first and no tree row", stdout.String(), code)
 		}
 		if got, _ := readPages(t, root, []string{"read", "page.txt", "--lines", "2:3"}); string(got) != "page text\npage text\n" {
 			t.Fatalf("line range 2:3 = %q, want two physical lines with their terminators", got)

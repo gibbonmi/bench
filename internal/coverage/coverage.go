@@ -54,7 +54,8 @@ var (
 	// storyPartRe matches one comma-separated part of a story reference. storyRefRe
 	// matches the whole comma list. Both compose storyPartPattern, so they cannot
 	// disagree about what a part looks like. Every trimmed part storyRefRe accepts is
-	// one storyPartRe matches, which is why the submatch below needs no nil check.
+	// one storyPartRe matches, which is why storyReference reads the submatch with no nil
+	// check.
 	storyPartRe = regexp.MustCompile(`^` + storyPartPattern + `$`)
 	storyRefRe  = regexp.MustCompile(`^` + storyPartPattern + `([ \t]*,[ \t]*` + storyPartPattern + `)*$`)
 )

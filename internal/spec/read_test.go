@@ -56,7 +56,7 @@ func TestExactMarkdownSelections(t *testing.T) {
 
 // TestExactSpecSelections grades the show shortcuts: the whole file, the actual User stories
 // section, and the raw Status: line that the metadata owner selects, where no status differs
-// from an empty status.
+// from an empty status, and the refusal of the coverage shortcut that another owner bounds.
 func TestExactSpecSelections(t *testing.T) {
 	const live = "# Spec\n\nStatus: draft\nStatus: staged\r\n```text\nStatus: fenced\n```\n\n## User stories\n\nLine: opus / medium.\n\n### Group\n\n1. As an agent, I want one story.\n\n## Implementation decisions\n\nnone\n"
 	for name, c := range map[string]selectionCase{
@@ -68,6 +68,9 @@ func TestExactSpecSelections(t *testing.T) {
 		"status":       {content: live, selector: StatusShortcut, want: "Status: staged\r\n"},
 		"empty status": {content: "# Spec\nStatus:", selector: StatusShortcut, want: "Status:"},
 		"no status":    {content: "# Spec\n```\nStatus: fenced\n```\n", selector: StatusShortcut, absent: true},
+		// The coverage owner bounds the coverage shortcut, so a literal Coverage title never
+		// answers it here.
+		"coverage": {content: "# Spec\n\n## coverage\n\nbody\n", selector: CoverageShortcut, refused: true},
 	} {
 		selection, err := Show([]byte(c.content), c.selector)
 		gradeSelection(t, name, c, selection, err)

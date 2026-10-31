@@ -1,6 +1,7 @@
-// Package spec owns spec-file addressing and the spec-lifecycle operations. Retire
-// implements the `bench spec retire <slug>` deletion, history reports the commits that
-// retired or deleted a spec, and widen adds paths to one ticket's Writes: line. Resolve
+// Package spec owns spec-file addressing and the spec-lifecycle operations. Show selects the
+// exact spec bytes that `bench spec show` pages. Retire implements the `bench spec retire
+// <slug>` deletion, history reports the commits that retired or deleted a spec, and widen
+// adds paths to one ticket's Writes: line. Resolve
 // is the one source of the spec-argument convention: path-first, then a
 // specs/<slug>/spec.md fallback. `bench coverage`, retire, and history resolve their
 // argument through it.

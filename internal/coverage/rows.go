@@ -99,16 +99,16 @@ func schemaFor(header string) schema {
 }
 
 type dataRow struct {
-	cells []string // one map row's cells, trimmed, exactly as many as were written
-	line  int      // the 1-based spec line the row sits on
-	span  Span     // the row's original bytes, without the line terminator
+	cells []string      // one map row's cells, trimmed, exactly as many as were written
+	line  int           // the 1-based spec line the row sits on
+	span  markdown.Span // the row's original bytes, without the line terminator
 }
 
 // storyLine is one numbered story line of the User stories section, in authored order. A
 // repeated number keeps each occurrence, so a selection can refuse it as ambiguous.
 type storyLine struct {
 	number int
-	span   Span // the story's original bytes, without the line terminator
+	span   markdown.Span // the story's original bytes, without the line terminator
 }
 
 // parsed is the result of one scan of a spec. It records whether the scan saw the
@@ -126,7 +126,9 @@ type parsed struct {
 	dataRows   []dataRow
 	// mapSpan is the original bytes of the map: its heading line through the byte before the
 	// heading that ends it, or through the end of the content.
-	mapSpan Span
+	mapSpan markdown.Span
+	// fault is the block reader's fault, which leaves the rest of the content unread.
+	fault *markdown.Fault
 }
 
 // projection is the descriptor Rows reads cells through. A header matching no
@@ -143,7 +145,9 @@ func (p parsed) projection() schema {
 func parse(content []byte) parsed {
 	var p parsed
 	inMap := false
-	for _, line := range markdown.Read(string(content)).Lines {
+	doc := markdown.Read(string(content))
+	p.fault = doc.Fault
+	for _, line := range doc.Lines {
 		text := line.Raw
 		if text == historicalMarker {
 			p.historical = true
@@ -151,7 +155,7 @@ func parse(content []byte) parsed {
 		if line.Class != markdown.Body {
 			continue
 		}
-		raw := Span{Start: line.Offset, End: line.Offset + len(text)}
+		raw := markdown.Span{Start: line.Offset, End: line.Offset + len(text)}
 		inStories := line.Section == specref.StoriesSection
 		if inStories && line.Heading {
 			continue
@@ -180,7 +184,7 @@ func parse(content []byte) parsed {
 		if text == "### Acceptance coverage map" && !p.seen {
 			p.seen = true
 			inMap = true
-			p.mapSpan = Span{Start: line.Offset, End: len(content)}
+			p.mapSpan = markdown.Span{Start: line.Offset, End: len(content)}
 			continue
 		}
 		if inMap && mapEndRe.MatchString(text) {
@@ -193,7 +197,7 @@ func parse(content []byte) parsed {
 	return p
 }
 
-func (p *parsed) processMapLine(raw string, lineNum int, span Span) {
+func (p *parsed) processMapLine(raw string, lineNum int, span markdown.Span) {
 	cells, ok := pipeCells(raw)
 	if !ok {
 		return

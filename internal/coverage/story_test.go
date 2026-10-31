@@ -23,8 +23,9 @@ const (
 
 // TestExactStoryProjection grades the coverage owner's typed obligations: the accepted map
 // span, a story's exact text and every matching typed row in authored order with its source
-// span, the refusals of a malformed map and of a repeated selected story number, the absent
-// story, and the versioned serialization.
+// span, a repeated member that joins once, the refusals of a malformed map, a Markdown fault,
+// invalid UTF-8, and a repeated selected story number, the absent story, and the versioned
+// serialization.
 func TestExactStoryProjection(t *testing.T) {
 	document, err := Describe([]byte(storySpec))
 	if err != nil {
@@ -105,11 +106,49 @@ func TestExactStoryProjection(t *testing.T) {
 		t.Fatalf("unrepeated story 2 = %+v, %v; want present", story, err)
 	}
 
+	// A row whose story cell repeats a member joins the projection once.
+	member := strings.Replace(storySpec, "| ST1 | 1 |", "| ST1 | 1, 1 |", 1)
+	member = strings.Replace(member, "| ST3 | 1-2 |", "| ST3 | 1, 1-2 |", 1)
+	document, err = Describe([]byte(member))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if story, err := document.Story(1); err != nil || len(story.Rows) != 2 || story.Rows[0].ID != "ST1" || story.Rows[1].ID != "ST3" {
+		t.Fatalf("story 1 with repeated members = %+v, %v; want ST1 and ST3 once each", story, err)
+	}
+	if violations := Check(parse([]byte(member))); len(violations) != 0 {
+		t.Fatalf("Check of repeated members = %v, want the existing pass", violations)
+	}
+
+	// The projection carries text, so invalid UTF-8 in the story or in a cell of a matching row
+	// refuses, and the other stories still project.
+	for name, c := range map[string]struct {
+		content string
+		other   int
+	}{
+		"invalid story text": {strings.Replace(storySpec, "I want one story.", "I want one \xff story.", 1), 2},
+		"invalid row cell":   {strings.Replace(storySpec, "The first behavior", "The first \xff behavior", 1), 3},
+	} {
+		document, err := Describe([]byte(c.content))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := document.Story(1); !errors.Is(err, ErrRefused) || !strings.Contains(err.Error(), "invalid UTF-8") {
+			t.Errorf("%s: story 1 = %v, want an invalid UTF-8 refusal", name, err)
+		}
+		if story, err := document.Story(c.other); err != nil || !story.Present {
+			t.Errorf("%s: story %d = %+v, %v; want present", name, c.other, story, err)
+		}
+	}
+
 	for name, content := range map[string]string{
 		"unknown story":    strings.Replace(storySpec, "| ST4 | 3 |", "| ST4 | 7 |", 1),
 		"short row":        strings.Replace(storySpec, " | planned TestC in c_test.go |", " |", 1),
 		"no header":        strings.Replace(storySpec, "| row | story |", "| rows | story |", 1),
 		"historical fault": "<!-- coverage-map: historical -->\n" + strings.Replace(storySpec, "| ST4 | 3 |", "| ST4 | 7 |", 1),
+		// A Markdown fault leaves the rest of the spec unread, so no partial projection holds.
+		"fence before the map": strings.Replace(storySpec, "## Implementation decisions\n", "## Implementation decisions\n\n```text\n", 1),
+		"fence inside the map": strings.Replace(storySpec, "the third failure. |\n\n", "the third failure. |\n\n```text\n", 1),
 	} {
 		if _, err := Describe([]byte(content)); !errors.Is(err, ErrRefused) {
 			t.Errorf("%s: Describe = %v, want a validator refusal", name, err)

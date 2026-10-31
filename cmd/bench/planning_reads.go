@@ -41,9 +41,21 @@ var readGrammar = usage.Grammar{
 	},
 }
 
-// readUsageRefusal renders a usage refusal of a parsed `bench read` call.
-func readUsageRefusal(reason string) (string, int) {
-	return readGrammar.Help + " (" + reason + ")\n", 2
+// usageRefusal renders a usage refusal of one parsed exact-reader call: the grammar's help
+// line with the reason, at exit 2.
+func usageRefusal(grammar usage.Grammar, reason string) (string, int) {
+	return grammar.Help + " (" + reason + ")\n", 2
+}
+
+// repositoryPath answers the repository-relative path that operand names from the caller's
+// directory, or a refusal with hint for a path outside the repository.
+func repositoryPath(root, operand, hint string) (string, string, bool) {
+	cwd, _ := os.Getwd()
+	_, path := canonicalpath.Operand(root, cwd, operand)
+	if !filepath.IsLocal(path) {
+		return path, toon.Errorf(path+" is outside the repository", hint) + "\n", false
+	}
+	return path, "", true
 }
 
 // readCommand pages the exact bytes of one repository file, one physical-line range or one
@@ -57,7 +69,7 @@ func readCommand(args []string) (string, int) {
 	}
 	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
 	if err != nil {
-		return readUsageRefusal(err.Error())
+		return usageRefusal(readGrammar, err.Error())
 	}
 	_, artifact := parsed.Flags[artifactFlag]
 	lines, ranged := parsed.Flags[linesFlag]
@@ -65,14 +77,14 @@ func readCommand(args []string) (string, int) {
 	first, last := 0, 0
 	switch {
 	case sectioned && (ranged || artifact):
-		return readUsageRefusal(spec.SectionFlag + " takes neither " + linesFlag + " nor " + artifactFlag)
+		return usageRefusal(readGrammar, spec.SectionFlag+" takes neither "+linesFlag+" nor "+artifactFlag)
 	case artifact && ranged:
-		return readUsageRefusal(linesFlag + " and " + artifactFlag + " are mutually exclusive")
+		return usageRefusal(readGrammar, linesFlag+" and "+artifactFlag+" are mutually exclusive")
 	case artifact && !filepath.IsAbs(parsed.Positionals[0]):
-		return readUsageRefusal(artifactFlag + " takes an absolute path")
+		return usageRefusal(readGrammar, artifactFlag+" takes an absolute path")
 	case ranged:
 		if first, last, err = responsebound.ParseLineRange(lines); err != nil {
-			return readUsageRefusal(err.Error())
+			return usageRefusal(readGrammar, err.Error())
 		}
 	}
 	root, err := git.Root()
@@ -87,11 +99,11 @@ func readCommand(args []string) (string, int) {
 	if artifact {
 		request.Kind, request.Scope, request.Path = "artifact", "", path
 	} else {
-		cwd, _ := os.Getwd()
-		_, request.Path = canonicalpath.Operand(root, cwd, parsed.Positionals[0])
-		if !filepath.IsLocal(request.Path) {
-			return toon.Errorf(request.Path+" is outside the repository", "read a repository path, or pass "+artifactFlag+" with an absolute artifact path") + "\n", 1
+		relative, refusal, local := repositoryPath(root, parsed.Positionals[0], "read a repository path, or pass "+artifactFlag+" with an absolute artifact path")
+		if !local {
+			return refusal, 1
 		}
+		request.Path = relative
 		path = filepath.Join(root, request.Path)
 	}
 	source, err := responsebound.OpenSource(path, artifact)
@@ -133,17 +145,17 @@ func specShowCommand(args []string) (string, int) {
 	}
 	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
 	if err != nil {
-		return spec.ShowGrammar.Help + " (" + err.Error() + ")\n", 2
+		return usageRefusal(spec.ShowGrammar, err.Error())
 	}
 	section, sectioned := parsed.Flags[spec.SectionFlag]
 	story, storied := parsed.Flags[spec.StoryFlag]
 	number := 0
 	switch {
 	case sectioned && storied:
-		return spec.ShowGrammar.Help + " (" + spec.SectionFlag + " and " + spec.StoryFlag + " are mutually exclusive)\n", 2
+		return usageRefusal(spec.ShowGrammar, spec.SectionFlag+" and "+spec.StoryFlag+" are mutually exclusive")
 	case storied:
 		if number, err = responsebound.ParsePositive(story); err != nil {
-			return spec.ShowGrammar.Help + " (" + spec.StoryFlag + " takes " + err.Error() + ")\n", 2
+			return usageRefusal(spec.ShowGrammar, spec.StoryFlag+" takes "+err.Error())
 		}
 	}
 	root, err := git.Root()
@@ -158,7 +170,11 @@ func specShowCommand(args []string) (string, int) {
 	if !ok {
 		return toon.Errorf("spec not found: "+strings.Join(tried, ", "), "pass a spec slug or a path to a spec markdown file") + "\n", 1
 	}
-	request := responsebound.ReadRequest{Scope: root, Path: spec.RelTo(root, resolved), Offset: offset, Token: token, Continued: continued}
+	path, refusal, local := repositoryPath(root, resolved, "pass a spec slug or a path to a spec markdown file inside the repository")
+	if !local {
+		return refusal, 1
+	}
+	request := responsebound.ReadRequest{Scope: root, Path: path, Offset: offset, Token: token, Continued: continued}
 	request.Command = append(strings.Fields(spec.ShowGrammar.Cmd)[1:], operand)
 	source, err := responsebound.OpenSource(resolved, false)
 	if err != nil {
@@ -201,7 +217,7 @@ func pageCoverage(request responsebound.ReadRequest, source *responsebound.Sourc
 		payload = projection.Encode()
 	}
 	selector := strconv.Itoa(number)
-	request.Kind, request.Selection = spec.KindStory, selector
+	request.Kind, request.Selection, request.Projection = spec.KindStory, selector, coverage.StorySchema
 	return pagePayload(request, source, projection.Present, payload, spec.StoryFlag, selector)
 }
 
