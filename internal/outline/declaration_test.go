@@ -10,7 +10,6 @@ import (
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/responsebound"
-	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // declarationSource holds each declaration family, an unattached comment, adjacent
@@ -119,11 +118,7 @@ func candidateRoutes(t *testing.T, args ...string) (string, [][]string) {
 	}
 	var routes [][]string
 	for _, action := range actions {
-		help, err := toon.Table("help", []string{"cmd", "why"}, [][]string{{action.Cmd, action.Why}})
-		if err != nil {
-			t.Fatal(err)
-		}
-		argv, err := axitest.RecoverHelpCommandArgv(help)
+		argv, err := action.Argv()
 		if err != nil || len(argv) < 2 || argv[0] != "bench" {
 			t.Fatalf("route %q: %v", action.Cmd, err)
 		}

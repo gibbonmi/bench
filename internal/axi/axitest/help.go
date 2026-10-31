@@ -37,6 +37,16 @@ func RecoverHelpCommandArgv(output string) ([]string, error) {
 	if !ok || command == "" {
 		return nil, errors.New("decoded help row has no command")
 	}
+	return shellArgv(command)
+}
+
+// Argv returns the argv that the action's rendered command expands to in a POSIX shell.
+func (a HelpAction) Argv() ([]string, error) {
+	return shellArgv(a.Cmd)
+}
+
+// shellArgv returns the argv that one rendered help command expands to in a POSIX shell.
+func shellArgv(command string) ([]string, error) {
 	recovered, err := exec.Command("sh", "-c", "set -- "+command+`; for argument do printf '%s\000' "$argument"; done`).Output()
 	if err != nil {
 		return nil, fmt.Errorf("execute decoded help command: %w", err)

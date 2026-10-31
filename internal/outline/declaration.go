@@ -25,12 +25,13 @@ const declarationKind = "declaration"
 // declared identifier. Receiver is the base type name of a method's receiver, and Pointer
 // marks a pointer receiver. Line is the 1-based line of the name. Start and End are the byte
 // offsets of the span: from the attached Doc group, or from the keyword when no Doc group is
-// attached, through the declaration End. Each name of a grouped declaration has the span of
-// the complete group.
+// attached, through the declaration End. First and Last are the 1-based lines of Start and
+// End. Each name of a grouped declaration has the span of the complete group.
 type Declaration struct {
 	Name, Receiver, Kind string
 	Pointer              bool
 	Line, Start, End     int
+	First, Last          int
 }
 
 // Qualified answers the selector spelling of the declaration: the name of a package-level
@@ -64,30 +65,31 @@ func Declarations(name string, content []byte) ([]Declaration, error) {
 				item.Kind = "method"
 				item.Receiver, item.Pointer = receiver(d.Recv.List[0].Type)
 			}
-			item.Start, item.End = span(positions, d.Doc, d)
+			item.Start, item.End, item.First, item.Last = span(positions, d.Doc, d)
 			declarations = append(declarations, item)
 		case *ast.GenDecl:
 			if d.Tok == token.IMPORT {
 				continue
 			}
-			start, end := span(positions, d.Doc, d)
+			start, end, first, last := span(positions, d.Doc, d)
 			for _, name := range specNames(d) {
-				declarations = append(declarations, Declaration{Name: name.Name, Kind: d.Tok.String(), Line: positions.Line(name.Pos()), Start: start, End: end})
+				declarations = append(declarations, Declaration{Name: name.Name, Kind: d.Tok.String(), Line: positions.Line(name.Pos()), Start: start, End: end, First: first, Last: last})
 			}
 		}
 	}
 	return declarations, nil
 }
 
-// span answers the byte offsets of decl: from its attached Doc group when it has one, and
-// otherwise from its keyword, through its End. A comment that the parser does not attach,
-// such as one that a blank line separates, stays outside.
-func span(positions *token.File, doc *ast.CommentGroup, decl ast.Decl) (int, int) {
+// span answers the byte offsets of decl, and the 1-based lines of those offsets: from its
+// attached Doc group when it has one, and otherwise from its keyword, through its End. A
+// comment that the parser does not attach, such as one that a blank line separates, stays
+// outside.
+func span(positions *token.File, doc *ast.CommentGroup, decl ast.Decl) (int, int, int, int) {
 	start := decl.Pos()
 	if doc != nil {
 		start = doc.Pos()
 	}
-	return positions.Offset(start), positions.Offset(decl.End())
+	return positions.Offset(start), positions.Offset(decl.End()), positions.Line(start), positions.Line(decl.End())
 }
 
 // specNames answers the declared names of a type, const, or var declaration in source order.
@@ -272,8 +274,8 @@ func ambiguous(root, text string, found []candidate) (string, int) {
 		rows = append(rows, []any{c.file, c.Line, c.Qualified(), c.Kind})
 		operand := fromCaller(root, c.file)
 		if shared[[2]string{c.file, c.Qualified()}] > 1 {
-			lines := fmt.Sprintf("%d:%d", lineAt(c.content, c.Start), lineAt(c.content, c.End))
-			actions = append(actions, axi.ExecutableInvocation("read the lines of this declaration", knownArguments([]string{"read", operand, "--lines", lines})...))
+			lines := responsebound.LineRange(c.First, c.Last)
+			actions = append(actions, axi.ExecutableInvocation("read the lines of this declaration", knownArguments([]string{"read", operand, responsebound.LinesFlag, lines})...))
 			continue
 		}
 		actions = append(actions, axi.ExecutableInvocation("read this declaration", knownArguments(commandArgv(operand, SymbolFlag, c.Qualified()))...))
@@ -308,11 +310,6 @@ func symbolCall[T any](positionals []string, flags map[string]string, name T, kn
 		call = append(call, known(filter))
 	}
 	return call
-}
-
-// lineAt answers the 1-based line of content that holds the byte offset.
-func lineAt(content []byte, offset int) int {
-	return bytes.Count(content[:offset], []byte("\n")) + 1
 }
 
 // commandArgv answers the outline argv after `bench`, with extra after the command name.

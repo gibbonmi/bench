@@ -15,7 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/responsebound"
 	"github.com/gibbonmi/bench/internal/responsebound/responseboundtest"
-	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -168,11 +167,7 @@ func TestExactReaderCLIReconstruction(t *testing.T) {
 			t.Fatalf("help = %v err=%v, want one route per candidate", actions, err)
 		}
 		for i, want := range []string{first, second} {
-			help, err := toon.Table("help", []string{"cmd", "why"}, [][]string{{actions[i].Cmd, actions[i].Why}})
-			if err != nil {
-				t.Fatal(err)
-			}
-			argv, err := axitest.RecoverHelpCommandArgv(help)
+			argv, err := actions[i].Argv()
 			if err != nil || len(argv) < 2 || argv[0] != "bench" {
 				t.Fatalf("route %q: %v", actions[i].Cmd, err)
 			}

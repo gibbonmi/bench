@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -105,14 +106,29 @@ func (s *Source) Unchanged() error {
 // Close releases the open file.
 func (s *Source) Close() error { return s.file.Close() }
 
-// ParseLineRange reads a `<first>:<last>` physical-line range: decimal one-based bounds with
+const (
+	// LinesFlag selects one physical-line range of a file read.
+	LinesFlag = "--lines"
+	// LineRangeUsage is the grammar of a LinesFlag value.
+	LineRangeUsage = "<first>:<last>"
+	// lineRangeSeparator separates the two bounds of a line range.
+	lineRangeSeparator = ":"
+)
+
+// LineRange formats the physical-line range first through last as the LinesFlag value that
+// ParseLineRange reads.
+func LineRange(first, last int) string {
+	return strconv.Itoa(first) + lineRangeSeparator + strconv.Itoa(last)
+}
+
+// ParseLineRange reads a LineRangeUsage physical-line range: decimal one-based bounds with
 // first no greater than last.
 func ParseLineRange(value string) (int, int, error) {
-	firstText, lastText, found := strings.Cut(value, ":")
+	firstText, lastText, found := strings.Cut(value, lineRangeSeparator)
 	first, firstErr := decimal(firstText)
 	last, lastErr := decimal(lastText)
 	if !found || firstErr != nil || lastErr != nil || first < 1 || first > last {
-		return 0, 0, fmt.Errorf("line range %q is not <first>:<last> with ordered positive bounds", value)
+		return 0, 0, fmt.Errorf("line range %q is not "+LineRangeUsage+" with ordered positive bounds", value)
 	}
 	return int(first), int(last), nil
 }

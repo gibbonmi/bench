@@ -18,14 +18,11 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-const (
-	linesFlag    = "--lines"
-	artifactFlag = "--artifact"
-)
+const artifactFlag = "--artifact"
 
 // readUsage is the one grammar of `bench read`. Its help, its root help row, and its parser
 // read this line.
-const readUsage = "bench read <path> [" + spec.SectionFlag + " <literal-H2-title> | " + linesFlag + " <first>:<last>] [" + artifactFlag + "] " + responsebound.CursorUsage
+const readUsage = "bench read <path> [" + spec.SectionFlag + " <literal-H2-title> | " + responsebound.LinesFlag + " " + responsebound.LineRangeUsage + "] [" + artifactFlag + "] " + responsebound.CursorUsage
 
 var readGrammar = usage.Grammar{
 	Cmd:     usage.CommandName(readUsage),
@@ -34,7 +31,7 @@ var readGrammar = usage.Grammar{
 	MaxArgs: 1,
 	Flags: []usage.Flag{
 		{Name: spec.SectionFlag, HasValue: true, NoEmptyValue: true},
-		{Name: linesFlag, HasValue: true, NoEmptyValue: true},
+		{Name: responsebound.LinesFlag, HasValue: true, NoEmptyValue: true},
 		{Name: artifactFlag},
 		{Name: responsebound.OffsetFlag, HasValue: true, NoEmptyValue: true},
 		{Name: responsebound.SourceFlag, HasValue: true, NoEmptyValue: true},
@@ -72,14 +69,14 @@ func readCommand(args []string) (string, int) {
 		return usageRefusal(readGrammar, err.Error())
 	}
 	_, artifact := parsed.Flags[artifactFlag]
-	lines, ranged := parsed.Flags[linesFlag]
+	lines, ranged := parsed.Flags[responsebound.LinesFlag]
 	section, sectioned := parsed.Flags[spec.SectionFlag]
 	first, last := 0, 0
 	switch {
 	case sectioned && (ranged || artifact):
-		return usageRefusal(readGrammar, spec.SectionFlag+" takes neither "+linesFlag+" nor "+artifactFlag)
+		return usageRefusal(readGrammar, spec.SectionFlag+" takes neither "+responsebound.LinesFlag+" nor "+artifactFlag)
 	case artifact && ranged:
-		return usageRefusal(readGrammar, linesFlag+" and "+artifactFlag+" are mutually exclusive")
+		return usageRefusal(readGrammar, responsebound.LinesFlag+" and "+artifactFlag+" are mutually exclusive")
 	case artifact && !filepath.IsAbs(parsed.Positionals[0]):
 		return usageRefusal(readGrammar, artifactFlag+" takes an absolute path")
 	case ranged:
@@ -120,7 +117,7 @@ func readCommand(args []string) (string, int) {
 		}
 		request.Kind, request.Selection = "lines", lines
 		request.Payload, request.Size = bytes.NewReader(selected), int64(len(selected))
-		request.Command = append(request.Command, linesFlag, lines)
+		request.Command = append(request.Command, responsebound.LinesFlag, lines)
 	case sectioned:
 		selection, err := spec.Section(source.Bytes(), section)
 		if err != nil {
