@@ -159,7 +159,7 @@ func TestGuardProjectionCensusExclusion(t *testing.T) {
 	t.Chdir(root)
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("BENCH_HOME", home)
-	raw, id, advice := followOnEnvelope(home, root)
+	raw, id := followOnEnvelope(home, root)
 	record := filepath.Join(census.Dir(home, root), id)
 	// Each form wraps the raw read, which starts `"sed ` and ends `"}}` in the envelope.
 	wrap := func(head, tail string) string {
@@ -175,7 +175,7 @@ func TestGuardProjectionCensusExclusion(t *testing.T) {
 			t.Fatalf("%s wrote a raw census record (stat error %v)", tc.name, err)
 		}
 	}
-	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{{name: "raw read", in: raw, message: advice}})
+	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{{name: "raw read", in: raw}})
 	if _, err := os.Lstat(record); err != nil {
 		t.Fatalf("raw read wrote no census record: %v", err)
 	}

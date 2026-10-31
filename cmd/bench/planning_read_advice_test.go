@@ -2,21 +2,27 @@ package main
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/census"
+	"github.com/gibbonmi/bench/internal/poolkey"
 )
 
 // TestRawReadAdvice is ER41 and ER43 through the follow-on guard entry. An eligible raw read
 // exits 0 with the native read form on stderr: a whole-file read for cat and tail, and a
 // line range for head and a simple sed line print. Stdin reads, examples, transformations,
-// other sed programs, unresolved operands, and unknown parses exit 0 with no advice. A pool
-// denial keeps its exit and its exact diagnostic. An owned read records under its verified
-// assignment, and a primary read records nothing.
+// other sed programs, unresolved and controlled operands, and unknown parses exit 0 with no
+// advice. A read whose file resolves outside the current repository, such as a pool path read
+// from the primary root, gets no advice either. A pool denial keeps its exit and its exact
+// diagnostic. An owned read records under its verified assignment, a primary read records
+// nothing, and a pool-path read keeps its pool attribution.
 func TestRawReadAdvice(t *testing.T) {
-	target := poolTarget(t)
+	home, repo, creation := censusAssignment(t, "raw-read-advice")
+	target := filepath.Join(poolkey.Pools(home), "repository", "assignment")
 	envelope := func(command string) string {
 		quoted, _ := json.Marshal(command)
 		return `{"tool_input":{"command":` + string(quoted) + `}}`
@@ -31,6 +37,20 @@ func TestRawReadAdvice(t *testing.T) {
 	if got, want := file("a b.md"), "bench read 'a b.md' "; !strings.Contains(got, want) {
 		t.Fatalf("file advice = %q, want it to name %q", got, want)
 	}
+	read := []guardEnvelopeCase{{name: "eligible read", in: envelope("cat README.md"), message: file("README.md")}}
+	t.Chdir(repo)
+	checkGuardEnvelope(t, guardBenchFollowOn, read)
+	if counts, _ := census.Counts(home, repo); len(counts) != 0 {
+		t.Fatalf("primary read counts = %v, want none", counts)
+	}
+	t.Chdir(creation.Path)
+	checkGuardEnvelope(t, guardBenchFollowOn, read)
+	if got := census.HeadBreakdown(home, repo, creation.Assignment.ID); got != "cat=1" {
+		t.Fatalf("owned read breakdown = %q, want cat=1", got)
+	}
+
+	inside := filepath.Join(repo, "README.md")
+	pooled := filepath.Join(creation.Path, "README.md")
 	cases := []struct {
 		command string
 		want    int
@@ -73,6 +93,15 @@ func TestRawReadAdvice(t *testing.T) {
 		{command: "cat notes.md | grep x"},
 		{command: "cat notes.md; ls"},
 		{command: "xargs cat"},
+		{command: "xargs cat notes.md"},
+		{command: "sed -i 3p notes.md"},
+		{command: "sed -e 3p notes.md"},
+		{command: "cat notes\u009b.md"},
+		{command: "cat notes\u0085.md"},
+		{command: "cat " + inside, message: file(inside)},
+		{command: "cat /etc/hosts"},
+		{command: "cat ../outside"},
+		{command: "cat " + pooled},
 		{command: `echo "cat notes.md"`},
 		{command: "cat 'notes.md"},
 		{command: "X=" + target + " cat notes.md", want: 2, message: benchguard.PoolReferenceMessage(target)},
@@ -82,18 +111,19 @@ func TestRawReadAdvice(t *testing.T) {
 	for _, tc := range cases {
 		rows = append(rows, guardEnvelopeCase{name: tc.command, in: envelope(tc.command), want: tc.want, message: tc.message})
 	}
-	checkGuardEnvelope(t, guardBenchFollowOn, rows)
-
-	home, repo, creation := censusAssignment(t, "raw-read-advice")
-	read := []guardEnvelopeCase{{name: "eligible read", in: envelope("cat README.md"), message: file("README.md")}}
 	t.Chdir(repo)
-	checkGuardEnvelope(t, guardBenchFollowOn, read)
-	if counts, _ := census.Counts(home, repo); len(counts) != 0 {
-		t.Fatalf("primary read counts = %v, want none", counts)
+	checkGuardEnvelope(t, guardBenchFollowOn, rows)
+	if got := census.HeadBreakdown(home, repo, creation.Assignment.ID); got != "cat=2" {
+		t.Fatalf("pool-path read breakdown = %q, want the owned read and the pool attribution, cat=2", got)
 	}
-	t.Chdir(creation.Path)
-	checkGuardEnvelope(t, guardBenchFollowOn, read)
-	if got := census.HeadBreakdown(home, repo, creation.Assignment.ID); got != "cat=1" {
-		t.Fatalf("owned read breakdown = %q, want cat=1", got)
+
+	sub := filepath.Join(repo, "sub")
+	if err := os.Mkdir(sub, 0o755); err != nil {
+		t.Fatal(err)
 	}
+	t.Chdir(sub)
+	checkGuardEnvelope(t, guardBenchFollowOn, []guardEnvelopeCase{
+		{name: "relative read from a subdirectory", in: envelope("cat notes.md"), message: file("notes.md")},
+		{name: "relative climb inside the repository", in: envelope("cat ../README.md"), message: file("../README.md")},
+	})
 }

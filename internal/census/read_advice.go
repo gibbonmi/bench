@@ -3,11 +3,12 @@ package census
 import (
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/responsebound"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
@@ -30,8 +31,9 @@ const headDefaultLines = 10
 // runs: an expansion, a substitution, a glob, a brace list, or a home prefix.
 const unresolvedOperand = "$`*?[]{}~"
 
-// sedLinePrint is the one sed program a read can print: one line, or one ordered line range.
-var sedLinePrint = regexp.MustCompile(`^([1-9][0-9]*)(?:,([1-9][0-9]*))?p$`)
+// sedLinePrint is the one sed program shape a read can print: one line number, or two line
+// numbers. The exact-reader parsers decide whether the numbers name one ordered range.
+var sedLinePrint = regexp.MustCompile(`^([0-9]+)(?:,([0-9]+))?p$`)
 
 // readForms observes the operands of each eligible read head. Each answers the file and the
 // range, and refuses every flag, operand count, and program it does not name.
@@ -76,12 +78,12 @@ func ObserveRead(command string) (Read, bool) {
 }
 
 // resolved reports whether an operand names one file as written: not empty, not a flag or
-// stdin, with no control byte and no character that the shell expands.
+// stdin, with no control character and no character that the shell expands.
 func resolved(operand string) bool {
 	if operand == "" || strings.HasPrefix(operand, "-") || strings.ContainsAny(operand, unresolvedOperand) {
 		return false
 	}
-	return !strings.ContainsFunc(operand, func(r rune) bool { return r < ' ' || r == 0x7f })
+	return sanitize.LineSafe(operand)
 }
 
 // catRead is a cat call of one named file and no flag.
@@ -110,7 +112,8 @@ func tailRead(operands []string) (Read, bool) {
 }
 
 // countedOperand reads the operands `<file>`, `-n <count> <file>`, or `-n<count> <file>`. The
-// count is a positive decimal; a signed count changes what the call prints.
+// count is a positive decimal in the exact-reader grammar; a signed count changes what the
+// call prints.
 func countedOperand(operands []string) (int, string, bool) {
 	text := ""
 	switch {
@@ -123,11 +126,12 @@ func countedOperand(operands []string) (int, string, bool) {
 	default:
 		return 0, "", false
 	}
-	count, ok := positive(text)
-	return count, operands[1], ok
+	count, err := responsebound.ParsePositive(text)
+	return count, operands[1], err == nil
 }
 
-// sedRead is a quiet sed call of one line-print program and one named file.
+// sedRead is a quiet sed call of one line-print program and one named file. Each bound is a
+// positive exact-reader decimal, and the exact-reader line-range parser grades their order.
 func sedRead(operands []string) (Read, bool) {
 	if len(operands) != 3 || operands[0] != "-n" {
 		return Read{}, false
@@ -136,24 +140,20 @@ func sedRead(operands []string) (Read, bool) {
 	if match == nil {
 		return Read{}, false
 	}
-	first, ok := positive(match[1])
-	last := first
-	if ok && match[2] != "" {
-		last, ok = positive(match[2])
+	lastText := match[2]
+	if lastText == "" {
+		lastText = match[1]
 	}
-	if !ok || last < first {
+	first, firstErr := responsebound.ParsePositive(match[1])
+	last, lastErr := responsebound.ParsePositive(lastText)
+	if firstErr != nil || lastErr != nil {
+		return Read{}, false
+	}
+	first, last, err := responsebound.ParseLineRange(responsebound.LineRange(first, last))
+	if err != nil {
 		return Read{}, false
 	}
 	return Read{Path: operands[2], First: first, Last: last}, true
-}
-
-// positive reads one positive decimal with no sign.
-func positive(text string) (int, bool) {
-	if text == "" || strings.TrimLeft(text, "0123456789") != "" {
-		return 0, false
-	}
-	value, err := strconv.Atoi(text)
-	return value, err == nil && value > 0
 }
 
 // RecordRead appends at most one raw-call record for one invocation. The pool-path
