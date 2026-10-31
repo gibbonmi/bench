@@ -136,6 +136,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		TicketDiagnostics:     ticketFacts.diagnostics,
 		BlockerCycles:         ticketFacts.cycles,
 		WritesPathExists:      ticketFacts.writes,
+		LandedDeletions:       landedDeletions(root, mode, ticketFacts.parsed, ticketFacts.writes),
 		Audit:                 audited,
 		WritesSystemTagged:    ticketFacts.systemTag,
 		TicketPinsKit:         ticketFacts.kitPinned,

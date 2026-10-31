@@ -19,7 +19,7 @@ import (
 func TestDecideChargeRows(t *testing.T) {
 	verdictRows := []string{
 		"paths-authorized",
-		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
+		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve", "writes-landed",
 		"kit-pin", "binary-seal",
 		"rows-owned", "rows-membership", "chunk-rows", "diff-nonempty",
 	}

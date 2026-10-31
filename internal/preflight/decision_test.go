@@ -97,8 +97,8 @@ func TestDecideAllGreen(t *testing.T) {
 	}
 	// Every row that reads a parsed ticket, plus diff-nonempty, is
 	// not-applicable in a build with no tickets/ directory at all.
-	if naSeen != 9 {
-		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 9", naSeen)
+	if naSeen != 10 {
+		t.Fatalf("fixture invalid: build mode with no tickets/ gave %d not-applicable rows, want 10", naSeen)
 	}
 }
 
@@ -533,7 +533,7 @@ func TestTicketGatedRowsNotApplicableWithoutTickets(t *testing.T) {
 
 	want := []string{
 		"tickets-parse", "completion-plan", "blockers-resolve", "writes-resolve",
-		"kit-pin",
+		"writes-landed", "kit-pin",
 	}
 	at := -1
 	for i, c := range v.Checks {

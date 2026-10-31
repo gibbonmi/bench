@@ -8,11 +8,11 @@ import (
 )
 
 // bareRowCount is the number of check rows one mode renders with no
-// --source-tip. Build mode carries the binary-seal row that review mode
-// omits, so the count is per-mode rather than one literal.
+// --source-tip. Build mode carries the writes-landed and binary-seal rows that
+// review mode omits, so the count is per-mode rather than one literal.
 func bareRowCount(mode string) int {
 	if mode == modeBuild {
-		return 12
+		return 13
 	}
 	return 11
 }
