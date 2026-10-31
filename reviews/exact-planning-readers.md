@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
+  "plan_digest": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
   "implementation_session": "",
   "chunks": [
     {
@@ -1229,9 +1229,9 @@
     {
       "id": "ER-C4",
       "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
-      "tip": "a9a22b7a27b42b841978e3a52702251aedea66f7",
-      "plan_digest": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
-      "source_digest": "95b612152a60899ee780b1809bccd94a4b6c6c71",
+      "tip": "1f19bea233c3f2ba8b46517723b67864b66b83b3",
+      "plan_digest": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
+      "source_digest": "ace5740a2288f6aa9143fe86cb878d65305229c3",
       "acceptance_rows": [
         "ER29",
         "ER30",
@@ -1269,6 +1269,36 @@
               "ref": "claude-agent:bench-writer-medium:ft125-author-4b",
               "digest": "sha256:a5470b4177a4bdd0162493125f02c035a576fb494ddb55aa35b42d809450858b",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,11,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedContinuationRefusesChangedProjection,passed,12\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2218\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,5454,12\nfailures[11]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_joins,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_bound_assignment_leaves,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_label_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_lease_appears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_path_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_request_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_state_changes,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/a_tree_disappears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_ignored_file_appears,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/an_unbound_assignment_joins,\"selected_queries_test.go:335: the change left the related projection equal\",1\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedContinuationRefusesChangedProjection/the_branch_stops_being_landed,\"selected_queries_test.go:335: the change left the related projection equal\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ER-C4-r1-ER-C4-projection-red",
+          "performer": "ft125-repair-4b",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ace5740a2288f6aa9143fe86cb878d65305229c3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-repair-4b",
+            "digest": "sha256:d793ed14e28604637c67d47d79ad8f539d0911e5afafcb22b3b765df3fe5d807",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,1,TestRelatedWorktreeActions,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedWorktreeActions,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,131,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedWorktreeActions,\"worktree_leaves_test.go:184: related actions = []interface {}{map[string]interface {}{\\\"cmd\\\":\\\"bench worktree path \u003ctarget>\\\", \\\"why\\\":\\\"inspect an active worktree by its id\\\"}, map[string]interface {}{\\\"cmd\\\":\\\"bench worktree exec \u003ctarget> -- \u003ccomma… (895 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "1f19bea233c3f2ba8b46517723b67864b66b83b3",
+          "requirement": "ER-C4-projection-red",
+          "command": "bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "replace complete related projection identity with commitment-only identity",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-repair-4b",
+              "digest": "sha256:d793ed14e28604637c67d47d79ad8f539d0911e5afafcb22b3b765df3fe5d807",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,1,TestRelatedWorktreeActions,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedWorktreeActions,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,131,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedWorktreeActions,\"worktree_leaves_test.go:184: related actions = []interface {}{map[string]interface {}{\\\"cmd\\\":\\\"bench worktree path \u003ctarget>\\\", \\\"why\\\":\\\"inspect an active worktree by its id\\\"}, map[string]interface {}{\\\"cmd\\\":\\\"bench worktree exec \u003ctarget> -- \u003ccomma… (895 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1572,6 +1602,24 @@
     {
       "from": "sha256:cdb3b23c390c3ca7611de0f98ccad926d48997c6becfd0baf2c73dc31ac20a26",
       "to": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
+      "to": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
