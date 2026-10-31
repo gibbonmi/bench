@@ -6,16 +6,55 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
-// An unresolved default branch answers no default-equal path and no bootstrap failure, so
-// the fence rule grades every changed path. Two local branches, neither named main, and no
-// origin leave the default branch unresolved.
-func TestDefaultTipEqualPathsUnresolvedAnswersNone(t *testing.T) {
+// seedDefaultBranchRepo starts a repository whose main branch holds one commit, and returns
+// its root.
+func seedDefaultBranchRepo(t *testing.T) string {
+	t.Helper()
 	root := preflighttest.StartRepo(t)
 	preflighttest.MustWriteFile(t, "internal/x/y.go", "package x\n")
 	preflighttest.RunGit(t, "add", ".")
 	preflighttest.RunGit(t, "commit", "-q", "-m", "c0")
+	return root
+}
+
+// seedUnresolvedDefaultRepo leaves the default branch unresolved: two local branches, neither
+// named main, and no origin.
+func seedUnresolvedDefaultRepo(t *testing.T) string {
+	t.Helper()
+	root := seedDefaultBranchRepo(t)
 	preflighttest.RunGit(t, "branch", "-m", "main", "trunk")
 	preflighttest.RunGit(t, "branch", "other")
+	return root
+}
+
+// baseCurrentFacts reads the default-branch tip through git.DefaultTip, which answers the
+// commit identity. An annotated tag named like the branch therefore does not make a current
+// base stale. An unresolved default branch answers no name and both predicates false.
+func TestBaseCurrentFactsReadsTheDefaultTip(t *testing.T) {
+	t.Run("an annotated tag named like the branch", func(t *testing.T) {
+		root := seedDefaultBranchRepo(t)
+		preflighttest.RunGit(t, "tag", "-a", "main", "-m", "a tag named like the branch")
+		preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+
+		branch, resolved, current := baseCurrentFacts(root)
+		if branch != "main" || !resolved || !current {
+			t.Fatalf("baseCurrentFacts = (%q, %t, %t), want (main, true, true)", branch, resolved, current)
+		}
+	})
+	t.Run("an unresolved default branch", func(t *testing.T) {
+		root := seedUnresolvedDefaultRepo(t)
+
+		branch, resolved, current := baseCurrentFacts(root)
+		if branch != "" || resolved || current {
+			t.Fatalf("baseCurrentFacts = (%q, %t, %t), want (\"\", false, false)", branch, resolved, current)
+		}
+	})
+}
+
+// An unresolved default branch answers no default-equal path and no bootstrap failure, so
+// the fence rule grades every changed path.
+func TestDefaultTipEqualPathsUnresolvedAnswersNone(t *testing.T) {
+	root := seedUnresolvedDefaultRepo(t)
 	sourceTip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 
 	equal, failure := defaultTipEqualPaths(root, sourceTip, []string{"internal/x/y.go"})

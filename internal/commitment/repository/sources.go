@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -173,14 +174,14 @@ func (store Store) sourceRevision() (string, error) {
 	return revision, err
 }
 
-// defaultRevision resolves the default branch and its current revision.
+// defaultRevision resolves the default branch and its current revision. git.DefaultTip owns
+// both, and an unresolved branch maps to errDefaultUnresolved.
 func (store Store) defaultRevision() (string, string, error) {
-	branch, ok := git.ResolvedDefault(store.Root)
-	if !ok {
+	branch, revision, err := git.DefaultTip(store.Root)
+	if errors.Is(err, git.ErrDefaultUnresolved) {
 		return "", "", errDefaultUnresolved
 	}
-	revision, err := git.Output("-C", store.Root, "rev-parse", branch)
-	return branch, strings.TrimSpace(revision), err
+	return branch, revision, err
 }
 
 func (store Store) validateSourceAt(revision string, source commitment.SourceBinding) error {
