@@ -45,9 +45,9 @@ func checkHandoffShape(root string) []string {
 	body, found := shapeSectionBody(readIfExists(filepath.Join(root, status.HandoffFile)))
 	switch {
 	case !found:
-		diags = append(diags, fmt.Sprintf("%s carries no %q section; run bench handoff to regenerate it", status.HandoffFile, handoff.ShapeHeading))
+		diags = append(diags, fmt.Sprintf("%s carries no %q section; run bench handoff to regenerate it", status.HandoffFile, handoffdoc.ShapeHeading))
 	case body != strings.Trim(handoff.ShapeSection, "\n"):
-		diags = append(diags, fmt.Sprintf("%s has a %q section that no longer matches the text bench handoff renders, so the artifact has become a second source; run bench handoff to regenerate it", status.HandoffFile, handoff.ShapeHeading))
+		diags = append(diags, fmt.Sprintf("%s has a %q section that no longer matches the text bench handoff renders, so the artifact has become a second source; run bench handoff to regenerate it", status.HandoffFile, handoffdoc.ShapeHeading))
 	}
 
 	diags = append(diags, scanShapeCopies(root, tracked)...)
@@ -93,7 +93,7 @@ func shapeSentence() string {
 func shapeSectionBody(doc string) (string, bool) {
 	lines := strings.Split(doc, "\n")
 	for i, line := range lines {
-		if strings.TrimRight(line, " \t\r") == handoff.ShapeHeading {
+		if strings.TrimRight(line, " \t\r") == handoffdoc.ShapeHeading {
 			return strings.Trim(strings.Join(lines[i+1:], "\n"), "\n"), true
 		}
 	}
@@ -133,7 +133,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	// The source file is a presence sentinel. The text the check grades against comes from
 	// the imported constant, never from this tree.
 	write(shapeSourceFile, "package handoff\n")
-	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\n"+handoff.ShapeSection)
+	write(status.HandoffFile, "# Session handoff\n\n"+handoffdoc.ShapeHeading+"\n\n"+handoff.ShapeSection)
 
 	if diags := checkHandoffShape(root); len(diags) != 0 {
 		t.Fatalf("derived artifact and no other copy: want no diagnostics, got %v", diags)
@@ -148,7 +148,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	}
 	gittest.MustRun(t, root, "add", "-A")
 
-	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\nRewritten whenever somebody feels like it.\n")
+	write(status.HandoffFile, "# Session handoff\n\n"+handoffdoc.ShapeHeading+"\n\nRewritten whenever somebody feels like it.\n")
 	if !containsDiagnostic(checkHandoffShape(root), "no longer matches the text bench handoff renders") {
 		t.Fatalf("drifted Shape body: want a drift diagnostic, got %v", checkHandoffShape(root))
 	}

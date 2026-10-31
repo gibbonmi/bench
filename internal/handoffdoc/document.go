@@ -25,14 +25,14 @@ const MainKey = "main"
 
 // The section headings the renderer emits and the parser reads back.
 // RequestHeadingPrefix carries the trailing space, so the digest begins at the
-// byte after it. The three exported spellings are what the handoff's Shape text
-// describes, so the single-source check grades that text against these rather
-// than against a second copy of them.
+// byte after it. The single-source check grades the handoff's Shape text against
+// these exported spellings rather than against a second copy of them. It also
+// finds the artifact's Shape body by ShapeHeading, the string this renderer emits.
 const (
 	MainHeading          = markdown.H2Prefix + MainKey
 	RequestHeadingPrefix = markdown.H2Prefix + "request "
 	StateHeading         = h3Prefix + "State"
-	shapeHeading         = markdown.H2Prefix + "Shape"
+	ShapeHeading         = markdown.H2Prefix + "Shape"
 	h3Prefix             = "#" + markdown.H2Prefix
 )
 
@@ -167,7 +167,7 @@ func (d *Document) Render() string {
 		}
 	}
 	if shape := strings.Trim(d.Shape, "\n"); shape != "" {
-		out.WriteString(shapeHeading)
+		out.WriteString(ShapeHeading)
 		out.WriteString("\n\n")
 		out.WriteString(shape)
 		out.WriteString("\n")
@@ -222,7 +222,7 @@ func Parse(path string, content []byte) (*Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		if key == shapeHeading {
+		if key == ShapeHeading {
 			doc.Shape = bodyText(block.body)
 			continue
 		}
@@ -310,7 +310,7 @@ func convertLegacy(path string, blocks []block) ([]block, error) {
 	for _, b := range blocks {
 		body := bodyText(b.body)
 		switch {
-		case b.heading == shapeHeading:
+		case b.heading == ShapeHeading:
 			copied := b
 			shape = &copied
 		case b.heading == legacyStateHeading:
@@ -344,8 +344,8 @@ func sectionKey(path string, b block) (string, error) {
 	switch {
 	case b.heading == MainHeading:
 		return MainKey, nil
-	case b.heading == shapeHeading:
-		return shapeHeading, nil
+	case b.heading == ShapeHeading:
+		return ShapeHeading, nil
 	case strings.HasPrefix(b.heading, RequestHeadingPrefix):
 		digest := strings.TrimSpace(strings.TrimPrefix(b.heading, RequestHeadingPrefix))
 		if digest == "" || strings.ContainsAny(digest, " \t") {
@@ -353,7 +353,7 @@ func sectionKey(path string, b block) (string, error) {
 		}
 		return digest, nil
 	}
-	return "", &ParseError{path, b.line, fmt.Sprintf("heading %q is not %q, %q, or %q", b.raw, MainHeading, RequestHeadingPrefix+"<digest>", shapeHeading)}
+	return "", &ParseError{path, b.line, fmt.Sprintf("heading %q is not %q, %q, or %q", b.raw, MainHeading, RequestHeadingPrefix+"<digest>", ShapeHeading)}
 }
 
 // parseSection reads one block's label lines and its State body. Everything below
