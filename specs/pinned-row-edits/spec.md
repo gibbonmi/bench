@@ -152,68 +152,7 @@ The move of the link walk is not its own prefactor ticket, because this ticket i
 This version 2 plan records the delegate execution, the author verification, and the final checks.
 
 ```bench-completion-plan
-{
-  "version": 2,
-  "execution": {"mode": "delegate", "run_id": "ft437-build-20261031", "orchestrator_session": "session_01JK5CPcwpGroiAPWzzXxytc", "author_limit": 1, "assignments": {"1-read-changed-pinned-rows.md": []}},
-  "chunks": [
-    {
-      "id": "PE-C1",
-      "tickets": [
-        "1-read-changed-pinned-rows.md"
-      ],
-      "verification": [
-        {
-          "id": "plan-approve",
-          "command": "bench test --package ./internal/commitment --run 'PinnedRow|HeadBinding'",
-          "probe": "Make readTree return the default-branch tip for a changed outcome source, and record that TestPinnedRowPlanReadsTheWorkingFile turns red.",
-          "ticket": "1-read-changed-pinned-rows.md"
-        },
-        {
-          "id": "hostile-read",
-          "command": "bench test --package ./internal/commitment --run 'PinnedRowPlanRefusesAHostileWorkingFile'",
-          "probe": "Replace the guarded working read with a plain os.ReadFile, and record that TestPinnedRowPlanRefusesAHostileWorkingFile turns red.",
-          "ticket": "1-read-changed-pinned-rows.md"
-        },
-        {
-          "id": "commit",
-          "command": "bench test --package ./internal/commit --run 'CommitmentApprovedRowEdit|CommitmentProtectedScope'",
-          "probe": "Make approvedTransition skip the source read of a changed outcome source, and record that TestCommitmentApprovedRowEdit turns red.",
-          "ticket": "1-read-changed-pinned-rows.md"
-        },
-        {
-          "id": "landing",
-          "command": "bench test --package ./internal/commitment/repository --run 'AdmitPublication|AuthorizeCandidate'",
-          "probe": "Make approvedTransition read the default-branch tip for a changed outcome source, and record that TestAdmitPublicationGradesAChangedRowAtTheComposedTree turns red.",
-          "ticket": "1-read-changed-pinned-rows.md"
-        },
-        {
-          "id": "retro-walk",
-          "command": "bench test --package ./internal/roadmap --run 'Retro'",
-          "probe": "Remove the call of the moved component walk from the retro write, and record that TestRetroRefusesSymlinkedDestinationComponents turns red.",
-          "ticket": "1-read-changed-pinned-rows.md"
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "commitment-packages",
-      "command": "bench test --package ./internal/commitment/..."
-    },
-    {
-      "id": "commit-package",
-      "command": "bench test --package ./internal/commit"
-    },
-    {
-      "id": "walk-owners",
-      "command": "bench test --package ./internal/bounds --package ./internal/roadmap"
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check pinned-row-edits"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft437-build-20261031","orchestrator_session":"session_01JK5CPcwpGroiAPWzzXxytc","author_limit":1,"assignments":{"1-read-changed-pinned-rows.md":[{"session":"ft437-author-01","assignment":"76a3920f758a0cd21a81050992211eb9","model":"opus","effort":"medium","source":"fba398122a3165ab735ed509aa85b05136ea716b","native_ref":"claude-agent:bench-writer-medium:ft437-author-01"}]}},"chunks":[{"id":"PE-C1","tickets":["1-read-changed-pinned-rows.md"],"verification":[{"id":"plan-approve","command":"bench test --package ./internal/commitment --run 'PinnedRow|HeadBinding'","probe":"Make readTree return the default-branch tip for a changed outcome source, and record that TestPinnedRowPlanReadsTheWorkingFile turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"hostile-read","command":"bench test --package ./internal/commitment --run 'PinnedRowPlanRefusesAHostileWorkingFile'","probe":"Replace the guarded working read with a plain os.ReadFile, and record that TestPinnedRowPlanRefusesAHostileWorkingFile turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"commit","command":"bench test --package ./internal/commit --run 'CommitmentApprovedRowEdit|CommitmentProtectedScope'","probe":"Make approvedTransition skip the source read of a changed outcome source, and record that TestCommitmentApprovedRowEdit turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"landing","command":"bench test --package ./internal/commitment/repository --run 'AdmitPublication|AuthorizeCandidate'","probe":"Make approvedTransition read the default-branch tip for a changed outcome source, and record that TestAdmitPublicationGradesAChangedRowAtTheComposedTree turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"retro-walk","command":"bench test --package ./internal/roadmap --run 'Retro'","probe":"Remove the call of the moved component walk from the retro write, and record that TestRetroRefusesSymlinkedDestinationComponents turns red.","ticket":"1-read-changed-pinned-rows.md"}]}],"final_verification":[{"id":"commitment-packages","command":"bench test --package ./internal/commitment/..."},{"id":"commit-package","command":"bench test --package ./internal/commit"},{"id":"walk-owners","command":"bench test --package ./internal/bounds --package ./internal/roadmap"},{"id":"coverage","command":"bench coverage --check pinned-row-edits"}]}
 ```
 
 ## Testing decisions
