@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -81,10 +82,11 @@ func (definition commandDefinition) treeTargetInsertion() string {
 }
 
 // rowInsertion answers the tree-target insertion of one root help row of definition. The row
-// takes the scope of the child that it declares, so the help, the identity row, and the
-// refusal read one scope.
+// takes the scope of the child form that its suffix begins with, so the help, the identity
+// row, and the refusal read the one ChildScopes declaration.
 func (definition commandDefinition) rowInsertion(row helpRow) string {
-	if definition.childScope(row.Child) != scopeTree {
+	child, _, _ := strings.Cut(strings.TrimPrefix(row.Suffix, " "), " ")
+	if definition.childScope(child) != scopeTree {
 		return ""
 	}
 	return definition.treeTargetInsertion()

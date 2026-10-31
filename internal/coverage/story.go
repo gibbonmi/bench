@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/markdown"
 	specref "github.com/gibbonmi/bench/internal/spec"
@@ -106,25 +105,13 @@ func (d Document) Story(number int) (StoryProjection, error) {
 	if !projection.Present {
 		return projection, nil
 	}
-	if !utf8.ValidString(projection.Story.Text) {
-		return StoryProjection{}, invalidText(fmt.Sprintf("story %d", number))
-	}
 	for _, row := range d.Rows {
-		if !slices.Contains(row.Stories, number) {
-			continue
+		if slices.Contains(row.Stories, number) {
+			projection.Rows = append(projection.Rows, row)
 		}
-		for _, cell := range []string{row.ID, row.Behavior, row.Seam, row.Rationale} {
-			if !utf8.ValidString(cell) {
-				return StoryProjection{}, invalidText(fmt.Sprintf("the coverage row on bytes %d to %d", row.Span.Start, row.Span.End))
-			}
-		}
-		projection.Rows = append(projection.Rows, row)
+	}
+	if _, err := projection.encode(); err != nil {
+		return StoryProjection{}, fmt.Errorf("%w: story %d or a coverage row that references it holds %w, which the story projection cannot carry exactly; read its exact bytes with %s", ErrRefused, number, errInvalidText, specref.SectionFlag)
 	}
 	return projection, nil
-}
-
-// invalidText refuses a projection whose subject holds invalid UTF-8, and names the exact
-// section read that keeps those bytes.
-func invalidText(subject string) error {
-	return fmt.Errorf("%w: %s holds invalid UTF-8, which the story projection cannot carry exactly; read its exact bytes with %s", ErrRefused, subject, specref.SectionFlag)
 }

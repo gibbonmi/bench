@@ -3,6 +3,8 @@ package coverage
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"unicode/utf8"
 
 	"github.com/gibbonmi/bench/internal/markdown"
 )
@@ -21,18 +23,31 @@ type storyPayload struct {
 
 type storyRecord struct {
 	Number int        `json:"number"`
-	Text   string     `json:"text"`
+	Text   text       `json:"text"`
 	Span   spanRecord `json:"span"`
 }
 
 // rowRecord is one serialized row. A legacy schema without a row column omits the id.
 type rowRecord struct {
-	ID        string     `json:"id,omitempty"`
+	ID        text       `json:"id,omitempty"`
 	Stories   []int      `json:"stories"`
-	Behavior  string     `json:"behavior"`
-	SeamCell  string     `json:"seam_cell"`
-	Rationale string     `json:"rationale"`
+	Behavior  text       `json:"behavior"`
+	SeamCell  text       `json:"seam_cell"`
+	Rationale text       `json:"rationale"`
 	Span      spanRecord `json:"span"`
+}
+
+// text is one text field of the serialization. Its encoding refuses invalid UTF-8 rather than
+// become a replacement character, so the serializer owns the UTF-8 refusal of each text field.
+type text string
+
+var errInvalidText = errors.New("invalid UTF-8")
+
+func (t text) MarshalText() ([]byte, error) {
+	if !utf8.ValidString(string(t)) {
+		return nil, errInvalidText
+	}
+	return []byte(t), nil
 }
 
 // spanRecord is one serialized source span.
@@ -45,19 +60,27 @@ func record(span markdown.Span) spanRecord { return spanRecord{Start: span.Start
 
 // Encode answers the StorySchema serialization of the projection: one JSON object with the
 // story's exact text, its matching rows in authored order, and their original source spans.
-// An absent story has a null story and an empty row array.
+// An absent story has a null story and an empty row array. Story refuses a projection that
+// encode cannot carry, so a projection that Story answers always encodes.
 func (p StoryProjection) Encode() []byte {
+	out, _ := p.encode()
+	return out
+}
+
+// encode serializes the projection, and refuses a text field that holds invalid UTF-8.
+func (p StoryProjection) encode() ([]byte, error) {
 	payload := storyPayload{Schema: StorySchema, Present: p.Present, Rows: []rowRecord{}}
 	if p.Present {
-		payload.Story = &storyRecord{Number: p.Story.Number, Text: p.Story.Text, Span: record(p.Story.Span)}
+		payload.Story = &storyRecord{Number: p.Story.Number, Text: text(p.Story.Text), Span: record(p.Story.Span)}
 	}
 	for _, row := range p.Rows {
-		payload.Rows = append(payload.Rows, rowRecord{ID: row.ID, Stories: row.Stories, Behavior: row.Behavior, SeamCell: row.Seam, Rationale: row.Rationale, Span: record(row.Span)})
+		payload.Rows = append(payload.Rows, rowRecord{ID: text(row.ID), Stories: row.Stories, Behavior: text(row.Behavior), SeamCell: text(row.Seam), Rationale: text(row.Rationale), Span: record(row.Span)})
 	}
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)
 	encoder.SetEscapeHTML(false)
-	// The payload holds only strings, numbers, and booleans, so the encoder cannot fail.
-	_ = encoder.Encode(payload)
-	return out.Bytes()
+	if err := encoder.Encode(payload); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
 }

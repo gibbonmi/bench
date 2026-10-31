@@ -52,11 +52,11 @@ const (
 )
 
 type helpRow struct {
-	Order          int
-	Prefix, Suffix string
-	Child          string // the child form that the row advertises, which sets its tree scope
-	Gap            int
-	Description    string
+	Order       int
+	Prefix      string
+	Suffix      string
+	Gap         int
+	Description string
 }
 
 type commandInventory struct {
