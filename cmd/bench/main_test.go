@@ -405,14 +405,14 @@ func TestShellWrapperOfflineMissingBinarySuppressesRepairBeforeStartingNode(t *t
 	}
 }
 
-// followOnEnvelope builds a raw-call envelope whose command names a path under the
-// given root's worktree pool, keyed to a fixed owner and assignment id.
-func followOnEnvelope(home, root string) (string, string) {
+// followOnEnvelope builds an eligible raw-read envelope under root's worktree pool, keyed to
+// a fixed owner and assignment id, and answers the advice line the guard prints for it.
+func followOnEnvelope(home, root string) (string, string, string) {
 	owner := strings.Repeat("a", 32)
 	id := strings.Repeat("b", 32)
 	segment := poolkey.AssignmentSegment(owner, id)
 	path := filepath.Join(poolkey.Pool(home, root), segment, "x")
-	return bashEnvelope("sed -n 1p " + path), id
+	return bashEnvelope("sed -n 1p " + path), id, rawReadAdvice(census.Read{Path: path, First: 1, Last: 1})
 }
 
 // bashEnvelope builds the Bash tool-call envelope of command, which holds no quote.
@@ -441,19 +441,19 @@ func TestFollowOnGuardDeniesTheOverrideEnvelope(t *testing.T) {
 // TestGuardBenchFollowOnRecordsRawCall covers EC09: a raw-call envelope whose command
 // names a path under the pool makes the verb exit 0 and write one census record.
 // The verdict must change if this record is skipped, since a record's own error can
-// never surface here.
+// never surface here. The read is eligible, so stderr holds only its advice line.
 func TestGuardBenchFollowOnRecordsRawCall(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	t.Chdir(root)
 	home := filepath.Join(t.TempDir(), "home")
 	t.Setenv("BENCH_HOME", home)
-	envelope, id := followOnEnvelope(home, root)
+	envelope, id, advice := followOnEnvelope(home, root)
 	var errb bytes.Buffer
 	if code := guardBenchFollowOn(nil, strings.NewReader(envelope), io.Discard, &errb); code != 0 {
 		t.Fatalf("exit = %d, want 0", code)
 	}
-	if errb.Len() != 0 {
-		t.Fatalf("stderr = %q, want empty", errb.String())
+	if errb.String() != advice+"\n" {
+		t.Fatalf("stderr = %q, want the advice %q", errb.String(), advice)
 	}
 	if _, err := os.Stat(filepath.Join(census.Dir(home, root), id)); err != nil {
 		t.Fatalf("census record not written: %v", err)
@@ -461,8 +461,8 @@ func TestGuardBenchFollowOnRecordsRawCall(t *testing.T) {
 }
 
 // TestGuardBenchFollowOnUnwritableHomeStaysSilent covers EC10: a home the record
-// cannot write under still exits 0 with empty stderr, because a record error never
-// surfaces as a diagnostic or a block.
+// cannot write under still exits 0 with only the read's advice on stderr, because a
+// record error never surfaces as a diagnostic or a block.
 func TestGuardBenchFollowOnUnwritableHomeStaysSilent(t *testing.T) {
 	root := gittest.RepoOnBranch(t, "main")
 	t.Chdir(root)
@@ -471,13 +471,13 @@ func TestGuardBenchFollowOnUnwritableHomeStaysSilent(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("BENCH_HOME", home)
-	envelope, _ := followOnEnvelope(home, root)
+	envelope, _, advice := followOnEnvelope(home, root)
 	var errb bytes.Buffer
 	if code := guardBenchFollowOn(nil, strings.NewReader(envelope), io.Discard, &errb); code != 0 {
 		t.Fatalf("exit = %d, want 0", code)
 	}
-	if errb.Len() != 0 {
-		t.Fatalf("stderr = %q, want empty", errb.String())
+	if errb.String() != advice+"\n" {
+		t.Fatalf("stderr = %q, want only the advice %q", errb.String(), advice)
 	}
 }
 

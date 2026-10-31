@@ -25,19 +25,22 @@ func Record(command, root, home string, now time.Time) error {
 // recordWith is Record with an injected executable resolver, which lets a test name a
 // Bench wrapper without the machine's own PATH.
 func recordWith(command, root, home string, now time.Time, resolver benchguard.Resolver) error {
+	return recordReadWith(command, root, home, "", now, resolver)
+}
+
+// poolAttribution answers the assignment id and the verb head of the record that a raw call
+// naming a pool path makes, and whether it makes one.
+func poolAttribution(command, root, home string, resolver benchguard.Resolver) (string, string, bool) {
 	if benchguard.InvokesBench(command, resolver) {
-		return nil
+		return "", "", false
 	}
 	prefix := poolkey.Pool(home, root) + string(filepath.Separator)
 	id, ok := assignment(command, prefix)
 	if !ok {
-		return nil
+		return "", "", false
 	}
 	head := verbHead(command, prefix)
-	if head == "" {
-		return nil
-	}
-	return write(Dir(home, root), id, composeRecord(now.UTC().Format(time.RFC3339), head))
+	return id, head, head != ""
 }
 
 // assignment returns the assignment id of the first pool path in the raw command text.
