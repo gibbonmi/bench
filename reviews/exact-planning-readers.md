@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/exact-planning-readers/spec.md",
-  "plan_digest": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
+  "plan_digest": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
   "implementation_session": "",
   "chunks": [
     {
@@ -1229,9 +1229,9 @@
     {
       "id": "ER-C4",
       "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
-      "tip": "1f19bea233c3f2ba8b46517723b67864b66b83b3",
-      "plan_digest": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
-      "source_digest": "ace5740a2288f6aa9143fe86cb878d65305229c3",
+      "tip": "c0d81ce6987265dfb06c08e2f33019c79f990dfd",
+      "plan_digest": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
+      "source_digest": "273358bc8adf894d162e89e92754df71a2d1d597",
       "acceptance_rows": [
         "ER29",
         "ER30",
@@ -1299,6 +1299,36 @@
               "ref": "claude-agent:bench-writer-medium:ft125-repair-4b",
               "digest": "sha256:d793ed14e28604637c67d47d79ad8f539d0911e5afafcb22b3b765df3fe5d807",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/related.go,swap,failed,1,TestRelatedWorktreeActions,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestRelatedWorktreeActions,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,131,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestRelatedWorktreeActions,\"worktree_leaves_test.go:184: related actions = []interface {}{map[string]interface {}{\\\"cmd\\\":\\\"bench worktree path \u003ctarget>\\\", \\\"why\\\":\\\"inspect an active worktree by its id\\\"}, map[string]interface {}{\\\"cmd\\\":\\\"bench worktree exec \u003ctarget> -- \u003ccomma… (895 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ER-C4-r2-ER-C4-projection-red",
+          "performer": "ft125-repair-4b2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "273358bc8adf894d162e89e92754df71a2d1d597",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft125-repair-4b2",
+            "digest": "sha256:07c72c154ca19ccd1f4320ade8129118fcc24ade2712706b2970633a3a8d90c7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/planning_reads.go,swap,failed,3,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_assignment_labelled_primary,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,179,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_assignment_labelled_primary,\"worktree_leaves_test.go:135: worktree read in an assignment labelled primary = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  primary,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_bytes,source_byt… (1020 bytes)\",5\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_unassigned_linked_tree,\"worktree_leaves_test.go:135: worktree read in an unassigned linked tree = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  unassigned,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes… (1020 bytes)\",5\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/two_active_assignments_with_one_label,\"worktree_leaves_test.go:135: worktree read in two active assignments with one label = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  related 0064,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_byte… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c0d81ce6987265dfb06c08e2f33019c79f990dfd",
+          "requirement": "ER-C4-projection-red",
+          "command": "bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "replace complete related projection identity with commitment-only identity",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft125-repair-4b2",
+              "digest": "sha256:07c72c154ca19ccd1f4320ade8129118fcc24ade2712706b2970633a3a8d90c7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/planning_reads.go,swap,failed,3,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_assignment_labelled_primary,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,179,4\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_assignment_labelled_primary,\"worktree_leaves_test.go:135: worktree read in an assignment labelled primary = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  primary,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_bytes,source_byt… (1020 bytes)\",5\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/an_unassigned_linked_tree,\"worktree_leaves_test.go:135: worktree read in an unassigned linked tree = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  unassigned,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_bytes,source_bytes… (1020 bytes)\",5\n  github.com/gibbonmi/bench/cmd/bench,TestWorktreeReadRefusesATargetThatNamesAnotherTree/two_active_assignments_with_one_label,\"worktree_leaves_test.go:135: worktree read in two active assignments with one label = \\\"tree[1]{target,head,dirty}:\\\\\\\\n  related 0064,78ef88f3be26fb4071e2442b62140ed5ce830a42,true\\\\\\\\npage[1]{source,kind,present,encoding,offset,next,selected_byte… (1020 bytes)\",5\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -1620,6 +1650,24 @@
     {
       "from": "sha256:0bb707ac59beea4874b6567a816bf11404242c0418925503de25c47db95dc518",
       "to": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
+      "chunk_ids": {
+        "ER-C1": [
+          "ER-C1"
+        ],
+        "ER-C2": [
+          "ER-C2"
+        ],
+        "ER-C3": [
+          "ER-C3"
+        ],
+        "ER-C4": [
+          "ER-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ddc0b49d6833e033a0cd88dc4497d0e93fa86aec2c7f601288e4b384b32e3881",
+      "to": "sha256:93878c88965b0bfcd7f79df1a662b08e39a01e8e3f573c6597390d9e2120b7fe",
       "chunk_ids": {
         "ER-C1": [
           "ER-C1"
