@@ -79,27 +79,29 @@ func (store Store) Inventory() ([]InventoryItem, error) {
 		return nil, err
 	}
 	for _, assignment := range ledger.Assignments {
-		items = append(items, InventoryItem{Kind: "run", ID: assignment.ID, State: string(assignment.State), Identity: assignment.Request, Scope: runScope(ledger.Commitment, assignment.ID)})
+		items = append(items, InventoryItem{Kind: "run", ID: assignment.ID, State: string(assignment.State), Identity: assignment.Request, Scope: strings.Join(RunScopes(ledger.Commitment, assignment.ID), " ")})
 	}
 	return items, nil
 }
 
-// runScope names the deliverable that binds the assignment, or else its continuation scope.
-func runScope(state *intent.CommitmentState, assignment string) string {
+// RunScopes names the deliverable that binds the assignment, or else its declared
+// continuation scope. An assignment that the commitment state does not bind has no scope,
+// and the answer is empty: a missing binding proves no relationship either way.
+func RunScopes(state *intent.CommitmentState, assignment string) []string {
 	if state == nil {
-		return ""
+		return nil
 	}
 	for _, binding := range state.Bindings {
 		if binding.Assignment == assignment {
-			return binding.Deliverable
+			return []string{binding.Deliverable}
 		}
 	}
 	for _, continuation := range state.Continuations {
 		if continuation.Assignment == assignment {
-			return strings.Join(continuation.Scope, " ")
+			return slices.Clone(continuation.Scope)
 		}
 	}
-	return ""
+	return nil
 }
 
 // Plan validates and records one proposed policy.

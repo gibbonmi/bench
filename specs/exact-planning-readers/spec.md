@@ -535,9 +535,9 @@ These future reds are required evidence, not observations made during specificat
 | ER29 | 18 | The real --in worktree read resolves only an active owned target | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRunsInNamedWorktree`) | Direct filesystem lookup bypasses existing assignment authority. |
 | ER30 | 19 | A worktree section read reconstructs the same selected source span | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRunsInNamedWorktree`) | A separate worktree selector drifts from the primary reader. |
 | ER31 | 19 | An inclusive physical-line range preserves its original terminators | `internal/responsebound/file_test.go` (`TestExactLineRanges`) | Splitting and joining lines silently normalizes the selected bytes. |
-| ER32 | 20 | A spec filter uses exact commitment bindings or declared continuation scope | planned TestRelatedWorktreeFilter in internal/worktree/related_test.go | Matching a label or physical spec file invents a relationship. |
-| ER33 | 20 | An unbound assignment is excluded with an explicit unbound count | planned TestRelatedWorktreeFilter in internal/worktree/related_test.go | Guessing missing Assignment.Spec data yields a false complete relation. |
-| ER34 | 21 | Related results paginate in deterministic assignment-ID order with complete counts | planned extension of TestTreeTargetRunsInNamedWorktree in internal/systemtest/tree_target_test.go | A bounded first page alone hides later related worktrees. |
+| ER32 | 20 | A spec filter uses exact commitment bindings or declared continuation scope | `internal/worktree/related_test.go` (`TestRelatedWorktreeFilter`) | Matching a label or physical spec file invents a relationship. |
+| ER33 | 20 | An unbound assignment is excluded with an explicit unbound count | `internal/worktree/related_test.go` (`TestRelatedWorktreeFilter`) | Guessing missing Assignment.Spec data yields a false complete relation. |
+| ER34 | 21 | Related results paginate in deterministic assignment-ID order with complete counts | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRunsInNamedWorktree`) | A bounded first page alone hides later related worktrees. |
 | ER35 | 22 | An existing spill file reconstructs through the same exact page protocol | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A separate artifact renderer can exceed the shared escaped-byte bound. |
 | ER36 | 22 | An exported evidence file reconstructs without granting evidence authority | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | Reading a file must not assert manifest verification or qualification. |
 | ER37 | 23 | A symlink in any path component refuses before opening the target | `internal/responsebound/file_test.go` (`TestExactFileStates`) | Checking only the final entry allows a linked parent to redirect the reader. |
@@ -553,7 +553,7 @@ These future reds are required evidence, not observations made during specificat
 
 | ER47 | 26 | Native reader output records identify their complete supported read form | planned TestExactReaderOutputHeads in cmd/bench/census_output_test.go | A root-only spec or outline head conflates exact reads with other operations. |
 
-| ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | planned TestRelatedContinuationRefusesChangedProjection in cmd/bench/planning_reader_commands_test.go | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
+| ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | `cmd/bench/selected_queries_test.go` (`TestRelatedContinuationRefusesChangedProjection`) | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
 
 | ER49 | 17 | A cursor inside a rune of a valid UTF-8 selection refuses before content | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | A byte cursor that lands inside a rune silently switches the remaining pages to base64. |
 

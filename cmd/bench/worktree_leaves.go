@@ -79,6 +79,7 @@ func worktreeHelpRows() []helpRow {
 	return []helpRow{
 		{Order: 31, Suffix: " shell [--refresh] [objective]", Gap: 1, Description: "create an owned worktree subshell and release it on exit"},
 		{Order: 32, Suffix: " list", Description: "list assignments and registered worktrees as TOON"},
+		{Order: 32, Suffix: worktreeSuffix(usage.WorktreeListRelated), Description: "the assignments that commitment scopes relate to one spec as bounded TOON pages"},
 		{Order: 33, Suffix: worktreeSuffix(usage.WorktreePath), Description: "print one active owned worktree's absolute path for the file tools"},
 		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeExec), Description: "run a child directly in an active owned worktree"},
 		{Order: 34, Suffix: worktreeSuffix(usage.WorktreeShow), Description: "print one blob from a revision of an active owned worktree"},

@@ -134,6 +134,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench release [--in <label|primary>] prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication
   bench worktree shell [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
+  bench worktree list --spec <slug-or-path> [--offset <byte-offset> --source <identity>]  the assignments that commitment scopes relate to one spec as bounded TOON pages
   bench worktree path <target>  print one active owned worktree's absolute path for the file tools
   bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]  run a child directly in an active owned worktree
   bench worktree show <target> <rev>:<path>  print one blob from a revision of an active owned worktree

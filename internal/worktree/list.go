@@ -15,10 +15,11 @@ import (
 )
 
 // These constants name each table block that the package renders, so a test reads the
-// name that its renderer passes to toon.Table or toon.TableTyped. Both list views render
+// name that its renderer passes to toon.Table or toon.TableTyped. Each list view renders
 // listTable.
 const (
 	listTable                 = "worktrees"
+	relatedTable              = "related"
 	createTable               = "worktree_create"
 	releaseTable              = "worktree_release"
 	buildTable                = "worktree_build"
@@ -56,6 +57,9 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		return listSelectedWorktrees(root, args)
 	}
 	j, run := defaultJoins(), &git.Run{}
+	if relatesWorktrees(args) {
+		return listRelatedWorktrees(j, run, root, args)
+	}
 	_, line, code := usage.Parse(worktreeListGrammar, args)
 	if line != "" {
 		return line + "\n", code
@@ -77,15 +81,10 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	}
 
 	def, defaultResolved := git.ResolvedDefault(root)
-	rows := make([]listRow, 0, len(assignments)+len(registrations))
+	rows := assignmentRows(j, run, root, assignments, def, defaultResolved)
 	assignedPaths := make(map[string]bool, len(assignments))
 	for _, assignment := range assignments {
 		assignedPaths[assignment.Worktree] = true
-		row := listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved), assignmentPath: assignment.Worktree}
-		if row.values[listTreeCell] == "missing" {
-			row.cleanLanded = missingTreeLanded(run, root, assignment)
-		}
-		rows = append(rows, row)
 	}
 	mainRoot := canonicalRoot(root)
 	for _, registration := range registrations {
@@ -106,6 +105,31 @@ func ListCommand(root, _ string, args []string) (string, int) {
 		}
 		rows = append(rows, row)
 	}
+	out, err := renderListRows(j, run, root, rows, assignments)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 0
+}
+
+// assignmentRows renders one list row for each assignment, in the given order. A row whose
+// tree is missing carries the landed proof that its recovery action reads.
+func assignmentRows(j joins, run *git.Run, root string, assignments []intent.Assignment, def string, defaultResolved bool) []listRow {
+	rows := make([]listRow, 0, len(assignments))
+	for _, assignment := range assignments {
+		row := listRow{values: listAssignmentRow(j, root, assignment, def, defaultResolved), assignmentPath: assignment.Worktree}
+		if row.values[listTreeCell] == "missing" {
+			row.cleanLanded = missingTreeLanded(run, root, assignment)
+		}
+		rows = append(rows, row)
+	}
+	return rows
+}
+
+// renderListRows renders the worktrees table of rows and its ordered help actions. The help
+// offers the batch clean when an active assignment of assignments has landed. Each list view
+// that renders the worktrees table renders it here.
+func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignments []intent.Assignment) (string, error) {
 	values := make([][]any, 0, len(rows))
 	for _, row := range rows {
 		values = append(values, row.values)
@@ -122,7 +146,7 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	}
 	out, err := toon.TableTyped(listTable, worktreeListFields, values)
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		return "", err
 	}
 	actions := actionsForRows(rows)
 	if landed {
@@ -130,9 +154,9 @@ func ListCommand(root, _ string, args []string) (string, int) {
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
-		return toon.RenderError(err) + "\n", 1
+		return "", err
 	}
-	return out + help, 0
+	return out + help, nil
 }
 
 // assignmentsReadRefusal is the response of each list view when the intent ledger cannot

@@ -1,0 +1,134 @@
+package worktree
+
+import (
+	"bytes"
+	"cmp"
+	"crypto/sha256"
+	"fmt"
+	"path"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/responsebound"
+	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/tickets"
+	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
+)
+
+// relatedSpecFlag selects the related view: the assignments that the commitment relates to
+// one spec.
+const relatedSpecFlag = "--spec"
+
+// relatedSchema names the related projection that each related page identity binds.
+const relatedSchema = "bench-related/1"
+
+var relatedFields = []string{"spec", "matched", "unbound"}
+
+// relatedWorktreeGrammar is the related view's grammar. It declares neither selected-view
+// flag, so the selected view and this view refuse each other's flags.
+var relatedWorktreeGrammar = usage.Grammar{
+	Cmd:  usage.WorktreeList,
+	Help: "usage: " + usage.WorktreeListRelated,
+	Flags: []usage.Flag{
+		{Name: relatedSpecFlag, HasValue: true, NoEmptyValue: true, Required: true},
+		{Name: responsebound.OffsetFlag, HasValue: true, NoEmptyValue: true},
+		{Name: responsebound.SourceFlag, HasValue: true, NoEmptyValue: true},
+	},
+}
+
+// relatesWorktrees reports whether args choose the related view.
+func relatesWorktrees(args []string) bool {
+	return usage.FlagPresent(relatedWorktreeGrammar, args, relatedSpecFlag)
+}
+
+// listRelatedWorktrees pages the related projection of one spec. The page identity binds
+// the complete projection, so a continuation refuses before content when any row, count, or
+// action changed since the cursor, even when the commitment data stayed equal. Each offered
+// action still resolves and authorizes its target through its own verb.
+func listRelatedWorktrees(j joins, run *git.Run, root string, args []string) (string, int) {
+	parsed, line, code := usage.Parse(relatedWorktreeGrammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	offset, token, continued, err := responsebound.ParseCursor(parsed.Flags)
+	if err != nil || parsed.EndedFlags {
+		return relatedWorktreeGrammar.Help + "\n", 2
+	}
+	if !inRepository(root) {
+		return toon.NotInRepo() + "\n", 1
+	}
+	operand := parsed.Flags[relatedSpecFlag]
+	specPath, err := relatedSpec(operand)
+	if err != nil {
+		return toon.Errorf(err.Error(), "pass a spec slug or a path to a spec markdown file inside the repository") + "\n", 1
+	}
+	// One ledger read supplies both the assignments and the commitment state.
+	ledger, err := intent.Read(root)
+	if err != nil {
+		return assignmentsReadRefusal(), 1
+	}
+	content, err := relatedProjection(j, run, root, ledger, specPath)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	page, err := responsebound.PageRead(responsebound.ReadRequest{
+		Command: append(strings.Fields(usage.WorktreeList)[1:], relatedSpecFlag, operand),
+		Kind:    "related", Selection: specPath, Projection: relatedSchema,
+		Scope: canonicalRoot(root), Path: specPath,
+		Digest: sha256.Sum256(content), SourceSize: int64(len(content)),
+		Payload: bytes.NewReader(content), Size: int64(len(content)),
+		Offset: offset, Token: token, Continued: continued,
+	})
+	if err != nil {
+		return err.Error() + "\n", 1
+	}
+	return page.Output, 0
+}
+
+// relatedSpec answers the repository-relative spec path that operand names: a slug names its
+// live folder spec, and a path names itself from the repository root. The spec need not
+// exist, because the commitment bindings, not the file, carry the relationship.
+func relatedSpec(operand string) (string, error) {
+	specPath := spec.LiveSpecPath(operand)
+	if !filepath.IsLocal(specPath) || path.Base(specPath) != "spec.md" {
+		return "", fmt.Errorf("%s is not a spec path inside the repository", specPath)
+	}
+	return specPath, nil
+}
+
+// relatedProjection renders the complete related projection of the spec at specPath: one
+// summary row with the matched and unbound counts, the list row of each matched assignment
+// in assignment-ID order, and their ordered navigation actions. An assignment matches when
+// a scope that the commitment state gives it holds the spec folder or lies within it. An
+// assignment with no scope is unbound: it is excluded and counted, because a missing binding
+// proves no relationship either way.
+func relatedProjection(j joins, run *git.Run, root string, ledger intent.Ledger, specPath string) ([]byte, error) {
+	folder := path.Dir(specPath)
+	var matched []intent.Assignment
+	unbound := 0
+	for _, assignment := range ledger.Assignments {
+		scopes := commitrepo.RunScopes(ledger.Commitment, assignment.ID)
+		switch {
+		case len(scopes) == 0:
+			unbound++
+		case slices.ContainsFunc(scopes, func(scope string) bool { return tickets.Covers(scope, folder) || tickets.Covers(folder, scope) }):
+			matched = append(matched, assignment)
+		}
+	}
+	slices.SortFunc(matched, func(a, b intent.Assignment) int { return cmp.Compare(a.ID, b.ID) })
+	summary, err := toon.TableTyped(relatedTable, relatedFields, [][]any{{specPath, len(matched), unbound}})
+	if err != nil {
+		return nil, err
+	}
+	def, defaultResolved := git.ResolvedDefault(root)
+	rows, err := renderListRows(j, run, root, assignmentRows(j, run, root, matched, def, defaultResolved), matched)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(summary + rows), nil
+}
