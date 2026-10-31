@@ -1728,7 +1728,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ER-C5-standards-1",
+          "performer": "ft125-review-c5-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "304670d6498ceae79ed4fad1dfc3e53288646491",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-standards",
+            "digest": "sha256:fbb542b2e06be3a52fa2ab3c97724895a8739cd02b00e05f63c49a50d67f92e7",
+            "excerpt": "Standards axis, chunk ER-C5 (base 34b20e6f2, tip 9a7404cfb). 2 findings; worst ST1.\nST1 (auto-fix, conf 9) internal/census/read_advice.go:84 resolved adds a second control-byte predicate (r \u003c ' ' || r == 0x7f) beside sanitize.LineSafe (internal/sanitize/sanitize.go:153, unicode.IsControl); they disagree on C1 controls, so an operand with U+009B or U+0085 is eligible and rawReadAdvice (cmd/bench/planning_read_advice.go:15) prints it raw to stderr. Fix: use sanitize.LineSafe and delete the closure.\nST2 (auto-fix, conf 8) internal/census/read_advice.go:151 positive is a second positive-decimal parser and sedRead repeats the range ordering; responsebound owns ParsePositive (internal/responsebound/read.go:107,116) and ParseLineRange (internal/responsebound/file.go:126). Fix: parse through those owners and drop positive.\nClean: 5a is a byte-for-byte move (ed206c850); codec and separator stay in census.go; pool-path and Classify denials keep order, exit codes and diagnostics; parseCall/parseSpecShow keep every refusal; guard fixtures changed in place; nothing outside Writes; no new dependency.\nOptional advice: census.Record (internal/census/raw_calls.go:21) has only test callers after 5c; outputHead (cmd/bench/census_output.go:46) runs every readFormHeads parser then filters by prefix.\nOutcome: fail.\n"
+          },
+          "axis": "Standards",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "9a7404cfbe7c4e86f4837b3b079274049efe2f8e",
+          "finding_ids": [
+            "ST1",
+            "ST2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C5-spec-1",
+          "performer": "ft125-review-c5-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "304670d6498ceae79ed4fad1dfc3e53288646491",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-spec",
+            "digest": "sha256:2e0abee3a3d6ebd5fead9cc4a1bf93eab270f2d57644eb65b35000cccc1d5c0c",
+            "excerpt": "Spec axis, chunk ER-C5 (base 34b20e6f2, tip 9a7404cfb). 1 finding; worst S1.\nS1 (auto-fix, conf 7) internal/census/read_advice.go:71 and cmd/bench/planning_read_advice.go:14: eligibility never checks that the operand resolves inside the current repository, so cat /etc/hosts, a read outside any repository, or an absolute pool-path read get bench read advice that repositoryPath (cmd/bench/planning_reads.go:88-92) refuses; main_test.go:415 pins that false advice (spec 299-306, story 25, ticket 5c:9). Fix: resolve through canonicalpath.Operand and give no advice when the result is not local; re-pin main_test.go:415; add outside-path and pool-path negatives.\nPoint 1: not a defect (ticket note; internal/spec/command.go is an untouched Writes entry). Point 2: defect, held as S1. Point 3: not a defect (spec 160, 304, 302).\nRow audit: ER41 unmet (S1); ER42 met; ER43 met; ER47 met.\nOptional advice: head \u003cfile> with no count advises --lines 1:10, which refuses on a shorter file; the whole-file form would serve better.\nOutcome: fail.\n"
+          },
+          "axis": "Spec",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "9a7404cfbe7c4e86f4837b3b079274049efe2f8e",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ER-C5-coverage-1",
+          "performer": "ft125-review-c5-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "304670d6498ceae79ed4fad1dfc3e53288646491",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c5-coverage",
+            "digest": "sha256:571b71079bc99174e4d032eb40af5ae6a7a6038891b8b7c7d87f5696ecc0b958",
+            "excerpt": "Coverage axis, chunk ER-C5 (base 34b20e6f2, tip 9a7404cfb). 2 findings; worst C1.\nC1 (auto-fix, conf 9) internal/census/read_advice.go:132 no test grades the operands[0] != \"-n\" guard in sedRead; sed -i 3p notes.md or sed -e 3p notes.md would get line-range advice and an owned record with a green gate (spec 305, ER43). Missing rows: both forms expect no advice.\nC2 (auto-fix, conf 9) internal/census/read_advice.go:63 no test grades the prefix.ViaXargs exclusion; the only xargs case has no operand. xargs cat notes.md would get advice (spec 307, ER43). Missing row: xargs cat notes.md expects no advice.\nProbe: internal/census/read_advice.go, 3 mutants, ./cmd/bench ./internal/census --run \"Guard|FollowOn|RawRead|Census|Read\": omit ViaXargs silent; omit the -n check silent; control-byte check return true silent; all restored=yes.\nGraded by reading: eligibility shapes, tested exclusion classes, advice after verdict (planning_read_advice_test.go:78), one-record rule (read_advice_test.go:25), unowned and primary no record, output-head qualifiers and fallbacks (census_output_test.go:73-88).\nOptional advice: the control-byte exclusion (read_advice.go:84) has no test; the head-prefix guard at census_output.go:47 has no test; no /bin/cat or command -v case.\nOutcome: fail.\n"
+          },
+          "axis": "Coverage",
+          "base": "34b20e6f29c7fcda7362bc305c6d87ce741ac73d",
+          "tip": "9a7404cfbe7c4e86f4837b3b079274049efe2f8e",
+          "finding_ids": [
+            "C1",
+            "C2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -2494,3 +2563,16 @@ The authors report three spec-versus-code points for the review:
 - The 5b ticket marks `internal/outline/command.go` as new, but the file existed. Ticket 5b did not create `internal/spec/command.go`, because the spec owner already exports the show grammar.
 - Raw-read advice always names `bench read <path>`. For a raw read of a path in the worktree pool, `bench read` refuses an outside path, and `bench worktree read --in <label>` is the matching form.
 - `head -n N` advice names `--lines 1:N`, which refuses when the file has fewer than N lines. The spec accepts the same limit for a sed line print.
+
+## ER-C5 review round 1
+
+The frozen pair is `34b20e6f2..9a7404cfb`. Each axis ran on opus / high.
+The round has 5 findings, and each is a repair target. The orchestrator accepted every finding under `--auto-approve`, and repair cycle 1 takes them on ticket 5c.
+
+- ST1 (auto-fix, confidence 9): the advice code has its own control-byte check, which misses C1 controls, so a raw escape can reach stderr. Repair target R1 uses `sanitize.LineSafe` and adds a C1 control row.
+- ST2 (auto-fix, confidence 8): the advice code has its own count and range parser. Repair target R2 parses through `responsebound.ParsePositive` and `responsebound.ParseLineRange`.
+- S1 (auto-fix, confidence 7): an operand outside the repository gets `bench read` advice that the reader refuses. Repair target R3 resolves the operand through `canonicalpath` and gives no advice for a path that is not local.
+- C1 (auto-fix, confidence 9): no test grades the sed `-n` guard. Repair target R4 adds the `sed -i 3p` and `sed -e 3p` rows.
+- C2 (auto-fix, confidence 9): no test grades the xargs exclusion. Repair target R5 adds the `xargs cat notes.md` row.
+
+The Spec axis found that the ticket 5b note and the `head -n N` range limit are not defects.
