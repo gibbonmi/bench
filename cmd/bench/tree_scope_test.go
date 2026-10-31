@@ -169,17 +169,20 @@ func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
 	if !strings.Contains(renderCommandHelp(), "bench commit"+insertion) {
 		t.Fatalf("root help names no %q for bench commit", want)
 	}
+	// A tree-scoped family leaf names the target form in its own usage line after the leaf
+	// name, and its family declares no scope, so no definition line ends its help.
 	type call struct {
 		argv  []string
 		scope treeScope
+		leaf  bool
 	}
 	var calls []call
 	for _, definition := range commandRegistry {
 		if definition.Scope != 0 && !definition.WrapperOnly {
-			calls = append(calls, call{[]string{definition.Name, "--help"}, definition.Scope})
+			calls = append(calls, call{[]string{definition.Name, "--help"}, definition.Scope, false})
 		}
 		for _, leaf := range definition.Leaves {
-			calls = append(calls, call{[]string{definition.Name, leaf.Name, "--help"}, leaf.Scope})
+			calls = append(calls, call{[]string{definition.Name, leaf.Name, "--help"}, leaf.Scope, true})
 		}
 	}
 	root := newAXIEnvelopeRepo(t)
@@ -192,7 +195,10 @@ func TestTreeScopedHelpNamesTheTarget(t *testing.T) {
 			t.Errorf("bench %q = (%d, %q, %q) names %q: %v, want %v", c.argv, result.code, result.stdout, result.stderr, want, got, named)
 		}
 		definition, _ := commandByName(c.argv[0])
-		if line := definition.treeTargetLine(); named && (line == "" || !strings.Contains(result.stdout, line)) {
+		if leafTarget := c.argv[0] + " " + c.argv[1] + insertion; named && c.leaf && !strings.Contains(result.stdout, "usage: bench "+leafTarget) {
+			t.Errorf("bench %q stdout = %q, want the usage line of bench %s", c.argv, result.stdout, leafTarget)
+		}
+		if line := definition.treeTargetLine(); named && !c.leaf && (line == "" || !strings.Contains(result.stdout, line)) {
 			t.Errorf("bench %q stdout = %q, want the line %q", c.argv, result.stdout, line)
 		}
 		if c.scope == scopeRepository && (strings.Contains(both, "tree target:") || strings.Contains(both, treetarget.Operand)) {

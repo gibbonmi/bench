@@ -123,7 +123,9 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench test [--in <label|primary>] [--full] [--package <expr> [--package <expr>]... | <legacy-package> | --changed] [--base <commit> [--source-tip <commit>]] [--run <go-regex>] | bench test [--full] --check <name> | bench test [--full] --check system --run <go-regex> | bench test --check <name> --fixtures | bench test --checks  run focused Go-test or named-check evidence as TOON; no gate verdict
   bench probe [--in <label|primary>] <file> ((--swap <old> (--with <new> | --with-file <path>) [--occurrence <n>] | --omit <old> [--occurrence <n>] | --unwrap <call> [--occurrence <n>] | --insert-before <anchor> (--with <text> | --with-file <path>) [--occurrence <n>] | --omit-file <path> | --delete | (--swap <old> --with <new> | --omit <old>)...) [--expect <test>] | --mutants <path>) (--package <expr> [--package <expr>]... [--run <go-regex>] | --check <name> | --check system --run <go-regex>) [--full]  grade one or several mutants of one file: write each, run one focused test or check, restore the file after each run, and report bit, silent, invalid, or restore-failed
   bench outline [--in <label|primary>] [path] [--full] [--production|--test]  top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams
+  bench outline [--in <label|primary>] [path] --symbol <name-or-receiver.method> [--production|--test] [--offset <byte-offset> --source <identity>]  one complete Go declaration with its attached documentation as bounded TOON pages; an ambiguous name lists its candidates
   bench consumers [--in <label|primary>] <qualified-symbol>... [--production|--test] [--full]  every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams
+  bench read <path> [--section <literal-H2-title> | --lines <first>:<last>] [--artifact] [--offset <byte-offset> --source <identity>]  exact file or artifact bytes as bounded TOON pages; each page names its source identity, byte offset, and exact continuation
   bench doctor [--fix] | --compat <codex-cli|codex-desktop> [--fix | --undo <repair-id>]  report shim health or inspect one Codex interface
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate [--in <label|primary>] [--fresh] [--checkpoint <spec-path> (--chunk <id> | --complete)]  run the project gate (the oracle; --fresh ignores a reusable green)
@@ -132,9 +134,11 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench release [--in <label|primary>] prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--adapter npm|fixture] [--provenance] [--message text]  governed npm publication
   bench worktree shell [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
+  bench worktree list --spec <slug-or-path> [--offset <byte-offset> --source <identity>]  the assignments that commitment scopes relate to one spec as bounded TOON pages
   bench worktree path <target>  print one active owned worktree's absolute path for the file tools
   bench worktree exec <target> [--env KEY=VALUE]... -- <command> [args...]  run a child directly in an active owned worktree
   bench worktree show <target> <rev>:<path>  print one blob from a revision of an active owned worktree
+  bench worktree read [--in <label|primary>] <path> [--section <literal-H2-title> | --lines <first>:<last>] [--offset <byte-offset> --source <identity>]  exact file, line-range, or H2 section bytes of one owned worktree as bounded TOON pages
   bench worktree build <target>  build an active owned worktree's tree into its own dist/bench
   bench worktree exec <target> -- bench gate  run one active owned worktree's gate
   bench worktree reauthorize --assignment <id> --request <token> --base <commit> --source-tip <commit> <path>  replace one lost request token after identity proof
@@ -144,7 +148,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench worktree land --resume <published-commit> --request <opaque-id> --base <commit> --source-tip <commit> [--spec <slug>] <path>  resume incomplete post-publication landing work
   bench worktree land --stack <file> [--source-tip <request>=<commit>]...  compose, gate once, and publish two or more owned worktrees in order
   bench worktree land --resume <published-commit> --stack <file> [--source-tip <request>=<commit>]...  resume incomplete post-publication stack work
-  bench worktree --help      show exact list, path, exec, show, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
+  bench worktree --help      show exact list, path, exec, show, read, build, create, release, clean, reclaim, reauthorize, merge, reset, and land grammar
   bench shift [--refresh] --outcome <id> "<objective>" gated loop in a pooled worktree; commit on green
   bench commit [--in <label|primary>] -m <msg> [--preflight-build <slug> [--base <commit>]] <path>...  run the declared lane (or the gate when no lane is declared), then commit named paths on a pass
   bench record [--in <label|primary>] assignment <slug> --source <commit> --ticket <basename> --performer <session> --assignment <id> --model <model> --effort <effort> --ref <native-dispatch-ref> --run <run-id> --orchestrator <session> --author-limit <positive> [--review-mode unified] [--predecessor <session> --trigger <trigger> --stopped <ref> --preserved <ref> [--reassessment <ref>]]  append one author dispatch to a ticket's history in the version 2 completion plan at HEAD
@@ -161,6 +165,7 @@ func TestHelpInventoryIsComplete(t *testing.T) {
   bench spec [--in <label|primary>] history <slug>  retire/delete commits for a spec, newest first (TOON)
   bench spec [--in <label|primary>] history --spec <slug-or-path> [--spec <slug-or-path>]... --limit <positive-count>  selected histories with complete counts and recovery commands
   bench spec [--in <label|primary>] widen <slug> --ticket <basename> [--decision <reference>] <entry>...  add paths inside the signed-off scope to one ticket's Writes: line (no commit)
+  bench spec show <slug-or-path> [--section stories|coverage|status|<literal-H2-title> | --story <positive>] [--offset <byte-offset> --source <identity>]  exact spec bytes, one visible H2 section, the User stories or coverage map section, the raw Status: line, or one story with its typed coverage rows as bounded TOON pages
   bench version              print the installed Bench version (os/arch)
 `
 

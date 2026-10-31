@@ -17,7 +17,6 @@ import (
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/dashboard"
 	"github.com/gibbonmi/bench/internal/diff"
-	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gocache"
@@ -48,7 +47,6 @@ import (
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
-	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
 	"go.opentelemetry.io/otel/attribute"
@@ -92,8 +90,9 @@ var commandRegistry = []commandDefinition{
 		helpRow{Order: 6, Suffix: " clean", Description: "take the cache lock and empty the Bench Go build cache (refuses under a live run)"},
 	), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(gocache.Command)},
 	{Name: "models", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 5, Description: "list advisory model-id candidates for the line binding"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(models.Command)},
-	{Name: "outline", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 23, Suffix: outline.Suffix, Description: "top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(outline.Command)},
+	{Name: "outline", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 23, Suffix: outline.Suffix, Description: "top-level directory symbol counts as TOON; a path or --full locates candidate seams (file:line), never the project's blessed seams"}, helpRow{Order: 23, Suffix: outline.SymbolSuffix, Description: "one complete Go declaration with its attached documentation as bounded TOON pages; an ambiguous name lists its candidates"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(outline.Command)},
 	{Name: "consumers", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 23, Suffix: consumers.Suffix, Description: "every resolved Go reference edge as TOON (symbol when several, file:line, via, enclosing); identifies edges, never blessed seams"}), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(consumers.CommandWithVersion(version))},
+	{Name: "read", AXI: axiApprovedRoot, Inventory: publicInventory(helpRow{Order: 23, Suffix: strings.TrimPrefix(readUsage, readGrammar.Cmd), Description: "exact file or artifact bytes as bounded TOON pages; each page names its source identity, byte offset, and exact continuation"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(readCommand)},
 	{Name: "capture", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " drain [show|commit|abort] [<drain-id>]", Description: "seal or finish one concurrent-safe capture drain"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(roadmap.CaptureCommand)},
 	{Name: "idea", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<text>\"", Description: "park an out-of-scope idea in capture/IDEAS.md (commit to nothing)"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(roadmap.IdeaCommand)},
 	{Name: "learning", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 8, Suffix: " \"<title>\" --what --right [--rule]", Description: "append one open entry to capture/learnings.md (the drain verdicts it)"}, helpRow{Order: 8, Suffix: " --resolves \"<title>\" --commit <sha>", Description: "link the commit that fixed an open entry (the drain closes it)"}), Bound: boundResponse, Scope: scopeRepository, Run: outputCommand(roadmap.LearningCommand)},
@@ -110,13 +109,15 @@ var commandRegistry = []commandDefinition{
 	{Name: "help", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(), Bound: boundResponse, Scope: scopeRepository, Kind: commandHelp},
 	{Name: "repair", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 25, Suffix: " [--prune]", Description: "explicitly install the pinned platform binary or prune stale cache entries"}), Bound: boundExempt(boundReasonWrapper), Scope: scopeRepository, WrapperOnly: true},
 	{Name: "version", AXI: axiExempt(axiReasonOperational), Inventory: publicInventory(helpRow{Order: 43, Description: "print the installed Bench version (os/arch)"}), Bound: boundResponse, Scope: scopeRepository, Run: versionCommand},
-	{Name: "worktree", AXI: axiApprovedChildren("list"), Inventory: publicInventory(worktreeHelpRows()...), Bound: boundResponse, Leaves: worktreeLeaves, LeafUsage: usage.WorktreeUsage},
+	{Name: "worktree", AXI: axiApprovedChildren("list", "read"), Inventory: publicInventory(worktreeHelpRows()...), Bound: boundResponse, Leaves: worktreeLeaves, LeafUsage: usage.WorktreeUsage},
 	{Name: "resume-clean", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: resumeCleanCommand},
 	{Name: "session-inspect", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return sessioninspect.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "shift", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 38, Suffix: " " + shift.Arguments(), Gap: 1, Description: "gated loop in a pooled worktree; commit on green"}), Bound: boundResponse, Scope: scopeRepository, Run: func(c Command, args []string) int { return shift.Command(args, c.Stdout, c.Stderr) }},
 	{Name: "commit", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 39, Suffix: commit.HelpRowSuffix, Description: commit.LaneClause + ", then commit named paths on a pass"}), Bound: boundResponse, Scope: scopeTree, Run: commitChainCommand},
 	{Name: "record", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(recordHelpRows(40)...), Bound: boundResponse, Scope: scopeTree, Run: outputCommand(recordCommand)},
-	{Name: "spec", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"}, helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec"), Description: "selected histories with complete counts and recovery commands"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.WidenUsage, "bench spec"), Description: "add paths inside the signed-off scope to one ticket's Writes: line (no commit)"}), Bound: boundResponse, Scope: scopeTree, Run: retireListingCommand(spec.Command)},
+	// The show child is the family's one approved AXI query. Retire and widen mutate the
+	// tree, and history keeps its own contract.
+	{Name: "spec", AXI: axiApprovedChildren("show"), Inventory: publicInventory(helpRow{Order: 41, Suffix: " retire <slug>", Description: "delete a merged spec + its review pickup (validated)"}, helpRow{Order: 42, Suffix: " history <slug>", Description: "retire/delete commits for a spec, newest first (TOON)"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.SelectedHistoryUsage, "bench spec"), Description: "selected histories with complete counts and recovery commands"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.WidenUsage, "bench spec"), Description: "add paths inside the signed-off scope to one ticket's Writes: line (no commit)"}, helpRow{Order: 42, Suffix: strings.TrimPrefix(spec.ShowUsage, "bench spec"), Description: "exact spec bytes, one visible H2 section, the User stories or coverage map section, the raw Status: line, or one story with its typed coverage rows as bounded TOON pages"}), Bound: boundResponse, Scope: scopeTree, ChildScopes: map[string]treeScope{spec.ShowSubcommand: scopeRepository}, Run: specCommand},
 	{Name: "gate-go", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateGoCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "gate-prose", AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return gate.GateProseCommand(args, c.Stdout, c.Stderr) }},
 	{Name: "guard-git", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardGit(args, c.Stdin, c.Stdout, c.Stderr) }},
@@ -149,66 +150,6 @@ var commandRegistry = []commandDefinition{
 func versionCommand(c Command, _ []string) int {
 	fmt.Fprintln(c.Stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 	return 0
-}
-
-// commandsGrammar is the declared argument shape usage.Parse enforces for `bench
-// commands`. Arity, flag recognition, `--`, and help all come from there rather than a
-// local switch. `--brief` is the only form that lists anything, so an invocation without
-// it keeps its exit-2 usage answer.
-var commandsGrammar = usage.Grammar{
-	Cmd:   "bench commands",
-	Help:  "usage: bench commands --brief",
-	Flags: []usage.Flag{{Name: "--brief"}},
-}
-
-func commandsCommand(args []string) (string, int) {
-	parsed, line, code := usage.Parse(commandsGrammar, args)
-	if line != "" {
-		return line + "\n", code
-	}
-	if _, brief := parsed.Flags["--brief"]; !brief {
-		return commandsGrammar.Help + "\n", 2
-	}
-	if root, err := git.Root(); err == nil && commandsProbeIsStale(root) {
-		return toon.Errorf("bench binary does not match this checkout's sources", freshness.RebuildAction(root)) + "\n", 1
-	}
-	return "version\ncommands --brief\nstatus\n", 0
-}
-
-// commandsProbeIsStale grades the executable answering the probe against root's current
-// build inputs. A session runs this verb to learn whether Bench answers at all, so an
-// answer from last week's bytes is the one false pass no other check in the loop reaches.
-// The verdict comes from freshness, so the probe derives no digest and reads no mtime.
-//
-// Only an executable inside root is graded. root's sources describe the binary root
-// published, and they describe no other: a release artifact, an installed platform
-// binary, and a private run selection all live outside the checkout and are built from
-// their own trees. Grading one of those against the cwd's repository would refuse a
-// sound binary. Outside a repository, and in a repository that declares no build inputs,
-// there is likewise nothing to grade, and the probe keeps its answer.
-func commandsProbeIsStale(root string) bool {
-	if !freshness.DeclaresBuildInputs(root) {
-		return false
-	}
-	executable, err := os.Executable()
-	if err != nil {
-		return false
-	}
-	// A shim on PATH points at the published bytes, so resolve both sides before the
-	// containment test compares them.
-	executable, err = filepath.EvalSymlinks(executable)
-	if err != nil {
-		return false
-	}
-	checkout, err := filepath.EvalSymlinks(root)
-	if err != nil {
-		return false
-	}
-	relative, err := filepath.Rel(checkout, executable)
-	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return false
-	}
-	return freshness.Verify(root, executable) != nil
 }
 
 var gatePhasesCommand = gate.PhasesCommand

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/markdown"
+	specref "github.com/gibbonmi/bench/internal/spec"
 )
 
 const escSentinel = "\x1c" // stands in for an escaped `\|` across the pipe split
@@ -98,8 +99,16 @@ func schemaFor(header string) schema {
 }
 
 type dataRow struct {
-	cells []string // one map row's cells, trimmed, exactly as many as were written
-	line  int      // the 1-based spec line the row sits on
+	cells []string      // one map row's cells, trimmed, exactly as many as were written
+	line  int           // the 1-based spec line the row sits on
+	span  markdown.Span // the row's original bytes, without the line terminator
+}
+
+// storyLine is one numbered story line of the User stories section, in authored order. A
+// repeated number keeps each occurrence, so a selection can refuse it as ambiguous.
+type storyLine struct {
+	number int
+	span   markdown.Span // the story's original bytes, without the line terminator
 }
 
 // parsed is the result of one scan of a spec. It records whether the scan saw the
@@ -112,8 +121,14 @@ type parsed struct {
 	gotHeader  bool
 	sch        schema // the descriptor the header matched; zero when none did
 	storyNums  map[int]bool
+	stories    []storyLine
 	notCovered map[int]string
 	dataRows   []dataRow
+	// mapSpan is the original bytes of the map: its heading line through the byte before the
+	// heading that ends it, or through the end of the content.
+	mapSpan markdown.Span
+	// fault is the block reader's fault, which leaves the rest of the content unread.
+	fault *markdown.Fault
 }
 
 // projection is the descriptor Rows reads cells through. A header matching no
@@ -130,7 +145,9 @@ func (p parsed) projection() schema {
 func parse(content []byte) parsed {
 	var p parsed
 	inMap := false
-	for _, line := range markdown.Read(string(content)).Lines {
+	doc := markdown.Read(string(content))
+	p.fault = doc.Fault
+	for _, line := range doc.Lines {
 		text := line.Raw
 		if text == historicalMarker {
 			p.historical = true
@@ -138,7 +155,8 @@ func parse(content []byte) parsed {
 		if line.Class != markdown.Body {
 			continue
 		}
-		inStories := line.Section == "User stories"
+		raw := markdown.Span{Start: line.Offset, End: line.Offset + len(text)}
+		inStories := line.Section == specref.StoriesSection
 		if inStories && line.Heading {
 			continue
 		}
@@ -152,6 +170,7 @@ func parse(content []byte) parsed {
 					p.storyNums = make(map[int]bool)
 				}
 				p.storyNums[n] = true
+				p.stories = append(p.stories, storyLine{number: n, span: raw})
 			}
 		}
 		if m := notCoveredRe.FindStringSubmatch(text); m != nil {
@@ -165,17 +184,20 @@ func parse(content []byte) parsed {
 		if text == "### Acceptance coverage map" && !p.seen {
 			p.seen = true
 			inMap = true
+			p.mapSpan = markdown.Span{Start: line.Offset, End: len(content)}
 			continue
 		}
-		inMap = inMap && !mapEndRe.MatchString(text)
+		if inMap && mapEndRe.MatchString(text) {
+			inMap, p.mapSpan.End = false, line.Offset
+		}
 		if inMap {
-			p.processMapLine(text, line.Number)
+			p.processMapLine(text, line.Number, raw)
 		}
 	}
 	return p
 }
 
-func (p *parsed) processMapLine(raw string, lineNum int) {
+func (p *parsed) processMapLine(raw string, lineNum int, span markdown.Span) {
 	cells, ok := pipeCells(raw)
 	if !ok {
 		return
@@ -188,7 +210,7 @@ func (p *parsed) processMapLine(raw string, lineNum int) {
 	if separatorRow(cells) {
 		return
 	}
-	p.dataRows = append(p.dataRows, dataRow{cells: cells, line: lineNum})
+	p.dataRows = append(p.dataRows, dataRow{cells: cells, line: lineNum, span: span})
 }
 
 // pipeCells is the one pipe-table cell splitter: it splits one Markdown table line into

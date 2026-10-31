@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -19,45 +20,54 @@ type treeScope uint8
 const (
 	// scopeTree marks a leaf that reads, grades, or writes tracked content of one checkout.
 	scopeTree treeScope = iota + 1
-	// scopeRepository marks a leaf that reads or writes only Git refs, the worktree
-	// ledger, git-ignored capture files, or state under the Bench home.
+	// scopeRepository marks a leaf that takes no tree target: it reads or writes only Git
+	// refs, the worktree ledger, git-ignored capture files, or state under the Bench home,
+	// or, as root read does, it reads only the checkout of the caller or an absolute
+	// artifact path.
 	scopeRepository
 )
 
 // treeTargetFlag is the one spelling of the tree-target flag.
 const treeTargetFlag = "--in"
 
-// leadsWithTreeTarget reports whether args name a tree target. The flag counts only as the
-// first argument after the verb. In any other position the verb's own grammar reads it.
+// leadsWithTreeTarget reports whether args name a tree target. args are the arguments after
+// the verb, or after the leaf name of a family leaf, and the flag counts only as the first of
+// them. In any other position the verb's own grammar reads it.
 func leadsWithTreeTarget(args []string) bool {
 	return len(args) > 0 && args[0] == treeTargetFlag
 }
 
-// refusesTreeTarget answers the repository refusal. A repository-scoped definition that
-// gets the tree-target flag as its first argument prints the usage line and does not run,
-// so an ignored target never looks accepted. A family declares no scope, so its first
-// argument still routes as a leaf name.
+// refusesTreeTarget answers the repository refusal. A repository-scoped call that gets the
+// tree-target flag as its first argument prints the usage line of its definition, or of its
+// declared child, and does not run, so an ignored target never looks accepted. A family
+// declares no scope, so its first argument still routes as a leaf name.
 func (definition commandDefinition) refusesTreeTarget(c Command, args []string) bool {
-	if definition.Scope != scopeRepository || !leadsWithTreeTarget(args) {
+	if definition.scope(args) != scopeRepository || !leadsWithTreeTarget(args) {
 		return false
 	}
-	fmt.Fprintln(c.Stdout, toon.Usage("bench "+definition.Name, treeTargetFlag))
+	name := "bench " + definition.Name
+	if child := formArgument(args); definition.ChildScopes[child] != 0 {
+		name += " " + child
+	}
+	fmt.Fprintln(c.Stdout, toon.Usage(name, treeTargetFlag))
 	return true
 }
 
 // runInTreeTarget runs a tree-scoped call that names its tree target as one child in that
-// tree, and answers the child's exit and true. Every other call answers false and runs in
-// this process. The running executable goes by its absolute path, because the child
-// directory is another tree, where the spelling of argv[0] can name another file. When
-// that path is unknown it stays empty, and a child start that needs it fails with its own
-// error.
+// tree, and answers the child's exit and true. A tree-scoped family leaf takes the target
+// after its leaf name. Every other call answers false and runs in this process, so a
+// repository-scoped child of a tree-scoped definition reaches the repository refusal. The
+// running executable goes by its absolute path, because the child directory is another
+// tree, where the spelling of argv[0] can name another file. When that path is unknown it
+// stays empty, and a child start that needs it fails with its own error.
 func (c Command) runInTreeTarget(definition commandDefinition, args []string) (int, bool) {
-	if definition.Scope != scopeTree || !leadsWithTreeTarget(args) {
+	leaf, rest := definition.leafCall(args)
+	if leaf.Scope != scopeTree || !leadsWithTreeTarget(rest) {
 		return 0, false
 	}
 	running, _ := os.Executable()
 	return treetarget.Run(treetarget.Call{
-		Name: definition.Name, Flag: treeTargetFlag, Args: args[1:],
+		Name: definition.Name, Leaf: leaf.Name, Flag: treeTargetFlag, Args: rest[1:],
 		Root: boundaryRoot(), Home: worktree.Home(),
 		Wrapper: os.Getenv(env.WrapperEnv), Running: running,
 		Stdin: c.Stdin, Stdout: c.Stdout, Stderr: c.Stderr,
@@ -72,6 +82,17 @@ func (definition commandDefinition) treeTargetInsertion() string {
 		return ""
 	}
 	return " [" + treeTargetFlag + " " + treetarget.Operand + "]"
+}
+
+// rowInsertion answers the tree-target insertion of one root help row of definition. The row
+// takes the scope of the child form that its suffix begins with, so the help, the identity
+// row, and the refusal read the one ChildScopes declaration.
+func (definition commandDefinition) rowInsertion(row helpRow) string {
+	child, _, _ := strings.Cut(strings.TrimPrefix(row.Suffix, " "), " ")
+	if definition.childScope(child) != scopeTree {
+		return ""
+	}
+	return definition.treeTargetInsertion()
 }
 
 // runNamingTarget runs one call of definition. A help form that answers at exit 0 then
@@ -95,10 +116,27 @@ func (definition commandDefinition) treeTargetLine() string {
 }
 
 // scope answers the scope of one call. A call that names a family leaf takes the scope of
-// that leaf, and every other call takes the scope of the definition.
+// that leaf, and every other call takes the scope of the child form that it names.
 func (definition commandDefinition) scope(args []string) treeScope {
+	leaf, _ := definition.leafCall(args)
+	return leaf.Scope
+}
+
+// leafCall answers the one leaf lookup of a call: the family leaf that it names and the
+// arguments after the leaf name. Every other call answers a leaf with no name, the scope of
+// the child form that the call names, and args whole.
+func (definition commandDefinition) leafCall(args []string) (commandLeaf, []string) {
 	if leaf, ok := leafNamed(definition.Leaves, args); ok {
-		return leaf.Scope
+		return leaf, args[1:]
+	}
+	return commandLeaf{Scope: definition.childScope(formArgument(args))}, args
+}
+
+// childScope answers the scope of one child form: the scope that the definition declares
+// for that child, or else the scope of the definition.
+func (definition commandDefinition) childScope(child string) treeScope {
+	if scope, ok := definition.ChildScopes[child]; ok {
+		return scope
 	}
 	return definition.Scope
 }
@@ -116,7 +154,13 @@ func (definition commandDefinition) treeRow(args []string) string {
 	if root == "" {
 		return ""
 	}
-	row, err := treetarget.Row(treetarget.Identify(root))
+	return identityRow(treetarget.Identify(root))
+}
+
+// identityRow answers the identity row block of one tree. The dispatcher prints it, and a
+// tree-scoped reader counts it in its page budget.
+func identityRow(identity treetarget.Identity) string {
+	row, err := treetarget.Row(identity)
 	if err != nil {
 		return ""
 	}

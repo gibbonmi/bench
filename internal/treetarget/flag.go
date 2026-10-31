@@ -5,11 +5,12 @@ import (
 
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // Operand is the grammar operand of the tree-target flag. The missing-value refusal and
 // the root help row both read it here.
-const Operand = "<label|primary>"
+const Operand = usage.TreeTargetOperand
 
 // targetValue splits the arguments after the tree-target flag into the target value and the
 // verb's own arguments. It answers the exit-2 usage line of command when the arguments name

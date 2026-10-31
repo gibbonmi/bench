@@ -1,6 +1,6 @@
 # Exact planning readers
 
-Status: staged
+Status: implemented
 
 Related roadmap: FT125.
 
@@ -10,6 +10,7 @@ Verification log: 1 iteration(s) to accept — the independent ticket review acc
 Earlier SPEC review found closure and related-identity issues; their frozen repairs were independently accepted.
 The confirming SPEC and ticket reviews each returned zero Standards, Spec, and Coverage findings.
 The preserved first draft is response artifact 1791348759131116188-a9e012873e65538a.out in the primary Bench response store.
+A build-entry staleness pass at 80521da29 refreshed the fence, the placement counts, the Markdown citation, and the completion plan.
 
 ## Problem
 
@@ -26,10 +27,10 @@ Refuse changed sources rather than joining different versions.
 
 ## User stories
 
-Line: gpt-5.6-sol / high.
+Line: opus / medium.
 Implementation-line reason: existing owners provide interpretation and fixtures, while exact pagination requires careful byte accounting and integration.
-Harder chunk: ER-C1 uses gpt-5.6-sol / xhigh for the reversible page protocol and source-change refusal.
-The requested gpt-6.1-sol / high author line does not change other approved implementation lines.
+Harder chunk: ER-C1 carries the reversible page protocol and source-change refusal.
+The reviewer directed opus / medium for every ticket author on 2026-10-30, including ER-C1.
 
 ### Read exact text
 
@@ -76,15 +77,14 @@ The requested gpt-6.1-sol / high author line does not change other approved impl
 
 ### Source observations and prerequisites
 
-The production source is `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`.
-The planning base is `49a28e8124b5d919b4b39d4c346af962e1c1fa26`.
+The build-entry staleness pass read these premises again at `80521da29987c6c0d950b6a5a09f30e59cb29aa2`.
 Full FT125, map answer 4, structured sources, definitions, and actual consumers informed these contracts.
 These observations are static and claim no read savings or runtime proof.
 
 `spec.Resolve` owns path-first, then live-slug addressing.
 `spec.metadata` owns visible status selection.
-Coverage's private `parse` owns authored stories, schema versions, table cells, row identity, and membership validation.
-Its current `Rows` projection omits row IDs and rationales, so the reader needs a typed projection from that same parse.
+Coverage's private `parse` in rows.go owns authored stories, schema versions, table cells, row identity, and membership validation.
+Its current `Rows` and `MapRows` projections omit rationales, story text, and source spans, so the reader needs a typed projection from that same parse.
 `outline` currently locates declaration lines; its regular expressions cannot establish complete declaration bodies.
 Go parser and token positions own those new spans.
 
@@ -93,11 +93,10 @@ Go parser and token positions own those new spans.
 `ClassifyNoFollow` checks the leaf and reads within the canonical control-record limit.
 The exact reader composes those policies without changing other callers' empty-file or link postures.
 
-ER-C2 consumes the accepted `specs/markdown-block-reader/spec.md` delivery, particularly MB-C1 and MB-C2.
-That contract supplies classified physical lines, original byte offsets, visible H2 ownership, comments, fences, and at most one fault.
-Coverage consumes its own approved adapter delivery before exposing spans from the canonical parse.
-This is an actual prerequisite for authored-section chunks, not a literal 293-to-375-to-318-to-125 blocker.
-No chunk depends on the unlanded native-record or preflight pair.
+ER-C2 consumes the `internal/markdown` owner, which FT358 delivered at 561fdc886.
+`markdown.Read` supplies classified physical lines, original byte offsets, visible H2 ownership, comments, fences, and at most one fault.
+Coverage and spec already read through that owner, so the prerequisite is satisfied.
+No chunk depends on the preflight pair.
 
 ### CLI grammar and composition
 
@@ -142,11 +141,16 @@ A present empty selection and a definitive absent symbol or story return exit 0 
 An explicit Go file selects that file; a directory or omitted path searches its deterministic tracked Go scope.
 Existing production/test filters retain their meaning.
 Each ambiguous candidate names its file and qualified declaration, with a directly executable narrowing route.
+A bare name selects a package-level declaration; when no package-level declaration matches, each same-name method is an ambiguous candidate, not an absence.
+When two candidates share a file and a qualified name, the candidate names its line, and its narrowing route reads the declaration's line range with `bench read --lines`.
 No ambiguous candidate body is guessed.
 
 `worktree list --spec` is incompatible with the selected-view and repeated-target forms.
 Keep the existing default and selected views' bytes and authority.
 Related navigation names read, path, exec, or clean actions according to existing assignment state.
+The related read action is `bench worktree read --in <label> <path>` for an active row with a present tree, and the default view does not gain it.
+The action appears only when the label names that tree alone: it is not the `primary` keyword, no other active assignment has it, and the action grammar accepts it.
+A row without the action keeps its other actions, and so does every other row.
 A missing or inactive read target still refuses through the current tree resolver.
 
 ### Exact source selections
@@ -212,6 +216,7 @@ Content is a JSON string cell for valid UTF-8, with controls escaped reversibly.
 Invalid UTF-8 uses a base64 cell with the encoding named explicitly.
 Cursors always count raw selected bytes, never rendered characters or base64 characters.
 For valid UTF-8, split only at rune boundaries.
+For a valid UTF-8 selection, a supplied cursor offset must fall on a rune boundary; an offset inside a rune refuses as an invalid cursor.
 Decoding and concatenating page content must recover the exact selected bytes.
 
 A story's typed projection has one versioned coverage-owned serialization.
@@ -224,6 +229,8 @@ Budget the actual rendered TOON after both JSON and TOON escaping.
 Include page metadata, the complete help continuation, and the dispatcher tree frame in that budget.
 Use the existing line and byte limits, currently 10 lines and 4096 bytes.
 Nonterminal pages contain one fully executable continuation with the same selector, source token, and next offset.
+A `worktree read` continuation carries `--in` with the label of the read tree's identity row.
+When that label does not resolve back to the read tree, the read refuses before content and names `bench read`.
 Terminal pages explicitly have no successor.
 
 Help exposes all cursor flags before a content result could spill.
@@ -245,7 +252,7 @@ It must preserve the current classifiers' signatures and callers' policies.
 Use existing filesystem fixtures rather than a global opener hook.
 Refuse a replaced or modified file before returning a partial page.
 
-Authored Markdown retains `ControlRecordLimit`; Go syntax selection retains the outline owner's `OutlineFileLimit`.
+Authored Markdown retains `ControlRecordLimit`; Go syntax selection retains the bounds-owned `OutlineFileLimit` that outline reads.
 Reuse its scannable-file policy without acquiring caller-specific size guesses.
 Artifact mode can stream larger regular files with bounded memory while computing a whole-file identity.
 It may therefore read the whole artifact for each page; no read-cost saving is promised.
@@ -320,8 +327,9 @@ This spec claims no adoption percentage, latency improvement, or reduced read co
 
 ### Placement, growth, and transitive closure
 
-The selected planning lane uses per-file Growth through `internal/gate/lane.go`.
-The default increased-file cap is 400 lines unless an exact grant applies.
+The selected planning lane runs per-file Growth through `internal/structure`.
+The default increased-file cap is 400 lines unless a `.bench/structure.budgets` row sets another limit.
+The line counts below were read at `80521da29` in the build-entry staleness pass.
 
 Growth refuses only when a changed source exceeds both its applicable cap and its base line count.
 `acceptedReason` uses exact keys; the conformance-directory accept does not waive individual file growth.
@@ -329,70 +337,73 @@ Directory crowding is inherited debt, not a new Growth refusal.
 No count-equal grant or structure-budget edit is proposed.
 Each placement below is part of the first chunk that needs that owner.
 
-main.go has 436 lines and must retain commandRegistry in place.
-Move only `commandsGrammar`, `commandsCommand`, and `commandsProbeIsStale` into commands.go, removing about 60 lines.
+main.go has 415 lines and must retain commandRegistry in place.
+Move only `commandsGrammar`, `commandsCommand`, and `commandsProbeIsStale` into commands.go.
 Keep the new registry and help edits within a 400-line main.go result.
 Every conformance source reader that parses commandRegistry still reads main.go.
-`command_registry.go` has 387 lines; put new adapter logic in planning_reads.go instead.
+`command_registry.go` had 399 lines; put all new adapter logic in planning_reads.go.
+That file may reach its 400-line cap only for one registry field that a reader form needs.
 
-`command_registry_test.go` has 794 lines and no new default growth allowance.
+`command_registry_test.go` has 784 lines and no new default growth allowance.
 Move its existing envelope types and runner plus fixture helpers into axi_query_envelope_test.go.
 Move only `axiEnvelopeCases` into axi_query_cases_test.go, preserving one independent expectation table.
-Move the existing final help tests into command_help_test.go, leaving the original source at about 371 lines.
+Move the existing final help tests into command_help_test.go, leaving the original source below its 784-line base.
+`TestAXIRegistryBindsEachRealCommandEnvelope` stays in command_registry_test.go, because a staged spec cites it there.
 The new files target at most 350 lines and reuse all existing helpers.
-Existing declarations and callers keep their names except where a test name inaccurately says only retire and history.
+Existing declarations and callers keep their names except where a test name inaccurately says only retire, history, and widen.
 
 Update directArchitectureTests to cover the relocated envelope harness, with no broader exemption.
 The ticket owner's existing five command-registry names extend to the moved envelope, cases, and help files as required.
 Its registered-command closure and registry tests remain the sole ownership check.
 New production-entry tests use the same fixtures, never a copied repository builder or child benchmark harness.
 
-`axi_query_registry_test.go` has 445 lines.
-Move its existing guidance and bidirectional membership bite tests into axi_query_bite_test.go before adding approved memberships.
-Leave its parser and independent membership map in the original owner, with a target below 400 lines.
+`internal/conformance/axi_query_registry_test.go` has 431 lines.
+Its guidance, bidirectional membership, and parser-closure bite tests stay in that file, because a staged spec cites them there.
+Each approved membership joins the independent membership map without growth past the file's 431-line base.
 Keep the parser's main.go path and exact diagnostics.
 
 Approved additions are read, outline, spec show, and worktree read; worktree list is already approved.
 Existing outline metadata also gains derived AXI continuation help while preserving its result table.
-Spec retire and history remain outside the newly approved show query.
+Spec retire, history, and widen remain outside the newly approved show query.
 
-Coverage.go has 599 lines.
-Move Command into command.go, validation into validation.go, and existing State/Rows projections into projection.go.
-Keep the one parser and add original-byte span observations there, targeting at most 380 lines.
+The coverage parser and its `State`, `Rows`, and `MapRows` projections live in rows.go, which has 301 lines.
+Coverage.go has 342 lines and holds `Check`, `ParseSpec`, and `Command`.
+Keep the one parser in rows.go and add original-byte span observations there, within 400 lines.
+Move Command, validation, or projections into command.go, validation.go, or projection.go only when growth requires it.
 New typed story serialization and witnesses live in story.go and story_test.go.
 Existing validators and citation helpers keep their public behavior and sufficient tests.
 
 Outline.go has 383 lines and 17 lines of headroom.
-Move its existing Command into command.go before adding symbol forms, leaving the location owner near 240 lines.
+Move its existing Command into command.go before adding symbol forms, leaving the location owner below 350 lines.
 New AST span selection and its witnesses live in declaration.go and declaration_test.go.
-Spec.go has 502 lines; move its existing Command/specArg and retirement effect family into command.go and retire.go.
-Leave status, facts, lifecycle derivation, and addressing in their original owner, with a target below 350 lines.
+Spec.go has 316 lines, and retire.go already holds the retirement effect family.
+Move Command and specArg into command.go only if the show leaf needs headroom.
+Leave status, facts, lifecycle derivation, and addressing in their original owner, below 350 lines.
 
-Responsebound owner.go has 234 lines, leaving 166 lines of default headroom.
-New page and file operations use siblings targeted below 350 lines each.
-Repository.go has exactly 400 lines; move its existing runScope and typed projection together into run_scope.go.
-List.go has 332 lines; keep related filtering in related.go and only route the new form through the original list adapter.
+Responsebound owner.go has 353 lines, leaving 47 lines of default headroom.
+New page and file operations use the read.go and file.go siblings, targeted below 350 lines each.
+Repository.go has 300 lines; expose RunScopes beside runScope, or move both into run_scope.go when growth requires it.
+List.go has 346 lines; keep related filtering in related.go and only route the new form through the original list adapter.
 
 Census.go has 398 lines.
 Move its existing raw-call orchestration and head-resolution family into raw_calls.go before adding advice.
 Keep `composeRecord`, parsing, and the separator literal in census.go for the existing path-sensitive codec witness.
 New eligibility and attribution witnesses use read_advice_test.go.
-Cmd guards.go has 239 lines; the adapter fits without changing the shim or introducing another hook.
+Cmd guards.go has 244 lines; the adapter fits without changing the shim or introducing another hook.
 
-Registry_retained_workflow.go has 396 lines.
-Preserve its existing target-slot needle and use a new registry_planning_readers.go for reader-specific anchors.
-Registry_data.go has 479 lines, no file accept grant, and a default 400-line cap.
-Extend its existing append expression without growing that inherited overage.
+Registry_retained_workflow.go has 235 lines, and registry_data.go has 184 lines.
+Use a new registry_planning_readers.go for reader-specific anchors.
+New anchor rows use only the admitted anchor classes.
 
-Docs_workflow_checks_test.go has 786 lines and an exact 786-line grant.
-Fixture_bite_test.go has 872 lines against its 826-line grant and must not grow.
+Docs_workflow_checks_test.go has 751 lines against a 904-line budget row.
+Fixture_bite_test.go has 849 lines against a 1003-line budget row.
 Their sufficient checks remain unchanged.
 No redundant conformance test or additional system harness is proposed.
 
 The existing tree-target system witness supplies the actual child boundary with its current selected binary and three-repository owner.
-Tree_target_test.go has 115 lines and 285 lines of default headroom.
+Tree_target_test.go has 119 lines and 281 lines of default headroom.
 Add reader rows and paginated reconstruction to its existing TestTreeTargetRunsInNamedWorktree.
-Reuse treeTargetFixture, runTreeTarget, and current fixture source; do not edit or copy the 445-line system owner.
+Reuse treeTargetFixture, runTreeTarget, and current fixture source; do not edit or copy the larger system owner.
 
 The complete closure includes the root registry, five bound-command registry names, AXI membership, profile, grammar guidance, and relevant anchors.
 The fixture census follows recursive BASE includes, dot-restored overlay paths, and MUTATE.json inputs.
@@ -403,18 +414,19 @@ No existing guard, phase registry, or evidence qualification policy is reassigne
 ## Implementation chunks
 
 The independent SPEC review accepted source ab74806ee43dfcbc339050d88b8c358ad7a12db3 before ticket slicing.
-These five green outcomes have one ticket each; independent graph review accepted source 5b87e01c9a109f07ef7c33d019cf18d6496aea11.
+Independent graph review accepted the first five-ticket graph at source 5b87e01c9a109f07ef7c33d019cf18d6496aea11.
+On 2026-10-30 the reviewer approved a re-slice of tickets 2-5 into nine tickets under the current slicing rules, with the same rows and no new behavior.
 Shared page and command-registry writes order each later chunk after its preceding reader delivery.
 Same-file overlaps with other accepted plans require the reviewed earlier owner version or explicit composition before starting.
 They do not invent dependencies on unrelated unlanded capabilities.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| ER-C1 / 1.md | Native raw-file and artifact pages reconstruct exact bytes through the CLI and expose bounded continuation grammar. | ER1, ER16-ER28, ER35-ER40, ER44-ER46 | planned page/file and real CLI reconstruction families | gpt-5.6-sol / xhigh |
-| ER-C2 / 2.md | Canonical Markdown selections and typed story obligations read through the spec CLI. | ER2-ER10 | planned Markdown/spec/story families and real CLI reconstruction | no |
-| ER-C3 / 3.md | Go syntax selections return complete declarations with deterministic narrowing. | ER11-ER15 | planned declaration families and real CLI reconstruction | no |
-| ER-C4 / 4.md | Owned worktree reads and binding-based related navigation use the same exact page contract. | ER29-ER34, ER48 | planned related filtering and worktree CLI families | no |
-| ER-C5 / 5.md | Eligible raw reads remain allowed with native advice and attributable census evidence. | ER41-ER43, ER47 | planned advice/census families and preserved guard refusals | no |
+| ER-C1 / 1.md | Native raw-file and artifact pages reconstruct exact bytes through the CLI and expose bounded continuation grammar. | ER1, ER16-ER28, ER35-ER40, ER44-ER46 | planned page/file and real CLI reconstruction families | yes |
+| ER-C2 / 2a.md, 2b.md | Canonical Markdown selections and typed story obligations read through the spec CLI. | ER2-ER10, ER49 | planned Markdown/spec/story families and real CLI reconstruction | no |
+| ER-C3 / 3a.md, 3b.md | Go syntax selections return complete declarations with deterministic narrowing. | ER11-ER15 | planned declaration families and real CLI reconstruction | no |
+| ER-C4 / 4a.md, 4b.md | Owned worktree reads and binding-based related navigation use the same exact page contract. | ER29-ER34, ER48 | planned related filtering and worktree CLI families | no |
+| ER-C5 / 5a.md, 5b.md, 5c.md | Eligible raw reads remain allowed with native advice and attributable census evidence. | ER41-ER43, ER47 | planned advice/census families and preserved guard refusals | no |
 
 ER-C1 includes source splits and complete query-registry closure for its first usable read form.
 Each later chunk adds its own approved query and all profile, anchor, fixture, and registry closure on the same green outcome.
@@ -422,221 +434,25 @@ Each later chunk adds its own approved query and all profile, anchor, fixture, a
 Every chunk editing BENCH-reference or the benchkit profile co-names internal/anchors/registry_data_test.go at that first use.
 ER-C1 establishes this closure; ER-C2 through ER-C5 retain it whenever their advertised forms edit either subject.
 The holder's independent assertions remain intact, and its existing role adds no fixture unit.
-ER-C2 waits for the named canonical Markdown delivery; other chunks do not acquire an artificial Markdown prerequisite.
+ER-C2 reads the landed canonical Markdown owner; other chunks do not acquire an artificial Markdown prerequisite.
 ER-C4 includes its physical-line range behavior, which ER-C1 supplies as the reusable file owner.
 ER-C5 changes no existing denial policy and has no dependency on a future guard scanner.
 
 ### Completion plan
 
-This version-1 plan binds the five ticket checkpoints and their required verification inventories.
-A delegated build must author its complete version-2 execution assignments through the existing validator before dispatch.
-This graph does not invent execution identity or depend on the separate native-record capability.
+This version-2 plan binds the ten ticket checkpoints, their required verification inventories, and the delegated run.
+Each ticket author's assignment is recorded through the existing validator before dispatch.
+This graph does not invent execution identity.
 Each chunk reviews its frozen predecessor and current tips before the next ticket starts.
 
+Each chunk requirement is one named probe; the package and check runs are final verifications.
 Probe identities below name required future mutations and their named failing witnesses.
 Run them through the existing probe and verification owners, retain actual output, restore the source, and demonstrate green.
 Query-membership and help-grammar omission witnesses also remain required for each delivered form.
 No runtime result is asserted by this plan.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "ER-C1",
-      "tickets": [
-        "1.md"
-      ],
-      "verification": [
-        {
-          "id": "ER-C1-page",
-          "command": "bench test --package ./internal/responsebound"
-        },
-        {
-          "id": "ER-C1-bounds",
-          "command": "bench test --package ./internal/bounds"
-        },
-        {
-          "id": "ER-C1-entry",
-          "command": "bench test --package ./cmd/bench --run \"TestExactReaderCLIReconstruction|TestPlanningReaderHelpAndRefusals\""
-        },
-        {
-          "id": "ER-C1-successor-red",
-          "command": "bench test --package ./cmd/bench --run TestExactReaderCLIReconstruction",
-          "probe": "skip one source byte in continuation successor"
-        },
-        {
-          "id": "ER-C1-query",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "ER-C1-routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "ER-C1-help",
-          "command": "bench test --package ./cmd/bench --run Help"
-        }
-      ]
-    },
-    {
-      "id": "ER-C2",
-      "tickets": [
-        "2.md"
-      ],
-      "verification": [
-        {
-          "id": "ER-C2-spec",
-          "command": "bench test --package ./internal/spec"
-        },
-        {
-          "id": "ER-C2-coverage",
-          "command": "bench test --package ./internal/coverage"
-        },
-        {
-          "id": "ER-C2-entry",
-          "command": "bench test --package ./cmd/bench --run \"TestExactReaderCLIReconstruction|TestPlanningReaderHelpAndRefusals\""
-        },
-        {
-          "id": "ER-C2-query",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "ER-C2-routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "ER-C2-help",
-          "command": "bench test --package ./cmd/bench --run Help"
-        }
-      ]
-    },
-    {
-      "id": "ER-C3",
-      "tickets": [
-        "3.md"
-      ],
-      "verification": [
-        {
-          "id": "ER-C3-outline",
-          "command": "bench test --package ./internal/outline"
-        },
-        {
-          "id": "ER-C3-entry",
-          "command": "bench test --package ./cmd/bench --run \"TestExactReaderCLIReconstruction|TestPlanningReaderHelpAndRefusals\""
-        },
-        {
-          "id": "ER-C3-query",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "ER-C3-routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "ER-C3-help",
-          "command": "bench test --package ./cmd/bench --run Help"
-        }
-      ]
-    },
-    {
-      "id": "ER-C4",
-      "tickets": [
-        "4.md"
-      ],
-      "verification": [
-        {
-          "id": "ER-C4-worktree",
-          "command": "bench test --package ./internal/worktree"
-        },
-        {
-          "id": "ER-C4-scopes",
-          "command": "bench test --package ./internal/commitment/repository"
-        },
-        {
-          "id": "ER-C4-targets",
-          "command": "bench test --package ./internal/treetarget"
-        },
-        {
-          "id": "ER-C4-lines",
-          "command": "bench test --package ./internal/responsebound --run TestExactLineRanges"
-        },
-        {
-          "id": "ER-C4-entry",
-          "command": "bench test --package ./cmd/bench --run \"TestRelatedContinuationRefusesChangedProjection|TestPlanningReaderHelpAndRefusals|TestTreeScope|TestWorktree\""
-        },
-        {
-          "id": "ER-C4-projection-red",
-          "command": "bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection",
-          "probe": "replace complete related projection identity with commitment-only identity"
-        },
-        {
-          "id": "ER-C4-system",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "ER-C4-query",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "ER-C4-routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "ER-C4-help",
-          "command": "bench test --package ./cmd/bench --run Help"
-        }
-      ]
-    },
-    {
-      "id": "ER-C5",
-      "tickets": [
-        "5.md"
-      ],
-      "verification": [
-        {
-          "id": "ER-C5-advice",
-          "command": "bench test --package ./cmd/bench --run \"TestRawReadAdvice|TestExactReaderOutputHeads|TestGuard\""
-        },
-        {
-          "id": "ER-C5-census",
-          "command": "bench test --package ./internal/census"
-        },
-        {
-          "id": "ER-C5-head-red",
-          "command": "bench test --package ./cmd/bench --run TestExactReaderOutputHeads",
-          "probe": "omit the native read-form qualifier at outputHead"
-        },
-        {
-          "id": "ER-C5-query",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "ER-C5-routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "ER-C5-help",
-          "command": "bench test --package ./cmd/bench --run Help"
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "ER-final-ordinary",
-      "command": "bench test --package ./..."
-    },
-    {
-      "id": "ER-final-system",
-      "command": "bench test --check system"
-    },
-    {
-      "id": "ER-final-coverage",
-      "command": "bench coverage specs/exact-planning-readers/spec.md --check"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft125-build-run-1","orchestrator_session":"session_01JK5CPbT18o2hCYe8SVhPcj","author_limit":1,"assignments":{"1.md":[{"session":"ft125-author-01","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"f5352555da41f53785a4b77497802085ec82c9b2","native_ref":"claude-agent:bench-writer-medium:ft125-author-01"},{"session":"ft125-repair-01","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"b295ebc4d74a7ef6167cc2ffe9154d12478b32a7","native_ref":"claude-agent:bench-writer-medium:ft125-repair-01","predecessor":"ft125-author-01","trigger":"user-directed","stopped":"claude-agent:ft125-author-01:completed","preserved":"97ef9ee0e680e9cc4de6f1709b09664dd6cafd0e"},{"session":"ft125-repair-01b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"ef70293043d55953e36dcf6145e524a477ea94db","native_ref":"claude-agent:bench-writer-medium:ft125-repair-01b","predecessor":"ft125-repair-01","trigger":"user-directed","stopped":"claude-agent:ft125-repair-01:completed","preserved":"8b89063e28fc3b5ede6b0d6250d23089eee0e0c9"}],"2a.md":[{"session":"ft125-author-2a","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"2f5cf347b3f18641fd1fc5261f65b5c41bd1960f","native_ref":"claude-agent:bench-writer-medium:ft125-author-2a"}],"2b.md":[{"session":"ft125-author-2b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"6594205e641adfecf77984b549235aa2d590659f","native_ref":"claude-agent:bench-writer-medium:ft125-author-2b"},{"session":"ft125-repair-2b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"579a2bda5c6a64aa92b0812ddc82af5ad5be1752","native_ref":"claude-agent:bench-writer-medium:ft125-repair-2b","predecessor":"ft125-author-2b","trigger":"user-directed","stopped":"claude-agent:ft125-author-2b:completed","preserved":"38604b3c80fcd38c1c8705deafbf58cd528ce8e4"},{"session":"ft125-repair-2b2","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"64a6623715d2157b26f8ad111bf1bceece973445","native_ref":"claude-agent:bench-writer-medium:ft125-repair-2b2","predecessor":"ft125-repair-2b","trigger":"user-directed","stopped":"claude-agent:ft125-repair-2b:completed","preserved":"db5efd2c87ddd56f96ef9aa04c95aa77f12a05ab"}],"3a.md":[{"session":"ft125-author-3a","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"7ea777e288b669bdce33029b5d8e7c29c1925e0c","native_ref":"claude-agent:bench-writer-medium:ft125-author-3a"}],"3b.md":[{"session":"ft125-author-3b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"a041ad601fe91e1de73f6226d1fb111d083b2296","native_ref":"claude-agent:bench-writer-medium:ft125-author-3b"},{"session":"ft125-repair-3b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"5a3b517adf92fc61b6a60350c6a6241d4596f974","native_ref":"claude-agent:bench-writer-medium:ft125-repair-3b","predecessor":"ft125-author-3b","trigger":"user-directed","stopped":"claude-agent:ft125-author-3b:completed","preserved":"048ec2ac73a20b2520c3370786f27640d0e424fe"},{"session":"ft125-repair-3b2","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"c1b7fddc9a8f865aa1db0e62932458e3932af314","native_ref":"claude-agent:bench-writer-medium:ft125-repair-3b2","predecessor":"ft125-repair-3b","trigger":"user-directed","stopped":"claude-agent:ft125-repair-3b:completed","preserved":"c37e30b5d5503d0a1a0373c70a42b1913c9233e9"},{"session":"ft125-repair-3b3","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"114f1ddf5159b9f3cc46c4a81719f1f3a1a1ab86","native_ref":"claude-agent:bench-writer-medium:ft125-repair-3b3","predecessor":"ft125-repair-3b2","trigger":"user-directed","stopped":"claude-agent:ft125-repair-3b2:completed","preserved":"a7c146622a2f570a6d7f54de341a4b70f90783e0"},{"session":"ft125-repair-3b4","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"9f529f86e59088aac9f70d8332fa056f9db9324a","native_ref":"claude-agent:bench-writer-medium:ft125-repair-3b4","predecessor":"ft125-repair-3b3","trigger":"user-directed","stopped":"claude-agent:ft125-repair-3b3:completed","preserved":"acf39804ff59fa90fd5404ee1acfae32ce59e547"},{"session":"ft125-repair-3b5","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"754963c41a61af58aebcad082ca1ce4c1df59d3b","native_ref":"claude-agent:bench-writer-medium:ft125-repair-3b5","predecessor":"ft125-repair-3b4","trigger":"user-directed","stopped":"claude-agent:ft125-repair-3b4:completed","preserved":"5cd178b342f484da44c6e9bfd681d980551d48a5"}],"4a.md":[{"session":"ft125-author-4a","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"7feeb64f0cdd56973f58e059ea6513c79ab4d638","native_ref":"claude-agent:bench-writer-medium:ft125-author-4a"}],"4b.md":[{"session":"ft125-author-4b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"a91ff8a7bd2c9b94f86c7b39880b40bd9019115d","native_ref":"claude-agent:bench-writer-medium:ft125-author-4b"},{"session":"ft125-repair-4b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"242b92c9144ebe720c34b1ca29b352ca387b1646","native_ref":"claude-agent:bench-writer-medium:ft125-repair-4b","predecessor":"ft125-author-4b","trigger":"user-directed","stopped":"claude-agent:ft125-author-4b:completed","preserved":"a9a22b7a27b42b841978e3a52702251aedea66f7"},{"session":"ft125-repair-4b2","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"9dab65e98ad5b2a31b0cc52b7d02971ff31d6fed","native_ref":"claude-agent:bench-writer-medium:ft125-repair-4b2","predecessor":"ft125-repair-4b","trigger":"user-directed","stopped":"claude-agent:ft125-repair-4b:completed","preserved":"1f19bea233c3f2ba8b46517723b67864b66b83b3"},{"session":"ft125-repair-4b3","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"1d990844a1ddb2edec514f37c715acce942146f0","native_ref":"claude-agent:bench-writer-medium:ft125-repair-4b3","predecessor":"ft125-repair-4b2","trigger":"user-directed","stopped":"claude-agent:ft125-repair-4b2:completed","preserved":"c0d81ce6987265dfb06c08e2f33019c79f990dfd"},{"session":"ft125-repair-4b4","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"87a95bfad2004465deb2e6a58c3b6a5e7bae6d16","native_ref":"claude-agent:bench-writer-medium:ft125-repair-4b4","predecessor":"ft125-repair-4b3","trigger":"user-directed","stopped":"claude-agent:ft125-repair-4b3:completed","preserved":"b8a27b497"}],"5a.md":[{"session":"ft125-author-5a","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"48c1a3b62c08a8d20f16f1054ce5f13a8d0eed0c","native_ref":"claude-agent:bench-writer-medium:ft125-author-5a"}],"5b.md":[{"session":"ft125-author-5b","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"cabf6946b287a19782811c823f8fa64355aa0c49","native_ref":"claude-agent:bench-writer-medium:ft125-author-5b"}],"5c.md":[{"session":"ft125-author-5c","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"9b62c9d9be0c99d190660a97bce8a52ca3506239","native_ref":"claude-agent:bench-writer-medium:ft125-author-5c"},{"session":"ft125-repair-5c","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"7152bf53b2e23ac9adeb49f2ac4496c553fad67e","native_ref":"claude-agent:bench-writer-medium:ft125-repair-5c","predecessor":"ft125-author-5c","trigger":"user-directed","stopped":"claude-agent:ft125-author-5c:completed","preserved":"9a7404cfb"},{"session":"ft125-repair-5c2","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"d104bee2ee0b1e06083c239f10dc99fd0571efd5","native_ref":"claude-agent:bench-writer-medium:ft125-repair-5c2","predecessor":"ft125-repair-5c","trigger":"user-directed","stopped":"claude-agent:ft125-repair-5c:completed","preserved":"4b1800d70"},{"session":"ft125-repair-5c3","assignment":"8fda0f9e53ebbc0cbdc9a326a98abf62","model":"opus","effort":"medium","source":"4a39e071aebed5e86c730a95817c8af8b213eda9","native_ref":"claude-agent:bench-writer-medium:ft125-repair-5c3","predecessor":"ft125-repair-5c2","trigger":"user-directed","stopped":"claude-agent:ft125-repair-5c2:completed","preserved":"a41c9fb92"}]}},"chunks":[{"id":"ER-C1","tickets":["1.md"],"verification":[{"id":"ER-C1-successor-red","command":"bench test --package ./cmd/bench --run TestExactReaderCLIReconstruction","probe":"skip one source byte in continuation successor","ticket":"1.md"}]},{"id":"ER-C2","tickets":["2a.md","2b.md"],"verification":[{"id":"ER-C2-hidden-heading-red","command":"bench test --package ./internal/spec --run TestExactMarkdownSelections","probe":"internal/spec/read.go: accept a fenced or commented H2 line as an owning heading; expect TestExactMarkdownSelections","ticket":"2a.md"}]},{"id":"ER-C3","tickets":["3a.md","3b.md"],"verification":[{"id":"ER-C3-doc-span-red","command":"bench test --package ./internal/outline --run TestDeclarationSpans","probe":"internal/outline/declaration.go: start the span at the declaration keyword instead of its attached Doc group; expect TestDeclarationSpans","ticket":"3b.md"}]},{"id":"ER-C4","tickets":["4a.md","4b.md"],"verification":[{"id":"ER-C4-projection-red","command":"bench test --package ./cmd/bench --run TestRelatedContinuationRefusesChangedProjection","probe":"replace complete related projection identity with commitment-only identity","ticket":"4b.md"}]},{"id":"ER-C5","tickets":["5a.md","5b.md","5c.md"],"verification":[{"id":"ER-C5-head-red","command":"bench test --package ./cmd/bench --run TestExactReaderOutputHeads","probe":"omit the native read-form qualifier at outputHead","ticket":"5b.md"}]}],"final_verification":[{"id":"ER-final-ordinary","command":"bench test --package ./..."},{"id":"ER-final-system","command":"bench test --check system"},{"id":"ER-final-query","command":"bench test --check axi-query-registry"},{"id":"ER-final-routing","command":"bench test --check subcommand-routing"},{"id":"ER-final-coverage","command":"bench coverage specs/exact-planning-readers/spec.md --check"}]}
 ```
 
 ## Testing decisions
@@ -693,56 +509,58 @@ These future reds are required evidence, not observations made during specificat
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| ER1 | 1 | A file read reconstructs the exact source bytes | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | A summarizer or newline-normalizing adapter produces different bytes. |
-| ER2 | 2 | A literal visible H2 selection includes its heading and ends before the next visible H2 | planned TestExactMarkdownSelections in internal/spec/read_test.go | Whole-file or regex slicing leaks the neighboring section. |
-| ER3 | 2 | A heading hidden in a fence or HTML comment is not selected | planned TestExactMarkdownSelections in internal/spec/read_test.go | An independent heading detector selects authored examples as owning headings. |
-| ER4 | 2 | Repeated visible matching H2 headings refuse as ambiguous | planned TestExactMarkdownSelections in internal/spec/read_test.go | Choosing the first occurrence conceals the ambiguity. |
-| ER5 | 3 | The stories shortcut returns the actual User stories H2 span | planned TestExactSpecSelections in internal/spec/read_test.go | An invented summary drops the author line or grouped story text. |
-| ER6 | 3 | The coverage shortcut returns the authoritative coverage-map span | planned TestExactStoryProjection in internal/coverage/story_test.go | A second table detector disagrees with the validator boundary. |
-| ER7 | 3 | The status shortcut returns the metadata owner's selected raw Status line | planned TestExactSpecSelections in internal/spec/read_test.go | Choosing a fenced or earlier status changes existing last-visible-line semantics. |
-| ER8 | 4 | A story projection contains its exact authored text and all typed matching rows with named seams | planned TestExactStoryProjection in internal/coverage/story_test.go | A display-only Rows projection loses row identity, membership, or rationale. |
-| ER9 | 4 | Malformed or ambiguous story membership refuses rather than returning a partial projection | planned TestExactStoryProjection in internal/coverage/story_test.go | Ignoring validator faults makes an invalid map look like a complete obligation. |
-| ER10 | 5 | An absent story returns present false and no rows | planned TestExactStoryProjection in internal/coverage/story_test.go | An empty string alone cannot identify a missing story. |
-| ER11 | 6 | A declaration span begins at its attached doc comment and ends at the AST declaration end | planned TestDeclarationSpans in internal/outline/declaration_test.go | Regex locations cannot prove a complete body or attached documentation. |
-| ER12 | 7 | A selected declaration excludes neighboring comments and declarations | planned TestDeclarationSpans in internal/outline/declaration_test.go | Taking a line window includes an unrelated producer. |
-| ER13 | 8 | Ambiguous same-name declarations return deterministic candidates without a guessed body | planned TestDeclarationSelection in internal/outline/declaration_test.go | A first-match implementation chooses the wrong file or receiver. |
-| ER14 | 8 | A receiver-qualified selection distinguishes methods from same-name functions | planned TestDeclarationSelection in internal/outline/declaration_test.go | Name-only matching confuses independent production seams. |
-| ER15 | 9 | A syntax-invalid selected Go file refuses before any declaration page | planned TestDeclarationSelection in internal/outline/declaration_test.go | A textual locator appears successful even though the Go parser cannot establish a span. |
-| ER16 | 10 | Every page includes the source identity and selected-payload byte offset | planned TestExactPageProtocol in internal/responsebound/read_test.go | A continuation cannot prove which bytes precede it without both fields. |
-| ER17 | 10 | Changing the source between pages refuses without emitting new content | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | A cursor alone combines the old prefix with a new suffix. |
-| ER18 | 11 | A nonterminal page includes its complete executable continuation command | planned TestExactPageProtocol in internal/responsebound/read_test.go | A descriptive placeholder leaves the next page inaccessible. |
-| ER19 | 11 | The pagination grammar is available before any read can spill | planned TestPlanningReaderHelpAndRefusals in cmd/bench/planning_reader_commands_test.go | Adding grammar only to a spilled body hides the recovery route. |
-| ER20 | 12 | Rendered escaped output stays within the shared byte and line budget | planned TestExactPageProtocol in internal/responsebound/read_test.go | Raw source length understates TOON and JSON escaping expansion. |
-| ER21 | 13 | Unicode page boundaries reconstruct the original bytes | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | Splitting a UTF-8 rune changes the round trip. |
-| ER22 | 13 | CRLF, LF, and final-newline absence reconstruct without normalization | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | Line-based reassembly manufactures or drops terminators. |
-| ER23 | 14 | Control bytes round-trip through the declared reversible content encoding | planned TestExactPageProtocol in internal/responsebound/read_test.go | Literal controls break the response while replacement characters lose the source. |
-| ER24 | 14 | Invalid UTF-8 round-trips through base64 with raw-byte cursors | planned TestExactPageProtocol in internal/responsebound/read_test.go | Encoding invalid bytes as a Go string replaces their values. |
-| ER25 | 15 | A single oversized physical line advances through multiple exact pages | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | A line-count paginator cannot advance within the line. |
-| ER26 | 16 | A present empty file returns present true with empty content and terminal position zero | planned TestExactFileStates in internal/responsebound/file_test.go | Treating StateEmpty as absence erases an existing file. |
-| ER27 | 17 | An offset without its source token refuses as usage | planned TestPlanningReaderHelpAndRefusals in cmd/bench/planning_reader_commands_test.go | An unbound cursor can skip bytes from an unrelated source. |
-| ER28 | 17 | An invalid or out-of-range cursor refuses without resetting to page zero | planned TestExactPageProtocol in internal/responsebound/read_test.go | A forgiving parser repeats or omits already reconstructed bytes. |
-| ER29 | 18 | The real --in worktree read resolves only an active owned target | planned extension of TestTreeTargetRunsInNamedWorktree in internal/systemtest/tree_target_test.go | Direct filesystem lookup bypasses existing assignment authority. |
-| ER30 | 19 | A worktree section read reconstructs the same selected source span | planned extension of TestTreeTargetRunsInNamedWorktree in internal/systemtest/tree_target_test.go | A separate worktree selector drifts from the primary reader. |
-| ER31 | 19 | An inclusive physical-line range preserves its original terminators | planned TestExactLineRanges in internal/responsebound/file_test.go | Splitting and joining lines silently normalizes the selected bytes. |
-| ER32 | 20 | A spec filter uses exact commitment bindings or declared continuation scope | planned TestRelatedWorktreeFilter in internal/worktree/related_test.go | Matching a label or physical spec file invents a relationship. |
-| ER33 | 20 | An unbound assignment is excluded with an explicit unbound count | planned TestRelatedWorktreeFilter in internal/worktree/related_test.go | Guessing missing Assignment.Spec data yields a false complete relation. |
-| ER34 | 21 | Related results paginate in deterministic assignment-ID order with complete counts | planned extension of TestTreeTargetRunsInNamedWorktree in internal/systemtest/tree_target_test.go | A bounded first page alone hides later related worktrees. |
-| ER35 | 22 | An existing spill file reconstructs through the same exact page protocol | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | A separate artifact renderer can exceed the shared escaped-byte bound. |
-| ER36 | 22 | An exported evidence file reconstructs without granting evidence authority | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | Reading a file must not assert manifest verification or qualification. |
-| ER37 | 23 | A symlink in any path component refuses before opening the target | planned TestExactFileStates in internal/responsebound/file_test.go | Checking only the final entry allows a linked parent to redirect the reader. |
-| ER38 | 23 | A special or unreadable file refuses without partial content | planned TestExactFileStates in internal/responsebound/file_test.go | A reader that opens before classification can block or expose an incomplete prefix. |
-| ER39 | 23 | A missing file is an operational refusal distinct from an empty file | planned TestExactFileStates in internal/responsebound/file_test.go | Collapsing both states conceals an unavailable input. |
-| ER40 | 24 | Repeated selections at an unchanged source return the same bytes and cursor sequence | planned TestExactPageProtocol in internal/responsebound/read_test.go | Nondeterministic row or candidate ordering changes continuation boundaries. |
-| ER41 | 25 | An eligible ordinary raw read remains allowed while stderr names the matching native form | planned TestRawReadAdvice in cmd/bench/planning_read_advice_test.go | A new deny code would turn guidance into an unapproved ban. |
-| ER42 | 26 | Owned eligible raw reads and native reader calls remain attributable in the existing census | planned TestReaderCensusAttribution in internal/census/read_advice_test.go | An unrecorded advisory cannot support a later adoption comparison. |
-| ER43 | 27 | A source example, stdin read, or general sed program receives no guessed translation | planned TestRawReadAdvice in cmd/bench/planning_read_advice_test.go | Name-only matching turns ordinary shell text into a false read recommendation. |
+| ER1 | 1 | A file read reconstructs the exact source bytes | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A summarizer or newline-normalizing adapter produces different bytes. |
+| ER2 | 2 | A literal visible H2 selection includes its heading and ends before the next visible H2 | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | Whole-file or regex slicing leaks the neighboring section. |
+| ER3 | 2 | A heading hidden in a fence or HTML comment is not selected | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | An independent heading detector selects authored examples as owning headings. |
+| ER4 | 2 | Repeated visible matching H2 headings refuse as ambiguous | `internal/spec/read_test.go` (`TestExactMarkdownSelections`) | Choosing the first occurrence conceals the ambiguity. |
+| ER5 | 3 | The stories shortcut returns the actual User stories H2 span | `internal/spec/read_test.go` (`TestExactSpecSelections`) | An invented summary drops the author line or grouped story text. |
+| ER6 | 3 | The coverage shortcut returns the authoritative coverage-map span | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | A second table detector disagrees with the validator boundary. |
+| ER7 | 3 | The status shortcut returns the metadata owner's selected raw Status line | `internal/spec/read_test.go` (`TestExactSpecSelections`) | Choosing a fenced or earlier status changes existing last-visible-line semantics. |
+| ER8 | 4 | A story projection contains its exact authored text and all typed matching rows with named seams | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | A display-only Rows projection loses row identity, membership, or rationale. |
+| ER9 | 4 | Malformed or ambiguous story membership refuses rather than returning a partial projection | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | Ignoring validator faults makes an invalid map look like a complete obligation. |
+| ER10 | 5 | An absent story returns present false and no rows | `internal/coverage/story_test.go` (`TestExactStoryProjection`) | An empty string alone cannot identify a missing story. |
+| ER11 | 6 | A declaration span begins at its attached doc comment and ends at the AST declaration end | `internal/outline/declaration_test.go` (`TestDeclarationSpans`) | Regex locations cannot prove a complete body or attached documentation. |
+| ER12 | 7 | A selected declaration excludes neighboring comments and declarations | `internal/outline/declaration_test.go` (`TestDeclarationSpans`) | Taking a line window includes an unrelated producer. |
+| ER13 | 8 | Ambiguous same-name declarations return deterministic candidates without a guessed body | `internal/outline/declaration_test.go` (`TestDeclarationSelection`) | A first-match implementation chooses the wrong file or receiver. |
+| ER14 | 8 | A receiver-qualified selection distinguishes methods from same-name functions | `internal/outline/declaration_test.go` (`TestDeclarationSelection`) | Name-only matching confuses independent production seams. |
+| ER15 | 9 | A syntax-invalid selected Go file refuses before any declaration page | `internal/outline/declaration_test.go` (`TestDeclarationSelection`) | A textual locator appears successful even though the Go parser cannot establish a span. |
+| ER16 | 10 | Every page includes the source identity and selected-payload byte offset | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | A continuation cannot prove which bytes precede it without both fields. |
+| ER17 | 10 | Changing the source between pages refuses without emitting new content | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A cursor alone combines the old prefix with a new suffix. |
+| ER18 | 11 | A nonterminal page includes its complete executable continuation command | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | A descriptive placeholder leaves the next page inaccessible. |
+| ER19 | 11 | The pagination grammar is available before any read can spill | `cmd/bench/planning_reader_commands_test.go` (`TestPlanningReaderHelpAndRefusals`) | Adding grammar only to a spilled body hides the recovery route. |
+| ER20 | 12 | Rendered escaped output stays within the shared byte and line budget | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | Raw source length understates TOON and JSON escaping expansion. |
+| ER21 | 13 | Unicode page boundaries reconstruct the original bytes | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | Splitting a UTF-8 rune changes the round trip. |
+| ER22 | 13 | CRLF, LF, and final-newline absence reconstruct without normalization | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | Line-based reassembly manufactures or drops terminators. |
+| ER23 | 14 | Control bytes round-trip through the declared reversible content encoding | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | Literal controls break the response while replacement characters lose the source. |
+| ER24 | 14 | Invalid UTF-8 round-trips through base64 with raw-byte cursors | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | Encoding invalid bytes as a Go string replaces their values. |
+| ER25 | 15 | A single oversized physical line advances through multiple exact pages | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A line-count paginator cannot advance within the line. |
+| ER26 | 16 | A present empty file returns present true with empty content and terminal position zero | `internal/responsebound/file_test.go` (`TestExactFileStates`) | Treating StateEmpty as absence erases an existing file. |
+| ER27 | 17 | An offset without its source token refuses as usage | `cmd/bench/planning_reader_commands_test.go` (`TestPlanningReaderHelpAndRefusals`) | An unbound cursor can skip bytes from an unrelated source. |
+| ER28 | 17 | An invalid or out-of-range cursor refuses without resetting to page zero | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | A forgiving parser repeats or omits already reconstructed bytes. |
+| ER29 | 18 | The real --in worktree read resolves only an active owned target | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRunsInNamedWorktree`) | Direct filesystem lookup bypasses existing assignment authority. |
+| ER30 | 19 | A worktree section read reconstructs the same selected source span | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRunsInNamedWorktree`) | A separate worktree selector drifts from the primary reader. |
+| ER31 | 19 | An inclusive physical-line range preserves its original terminators | `internal/responsebound/file_test.go` (`TestExactLineRanges`) | Splitting and joining lines silently normalizes the selected bytes. |
+| ER32 | 20 | A spec filter uses exact commitment bindings or declared continuation scope | `internal/worktree/related_test.go` (`TestRelatedWorktreeFilter`) | Matching a label or physical spec file invents a relationship. |
+| ER33 | 20 | An unbound assignment is excluded with an explicit unbound count | `internal/worktree/related_test.go` (`TestRelatedWorktreeFilter`) | Guessing missing Assignment.Spec data yields a false complete relation. |
+| ER34 | 21 | Related results paginate in deterministic assignment-ID order with complete counts | `internal/systemtest/tree_target_test.go` (`TestTreeTargetRunsInNamedWorktree`) | A bounded first page alone hides later related worktrees. |
+| ER35 | 22 | An existing spill file reconstructs through the same exact page protocol | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A separate artifact renderer can exceed the shared escaped-byte bound. |
+| ER36 | 22 | An exported evidence file reconstructs without granting evidence authority | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | Reading a file must not assert manifest verification or qualification. |
+| ER37 | 23 | A symlink in any path component refuses before opening the target | `internal/responsebound/file_test.go` (`TestExactFileStates`) | Checking only the final entry allows a linked parent to redirect the reader. |
+| ER38 | 23 | A special or unreadable file refuses without partial content | `internal/responsebound/file_test.go` (`TestExactFileStates`) | A reader that opens before classification can block or expose an incomplete prefix. |
+| ER39 | 23 | A missing file is an operational refusal distinct from an empty file | `internal/responsebound/file_test.go` (`TestExactFileStates`) | Collapsing both states conceals an unavailable input. |
+| ER40 | 24 | Repeated selections at an unchanged source return the same bytes and cursor sequence | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | Nondeterministic row or candidate ordering changes continuation boundaries. |
+| ER41 | 25 | An eligible ordinary raw read remains allowed while stderr names the matching native form | `cmd/bench/planning_read_advice_test.go` (`TestRawReadAdvice`) | A new deny code would turn guidance into an unapproved ban. |
+| ER42 | 26 | Owned eligible raw reads and native reader calls remain attributable in the existing census | `internal/census/read_advice_test.go` (`TestReaderCensusAttribution`) | An unrecorded advisory cannot support a later adoption comparison. |
+| ER43 | 27 | A source example, stdin read, or general sed program receives no guessed translation | `cmd/bench/planning_read_advice_test.go` (`TestRawReadAdvice`) | Name-only matching turns ordinary shell text into a false read recommendation. |
 | ER44 | 28 | Legacy outline metadata and lifecycle or evidence commands retain their existing refusal authority | review-owned scope comparison at internal/outline/outline.go, internal/spec/spec.go, internal/preflight/evidencecmd/evidence.go | Reader source identity does not replace lifecycle status or immutable evidence manifests. |
-| ER45 | 29 | The real CLI reconstruction fails when continuation skips one source byte | planned TestExactReaderCLIReconstruction in cmd/bench/planning_reader_commands_test.go | A producer-derived expectation repeats the same cursor omission and stays green. |
-| ER46 | 30 | New command forms satisfy the existing real-envelope membership and routing checks | planned TestPlanningReaderHelpAndRefusals in cmd/bench/planning_reader_commands_test.go | Owner-only tests do not detect missing root registration or tree routing. |
+| ER45 | 29 | The real CLI reconstruction fails when continuation skips one source byte | `cmd/bench/planning_reader_commands_test.go` (`TestExactReaderCLIReconstruction`) | A producer-derived expectation repeats the same cursor omission and stays green. |
+| ER46 | 30 | New command forms satisfy the existing real-envelope membership and routing checks | `cmd/bench/planning_reader_commands_test.go` (`TestPlanningReaderHelpAndRefusals`) | Owner-only tests do not detect missing root registration or tree routing. |
 
-| ER47 | 26 | Native reader output records identify their complete supported read form | planned TestExactReaderOutputHeads in cmd/bench/census_output_test.go | A root-only spec or outline head conflates exact reads with other operations. |
+| ER47 | 26 | Native reader output records identify their complete supported read form | `cmd/bench/census_output_test.go` (`TestExactReaderOutputHeads`) | A root-only spec or outline head conflates exact reads with other operations. |
 
-| ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | planned TestRelatedContinuationRefusesChangedProjection in cmd/bench/planning_reader_commands_test.go | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
+| ER48 | 21 | Related continuation refuses before content when its complete projection changes while commitment data stays unchanged | `cmd/bench/selected_queries_test.go` (`TestRelatedContinuationRefusesChangedProjection`) | Commitment-only identity misses assignment population, fields, observed tree facts, counts, and navigation changes. |
+
+| ER49 | 17 | A cursor inside a rune of a valid UTF-8 selection refuses before content | `internal/responsebound/read_test.go` (`TestExactPageProtocol`) | A byte cursor that lands inside a rune silently switches the remaining pages to base64. |
 
 ### Edge inventory
 
@@ -783,13 +601,16 @@ No implementation is authorized by this planning artifact.
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/commands.go`
+- `cmd/bench/guard_projection_test.go`
 - `cmd/bench/guards.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main.go`
+- `cmd/bench/main_test.go`
 - `cmd/bench/planning_read_advice.go`
 - `cmd/bench/planning_read_advice_test.go`
 - `cmd/bench/planning_reader_commands_test.go`
 - `cmd/bench/planning_reads.go`
+- `cmd/bench/selected_queries_test.go`
 - `cmd/bench/tree_scope.go`
 - `cmd/bench/tree_scope_test.go`
 - `cmd/bench/worktree_leaves.go`
@@ -799,29 +620,31 @@ No implementation is authorized by this planning artifact.
 - `internal/anchors/registry_ft311_review_dispatch.go`
 - `internal/anchors/registry_planning_readers.go`
 - `internal/anchors/registry_retained_workflow.go`
+- `internal/axi/axitest/help.go`
 - `internal/bounds/classify.go`
 - `internal/bounds/open.go`
 - `internal/bounds/open_test.go`
 - `internal/census/census.go`
 - `internal/census/census_test.go`
-- `internal/census/output.go`
 - `internal/census/raw_calls.go`
 - `internal/census/read_advice.go`
 - `internal/census/read_advice_test.go`
 - `internal/commitment/repository/repository.go`
 - `internal/commitment/repository/run_scope.go`
-- `internal/conformance/axi_query_bite_test.go`
 - `internal/conformance/axi_query_registry_test.go`
+- `internal/conformance/bounds_policy_test.go`
 - `internal/conformance/docs_workflow_checks_test.go`
 - `internal/conformance/fixture_bite_test.go`
 - `internal/conformance/help_inventory_single_source_test.go`
 - `internal/conformance/ordinary_build_census_test.go`
 - `internal/conformance/retained_workflow_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
+- `internal/conformance/ticket_grammar_test.go`
 - `internal/coverage/command.go`
 - `internal/coverage/coverage.go`
 - `internal/coverage/coverage_test.go`
 - `internal/coverage/projection.go`
+- `internal/coverage/rows.go`
 - `internal/coverage/story.go`
 - `internal/coverage/story_test.go`
 - `internal/coverage/validation.go`
@@ -829,7 +652,10 @@ No implementation is authorized by this planning artifact.
 - `internal/outline/declaration.go`
 - `internal/outline/declaration_test.go`
 - `internal/outline/outline.go`
+- `internal/outline/outline_filter_test.go`
+- `internal/outline/outline_kinds_test.go`
 - `internal/outline/outline_test.go`
+- `internal/outline/read.go`
 - `internal/responsebound/file.go`
 - `internal/responsebound/file_test.go`
 - `internal/responsebound/owner.go`
@@ -839,8 +665,6 @@ No implementation is authorized by this planning artifact.
 - `internal/spec/command.go`
 - `internal/spec/read.go`
 - `internal/spec/read_test.go`
-- `internal/spec/resolve.go`
-- `internal/spec/retire.go`
 - `internal/spec/spec.go`
 - `internal/spec/spec_test.go`
 - `internal/systemtest/tree_target_test.go`
@@ -848,13 +672,17 @@ No implementation is authorized by this planning artifact.
 - `internal/tickets/registry_data_test.go`
 - `internal/treetarget/family_test.go`
 - `internal/treetarget/run.go`
+- `internal/treetarget/run_test.go`
+- `internal/usage/command_name_test.go`
 - `internal/usage/worktree.go`
 - `internal/worktree/list.go`
 - `internal/worktree/list_actions_test.go`
 - `internal/worktree/list_selected.go`
 - `internal/worktree/list_selected_test.go`
+- `internal/worktree/parallel_census_test.go`
 - `internal/worktree/related.go`
 - `internal/worktree/related_test.go`
+- `internal/worktree/verb_runner_check_test.go`
 - `projects/benchkit.md`
 - `reviews/exact-planning-readers.md`
 - `tests/canary/docs-currency-token-diet/benchref-imported`
@@ -877,27 +705,10 @@ No implementation is authorized by this planning artifact.
 - `tests/canary/skills-index-command-adapters/missing-index-field`
 - `tests/canary/skills-index-command-adapters/stale-index-wording`
 - `tests/canary/skills-index-command-adapters/unindexed-skill`
-- `tests/canary/workflow-guidance-anchors/agents-handoff-section-rule`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
-- `tests/canary/workflow-guidance-anchors/reference-agent-push-rule`
-- `tests/canary/workflow-guidance-anchors/reference-bench-operational-layer`
-- `tests/canary/workflow-guidance-anchors/reference-category-context`
-- `tests/canary/workflow-guidance-anchors/reference-category-oracle`
-- `tests/canary/workflow-guidance-anchors/reference-category-setup`
-- `tests/canary/workflow-guidance-anchors/reference-category-work`
-- `tests/canary/workflow-guidance-anchors/reference-gate-authority`
-- `tests/canary/workflow-guidance-anchors/reference-kit-only-ship`
-- `tests/canary/workflow-guidance-anchors/reference-no-path-fallback`
 - `tests/canary/workflow-guidance-anchors/reference-progressive-loading-term`
-- `tests/canary/workflow-guidance-anchors/reference-refusal-route-shape`
 - `tests/canary/workflow-guidance-anchors/reference-retro-capture-owner`
 - `tests/canary/workflow-guidance-anchors/reference-retro-drain-owner`
-- `tests/canary/workflow-guidance-anchors/reference-skills-guidance`
-- `tests/canary/workflow-guidance-anchors/reference-upgrade-route`
 
 ## Out of scope
 
@@ -919,16 +730,16 @@ No external consumer absence is asserted from an in-tree search.
 The required planning lane and document checks freeze this complete spec before independent review.
 The original independent three-axis review and this bounded repair are retained in [the spec review record](assets/spec-review.md).
 Runtime tests, omission probes, benchmarks, and source relocations remain future work.
-The independent graph review accepted all five tickets; dispatch still requires the complete version-2 execution binding and fresh authors.
+The reviewer approved the ten-ticket graph; each dispatch still requires its version-2 assignment and a fresh author.
 The separate preflight pair keeps closure and staleness policy authority.
 Ticket slicing must recheck overlapping source obligations and preserve each first green registry closure.
 
 | approval item | proposed disposition |
 | --- | --- |
-| implementation line | gpt-5.6-sol / high, ER-C1 xhigh, preserved from accepted SPEC |
+| implementation line | opus / medium for every chunk, by reviewer direction on 2026-10-30 |
 | test purpose | Exact owner-level predicates plus one real CLI reconstruction family |
 | source authority | Canonical Markdown, coverage, Go syntax, response limits, and worktree binding owners |
-| graph | Five serial green tickets accepted at 5b87e01c9a109f07ef7c33d019cf18d6496aea11 |
+| graph | Ten serial green tickets, re-sliced from the five accepted at 5b87e01c9a109f07ef7c33d019cf18d6496aea11 |
 | evidence limits | Static source and document checks only; no runtime or read-savings claim |
 
 ### Accepted ticket graph
@@ -936,13 +747,18 @@ Ticket slicing must recheck overlapping source obligations and preserve each fir
 | ticket | title | Blocked by | delivered outcome |
 | --- | --- | --- | --- |
 | 1.md | Deliver exact native file and artifact pages | none | Accepted ER-C1 vertical outcome with its own verification and review checkpoint |
-| 2.md | Read canonical spec sections and story obligations | 1.md | Accepted ER-C2 vertical outcome with its own verification and review checkpoint |
-| 3.md | Read complete Go declarations from syntax spans | 1.md, 2.md | Accepted ER-C3 vertical outcome with its own verification and review checkpoint |
-| 4.md | Read owned worktrees and source-bound related navigation | 1.md, 2.md, 3.md | Accepted ER-C4 vertical outcome with its own verification and review checkpoint |
-| 5.md | Advise eligible raw reads through the existing census | 1.md, 2.md, 3.md, 4.md | Accepted ER-C5 vertical outcome with its own verification and review checkpoint |
+| 2a.md | Read literal H2 sections and spec shortcuts | 1.md | Vertical outcome in ER-C2 |
+| 2b.md | Read typed story obligations through spec show | 2a.md | Vertical outcome in ER-C2 |
+| 3a.md | Move the outline command into its own file | none | Prefactor with no behavior change in ER-C3 |
+| 3b.md | Read complete Go declarations with outline --symbol | 2b.md, 3a.md | Vertical outcome in ER-C3 |
+| 4a.md | Read an owned worktree through worktree read --in | 2a.md, 3b.md | Vertical outcome in ER-C4 |
+| 4b.md | List spec-related worktrees through binding scopes | 4a.md | Vertical outcome in ER-C4 |
+| 5a.md | Move the census raw-call family into its own file | none | Prefactor with no behavior change in ER-C5 |
+| 5b.md | Name native read forms in census output heads | 3b.md, 4a.md | Vertical outcome in ER-C5 |
+| 5c.md | Advise eligible raw reads with census attribution | 4a.md, 5a.md, 5b.md | Vertical outcome in ER-C5 |
 
 All preceding overlapping tickets are explicit blockers, including shared registry, profile, anchor, fixture, and command-adapter writes.
-ER-C2 also requires the accepted canonical Markdown and coverage-adapter delivery named above.
+The canonical Markdown and coverage-adapter delivery named above has landed.
 Other capabilities and advisory roadmap ordering introduce no additional literal blockers.
 Ticket Writes union equals the accepted implementation fence, excluding only the review pickup.
 Co-owned sufficient checks and immutable fixtures need no edit when their accepted input remains valid.

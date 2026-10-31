@@ -147,7 +147,21 @@ func (o *Owner) write(stdout bool, p []byte) {
 
 // overBound reports a response past the line value or the byte value.
 func (o *Owner) overBound() bool {
-	return o.lines.count > bounds.ResponseLines || o.bytes > bounds.ResponseBytes
+	return !withinBound(o.lines.count, o.bytes)
+}
+
+// withinBound reports that a response of lines lines and size bytes is within the line value
+// and the byte value. The owner and every page renderer grade a response through it.
+func withinBound(lines int, size int64) bool {
+	return lines <= bounds.ResponseLines && size <= bounds.ResponseBytes
+}
+
+// Fits reports that one whole response prints unchanged: its lines, counted as the owner
+// counts them, and its bytes are within the bound.
+func Fits(response string) bool {
+	var lines lineTracker
+	lines.add([]byte(response))
+	return withinBound(lines.count, int64(len(response)))
 }
 
 // startSpill moves the retained writes into a new spill file. A file that cannot be

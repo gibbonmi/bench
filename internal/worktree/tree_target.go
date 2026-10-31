@@ -30,16 +30,9 @@ var ErrTreeTargetPath = errors.New("tree target is a path")
 // separator still names its worktree. The selected assignment then passes the state,
 // missing-tree, and creation-bundle checks of every other target-taking verb.
 func TreeTarget(root, label string) (string, error) {
-	if !lineSafe(label) {
-		return "", errTargetControls
-	}
-	assignments, err := intent.Assignments(root)
+	labeled, err := labelSelection(func() ([]intent.Assignment, error) { return intent.Assignments(root) }, label)
 	if err != nil {
 		return "", err
-	}
-	labeled := matchingAssignments(assignments, func(a intent.Assignment) bool { return a.Label == label })
-	if active := matchingAssignments(labeled, func(a intent.Assignment) bool { return landingActiveState(a.State) }); len(active) > 0 {
-		labeled = active
 	}
 	switch {
 	case len(labeled) == 0 && pathShaped(label):
@@ -56,6 +49,25 @@ func TreeTarget(root, label string) (string, error) {
 		return "", err
 	}
 	return selected.Worktree, nil
+}
+
+// labelSelection is the label step of the tree-target lookup. A label that a line cannot
+// carry refuses before load reads the assignments. The answer holds every assignment whose
+// label is exactly label, narrowed to the active class when that class has a match, so
+// exactly one answer means the label selects one assignment.
+func labelSelection(load func() ([]intent.Assignment, error), label string) ([]intent.Assignment, error) {
+	if !lineSafe(label) {
+		return nil, errTargetControls
+	}
+	assignments, err := load()
+	if err != nil {
+		return nil, err
+	}
+	labeled := matchingAssignments(assignments, func(a intent.Assignment) bool { return a.Label == label })
+	if active := matchingAssignments(labeled, func(a intent.Assignment) bool { return landingActiveState(a.State) }); len(active) > 0 {
+		labeled = active
+	}
+	return labeled, nil
 }
 
 // pathShaped reports whether targetPath, the owner of the worktree target grammar, reads

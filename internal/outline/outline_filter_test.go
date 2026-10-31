@@ -5,10 +5,11 @@ import (
 	"testing"
 )
 
-// productionOutline and testOutline are the two filtered renderings of
+// productionOutline and testOutline are the two filtered result tables of
 // writeKindFixtureTree. Together their symbol rows are exactly newOutline's rows: the
 // production form keeps the fixture row and pkg/widget.go, and the test form keeps the
-// two _test.go files. The metadata counts only the files the filter keeps in scope.
+// two _test.go files. The metadata counts only the files the filter keeps in scope. Each
+// form then ends with its help, which assertFilteredForms names.
 const productionOutline = `outline[3]{file,line,kind,name}:
   pkg/testdata/golden.txt,"1",fixture,golden.txt
   pkg/widget.go,"2",type,Widget
@@ -47,21 +48,23 @@ func TestTestFilterKeepsOnlyTestFileSymbols(t *testing.T) {
 }
 
 // assertFilteredForms runs one filter flag through the three forms: --full must equal
-// want, the path form scoped to pkg carries the same bytes because every fixture file
-// sits under pkg, and the bare summary carries dirRow.
+// want, the path form scoped to pkg carries the same table because every fixture file
+// sits under pkg, and the bare summary carries dirRow. Each form ends with help that keeps
+// the filter: the symbol tables offer a --symbol read in their own scope, and the summary
+// offers to narrow into pkg.
 func assertFilteredForms(t *testing.T, flag, want, dirRow string) {
 	t.Helper()
 	full, code := Command([]string{"--full", flag})
-	if code != 0 || full != want {
-		t.Fatalf("--full %s code=%d bytes =\n%s\nwant\n%s", flag, code, full, want)
+	if wantFull := want + "help[1]{cmd,why}:\n  bench outline --symbol <name> " + flag + ",read one listed Go declaration\n"; code != 0 || full != wantFull {
+		t.Fatalf("--full %s code=%d bytes =\n%s\nwant\n%s", flag, code, full, wantFull)
 	}
 	scoped, code := Command([]string{flag, "pkg"})
-	if code != 0 || scoped != want {
-		t.Fatalf("%s pkg code=%d bytes =\n%s\nwant\n%s", flag, code, scoped, want)
+	if wantScoped := want + "help[1]{cmd,why}:\n  bench outline pkg --symbol <name> " + flag + ",read one listed Go declaration\n"; code != 0 || scoped != wantScoped {
+		t.Fatalf("%s pkg code=%d bytes =\n%s\nwant\n%s", flag, code, scoped, wantScoped)
 	}
 	bare, code := Command([]string{flag})
-	if code != 0 || !strings.HasPrefix(bare, "outline_dirs[1]{dir,symbols}:\n"+dirRow+"\n") {
-		t.Fatalf("bare %s code=%d summary:\n%s", flag, code, headOf(bare))
+	if code != 0 || !strings.HasPrefix(bare, "outline_dirs[1]{dir,symbols}:\n"+dirRow+"\n") || !strings.HasSuffix(bare, "help[1]{cmd,why}:\n  bench outline pkg "+flag+",list the symbols under this directory\n") {
+		t.Fatalf("bare %s code=%d summary:\n%s", flag, code, bare)
 	}
 }
 
@@ -84,10 +87,13 @@ const bareKindOutline = `outline_dirs[1]{dir,symbols}:
 outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_symbols,omitted_symbols,truncated}:
   "4","4","0","10","10","0","false"
 outline_skips[0]{file,reason}:
+help[1]{cmd,why}:
+  bench outline pkg,list the symbols under this directory
 `
 
-// OF4: without a filter flag the bare summary keeps its bytes. The --full bytes of the
-// same tree are pinned by TestOldToNewFixturePairPinsTheKindDelta.
+// OF4: without a filter flag the bare summary keeps its result bytes and ends with one
+// narrowing call into its listed directory. The --full bytes of the same tree are pinned
+// by TestOldToNewFixturePairPinsTheKindDelta.
 func TestBareFormKeepsItsBytesWithoutAFilter(t *testing.T) {
 	root := outlineRepo(t)
 	writeKindFixtureTree(t, root)
@@ -96,10 +102,10 @@ func TestBareFormKeepsItsBytesWithoutAFilter(t *testing.T) {
 	}
 }
 
-// OF5: the help text names both filter flags.
+// OF5: the help text names both filter flags, and the symbol form with its cursor flags.
 func TestHelpNamesTheFilterFlags(t *testing.T) {
 	out, code := Command([]string{"--help"})
-	if code != 0 || !strings.HasPrefix(out, "usage: bench outline [path] [--full] [--production|--test]\n") {
+	if code != 0 || !strings.HasPrefix(out, "usage: bench outline [path] [--full] [--production|--test]\nusage: bench outline [path] --symbol <name-or-receiver.method> [--production|--test] [--offset <byte-offset> --source <identity>]\n") {
 		t.Fatalf("help code=%d does not name the filter flags:\n%s", code, out)
 	}
 }

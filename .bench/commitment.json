@@ -2255,6 +2255,14 @@
       "identity": "sha256:fc6dcf6d82322cd7ef4723998ebeb6db6b8c4403ab307687057e9251f9c0fd70",
       "source": "591ecb52e7e1ec0a7292c47a334135776181e426",
       "evidence": "6be154513bf63263e4fdaaef57c96e0b20f39e4b"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT125-exact-readers",
+      "binding": "exact-planning-readers",
+      "identity": "sha256:b4f5d534bc72a368e67e9c81420743238d819d40e2dbd6c223e0aac85c60ab2f",
+      "source": "785c02d407b6986aad73075145044b4b8d28db7e",
+      "evidence": "2ea43a34ef5763acbb41e7524f84af8d7e3f4381"
     }
   ]
 }

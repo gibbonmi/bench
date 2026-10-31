@@ -18,7 +18,7 @@ import (
 
 // guardEnvelopeCase is one raw stdin envelope and the exit a guard entry keeps for it.
 // warn marks an exit-0 case whose stderr carries the entry's unreadable-input warning.
-// A nonempty message is the one refusal line that stderr must hold.
+// A nonempty message is the one refusal or advice line that stderr must hold.
 type guardEnvelopeCase struct {
 	name    string
 	in      string
@@ -28,7 +28,7 @@ type guardEnvelopeCase struct {
 }
 
 // checkGuardEnvelope runs each case through the actual guard entry and grades its exit and streams.
-// Exit 2 carries BLOCKED or the case's exact message, a warned exit 0 carries WARNING, and any other exit 0 writes nothing.
+// A case with a message carries exactly that line, exit 2 otherwise carries BLOCKED, a warned exit 0 carries WARNING, and any other exit 0 writes nothing.
 func checkGuardEnvelope(t *testing.T, entry func([]string, io.Reader, io.Writer, io.Writer) int, cases []guardEnvelopeCase) {
 	t.Helper()
 	for _, tc := range cases {
@@ -43,8 +43,10 @@ func checkGuardEnvelope(t *testing.T, entry func([]string, io.Reader, io.Writer,
 			}
 			got := stderr.String()
 			switch {
-			case tc.message != "" && got != tc.message+"\n":
-				t.Errorf("entry(%q) stderr = %q, want %q", tc.in, got, tc.message+"\n")
+			case tc.message != "":
+				if got != tc.message+"\n" {
+					t.Errorf("entry(%q) stderr = %q, want %q", tc.in, got, tc.message+"\n")
+				}
 			case tc.want == 2 && !strings.HasPrefix(got, "BLOCKED:"):
 				t.Errorf("entry(%q) stderr = %q, want BLOCKED", tc.in, got)
 			case tc.want == 0 && tc.warn && !strings.HasPrefix(got, "WARNING: "):

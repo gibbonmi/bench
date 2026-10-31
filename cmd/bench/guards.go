@@ -164,7 +164,8 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		fmt.Fprintln(stderr, "WARNING: block-bench-follow-on: unreadable command field — allowing Bash.")
 		return 0
 	}
-	recordFollowOn(command)
+	read, observed := census.ObserveRead(command)
+	eligible := recordFollowOn(command, read, observed)
 	// The pool denial runs first. A pool reference with a Bench call after it has two
 	// faults, and the pool reference is the cause the reader repairs.
 	if target := benchguard.PoolReference(command, poolkey.Pools(worktree.Home())); target != "" {
@@ -176,11 +177,15 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		return 2
 	}
 	verdict := benchguard.Classify(command, benchguard.DefaultResolver())
-	if !verdict.Blocked {
-		return 0
+	if verdict.Blocked {
+		fmt.Fprintln(stderr, verdict.Message())
+		return 2
 	}
-	fmt.Fprintln(stderr, verdict.Message())
-	return 2
+	// The advice comes after every verdict, so a denial keeps its exact diagnostic.
+	if eligible {
+		fmt.Fprintln(stderr, rawReadAdvice(read))
+	}
+	return 0
 }
 
 // guardFileWrite is the primary-checkout file-write guard subcommand. It reads the
@@ -228,17 +233,21 @@ func guardPathIgnored(root, path string) bool {
 }
 
 // recordFollowOn records a raw call through the exec census. It tests the command
-// text for the pool prefix before it resolves any root, so an ordinary call outside
-// a Bench worktree spawns no git process. Its own failure is silent and never reaches
-// the verdict: this call sits before the verdict, so no later return can skip it.
-func recordFollowOn(command string) {
+// text for the pool prefix and the read-shape observation before it resolves any root, so a
+// call that is neither spawns no git process. eligibleRead decides eligibility once, and that
+// one answer gates both the owned record and the advice. An eligible read takes the verified
+// owner of the current tree, and the census writes at most one record for the call. Its own failure is silent and never reaches the verdict: this call
+// sits before the verdict, so no later return can skip it.
+func recordFollowOn(command string, read census.Read, observed bool) (eligible bool) {
 	home := worktree.Home()
-	if !strings.Contains(command, poolkey.Pools(home)+string(filepath.Separator)) {
-		return
+	if !observed && !strings.Contains(command, poolkey.Pools(home)+string(filepath.Separator)) {
+		return false
 	}
 	root, err := git.Root()
 	if err != nil {
-		return
+		return false
 	}
-	_ = census.Record(command, root, home, time.Now())
+	eligible = eligibleRead(root, read, observed)
+	_ = census.RecordRead(command, root, home, readOwner(root, eligible), time.Now())
+	return eligible
 }

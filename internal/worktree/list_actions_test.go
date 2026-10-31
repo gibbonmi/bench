@@ -222,7 +222,7 @@ func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 		owned[i] = listRow{values: row}
 	}
 	owned[2].orphanPath, owned[5].orphanPath = "/tmp/orphan one", "/tmp/orphan-two"
-	help, err := axi.RenderHelp(actionsForRows(owned))
+	help, err := axi.RenderHelp(actionsForRows(owned, nil))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -364,7 +364,7 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			tc.row.cleanLanded = tc.cleanLanded
-			help, err := axi.RenderHelp(actionsForRows([]listRow{tc.row}))
+			help, err := axi.RenderHelp(actionsForRows([]listRow{tc.row}, nil))
 			if err != nil {
 				t.Fatal(err)
 			}

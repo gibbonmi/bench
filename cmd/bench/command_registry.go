@@ -120,11 +120,12 @@ const (
 )
 
 type commandDefinition struct {
-	Name      string
-	AXI       commandAXIDisposition
-	Inventory commandInventory
-	Bound     boundDisposition
-	Scope     treeScope
+	Name        string
+	AXI         commandAXIDisposition
+	Inventory   commandInventory
+	Bound       boundDisposition
+	Scope       treeScope
+	ChildScopes map[string]treeScope // the scope of each child form that differs from Scope
 	// Leaves is the family table of a command whose first argument names a leaf. Each
 	// leaf declares its own bound disposition on its row. The dispatcher and the bound
 	// both read this one table, so no family runs a leaf that the bound does not see.
@@ -372,7 +373,7 @@ func renderCommandHelp() string {
 			continue
 		}
 		for _, row := range definition.Inventory.Rows {
-			row.Suffix = definition.treeTargetInsertion() + row.Suffix
+			row.Suffix = definition.rowInsertion(row) + row.Suffix
 			prefix := row.Prefix
 			if prefix == "" {
 				prefix = "bench"

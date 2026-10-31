@@ -37,6 +37,8 @@ assignments; the file map, adapter contracts, and hook layers live below.
 - `.bench/hooks/session-start.sh` renders ambient repository status when a
   harness session starts.
   The `census` signal counts raw calls per assignment from `$BENCH_HOME/census/<repo-key>/`.
+  The follow-on guard allows a raw read of one named file inside the repository and names the matching `bench read` form on stderr.
+  The census counts that read for the assignment that owns the current worktree.
 - `projects/<name>.md` holds the project's seams, gate shape, and line bindings.
 - `capture/learnings.md` is the usage journal for process learnings.
 - `capture/IDEAS.md` is the parked-idea sink `bench idea` writes. Run the verb

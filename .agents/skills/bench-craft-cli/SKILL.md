@@ -7,8 +7,7 @@ index: building an agent-facing CLI
 # AXI — Agent eXperience Interface
 
 AXI is the output contract for a CLI an agent drives through the shell. It aims for accurate action at low token cost.
-Apply it per surface: a declared query may conform while operational siblings keep their own documented contract. Full spec:
-https://axi.md
+Apply it per surface: a declared query may conform while operational siblings keep their own documented contract. Full spec: https://axi.md
 
 ## The principles
 
@@ -67,8 +66,7 @@ https://axi.md
 
 ## Bench application
 
-This table is the complete approved Bench AXI query set and says how the contract
-applies to each surface. Commands not listed retain their own contracts.
+This table is the complete approved Bench AXI query set.
 
 | approved query | contextual disclosure |
 | --- | --- |
@@ -83,14 +81,17 @@ applies to each surface. Commands not listed retain their own contracts.
 | `bench consumers` | A resolved symbol result is a terminal read, so its envelope is `help[0]`. An ambiguous bare name answers its candidates with one re-query action per candidate row. An over-cap default also discloses, and it offers the one `bench consumers <symbol> --full` invocation that returns the complete set. |
 | `bench coverage` | Successful default extraction offers one check action per mapped coverage row: `bench coverage --check <spec>`. For repairable mapped rows, that exact command is the retry with why `retry after repairing coverage map`. `coverage --check` and every refusal retain their error contracts and append no disclosure. |
 | `bench harnesses` | Project the compiled harness record, or observe one named session record with `--record` and `--format`. Each view is a terminal read, so the disposition is always `help[0]`. |
+| `bench read` | A nonterminal page offers one exact continuation with the same selector, source token, and next byte offset. A terminal page ends with `help[0]`. |
+| `bench outline` | `--symbol` pages one complete Go declaration like `bench read`. An ambiguous name refuses with a narrowing command per candidate. Other forms keep their tables and add narrowing actions. |
+| `bench spec show` | Page a spec, one visible H2 section, the stories section, the coverage map, or the raw status line like `bench read`. `--story <n>` pages one story with its typed coverage rows. An absent selection is a `present` false row with `help[0]`. |
 | `bench roadmap` | Default index omits bodies; request selected complete rows with `bench roadmap --context --row <ID,...>` or the complete snapshot with `bench roadmap --context --full`. |
-| `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action. Each id cell holds the address for the `<target>` slot. |
+| `bench worktree list` | Offer inspect, execute, or clean actions according to each worktree state. The active rows with a present tree share one `bench worktree path <target>` action and one `bench worktree exec <target> -- <command>` action. Each id cell holds the address for the `<target>` slot. `--spec <slug-or-path>` pages the commitment-scoped rows of one spec like `bench read`, with matched and unbound counts. |
+| `bench worktree read` | Like `bench read`, page a file, a line range, or a visible H2 section of the tree that `--in` names. Each continuation names that tree. |
 
 Every approved result ends with `help[N]{cmd,why}:`; an honest empty envelope is
 `help[0]{cmd,why}:`. Derive one state-derived action per matching row. Collapse
 exact duplicates while retaining stable source order. Carry every known argument
-literally, with placeholders only for unknown future-input slots. Terminal results
-offer no busywork.
+literally, with placeholders only for unknown future-input slots. Terminal results offer no busywork.
 
 ## Focused reads
 
@@ -99,7 +100,7 @@ Keep the source identity with each result, so that its complete detail stays rec
 
 | evidence | focused read | complete detail |
 | --- | --- | --- |
-| File | `rg -n '<pattern>' -- <path>` | Read the named file with the file reader. |
+| File | `rg -n '<pattern>' -- <path>` | `bench read <path>`, then each continuation it offers |
 | Git | `git diff --name-only <base> <tip>`, then `git diff <base> <tip> -- <path>` | `git diff <base> <tip>` |
 | Test | `bench test --package <package> --run <test>` | `bench test --full --package <package> --run <test>` |
 | Worktree paths | `bench worktree list --view paths --target <first> --target <second>` | The default `bench worktree list` view |
@@ -108,8 +109,7 @@ Keep the source identity with each result, so that its complete detail stays rec
 | Shell output or log | `rg -n -e error -e failed -- <log>` | Read the same named log with the file reader. |
 
 Capture the output and exit status of a non-Bench command once, because a rerun can change the evidence.
-Batch the independent archive and log discovery reads.
-After that discovery, fetch only the relevant bodies.
+Batch the independent archive and log discovery reads, and then fetch only the relevant bodies.
 Keep polling, mutation, verification, approval, and publication as separate operations.
 
 ## Conformance
