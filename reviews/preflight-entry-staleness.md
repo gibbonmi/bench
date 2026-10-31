@@ -384,6 +384,72 @@
           "supersedes": [
             "es-c1-r1-coverage"
           ]
+        },
+        {
+          "id": "es-c1-r3-standards",
+          "performer": "ft375-review-standards-3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4a14df4dc616f6f698592eaf409dbe98cdb3bd84",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-standards-3",
+            "digest": "sha256:c290c3386e8382e836209e6c4b7993d1a4ff8c178d3edf539fdc3161f212317e",
+            "excerpt": "Standards axis, ES-C1 reaffirmation over 07922d543..b1182c17a, evidence b0e24091 current. Reaffirmed: tests reuse existing harnesses, no duplicated knowledge, comment register plain, budgets met. Note (confidence 3, no-op): the C5 message literal is an independent expectation; the C5 witness red demonstrates it.\n"
+          },
+          "axis": "Standards",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "finding_ids": [],
+          "supersedes": [
+            "es-c1-r2-standards"
+          ]
+        },
+        {
+          "id": "es-c1-r3-spec",
+          "performer": "ft375-review-spec-3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4a14df4dc616f6f698592eaf409dbe98cdb3bd84",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-spec-3",
+            "digest": "sha256:34f680e5240208b4e426bca8d5d67479377bc334d68f8e224cd04b1df7eb0d31",
+            "excerpt": "Spec axis, ES-C1 reaffirmation over 07922d543..b1182c17a, evidence b0e24091 current. Reaffirmed: the new tests match spec line 146 and widen.go:216; the Writes widen names the two test files; Covers unchanged; no coverage citation changes. Findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "finding_ids": [],
+          "supersedes": [
+            "es-c1-r2-spec"
+          ]
+        },
+        {
+          "id": "es-c1-r3-coverage",
+          "performer": "ft375-review-coverage-3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "4a14df4dc616f6f698592eaf409dbe98cdb3bd84",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft375-review-coverage-3",
+            "digest": "sha256:b0e8898708304d894967bf4fe5db5c0c3d830251ccaddf66f19905162408a438",
+            "excerpt": "Coverage axis, ES-C1 reaffirmation over 07922d543..b1182c17a, evidence b0e24091 current, tree clean. C4 closed (default_branch_test.go:18; coordinator probe bit). C5 closed (widen_signedoff_test.go:54; probe widen.go:215 '&& err == nil': bit, TestSpecWidenRefusesAnUnresolvedDefaultBranch). New findings: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "fbcd16dfa1cff57bfd5590fca61aa9df5ac385f4",
+          "tip": "b1182c17a622ffa78fd8140d8bd341b3d7afa480",
+          "finding_ids": [],
+          "supersedes": [
+            "es-c1-r2-coverage"
+          ]
         }
       ]
     }
