@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/commitment"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -36,11 +37,56 @@ func sourceAt(run *git.Run, root, revision, path string) (string, []byte, error)
 	if err != nil {
 		return "", nil, err
 	}
-	normalized, err := roadmap.RequirementBytes(path, data)
+	identity, err := requirementIdentity(path, data)
 	if err != nil {
 		return "", nil, err
 	}
-	return commitment.Identity(normalized), data, nil
+	return identity, data, nil
+}
+
+// requirementIdentity is the identity of the source bytes data at path. It drops the
+// occurrence ledger of a row file, so the tree read and the working read compute one
+// identity for the same bytes.
+func requirementIdentity(path string, data []byte) (string, error) {
+	normalized, err := roadmap.RequirementBytes(path, data)
+	if err != nil {
+		return "", err
+	}
+	return commitment.Identity(normalized), nil
+}
+
+// workingIdentity is the identity of the working file at path under root. A linked component
+// below root refuses, and only a parsed regular file passes, so a hostile checkout cannot
+// redirect or block the read. A link above root passes, because a checkout can sit below a
+// linked directory.
+func workingIdentity(root, path string) (string, error) {
+	if err := bounds.RefuseLinksBelow(root, path); err != nil {
+		return "", err
+	}
+	read := bounds.ClassifyNoFollow(filepath.Join(root, filepath.FromSlash(path)))
+	if read.State != bounds.StateParsed {
+		if read.Reason != "" {
+			return "", fmt.Errorf("working file %s is %s: %s", path, read.State, read.Reason)
+		}
+		return "", fmt.Errorf("working file %s is %s", path, read.State)
+	}
+	return requirementIdentity(path, read.Data)
+}
+
+// sourceRead names where one source reads: revision, or the working file under the store
+// root when working is true.
+type sourceRead struct {
+	revision string
+	working  bool
+}
+
+// identityAt is the identity of the source at path where at names.
+func (store Store) identityAt(at sourceRead, path string) (string, error) {
+	if at.working {
+		return workingIdentity(store.Root, path)
+	}
+	identity, _, err := sourceAt(store.Run, store.Root, at.revision, path)
+	return identity, err
 }
 
 // stagedSpecs lists each staged spec that revision holds, in slug order. The status, the
@@ -91,15 +137,25 @@ func ticketsOnlyAt(root, revision, path string) bool {
 	return path == spec.ClosedFolderPath(name) && spec.TicketsOnly(spec.CommitTree(root, revision), name)
 }
 
-// readTree names the tree that source reads in a transition from current to proposed. A new
+// readTree names where source reads in a transition from current to proposed. A new
 // deliverable source reads tree, which publishes it. A new outcome source whose path revision
-// does not hold reads tree too, so one landing publishes a row and its admission. Every other
-// source reads revision, so a worktree edit of a row that revision holds cannot pass as current.
-func (store Store) readTree(current *commitment.Policy, proposed commitment.Policy, source commitment.SourceBinding, tree, revision string) string {
-	if commitment.NewDeliverable(current, proposed, source) || commitment.NewSource(current, proposed, source) && store.absentAt(revision, source.Path) {
-		return tree
+// does not hold reads tree too, so one landing publishes a row and its admission. A changed
+// outcome source, whose id and path current binds at another identity, reads the working file
+// under the store root when checkout is true, at plan and approve, so the row edit can stay
+// uncommitted until the approval. At commit and landing it reads tree, so the committed bytes
+// must equal the approved identity. Every other source reads revision, so a worktree edit of a
+// row whose identity the proposal keeps cannot pass as current.
+func (store Store) readTree(current *commitment.Policy, proposed commitment.Policy, source commitment.SourceBinding, tree, revision string, checkout bool) sourceRead {
+	if commitment.NewDeliverable(current, proposed, source) {
+		return sourceRead{revision: tree}
 	}
-	return revision
+	if commitment.ChangedSource(current, proposed, source) {
+		return sourceRead{revision: tree, working: checkout}
+	}
+	if commitment.NewSource(current, proposed, source) && store.absentAt(revision, source.Path) {
+		return sourceRead{revision: tree}
+	}
+	return sourceRead{revision: revision}
 }
 
 // absentAt reports that revision holds no entry at path. A read error is no proof of absence,
@@ -149,7 +205,8 @@ func (store Store) validateDeliverables(current *commitment.Policy, proposed com
 	}
 	_, bindings := commitment.Unsettled(proposed)
 	for _, binding := range bindings {
-		if _, err := store.validateDeliverableAt(store.readTree(current, proposed, binding.Source, head, revision), binding.Source); err != nil {
+		// A deliverable reads a revision, never the working file.
+		if _, err := store.validateDeliverableAt(store.readTree(current, proposed, binding.Source, head, revision, false).revision, binding.Source); err != nil {
 			return err
 		}
 	}
@@ -162,7 +219,7 @@ func (store Store) validateSources(current *commitment.Policy, proposed commitme
 		return err
 	}
 	for _, source := range sources {
-		if err := store.validateSourceAt(store.readTree(current, proposed, source, head, revision), source); err != nil {
+		if err := store.validateSourceAt(store.readTree(current, proposed, source, head, revision, true), source); err != nil {
 			return err
 		}
 	}
@@ -184,8 +241,8 @@ func (store Store) defaultRevision() (string, string, error) {
 	return branch, revision, err
 }
 
-func (store Store) validateSourceAt(revision string, source commitment.SourceBinding) error {
-	got, _, err := sourceAt(store.Run, store.Root, revision, source.Path)
+func (store Store) validateSourceAt(at sourceRead, source commitment.SourceBinding) error {
+	got, err := store.identityAt(at, source.Path)
 	if err != nil {
 		return fmt.Errorf("commitment source %q refused: %w", source.ID, err)
 	}

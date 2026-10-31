@@ -208,7 +208,7 @@ func (store Store) approvedTransition(ledger intent.Ledger, current, candidate *
 			continue
 		}
 		for _, source := range expected.Sources {
-			if err := store.validateSourceAt(store.readTree(current, *candidate, source, tree, revision), source); err != nil {
+			if err := store.validateSourceAt(store.readTree(current, *candidate, source, tree, revision, false), source); err != nil {
 				return err
 			}
 		}
@@ -271,7 +271,7 @@ func (store Store) protectedCandidate(policy *commitment.Policy, revision, tree 
 	}
 	sources, _ := commitment.Unsettled(*policy)
 	for _, source := range sources {
-		if err := store.validateSourceAt(tree, source); err != nil {
+		if err := store.validateSourceAt(sourceRead{revision: tree}, source); err != nil {
 			return err
 		}
 		if roadmap.RowOwner(source.ID, source.Path) && !rows[source.ID] {

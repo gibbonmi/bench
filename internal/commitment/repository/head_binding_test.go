@@ -151,3 +151,58 @@ func TestAdmitPublicationGradesANewBindingAtTheComposedTree(t *testing.T) {
 		})
 	}
 }
+
+// A publication grades a changed pinned row at the composed tree. The worktree plans and
+// approves a new identity of FT1 while its working file holds the row edit, then commits the
+// policy, the board, and the row. The composed tree admits the approved row bytes, and it
+// refuses row bytes that changed after the approval.
+func TestAdmitPublicationGradesAChangedRowAtTheComposedTree(t *testing.T) {
+	t.Parallel()
+	const approvedRow = "**FT1 — A**\n\nRecord the settled A decision.\n"
+	const rewrittenRow = "**FT1 — A**\n\nAn edit after the approval.\n"
+	for _, row := range []struct{ name, body, want string }{
+		{name: "approved", body: approvedRow},
+		{name: "changed-after-approval", body: rewrittenRow, want: "commitment source " + strconv.Quote("FT1") + " changed from " + commitment.Identity([]byte(approvedRow)) + " to " + commitment.Identity([]byte(rewrittenRow))},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			root := gittest.RepoOnBranch(t, "main")
+			commitmenttest.SeedProtected(t, root)
+			commitmenttest.Commit(t, root, "protect the rows")
+			worktree := commitmenttest.Assignment(t, root, "pinned-row")
+			policy, _, err := (commitrepo.Store{Root: root}).Policy()
+			if err != nil {
+				t.Fatal(err)
+			}
+			source := &policy.Milestones[0].Outcomes[0].Sources[0]
+			commitmenttest.Write(t, worktree, source.Path, approvedRow)
+			source.Identity = commitment.Identity([]byte(approvedRow))
+			proposal, err := commitment.Bytes(policy)
+			if err != nil {
+				t.Fatal(err)
+			}
+			store := commitrepo.Store{Root: worktree}
+			plan, err := store.Plan(proposal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.Approve(plan.ID, "reviewer sign-off", plan.Effects.Delayed, plan.Effects.Removed); err != nil {
+				t.Fatal(err)
+			}
+			commitmenttest.Write(t, worktree, source.Path, row.body)
+			commitmenttest.Commit(t, worktree, "record the FT1 decision")
+			landProduction(t, root)
+			composed := gittest.Output(t, root, "merge-tree", "--write-tree", "main", gittest.Output(t, worktree, "rev-parse", "HEAD"))
+			err = (commitrepo.Store{Root: root}).AdmitPublication(publication(t, root, worktree), composed)
+			if row.want == "" {
+				if err != nil {
+					t.Fatalf("AdmitPublication(the composed approved row edit) = %v, want admission", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), row.want) {
+				t.Fatalf("AdmitPublication(a composed row that differs from the approval) = %v, want a refusal naming %q", err, row.want)
+			}
+		})
+	}
+}
