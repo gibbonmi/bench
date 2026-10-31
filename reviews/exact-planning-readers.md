@@ -1416,6 +1416,77 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ER-C4-standards-2",
+          "performer": "ft125-review-c4-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "273358bc8adf894d162e89e92754df71a2d1d597",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-standards-2",
+            "digest": "sha256:b4a53f73e5f4d4cbec54e28797b0610bd73f5b4f919ab4b9fc6cd3cd957a7bb4",
+            "excerpt": "Standards axis, ER-C4 confirming round 1 (repair deltas a9a22b7a2..c0d81ce69). ST1, ST3, ST4, ST6, ST7, ST8, ST9, ST10, ST11, ST12 closed. 0 blocking findings; 8 optional advice items, each severity 3 or lower.\nA1 (sev 3) internal/worktree/related.go:103-107 recomputes the path branch of spec.LiveSpecPath.\nA2 (sev 3) internal/worktree/list.go:221 spells --in again (same constraint as ST2).\nA3 (sev 3) internal/worktree/related.go:65 writes the help-plus-reason usage refusal a third time.\nA4 (sev 2) cmd/bench/worktree_leaves_test.go:201-208 helpRows re-reads the help block beside axitest.Document.HelpActions.\nA5 (sev 2) worktree.ListCommand has no production caller.\nA6 (sev 2) cmd/bench/worktree_leaves_test.go:134 spells the identity-row header.\nA7 (sev 2) putRelatedAssignment name and absent-tree path at three call sites.\nA8 (sev 2) WalkPages doc omits why decode is a parameter.\nMinor: the resolve-back refusal folds every resolve failure into one message.\n"
+          },
+          "axis": "Standards",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "c0d81ce6987265dfb06c08e2f33019c79f990dfd",
+          "finding_ids": [],
+          "supersedes": [
+            "ER-C4-standards-1"
+          ]
+        },
+        {
+          "id": "ER-C4-spec-2",
+          "performer": "ft125-review-c4-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "273358bc8adf894d162e89e92754df71a2d1d597",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-spec-2",
+            "digest": "sha256:1f8bfbfe328d100f2c093157f25695f965d44987d9d13f2f278eceb4b91a26e4",
+            "excerpt": "Spec axis, ER-C4 confirming round 1 (repair deltas a9a22b7a2..c0d81ce69). S1, S3, S4, S5, S6 closed. The revised S1 rule meets story 11 and spec line 228 for every tree that pages. 2 new findings; worst N1.\nN1 (auto-fix, conf 6) internal/worktree/list.go:220 the related read action uses the raw label, so a row labelled primary reads the primary checkout and a shared label refuses as ambiguous (spec line 151, story 20).\nN2 (auto-fix, conf 6) internal/worktree/list.go:220 one label that axi.KnownArgument rejects makes RenderHelp return help[0] for the whole related page (spec line 150).\nRow audit: ER29 met; ER30 met; ER31 untouched; ER32 met; ER33 untouched; ER34 untouched; ER48 met.\nReviewer veto note: the revised rule refuses every worktree read in an unassigned or ambiguous tree, including a one-page read.\n"
+          },
+          "axis": "Spec",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "c0d81ce6987265dfb06c08e2f33019c79f990dfd",
+          "finding_ids": [
+            "N1",
+            "N2"
+          ],
+          "supersedes": [
+            "ER-C4-spec-1"
+          ]
+        },
+        {
+          "id": "ER-C4-coverage-2",
+          "performer": "ft125-review-c4-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "273358bc8adf894d162e89e92754df71a2d1d597",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer-high:ft125-review-c4-coverage-2",
+            "digest": "sha256:6a90a3b1f7f8bc53ed19ce19bf2d4de5d45a015cea517a8922b837353d059e5c",
+            "excerpt": "Coverage axis, ER-C4 confirming round 1 (repair deltas a9a22b7a2..c0d81ce69). C1 closed. 1 new finding; worst C10.\nC10 (auto-fix, conf 8) internal/worktree/related.go:85 the continuation repeats the raw operand, but no multi-page related walk runs from a subdirectory; the mutant that puts specPath there stayed silent.\nProbe: internal/worktree/related.go, 1 mutant (relatedSpecFlag, operand -> relatedSpecFlag, specPath), ./cmd/bench ./internal/worktree: silent; 2116 tests passed; restored yes.\nGraded by reading: WalkPages through both callers, usage byte identity, treetarget.Resolve keyword and label branches, the related cursor refusal reason, ListCommandFrom cwd.\n"
+          },
+          "axis": "Coverage",
+          "base": "bb867e2ccd9ffe1c2bf10f0c4f1868e7b78b79a7",
+          "tip": "c0d81ce6987265dfb06c08e2f33019c79f990dfd",
+          "finding_ids": [
+            "C10"
+          ],
+          "supersedes": [
+            "ER-C4-coverage-1"
+          ]
         }
       ]
     }
@@ -2039,3 +2110,13 @@ R6 (S1) changes route: the spec now refuses a read whose identity-row label does
 The repair delta is `4aa5700ff..c0d81ce69`; its code changes are in `cmd/bench/planning_reads.go`, `internal/treetarget/run.go`, and `cmd/bench/worktree_leaves_test.go`.
 
 - R6: the witness probe that turns the resolve-back refusal off answered `bit`. All three cases of `TestWorktreeReadRefusesATargetThatNamesAnotherTree` paged content, with the labels `primary`, `unassigned`, and `related 0064`.
+
+## ER-C4 confirming round 1
+
+The repair deltas are `a9a22b7a2..c0d81ce69`. Each axis ran on opus / high.
+Every round 1 target is closed, and the Standards axis passes with optional advice A1 to A8.
+The Spec and Coverage axes found three defects that the repairs introduced, and repair cycle 3 takes them on ticket 4b under `--auto-approve`.
+
+- N1 (auto-fix, confidence 6): the related read action uses the raw label, so a row labelled `primary` reads the primary checkout. Repair target R10 applies the new spec rule.
+- N2 (auto-fix, confidence 6): one label that the action grammar rejects empties the help of the whole related page. Repair target R10 drops only that row's read action.
+- C10 (auto-fix, confidence 8): no multi-page related walk runs from a subdirectory, and a mutant that puts the root-relative path in the continuation stayed silent. Repair target R11 adds that walk with a slug and a relative path.

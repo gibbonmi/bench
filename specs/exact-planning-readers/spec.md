@@ -149,6 +149,8 @@ No ambiguous candidate body is guessed.
 Keep the existing default and selected views' bytes and authority.
 Related navigation names read, path, exec, or clean actions according to existing assignment state.
 The related read action is `bench worktree read --in <label> <path>` for an active row with a present tree, and the default view does not gain it.
+The action appears only when the label names that tree alone: it is not the `primary` keyword, no other active assignment has it, and the action grammar accepts it.
+A row without the action keeps its other actions, and so does every other row.
 A missing or inactive read target still refuses through the current tree resolver.
 
 ### Exact source selections
