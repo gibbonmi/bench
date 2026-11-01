@@ -1,7 +1,7 @@
 # Isolate the descendant row of the focused differential
 
 Blocked by: none
-Writes: internal/systemtest/process_lifetime_callers_test.go
+Writes: internal/systemtest/process_lifetime_callers_test.go, docs/known-issues.md
 Covers: none
 
 ## What to build
