@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/rebuild-remedy-owner/spec.md",
-  "plan_digest": "sha256:ab8510297cf6cb803af526974e2aa57244109ec2adbfcf37919ccff11dd3b6f6",
+  "plan_digest": "sha256:f88a5adc681f6113ac4a4f6407ea543b190967ae223eb2d01b6d70baac092a69",
   "implementation_session": "",
   "chunks": [
     {
       "id": "RB-C1",
       "base": "7d02ba15a2dc0a589a3352eefb3e11f3948ac89f",
-      "tip": "e0be748b15881fefdc35ede79354e972a5b5e175",
-      "plan_digest": "sha256:ab8510297cf6cb803af526974e2aa57244109ec2adbfcf37919ccff11dd3b6f6",
-      "source_digest": "754c1dbd4756b0e9214015191133496650cd5433",
+      "tip": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+      "plan_digest": "sha256:f88a5adc681f6113ac4a4f6407ea543b190967ae223eb2d01b6d70baac092a69",
+      "source_digest": "b854a9aec036735da6c1aa34768c20102e45b25d",
       "acceptance_rows": [
         "RB01",
         "RB02",
@@ -284,6 +284,44 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "rb-c1-r1-confirmation",
+          "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b854a9aec036735da6c1aa34768c20102e45b25d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-code:orchestrator:session_01JK5CPcwpGroiAPWzzXxytc",
+            "digest": "sha256:8b0a08f9f9bd20603e29578ed1f50c21259b547c06914972afe3b3eeb017ab9e",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRebuildRemedyKind,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRebuildRemedyKind,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/benchguard,TestRebuildRemedyKind,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "base": "7d02ba15a2dc0a589a3352eefb3e11f3948ac89f",
+          "reviewed_tip": "40fbf22e237dd5c6604e7aa45f3468eaa09005b6",
+          "repaired_tip": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "finding_ids": [
+            "rb-c1-std-1",
+            "rb-c1-std-2",
+            "rb-c1-cov-1",
+            "rb-c1-spec-1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "Mutant 1 removes the home != \"\" clause of RebuildIn (rb-c1-cov-1); the new relative-root case of TestRebuildRemedyKind kills it. Mutant 2 of the same set doubles a space in the CheckoutRebuildAction format (rb-c1-std-1); only the RB10 literal kills it, so RB02, RB05, and RB06 now derive their expectation. rb-c1-std-2 is a spelling-only change with no behavioral mutant. rb-c1-spec-1 is a comment-only fix in .bench/lib/resolve-bench.sh that the orchestrator routes to ticket 02 step 8; the RB-C2 review grades it, and RB-C1 holds no edit for it.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-code:orchestrator:session_01JK5CPcwpGroiAPWzzXxytc",
+              "digest": "sha256:8b0a08f9f9bd20603e29578ed1f50c21259b547c06914972afe3b3eeb017ab9e",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestRebuildRemedyKind,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRebuildRemedyKind,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/benchguard,TestRebuildRemedyKind,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -298,6 +336,15 @@
     {
       "from": "sha256:5af4ab8f4f17fc2df240a7bc3eeff75e28ca925d9eba968241d049adfe46a288",
       "to": "sha256:ab8510297cf6cb803af526974e2aa57244109ec2adbfcf37919ccff11dd3b6f6",
+      "chunk_ids": {
+        "RB-C1": [
+          "RB-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ab8510297cf6cb803af526974e2aa57244109ec2adbfcf37919ccff11dd3b6f6",
+      "to": "sha256:f88a5adc681f6113ac4a4f6407ea543b190967ae223eb2d01b6d70baac092a69",
       "chunk_ids": {
         "RB-C1": [
           "RB-C1"
@@ -340,3 +387,9 @@ Findings: 1 accepted. Worst issue: C1.
 - Spec: RB18 could also assert that the printed remedy equals the expected `cd` form.
 - Coverage: no row exercises a root equal to `<home>/worktrees` or a root with a trailing separator. The owner and the guard agree on both by construction.
 - Coverage: the RB18 cut after `Rebuild it: ` could stop at the first newline.
+
+## RB-C1 repair cycle 1
+
+The repair session `ft344-author-01-rep1` repaired `rb-c1-std-1`, `rb-c1-std-2`, and `rb-c1-cov-1` with test-only edits at `e0be748b`. RB-C1 has consumed one of its two repair cycles. The repair witness for `rb-c1-cov-1` is red when the `home != ""` clause goes, and `TestRebuildRemedyKind` kills it.
+
+The coordinator probe of the finding mutants bit on both mutants, and the coordinator confirmation closes the round with no confirming axis round. The finding `rb-c1-spec-1` routes to ticket 02. Its widen returns as a plan commit in the chunk gap, because a ticket 02 edit inside the RB-C1 delta makes that delta not test-only.
