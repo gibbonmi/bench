@@ -1,6 +1,6 @@
 # The review chain accepts a proved comment gap
 
-Status: staged
+Status: implemented
 
 Roadmap: FT439
 
@@ -91,33 +91,7 @@ CG-C2 changes the guidance, the anchor registry, the changelog, and the scorecar
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "CG-C1",
-      "tickets": ["01-chain-proves-comment-gap.md"],
-      "verification": [
-        {"id": "chain-gap", "command": "bench test --package ./internal/reviewrecord/... --run 'Chain|Fold|ReviewRecordSource|CommentOnlyGap'", "probe": "Make foldCoversBase compare the fold digest with the base digest by equality, and record that the fold-then-comment case of TestChainAcceptsAProvedCommentGap turns red."},
-        {"id": "checkpoint", "command": "bench test --package ./internal/gate --run 'ReviewCheckpoint|DeltaCheckpointRunsWholeForANonTestDelta'", "probe": "Restore the equality comparison of the base digest with the previous chunk digest in checkSource, and record that TestReviewCheckpointChainAcceptsACommentGap turns red."}
-      ]
-    },
-    {
-      "id": "CG-C2",
-      "tickets": ["02-guidance-states-comment-gap.md"],
-      "verification": [
-        {"id": "anchors", "command": "bench test --package ./internal/anchors", "probe": "Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row."},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow", "probe": "Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red."}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "owner-packages", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/commentgap --package ./internal/gate --package ./internal/anchors --package ./internal/landing --package ./internal/preflight/..."},
-    {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-    {"id": "prose", "command": "bench test --check prose-mechanics"},
-    {"id": "coverage", "command": "bench coverage --check comment-gap-chain"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft439-build-20261101","orchestrator_session":"session_01JK5CPcwpGroiAPWzzXxytc","author_limit":1,"assignments":{"01-chain-proves-comment-gap.md":[{"session":"ft439-author-01","assignment":"58abfa6badfad14b8718236a3ee8a691","model":"opus","effort":"medium","source":"1d08e3dd749824d76d22fa22e752cae34b53a944","native_ref":"claude-agent:bench-writer-medium:ft439-author-01"}],"02-guidance-states-comment-gap.md":[{"session":"ft439-author-02","assignment":"58abfa6badfad14b8718236a3ee8a691","model":"opus","effort":"high","source":"4815d5be3d1108024bb377f5b76ef982ca6eba22","native_ref":"claude-agent:bench-writer-high:ft439-author-02"}]}},"chunks":[{"id":"CG-C1","tickets":["01-chain-proves-comment-gap.md"],"verification":[{"id":"chain-gap","command":"bench test --package ./internal/reviewrecord/... --run 'Chain|Fold|ReviewRecordSource|CommentOnlyGap'","probe":"Make foldCoversBase compare the fold digest with the base digest by equality, and record that the fold-then-comment case of TestChainAcceptsAProvedCommentGap turns red.","ticket":"01-chain-proves-comment-gap.md"},{"id":"checkpoint","command":"bench test --package ./internal/gate --run 'ReviewCheckpoint|DeltaCheckpointRunsWholeForANonTestDelta'","probe":"Restore the equality comparison of the base digest with the previous chunk digest in checkSource, and record that TestReviewCheckpointChainAcceptsACommentGap turns red.","ticket":"01-chain-proves-comment-gap.md"}]},{"id":"CG-C2","tickets":["02-guidance-states-comment-gap.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors","probe":"Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row.","ticket":"02-guidance-states-comment-gap.md"},{"id":"guidance","command":"bench test --check docs-currency-workflow","probe":"Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red.","ticket":"02-guidance-states-comment-gap.md"}]}],"final_verification":[{"id":"owner-packages","command":"bench test --package ./internal/reviewrecord/... --package ./internal/commentgap --package ./internal/gate --package ./internal/anchors --package ./internal/landing --package ./internal/preflight/..."},{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"prose","command":"bench test --check prose-mechanics"},{"id":"coverage","command":"bench coverage --check comment-gap-chain"}]}
 ```
 
 ## Testing decisions
@@ -152,15 +126,15 @@ CG-C2 changes the guidance, the anchor registry, the changelog, and the scorecar
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| CG01 | 1 | `bench gate --checkpoint <spec> --chunk 2` exits 0 when the chunk 2 base is a commit after the chunk 1 tip whose only change is a Go comment edit | planned TestReviewCheckpointChainAcceptsACommentGap in internal/gate | The equality branch refuses that base with `stale review chain gap`, so the checkpoint exits 1 |
-| CG02 | 2 | After that green checkpoint, the retained chunk 1 entry has the frozen Base, Tip, SourceDigest, Reviews, and Verification | planned TestReviewCheckpointChainAcceptsACommentGap in internal/gate | A route that refreezes chunk 1 changes the Tip and the SourceDigest, and the test compares each field with the frozen entry |
-| CG03 | 9 | `bench gate --checkpoint <spec> --complete` exits 0 over two chunks when the chunk 2 base follows the chunk 1 tip by a Go comment edit | planned TestReviewCheckpointChainAcceptsACommentGap in internal/gate | The complete check walks every chunk through the same chain, so an equality branch refuses chunk 2 |
-| CG04 | 1 | `reviewrecord.CheckSource` for chunk 2 returns nil when the chunk 2 base follows the chunk 1 tip by a Go comment edit | planned TestChainAcceptsAProvedCommentGap in internal/reviewrecord | The equality branch returns the `FormFold` repair for that base |
-| CG05 | 3 | `reviewrecord.CheckSource` for chunk 2 returns nil when the chunk 2 base follows a recorded fold after chunk 1 by a Go comment edit | planned TestChainAcceptsAProvedCommentGap in internal/reviewrecord | `foldCoversBase` compares the fold digest by equality, so the chain refuses that base |
-| CG06 | 4 | `reviewrecord.CheckSource` refuses with the `FormFold` repair and `stale review chain gap` when the gap changes a Go statement | planned TestChainAcceptsAProvedCommentGap in internal/reviewrecord | A predicate that accepts each descendant base passes this case |
-| CG07 | 5 | `reviewrecord.CheckSource` refuses with `stale review chain gap` when the gap changes a comment into a `//go:generate` directive | planned TestChainAcceptsAProvedCommentGap in internal/reviewrecord | A predicate that compares the files without comments, in place of `commentgap.Prove`, passes this case |
-| CG08 | 6 | `reviewrecord.CheckSource` refuses with `stale review chain gap` when the gap edits only a comment line in a committed Markdown file | planned TestChainAcceptsAProvedCommentGap in internal/reviewrecord | A predicate that accepts a change in a file that is not Go passes this case |
-| CG09 | 7 | `reviewrecord.CheckSource` refuses with `stale review chain gap` when the chunk 2 base holds the comment-gap tree on a parent line that skips the chunk 1 tip, and the chunk 2 tip is a two-parent commit of that base and the chunk 1 tip | planned TestChainAcceptsAProvedCommentGap in internal/reviewrecord | The two-parent tip passes the pair guard at `coverage.go:45-53`, so only the chain ancestry conjunct refuses, and a change that drops that conjunct passes this case |
+| CG01 | 1 | `bench gate --checkpoint <spec> --chunk 2` exits 0 when the chunk 2 base is a commit after the chunk 1 tip whose only change is a Go comment edit | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointChainAcceptsACommentGap`) | The equality branch refuses that base with `stale review chain gap`, so the checkpoint exits 1 |
+| CG02 | 2 | After that green checkpoint, the retained chunk 1 entry has the frozen Base, Tip, SourceDigest, Reviews, and Verification | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointChainAcceptsACommentGap`) | A route that refreezes chunk 1 changes the Tip and the SourceDigest, and the test compares each field with the frozen entry |
+| CG03 | 9 | `bench gate --checkpoint <spec> --complete` exits 0 over two chunks when the chunk 2 base follows the chunk 1 tip by a Go comment edit | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointChainAcceptsACommentGap`) | The complete check walks every chunk through the same chain, so an equality branch refuses chunk 2 |
+| CG04 | 1 | `reviewrecord.CheckSource` for chunk 2 returns nil when the chunk 2 base follows the chunk 1 tip by a Go comment edit | `internal/reviewrecord/fold_test.go` (`TestChainAcceptsAProvedCommentGap`) | The equality branch returns the `FormFold` repair for that base |
+| CG05 | 3 | `reviewrecord.CheckSource` for chunk 2 returns nil when the chunk 2 base follows a recorded fold after chunk 1 by a Go comment edit | `internal/reviewrecord/fold_test.go` (`TestChainAcceptsAProvedCommentGap`) | `foldCoversBase` compares the fold digest by equality, so the chain refuses that base |
+| CG06 | 4 | `reviewrecord.CheckSource` refuses with the `FormFold` repair and `stale review chain gap` when the gap changes a Go statement | `internal/reviewrecord/fold_test.go` (`TestChainAcceptsAProvedCommentGap`) | A predicate that accepts each descendant base passes this case |
+| CG07 | 5 | `reviewrecord.CheckSource` refuses with `stale review chain gap` when the gap changes a comment into a `//go:generate` directive | `internal/reviewrecord/fold_test.go` (`TestChainAcceptsAProvedCommentGap`) | A predicate that compares the files without comments, in place of `commentgap.Prove`, passes this case |
+| CG08 | 6 | `reviewrecord.CheckSource` refuses with `stale review chain gap` when the gap edits only a comment line in a committed Markdown file | `internal/reviewrecord/fold_test.go` (`TestChainAcceptsAProvedCommentGap`) | A predicate that accepts a change in a file that is not Go passes this case |
+| CG09 | 7 | `reviewrecord.CheckSource` refuses with `stale review chain gap` when the chunk 2 base holds the comment-gap tree on a parent line that skips the chunk 1 tip, and the chunk 2 tip is a two-parent commit of that base and the chunk 1 tip | `internal/reviewrecord/fold_test.go` (`TestChainAcceptsAProvedCommentGap`) | The two-parent tip passes the pair guard at `coverage.go:45-53`, so only the chain ancestry conjunct refuses, and a change that drops that conjunct passes this case |
 | CG10 | 4 | The `chain base` case of the strict checkpoint test refuses with `expected base` when the gap changes a Go statement | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointKeepsStrictEvidence`) | A checkpoint that accepts each descendant base exits 0 on this case |
 | CG11 | 8 | The chain refusal holds `only record commits, recorded folds, and proved comment-only Go corrections follow a chunk tip until its checkpoint` | `internal/gate/review_checkpoint_commits_test.go` (`TestReviewCheckpointChainGapNamesTheExpectedBase`) | The old refusal sentence lacks that clause, so the substring test fails |
 | CG12 | 10 | `commentgap.Prove` has one call site in `internal/reviewrecord`, and that call site is the shared predicate | review-owned: `rg -n 'commentgap\.Prove\(' internal/reviewrecord` answers one line | A second inline proof can keep its own scope when the predicate changes |
@@ -207,7 +181,7 @@ The profile's hostile-input classes, walked:
 - A refreeze after a comment-only correction keeps staling the reviews — the decision routes no refreeze, and `checkReviews` still guards a moved pair for every other change (CG16).
 - A layout-only Go change counts as a proved comment gap — `commentgap.Prove` already accepts it at the covered-digest check (`internal/commentgap/commentgap_test.go:15`), and the chain reads the same proof.
 - The default successor base stays the predecessor's covered commit — the chain accepts that base as today, and `chunkBase` keeps its one caller (`internal/reviewrecord/ticket.go:173-188`).
-- The delivered criterion `FT380-plan-commit.moved-tip` keeps its text — it is delivered history of a closed outcome (`.bench/commitment.json:2131-2137`), and the FT439 criterion governs the comment-only correction from this landing.
+- The delivered criterion `FT380-plan-commit.moved-tip` keeps its text — it is delivered history of a closed outcome (`.bench/commitment.json:966-967`, delivered at `.bench/commitment.json:2143-2149`), and the FT439 criterion governs the comment-only correction from this landing.
 
 ## Out of scope
 

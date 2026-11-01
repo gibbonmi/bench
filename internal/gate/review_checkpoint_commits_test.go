@@ -96,8 +96,58 @@ func TestReviewCheckpointChainGapNamesTheExpectedBase(t *testing.T) {
 	if code == 0 || !strings.Contains(text, "expected base "+expected) {
 		t.Fatalf("chain-gap refusal = (%d, %q), want expected base %s", code, text, expected)
 	}
-	if !strings.Contains(text, "plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and recorded folds follow a chunk tip until its checkpoint") {
+	if !strings.Contains(text, "plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits, recorded folds, and proved comment-only Go corrections follow a chunk tip until its checkpoint") {
 		t.Fatalf("chain-gap refusal = %q, want the chain rule", text)
+	}
+}
+
+// chainedOverCommentGap is two recorded chunks whose chunk 2 base follows the chunk 1 tip by a
+// Go comment edit. It also answers the chunk 1 entry as the record first retained it.
+func chainedOverCommentGap(t *testing.T) (*recordtest.Fixture, rr.Chunk) {
+	t.Helper()
+	f := recordtest.Attach(t, outcomeFixture(t), 2)
+	seedCommentGap(f)
+	f.AddChunk()
+	f.Save()
+	f.Commit("retain first chunk")
+	frozen, err := rr.Read(f.Root, recordtest.Spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	correctCommentGap(f)
+	f.AddChunk()
+	f.Save()
+	f.Commit("retain second chunk")
+	return f, frozen.Chunks[0]
+}
+
+// TestReviewCheckpointChainAcceptsACommentGap covers CG01 to CG03: the chunk 2 checkpoint and
+// the complete checkpoint exit 0 over a comment gap before the chunk 2 base, and the chunk 1
+// entry keeps its frozen evidence.
+func TestReviewCheckpointChainAcceptsACommentGap(t *testing.T) {
+	for _, kind := range []string{"chunk", "complete"} {
+		t.Run(kind, func(t *testing.T) {
+			f, frozen := chainedOverCommentGap(t)
+			args := []string{f.Root, "--checkpoint", recordtest.Spec, "--chunk", "2"}
+			if kind == "complete" {
+				f.Complete()
+				f.Save()
+				f.Commit("retain completion")
+				args = []string{f.Root, "--checkpoint", recordtest.Spec, "--complete"}
+			}
+			var out, diagnostic bytes.Buffer
+			if code := RunCommand(args, &out, &diagnostic); code != 0 {
+				t.Fatalf("%s checkpoint over a comment gap = %d %s %s, want 0", kind, code, &out, &diagnostic)
+			}
+			retained, err := rr.Read(f.Root, recordtest.Spec)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := retained.Chunks[0]
+			if got.Base != frozen.Base || got.Tip != frozen.Tip || got.SourceDigest != frozen.SourceDigest || !reflect.DeepEqual(got.Reviews, frozen.Reviews) || !reflect.DeepEqual(got.Verification, frozen.Verification) {
+				t.Fatalf("chunk 1 after the comment gap = %+v, want the frozen entry %+v", got, frozen)
+			}
+		})
 	}
 }
 
@@ -227,6 +277,8 @@ func TestReviewCheckpointKeepsStrictEvidence(t *testing.T) {
 			case "stale completion":
 				args = []string{f.Root, "--checkpoint", recordtest.Spec, "--complete"}
 			case "chain base":
+				f.Write("comment_gap_test.go", "package fixture\nvar value = 2 // after\n")
+				f.Commit("change Go statement")
 				f.AddChunk()
 				f.Save()
 				f.Commit("retain second chunk")

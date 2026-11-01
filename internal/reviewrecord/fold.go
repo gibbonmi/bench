@@ -109,10 +109,10 @@ func coveredAfter(root string, record Record, chunk Chunk) (digest, commit strin
 
 // foldCoversBase reports whether the last fold after chunk covers base, the next chunk
 // base, whose source digest is digest. The fold commit must be an ancestor of base, and
-// base must hold the fold's source digest. A failed ancestry query is an error.
+// digest must follow the fold's source digest. A failed ancestry query is an error.
 func foldCoversBase(root string, record Record, chunk Chunk, base, digest string) (bool, error) {
 	fold := coveringFold(root, record, chunk)
-	if fold == nil || fold.SourceDigest != digest {
+	if fold == nil || !digestFollows(root, fold.SourceDigest, digest) {
 		return false, nil
 	}
 	return isAncestor(root, fold.Commit, base)
@@ -133,9 +133,14 @@ func uncoveredFold(root, from, tip string) string {
 	return ""
 }
 
-// follows reports whether the source digest of commit equals covered or differs from it
-// only by a comment-only gap.
+// follows reports whether the source digest of commit follows covered.
 func follows(root, spec, commit, covered string) bool {
 	digest, err := commitDigest(root, spec, commit)
-	return err == nil && commentgap.Prove(root, covered, digest) == nil
+	return err == nil && digestFollows(root, covered, digest)
+}
+
+// digestFollows reports whether the later source digest follows covered: the two digests
+// are equal, or the gap from covered to later is a proved comment-only Go gap.
+func digestFollows(root, covered, later string) bool {
+	return covered == later || commentgap.Prove(root, covered, later) == nil
 }

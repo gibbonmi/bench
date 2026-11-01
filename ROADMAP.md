@@ -148,8 +148,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT380 (MEDIUM) — a plan commit passes the coverage parser and the `check-floor` row before publication.**
 
-**FT439 (MEDIUM) — a comment-only correction after a chunk freeze keeps its verifications and its review chain.**
-
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
 
 **FT384 (MEDIUM, decision required) — legacy closure and the production path check share one scope matcher.**
@@ -360,18 +358,17 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT439-comment-correction
-2. FT354-strict-json
-3. FT406-rebuild
-4. FT366-rg-guard
-5. FT380-residual
-6. FT363-member-set
-7. FT354-shell-args
-8. FT343-seam-policy
-9. FT446-cache-store
-10. FT414-preconditions
-11. FT369-charge-slicing
-12. FT365-conformance
-13. FT341-in-only
-14. FT420-concurrent-chunks
-15. FT387-overflow
+1. FT354-strict-json
+2. FT406-rebuild
+3. FT366-rg-guard
+4. FT380-residual
+5. FT363-member-set
+6. FT354-shell-args
+7. FT343-seam-policy
+8. FT446-cache-store
+9. FT414-preconditions
+10. FT369-charge-slicing
+11. FT365-conformance
+12. FT341-in-only
+13. FT420-concurrent-chunks
+14. FT387-overflow

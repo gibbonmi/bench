@@ -8,6 +8,7 @@ package anchors
 // chunk record, the checkpoint gate for every chunk, the README checkpoint edges, the review
 // chain's refusal of a fold, the widened confirming round, the hand-recording sentences, the
 // full rerun of a repair session, and the retired prepared run of a chunk checkpoint.
+// They also forbid the retired refreeze of a comment-only correction.
 var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "bench worktree exec <target> -- bench preflight build", Diagnostic: "chunk chain: the implement phase restored the exec build preflight after a ticket commit"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: ForbidInSection, Section: "Build", Needle: "review charge before the author record commit", Diagnostic: "chunk chain: the Build section puts the review charge before the author record commit"},
@@ -18,6 +19,8 @@ var chunkChainAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "review delta of the last chunk", Diagnostic: "chunk chain: the implement phase restored the fold in the review delta of the last chunk"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "the last chunk refreezes", Diagnostic: "chunk chain: the implement phase restored the refreeze of the last chunk after a fold"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "comment-only corrections follow the chunk tip", Diagnostic: "chunk chain: the implement phase restored the comment-only correction after the chunk tip"},
+	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "Each source change except a record commit or a recorded fold moves the chunk tip", Diagnostic: "chunk chain: the implement phase restored the refreeze of a comment-only correction"},
+	{Group: AfterImplementSpec, File: boundedRepairPolicy, Kind: Forbid, Needle: "takes a refreeze", Diagnostic: "chunk chain: the bounded repair policy restored the refreeze of a comment-only correction"},
 	{Group: AfterImplementSpec, File: craftTickets, Kind: ForbidCaseFoldedEmphasis, Needle: "review freezes", Diagnostic: "chunk chain: craft-tickets restored the review as the chunk freezer"},
 	{Group: AfterImplementSpec, File: benchReference, Kind: ForbidCaseFoldedEmphasis, Needle: "review freezes", Diagnostic: "chunk chain: the reference restored the review as the chunk freezer"},
 	{Group: AfterImplementSpec, File: implementPhase, Kind: Forbid, Needle: "When the orchestrator freezes a chunk after its last ticket", Diagnostic: "chunk chain: the implement phase restored the orchestrator's chunk record"},

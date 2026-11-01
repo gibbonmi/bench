@@ -46,7 +46,8 @@ A native review can pass with no finding IDs while its prose retains optional ad
 
 A review-record prose correction is evidence-only only when it changes no finding, source identity, observation, disposition, or verification claim.
 A comment-only Go correction that the checkpoint accepts is evidence-only despite its source change, and the orchestrator commits it with no plan assignment.
-A comment-only correction before the green checkpoint stays evidence-only and still takes a refreeze.
+A comment-only Go correction before the green checkpoint stays evidence-only and takes no refreeze.
+The review chain accepts a later chunk base after that correction, so the chunk keeps its verifications and its reviews.
 A comment-only Go correction changes the chunk-checkpoint subject, so the checkpoint after it runs the gate again.
 A record-only correction keeps that subject, so an earlier green of that subject still serves the checkpoint.
 
