@@ -139,10 +139,42 @@ func TestHeadBindingRefusesAnUnheldDeliverable(t *testing.T) {
 	}
 }
 
-// Every source other than a new deliverable or a new row that main lacks reads the
-// default-branch tip. A worktree edit of a row therefore cannot pass as current, and a
-// binding that main added after the worktree's HEAD stays valid there.
+// Every source other than a new deliverable, a new row that main lacks, or a row whose
+// identity the proposal changes reads the default-branch tip. A worktree edit of a row whose
+// identity the proposal keeps therefore cannot pass as current, and a binding that main added
+// after the worktree's HEAD stays valid there. A changed identity reads the working file only
+// when a current source binds both its id and its path: a pinned id at a new path that main
+// holds, and a new id at the path of a pinned row, each read main and refuse the working bytes.
 func TestHeadBindingKeepsTheDefaultTipForEveryOtherSource(t *testing.T) {
+	for _, row := range []struct {
+		name string
+		bind func(t *testing.T, root string, source *commitment.SourceBinding)
+	}{
+		{name: "moved-id", bind: func(t *testing.T, root string, source *commitment.SourceBinding) {
+			source.Path = "roadmap/FT1-moved.md"
+			commitmenttest.Write(t, root, source.Path, "**FT1 — A**\n\nThe moved row that main holds.\n")
+			commitmenttest.Commit(t, root, "main holds the moved path")
+		}},
+		{name: "new-id-at-current-path", bind: func(_ *testing.T, _ string, source *commitment.SourceBinding) {
+			source.ID = "FT1b"
+		}},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root, worktree, proposed := commitmenttest.PinnedRows(t)
+			source := &proposed.Milestones[0].Outcomes[0].Sources[0]
+			row.bind(t, root, source)
+			main, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(source.Path)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			commitmenttest.Write(t, worktree, source.Path, pinnedEdit)
+			source.Identity = commitment.Identity([]byte(pinnedEdit))
+			_, err = (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, proposed))
+			if want := commitmenttest.ChangedFrom(*source, string(main)); err == nil || err.Error() != want {
+				t.Fatalf("Plan(the working bytes of a %s source) = %v, want %q from the default tip", row.name, err, want)
+			}
+		})
+	}
 	t.Run("changed-row", func(t *testing.T) {
 		const edited = "**FT1 — A**\n\nAn obligation that the worktree changes.\n"
 		root := commitmenttest.Repo(t, policy([]commitment.Milestone{milestone("M1", headOutcome)}, "M1"))
@@ -156,12 +188,9 @@ func TestHeadBindingKeepsTheDefaultTipForEveryOtherSource(t *testing.T) {
 		worktree := commitmenttest.Assignment(t, root, headRequest)
 		commitmenttest.Write(t, worktree, published.Path, edited)
 		commitmenttest.Commit(t, worktree, "change the row")
-		changed := commitment.Identity([]byte(edited))
-		current.Milestones[0].Outcomes[0].Sources[0].Identity = changed
-		_, err = commitrepo.Store{Root: worktree}.Plan(mustBytes(t, current))
-		want := "commitment source " + strconv.Quote(published.ID) + " changed from " + changed + " to " + published.Identity
-		if err == nil || err.Error() != want {
-			t.Fatalf("Plan(the row identity that HEAD holds) = %v, want %q", err, want)
+		current.Milestones[0].Outcomes[0].Criteria[0].Text = "A criterion that keeps the published row."
+		if _, err := (commitrepo.Store{Root: worktree}).Plan(mustBytes(t, current)); err != nil {
+			t.Fatalf("Plan(a proposal that keeps the published identity of a row that HEAD and the working file edit) = %v, want acceptance", err)
 		}
 	})
 	t.Run("retained-binding", func(t *testing.T) {

@@ -188,6 +188,78 @@ func TestCommitmentProtectedScope(t *testing.T) {
 	}
 }
 
+// An approved plan that changes the identity of FT1 commits with the policy, the board, and
+// the row edit in one commit. The commit refuses when it names no row edit, and when the row
+// bytes changed after the approval, and a refused commit leaves HEAD in place.
+func TestCommitmentApprovedRowEdit(t *testing.T) {
+	const path = "roadmap/FT1.md"
+	const approved = "**FT1 — A**\n\nRecord the settled A decision.\n"
+	const rewritten = "**FT1 — A**\n\nAn edit after the approval.\n"
+	approvedPaths := []string{commitment.PolicyPath, "ROADMAP.md", path}
+	for _, row := range []struct {
+		name, after, got string
+		paths            []string
+	}{
+		{name: "approved", paths: approvedPaths},
+		{name: "policy-only", paths: approvedPaths[:2]},
+		{name: "rewritten", after: rewritten, got: rewritten, paths: approvedPaths},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			root := planningCommitRepo(t)
+			published, err := os.ReadFile(filepath.Join(root, path))
+			if err != nil {
+				t.Fatal(err)
+			}
+			store := commitrepo.Store{Root: root}
+			policy, _, err := store.Policy()
+			if err != nil {
+				t.Fatal(err)
+			}
+			commitmenttest.Write(t, root, path, approved)
+			policy.Milestones[0].Outcomes[0].Sources[0].Identity = commitment.Identity([]byte(approved))
+			data, err := commitment.Bytes(policy)
+			if err != nil {
+				t.Fatal(err)
+			}
+			plan, err := store.Plan(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.Approve(plan.ID, "reviewer direction", plan.Effects.Delayed, plan.Effects.Removed); err != nil {
+				t.Fatal(err)
+			}
+			if row.after != "" {
+				commitmenttest.Write(t, root, path, row.after)
+			}
+			if row.name != "approved" {
+				got := row.got
+				if got == "" {
+					got = string(published)
+				}
+				want := commitmenttest.ChangedFrom(policy.Milestones[0].Outcomes[0].Sources[0], got)
+				// The approval check refuses before the protected-commitment check, so the
+				// refusal keeps the face of the approval check.
+				const protected = "candidate changes protected commitment"
+				if errOut := refuseCommit(t, root, row.paths...); !strings.Contains(errOut, want) || strings.Contains(errOut, protected) {
+					t.Fatalf("commit stderr = %q, want %q from the approval check, not %q", errOut, want, protected)
+				}
+				return
+			}
+			before := gittest.Output(t, root, "rev-parse", "HEAD")
+			code, out, errOut := runCommand(t, root, append([]string{"-m", "record the FT1 decision", "--"}, row.paths...)...)
+			if code != 0 {
+				t.Fatalf("approved row edit commit = %d %s %s", code, out, errOut)
+			}
+			if parent := gittest.Output(t, root, "rev-parse", "HEAD^"); parent != before {
+				t.Fatalf("HEAD^ = %s, want one commit on %s", parent, before)
+			}
+			if got := gittest.Output(t, root, "show", "HEAD:"+path); got+"\n" != approved {
+				t.Fatalf("committed %s = %q, want %q", path, got, approved)
+			}
+		})
+	}
+}
+
 func TestCommitmentCommitBeforeEffects(t *testing.T) {
 	for _, prior := range []bool{false, true} {
 		t.Run(strconv.FormatBool(prior), func(t *testing.T) {

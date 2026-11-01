@@ -168,8 +168,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT435 (LOW, decision required) — author and repair returns carry a calibrated claims table.**
 
-**FT437 (MEDIUM) — a settled decision on a commitment-pinned row reaches its row file.**
-
 **FT441 (MEDIUM, decision required) — the spec author re-reads each cited source and walks each lifecycle, and the spec review grades rows against the tree.**
 
 **FT442 (LOW) — a build widens each consumer file of a touched declaration before dispatch.**
@@ -364,20 +362,19 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT437-pinned-rows
-2. FT344-remedy
-3. FT439-comment-correction
-4. FT354-strict-json
-5. FT406-rebuild
-6. FT366-rg-guard
-7. FT380-residual
-8. FT363-member-set
-9. FT354-shell-args
-10. FT343-seam-policy
-11. FT446-cache-store
-12. FT414-preconditions
-13. FT369-charge-slicing
-14. FT365-conformance
-15. FT341-in-only
-16. FT420-concurrent-chunks
-17. FT387-overflow
+1. FT344-remedy
+2. FT439-comment-correction
+3. FT354-strict-json
+4. FT406-rebuild
+5. FT366-rg-guard
+6. FT380-residual
+7. FT363-member-set
+8. FT354-shell-args
+9. FT343-seam-policy
+10. FT446-cache-store
+11. FT414-preconditions
+12. FT369-charge-slicing
+13. FT365-conformance
+14. FT341-in-only
+15. FT420-concurrent-chunks
+16. FT387-overflow
