@@ -16,11 +16,6 @@ import (
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
 
-// checkoutRemedy is the literal cd form for a root whose path needs no quote escape.
-func checkoutRemedy(root string) string {
-	return "cd '" + root + "' && bash scripts/go-build.sh '" + root + "' '" + root + "/dist/bench'"
-}
-
 // TestRebuildRemedyKind is RB01, RB02, RB05, RB06, and RB10. A root under the pool of
 // home takes the build verb, and every other root keeps the cd form.
 func TestRebuildRemedyKind(t *testing.T) {
@@ -34,16 +29,20 @@ func TestRebuildRemedyKind(t *testing.T) {
 		{"RB02 a root outside the pool", home, t.TempDir(), "", false},
 		{"RB05 a sibling of the pool", home, home + "/worktrees-old/x", "", false},
 		{"RB06 an empty home", "", "/worktrees/k/x", "", false},
+		// The empty home's pool is the relative path worktrees, which this root is under.
+		{"RB06 an empty home with a relative root", "", "worktrees/k/x", "", false},
 	} {
 		want := tc.action
 		if want == "" {
-			want = checkoutRemedy(tc.root)
+			want = freshness.CheckoutRebuildAction(tc.root)
 		}
 		if got := freshness.RebuildIn(tc.home, tc.root); got.Action != want || got.Worktree != tc.worktree {
 			t.Errorf("%s: RebuildIn(%q, %q) = %+v, want Action %q and Worktree %t", tc.row, tc.home, tc.root, got, want, tc.worktree)
 		}
 	}
-	if got, want := freshness.CheckoutRebuildAction(pool), checkoutRemedy(pool); got != want {
+	// RB10 pins the kept cd form itself, so its expectation is written out by hand.
+	want := "cd '" + pool + "' && bash scripts/go-build.sh '" + pool + "' '" + pool + "/dist/bench'"
+	if got := freshness.CheckoutRebuildAction(pool); got != want {
 		t.Errorf("RB10: CheckoutRebuildAction(%q) = %q, want the cd form %q", pool, got, want)
 	}
 }

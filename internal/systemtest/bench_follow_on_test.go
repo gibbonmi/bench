@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/freshness"
 )
 
@@ -327,7 +328,7 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 	// passes that printed remedy. (Coverage rows RB17 and RB18.)
 	home := t.TempDir()
 	poolKit := filepath.Join(home, "worktrees", "k", "x")
-	pooled := []string{"BENCH_KIT=" + poolKit, "BENCH_HOME=" + home}
+	pooled := []string{"BENCH_KIT=" + poolKit, benchhome.Env + "=" + home}
 	poolAction := freshness.CheckoutRebuildAction(poolKit)
 	blocked := run(hook, staleRepo, pooled, hookEnvelope(t, "", "bench gate"))
 	if blocked.code != 2 || !strings.Contains(blocked.stderr, "BLOCKED:") || !strings.Contains(blocked.stderr, poolAction) {
