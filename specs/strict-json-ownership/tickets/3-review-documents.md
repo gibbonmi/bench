@@ -1,7 +1,7 @@
 # Preserve review documents through the shared reader
 
 Blocked by: 2-jsonfile-gate.md
-Writes: internal/reviewrecord/parse.go, internal/reviewrecord/json_compatibility_test.go (new), internal/reviewrecord/testdata/strict-json-baseline.json (new), internal/reviewrecord/recordtest/fixture.go, internal/jsonfile/jsonfiletest/, internal/gate/json_compatibility_test.go, internal/gate/testdata/strict-json-baseline.json
+Writes: internal/reviewrecord/parse.go, internal/reviewrecord/json_compatibility_test.go (new), internal/reviewrecord/testdata/strict-json-baseline.json (new), internal/reviewrecord/recordtest/fixture.go, internal/jsonfile/jsonfiletest/ (new), internal/gate/json_compatibility_test.go, internal/gate/testdata/strict-json-baseline.json
 Covers: SJ32, SJ33, SJ34, SJ35
 
 ## What to build
