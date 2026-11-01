@@ -236,7 +236,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cg-c2-standards-r1",
+          "performer": "ft439-review-standards-c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft439-review-standards-c2",
+            "digest": "sha256:ebc1defa1e4e4ee2cb4ae45480d54b6eda6abd88166ae26bdcbae9e7ce168584",
+            "excerpt": "Standards axis, CG-C2, frozen pair 890370c8..dd48bf92, sonnet/medium. Preflight bind current=true. Steps 1-6 done.\nFindings (initial round, severity 1, not correctness; the coordinator routes each to optional advice):\n- S1 sev 1: CHANGELOG.md:12 sentence may hold 26 words against the 25-word bound; prose-mechanics owns the count and passed. Axis disposition: no-op.\n- S2 sev 1: claude-models.md:80-81 hold long instruction sentences; the ticket fixes the reason text. Axis disposition: no-op.\nClean: registry and mirror rows follow the file pattern; guidance sentences in STE bounds; needle \"takes a refreeze\" no longer in the policy; chunkChainAnchors doc sentence timeless with no provenance.\nImplementation command contributed: no.\n"
+          },
+          "axis": "Standards",
+          "base": "890370c84f8a404e38bff0d77873f9b6b119368d",
+          "tip": "dd48bf924f651ae4d5a695b59d20391bba07b74c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cg-c2-spec-r1",
+          "performer": "ft439-review-spec-c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft439-review-spec-c2",
+            "digest": "sha256:1409c12566a2051d6ab22b99abd521eb20305a0293b5fe2930c1422c166195b9",
+            "excerpt": "Spec axis, CG-C2, frozen pair 890370c8..dd48bf92, sonnet/medium. Preflight bind current=true. Steps 1-5 done; bench coverage gave 26 mapped rows.\nFindings: 0.\nPer-row: CG18 holds (bounded-repair-policy.md:49-50 exact, lines 48, 51, 52 unchanged, 6 sentences). CG19 holds (bench-implement-spec.md:60 exact, retired sentence gone, 97 lines, 6 sentences). CG20 holds (bench-review-implementation.md:99 exact, after the fold sentence, 6 sentences). CG21, CG22 rows match the spec shape (needles, group, file, diagnostics; mirror rows pin the whole retired sentences). CG23 holds (row and mirror unchanged). CG24 holds (CHANGELOG.md:9 under Unreleased, history kept). CG25, CG26 hold (claude-models.md:80-81). CG12 holds.\nAdvice: the doc-comment sentence names \"the retired refreeze of a comment-only correction\".\nImplementation command contributed: no.\n"
+          },
+          "axis": "Spec",
+          "base": "890370c84f8a404e38bff0d77873f9b6b119368d",
+          "tip": "dd48bf924f651ae4d5a695b59d20391bba07b74c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cg-c2-coverage-r1",
+          "performer": "ft439-review-coverage-c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft439-review-coverage-c2",
+            "digest": "sha256:8f1aa9047aa6fb237f9b19c816d98ae3e3c15e3df1abcb2d21151e464ca62ace",
+            "excerpt": "Coverage axis, CG-C2, frozen pair 890370c8..dd48bf92, sonnet/medium. Preflight bind current=true. Steps 1-6 done; no probe run; final git status empty.\nFindings (initial round, severity \u003c= 2, not correctness; the coordinator routes each to optional advice):\n- C1 sev 2: the CG22 needle is the whole retired clause, so a reworded refreeze of a comment-only correction at bench-implement-spec.md:60 escapes it. Axis disposition: no-op; CG22 grades the retired sentence as specified.\n- C2 sev 1: synonyms such as \"needs a refreeze\" escape the \"takes a refreeze\" needle. Axis disposition: no-op.\nClean: CG23 bites through its mirror row; sweep of .agents, .bench, docs finds no unforbidden retired sentence.\nImplementation command contributed: yes (charge scope); no command change needed.\n"
+          },
+          "axis": "Coverage",
+          "base": "890370c84f8a404e38bff0d77873f9b6b119368d",
+          "tip": "dd48bf924f651ae4d5a695b59d20391bba07b74c",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -310,3 +371,19 @@ The plan probes `anchors` and `guidance` answered `bit` after the ticket commit 
 | --- | --- | --- | --- |
 | `internal/anchors/registry_chunk_chain.go` | no Forbid row on the retired implement-phase sentence | `TestChunkChainAnchors` | CG22 |
 | `internal/anchors/registry_chunk_chain.go` | no Forbid row on `takes a refreeze` | `TestChunkChainAnchors` (second failure line, not seen) | CG21 |
+
+## CG-C2 round 1 review
+
+The three axes ran on sonnet / medium over the frozen pair `890370c8..dd48bf92`. Each axis passes with zero finding IDs, and each return confirms its required reads. The repair count of CG-C2 is 0 of 2.
+
+Standards: 0 findings. Spec: 0 findings, and each row from CG18 to CG26 holds. Coverage: 0 findings.
+
+## CG-C2 advice
+
+Each item is an initial-round concern at severity 2 or lower and is not a correctness defect. Thus the bounded repair policy routes each item to optional advice.
+
+- Standards S1 (severity 1): one sentence of the new `CHANGELOG.md` section can count 26 words. The `prose-mechanics` check owns that count, and it passes.
+- Standards S2 (severity 1): the two scorecard reasons at `capture/agent-performance/claude-models.md:80-81` are long instruction sentences. The ticket fixes their reason text.
+- Coverage C1 (severity 2): the implement-phase needle is the whole retired clause, so a reworded refreeze of a comment-only correction escapes it. The spec forbids only the retired sentence, and a wider needle can match the current sentence.
+- Coverage C2 (severity 1): a synonym such as `needs a refreeze` escapes the `takes a refreeze` needle.
+- Spec advice: the new doc-comment sentence of `chunkChainAnchors` names the retired refreeze of a comment-only correction, not each retired sentence.
