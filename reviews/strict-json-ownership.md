@@ -625,7 +625,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sj-c4-standards-1",
+          "performer": "ft354-review-c4-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4b78a2e9e63356b8d6bfe20b8a969e0fce3eb2dd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c4-standards-1",
+            "digest": "sha256:e1e890688d90e304ca626cd6d68d8bca7ca5ed895e1b72b4d259c0842321022d",
+            "excerpt": "## Standards\n1 finding. Worst issue: S1, the native proof baseline reader copies the production reader, so the baseline grades the copy.\n- S1 | severity 5 | confidence 8 | ask-user | internal/releaseevidence/json_compatibility_test.go:214 | AGENTS.md \"Knowledge duplication is a defect\"; Duplicated Code. The reader re-types the decodeStrict and nativeProofMatches sequence of inspectNativeProofs (artifact_proofs.go:125-137) and hand-writes the refusal text; the baseline records that text (strict-json-baseline.json:198). A drift in inspectNativeProofs leaves SJ36 green. The releaseReaders comment says each reader uses its real validator. The repair needs a seam in artifact_proofs.go, outside the ticket Writes line.\nAdvice: the decodeDocument doc comment restates jsonfile ordering; releaseevidence.decodeDocument shares the jsonfile private name; bufferedPackageTarball keeps a hand-written manifest literal beside componentManifestJSON; one comment and one baseline read repeat.\nChecked: package_artifact.go:174 decodes twice by necessity (SJ43); duplicateKeyError takes its wording from ErrDuplicateKey; comments are timeless.\njson_compatibility_test.go consumes jsonfiletest and pastes no harness; packageTarball is the one archive builder. No Token() or json.Delim walker remains in internal/releaseevidence.\nSteps 1-8 done.\n"
+          },
+          "axis": "Standards",
+          "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "tip": "c470a86d0aaef313f7bf73f0ee897db49f81fb33",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c4-spec-1",
+          "performer": "ft354-review-c4-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4b78a2e9e63356b8d6bfe20b8a969e0fce3eb2dd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c4-spec-1",
+            "digest": "sha256:6deadfd09ba63c0777ab7e64de02a0874be288c62c8473542197a659673d0e6f",
+            "excerpt": "## Spec\n1 finding, a spec gap. Worst issue: release readers now accept an overflow number such as 1e999 inside a json.RawMessage field; the old walker refused it.\n- P1; severity 4; confidence 8; ask-user; SJ36, SJ45 (story 19); internal/releaseevidence/json_validation.go:17 and package_artifact.go:174 at c470a86d. A producer payload {\"flag\":1e999} used to be \"is malformed\"; now mustCanonicalPayload returns nil (artifact_evidence.go:68-72), and a digest of empty bytes is accepted. A package.json with \"x\":1e999 used to be \"package identity is malformed\"; now accepted. The baseline has no overflow case.\n9(a) true: the old rejectDuplicateJSONKeys used Token() without UseNumber; jsonfile calls scan.UseNumber() (decode.go:49). Only RawMessage fields see the change; ArchiveEntries []map[string]any and component objects still refuse. Precedence shift: overflow plus duplicate now reports the duplicate.\n9(b): rejectDuplicateNames (533160a7 verdict.go:353) and uniqueJSON (bc1d783e parse.go:246) had the same numeric refusal, but no gate or review target holds a RawMessage or any field; gate output is unchanged; review overflow-plus-duplicate moves to the duplicate diagnostic.\n9(c): spec gap between line 242 and line 113 with story 19.\nAdvice: the jsonfiletest widen is unused; the SJ37 subtest skips embedded registries; several SJ37 readers have no Nested seed.\nRow audit: SJ36-SJ45 cells cite existing tests; the baseline was captured at 1ce13623 and c470a86d does not change it; rejectDuplicateJSONKeys is gone.\nSteps 1-9 done.\n"
+          },
+          "axis": "Spec",
+          "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "tip": "c470a86d0aaef313f7bf73f0ee897db49f81fb33",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c4-coverage-1",
+          "performer": "ft354-review-c4-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4b78a2e9e63356b8d6bfe20b8a969e0fce3eb2dd",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c4-coverage-1",
+            "digest": "sha256:3ca0ae45fa2c1e05314213a2a4f669a85dc8f0f5846b4a32a4d3077d541c9ca9",
+            "excerpt": "## Coverage\n1 finding. Worst issue: C1, the tip accepts a producer envelope whose payload holds an overflow number and whose digest is the SHA-256 of empty bytes; the old walker refused it.\n- C1; severity 5; confidence 9; ask-user; SJ36 (story 19); internal/releaseevidence/json_validation.go:13 -> internal/jsonfile/decode.go:49 (scan.UseNumber()), release_requirements.go:157, artifact_evidence.go:70-71. Input: a framed producer envelope with payload {\"flag\":\"BENCH_OFFLINE=1\",\"journeys\":[\"direct\"],\"n\":1e999} and digest(nil). Old: rejectDuplicateJSONKeys read numbers through Token() without UseNumber, overflowed float64, and returned \"is malformed\". Tip: accepted, because mustCanonicalPayload returns nil and the digest check compares the hash of empty bytes. Second path (read, not run): inspectRequirements (requirement_inspection.go:52) reports not_applicable where the old reader kept satisfied. The baseline has no raw overflow case.\nprobe row: silent,internal/releaseevidence/json_compatibility_test.go,swap,passed,0,null,yes; selection package,./internal/releaseevidence,TestReleaseJSONCompatibility/requirement_evidence_framing,passed,2. The swap added \"n\":1e999 to the payload; the framed case stayed accepted.\nAdvice: every Edge inventory class is present; readReleasePlan, readReleaseArtifacts, archiveInventory, inspectRequirements, the full inspectNativeProofs, and validateSPDXDocument through spdx-json/2.3 are not reached (sampling gaps except inspectRequirements under C1); validatePackageEvidence now accepts 1e999 in an unrelated field.\nSteps 1-8 done.\n"
+          },
+          "axis": "Coverage",
+          "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "tip": "c470a86d0aaef313f7bf73f0ee897db49f81fb33",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -899,3 +966,29 @@ In one pre-edit call, SJ37 and SJ42 went red, because the old refusals did not c
 | SJ45 | `internal/jsonfile/decode.go` | child scan errors ignored | `duplicate_inside_an_unrelated_field` |
 
 Each row answered `bit` with restored `yes`. The author claims one residual: an overflow number such as `1e999` in a raw field now passes the structural decode.
+
+## SJ-C4 round 1 review
+
+The three axes ran on opus / medium over the frozen pair `7e962ba2..c470a86d`. Each axis raised one finding, and they name two repair targets. The repair count of SJ-C4 is 1 of 2.
+
+## Standards
+
+Findings: 1. Worst issue: S1, severity 5, confidence 8. The native proof reader in `internal/releaseevidence/json_compatibility_test.go:214` copies the decode and match steps of `inspectNativeProofs`.
+The repair adds one production seam in `artifact_proofs.go`, and the test calls it.
+
+## Spec
+
+Findings: 1. Worst issue: P1, severity 4, confidence 8. Release readers accept an overflow number such as `1e999` in a raw field, where the old walker refused it.
+The gate and review readers have no raw field, so their results do not change.
+
+## Coverage
+
+Findings: 1. Worst issue: C1, severity 5, confidence 9. A producer envelope with an overflow number and the digest of empty bytes is accepted, so the digest does not bind the payload.
+
+The orchestrator decides the seat of P1 and C1, and flags it for reviewer veto. The release adapter keeps the old refusal of a number that an untyped decode refuses, and the shared owner gets no numeric rule.
+
+## SJ-C4 advice
+
+- Standards: the adapter comment restates the owner's order, the adapter shares a private owner name, and the archive builder keeps a hand-written manifest literal.
+- Spec: the SJ37 subtest skips the embedded registries, and several SJ37 readers have no nested seed.
+- Coverage: the release plan readers and the full native proof path are sampling gaps.

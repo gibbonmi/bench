@@ -251,6 +251,7 @@ The review baseline uses the same grammar family with valid record and plan seed
 The release baseline covers embedded registries, governance policies, producer envelopes, SPDX documents, reproducibility records, and native proofs.
 Its component cases use the requirement registry's field labels. Its artifact cases use the existing archive fixture with a valid identity.
 The release family retains null decisions and every existing requirement newline check.
+Release readers keep refusing a number that an untyped encoding/json decode refuses, such as an overflow in a raw field. The release adapter owns that refusal.
 
 The source-check family includes an absent package, an empty package, a present unreadable source, and a present unparsable source.
 It includes a renamed recursive walker and a typed decoder that bypasses jsonfile. Negative controls include strings, comments, tests, and excluded streams.
@@ -307,6 +308,8 @@ SJ-C4
 - `internal/releaseevidence/package_artifact_test.go`
 - `internal/releaseevidence/testdata/strict-json-baseline.json`
 - `internal/jsonfile/jsonfiletest/jsonfiletest.go`
+- `internal/releaseevidence/artifact_proofs.go`
+- `internal/releaseevidence/artifact_evidence.go`
 
 SJ-C5
 
