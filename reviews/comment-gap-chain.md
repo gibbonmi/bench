@@ -301,11 +301,111 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+    "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+    "reconciliation": {
+      "CG01": "covered",
+      "CG02": "covered",
+      "CG03": "covered",
+      "CG04": "covered",
+      "CG05": "covered",
+      "CG06": "covered",
+      "CG07": "covered",
+      "CG08": "covered",
+      "CG09": "covered",
+      "CG10": "covered",
+      "CG11": "covered",
+      "CG12": "covered",
+      "CG13": "covered",
+      "CG14": "covered",
+      "CG15": "covered",
+      "CG16": "covered",
+      "CG17": "covered",
+      "CG18": "covered",
+      "CG19": "covered",
+      "CG20": "covered",
+      "CG21": "covered",
+      "CG22": "covered",
+      "CG23": "covered",
+      "CG24": "covered",
+      "CG25": "covered",
+      "CG26": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-owner-packages",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:6f362a15fe15b2b3f8b9cd4618177186d97f1794a50cd945243d556343310989",
+          "excerpt": "bench test --package ./internal/reviewrecord/... --package ./internal/commentgap --package ./internal/gate --package ./internal/anchors --package ./internal/landing --package ./internal/preflight/... at 95e28901 (tree of source dd48bf92 plus record commits)\npackages[16]: all pass or no-tests; anchors pass 140; commentgap pass 42; gate pass 813\nfailures[0]\nskips[2]: internal/landing TestLandPreAuthorizationRefusalTable/descendant-device and /direct-device, capability: privilege: cannot create a character device\n"
+        },
+        "requirement": "owner-packages",
+        "command": "bench test --package ./internal/reviewrecord/... --package ./internal/commentgap --package ./internal/gate --package ./internal/anchors --package ./internal/landing --package ./internal/preflight/...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-guidance",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:0d188125be53bcf1936c781488c27a38b3a91b6b52469a45d02666c25cafee1f",
+          "excerpt": "bench test --check docs-currency-workflow at 95e28901\ncheck docs-currency-workflow, conformance, tests_run 1; internal/conformance pass; failures[0]\n"
+        },
+        "requirement": "guidance",
+        "command": "bench test --check docs-currency-workflow",
+        "exit_code": 0
+      },
+      {
+        "id": "final-prose",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:60d06a5850383a8a141c1265efd820097768175a383b51ab59aaebdffee3fd02",
+          "excerpt": "bench test --check prose-mechanics at 95e28901\ncheck prose-mechanics, conformance, tests_run 1; internal/conformance pass; failures[0]\n"
+        },
+        "requirement": "prose",
+        "command": "bench test --check prose-mechanics",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:session_01JK5CPcwpGroiAPWzzXxytc",
+          "digest": "sha256:f7819d7e12bb7291a2fdde7c1a090c07588038200e48800c721d791969fabd98",
+          "excerpt": "bench coverage --check comment-gap-chain at 95e28901\nok: coverage map valid — 26 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check comment-gap-chain",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
