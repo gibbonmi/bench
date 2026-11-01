@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/strict-json-ownership/spec.md",
-  "plan_digest": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
+  "plan_digest": "sha256:4213664c0021770dcb432231a0335b7990fea68f9a224a0e7c32f2f4892f0e75",
   "implementation_session": "",
   "chunks": [
     {
@@ -578,9 +578,9 @@
     {
       "id": "SJ-C4",
       "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
-      "tip": "c470a86d0aaef313f7bf73f0ee897db49f81fb33",
-      "plan_digest": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
-      "source_digest": "4b78a2e9e63356b8d6bfe20b8a969e0fce3eb2dd",
+      "tip": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+      "plan_digest": "sha256:4213664c0021770dcb432231a0335b7990fea68f9a224a0e7c32f2f4892f0e75",
+      "source_digest": "577e578b14f54e1cbad27dbca78e25b94c83306d",
       "acceptance_rows": [
         "SJ36",
         "SJ37",
@@ -621,6 +621,36 @@
               "ref": "claude-agent:bench-writer-high:ft354-author-04",
               "digest": "sha256:3196f2ee8e8c73f4e703842169002e65b4624e84a3b281d15e6843a0e701339b",
               "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestComponentJSONCompatibility/declared_key_set,2,1,0,null,yes\n  2,bit,swap,failed,1,TestComponentJSONCompatibility/missing_key,2,1,0,null,yes\n  3,bit,swap,failed,1,TestComponentJSONCompatibility/extra_key,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/releaseevidence,^TestComponentJSONCompatibility$/^declared_key_set$|^TestComponentJSONCompatibility$/^missing_key$|^TestComponentJSONCompatibility$/^extra_key$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "sj-c4-r1-release",
+          "performer": "ft354-repair-04-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "577e578b14f54e1cbad27dbca78e25b94c83306d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft354-repair-04-1",
+            "digest": "sha256:95cd5a8d17cc2b6c2b51fa23caeb22c25c2bb9b98c18eabe469637314df4690d",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestComponentJSONCompatibility/extra_key,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/releaseevidence,^TestComponentJSONCompatibility$/^extra_key$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "requirement": "release",
+          "command": "bench test --package ./internal/releaseevidence",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap 'if len(object) != len(fields) {' for 'if false && len(object) != len(fields) {' in internal/releaseevidence/component_manifest.go, and record that the extra-key case of TestComponentJSONCompatibility turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft354-repair-04-1",
+              "digest": "sha256:95cd5a8d17cc2b6c2b51fa23caeb22c25c2bb9b98c18eabe469637314df4690d",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestComponentJSONCompatibility/extra_key,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/releaseevidence,^TestComponentJSONCompatibility$/^extra_key$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
         }
@@ -763,6 +793,24 @@
         ],
         "SJ-C3": [
           "SJ-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
+      "to": "sha256:4213664c0021770dcb432231a0335b7990fea68f9a224a0e7c32f2f4892f0e75",
+      "chunk_ids": {
+        "SJ-C1": [
+          "SJ-C1"
+        ],
+        "SJ-C2": [
+          "SJ-C2"
+        ],
+        "SJ-C3": [
+          "SJ-C3"
+        ],
+        "SJ-C4": [
+          "SJ-C4"
         ]
       }
     }
