@@ -92,22 +92,23 @@ CG-C2 changes the guidance, the anchor registry, the changelog, and the scorecar
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {"mode": "delegate", "run_id": "ft439-build-20261101", "orchestrator_session": "session_01JK5CPcwpGroiAPWzzXxytc", "author_limit": 1, "assignments": {"01-chain-proves-comment-gap.md": [], "02-guidance-states-comment-gap.md": []}},
   "chunks": [
     {
       "id": "CG-C1",
       "tickets": ["01-chain-proves-comment-gap.md"],
       "verification": [
-        {"id": "chain-gap", "command": "bench test --package ./internal/reviewrecord/... --run 'Chain|Fold|ReviewRecordSource|CommentOnlyGap'", "probe": "Make foldCoversBase compare the fold digest with the base digest by equality, and record that the fold-then-comment case of TestChainAcceptsAProvedCommentGap turns red."},
-        {"id": "checkpoint", "command": "bench test --package ./internal/gate --run 'ReviewCheckpoint|DeltaCheckpointRunsWholeForANonTestDelta'", "probe": "Restore the equality comparison of the base digest with the previous chunk digest in checkSource, and record that TestReviewCheckpointChainAcceptsACommentGap turns red."}
+        {"id": "chain-gap", "command": "bench test --package ./internal/reviewrecord/... --run 'Chain|Fold|ReviewRecordSource|CommentOnlyGap'", "probe": "Make foldCoversBase compare the fold digest with the base digest by equality, and record that the fold-then-comment case of TestChainAcceptsAProvedCommentGap turns red.", "ticket": "01-chain-proves-comment-gap.md"},
+        {"id": "checkpoint", "command": "bench test --package ./internal/gate --run 'ReviewCheckpoint|DeltaCheckpointRunsWholeForANonTestDelta'", "probe": "Restore the equality comparison of the base digest with the previous chunk digest in checkSource, and record that TestReviewCheckpointChainAcceptsACommentGap turns red.", "ticket": "01-chain-proves-comment-gap.md"}
       ]
     },
     {
       "id": "CG-C2",
       "tickets": ["02-guidance-states-comment-gap.md"],
       "verification": [
-        {"id": "anchors", "command": "bench test --package ./internal/anchors", "probe": "Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row."},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow", "probe": "Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red."}
+        {"id": "anchors", "command": "bench test --package ./internal/anchors", "probe": "Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row.", "ticket": "02-guidance-states-comment-gap.md"},
+        {"id": "guidance", "command": "bench test --check docs-currency-workflow", "probe": "Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red.", "ticket": "02-guidance-states-comment-gap.md"}
       ]
     }
   ],
@@ -207,7 +208,7 @@ The profile's hostile-input classes, walked:
 - A refreeze after a comment-only correction keeps staling the reviews — the decision routes no refreeze, and `checkReviews` still guards a moved pair for every other change (CG16).
 - A layout-only Go change counts as a proved comment gap — `commentgap.Prove` already accepts it at the covered-digest check (`internal/commentgap/commentgap_test.go:15`), and the chain reads the same proof.
 - The default successor base stays the predecessor's covered commit — the chain accepts that base as today, and `chunkBase` keeps its one caller (`internal/reviewrecord/ticket.go:173-188`).
-- The delivered criterion `FT380-plan-commit.moved-tip` keeps its text — it is delivered history of a closed outcome (`.bench/commitment.json:2131-2137`), and the FT439 criterion governs the comment-only correction from this landing.
+- The delivered criterion `FT380-plan-commit.moved-tip` keeps its text — it is delivered history of a closed outcome (`.bench/commitment.json:966-967`, delivered at `.bench/commitment.json:2143-2149`), and the FT439 criterion governs the comment-only correction from this landing.
 
 ## Out of scope
 
