@@ -7,7 +7,7 @@ Covers: SJ32, SJ33, SJ34, SJ35
 ## What to build
 
 Replace the review decoder grammar with jsonfile.DecodeDocument. Remove uniqueJSON when this ticket migrates its last caller.
-Keep bounds.ClassifyBytes before the shared decode. Preserve review record and completion-plan domain checks and caller error context.
+Keep bounds.ClassifyBytes before the shared decode. Keep the fence locator on the shared markdown block reader. Preserve review record and completion-plan domain checks and caller error context.
 
 Capture the accepted spec's review baseline family before the production edit. Include null and competing invalid inputs.
 Compare Parse and ReadPlan with that permanent baseline. Preserve their observable diagnostic precedence.

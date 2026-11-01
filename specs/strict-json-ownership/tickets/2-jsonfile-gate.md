@@ -9,6 +9,7 @@ Covers: SJ16, SJ17, SJ18, SJ19, SJ20, SJ21, SJ22, SJ23, SJ24, SJ25, SJ26, SJ27, 
 Expose duplicate-key and trailing-data categories through errors.Is. Preserve Decode, DecodeDocument, and DecodeExactDocument semantics.
 Migrate strictJSON to the owner and remove rejectDuplicateNames in this ticket. Gate adapters preserve errTrailingJSON and errDuplicateJSONName identities.
 Preserve manifest unknown-field extraction and the current cache, manifest, framing, and domain policies.
+The engine evidence read, the reader-table loader, and the reader schedule also call strictJSON. Keep their calls unchanged.
 
 Capture the accepted spec's gate baseline family before the production edit. Compare the finished callers with that permanent baseline.
 Include unknown-plus-suffix and duplicate-plus-suffix inputs. Preserve their observable diagnostic precedence.

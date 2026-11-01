@@ -106,7 +106,7 @@ The source definitions below identify their current owners. Rows SJ6 through SJ1
 | component decodeExactObject | Duplicate walk and exact dynamic map keys | Shared map decode and the same exact dynamic keys | SJ40–SJ42 |
 | package identity | Duplicate walk and partial json.Unmarshal | Shared raw-document decode and the same partial json.Unmarshal | SJ43–SJ45 |
 | freshness parseSeal | Typed unknown and suffix refusal with duplicate acceptance | Preserve this reader in place | Won't handle below |
-| prospectiveartifact readRecordAt | Typed unknown and suffix refusal with duplicate acceptance | Preserve this reader in place | Won't handle below |
+| prospectiveartifact readRecordAt in internal/gate/prospectiveartifact | Typed unknown and suffix refusal with duplicate acceptance | Preserve this reader in place | Won't handle below |
 | existing jsonfile consumers | Explicit document, record, or exact-document API | Preserve each API selection | SJ22–SJ24 |
 
 A migration must preserve observable diagnostic classes for competing invalid inputs. The caller baseline includes unknown-plus-suffix and duplicate-plus-suffix cases.
@@ -327,13 +327,7 @@ SJ-C5
 - `tests/canary/skill-description-budgets/description-missing`
 - `tests/canary/skill-description-budgets/over-budget-command`
 - `tests/canary/skill-description-budgets/over-budget-description`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
-- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
-- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 
 Plan and review pickup:
 
@@ -360,7 +354,7 @@ A manual performance benchmark is outside this planning task. This spec makes no
 
 The whole hidden-tree sweep searched Go, JavaScript, shell, and workflow files. It excluded only .git.
 The needles were json.NewDecoder, json.Unmarshal, jsonfile, DisallowUnknownFields, duplicate helper names, JSON.parse, vuln-exceptions, and govulncheck.
-The source inventory is current at base `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`. Historical survey counts are not acceptance predicates.
+The build-entry staleness pass refreshed the source inventory at `835f5491b7aa50042f5f65bcb6ac941592e8181b`. Historical survey counts are not acceptance predicates.
 
 The changed-function sweep used bench consumers with the following symbols:
 
@@ -371,6 +365,8 @@ The changed-function sweep used bench consumers with the following symbols:
 - jsonfile.Decode, jsonfile.DecodeDocument, and jsonfile.DecodeExactDocument
 
 Gate strictJSON serves loadVerdict, decodeManifest, and loadManifest. Their sources are verdict.go, manifest.go, and subject.go in internal/gate.
+Gate strictJSON also serves the evidence record read, the reader-table loader, and the reader schedule. Their sources are engine.go, reader_store.go, and reader_set.go.
+These three callers keep their call unchanged. SJ28 and SJ29 grade the sentinels that they receive through strictJSON.
 Review decode serves Parse and ReadPlan. Their sources are parse.go and plan.go in internal/reviewrecord.
 Release decodeStrict serves the following source-defined readers:
 
@@ -386,11 +382,14 @@ ValidateVulnerabilityPolicy serves runner.runVulnerability. findingIDs produces 
 
 Existing jsonfile record consumers are assessment.Store.Read, intent.readPath, repairpilot.load, and worktree.decodeMarker.
 Existing document consumers are assessment.readJSON, assessment.collectHarness, commitment.ParseProposal, and commitment repository receipt readers.
-The other document consumers are repairpilot.readRecordInput and worktree.loadBuildOutputs. Exact consumers are commitment.Parse, ParseProposal, and ParseEvidence.
+The other document consumers are repairpilot.readRecordInput, worktree.loadBuildOutputs, the probe mutant-set input, and the preflight ownership manifest.
+The other record consumers are the gate background state and the intent transaction. Exact consumers are commitment.Parse, ParseProposal, and ParseEvidence.
+The other exact consumers are the landing stack input and the subprocess protection record.
 These consumers retain their current API and require no production edits. Their package tests remain integration checks for owner API changes.
 
 The named permissive Go families are harness, benchguard, writeguard, gitguard, stophook, lines, harnesstranscript, models, publication, adopt, and capturetx.
 Other exclusions are otelrecord, testreport, test fixture decodes, canary inventory, and intent recovery projections.
+The canary pin line locator elementLines is also an exclusion. It reads array element offsets after a permissive decode and walks no object keys.
 JavaScript exclusions are the offline registry, binary repair, release-plan, artifact verifier, and release-evidence producer readers.
 Their runtime and schema contracts remain outside this migration. No workflow calls a changed public CLI command.
 
@@ -447,11 +446,11 @@ This planning pass runs prose and coverage checks only. It supplies no implement
 
 ### Completion plan
 
-The plan uses version 1 for the serial author checkpoints. The build records one fresh implementation author per ticket on the accepted implementation line.
+The plan uses version 2 with one delegated run and an author limit of 1. The build records one fresh author per ticket on the accepted line.
 Every ticket owns its complete vertical result. Review closes each frozen chunk before the next author starts.
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"SJ-C1","tickets":["1-policy-document.md"],"verification":[{"id":"policy","command":"bench test --package ./internal/releasepreflight"},{"id":"owner","command":"bench test --package ./internal/jsonfile"},{"id":"mutation","command":"bench probe internal/releasepreflight/vulnerability.go --swap 'jsonfile.DecodeDocument(data, &exceptions)' --with 'jsonfile.DecodeDocument([]byte(\"[]\"), &exceptions)' --package ./internal/releasepreflight --run TestVulnerabilityPolicyDocumentContract","probe":"Replace the real policy bytes with an empty array at the shared decode call. The suffix-refusal case must fail."}]},{"id":"SJ-C2","tickets":["2-jsonfile-gate.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/jsonfile"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"census","command":"bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus"},{"id":"mutation","command":"bench probe internal/jsonfile/decode.go --swap 'seen[name] = true' --with 'seen[name] = false' --package ./internal/jsonfile --run TestDocumentStructuralContract","probe":"Disable the shared duplicate-memory update. The nested duplicate assertion must fail."}]},{"id":"SJ-C3","tickets":["3-review-documents.md"],"verification":[{"id":"review","command":"bench test --package ./internal/reviewrecord"},{"id":"fixture","command":"bench test --package ./internal/reviewrecord/recordtest"},{"id":"mutation","command":"bench probe internal/reviewrecord/parse.go --swap 'jsonfile.DecodeDocument(data, value)' --with 'jsonfile.DecodeDocument([]byte(\"null\"), value)' --package ./internal/reviewrecord --run TestReviewJSONCompatibility","probe":"Replace the real review bytes with null at the shared decode call. The valid review-document assertion must fail."}]},{"id":"SJ-C4","tickets":["4-release-documents.md"],"verification":[{"id":"release","command":"bench test --package ./internal/releaseevidence"},{"id":"mutation","command":"bench probe internal/releaseevidence/component_manifest.go --swap 'if len(object) != len(fields) {' --with 'if false && len(object) != len(fields) {' --package ./internal/releaseevidence --run TestComponentJSONCompatibility","probe":"Disable the component extra-key refusal while preserving all required keys. The extra-key assertion must fail."}]},{"id":"SJ-C5","tickets":["5-ownership-closure.md"],"verification":[{"id":"owner-check","command":"bench test --check strict-json-owner"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"census","command":"bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus"},{"id":"mutation","command":"bench probe internal/conformance/registry/checks.go --swap 'Name: \"strict-json-owner\"' --with 'Name: \"strict-json-owner-disabled\"' --package ./internal/conformance --run TestStrictJSONOwnerRegisteredPath","probe":"Rename the registry entry while leaving its executable binding unchanged. The registered-path assertion must fail."}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base 37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/strict-json-ownership/spec.md"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft354-build-20261101","orchestrator_session":"session_01JK5CPcwpGroiAPWzzXxytc","author_limit":1,"assignments":{}},"chunks":[{"id":"SJ-C1","tickets":["1-policy-document.md"],"verification":[{"id":"policy","command":"bench test --package ./internal/releasepreflight --package ./internal/jsonfile","probe":"Swap the policy bytes for an empty array at the jsonfile.DecodeDocument call in ValidateVulnerabilityPolicy, and record that the suffix case of TestVulnerabilityPolicyDocumentContract turns red.","ticket":"1-policy-document.md"}]},{"id":"SJ-C2","tickets":["2-jsonfile-gate.md"],"verification":[{"id":"owner-gate","command":"bench test --package ./internal/jsonfile --package ./internal/gate","probe":"Swap 'seen[name] = true' for 'seen[name] = false' in internal/jsonfile/decode.go, and record that the nested duplicate case of TestDocumentStructuralContract turns red.","ticket":"2-jsonfile-gate.md"}]},{"id":"SJ-C3","tickets":["3-review-documents.md"],"verification":[{"id":"review","command":"bench test --package ./internal/reviewrecord/...","probe":"Swap the review bytes for null at the jsonfile.DecodeDocument call in internal/reviewrecord/parse.go, and record that the valid review-document case of TestReviewJSONCompatibility turns red.","ticket":"3-review-documents.md"}]},{"id":"SJ-C4","tickets":["4-release-documents.md"],"verification":[{"id":"release","command":"bench test --package ./internal/releaseevidence","probe":"Swap 'if len(object) != len(fields) {' for 'if false && len(object) != len(fields) {' in internal/releaseevidence/component_manifest.go, and record that the extra-key case of TestComponentJSONCompatibility turns red.","ticket":"4-release-documents.md"}]},{"id":"SJ-C5","tickets":["5-ownership-closure.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance","probe":"Rename the strict-json-owner registry entry in internal/conformance/registry/checks.go and keep its executable binding, and record that TestStrictJSONOwnerRegisteredPath turns red.","ticket":"5-ownership-closure.md"}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base 835f5491b7aa50042f5f65bcb6ac941592e8181b"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"owner-check","command":"bench test --check strict-json-owner"},{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/strict-json-ownership/spec.md"}]}
 ```
 
 ### Ticket slice verification
