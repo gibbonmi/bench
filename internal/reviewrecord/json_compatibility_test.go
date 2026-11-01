@@ -65,16 +65,13 @@ func TestReviewJSONCompatibility(t *testing.T) {
 	})
 
 	stored := readReviewJSONBaseline(t)
-	current := currentReviewResults(t, record, limits)
-	t.Run("record baseline", func(t *testing.T) { compareReviewJSON(t, current.Record, stored.Record) })
-	t.Run("plan baseline", func(t *testing.T) { compareReviewJSON(t, current.Plan, stored.Plan) })
+	t.Run("record baseline", func(t *testing.T) { compareReviewJSON(t, recordResults(t, record, limits), stored.Record) })
+	t.Run("plan baseline", func(t *testing.T) { compareReviewJSON(t, planResults(t), stored.Plan) })
 }
 
-// currentReviewResults reads every case of the baseline family through Parse and ReadPlan.
-// The plan cases share one fixture and commit each payload in name order.
-func currentReviewResults(t *testing.T, record string, limits map[string]string) reviewJSONResults {
+// recordResults reads every record case of the baseline family through Parse.
+func recordResults(t *testing.T, record string, limits map[string]string) map[string]reviewResult {
 	t.Helper()
-	current := reviewJSONResults{Record: map[string]reviewResult{}, Plan: map[string]reviewResult{}}
 	records := reviewFamily(record)
 	for name, body := range limits {
 		records[name] = body
@@ -82,10 +79,18 @@ func currentReviewResults(t *testing.T, record string, limits map[string]string)
 	for name, value := range recordDomainCases() {
 		records[name] = marshalReview(t, value)
 	}
+	current := map[string]reviewResult{}
 	for name, body := range records {
-		current.Record[name] = parseResult([]byte(body))
+		current[name] = parseResult([]byte(body))
 	}
+	return current
+}
 
+// planResults reads every plan case of the baseline family through ReadPlan. The cases share
+// one fixture, which commits each payload in name order.
+func planResults(t *testing.T) map[string]reviewResult {
+	t.Helper()
+	current := map[string]reviewResult{}
 	f := recordtest.New(t, 1)
 	plans := reviewFamily(marshalReview(t, f.Plan))
 	unsupported := f.Plan
@@ -99,9 +104,8 @@ func currentReviewResults(t *testing.T, record string, limits map[string]string)
 	for _, name := range names {
 		f.WritePlanPayload([]byte(plans[name]))
 		f.Commit("plan case " + name)
-		current.Plan[name] = planResult(f)
+		current[name] = planResult(f)
 	}
-
 	return current
 }
 
