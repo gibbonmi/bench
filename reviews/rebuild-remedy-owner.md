@@ -526,16 +526,164 @@
             "rb-c2-cov-2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "rb-c2-r2-standards",
+          "performer": "ft344-review-c2-standards-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c2-standards-r2",
+            "digest": "sha256:2570dc1e01312eddf4b831120a746f9ddc75bfc4cf7c2fdb2ed431a8f83ee955",
+            "excerpt": "Standards axis, RB-C2 confirming round, repair delta d1f23d5c..be4f0196: reaffirmed, zero findings. Fixtures reused (sealFixtureRoot, publishSealedBinary, SeedConformant); env name through benchhome.Env; no cd-form copy; comment register fine.\nAdvice: the stale-sources line appears three times and the pool-root layout twice; t.Chdir(root) has no why comment.\n"
+          },
+          "axis": "Standards",
+          "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "tip": "be4f01969968ae0d9f1c0683ebad965260ef7f06",
+          "finding_ids": [],
+          "supersedes": [
+            "rb-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "rb-c2-r2-spec",
+          "performer": "ft344-review-c2-spec-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c2-spec-r2",
+            "digest": "sha256:9fdaf72e2f5a0d7bc8ab870277b134d6d4b447b346704cc262e84240b528776f",
+            "excerpt": "Spec axis, RB-C2 confirming round, repair delta d1f23d5c..be4f0196: rb-c2-spec-1 closed (CHANGELOG.md:9 names the three owner readers that printed the cd form at 7d02ba15; story 25 holds). rb-c2-cov-1 closed in scope (the gather test reaches only RB24's behavior). No new finding.\nAdvice: RB25 wording says the broker notice holds CheckoutRebuildAction(root); land.go:393 calls RebuildAction(root), same output for a non-pool root.\n"
+          },
+          "axis": "Spec",
+          "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "tip": "be4f01969968ae0d9f1c0683ebad965260ef7f06",
+          "finding_ids": [],
+          "supersedes": [
+            "rb-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "rb-c2-r2-coverage",
+          "performer": "ft344-review-c2-coverage-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c2-coverage-r2",
+            "digest": "sha256:e21b73e78447c0de66a9b8c179c8a334adf4255c7161e2ce3526fd3cf742c32e",
+            "excerpt": "Coverage axis, RB-C2 confirming round, repair delta d1f23d5c..be4f0196: rb-c2-cov-1 closed (gather_test.go:269-293 pins the home read at gather.go:105 and the field at gather.go:148; no t.Parallel; no leftover state; ./internal/preflight 382 tests pass). rb-c2-cov-2 closed under the record-only disposition. No new finding. No probe.\nAdvice: record the cov-1 witness and the coordinator probe; name the killing test per recorded red.\n"
+          },
+          "axis": "Coverage",
+          "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "tip": "be4f01969968ae0d9f1c0683ebad965260ef7f06",
+          "finding_ids": [],
+          "supersedes": [
+            "rb-c2-r1-coverage"
+          ]
         }
       ]
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+    "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+    "reconciliation": {
+      "RB01": "covered",
+      "RB02": "covered",
+      "RB03": "covered",
+      "RB04": "covered",
+      "RB05": "covered",
+      "RB06": "covered",
+      "RB07": "covered",
+      "RB08": "covered",
+      "RB09": "covered",
+      "RB10": "covered",
+      "RB11": "covered",
+      "RB12": "covered",
+      "RB13": "covered",
+      "RB14": "covered",
+      "RB15": "covered",
+      "RB16": "covered",
+      "RB17": "covered",
+      "RB18": "covered",
+      "RB19": "covered",
+      "RB20": "covered",
+      "RB21": "covered",
+      "RB22": "covered",
+      "RB23": "covered",
+      "RB24": "covered",
+      "RB25": "covered",
+      "RB26": "covered"
+    },
+    "verification": [
+      {
+        "id": "rb-final-owner-packages",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:session_01JK5CPcwpGroiAPWzzXxytc:final-owner-packages",
+          "digest": "sha256:91d6a8f8423832cd8cd6be8bda0924eacda38e8877084f90a671822adfccbab7",
+          "excerpt": "packages[13]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,48388,586\n  github.com/gibbonmi/bench/internal/benchguard,pass,3,34\n  github.com/gibbonmi/bench/internal/freshness,pass,12440,80\n  github.com/gibbonmi/bench/internal/freshness/check,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight,pass,31918,382\n  github.com/gibbonmi/bench/internal/preflight/chargesource,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/evidencecmd,pass,18506,232\n  github.com/gibbonmi/bench/internal/preflight/ownership,pass,10600,178\n  github.com/gibbonmi/bench/internal/preflight/ownership/inventorytest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/ownership/ownershiptest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/preflighttest,no-tests,0,0\n  github.com/gibbonmi/bench/internal/preflight/staleness,pass,5673,70\n  github.com/gibbonmi/bench/internal/worktree,pass,74783,1591\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "owner-packages",
+        "command": "bench test --package ./internal/freshness/... --package ./internal/benchguard --package ./internal/preflight/... --package ./internal/worktree --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "rb-final-system",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:session_01JK5CPcwpGroiAPWzzXxytc:final-system",
+          "digest": "sha256:097c000d3a584c18afa132c8ec2d718dbb7891fdfc9f4ff866b8ee4ebe85dde3",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,285,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,57209,285\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "rb-final-coverage",
+        "performer": "session_01JK5CPcwpGroiAPWzzXxytc",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "9e86bce383eb10d1805620aff11fa76f8c1b9a5c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-code:orchestrator:session_01JK5CPcwpGroiAPWzzXxytc:final-coverage",
+          "digest": "sha256:8c5ede656ec870191bde4bf10b4acb94ab58338e61c3bfbe54a6ddeebc58bd84",
+          "excerpt": "ok: coverage map valid — 26 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check rebuild-remedy-owner",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
@@ -650,3 +798,17 @@ Findings: 2 accepted. Worst issue: `rb-c2-cov-1`.
 - Standards: the doc comment of `warnBeforeRemovingLiveBinary` could name the graded pool more plainly.
 - Spec: step 8 also rewraps the sentence after the reworded clause.
 - Coverage: the clean caller has no pool-root warning test of its own. It shares the warning and the ambient value with the release.
+
+## RB-C2 repair cycle 1 and confirming round
+
+The repair session `ft344-author-02-rep1` repaired `rb-c2-spec-1` and `rb-c2-cov-1` at `be4f0196`. RB-C2 has consumed one of its two repair cycles. The new test `TestGatherBinarySealRebuildReadsTheBenchHome` drives the gather over a stale seal in the pool of the Bench home.
+
+The repair witness gives the gather another home through `binarySealFacts(benchhome.Dir()+"-other", root)`, and the new test kills it. The coordinator probe passes `filepath.Dir(root)` to the same call, and the stale-seal guard of the new test kills it. Both probes read `bit`, and each restore passed.
+
+The confirming round ran on opus at medium effort over the repair delta `d1f23d5c..be4f0196`. Standards reaffirms with zero findings. Spec and Coverage close each named finding and report no new finding.
+
+## RB-C2 advice of the confirming round
+
+- Standards: the line that makes the seal stale appears three times, and the pool-root layout appears twice.
+- Spec: the RB25 behavior cell names `CheckoutRebuildAction(root)`, and the landing calls `RebuildAction(root)`. Both give the same text for a root outside the pool.
+- Coverage: each recorded author red could name its killing test.
