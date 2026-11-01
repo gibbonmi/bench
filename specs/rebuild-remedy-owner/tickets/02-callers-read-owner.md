@@ -1,7 +1,7 @@
 # Read the rebuild remedy from the owner in the live-binary warning and the binary-seal row
 
 Blocked by: 01-pool-rebuild-owner.md
-Writes: internal/worktree/live_binary.go, internal/worktree/live_binary_test.go, internal/worktree/clean.go, internal/worktree/land_broker_notice_test.go, internal/preflight/binary_seal.go, internal/preflight/binary_seal_test.go, internal/preflight/decision.go, internal/preflight/gather.go, CHANGELOG.md, .bench/lib/resolve-bench.sh
+Writes: internal/worktree/live_binary.go, internal/worktree/live_binary_test.go, internal/worktree/clean.go, internal/worktree/land_broker_notice_test.go, internal/preflight/binary_seal.go, internal/preflight/binary_seal_test.go, internal/preflight/decision.go, internal/preflight/gather.go, CHANGELOG.md, .bench/lib/resolve-bench.sh, internal/preflight/gather_test.go
 Covers: RB13, RB14, RB15, RB16, RB23, RB24, RB25
 
 ## What to build
