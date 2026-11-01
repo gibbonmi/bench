@@ -721,6 +721,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sj-c4-standards-2",
+          "performer": "ft354-review-c4-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "577e578b14f54e1cbad27dbca78e25b94c83306d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c4-standards-2",
+            "digest": "sha256:7a291bf0fe9c320b770cfe0576bc6c870016f74fece6a5ce9d607eb76a1e9d81",
+            "excerpt": "## Standards\n0 findings. S1 is closed; no copy of production logic remains in the test readers.\ncheckNativeProof (artifact_proofs.go:148) holds the decode and match; inspectNativeProofs (:124) and the native proof reader (json_compatibility_test.go:~221) call it; decodeStrict and nativeProofMatches run only from production.\nThe overflow refusal has one owner, decodeDocument (json_validation.go:29); package_artifact.go:172 calls it. Comments are present tense, with the reason at :27-28 and the contract at :21-22.\nAdvice: the test reader strips the malformed prefix (json_compatibility_test.go:227); releaseJSONBaseline is read three times; the artifact_evidence.go widen is unused; the target OS-Arch string is built twice (artifact_proofs.go:116, :164), as before.\nSteps 1-5 done.\n"
+          },
+          "axis": "Standards",
+          "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "tip": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c4-standards-1"
+          ]
+        },
+        {
+          "id": "sj-c4-spec-2",
+          "performer": "ft354-review-c4-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "577e578b14f54e1cbad27dbca78e25b94c83306d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c4-spec-2",
+            "digest": "sha256:9254d1ad86497574d5031742f004f845e7a375d3fdb144442d0b7d2466a0aa04",
+            "excerpt": "## Spec\n0 findings. P1 is closed; no new finding at severity 5 or above.\n(a) Held: decodeDocument ends with json.Unmarshal(data, new(any)) (json_validation.go:29 at 883fc3b2), reached through decodeStrict (:17), decodeExactObject (component_manifest.go:69), and the identity check (package_artifact.go:172). The baseline adds producer raw overflow and package raw overflow refusals.\n(b) Held: git diff --stat 7e962ba2..883fc3b2 -- internal/jsonfile is empty; decode.go:49 still calls only UseNumber().\n(c) Held: the baseline hunks only add entries; the native proof text is unchanged. Confirmed by reading.\n(d) Held when the duplicate comes first.\nAdvice: overflow first, then a duplicate, moves from the numeric cause to \"duplicate JSON key\", a literal departure from spec line 113 at about severity 3; both stay refused under the same malformed prefix, the same shift as the gate and review readers; no baseline case covers it.\nSteps 1-6 done.\n"
+          },
+          "axis": "Spec",
+          "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "tip": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c4-spec-1"
+          ]
+        },
+        {
+          "id": "sj-c4-coverage-2",
+          "performer": "ft354-review-c4-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "577e578b14f54e1cbad27dbca78e25b94c83306d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c4-coverage-2",
+            "digest": "sha256:10d796352e0de2f0ae6c3d2f00440834c174ced38b4001fb2e86ec86d1fbdaad",
+            "excerpt": "## Coverage\n0 findings. C1 is closed.\nvalidateRequirementBytes decodes the envelope with decodeStrict (release_requirements.go:145) before mustCanonicalPayload (:157). decodeDocument now decodes the whole document into any (json_validation.go:29), which refuses 1e999 inside the payload, so the nil branch of mustCanonicalPayload (artifact_evidence.go:68-75) cannot be reached after a whole-document pass. The baseline records \"producer envelope / raw overflow\" as malformed (strict-json-baseline.json:266).\nNo probe: no suspected gap survived. Component overflow is refused by the typed unmarshal or the field-count check (component_manifest.go:58, :72); native proofs have no raw field; the package section pins the identity path.\nmustCanonicalPayload callers: json_compatibility_test.go:190 (fixed valid payload) and release_requirements.go:157 (after the refusal at :145). inspectRequirements marks the overflow envelope invalid (requirement_inspection.go:44-46).\n./internal/releaseevidence passed: 33 tests, 0 failures, 0 skips.\nAdvice: no component baseline case pins the overflow refusal; both package cases record the same text; the witness text is ambiguous about the capture commit.\nSteps 1-6 done; 7 not done (optional).\n"
+          },
+          "axis": "Coverage",
+          "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "tip": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c4-coverage-1"
+          ]
         }
       ]
     }
@@ -1054,3 +1120,13 @@ Before the fix, both raw overflow cases read `accepted` in one call. Each row be
 | `package_artifact.go` | the identity check calls `jsonfile.DecodeDocument` again | `TestPackageIdentityJSONCompatibility/package_baseline` |
 | `artifact_proofs.go` | the native proof match is disabled | `TestReleaseJSONCompatibility/release_baseline` |
 | `component_manifest.go` | plan probe `release`, the extra-key check disabled | `TestComponentJSONCompatibility/extra_key` |
+
+## SJ-C4 round 2 confirming review
+
+The three axes ran on opus / medium over the repair delta `c470a86d..883fc3b2`. Each axis passes with zero finding IDs, and S1, P1, and C1 close. The repair count of SJ-C4 is 1 of 2.
+
+## SJ-C4 round 2 advice
+
+- Spec: an overflow before a duplicate now reports the duplicate. Both inputs stay refused as malformed, and the gate and review readers shift the same way.
+- Coverage: no component case pins the overflow refusal, and the two package cases record one text.
+- Standards: the `artifact_evidence.go` widen is unused, and the target platform string is built twice.
