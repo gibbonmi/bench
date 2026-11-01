@@ -1040,3 +1040,17 @@ The orchestrator decides the seat of P1 and C1, and flags it for reviewer veto. 
 - Standards: the adapter comment restates the owner's order, the adapter shares a private owner name, and the archive builder keeps a hand-written manifest literal.
 - Spec: the SJ37 subtest skips the embedded registries, and several SJ37 readers have no nested seed.
 - Coverage: the release plan readers and the full native proof path are sampling gaps.
+
+## SJ-C4 repair 1 witness reds
+
+The repair session `ft354-repair-04-1` (opus / high) changed production at `883fc3b2`. The release adapter now refuses a document that an untyped decode refuses. `checkNativeProof` in `artifact_proofs.go` owns the native proof decode and match.
+
+The new baseline cases are the producer envelope raw overflow, the duplicate plus raw overflow, and a package section with the same two cases. The repair captured them against the readers at `7e962ba2`.
+Before the fix, both raw overflow cases read `accepted` in one call. Each row below answered `bit` with restored `yes`.
+
+| subject | mutation | failing witness |
+| --- | --- | --- |
+| `json_validation.go` | the untyped decode returns nil | `TestReleaseJSONCompatibility/release_baseline` |
+| `package_artifact.go` | the identity check calls `jsonfile.DecodeDocument` again | `TestPackageIdentityJSONCompatibility/package_baseline` |
+| `artifact_proofs.go` | the native proof match is disabled | `TestReleaseJSONCompatibility/release_baseline` |
+| `component_manifest.go` | plan probe `release`, the extra-key check disabled | `TestComponentJSONCompatibility/extra_key` |
