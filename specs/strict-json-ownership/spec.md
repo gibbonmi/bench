@@ -227,10 +227,10 @@ Synthetic mutation fixtures prove both the owner rule and its exclusions. Root c
 | SJ43 | 21 | Artifact validation accepts package.json with unrelated fields | `internal/releaseevidence/package_artifact_test.go` (`TestPackageIdentityJSONCompatibility`) | Typed DisallowUnknownFields on the identity projection would reject it |
 | SJ44 | 21 | Artifact validation refuses a duplicate package identity key | `internal/releaseevidence/package_artifact_test.go` (`TestPackageIdentityJSONCompatibility`) | A partial json.Unmarshal alone would accept it |
 | SJ45 | 21 | Artifact validation refuses duplicate keys inside an unrelated package field | `internal/releaseevidence/package_artifact_test.go` (`TestPackageIdentityJSONCompatibility`) | Schema tolerance must not become structural tolerance |
-| SJ46 | 23, 24 | The registered owner check refuses a planted recursive duplicate walker | planned TestStrictJSONOwnerBites in internal/conformance/strict_json_owner_test.go | A surviving implementation copy makes the check red |
-| SJ47 | 24 | The registered owner check refuses a caller that bypasses jsonfile | planned TestStrictJSONOwnerBites in internal/conformance/strict_json_owner_test.go | Deleting a walker alone cannot establish shared ownership |
-| SJ48 | 22, 24 | The owner check permits each named preservation exclusion | planned TestStrictJSONOwnerNegativeControls in internal/conformance/strict_json_owner_test.go | A broad decoder ban would silently tighten excluded contracts |
-| SJ49 | 24 | Root conformance executes strict-json-owner against a planted source copy | planned TestStrictJSONOwnerRegisteredPath in internal/conformance/strict_json_owner_test.go | A correct but unregistered helper is insufficient |
+| SJ46 | 23, 24 | The registered owner check refuses a planted recursive duplicate walker | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerBites`) | A surviving implementation copy makes the check red |
+| SJ47 | 24 | The registered owner check refuses a caller that bypasses jsonfile | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerBites`) | Deleting a walker alone cannot establish shared ownership |
+| SJ48 | 22, 24 | The owner check permits each named preservation exclusion | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerNegativeControls`) | A broad decoder ban would silently tighten excluded contracts |
+| SJ49 | 24 | Root conformance executes strict-json-owner against a planted source copy | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerRegisteredPath`) | A correct but unregistered helper is insufficient |
 | SJ50 | 26 | Every chunk closes with its complete rows and a green lane result | review-owned chunk checkpoint records | A later migration cannot hide an incomplete earlier checkpoint |
 
 Not covered: story 8 — findingIDs retains its current multi-value scanner stream and existing test coverage

@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Strict JSON owner check
+
+- Added the `strict-json-owner` conformance check. It grades the production Go of each strict JSON caller package and of the packages below it. It refuses a function that reads JSON tokens and calls itself, directly or through other calls, because only `jsonfile` walks object keys. It also refuses each named strict reader that reaches no `jsonfile` call. Stream readers, partial projections, and local diagnostic adapters stay permitted. An absent caller package is an absent optional surface, and an unreadable or unparsable source gets a named diagnostic.
+
 ### Review chain after a comment-only correction
 
 - Changed the review chain of `bench gate --checkpoint` and `bench record completion`. A later chunk base now passes the chain when it follows the predecessor tip, or its covering fold, by a proved comment-only Go correction. The proof is the same proof that the covered-digest check uses. The chain refusal now names that correction among the commits that follow a chunk tip. The bounded repair policy, `/bench-implement-spec`, and `/bench-review-implementation` state the same rule, so that correction takes no refreeze and the chunk keeps its verifications and its reviews. Before, the chain compared each digest by equality, and that correction took a refreeze and a new review round.

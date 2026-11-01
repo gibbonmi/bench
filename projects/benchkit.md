@@ -486,6 +486,7 @@ current-state advertisement of its non-meta input bindings:
 | `go-build-vcs` | `catch-all` |
 | `git-plumbing-owner` | `go-source` |
 | `markdown-block-owner` | `go-source` |
+| `strict-json-owner` | `go-source` |
 | `cancel-signal-registrations` | `go-source` |
 | `wait-deadline-literals` | `go-source` |
 | `subcommand-routing` | `go-source` |

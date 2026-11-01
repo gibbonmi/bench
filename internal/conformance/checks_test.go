@@ -62,6 +62,7 @@ func init() {
 		"go-build-vcs":                  {checkGoBuildVCS, registry.Dev, registry.SubjectRoot},
 		"git-plumbing-owner":            {checkGitPlumbingOwner, registry.Dev, registry.SubjectRoot},
 		"markdown-block-owner":          {checkMarkdownBlockOwner, registry.Dev, registry.SubjectRoot},
+		"strict-json-owner":             {checkStrictJSONOwner, registry.Dev, registry.SubjectRoot},
 		"cancel-signal-registrations":   {checkCancelSignalRegistrations, registry.Dev, registry.SubjectRoot},
 		"wait-deadline-literals":        {checkWaitDeadlineLiterals, registry.Dev, registry.SubjectRoot},
 		"subcommand-routing":            {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},

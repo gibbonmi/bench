@@ -32,6 +32,7 @@ var classifiedLiveTreeTests = map[string]bool{
 	"TestGuardProjectionOwnerHoldsOnTheLiveTree":                   true,
 	"TestGuardProjectionPreservesIndependentChecks":                true,
 	"TestMarkdownBlockOwnerHoldsOnTheLiveTree":                     true,
+	"TestStrictJSONOwnerHoldsOnTheLiveTree":                        true,
 	"TestSkillDescriptionBudgetsHoldOnTheLiveTree":                 true,
 	"TestPreparedReviewGuidanceHoldsOnTheLiveTree":                 true,
 	"TestProseMechanicsCanaryFixturesBite":                         true,
