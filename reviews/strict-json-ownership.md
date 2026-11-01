@@ -156,7 +156,21 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "folds": [
+    {
+      "id": "F1",
+      "after": "SJ-C1",
+      "from": "d02ea82677295e38832d2eaa65862ab1128ca5cd",
+      "commit": "533160a782e35a64f68d5944f35f5103e0eadacd",
+      "incoming": "e6939da810757e1dc463d36a4d62e80fdee1c60a",
+      "source_digest": "3fc51898cf3629890a792750a2dc88a9da91c782",
+      "resolution": [],
+      "resolution_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_packages": [],
+      "reviews": []
+    }
+  ]
 }
 ```
 
