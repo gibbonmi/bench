@@ -218,9 +218,20 @@ func TestProcessLifetimeFocusedDifferential(t *testing.T) {
 			dir := t.TempDir()
 			mark := filepath.Join(dir, "group")
 			fakeGo(t, dir, map[string]string{goTestPattern: jsonShapeScript(c.shape, c.body, mark)})
-			result := systemSelected(t, fixture.root, append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir()), "test", "--package", "./...")
+			env := append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir())
+			if c.shape.descendant {
+				// The live descendant leaves the build cache generation sealed when its CLI
+				// releases the cache, so the row keeps that cache on a HOME of its own.
+				env = append(env, "HOME="+t.TempDir())
+			}
+			result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
+			out := result.stdout + result.stderr
+			// The CLI has returned, so a go child that ran has published its group.
+			if _, err := os.Stat(mark); err != nil {
+				t.Fatalf("focused test over %s = (%d, %q), want the go child's run", c.shape.name, result.code, out)
+			}
 			pgid := groupOf(t, mark)
-			if out := result.stdout + result.stderr; result.code != c.code || !strings.Contains(out, c.want) {
+			if result.code != c.code || !strings.Contains(out, c.want) {
 				t.Fatalf("focused test over %s = (%d, %q), want %d and %q", c.shape.name, result.code, out, c.code, c.want)
 			}
 			if c.shape.descendant {
