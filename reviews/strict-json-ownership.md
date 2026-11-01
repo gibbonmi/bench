@@ -1195,3 +1195,16 @@ The three axes ran on opus / medium over the repair delta `c470a86d..883fc3b2`. 
 - Spec: an overflow before a duplicate now reports the duplicate. Both inputs stay refused as malformed, and the gate and review readers shift the same way.
 - Coverage: no component case pins the overflow refusal, and the two package cases record one text.
 - Standards: the `artifact_evidence.go` widen is unused, and the target platform string is built twice.
+
+## SJ-C5 ticket 5 author witness reds
+
+The ticket 5 author `ft354-author-05` (opus / high) wrote the tests before the check existed. In one call, `TestStrictJSONOwnerBites` (SJ46, SJ47) failed as not bound, and `TestStrictJSONOwnerRegisteredPath` (SJ49) named no registered check.
+After the ticket commit `59f92c5b`, two mutant sets answered `bit` on every row with restored `yes`.
+
+| subject | mutants | rows |
+| --- | --- | --- |
+| `internal/conformance/strict_json_owner_test.go` | 1 to 8, each exclusion or adapter control made red | SJ48 |
+| `internal/conformance/strict_json_owner_test.go` | 9 to 14, the bite precision of the walker rule | SJ46, SJ47 |
+| `internal/conformance/registry/checks.go` | plan probe `conformance`, the registry name changed | SJ49 |
+
+The control for tests, comments, and strings has no mutation inside the fence. Its test-file skip lives in a shared walker helper outside the fence.
