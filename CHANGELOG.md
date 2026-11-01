@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Review chain after a comment-only correction
+
+- Changed the review chain of `bench gate --checkpoint` and `bench record completion`. A later chunk base now passes the chain when it follows the predecessor tip, or its covering fold, by a proved comment-only Go correction. The proof is the same proof that the covered-digest check uses. The chain refusal now names that correction among the commits that follow a chunk tip. The bounded repair policy, `/bench-implement-spec`, and `/bench-review-implementation` state the same rule, so that correction takes no refreeze and the chunk keeps its verifications and its reviews. Before, the chain compared each digest by equality, and that correction took a refreeze and a new review round.
+
 ### Rebuild remedy for a pool worktree
 
 - Changed the rebuild remedy for a stale Bench binary in a pool worktree. One owner now names `bench worktree build '<root>'` for each root whose `cd` form the pool guard refuses, and it keeps the `cd` form for every other root. The stale-binary refusal, `bench commands --brief`, and the live-binary warning of a release or clean read that owner. The `binary-seal` row of the build preflight reads the root kind from the same owner: for a pool root, its next step is `bench worktree build '<root>'` in place of `bench worktree build <assignment id>`, and any other root shows the whole refusal with no next step. The shell copy in the hook library keeps the `cd` form, because it prints only while the follow-on guard is off. Before, the stale-binary refusal, `bench commands --brief`, and the live-binary warning named a `cd` into the pool path, which the hooks refuse.

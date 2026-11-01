@@ -96,7 +96,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    A historical review keeps `bench diff --full --commit <sha>` for the landed
    commit. A spec-less review keeps `bench diff --full` in explicit-base mode.
 
-   The first chunk base is the `main` tip merged into the source. Each later chunk base is the predecessor tip: the last recorded source tip of its predecessor, never a record commit. When recorded folds follow the predecessor tip, the base is the last of them. A plan commit after the predecessor's green checkpoint sits in the successor's delta, so it is never a chunk base. The range then holds only that chunk's delta.
+   The first chunk base is the `main` tip merged into the source. Each later chunk base is the predecessor tip: the last recorded source tip of its predecessor, never a record commit. When recorded folds follow the predecessor tip, the base is the last of them. A commit that adds only a proved comment-only Go correction after that base can also be the chunk base. A plan commit after the predecessor's green checkpoint sits in the successor's delta, so it is never a chunk base. The range then holds only that chunk's delta.
 
    Merge `main` into the source before the first chunk. `/bench-implement-spec` owns each later fold point and its `bench record fold` step. The review chain accepts a recorded fold between two chunks and after the last chunk. The fold record lists each resolution path, where the fold commit differs from the automatic merge. A fold with an empty resolution needs no review. A fold with a resolution takes the three axes over its own pair.
 
