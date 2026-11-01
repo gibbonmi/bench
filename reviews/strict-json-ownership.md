@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/strict-json-ownership/spec.md",
-  "plan_digest": "sha256:4213664c0021770dcb432231a0335b7990fea68f9a224a0e7c32f2f4892f0e75",
+  "plan_digest": "sha256:a144b132615ce57c221b12aa0ef4fc069671cd188c12b784e54ee985aa07810e",
   "implementation_session": "",
   "chunks": [
     {
@@ -789,6 +789,53 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SJ-C5",
+      "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+      "tip": "59f92c5bb48c44b3199b645f02dc482f45c91a33",
+      "plan_digest": "sha256:a144b132615ce57c221b12aa0ef4fc069671cd188c12b784e54ee985aa07810e",
+      "source_digest": "a498bea05d395d2aab2dbf90e5b476c8a6820227",
+      "acceptance_rows": [
+        "SJ46",
+        "SJ47",
+        "SJ48",
+        "SJ49",
+        "SJ50"
+      ],
+      "verification": [
+        {
+          "id": "sj-c5-conformance",
+          "performer": "ft354-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a498bea05d395d2aab2dbf90e5b476c8a6820227",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft354-author-05",
+            "digest": "sha256:56c33164a03b3489c9638d188226cdd3950abbb385f7ffa7763d402ee643f902",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestStrictJSONOwnerRegisteredPath,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/conformance,^TestStrictJSONOwnerRegisteredPath$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "59f92c5bb48c44b3199b645f02dc482f45c91a33",
+          "requirement": "conformance",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Rename the strict-json-owner registry entry in internal/conformance/registry/checks.go and keep its executable binding, and record that TestStrictJSONOwnerRegisteredPath turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft354-author-05",
+              "digest": "sha256:56c33164a03b3489c9638d188226cdd3950abbb385f7ffa7763d402ee643f902",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestStrictJSONOwnerRegisteredPath,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/conformance,^TestStrictJSONOwnerRegisteredPath$,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -865,6 +912,24 @@
     {
       "from": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
       "to": "sha256:4213664c0021770dcb432231a0335b7990fea68f9a224a0e7c32f2f4892f0e75",
+      "chunk_ids": {
+        "SJ-C1": [
+          "SJ-C1"
+        ],
+        "SJ-C2": [
+          "SJ-C2"
+        ],
+        "SJ-C3": [
+          "SJ-C3"
+        ],
+        "SJ-C4": [
+          "SJ-C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4213664c0021770dcb432231a0335b7990fea68f9a224a0e7c32f2f4892f0e75",
+      "to": "sha256:a144b132615ce57c221b12aa0ef4fc069671cd188c12b784e54ee985aa07810e",
       "chunk_ids": {
         "SJ-C1": [
           "SJ-C1"
