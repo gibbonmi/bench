@@ -124,6 +124,28 @@
           "tip": "e32079f005169589a02dbf3826fde9250a988aff",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "sj-c1-spec-2",
+          "performer": "ft354-review-c1-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3304f73fea53f227fdb311af4751cde912612bfc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c1-spec-2",
+            "digest": "sha256:df2a9c9580df682c7c01909bcb8111fc01371bf32267271078f2b554882ac332",
+            "excerpt": "## Spec\nReaffirmation of P1 by ft354-review-c1-spec-2. P1 closes for SJ5, SJ8, and SJ10-SJ15: each row's recorded first-failing case is that row's own case.\nResidual P1-r, severity 3, confidence 7: for SJ7 and SJ9 the recorded first failure belonged to SJ10 cases (reviews/strict-json-ownership.md:164,166); repair is to record the SJ7 and SJ9 cases as red, no code change.\nThe internal/ tree is the same at 1b12ee8b and e32079f0, so the mutants ran on the frozen code.\nSteps 1-4 done.\nAdvice (bounded repair policy: an initial-round finding at severity 3 or lower that is not a correctness defect): P1-r. The coordinator closed it with a narrowed mutant set at b68631c1:\nmutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestVulnerabilityPolicyDomainCompatibility/absent_policy_without_findings,4,1,0,null,yes\n  2,bit,swap,failed,2,TestVulnerabilityPolicyDomainCompatibility/empty_array_without_findings,4,1,0,null,yes\n"
+          },
+          "axis": "Spec",
+          "base": "835f5491b7aa50042f5f65bcb6ac941592e8181b",
+          "tip": "e32079f005169589a02dbf3826fde9250a988aff",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c1-spec-1"
+          ]
         }
       ]
     }
@@ -161,9 +183,9 @@ The coordinator ran one mutant set of ten domain mutations at `1b12ee8b` over `T
 
 | mutant | mutation in `ValidateVulnerabilityPolicy` | first failing case | row |
 | --- | --- | --- | --- |
-| 1 | `if present {` to `if true {` | `absent_policy_with_a_finding` | SJ7 |
+| 1 | `if present {` to `if true {` | `absent_policy_without_findings` in the narrowed rerun | SJ7 |
 | 2 | `if len(data) == 0 {` to `if false {` | `zero-byte_policy` | SJ8 |
-| 3 | `if len(data) == 0 {` to `if len(data) < 5 {` | `empty_array_with_a_finding`, 4 failed | SJ9 |
+| 3 | `if len(data) == 0 {` to `if len(data) < 5 {` | `empty_array_without_findings` and `null_without_findings` in the narrowed rerun | SJ9 |
 | 4 | `if len(wanted) > 0 {` to `if false {` | `absent_policy_with_a_finding` | SJ10 |
 | 5 | `<` to `<=` in the expiry check | `expiry_equal_to_today` | SJ11 |
 | 6 | the expiry check to `if false {` | `expiry_before_today` | SJ12 |
@@ -171,6 +193,8 @@ The coordinator ran one mutant set of ten domain mutations at `1b12ee8b` over `T
 | 8 | `if !wanted[item.ID] {` to `if false {` | `unused_exception` | SJ14 |
 | 9 | `strings.TrimSpace(item.ID) == ""` to `item.ID == ""` | `blank_id` | SJ15 |
 | 10 | omit the full-date match | `partial_date` | SJ15 |
+
+The Spec reaffirmation found that mutants 1 and 3 named SJ10 cases first. A narrowed rerun at `b68631c1` turned the SJ7 and SJ9 cases red, with restored `yes`.
 
 ## SJ-C1 advice
 
