@@ -1,0 +1,147 @@
+{
+  "record": {
+    "duplicate key": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "duplicate plus suffix": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "empty": {
+      "error": "invalid record bytes: empty "
+    },
+    "framed": {
+      "version": 1
+    },
+    "framed second value": {
+      "error": "invalid JSON: trailing value"
+    },
+    "invalid UTF-8": {
+      "error": "invalid record bytes: malformed invalid UTF-8"
+    },
+    "invalid evidence": {
+      "error": "final-tests: invalid occurrence state \"done\""
+    },
+    "invalid spec path": {
+      "error": "invalid checkpoint spec path; use specs/\u003cslug\u003e/spec.md"
+    },
+    "malformed suffix": {
+      "error": "invalid JSON: trailing value"
+    },
+    "nested duplicate key": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "nested unknown field": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
+    "null": {
+      "error": "unsupported version 0"
+    },
+    "oversize": {
+      "error": "invalid record bytes: unreadable read limit exceeded"
+    },
+    "second value": {
+      "error": "invalid JSON: trailing value"
+    },
+    "surrounding whitespace": {
+      "version": 1
+    },
+    "syntax error": {
+      "error": "invalid JSON: invalid character '}' looking for beginning of object key string"
+    },
+    "unframed": {
+      "version": 1
+    },
+    "unknown field": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
+    "unknown plus duplicate": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "unknown plus suffix": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
+    "unsupported version": {
+      "error": "unsupported version 3"
+    },
+    "version 2 session": {
+      "error": "invalid implementation session; version 1 names one and version 2 defers to its plan"
+    },
+    "whitespace only": {
+      "error": "invalid JSON: EOF"
+    },
+    "wrong type": {
+      "error": "invalid JSON: json: cannot unmarshal string into Go struct field Record.version of type int"
+    },
+    "wrong type plus duplicate": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "wrong type plus suffix": {
+      "error": "invalid JSON: json: cannot unmarshal string into Go struct field Record.version of type int"
+    }
+  },
+  "plan": {
+    "duplicate key": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "duplicate plus suffix": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "empty": {
+      "error": "invalid record bytes: empty "
+    },
+    "framed": {
+      "version": 1
+    },
+    "framed second value": {
+      "error": "invalid JSON: trailing value"
+    },
+    "malformed suffix": {
+      "error": "invalid JSON: trailing value"
+    },
+    "nested duplicate key": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "nested unknown field": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
+    "null": {
+      "error": "invalid completion plan version or empty chunks"
+    },
+    "second value": {
+      "error": "invalid JSON: trailing value"
+    },
+    "surrounding whitespace": {
+      "version": 1
+    },
+    "syntax error": {
+      "error": "invalid JSON: invalid character '}' looking for beginning of object key string"
+    },
+    "unframed": {
+      "version": 1
+    },
+    "unknown field": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
+    "unknown plus duplicate": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "unknown plus suffix": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
+    "unsupported version": {
+      "error": "invalid completion plan version or empty chunks"
+    },
+    "whitespace only": {
+      "error": "invalid JSON: EOF"
+    },
+    "wrong type": {
+      "error": "invalid JSON: json: cannot unmarshal string into Go struct field Plan.version of type int"
+    },
+    "wrong type plus duplicate": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "wrong type plus suffix": {
+      "error": "invalid JSON: json: cannot unmarshal string into Go struct field Plan.version of type int"
+    }
+  }
+}

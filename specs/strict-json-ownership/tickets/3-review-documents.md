@@ -1,13 +1,13 @@
 # Preserve review documents through the shared reader
 
 Blocked by: 2-jsonfile-gate.md
-Writes: internal/reviewrecord/parse.go, internal/reviewrecord/json_compatibility_test.go (new), internal/reviewrecord/testdata/strict-json-baseline.json (new), internal/reviewrecord/recordtest/fixture.go
+Writes: internal/reviewrecord/parse.go, internal/reviewrecord/json_compatibility_test.go (new), internal/reviewrecord/testdata/strict-json-baseline.json (new), internal/reviewrecord/recordtest/fixture.go, internal/jsonfile/jsonfiletest/ (new), internal/gate/json_compatibility_test.go, internal/gate/testdata/strict-json-baseline.json
 Covers: SJ32, SJ33, SJ34, SJ35
 
 ## What to build
 
 Replace the review decoder grammar with jsonfile.DecodeDocument. Remove uniqueJSON when this ticket migrates its last caller.
-Keep bounds.ClassifyBytes before the shared decode. Preserve review record and completion-plan domain checks and caller error context.
+Keep bounds.ClassifyBytes before the shared decode. Keep the fence locator on the shared markdown block reader. Preserve review record and completion-plan domain checks and caller error context.
 
 Capture the accepted spec's review baseline family before the production edit. Include null and competing invalid inputs.
 Compare Parse and ReadPlan with that permanent baseline. Preserve their observable diagnostic precedence.

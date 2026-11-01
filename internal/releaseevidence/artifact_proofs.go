@@ -121,19 +121,17 @@ func inspectNativeProofs(root string, planTargets []planTarget, artifacts []arti
 		if err != nil {
 			return nil, fmt.Errorf("native proof %s is unreadable", name)
 		}
-		var proof nativeProofEvidence
-		if err := decodeStrict(data, &proof); err != nil {
-			return nil, fmt.Errorf("native proof %s is malformed: %w", name, err)
-		}
-		platform := plannedByTarget[name]["platform"]
-		archive := plannedByTarget[name]["archive"]
-		packageFiles, _, err := readTarball(mustArtifactBytes(root, platform))
+		proof, err := checkNativeProof("native proof "+name, data, target.targetEvidence, func() (nativeProofDigests, error) {
+			platform := plannedByTarget[name]["platform"]
+			archive := plannedByTarget[name]["archive"]
+			packageFiles, _, err := readTarball(mustArtifactBytes(root, platform))
+			if err != nil {
+				return nativeProofDigests{}, fmt.Errorf("native proof %s cannot inspect platform binary: %w", name, err)
+			}
+			return nativeProofDigests{binary: digest(packageFiles["bin/bench"].data), pkg: digestByName[platform], archive: digestByName[archive]}, nil
+		})
 		if err != nil {
-			return nil, fmt.Errorf("native proof %s cannot inspect platform binary: %w", name, err)
-		}
-		binaryDigest := digest(packageFiles["bin/bench"].data)
-		if !nativeProofMatches(proof, target.targetEvidence, binaryDigest, digestByName[platform], digestByName[archive]) {
-			return nil, fmt.Errorf("native proof %s does not match inspected artifacts", name)
+			return nil, err
 		}
 		proofs = append(proofs, proof)
 	}
@@ -141,9 +139,30 @@ func inspectNativeProofs(root string, planTargets []planTarget, artifacts []arti
 	return proofs, nil
 }
 
-func nativeProofMatches(proof nativeProofEvidence, target targetEvidence, binaryDigest, packageDigest, archiveDigest string) bool {
+// nativeProofDigests holds the inspected artifact digests that a native proof restates.
+type nativeProofDigests struct{ binary, pkg, archive string }
+
+// checkNativeProof decodes data as the native proof of target, then matches it with the digests
+// that inspect returns. Its decode and match refusals name subject, and an inspect refusal
+// returns unchanged.
+func checkNativeProof(subject string, data []byte, target targetEvidence, inspect func() (nativeProofDigests, error)) (nativeProofEvidence, error) {
+	var proof nativeProofEvidence
+	if err := decodeStrict(data, &proof); err != nil {
+		return proof, fmt.Errorf("%s is malformed: %w", subject, err)
+	}
+	digests, err := inspect()
+	if err != nil {
+		return proof, err
+	}
+	if !nativeProofMatches(proof, target, digests) {
+		return proof, fmt.Errorf("%s does not match inspected artifacts", subject)
+	}
+	return proof, nil
+}
+
+func nativeProofMatches(proof nativeProofEvidence, target targetEvidence, digests nativeProofDigests) bool {
 	name := target.OS + "-" + target.Arch
-	return proof.SchemaVersion == 1 && proof.Target == name && proof.Runner == target.Runner && proof.Status == "green" && proof.RebuiltSHA256 != "" && proof.RebuiltSHA256 == binaryDigest && proof.BinarySHA256 == binaryDigest && proof.PackageSHA256 == packageDigest && proof.ArchiveSHA256 == archiveDigest && proof.OperationsStatus == "green" && proof.StripStatus == "green" && proof.ToolsStatus == "green" && (target.OS != "linux" || proof.MuslStatus == "green") && (target.OS != "darwin" || proof.MuslStatus == "not_applicable")
+	return proof.SchemaVersion == 1 && proof.Target == name && proof.Runner == target.Runner && proof.Status == "green" && proof.RebuiltSHA256 != "" && proof.RebuiltSHA256 == digests.binary && proof.BinarySHA256 == digests.binary && proof.PackageSHA256 == digests.pkg && proof.ArchiveSHA256 == digests.archive && proof.OperationsStatus == "green" && proof.StripStatus == "green" && proof.ToolsStatus == "green" && (target.OS != "linux" || proof.MuslStatus == "green") && (target.OS != "darwin" || proof.MuslStatus == "not_applicable")
 }
 
 func mustArtifactBytes(root, name string) []byte {

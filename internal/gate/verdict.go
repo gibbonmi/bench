@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/durablefile"
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
 const (
@@ -335,54 +336,23 @@ var (
 	errDuplicateJSONName = errors.New("duplicate name")
 )
 
+// strictJSON takes its structural grammar from jsonfile and keeps the gate's diagnostic
+// precedence. A typed refusal of the first value comes first, then trailing data, then a
+// duplicate key. The typed decode stays here, so the manifest diagnostic keeps the
+// encoding/json error text without a jsonfile prefix.
 func strictJSON(data []byte, dst any) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(dst); err != nil {
 		return err
 	}
-	var trailing any
-	if err := dec.Decode(&trailing); !errors.Is(err, io.EOF) {
+	if jsonfile.RejectTrailing(dec) != nil {
 		return errTrailingJSON
 	}
-	// encoding/json accepts duplicate keys; a token walk rejects them recursively.
-	dec = json.NewDecoder(bytes.NewReader(data))
-	return rejectDuplicateNames(dec)
-}
-
-func rejectDuplicateNames(dec *json.Decoder) error {
-	tok, err := dec.Token()
-	if err != nil {
-		return err
+	err := jsonfile.DecodeDocument(data, new(json.RawMessage))
+	if errors.Is(err, jsonfile.ErrDuplicateKey) {
+		return errDuplicateJSONName
 	}
-	d, ok := tok.(json.Delim)
-	if !ok {
-		return nil
-	}
-	if d == '{' {
-		seen := map[string]bool{}
-		for dec.More() {
-			k, err := dec.Token()
-			if err != nil {
-				return err
-			}
-			key := k.(string)
-			if seen[key] {
-				return errDuplicateJSONName
-			}
-			seen[key] = true
-			if err := rejectDuplicateNames(dec); err != nil {
-				return err
-			}
-		}
-	} else if d == '[' {
-		for dec.More() {
-			if err := rejectDuplicateNames(dec); err != nil {
-				return err
-			}
-		}
-	}
-	_, err = dec.Token()
 	return err
 }
 

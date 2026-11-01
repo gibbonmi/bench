@@ -1,75 +1,53 @@
 package releaseevidence
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
+	"strings"
+
+	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
+// decodeStrict decodes one complete release document into value. Invalid JSON outranks a
+// duplicate key, as the release readers report it.
 func decodeStrict(data []byte, value any) error {
 	if !json.Valid(data) {
 		return errors.New("invalid JSON")
 	}
-	if err := rejectDuplicateJSONKeys(data); err != nil {
-		return err
-	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(value); err != nil {
-		return err
-	}
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		return errors.New("trailing JSON")
-	}
-	return nil
+	return decodeDocument(data, value)
 }
 
-func rejectDuplicateJSONKeys(data []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	var scan func() error
-	scan = func() error {
-		token, err := decoder.Token()
-		if err != nil {
-			return err
+// decodeDocument decodes data through jsonfile.DecodeDocument with the release diagnostics. A
+// duplicate key outranks a suffix, and a suffix outranks a typed refusal. After a decode, it
+// refuses a document that an untyped decode refuses, such as a number out of float64 range.
+func decodeDocument(data []byte, value any) error {
+	err := jsonfile.DecodeDocument(data, value)
+	switch {
+	case err == nil:
+		// The typed decode skips the numbers inside a json.RawMessage value. This untyped decode
+		// reads them.
+		return json.Unmarshal(data, new(any))
+	case errors.Is(err, jsonfile.ErrDuplicateKey):
+		return duplicateKeyError{err}
+	case errors.Is(err, jsonfile.ErrTrailingData):
+		// The encoding/json validity error names the first byte after the value.
+		if invalid := json.Unmarshal(data, new(json.RawMessage)); invalid != nil {
+			return invalid
 		}
-		delim, isDelim := token.(json.Delim)
-		if !isDelim {
-			return nil
-		}
-		switch delim {
-		case '{':
-			seen := map[string]bool{}
-			for decoder.More() {
-				keyToken, err := decoder.Token()
-				if err != nil {
-					return err
-				}
-				key, ok := keyToken.(string)
-				if !ok {
-					return errors.New("JSON object key is not a string")
-				}
-				if seen[key] {
-					return fmt.Errorf("duplicate JSON key %q", key)
-				}
-				seen[key] = true
-				if err := scan(); err != nil {
-					return err
-				}
-			}
-		case '[':
-			for decoder.More() {
-				if err := scan(); err != nil {
-					return err
-				}
-			}
-		default:
-			return errors.New("unexpected JSON delimiter")
-		}
-		_, err = decoder.Token()
-		return err
 	}
-	return scan()
+	// The release diagnostic names the encoding/json cause without the jsonfile context.
+	if cause := errors.Unwrap(err); cause != nil {
+		return cause
+	}
+	return err
 }
+
+// duplicateKeyError words a jsonfile duplicate-key refusal as the release readers report it.
+// errors.Is still finds jsonfile.ErrDuplicateKey through it.
+type duplicateKeyError struct{ cause error }
+
+func (e duplicateKeyError) Error() string {
+	return "duplicate JSON key" + strings.TrimPrefix(e.cause.Error(), jsonfile.ErrDuplicateKey.Error())
+}
+
+func (e duplicateKeyError) Unwrap() error { return e.cause }

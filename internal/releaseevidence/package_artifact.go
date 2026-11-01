@@ -169,7 +169,7 @@ func validatePackageEvidence(files map[string]tarFile, manifest componentManifes
 		return errors.New("package identity is missing")
 	}
 	var identity packageIdentity
-	if err := rejectDuplicateJSONKeys(pkg.data); err != nil || json.Unmarshal(pkg.data, &identity) != nil || identity.Version != version {
+	if decodeDocument(pkg.data, new(json.RawMessage)) != nil || json.Unmarshal(pkg.data, &identity) != nil || identity.Version != version {
 		return errors.New("package identity is malformed")
 	}
 	if target == "wrapper" && identity.Name != "redbench" || target != "wrapper" && identity.Name != "@redbench/"+target {

@@ -1,6 +1,6 @@
 # Strict JSON reads under one owner
 
-Status: staged
+Status: implemented
 
 Decision source: `decisions/architecture-primitives/tickets/1.md`, reviewed in `ft362-process-lifetime-map`, and its ready parent `decisions/architecture-primitives.md`
 
@@ -85,6 +85,7 @@ Use `DecodeDocument` for the exception array. Keep `Decode` for existing persist
 Keep `DecodeExactDocument` for existing exact-schema callers. These choices correspond to rows SJ5, SJ22, SJ23, and SJ24.
 
 Expose duplicate-key and trailing-data error categories through `errors.Is`. Gate adapters map those categories to their existing local sentinels.
+jsonfile.RejectTrailing exposes the shared suffix rule, so a gate adapter keeps its typed-first precedence without a second suffix rule.
 Do not classify unknown fields by a new duplicate walker. Preserve the existing encoding/json field and type semantics.
 Rows SJ25, SJ28, and SJ29 grade this contract.
 
@@ -106,7 +107,7 @@ The source definitions below identify their current owners. Rows SJ6 through SJ1
 | component decodeExactObject | Duplicate walk and exact dynamic map keys | Shared map decode and the same exact dynamic keys | SJ40–SJ42 |
 | package identity | Duplicate walk and partial json.Unmarshal | Shared raw-document decode and the same partial json.Unmarshal | SJ43–SJ45 |
 | freshness parseSeal | Typed unknown and suffix refusal with duplicate acceptance | Preserve this reader in place | Won't handle below |
-| prospectiveartifact readRecordAt | Typed unknown and suffix refusal with duplicate acceptance | Preserve this reader in place | Won't handle below |
+| prospectiveartifact readRecordAt in internal/gate/prospectiveartifact | Typed unknown and suffix refusal with duplicate acceptance | Preserve this reader in place | Won't handle below |
 | existing jsonfile consumers | Explicit document, record, or exact-document API | Preserve each API selection | SJ22–SJ24 |
 
 A migration must preserve observable diagnostic classes for competing invalid inputs. The caller baseline includes unknown-plus-suffix and duplicate-plus-suffix cases.
@@ -151,7 +152,7 @@ The check uses the existing conformance registry and executable binding. No CLI 
 The check grades duplicate-token walkers in the migrated caller packages. It also grades the required caller-to-owner composition.
 It permits local diagnostic and domain adapters. It does not forbid encoding/json for partial projections or stream readers.
 
-An absent caller package is an absent optional surface. An unreadable or unparsable present source produces a named refusal.
+An absent caller package is an absent optional surface. A graded root whose module is not the Bench kit has no caller package. An unreadable or unparsable present source produces a named refusal.
 Synthetic mutation fixtures prove both the owner rule and its exclusions. Root conformance proves the registered check executes.
 
 ### Seam diagram
@@ -181,55 +182,55 @@ Synthetic mutation fixtures prove both the owner rule and its exclusions. Root c
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| SJ1 | 1 | The validator refuses [] followed by nope | planned TestVulnerabilityPolicyDocumentContract in internal/releasepreflight/vulnerability_test.go | The existing second decode accepts this malformed suffix |
-| SJ2 | 2 | The validator refuses [] followed by {} | planned TestVulnerabilityPolicyDocumentContract in internal/releasepreflight/vulnerability_test.go | A valid second object cannot disappear |
-| SJ3 | 2 | The validator refuses [] followed by 7, true, null, a string, or an array | planned TestVulnerabilityPolicyDocumentContract in internal/releasepreflight/vulnerability_test.go | An incompatible second value exposes the incomplete suffix check |
-| SJ4 | 3 | The validator refuses repeated id, reason, or expires keys in one exception | planned TestVulnerabilityPolicyDocumentContract in internal/releasepreflight/vulnerability_test.go | The last decoded key cannot replace the first |
-| SJ5 | 5 | The validator accepts [] with leading and trailing JSON whitespace without a final newline | planned TestVulnerabilityPolicyDocumentContract in internal/releasepreflight/vulnerability_test.go | Persisted-record framing would reject a valid policy |
-| SJ6 | 4 | The validator refuses an exception with an extra typed field | planned TestVulnerabilityPolicyDocumentContract in internal/releasepreflight/vulnerability_test.go | A permissive decoder would discard the extra field |
-| SJ7 | 6 | An absent policy with no findings returns nil | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | Absence cannot become an empty-file refusal |
-| SJ8 | 6 | A present zero-byte policy returns the empty-file refusal | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | An empty file cannot become an absent policy |
-| SJ9 | 6 | Present [] and null policies with no findings return nil | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | Shared null rejection would change current domain behavior |
-| SJ10 | 7 | An uncovered finding remains an uncovered-vulnerabilities refusal | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | A parser repair cannot grant a missing exception |
-| SJ11 | 7 | A used exception with expiry equal to today returns nil | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | The expiry comparison must remain strictly less than today |
-| SJ12 | 7 | An exception dated before today remains expired | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | Shared decode success cannot bypass expiry |
-| SJ13 | 7 | Duplicate exception entries retain the duplicate-exception refusal | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | Object-key grammar cannot replace the domain uniqueness check |
-| SJ14 | 7 | An unused exception retains the unused-exception refusal | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | A document repair cannot widen exception coverage |
-| SJ15 | 7 | Blank required values and invalid full dates retain their current domain refusals | planned TestVulnerabilityPolicyDomainCompatibility in internal/releasepreflight/vulnerability_test.go | Typed decode success alone does not establish a valid exception |
-| SJ16 | 9 | Document decode refuses duplicate keys inside an object in an array | planned TestDocumentStructuralContract in internal/jsonfile/decode_test.go | A root-only duplicate check would pass |
-| SJ17 | 9 | Document decode refuses repeated keys with equivalent escaped spellings | planned TestDocumentStructuralContract in internal/jsonfile/decode_test.go | Raw token spelling must not create distinct key identities |
-| SJ18 | 10 | Typed document decode refuses an unknown nested field | planned TestDocumentStructuralContract in internal/jsonfile/decode_test.go | Root-only schema refusal would pass |
-| SJ19 | 11 | Document decode refuses every second JSON value kind | planned TestDocumentStructuralContract in internal/jsonfile/decode_test.go | Decoding a fixed second target misses incompatible values |
-| SJ20 | 11 | Document decode refuses malformed trailing bytes | planned TestDocumentStructuralContract in internal/jsonfile/decode_test.go | Success requires EOF rather than any decode error |
-| SJ21 | 11 | Document decode accepts JSON whitespace after its value | planned TestDocumentStructuralContract in internal/jsonfile/decode_test.go | A byte-equality suffix check would reject valid whitespace |
-| SJ22 | 12 | Existing record callers retain final-newline refusal | planned TestDocumentFramingCompatibility in internal/jsonfile/decode_test.go | Replacing Decode with DecodeDocument would remove framing |
-| SJ23 | 12 | Existing document callers retain acceptance without a final newline | planned TestDocumentFramingCompatibility in internal/jsonfile/decode_test.go | Replacing document decode with Decode would add framing |
-| SJ24 | 13 | Exact document decode refuses a case-alias key that ordinary typed decode accepts | planned TestDocumentFramingCompatibility in internal/jsonfile/decode_test.go | A shared non-exact reader would erase the exact schema |
-| SJ25 | 14 | errors.Is identifies duplicate and trailing errors from the owner | planned TestDocumentErrorCategories in internal/jsonfile/decode_test.go | Message matching cannot satisfy the classification contract |
-| SJ26 | 15, 25 | Gate manifest results match the committed baseline family | planned TestGateJSONCompatibility in internal/gate/json_compatibility_test.go | Domain and competing-refusal drift changes the stored result |
-| SJ27 | 15, 25 | Cache loader results match the committed baseline family | planned TestGateJSONCompatibility in internal/gate/json_compatibility_test.go | A parser change cannot alter ready, invalid, absent, or unavailable results |
-| SJ28 | 16 | Gate duplicate errors retain errDuplicateJSONName through errors.Is | planned TestGateJSONCompatibility in internal/gate/json_compatibility_test.go | A generic wrapped error would lose the local sentinel |
-| SJ29 | 16 | Gate trailing errors retain errTrailingJSON through errors.Is | planned TestGateJSONCompatibility in internal/gate/json_compatibility_test.go | The manifest's trailing diagnostic depends on this sentinel |
-| SJ30 | 15 | Gate documents valid without a final newline remain valid | planned TestGateJSONCompatibility in internal/gate/json_compatibility_test.go | These current readers permit unframed documents |
-| SJ31 | 15 | Unknown manifest fields retain the unknown-field key diagnostic | planned TestGateJSONCompatibility in internal/gate/json_compatibility_test.go | A new owner prefix must not hide the rejected key |
-| SJ32 | 17 | Parse accepts a valid review document without a final newline | planned TestReviewJSONCompatibility in internal/reviewrecord/json_compatibility_test.go | Fenced payloads trim their final newline |
-| SJ33 | 17 | ReadPlan accepts the real fenced completion-plan payload | planned TestReviewJSONCompatibility in internal/reviewrecord/json_compatibility_test.go | A unit-only decode test would miss the fence producer |
-| SJ34 | 18, 25 | Review results match the committed baseline family | planned TestReviewJSONCompatibility in internal/reviewrecord/json_compatibility_test.go | Null, version, schema, and evidence refusals remain caller-owned |
-| SJ35 | 18 | Review byte limits retain their current refusal | planned TestReviewJSONCompatibility in internal/reviewrecord/json_compatibility_test.go | Moving grammar must not bypass bounds.ClassifyBytes |
-| SJ36 | 19, 25 | Strict release results match the committed baseline family | planned TestReleaseJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | Embedded registries and real validators retain their domain results |
-| SJ37 | 19 | Strict release validators refuse recursive duplicate keys | planned TestReleaseJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | A migrated adapter must reach the shared duplicate check |
-| SJ38 | 19 | Strict release validators refuse unknown typed fields | planned TestReleaseJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | A structural-only migration would weaken typed schemas |
-| SJ39 | 19 | Requirement evidence retains its final-newline refusal | planned TestReleaseJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | The caller still requires persisted evidence framing |
-| SJ40 | 20 | A component object accepts exactly the registry's declared key set | planned TestComponentJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | Hardcoded struct tags cannot replace dynamic schema authority |
-| SJ41 | 20 | A component object refuses an extra or missing declared key | planned TestComponentJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | A generic map decoder would admit an incomplete schema |
-| SJ42 | 20 | A component object refuses duplicate keys recursively | planned TestComponentJSONCompatibility in internal/releaseevidence/json_compatibility_test.go | Partial object extraction must not hide nested duplicate values |
-| SJ43 | 21 | Artifact validation accepts package.json with unrelated fields | planned TestPackageIdentityJSONCompatibility in internal/releaseevidence/package_artifact_test.go | Typed DisallowUnknownFields on the identity projection would reject it |
-| SJ44 | 21 | Artifact validation refuses a duplicate package identity key | planned TestPackageIdentityJSONCompatibility in internal/releaseevidence/package_artifact_test.go | A partial json.Unmarshal alone would accept it |
-| SJ45 | 21 | Artifact validation refuses duplicate keys inside an unrelated package field | planned TestPackageIdentityJSONCompatibility in internal/releaseevidence/package_artifact_test.go | Schema tolerance must not become structural tolerance |
-| SJ46 | 23, 24 | The registered owner check refuses a planted recursive duplicate walker | planned TestStrictJSONOwnerBites in internal/conformance/strict_json_owner_test.go | A surviving implementation copy makes the check red |
-| SJ47 | 24 | The registered owner check refuses a caller that bypasses jsonfile | planned TestStrictJSONOwnerBites in internal/conformance/strict_json_owner_test.go | Deleting a walker alone cannot establish shared ownership |
-| SJ48 | 22, 24 | The owner check permits each named preservation exclusion | planned TestStrictJSONOwnerNegativeControls in internal/conformance/strict_json_owner_test.go | A broad decoder ban would silently tighten excluded contracts |
-| SJ49 | 24 | Root conformance executes strict-json-owner against a planted source copy | planned TestStrictJSONOwnerRegisteredPath in internal/conformance/strict_json_owner_test.go | A correct but unregistered helper is insufficient |
+| SJ1 | 1 | The validator refuses [] followed by nope | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDocumentContract`) | The existing second decode accepts this malformed suffix |
+| SJ2 | 2 | The validator refuses [] followed by {} | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDocumentContract`) | A valid second object cannot disappear |
+| SJ3 | 2 | The validator refuses [] followed by 7, true, null, a string, or an array | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDocumentContract`) | An incompatible second value exposes the incomplete suffix check |
+| SJ4 | 3 | The validator refuses repeated id, reason, or expires keys in one exception | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDocumentContract`) | The last decoded key cannot replace the first |
+| SJ5 | 5 | The validator accepts [] with leading and trailing JSON whitespace without a final newline | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDocumentContract`) | Persisted-record framing would reject a valid policy |
+| SJ6 | 4 | The validator refuses an exception with an extra typed field | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDocumentContract`) | A permissive decoder would discard the extra field |
+| SJ7 | 6 | An absent policy with no findings returns nil | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | Absence cannot become an empty-file refusal |
+| SJ8 | 6 | A present zero-byte policy returns the empty-file refusal | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | An empty file cannot become an absent policy |
+| SJ9 | 6 | Present [] and null policies with no findings return nil | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | Shared null rejection would change current domain behavior |
+| SJ10 | 7 | An uncovered finding remains an uncovered-vulnerabilities refusal | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | A parser repair cannot grant a missing exception |
+| SJ11 | 7 | A used exception with expiry equal to today returns nil | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | The expiry comparison must remain strictly less than today |
+| SJ12 | 7 | An exception dated before today remains expired | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | Shared decode success cannot bypass expiry |
+| SJ13 | 7 | Duplicate exception entries retain the duplicate-exception refusal | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | Object-key grammar cannot replace the domain uniqueness check |
+| SJ14 | 7 | An unused exception retains the unused-exception refusal | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | A document repair cannot widen exception coverage |
+| SJ15 | 7 | Blank required values and invalid full dates retain their current domain refusals | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityPolicyDomainCompatibility`) | Typed decode success alone does not establish a valid exception |
+| SJ16 | 9 | Document decode refuses duplicate keys inside an object in an array | `internal/jsonfile/decode_test.go` (`TestDocumentStructuralContract`) | A root-only duplicate check would pass |
+| SJ17 | 9 | Document decode refuses repeated keys with equivalent escaped spellings | `internal/jsonfile/decode_test.go` (`TestDocumentStructuralContract`) | Raw token spelling must not create distinct key identities |
+| SJ18 | 10 | Typed document decode refuses an unknown nested field | `internal/jsonfile/decode_test.go` (`TestDocumentStructuralContract`) | Root-only schema refusal would pass |
+| SJ19 | 11 | Document decode refuses every second JSON value kind | `internal/jsonfile/decode_test.go` (`TestDocumentStructuralContract`) | Decoding a fixed second target misses incompatible values |
+| SJ20 | 11 | Document decode refuses malformed trailing bytes | `internal/jsonfile/decode_test.go` (`TestDocumentStructuralContract`) | Success requires EOF rather than any decode error |
+| SJ21 | 11 | Document decode accepts JSON whitespace after its value | `internal/jsonfile/decode_test.go` (`TestDocumentStructuralContract`) | A byte-equality suffix check would reject valid whitespace |
+| SJ22 | 12 | Existing record callers retain final-newline refusal | `internal/jsonfile/decode_test.go` (`TestDocumentFramingCompatibility`) | Replacing Decode with DecodeDocument would remove framing |
+| SJ23 | 12 | Existing document callers retain acceptance without a final newline | `internal/jsonfile/decode_test.go` (`TestDocumentFramingCompatibility`) | Replacing document decode with Decode would add framing |
+| SJ24 | 13 | Exact document decode refuses a case-alias key that ordinary typed decode accepts | `internal/jsonfile/decode_test.go` (`TestDocumentFramingCompatibility`) | A shared non-exact reader would erase the exact schema |
+| SJ25 | 14 | errors.Is identifies duplicate and trailing errors from the owner | `internal/jsonfile/decode_test.go` (`TestDocumentErrorCategories`) | Message matching cannot satisfy the classification contract |
+| SJ26 | 15, 25 | Gate manifest results match the committed baseline family | `internal/gate/json_compatibility_test.go` (`TestGateJSONCompatibility`) | Domain and competing-refusal drift changes the stored result |
+| SJ27 | 15, 25 | Cache loader results match the committed baseline family | `internal/gate/json_compatibility_test.go` (`TestGateJSONCompatibility`) | A parser change cannot alter ready, invalid, absent, or unavailable results |
+| SJ28 | 16 | Gate duplicate errors retain errDuplicateJSONName through errors.Is | `internal/gate/json_compatibility_test.go` (`TestGateJSONCompatibility`) | A generic wrapped error would lose the local sentinel |
+| SJ29 | 16 | Gate trailing errors retain errTrailingJSON through errors.Is | `internal/gate/json_compatibility_test.go` (`TestGateJSONCompatibility`) | The manifest's trailing diagnostic depends on this sentinel |
+| SJ30 | 15 | Gate documents valid without a final newline remain valid | `internal/gate/json_compatibility_test.go` (`TestGateJSONCompatibility`) | These current readers permit unframed documents |
+| SJ31 | 15 | Unknown manifest fields retain the unknown-field key diagnostic | `internal/gate/json_compatibility_test.go` (`TestGateJSONCompatibility`) | A new owner prefix must not hide the rejected key |
+| SJ32 | 17 | Parse accepts a valid review document without a final newline | `internal/reviewrecord/json_compatibility_test.go` (`TestReviewJSONCompatibility`) | Fenced payloads trim their final newline |
+| SJ33 | 17 | ReadPlan accepts the real fenced completion-plan payload | `internal/reviewrecord/json_compatibility_test.go` (`TestReviewJSONCompatibility`) | A unit-only decode test would miss the fence producer |
+| SJ34 | 18, 25 | Review results match the committed baseline family | `internal/reviewrecord/json_compatibility_test.go` (`TestReviewJSONCompatibility`) | Null, version, schema, and evidence refusals remain caller-owned |
+| SJ35 | 18 | Review byte limits retain their current refusal | `internal/reviewrecord/json_compatibility_test.go` (`TestReviewJSONCompatibility`) | Moving grammar must not bypass bounds.ClassifyBytes |
+| SJ36 | 19, 25 | Strict release results match the committed baseline family | `internal/releaseevidence/json_compatibility_test.go` (`TestReleaseJSONCompatibility`) | Embedded registries and real validators retain their domain results |
+| SJ37 | 19 | Strict release validators refuse recursive duplicate keys | `internal/releaseevidence/json_compatibility_test.go` (`TestReleaseJSONCompatibility`) | A migrated adapter must reach the shared duplicate check |
+| SJ38 | 19 | Strict release validators refuse unknown typed fields | `internal/releaseevidence/json_compatibility_test.go` (`TestReleaseJSONCompatibility`) | A structural-only migration would weaken typed schemas |
+| SJ39 | 19 | Requirement evidence retains its final-newline refusal | `internal/releaseevidence/json_compatibility_test.go` (`TestReleaseJSONCompatibility`) | The caller still requires persisted evidence framing |
+| SJ40 | 20 | A component object accepts exactly the registry's declared key set | `internal/releaseevidence/json_compatibility_test.go` (`TestComponentJSONCompatibility`) | Hardcoded struct tags cannot replace dynamic schema authority |
+| SJ41 | 20 | A component object refuses an extra or missing declared key | `internal/releaseevidence/json_compatibility_test.go` (`TestComponentJSONCompatibility`) | A generic map decoder would admit an incomplete schema |
+| SJ42 | 20 | A component object refuses duplicate keys recursively | `internal/releaseevidence/json_compatibility_test.go` (`TestComponentJSONCompatibility`) | Partial object extraction must not hide nested duplicate values |
+| SJ43 | 21 | Artifact validation accepts package.json with unrelated fields | `internal/releaseevidence/package_artifact_test.go` (`TestPackageIdentityJSONCompatibility`) | Typed DisallowUnknownFields on the identity projection would reject it |
+| SJ44 | 21 | Artifact validation refuses a duplicate package identity key | `internal/releaseevidence/package_artifact_test.go` (`TestPackageIdentityJSONCompatibility`) | A partial json.Unmarshal alone would accept it |
+| SJ45 | 21 | Artifact validation refuses duplicate keys inside an unrelated package field | `internal/releaseevidence/package_artifact_test.go` (`TestPackageIdentityJSONCompatibility`) | Schema tolerance must not become structural tolerance |
+| SJ46 | 23, 24 | The registered owner check refuses a planted recursive duplicate walker | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerBites`) | A surviving implementation copy makes the check red |
+| SJ47 | 24 | The registered owner check refuses a caller that bypasses jsonfile | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerBites`) | Deleting a walker alone cannot establish shared ownership |
+| SJ48 | 22, 24 | The owner check permits each named preservation exclusion | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerNegativeControls`) | A broad decoder ban would silently tighten excluded contracts |
+| SJ49 | 24 | Root conformance executes strict-json-owner against a planted source copy | `internal/conformance/strict_json_owner_test.go` (`TestStrictJSONOwnerRegisteredPath`) | A correct but unregistered helper is insufficient |
 | SJ50 | 26 | Every chunk closes with its complete rows and a green lane result | review-owned chunk checkpoint records | A later migration cannot hide an incomplete earlier checkpoint |
 
 Not covered: story 8 — findingIDs retains its current multi-value scanner stream and existing test coverage
@@ -250,6 +251,7 @@ The review baseline uses the same grammar family with valid record and plan seed
 The release baseline covers embedded registries, governance policies, producer envelopes, SPDX documents, reproducibility records, and native proofs.
 Its component cases use the requirement registry's field labels. Its artifact cases use the existing archive fixture with a valid identity.
 The release family retains null decisions and every existing requirement newline check.
+Release readers keep refusing a number that an untyped encoding/json decode refuses, such as an overflow in a raw field. The release adapter owns that refusal.
 
 The source-check family includes an absent package, an empty package, a present unreadable source, and a present unparsable source.
 It includes a renamed recursive walker and a typed decoder that bypasses jsonfile. Negative controls include strings, comments, tests, and excluded streams.
@@ -293,6 +295,9 @@ SJ-C3
 - `internal/reviewrecord/json_compatibility_test.go`
 - `internal/reviewrecord/testdata/strict-json-baseline.json`
 - `internal/reviewrecord/recordtest/fixture.go`
+- `internal/jsonfile/jsonfiletest/`
+- `internal/gate/json_compatibility_test.go`
+- `internal/gate/testdata/strict-json-baseline.json`
 
 SJ-C4
 
@@ -302,10 +307,14 @@ SJ-C4
 - `internal/releaseevidence/json_compatibility_test.go`
 - `internal/releaseevidence/package_artifact_test.go`
 - `internal/releaseevidence/testdata/strict-json-baseline.json`
+- `internal/jsonfile/jsonfiletest/jsonfiletest.go`
+- `internal/releaseevidence/artifact_proofs.go`
+- `internal/releaseevidence/artifact_evidence.go`
 
 SJ-C5
 
 - `internal/conformance/strict_json_owner_test.go`
+- `internal/conformance/process_lifetime_test.go`
 - `internal/conformance/registry/checks.go`
 - `internal/conformance/checks_test.go`
 - `internal/conformance/tier_live_tree_test.go`
@@ -327,13 +336,7 @@ SJ-C5
 - `tests/canary/skill-description-budgets/description-missing`
 - `tests/canary/skill-description-budgets/over-budget-command`
 - `tests/canary/skill-description-budgets/over-budget-description`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route`
-- `tests/canary/workflow-guidance-anchors/changelog-reduced-schema-columns`
-- `tests/canary/workflow-guidance-anchors/changelog-ticket-vocabulary`
 
 Plan and review pickup:
 
@@ -360,7 +363,7 @@ A manual performance benchmark is outside this planning task. This spec makes no
 
 The whole hidden-tree sweep searched Go, JavaScript, shell, and workflow files. It excluded only .git.
 The needles were json.NewDecoder, json.Unmarshal, jsonfile, DisallowUnknownFields, duplicate helper names, JSON.parse, vuln-exceptions, and govulncheck.
-The source inventory is current at base `37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68`. Historical survey counts are not acceptance predicates.
+The build-entry staleness pass refreshed the source inventory at `835f5491b7aa50042f5f65bcb6ac941592e8181b`. Historical survey counts are not acceptance predicates.
 
 The changed-function sweep used bench consumers with the following symbols:
 
@@ -371,6 +374,8 @@ The changed-function sweep used bench consumers with the following symbols:
 - jsonfile.Decode, jsonfile.DecodeDocument, and jsonfile.DecodeExactDocument
 
 Gate strictJSON serves loadVerdict, decodeManifest, and loadManifest. Their sources are verdict.go, manifest.go, and subject.go in internal/gate.
+Gate strictJSON also serves the evidence record read, the reader-table loader, and the reader schedule. Their sources are engine.go, reader_store.go, and reader_set.go.
+These three callers keep their call unchanged. SJ28 and SJ29 grade the sentinels that they receive through strictJSON.
 Review decode serves Parse and ReadPlan. Their sources are parse.go and plan.go in internal/reviewrecord.
 Release decodeStrict serves the following source-defined readers:
 
@@ -386,11 +391,14 @@ ValidateVulnerabilityPolicy serves runner.runVulnerability. findingIDs produces 
 
 Existing jsonfile record consumers are assessment.Store.Read, intent.readPath, repairpilot.load, and worktree.decodeMarker.
 Existing document consumers are assessment.readJSON, assessment.collectHarness, commitment.ParseProposal, and commitment repository receipt readers.
-The other document consumers are repairpilot.readRecordInput and worktree.loadBuildOutputs. Exact consumers are commitment.Parse, ParseProposal, and ParseEvidence.
+The other document consumers are repairpilot.readRecordInput, worktree.loadBuildOutputs, the probe mutant-set input, and the preflight ownership manifest.
+The other record consumers are the gate background state and the intent transaction. Exact consumers are commitment.Parse, ParseProposal, and ParseEvidence.
+The other exact consumers are the landing stack input and the subprocess protection record.
 These consumers retain their current API and require no production edits. Their package tests remain integration checks for owner API changes.
 
 The named permissive Go families are harness, benchguard, writeguard, gitguard, stophook, lines, harnesstranscript, models, publication, adopt, and capturetx.
 Other exclusions are otelrecord, testreport, test fixture decodes, canary inventory, and intent recovery projections.
+The canary pin line locator elementLines is also an exclusion. It reads array element offsets after a permissive decode and walks no object keys.
 JavaScript exclusions are the offline registry, binary repair, release-plan, artifact verifier, and release-evidence producer readers.
 Their runtime and schema contracts remain outside this migration. No workflow calls a changed public CLI command.
 
@@ -447,11 +455,11 @@ This planning pass runs prose and coverage checks only. It supplies no implement
 
 ### Completion plan
 
-The plan uses version 1 for the serial author checkpoints. The build records one fresh implementation author per ticket on the accepted implementation line.
+The plan uses version 2 with one delegated run and an author limit of 1. The build records one fresh author per ticket on the accepted line.
 Every ticket owns its complete vertical result. Review closes each frozen chunk before the next author starts.
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"SJ-C1","tickets":["1-policy-document.md"],"verification":[{"id":"policy","command":"bench test --package ./internal/releasepreflight"},{"id":"owner","command":"bench test --package ./internal/jsonfile"},{"id":"mutation","command":"bench probe internal/releasepreflight/vulnerability.go --swap 'jsonfile.DecodeDocument(data, &exceptions)' --with 'jsonfile.DecodeDocument([]byte(\"[]\"), &exceptions)' --package ./internal/releasepreflight --run TestVulnerabilityPolicyDocumentContract","probe":"Replace the real policy bytes with an empty array at the shared decode call. The suffix-refusal case must fail."}]},{"id":"SJ-C2","tickets":["2-jsonfile-gate.md"],"verification":[{"id":"owner","command":"bench test --package ./internal/jsonfile"},{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"census","command":"bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus"},{"id":"mutation","command":"bench probe internal/jsonfile/decode.go --swap 'seen[name] = true' --with 'seen[name] = false' --package ./internal/jsonfile --run TestDocumentStructuralContract","probe":"Disable the shared duplicate-memory update. The nested duplicate assertion must fail."}]},{"id":"SJ-C3","tickets":["3-review-documents.md"],"verification":[{"id":"review","command":"bench test --package ./internal/reviewrecord"},{"id":"fixture","command":"bench test --package ./internal/reviewrecord/recordtest"},{"id":"mutation","command":"bench probe internal/reviewrecord/parse.go --swap 'jsonfile.DecodeDocument(data, value)' --with 'jsonfile.DecodeDocument([]byte(\"null\"), value)' --package ./internal/reviewrecord --run TestReviewJSONCompatibility","probe":"Replace the real review bytes with null at the shared decode call. The valid review-document assertion must fail."}]},{"id":"SJ-C4","tickets":["4-release-documents.md"],"verification":[{"id":"release","command":"bench test --package ./internal/releaseevidence"},{"id":"mutation","command":"bench probe internal/releaseevidence/component_manifest.go --swap 'if len(object) != len(fields) {' --with 'if false && len(object) != len(fields) {' --package ./internal/releaseevidence --run TestComponentJSONCompatibility","probe":"Disable the component extra-key refusal while preserving all required keys. The extra-key assertion must fail."}]},{"id":"SJ-C5","tickets":["5-ownership-closure.md"],"verification":[{"id":"owner-check","command":"bench test --check strict-json-owner"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"census","command":"bench test --package ./internal/conformance --run TestBranchNativeArchitectureCensus"},{"id":"mutation","command":"bench probe internal/conformance/registry/checks.go --swap 'Name: \"strict-json-owner\"' --with 'Name: \"strict-json-owner-disabled\"' --package ./internal/conformance --run TestStrictJSONOwnerRegisteredPath","probe":"Rename the registry entry while leaving its executable binding unchanged. The registered-path assertion must fail."}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base 37ac80b8adeff4ecbd57f3d813ff8937f2bcbc68"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/strict-json-ownership/spec.md"}]}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft354-build-20261101","orchestrator_session":"session_01JK5CPcwpGroiAPWzzXxytc","author_limit":1,"assignments":{"1-policy-document.md":[{"session":"ft354-author-01","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"medium","source":"34b7e5eaecf90495093a33f316f1706042484421","native_ref":"claude-agent:bench-writer-medium:ft354-author-01"}],"2-jsonfile-gate.md":[{"session":"ft354-author-02","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"high","source":"533160a782e35a64f68d5944f35f5103e0eadacd","native_ref":"claude-agent:bench-writer-high:ft354-author-02"},{"session":"ft354-repair-02-1","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"high","source":"7a087f9d536d07737f4a2efb125a393f1d84b8e4","native_ref":"claude-agent:bench-writer-high:ft354-repair-02-1","predecessor":"ft354-author-02","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft354-author-02","preserved":"4f88b2d46289a69c396185d1a40de5f0f6182326"}],"3-review-documents.md":[{"session":"ft354-author-03","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"medium","source":"81a154f03bfd4aa903f249539daf9da7f65111f0","native_ref":"claude-agent:bench-writer-medium:ft354-author-03"},{"session":"ft354-repair-03-1","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"medium","source":"ab699f600d3760e84efad6a4ebd9e62b69e992b6","native_ref":"claude-agent:bench-writer-medium:ft354-repair-03-1","predecessor":"ft354-author-03","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ft354-author-03","preserved":"2c72f6478c064633d4d6879c82e54178b835b3aa"}],"4-release-documents.md":[{"session":"ft354-author-04","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"high","source":"d36895dbcd2b22811468c9c2323c740afa719350","native_ref":"claude-agent:bench-writer-high:ft354-author-04"},{"session":"ft354-repair-04-1","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"high","source":"b74fdfe70ae798d0ddde19ec9613c0f323c5ecaa","native_ref":"claude-agent:bench-writer-high:ft354-repair-04-1","predecessor":"ft354-author-04","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft354-author-04","preserved":"c470a86d0aaef313f7bf73f0ee897db49f81fb33"}],"5-ownership-closure.md":[{"session":"ft354-author-05","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"high","source":"cf59ca235d8423cff896dbaf0ee17a5fc11053fb","native_ref":"claude-agent:bench-writer-high:ft354-author-05"},{"session":"ft354-repair-05-1","assignment":"0aada2df89da1aaa95469ee5331b873e","model":"opus","effort":"high","source":"994d0c4b64fa4eddc017ceab610bee4046cd199d","native_ref":"claude-agent:bench-writer-high:ft354-repair-05-1","predecessor":"ft354-author-05","trigger":"user-directed","stopped":"claude-agent:bench-writer-high:ft354-author-05","preserved":"59f92c5bb48c44b3199b645f02dc482f45c91a33"}]}},"chunks":[{"id":"SJ-C1","tickets":["1-policy-document.md"],"verification":[{"id":"policy","command":"bench test --package ./internal/releasepreflight --package ./internal/jsonfile","probe":"Swap the policy bytes for an empty array at the jsonfile.DecodeDocument call in ValidateVulnerabilityPolicy, and record that the suffix case of TestVulnerabilityPolicyDocumentContract turns red.","ticket":"1-policy-document.md"}]},{"id":"SJ-C2","tickets":["2-jsonfile-gate.md"],"verification":[{"id":"owner-gate","command":"bench test --package ./internal/jsonfile --package ./internal/gate","probe":"Swap 'seen[name] = true' for 'seen[name] = false' in internal/jsonfile/decode.go, and record that the nested duplicate case of TestDocumentStructuralContract turns red.","ticket":"2-jsonfile-gate.md"}]},{"id":"SJ-C3","tickets":["3-review-documents.md"],"verification":[{"id":"review","command":"bench test --package ./internal/reviewrecord/...","probe":"Swap the review bytes for null at the jsonfile.DecodeDocument call in internal/reviewrecord/parse.go, and record that the valid review-document case of TestReviewJSONCompatibility turns red.","ticket":"3-review-documents.md"}]},{"id":"SJ-C4","tickets":["4-release-documents.md"],"verification":[{"id":"release","command":"bench test --package ./internal/releaseevidence","probe":"Swap 'if len(object) != len(fields) {' for 'if false && len(object) != len(fields) {' in internal/releaseevidence/component_manifest.go, and record that the extra-key case of TestComponentJSONCompatibility turns red.","ticket":"4-release-documents.md"}]},{"id":"SJ-C5","tickets":["5-ownership-closure.md"],"verification":[{"id":"conformance","command":"bench test --package ./internal/conformance","probe":"Rename the strict-json-owner registry entry in internal/conformance/registry/checks.go and keep its executable binding, and record that TestStrictJSONOwnerRegisteredPath turns red.","ticket":"5-ownership-closure.md"}]}],"final_verification":[{"id":"integration","command":"bench test --changed --base 835f5491b7aa50042f5f65bcb6ac941592e8181b"},{"id":"conformance","command":"bench test --package ./internal/conformance"},{"id":"owner-check","command":"bench test --check strict-json-owner"},{"id":"whole-project","command":"bench gate"},{"id":"coverage","command":"bench coverage --check specs/strict-json-ownership/spec.md"}]}
 ```
 
 ### Ticket slice verification

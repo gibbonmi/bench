@@ -28,6 +28,7 @@ var Checks = []Check{
 	{Name: "go-build-vcs", Implementation: "checkGoBuildVCS", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "git-plumbing-owner", Implementation: "checkGitPlumbingOwner", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "markdown-block-owner", Implementation: "checkMarkdownBlockOwner", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "strict-json-owner", Implementation: "checkStrictJSONOwner", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "cancel-signal-registrations", Implementation: "checkCancelSignalRegistrations", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "wait-deadline-literals", Implementation: "checkWaitDeadlineLiterals", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "subcommand-routing", Implementation: "checkSubcommandRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},

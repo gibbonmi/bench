@@ -88,93 +88,168 @@ func processLifetimeClosureDiags(root string, census []processLifetimeEntry) []s
 // reverse direction can find an owner call that no entry reaches.
 func processLifetimeEntryDiags(root string, entry processLifetimeEntry, reached map[string]bool) []string {
 	dir := path.Dir(entry.file)
-	functions, err := processLifetimePackageFunctions(filepath.Join(root, filepath.FromSlash(dir)))
+	functions, err := processLifetimePackageFunctions(root, dir)
 	if err != nil {
 		return []string{"process-lifetime census entry " + entry.caller + ": " + err.Error()}
 	}
-	start := slices.IndexFunc(functions[entry.function], func(candidate processLifetimeDeclaration) bool {
-		return slashRel(root, candidate.path) == entry.file
-	})
+	candidates := functions.named(entry.function)
+	start := slices.IndexFunc(candidates, func(candidate *packageFunc) bool { return candidate.rel == entry.file })
 	if start < 0 {
 		return []string{fmt.Sprintf("process-lifetime census entry %s: %s declares no %s", entry.caller, entry.file, entry.function)}
 	}
 	owner := false
-	queue := []processLifetimeDeclaration{functions[entry.function][start]}
-	seen := map[*ast.FuncDecl]bool{queue[0].decl: true}
-	for len(queue) > 0 {
-		current := queue[0]
-		queue = queue[1:]
+	visit := func(current *packageFunc) bool {
 		reached[dir+"#"+current.decl.Name.Name] = true
-		ast.Inspect(current.decl.Body, func(node ast.Node) bool {
-			call, ok := node.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
-			if slices.Contains(processLifetimeOwnerCalls, guardProjectionImported(current.file, call, processLifetimeOwnerImport)) {
+		ast.Inspect(current.body, func(node ast.Node) bool {
+			if call, ok := node.(*ast.CallExpr); ok && slices.Contains(processLifetimeOwnerCalls, guardProjectionImported(current.file, call, processLifetimeOwnerImport)) {
 				owner = true
-			}
-			for _, next := range functions[processLifetimeCallee(current.file, call)] {
-				if !seen[next.decl] {
-					seen[next.decl] = true
-					queue = append(queue, next)
-				}
 			}
 			return true
 		})
+		return false
 	}
+	visit(candidates[start])
+	functions.reaches(candidates[start], visit)
 	if !owner {
 		return []string{fmt.Sprintf("process-lifetime census entry %s: %s %s does not reach subprocess.NewLifetime or subprocess.RunInherited", entry.caller, entry.file, entry.function)}
 	}
 	return nil
 }
 
-// processLifetimeCallee names the same-package function or method that a call can select. A
-// selection through an import qualifier names another package, so it selects nothing here.
-func processLifetimeCallee(file *ast.File, call *ast.CallExpr) string {
-	switch fun := ast.Unparen(call.Fun).(type) {
-	case *ast.Ident:
-		return fun.Name
-	case *ast.SelectorExpr:
-		if ident, ok := fun.X.(*ast.Ident); ok && ident.Obj == nil && importedPackage(file, ident.Name) != "" {
-			return ""
-		}
-		return fun.Sel.Name
-	}
-	return ""
-}
-
-// processLifetimeDeclaration is one function declaration with the file that holds it.
-type processLifetimeDeclaration struct {
-	path string
-	file *ast.File
-	decl *ast.FuncDecl
-}
-
-// processLifetimePackageFunctions parses every production file of dir, under every build
-// constraint, and indexes its function and method declarations by name.
-func processLifetimePackageFunctions(dir string) (map[string][]processLifetimeDeclaration, error) {
-	entries, err := os.ReadDir(dir)
+// processLifetimePackageFunctions parses every production file of dir beneath root, under
+// every build constraint, and indexes its functions.
+func processLifetimePackageFunctions(root, dir string) (packageFuncs, error) {
+	entries, err := os.ReadDir(filepath.Join(root, filepath.FromSlash(dir)))
 	if err != nil {
 		return nil, err
 	}
-	functions := map[string][]processLifetimeDeclaration{}
+	functions := packageFuncs{}
+	fset := token.NewFileSet()
 	for _, entry := range entries {
 		name := entry.Name()
 		if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-		path := filepath.Join(dir, name)
-		file, err := parser.ParseFile(token.NewFileSet(), path, readIfExists(path), 0)
+		rel := path.Join(dir, name)
+		abs := filepath.Join(root, filepath.FromSlash(rel))
+		file, err := parser.ParseFile(fset, abs, readIfExists(abs), 0)
 		if err != nil {
 			return nil, err
 		}
-		for _, decl := range file.Decls {
-			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Body != nil {
-				functions[fn.Name.Name] = append(functions[fn.Name.Name], processLifetimeDeclaration{path, file, fn})
+		functions.add(fset, rel, file)
+	}
+	return functions, nil
+}
+
+// packageCallee is a key of a package function index: a function name, a method name, or a
+// closure variable object. The object keeps two closures of one name apart.
+type packageCallee struct {
+	name    string
+	method  bool
+	closure *ast.Object
+}
+
+// packageFunc is one function, method, or assigned closure of a package. decl is the
+// declaration that holds it, and callees lists each callee that its body can select.
+type packageFunc struct {
+	name, rel string
+	line      int
+	file      *ast.File
+	decl      *ast.FuncDecl
+	body      *ast.BlockStmt
+	callees   []packageCallee
+}
+
+// packageFuncs indexes the functions, methods, and assigned closures of one package by callee.
+type packageFuncs map[packageCallee][]*packageFunc
+
+// add indexes each function, method, and assigned closure of file, which sits at rel.
+func (index packageFuncs) add(fset *token.FileSet, rel string, file *ast.File) {
+	put := func(key packageCallee, name string, pos token.Pos, decl *ast.FuncDecl, body *ast.BlockStmt) {
+		index[key] = append(index[key], &packageFunc{name, rel, fset.Position(pos).Line, file, decl, body, packageCallees(file, body)})
+	}
+	for _, decl := range file.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Body == nil {
+			continue
+		}
+		put(packageCallee{name: fn.Name.Name, method: fn.Recv != nil}, fn.Name.Name, fn.Pos(), fn, fn.Body)
+		ast.Inspect(fn.Body, func(node ast.Node) bool {
+			if assign, ok := node.(*ast.AssignStmt); ok && len(assign.Lhs) == len(assign.Rhs) {
+				for i, lhs := range assign.Lhs {
+					ident, named := lhs.(*ast.Ident)
+					literal, closure := assign.Rhs[i].(*ast.FuncLit)
+					if named && closure && ident.Obj != nil {
+						put(packageCallee{closure: ident.Obj}, ident.Name, literal.Pos(), fn, literal.Body)
+					}
+				}
+			}
+			return true
+		})
+	}
+}
+
+// packageCallees lists, once each, the callee that each call or function value of body can select.
+// A selection through an import qualifier selects another package. A composite literal key names a field.
+func packageCallees(file *ast.File, body ast.Node) []packageCallee {
+	var callees []packageCallee
+	skip := map[*ast.Ident]bool{}
+	add := func(key packageCallee) {
+		if !slices.Contains(callees, key) {
+			callees = append(callees, key)
+		}
+	}
+	ast.Inspect(body, func(node ast.Node) bool {
+		switch n := node.(type) {
+		case *ast.KeyValueExpr:
+			if key, ok := n.Key.(*ast.Ident); ok {
+				skip[key] = true
+			}
+		case *ast.SelectorExpr:
+			skip[n.Sel] = true
+			if qualifier, ok := n.X.(*ast.Ident); ok && qualifier.Obj == nil && importedPackage(file, qualifier.Name) != "" {
+				return false
+			}
+			add(packageCallee{name: n.Sel.Name, method: true})
+		case *ast.Ident:
+			switch {
+			case skip[n]:
+			case n.Obj == nil || n.Obj.Kind == ast.Fun:
+				add(packageCallee{name: n.Name})
+			case n.Obj.Kind == ast.Var:
+				add(packageCallee{closure: n.Obj})
+			}
+		}
+		return true
+	})
+	return callees
+}
+
+// named lists the functions and then the methods of index that a declared name selects.
+func (index packageFuncs) named(name string) []*packageFunc {
+	return slices.Concat(index[packageCallee{name: name}], index[packageCallee{name: name, method: true}])
+}
+
+// reaches reports whether a callee that from selects, directly or through other callees, is done.
+// It offers each reached function to done once.
+func (index packageFuncs) reaches(from *packageFunc, done func(*packageFunc) bool) bool {
+	seen := map[*packageFunc]bool{}
+	for stack := []*packageFunc{from}; len(stack) > 0; {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		for _, key := range node.callees {
+			for _, next := range index[key] {
+				if seen[next] {
+					continue
+				}
+				if seen[next] = true; done(next) {
+					return true
+				}
+				stack = append(stack, next)
 			}
 		}
 	}
-	return functions, nil
+	return false
 }
 
 // processLifetimeFixtureCensus is the one-entry census of the synthetic trees.

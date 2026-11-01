@@ -358,17 +358,16 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT354-strict-json
-2. FT406-rebuild
-3. FT366-rg-guard
-4. FT380-residual
-5. FT363-member-set
-6. FT354-shell-args
-7. FT343-seam-policy
-8. FT446-cache-store
-9. FT414-preconditions
-10. FT369-charge-slicing
-11. FT365-conformance
-12. FT341-in-only
-13. FT420-concurrent-chunks
-14. FT387-overflow
+1. FT406-rebuild
+2. FT366-rg-guard
+3. FT380-residual
+4. FT363-member-set
+5. FT354-shell-args
+6. FT343-seam-policy
+7. FT446-cache-store
+8. FT414-preconditions
+9. FT369-charge-slicing
+10. FT365-conformance
+11. FT341-in-only
+12. FT420-concurrent-chunks
+13. FT387-overflow
