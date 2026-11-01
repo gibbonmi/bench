@@ -301,6 +301,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sj-c2-standards-2",
+          "performer": "ft354-review-c2-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c3b2a959e0f36fdafa82ade2a1e1a7e3e7967248",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c2-standards-2",
+            "digest": "sha256:c74a307e8521802e49ff70289adccfc643a0709c60900d173a56152fac8157a2",
+            "excerpt": "## Standards\n0 new findings; S1 is closed. At bc1d783e, internal/jsonfile/decode_test.go:61 holds a raw-string body with a \\u escape, so the test has two spellings of one decoded key.\nRepair code passes AGENTS.md and craft-comments: hostCacheFiles at json_compatibility_test.go:180 is the one fixture source and removes its entries from the stored baseline (lines 94-100); the skip uses capability.Environment inside the subtest (line 101); comments are present tense with no tags.\nAdvice: the comment at json_compatibility_test.go:177-180 names root, but the real condition is ptrace access; the review record showed no prose reds for the new rows.\nSteps 1-5 done.\n"
+          },
+          "axis": "Standards",
+          "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
+          "tip": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c2-standards-1"
+          ]
+        },
+        {
+          "id": "sj-c2-spec-2",
+          "performer": "ft354-review-c2-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c3b2a959e0f36fdafa82ade2a1e1a7e3e7967248",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c2-spec-2",
+            "digest": "sha256:2b959825a9e7eb4db6c53ba7a826fa6c3c96afa56fe59720f1a3c3abf910a538",
+            "excerpt": "## Spec\nFindings: 0. P1 is closed, and SJ27 is covered.\nP1: SJ17 (spec.md:201); decode_test.go:61 holds a \\u escape that decodes to the same key, expecting ErrDuplicateKey; repair mutant 1 names this case first.\nSJ27 (spec.md:211; edge inventory spec.md:248): json_compatibility_test.go:180-197 adds /proc/1/mem and /proc/self/mem, compared at :104 with unavailable / cache unavailable entries; both pass the metadata check and reach the open and read refusals at verdict.go:285 and :291.\nCoverage cells for SJ17 and SJ27 cite tests that exist at bc1d783e.\nAdvice: as root or with permissive ptrace, the unopenable case reaches the read refusal instead; the record lacked prose reds for SJ27 and a repair prose section.\nSteps 1-5 done.\n"
+          },
+          "axis": "Spec",
+          "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
+          "tip": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c2-spec-1"
+          ]
+        },
+        {
+          "id": "sj-c2-coverage-2",
+          "performer": "ft354-review-c2-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "c3b2a959e0f36fdafa82ade2a1e1a7e3e7967248",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c2-coverage-2",
+            "digest": "sha256:a1cad1a1ec57e1983db8da4a55020e68e5a20744e7d91efcfe3715fe932724fa",
+            "excerpt": "## Coverage\n0 findings. C1 is closed and SJ27 is closed.\nC1: internal/jsonfile/decode_test.go:61 holds the escaped body with ErrDuplicateKey; the raw-span mutant turned only this case red.\nSJ27: occurrence 1 (verdict.go:285, failed open) and occurrence 2 (verdict.go:291, failed read or close) are witnessed. The round 1 silent mutation now bites:\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/verdict.go,swap,failed,1,TestGateJSONCompatibility/unreadable_cache_baseline,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestGateJSONCompatibility,passed,8\nHost and CI run as non-root (native-runtime.yml:20,38), so both are red-capable. As root, only the occurrence-1 witness goes silent and the test cannot fail falsely. Non-Linux skips through capability.Environment (json_compatibility_test.go:55).\nAdvice: a non-root container with ptrace_scope 0 could open /proc/1/mem; consider a capability skip when the open succeeds (unverified).\nSteps 1-5 done; gate 8 and jsonfile 15 tests pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
+          "tip": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c2-coverage-1"
+          ]
         }
       ]
     }
@@ -434,3 +500,24 @@ The de-duplicated repair target count is 1, and the orchestrator adds the SJ27 g
 - Standards: the move narration at `verdict.go:341`, the group comment of the categories, the baseline write wording, the second table loop, and the triple suffix check.
 - Spec: record `jsonfile.RejectTrailing` in Terms and API, and map trailing data by category.
 - Coverage: one duplicate row for each of loadManifest, parseReaderSchedule, and loadReaderTable.
+
+## SJ-C2 repair 1 witness reds
+
+The repair session `ft354-repair-02-1` (opus / high) changed tests and testdata only, at `f4eb1f9b` and `bc1d783e`. Each row below answered `bit` with restored `yes`.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/gate/verdict.go` | occurrence 1 of `Unavailable, "cache unavailable"` to `Ready, ""` | `TestGateJSONCompatibility/unreadable_cache_baseline` | SJ27 |
+| `internal/gate/verdict.go` | occurrence 2 of the same result | `TestGateJSONCompatibility/unreadable_cache_baseline` | SJ27 |
+| `internal/jsonfile/decode.go` | duplicate memory keyed on the name and its raw escape span | `TestDocumentStructuralContract/repeated_key_with_an_escaped_spelling`, the only failure | SJ17 |
+| `internal/jsonfile/decode.go` | plan probe `owner-gate`, `seen[name] = false` | `TestDocumentStructuralContract/nested_duplicate_in_an_array_element` | SJ16 |
+
+Before the two new baseline entries existed, the unreadable cache subtest failed on the missing entries. The coordinator probe swapped the read-failure condition to `readErr == io.EOF`, and the unreadable case turned red.
+
+## SJ-C2 round 2 confirming review
+
+The three axes ran on opus / medium over the repair delta `4f88b2d4..bc1d783e`. Each axis passes with zero finding IDs, and S1, P1, and C1 close. The repair count of SJ-C2 is 1 of 2.
+
+## SJ-C2 round 2 advice
+
+- Standards and Coverage: the `/proc/1/mem` case depends on ptrace access, not on root alone. With ptrace access, the case reaches the read refusal and the open witness goes silent.
