@@ -506,6 +506,72 @@
           "tip": "2c72f6478c064633d4d6879c82e54178b835b3aa",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "sj-c3-standards-2",
+          "performer": "ft354-review-c3-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f25b7ffe8bd44566ddd58fa02ea55423a80d45",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c3-standards-2",
+            "digest": "sha256:599a42c423d978fd32bac9db9b34944314d2d9cdf4550bbde1e9ebb17305da42",
+            "excerpt": "## Standards\nFindings: 0. S1 is closed; no new finding at severity 5 or above.\nAt 7e962ba2 one func Family exists, at internal/jsonfile/jsonfiletest/jsonfiletest.go:32. The repair removes jsonFamily, readGateJSONBaseline, compareGateJSON, reviewFamily, readReviewJSONBaseline, and compareReviewJSON. The gate tests (json_compatibility_test.go:78-101) and review tests (json_compatibility_test.go:67-121) call jsonfiletest.Family, ReadBaseline, and Compare.\nDependency standard: the package imports only the standard library and internal/jsonfile. Its shape matches recordtest/fixture.go; comments are timeless present with doc comments on exported symbols.\nAdvice: UnknownKey (jsonfiletest.go:18) is exported but unread; the gate \"nested unknown field\" row changed input and needs Spec confirmation; nestedDuplicateManifest and nestedUnknownManifest stay for other subtests.\nSteps 1-5 done.\n"
+          },
+          "axis": "Standards",
+          "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "tip": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c3-standards-1"
+          ]
+        },
+        {
+          "id": "sj-c3-spec-2",
+          "performer": "ft354-review-c3-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f25b7ffe8bd44566ddd58fa02ea55423a80d45",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c3-spec-2",
+            "digest": "sha256:3265cb4f260d802db6857e348c48036127d0b116f32af5db65fe30ef79a6bcb3",
+            "excerpt": "## Spec\n0 findings. All three confirmations hold.\n(a) Held. The repair changed the input, not the code: the shared family adds \"extra\":true (jsonfiletest.go:211; gate Nested seed json_compatibility_test.go:37). At 533160a strictJSON runs DisallowUnknownFields then Decode (verdict.go:338-342), and decodeManifest extracts the key through unknownField (manifest.go:125-127, 157-165); the tip has the same path (verdict.go:343-346, manifest.go:123-165). So \"unknown field: extra\" is the old result for the new input. Only $ROOT is normalized. Code read only.\n(b) Held. SJ26 and SJ27 (spec.md:210-211) cite TestGateJSONCompatibility; SJ32-SJ35 (spec.md:216-219) cite TestReviewJSONCompatibility; both exist at 7e962ba2.\n(c) Held. The review family has nested duplicate and nested unknown for record and plan, four entries.\nAdvice: the gate nested-duplicate input repeats one value, so the baseline cannot tell first-wins from last-wins; no run against old code confirms the changed gate entry.\nSteps 1-6 done.\n"
+          },
+          "axis": "Spec",
+          "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "tip": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c3-spec-1"
+          ]
+        },
+        {
+          "id": "sj-c3-coverage-2",
+          "performer": "ft354-review-c3-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "72f25b7ffe8bd44566ddd58fa02ea55423a80d45",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c3-coverage-2",
+            "digest": "sha256:f8caead382e4d2d75129f2ac83d36c1a9912c4eb1743b75ea8a0ce6ac4876cbc",
+            "excerpt": "## Coverage\n0 findings. S1-related coverage held.\nGate baseline: 45 cases before and after, same names; every cache case kept. Review baseline: 43 before, 47 after; the four new ones are nested duplicate key and nested unknown field under record and plan.\nThe changed gate entry nested unknown field reports extra; the need key stays checked at internal/gate/json_compatibility_test.go:68-75. The nested seeds are nested (record.go:67, plan.go:26).\nA nested-only red is possible: a mutant that ignores duplicates except a version key turned only the nested-duplicate cases red.\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/jsonfile/decode.go,swap,failed,2,TestReviewJSONCompatibility/plan_baseline,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestReviewJSONCompatibility,passed,6\nAdvice: the shared nested-duplicate case repeats one value; the duplicate sentinel subtest (json_compatibility_test.go:50-54) keeps the two-value form.\nSteps 1-6 done; gate 9, jsonfile 29, reviewrecord 6 tests pass.\n"
+          },
+          "axis": "Coverage",
+          "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "tip": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c3-coverage-1"
+          ]
         }
       ]
     }
@@ -737,3 +803,13 @@ The review baseline gained four nested entries, captured against the base `parse
 | 2 | the same mutation | `TestReviewJSONCompatibility/plan_baseline` | yes |
 | 3 | the unwrap skips an unknown-field cause | `TestReviewJSONCompatibility/record_baseline` | yes |
 | 4 | plan probe `review`, the real bytes to `null` | `TestReviewJSONCompatibility/unframed_review_document` | yes |
+
+## SJ-C3 round 2 confirming review
+
+The three axes ran on opus / medium over the repair delta `2c72f647..7e962ba2`. Each axis passes with zero finding IDs, and S1 closes. The repair count of SJ-C3 is 1 of 2.
+The Coverage probe showed a nested-only red. Its mutant ignores every duplicate except a `version` key, and only the nested-duplicate cases turned red.
+
+## SJ-C3 round 2 advice
+
+- Standards: `jsonfiletest.UnknownKey` is exported, and no consumer reads it.
+- Spec and Coverage: the shared nested-duplicate case repeats one value, so the baseline cannot tell a first-wins reader from a last-wins one. The gate duplicate sentinel subtest keeps the two-value form.
