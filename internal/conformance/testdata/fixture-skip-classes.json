@@ -11,6 +11,7 @@
   {"path": "internal/census/census_fifo_test.go", "symbol": "TestHeadBreakdownRefusesAFifoWithoutBlocking", "case": 1, "class": "Fifo"},
   {"path": "internal/census/census_test.go", "symbol": "TestRecordRefusesASymlinkedCensusDirectory", "case": 1, "class": "Symlink"},
   {"path": "internal/commit/lane_test.go", "symbol": "TestLaneRefusesASpecialNamedPathBeforeAnyCheckRuns", "case": 1, "class": "Fifo"},
+  {"path": "internal/commitment/pinned_row_hostile_test.go", "symbol": "TestPinnedRowPlanRefusesAHostileWorkingFile", "case": 1, "class": "Fifo"},
   {"path": "internal/commitment/repository/publication_lock_test.go", "symbol": "TestPublishAdmittedDecidesUnderTheLock", "case": 1, "class": "Fifo"},
   {"path": "internal/conformance/bounds_policy_test.go", "symbol": "TestBoundsPolicyRejectsSpecialSources", "case": 1, "class": "Symlink"},
   {"path": "internal/conformance/bounds_policy_test.go", "symbol": "TestBoundsPolicyRejectsSpecialSources", "case": 2, "class": "Fifo"},

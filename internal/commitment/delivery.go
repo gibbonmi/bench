@@ -199,6 +199,15 @@ func NewSource(current *Policy, proposed Policy, source SourceBinding) bool {
 		(current == nil || !namesSource(*current, func(binding SourceBinding) bool { return binding.Path == source.Path }))
 }
 
+// ChangedSource reports whether source is an outcome source of proposed whose id and path an
+// outcome source of current binds, while no outcome source of current binds source exactly.
+// A nil current binds no source.
+func ChangedSource(current *Policy, proposed Policy, source SourceBinding) bool {
+	return current != nil && namesSource(proposed, func(binding SourceBinding) bool { return binding == source }) &&
+		namesSource(*current, func(binding SourceBinding) bool { return binding.ID == source.ID && binding.Path == source.Path }) &&
+		!namesSource(*current, func(binding SourceBinding) bool { return binding == source })
+}
+
 // namesSource reports whether an outcome source of policy matches.
 func namesSource(policy Policy, match func(SourceBinding) bool) bool {
 	for _, milestone := range policy.Milestones {

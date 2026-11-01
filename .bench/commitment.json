@@ -2283,6 +2283,14 @@
       "identity": "sha256:fd3289b793b74d14dab60f3ba8fea6c5c706077ffb38ff330f31f4f3ab5f8200",
       "source": "43725ded45b4e86ef7a536bfba5ef22d305cef9e",
       "evidence": "14122d548c3f82ae00e7aaa7e0616ad23d868670"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT437-pinned-rows",
+      "binding": "pinned-row-edits",
+      "identity": "sha256:a02e080262846ab9554ec281f2fa90e0d68dec5da01cd10a7bb9e10b946e4236",
+      "source": "008b7988fe13fdffeece06d55a4906b82ffb208e",
+      "evidence": "95b3fac44599ec44d0ce69b2242e1f804654ba92"
     }
   ]
 }

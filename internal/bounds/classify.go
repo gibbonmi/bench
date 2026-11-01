@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -140,8 +141,30 @@ func ClassifyNoFollow(path string) Classified {
 	return gradeBytes(path, info, ControlRecordLimit)
 }
 
-// ErrLinkRefused marks the RefuseLinks refusal of a linked component.
+// ErrLinkRefused marks each refusal of a linked component: RefuseLinks and RefuseLinksBelow.
 var ErrLinkRefused = errors.New("symlink refused")
+
+// RefuseLinksBelow checks each component of relPath below root, from the first component down
+// to the last, and refuses a linked one. It does not check root or its ancestors, so a root
+// below a linked directory passes. An absent component does not refuse, so a write can create
+// it and a read can classify its absence.
+func RefuseLinksBelow(root, relPath string) error {
+	current := root
+	for _, component := range strings.Split(filepath.Clean(filepath.FromSlash(relPath)), string(filepath.Separator)) {
+		current = filepath.Join(current, component)
+		info, err := os.Lstat(current)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("%w: path component is a symbolic link: %s", ErrLinkRefused, component)
+		}
+	}
+	return nil
+}
 
 // RefuseLinks checks the complete path without resolving a linked component.
 func RefuseLinks(path string) error {

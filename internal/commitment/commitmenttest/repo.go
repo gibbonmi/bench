@@ -176,6 +176,25 @@ func SeedProtected(t testing.TB, root string) {
 	Write(t, root, "ROADMAP.md", "# Roadmap\n\n## Parked\n\n**FT1 — A**\n\n**FT2 — B**\n\n## Recommended sequence\n\n1. A\n2. B\n")
 }
 
+// PinnedRows commits on main the protected milestone of SeedProtected, and returns the root,
+// one owned assignment worktree of it, and the published policy.
+func PinnedRows(t testing.TB) (root, worktree string, published commitment.Policy) {
+	t.Helper()
+	root = gittest.RepoOnBranch(t, "main")
+	SeedProtected(t, root)
+	Commit(t, root, "protect the rows")
+	published, _, err := commitrepo.Store{Root: root}.Policy()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return root, Assignment(t, root, "pinned-row"), published
+}
+
+// ChangedFrom is the refusal of source whose read bytes are got.
+func ChangedFrom(source commitment.SourceBinding, got string) string {
+	return "commitment source " + strconv.Quote(source.ID) + " changed from " + source.Identity + " to " + commitment.Identity([]byte(got))
+}
+
 // ClosureIndex is the board index that SeedClosure writes. The delivery outcome owns FT1
 // and each residual row in order, and outcome B owns FT2.
 func ClosureIndex(residual ...string) string {

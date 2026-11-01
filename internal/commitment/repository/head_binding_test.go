@@ -1,7 +1,6 @@
 package repository_test
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 
@@ -57,8 +56,7 @@ func stageSource(body string) commitment.SourceBinding {
 
 // changedStage is the refusal of the approved spec source whose bytes became editedBody.
 func changedStage() string {
-	approved := stageSource(approvedBody)
-	return "commitment source " + strconv.Quote(approved.ID) + " changed from " + approved.Identity + " to " + stageSource(editedBody).Identity
+	return commitmenttest.ChangedFrom(stageSource(approvedBody), editedBody)
 }
 
 // The worktree commits its approved binding beside the staged spec that its HEAD holds and
@@ -147,6 +145,56 @@ func TestAdmitPublicationGradesANewBindingAtTheComposedTree(t *testing.T) {
 			}
 			if err == nil || !strings.Contains(err.Error(), row.want) {
 				t.Fatalf("AdmitPublication(a composed changed spec) = %v, want a refusal naming %q", err, row.want)
+			}
+		})
+	}
+}
+
+// A publication grades a changed pinned row at the composed tree. The worktree plans and
+// approves a new identity of FT1 while its working file holds the row edit, then commits the
+// policy, the board, and the row. The composed tree admits the approved row bytes, and it
+// refuses row bytes that changed after the approval with the face of the approval check.
+func TestAdmitPublicationGradesAChangedRowAtTheComposedTree(t *testing.T) {
+	t.Parallel()
+	const approvedRow = "**FT1 — A**\n\nRecord the settled A decision.\n"
+	const rewrittenRow = "**FT1 — A**\n\nAn edit after the approval.\n"
+	for _, row := range []struct{ name, body string }{
+		{name: "approved", body: approvedRow},
+		{name: "changed-after-approval", body: rewrittenRow},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			t.Parallel()
+			root, worktree, policy := commitmenttest.PinnedRows(t)
+			source := &policy.Milestones[0].Outcomes[0].Sources[0]
+			commitmenttest.Write(t, worktree, source.Path, approvedRow)
+			source.Identity = commitment.Identity([]byte(approvedRow))
+			proposal, err := commitment.Bytes(policy)
+			if err != nil {
+				t.Fatal(err)
+			}
+			store := commitrepo.Store{Root: worktree}
+			plan, err := store.Plan(proposal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.Approve(plan.ID, "reviewer sign-off", plan.Effects.Delayed, plan.Effects.Removed); err != nil {
+				t.Fatal(err)
+			}
+			commitmenttest.Write(t, worktree, source.Path, row.body)
+			commitmenttest.Commit(t, worktree, "record the FT1 decision")
+			landProduction(t, root)
+			composed := gittest.Output(t, root, "merge-tree", "--write-tree", "main", gittest.Output(t, worktree, "rev-parse", "HEAD"))
+			err = (commitrepo.Store{Root: root}).AdmitPublication(publication(t, root, worktree), composed)
+			if row.body == approvedRow {
+				if err != nil {
+					t.Fatalf("AdmitPublication(the composed approved row edit) = %v, want admission", err)
+				}
+				return
+			}
+			want := commitmenttest.ChangedFrom(*source, row.body)
+			const protected = "candidate changes protected commitment"
+			if err == nil || !strings.Contains(err.Error(), want) || strings.Contains(err.Error(), protected) {
+				t.Fatalf("AdmitPublication(a composed row that differs from the approval) = %v, want a refusal naming %q from the approval check, not %q", err, want, protected)
 			}
 		})
 	}

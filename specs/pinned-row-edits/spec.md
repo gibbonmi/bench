@@ -1,6 +1,6 @@
 # Record a pinned-row decision with its approved plan
 
-Status: staged
+Status: implemented
 
 Roadmap: FT437
 
@@ -16,7 +16,7 @@ A drain records each settled row decision in the row's `roadmap/FT<n>.md` file.
 When a committed outcome pins that row, the decision cannot reach the file.
 
 - `bench commit` refuses the row edit under the current policy. `protectedCandidate` reads each pinned source at the candidate tree and compares it with the pinned identity (`internal/commitment/repository/candidate.go:239`).
-- `bench commitment plan` refuses an input that names the edited identity. `readTree` reads each existing pinned row at the default-branch tip (`internal/commitment/repository/sources.go:97`).
+- `bench commitment plan` refuses an input that names the edited identity. `readTree` reads each existing pinned row at the default-branch tip (`internal/commitment/repository/sources.go:98`).
 - `bench commit` of an approved policy together with the row edit also refuses. `approvedTransition` reads each plan source through the same `readTree`, so it reads the default-branch tip too (`internal/commitment/repository/candidate.go:211`).
 
 The decision then goes only into an outcome criterion, and the row file keeps its old decision state.
@@ -80,10 +80,10 @@ Harder chunks: none.
 ## Implementation decisions
 
 **One predicate names a changed source.**
-The commitment package gains one predicate beside `NewSource` (`internal/commitment/delivery.go:176`).
+The commitment package gains one predicate beside `NewSource` (`internal/commitment/delivery.go:197`).
 It is true for an outcome source of the proposal when a current outcome source binds the same id and path, and no current outcome source binds the exact same identity.
-It composes `namesSource` (`internal/commitment/delivery.go:182`).
-A deliverable does not use it: `NewDeliverable` keeps its rule (`internal/commitment/delivery.go:158`).
+It composes `namesSource` (`internal/commitment/delivery.go:203`).
+A deliverable does not use it: `NewDeliverable` keeps its rule (`internal/commitment/delivery.go:179`).
 
 **One function keeps the read-location decision.**
 `readTree` stays the one owner of where each source reads.
@@ -103,22 +103,24 @@ The author chooses how the location carries the working-file form; the decision 
 **The working read composes existing guards.**
 The working read refuses a symbolic link in each path component from the store root down to the file.
 A link above the store root does not refuse, because a checkout can sit below a linked directory, such as the temporary directory of macOS.
-For that reason the read does not use `bounds.RefuseLinks`, which walks each ancestor up to the file-system root (`internal/bounds/classify.go:143`).
+For that reason the read does not use `bounds.RefuseLinks`, which walks each ancestor up to the file-system root (`internal/bounds/classify.go:147`).
+The read also does not use `bounds.OpenNoFollow` (`internal/bounds/open.go:16`), because that open calls `bounds.RefuseLinks` first.
 `refuseSymlinkComponents` holds the needed walk for a retro write today (`internal/roadmap/retro.go:76`).
 The ticket moves that walk into `internal/bounds` once, and the retro write and the working read both call it.
 The moved walk names the linked component in a neutral text, because it now serves a read and a write.
+Its refusal wraps `bounds.ErrLinkRefused` (`internal/bounds/classify.go:144`), so that one sentinel marks each link refusal of the package.
 No test pins the full old text. `TestRetroRefusesSymlinkedDestinationComponents` requires the words `symbolic link`, and the neutral text keeps them, so that test needs no edit.
-The read then classifies the file with `bounds.ClassifyNoFollow` (`internal/bounds/classify.go:134`), which binds the control-record limit that the tree read also binds (`internal/git/run.go:154`).
+The read then classifies the file with `bounds.ClassifyNoFollow` (`internal/bounds/classify.go:135`), which binds the control-record limit that the tree read also binds (`internal/git/run.go:154`).
 Only a parsed classification passes, and each other state refuses.
 
 **One normalization serves both reads.**
-The tree read normalizes the bytes with `roadmap.RequirementBytes` and then takes `commitment.Identity` (`internal/commitment/repository/sources.go:38`).
+The tree read normalizes the bytes with `roadmap.RequirementBytes` and then takes `commitment.Identity` (`internal/commitment/repository/sources.go:39`).
 The working read uses the same step, factored once, so the two reads cannot compute two identities for the same bytes.
 `RequirementBytes` drops only the one `Occurrences:` ledger line of a row file (`internal/roadmap/occurrences.go:181`). An `Occurrence:` line stays inside the identity.
 
 **The refusal texts and faces do not change.**
-A read failure keeps the form `commitment source "<id>" refused: <cause>` (`internal/commitment/repository/sources.go:189`).
-An identity mismatch keeps `validateIdentity`, which names the proposed identity and then the read identity (`internal/commitment/repository/sources.go:194`).
+A read failure keeps the form `commitment source "<id>" refused: <cause>` (`internal/commitment/repository/sources.go:190`).
+An identity mismatch keeps `validateIdentity`, which names the proposed identity and then the read identity (`internal/commitment/repository/sources.go:195`).
 A plan refusal keeps the `commitment-plan-input` face, and an approval refusal keeps `commitment-decision` through `replan` (`internal/commitment/repository/admission.go:107`).
 A commit refusal from `approvedTransition` keeps the `commit-handback` face (`internal/commit/commit.go:216`).
 The route-bypass check scans this package, so no new error literal holds a next command (`internal/conformance/registry/route_bypass.go:16`).
@@ -127,7 +129,7 @@ The route-bypass check scans this package, so no new error literal holds a next 
 `BuildPlan` keeps the old identity of a changed row as an open source of the current policy (`internal/commitment/authority.go:72`).
 The proposal does not name that old binding, so it is not a changed source, and it reads the default-branch tip.
 It passes at plan, approve, commit, and landing until the landing publishes.
-No change reaches `BuildPlan`, the plan identity, or `protectedCandidate`.
+No change reaches `BuildPlan` or the plan identity. The read rule of `protectedCandidate` does not change; only its read argument takes the new read-location form.
 Under a policy transition, `protectedCandidate` already reads the candidate policy at the candidate tree (`internal/commitment/repository/candidate.go:75`).
 
 **Story 16 narrows and stays.**
@@ -147,66 +149,10 @@ The move of the link walk is not its own prefactor ticket, because this ticket i
 
 ### Completion plan
 
-This version 1 plan records the author verification and the final checks.
-The orchestrator amends it to version 2 before the first author dispatch.
+This version 2 plan records the delegate execution, the author verification, and the final checks.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "PE-C1",
-      "tickets": [
-        "1-read-changed-pinned-rows.md"
-      ],
-      "verification": [
-        {
-          "id": "plan-approve",
-          "command": "bench test --package ./internal/commitment --run 'PinnedRow|HeadBinding'",
-          "probe": "Make readTree return the default-branch tip for a changed outcome source, and record that TestPinnedRowPlanReadsTheWorkingFile turns red."
-        },
-        {
-          "id": "hostile-read",
-          "command": "bench test --package ./internal/commitment --run 'PinnedRowPlanRefusesAHostileWorkingFile'",
-          "probe": "Replace the guarded working read with a plain os.ReadFile, and record that TestPinnedRowPlanRefusesAHostileWorkingFile turns red."
-        },
-        {
-          "id": "commit",
-          "command": "bench test --package ./internal/commit --run 'CommitmentApprovedRowEdit|CommitmentProtectedScope'",
-          "probe": "Make approvedTransition skip the source read of a changed outcome source, and record that TestCommitmentApprovedRowEdit turns red."
-        },
-        {
-          "id": "landing",
-          "command": "bench test --package ./internal/commitment/repository --run 'AdmitPublication|AuthorizeCandidate'",
-          "probe": "Make approvedTransition read the default-branch tip for a changed outcome source, and record that TestAdmitPublicationGradesAChangedRowAtTheComposedTree turns red."
-        },
-        {
-          "id": "retro-walk",
-          "command": "bench test --package ./internal/roadmap --run 'Retro'",
-          "probe": "Remove the call of the moved component walk from the retro write, and record that TestRetroRefusesSymlinkedDestinationComponents turns red."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "commitment-packages",
-      "command": "bench test --package ./internal/commitment/..."
-    },
-    {
-      "id": "commit-package",
-      "command": "bench test --package ./internal/commit"
-    },
-    {
-      "id": "walk-owners",
-      "command": "bench test --package ./internal/bounds --package ./internal/roadmap"
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check pinned-row-edits"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft437-build-20261031","orchestrator_session":"session_01JK5CPcwpGroiAPWzzXxytc","author_limit":1,"assignments":{"1-read-changed-pinned-rows.md":[{"session":"ft437-author-01","assignment":"76a3920f758a0cd21a81050992211eb9","model":"opus","effort":"medium","source":"fba398122a3165ab735ed509aa85b05136ea716b","native_ref":"claude-agent:bench-writer-medium:ft437-author-01"},{"session":"ft437-author-01-rep1","assignment":"76a3920f758a0cd21a81050992211eb9","model":"opus","effort":"medium","source":"b721eb1ee603d5357e29745b609ba13c60c9c5c2","native_ref":"claude-agent:bench-writer-medium:ft437-author-01-rep1","predecessor":"ft437-author-01","trigger":"user-directed","stopped":"claude-agent:bench-writer-medium:ft437-author-01","preserved":"5fb78f311a1458299ddb06dd07105a52e28e026e"}]}},"chunks":[{"id":"PE-C1","tickets":["1-read-changed-pinned-rows.md"],"verification":[{"id":"plan-approve","command":"bench test --package ./internal/commitment --run 'PinnedRow|HeadBinding'","probe":"Make readTree return the default-branch tip for a changed outcome source, and record that TestPinnedRowPlanReadsTheWorkingFile turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"hostile-read","command":"bench test --package ./internal/commitment --run 'PinnedRowPlanRefusesAHostileWorkingFile'","probe":"Replace the guarded working read with a plain os.ReadFile, and record that TestPinnedRowPlanRefusesAHostileWorkingFile turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"commit","command":"bench test --package ./internal/commit --run 'CommitmentApprovedRowEdit|CommitmentProtectedScope'","probe":"Make approvedTransition skip the source read of a changed outcome source, and record that TestCommitmentApprovedRowEdit turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"landing","command":"bench test --package ./internal/commitment/repository --run 'AdmitPublication|AuthorizeCandidate'","probe":"Make approvedTransition read the default-branch tip for a changed outcome source, and record that TestAdmitPublicationGradesAChangedRowAtTheComposedTree turns red.","ticket":"1-read-changed-pinned-rows.md"},{"id":"retro-walk","command":"bench test --package ./internal/roadmap --run 'Retro'","probe":"Remove the call of the moved component walk from the retro write, and record that TestRetroRefusesSymlinkedDestinationComponents turns red.","ticket":"1-read-changed-pinned-rows.md"}]}],"final_verification":[{"id":"commitment-packages","command":"bench test --package ./internal/commitment/..."},{"id":"commit-package","command":"bench test --package ./internal/commit"},{"id":"walk-owners","command":"bench test --package ./internal/bounds --package ./internal/roadmap"},{"id":"coverage","command":"bench coverage --check pinned-row-edits"}]}
 ```
 
 ## Testing decisions
@@ -232,33 +178,33 @@ The orchestrator amends it to version 2 before the first author dispatch.
 
 | row | story | behavior | seam | why it catches the failure |
 | --- | --- | --- | --- | --- |
-| PE01 | 1 | Plan accepts the new identity of a pinned row while the worktree holds the edit only in its working file | planned TestPinnedRowPlanReadsTheWorkingFile in internal/commitment/pinned_row_test.go | The tip read of today refuses with `changed from`, and a HEAD read refuses because HEAD keeps the published bytes |
-| PE02 | 3 | Plan accepts one proposal that changes the identities of both seeded pinned rows while both working files hold the edits | planned TestPinnedRowPlanReadsTheWorkingFile in internal/commitment/pinned_row_test.go | A read that admits only the first changed source refuses the second |
-| PE03 | 4 | Plan refuses a new identity that the working row file does not hold with `commitment source "FT1" changed from <proposed> to <working>` | planned TestPinnedRowPlanRefusesBytesTheWorkingFileLacks in internal/commitment/pinned_row_test.go | An implementation that passes a changed source without a read admits bytes that no file holds |
-| PE04 | 5 | Plan refuses a new identity that the checkout HEAD holds while the working file holds the published bytes | planned TestPinnedRowPlanRefusesBytesTheWorkingFileLacks in internal/commitment/pinned_row_test.go | A HEAD read admits the committed edit that the working file reverted |
-| PE05 | 10 | A refused plan of a changed pinned row leaves the milestone state of the root and the worktree unchanged | planned TestPinnedRowPlanRefusesBytesTheWorkingFileLacks in internal/commitment/pinned_row_test.go | A kept-rule witness: plan reads each source before its ledger transaction, and this row reds if a change moves the read after the receipt write |
-| PE06 | 2 | Approve writes the proposal bytes into the worktree policy file while the row edit stays uncommitted | planned TestPinnedRowApproveRereadsTheWorkingFile in internal/commitment/pinned_row_test.go | The tip read of today refuses the approval, and a HEAD read refuses it too |
-| PE07 | 6 | Approve refuses a plan whose working row file changed after the plan with the changed-source text and leaves the worktree policy file unchanged | planned TestPinnedRowApproveRereadsTheWorkingFile in internal/commitment/pinned_row_test.go | A kept-rule witness: approve reads each source again on each call, and this row reds if the approval trusts the plan-time read |
-| PE08 | 7 | Plan refuses a changed pinned row whose working path is absent with `commitment source "FT1" refused:` | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | A read that falls back to the tip or to HEAD for a missing file admits a deleted row |
-| PE09 | 7 | Plan refuses a zero-byte working row file even when the proposal names the identity of no bytes | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | A plain file read admits an empty control record, which ADR 0010 calls a failure |
-| PE10 | 7 | Plan refuses a working row file that holds invalid UTF-8 even when the proposal names the identity of those bytes | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | A plain file read admits bytes that the classification calls malformed |
-| PE11 | 7 | Plan refuses a working row file one byte over the control-record limit even when the proposal names the identity of those bytes | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | An unbounded read admits a row that the bounded tree read refuses |
-| PE12 | 7 | Plan refuses a working row path that is a live link to a file with the proposed bytes or a dangling link | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | A read that follows the link admits bytes outside the checkout |
-| PE13 | 7 | Plan refuses a working row path that is a FIFO and returns without a writer on the FIFO | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | A read that opens the path before its type check blocks in open(2) |
-| PE14 | 7 | Plan refuses a working row whose `roadmap` directory is a link to a directory that holds the proposed bytes | planned TestPinnedRowPlanRefusesAHostileWorkingFile in internal/commitment/pinned_row_hostile_test.go | A read that checks only the final component admits bytes behind a linked ancestor |
-| PE15 | 8 | Plan accepts the identity of the working row bytes without their `Occurrences:` ledger line | planned TestPinnedRowPlanNormalizesTheOccurrenceLedger in internal/commitment/pinned_row_test.go | A raw-byte identity differs from the tree identity of the same bytes, so it refuses the identity that the commit reads |
-| PE16 | 9 | Plan refuses a working row file with two `Occurrences:` lines with `has a malformed occurrence ledger` | planned TestPinnedRowPlanNormalizesTheOccurrenceLedger in internal/commitment/pinned_row_test.go | A working read without the ledger step admits a ledger that the tree read refuses |
+| PE01 | 1 | Plan accepts the new identity of a pinned row while the worktree holds the edit only in its working file | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanReadsTheWorkingFile`) | The tip read of today refuses with `changed from`, and a HEAD read refuses because HEAD keeps the published bytes |
+| PE02 | 3 | Plan accepts one proposal that changes the identities of both seeded pinned rows while both working files hold the edits | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanReadsTheWorkingFile`) | A read that admits only the first changed source refuses the second |
+| PE03 | 4 | Plan refuses a new identity that the working row file does not hold with `commitment source "FT1" changed from <proposed> to <working>` | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanRefusesBytesTheWorkingFileLacks`) | An implementation that passes a changed source without a read admits bytes that no file holds |
+| PE04 | 5 | Plan refuses a new identity that the checkout HEAD holds while the working file holds the published bytes | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanRefusesBytesTheWorkingFileLacks`) | A HEAD read admits the committed edit that the working file reverted |
+| PE05 | 10 | A refused plan of a changed pinned row leaves the milestone state of the root and the worktree unchanged | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanRefusesBytesTheWorkingFileLacks`) | A kept-rule witness: plan reads each source before its ledger transaction, and this row reds if a change moves the read after the receipt write |
+| PE06 | 2 | Approve writes the proposal bytes into the worktree policy file while the row edit stays uncommitted | `internal/commitment/pinned_row_test.go` (`TestPinnedRowApproveRereadsTheWorkingFile`) | The tip read of today refuses the approval, and a HEAD read refuses it too |
+| PE07 | 6 | Approve refuses a plan whose working row file changed after the plan with the changed-source text and leaves the worktree policy file unchanged | `internal/commitment/pinned_row_test.go` (`TestPinnedRowApproveRereadsTheWorkingFile`) | A kept-rule witness: approve reads each source again on each call, and this row reds if the approval trusts the plan-time read |
+| PE08 | 7 | Plan refuses a changed pinned row whose working path is absent with `commitment source "FT1" refused:` | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | A read that falls back to the tip or to HEAD for a missing file admits a deleted row |
+| PE09 | 7 | Plan refuses a zero-byte working row file even when the proposal names the identity of no bytes | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | A plain file read admits an empty control record, which ADR 0010 calls a failure |
+| PE10 | 7 | Plan refuses a working row file that holds invalid UTF-8 even when the proposal names the identity of those bytes | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | A plain file read admits bytes that the classification calls malformed |
+| PE11 | 7 | Plan refuses a working row file one byte over the control-record limit even when the proposal names the identity of those bytes | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | An unbounded read admits a row that the bounded tree read refuses |
+| PE12 | 7 | Plan refuses a working row path that is a live link to a file with the proposed bytes or a dangling link | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | A read that follows the link admits bytes outside the checkout |
+| PE13 | 7 | Plan refuses a working row path that is a FIFO and returns without a writer on the FIFO | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | A read that opens the path before its type check blocks in open(2) |
+| PE14 | 7 | Plan refuses a working row whose `roadmap` directory is a link to a directory that holds the proposed bytes | `internal/commitment/pinned_row_hostile_test.go` (`TestPinnedRowPlanRefusesAHostileWorkingFile`) | A read that checks only the final component admits bytes behind a linked ancestor |
+| PE15 | 8 | Plan accepts the identity of the working row bytes without their `Occurrences:` ledger line | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanNormalizesTheOccurrenceLedger`) | A raw-byte identity differs from the tree identity of the same bytes, so it refuses the identity that the commit reads |
+| PE16 | 9 | Plan refuses a working row file with two `Occurrences:` lines with `has a malformed occurrence ledger` | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanNormalizesTheOccurrenceLedger`) | A working read without the ledger step admits a ledger that the tree read refuses |
 | PE17 | 11 | Plan accepts a proposal that keeps the published identity of a pinned row while the worktree HEAD and working file hold an edit of that row | `internal/commitment/head_binding_test.go` (`TestHeadBindingKeepsTheDefaultTipForEveryOtherSource`) | A working-file read for every source refuses the kept identity with `changed from` |
 | PE18 | 12 | Plan refuses a new outcome source at a path that main holds and that no current source binds | `internal/commitment/head_binding_test.go` (`TestHeadBindingReadsANewRowAtHEAD`) | A working-file read for each path that main holds admits an unpinned row edit |
 | PE19 | 13 | Plan refuses a new deliverable that only the working tree holds | `internal/commitment/head_binding_test.go` (`TestHeadBindingRefusesAnUnheldDeliverable`) | A working-file read for deliverables admits an uncommitted spec |
-| PE20 | 14 | `bench commit` of the approved policy, the board, and the row edit exits 0 and adds one commit whose tree holds the new row bytes | planned TestCommitmentApprovedRowEdit in internal/commit/commitment_test.go | The tip read of today in `approvedTransition` refuses the commit |
-| PE21 | 15 | `bench commit` that names the approved policy and the board without the row edit exits 1 with `commitment source "FT1" changed from <new> to <published>` and leaves HEAD in place | planned TestCommitmentApprovedRowEdit in internal/commit/commitment_test.go | An implementation that passes each changed source without a read admits the stale row |
-| PE22 | 16 | `bench commit` whose row bytes differ from the approved identity exits 1 with `commitment source "FT1" changed from <new> to <rewritten>` and leaves HEAD in place | planned TestCommitmentApprovedRowEdit in internal/commit/commitment_test.go | A commit that trusts the approval without a candidate read admits an edit after the approval |
+| PE20 | 14 | `bench commit` of the approved policy, the board, and the row edit exits 0 and adds one commit whose tree holds the new row bytes | `internal/commit/commitment_test.go` (`TestCommitmentApprovedRowEdit`) | The tip read of today in `approvedTransition` refuses the commit |
+| PE21 | 15 | `bench commit` that names the approved policy and the board without the row edit exits 1 with `commitment source "FT1" changed from <new> to <published>` and leaves HEAD in place | `internal/commit/commitment_test.go` (`TestCommitmentApprovedRowEdit`) | An implementation that passes each changed source without a read gets the refusal from `protectedCandidate`, whose `candidate changes protected commitment` face the test refuses |
+| PE22 | 16 | `bench commit` whose row bytes differ from the approved identity exits 1 with `commitment source "FT1" changed from <new> to <rewritten>` and leaves HEAD in place | `internal/commit/commitment_test.go` (`TestCommitmentApprovedRowEdit`) | A commit that trusts the approval without a candidate read gets the refusal from `protectedCandidate`, whose `candidate changes protected commitment` face the test refuses |
 | PE23 | 17 | `bench commit` of a pinned-row edit with no policy change refuses and leaves HEAD in place | `internal/commit/commitment_test.go` (`TestCommitmentProtectedScope`) | A kept-rule witness: with no policy change, `protectedCandidate` reads the current policy at the candidate tree, and this row reds if the change weakens that read |
-| PE24 | 18 | `Store.AdmitPublication` admits the composed tree that holds the approved policy and the row edit | planned TestAdmitPublicationGradesAChangedRowAtTheComposedTree in internal/commitment/repository/head_binding_test.go | The tip read of today in `approvedTransition` refuses the landing |
-| PE25 | 19 | `Store.AdmitPublication` refuses a composed tree whose row bytes differ from the approved identity with the changed-source text | planned TestAdmitPublicationGradesAChangedRowAtTheComposedTree in internal/commitment/repository/head_binding_test.go | A landing that trusts the commit-time read admits bytes that it never graded |
+| PE24 | 18 | `Store.AdmitPublication` admits the composed tree that holds the approved policy and the row edit | `internal/commitment/repository/head_binding_test.go` (`TestAdmitPublicationGradesAChangedRowAtTheComposedTree`) | The tip read of today in `approvedTransition` refuses the landing |
+| PE25 | 19 | `Store.AdmitPublication` refuses a composed tree whose row bytes differ from the approved identity with the changed-source text | `internal/commitment/repository/head_binding_test.go` (`TestAdmitPublicationGradesAChangedRowAtTheComposedTree`) | A landing that trusts the commit-time read gets the refusal from `protectedCandidate`, whose `candidate changes protected commitment` face the test refuses |
 | PE26 | 20 | The Unreleased section of `CHANGELOG.md` holds one entry that names the working-file read at plan and approve and the candidate-tree read at commit and landing | review-owned: the Unreleased section of CHANGELOG.md | A missing entry leaves the read rule only in code after the row file retires |
-| PE27 | 21 | Plan accepts the new identity of a pinned row when the store root of the worktree is a path through a linked parent directory | planned TestPinnedRowPlanReadsTheWorkingFile in internal/commitment/pinned_row_test.go | A link walk up to the file-system root, as `bounds.RefuseLinks` does, refuses this checkout |
+| PE27 | 21 | Plan accepts the new identity of a pinned row when the store root of the worktree is a path through a linked parent directory | `internal/commitment/pinned_row_test.go` (`TestPinnedRowPlanReadsTheWorkingFile`) | A link walk up to the file-system root, as `bounds.RefuseLinks` does, refuses this checkout |
 | PE28 | 22 | `bench retro` still refuses a retro path whose destination component is a symbolic link | `internal/roadmap/retro_test.go` (`TestRetroRefusesSymlinkedDestinationComponents`) | A kept-rule witness: the moved walk must keep the refusal of the retro write |
 | PE29 | 22 | The tree holds one root-relative component-link walk, in `internal/bounds`, and `internal/roadmap` holds no copy | review-owned: `rg -n "refuseSymlinkComponents" internal` returns no hit after the move | A surviving copy is a second source for one link rule |
 
@@ -319,11 +265,11 @@ Won't handle: the interim spec-stage rule for a pinned row — only `roadmap/FT4
 
 ### Pre-review proof checklist
 
-- Cited symbols: `readTree` (`internal/commitment/repository/sources.go:97`), `sourceAt` (`internal/commitment/repository/sources.go:26`), `validateSourceAt` (`internal/commitment/repository/sources.go:186`), `validateIdentity` (`internal/commitment/repository/sources.go:194`), `NewSource` (`internal/commitment/delivery.go:176`), `NewDeliverable` (`internal/commitment/delivery.go:158`), `namesSource` (`internal/commitment/delivery.go:182`), `BuildPlan` (`internal/commitment/authority.go:48`), `approvedTransition` (`internal/commitment/repository/candidate.go:190`), `protectedCandidate` (`internal/commitment/repository/candidate.go:239`), `Store.Plan` (`internal/commitment/repository/repository.go:106`), `Store.approve` (`internal/commitment/repository/repository.go:163`), `Store.AdmitPublication` (`internal/commitment/repository/publication.go:21`), `roadmap.RequirementBytes` (`internal/roadmap/tree_validation.go:32`), `bounds.ClassifyNoFollow` (`internal/bounds/classify.go:134`), `bounds.RefuseLinks` (`internal/bounds/classify.go:143`), and `refuseSymlinkComponents` (`internal/roadmap/retro.go:76`).
+- Cited symbols: `readTree` (`internal/commitment/repository/sources.go:98`), `sourceAt` (`internal/commitment/repository/sources.go:27`), `validateSourceAt` (`internal/commitment/repository/sources.go:187`), `validateIdentity` (`internal/commitment/repository/sources.go:195`), `NewSource` (`internal/commitment/delivery.go:197`), `NewDeliverable` (`internal/commitment/delivery.go:179`), `namesSource` (`internal/commitment/delivery.go:203`), `BuildPlan` (`internal/commitment/authority.go:48`), `approvedTransition` (`internal/commitment/repository/candidate.go:190`), `protectedCandidate` (`internal/commitment/repository/candidate.go:239`), `Store.Plan` (`internal/commitment/repository/repository.go:108`), `Store.approve` (`internal/commitment/repository/repository.go:165`), `Store.AdmitPublication` (`internal/commitment/repository/publication.go:21`), `roadmap.RequirementBytes` (`internal/roadmap/tree_validation.go:32`), `bounds.ClassifyNoFollow` (`internal/bounds/classify.go:135`), `bounds.RefuseLinks` (`internal/bounds/classify.go:147`), and `refuseSymlinkComponents` (`internal/roadmap/retro.go:76`).
 - Import edges: the production code of `internal/commitment/repository` gains `internal/bounds`. `go list -deps ./internal/bounds` names no `internal/commitment` package, so the edge makes no cycle. `internal/roadmap` already imports `internal/bounds` (`internal/roadmap/tree.go:11`).
 - Source-row clauses and occurrences: the table above quotes each clause. The row records seven occurrences, from the 2026-10-18 drain to the 2026-10-29 drain re-plan (`roadmap/FT437.md:23`).
 - Promised field labels: none. No record field changes, so no `Persisted fields:` line applies.
-- Changed-function callers: `bench consumers` at 7b0a83e44 names `readTree` callers at `candidate.go:211`, `sources.go:151`, and `sources.go:164`; `validateSources` callers at `repository.go:127` and `repository.go:215`; the `approvedTransition` caller at `candidate.go:67`; `sourceAt` callers at `closure.go:40`, `repository.go:62`, `sources.go:17`, `sources.go:60`, `sources.go:81`, `sources.go:132`, and `sources.go:187`; and the `NewSource` caller at `sources.go:98`. `refuseSymlinkComponents` has one caller, at `internal/roadmap/retro.go:50`.
+- Changed-function callers: at 4bea51fc8, `readTree` has callers at `candidate.go:211`, `sources.go:152`, and `sources.go:165`; `validateSources` has callers at `repository.go:129` and `repository.go:217`; `approvedTransition` has its caller at `candidate.go:67`; `sourceAt` has callers at `closure.go:40`, `repository.go:62`, `sources.go:18`, `sources.go:61`, `sources.go:82`, `sources.go:133`, and `sources.go:188`; and `NewSource` has its caller at `sources.go:99`. No test calls `sourceAt` directly. `refuseSymlinkComponents` has one caller, at `internal/roadmap/retro.go:50`.
 - Copy survival: the working read and the tree read share one normalization step. PE15 turns red when the working read omits that step. PE29 names the copy-survival check of the moved walk.
 - Rendered-shape readers: the texts `changed from` and `refused:` keep their producers. The moved walk changes the text `destination component is a symbolic link`, and a repository-wide `rg` finds only its producer at `internal/roadmap/retro.go:88`.
 - Pin operators: the plan rows compare the exact error text where the precedent does (`internal/commitment/head_binding_test.go:163`). The commit rows use `strings.Contains` on the standard error, as `refuseCommit` does (`internal/commit/commitment_test.go:86`).

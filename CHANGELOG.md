@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Pinned-row decisions with their approved plan
+
+- Changed the read location of a pinned row whose identity a plan changes. `bench commitment plan` and `bench commitment approve` read that row at the working file of the checkout, so the row edit can stay uncommitted until the approval. `bench commit` and the landing read that row at the candidate tree, so the committed bytes must equal the approved identity. One approved plan and one commit now record a pinned-row decision in its row file. Every other source keeps its read, and a pinned-row edit with no exact approved plan still refuses. The working read refuses a linked path component below the checkout, a special file, and an empty, malformed, or oversized row file. Before, plan, approve, and commit read the row at the default-branch tip, so they refused each pinned-row edit.
+
 ### Known issues in the spec phase
 
 - Changed `/bench-write-spec`. At phase entry, the invoking session reads `docs/known-issues.md` and names each row whose issue can affect a step of the phase. Each charge of an affected step names that path and each affected row by its issue, and the session applies the workaround at its own steps. Before, only one research question read the file.
