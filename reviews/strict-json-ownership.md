@@ -1350,3 +1350,17 @@ Findings: 1. Worst issue: C1, severity 4, confidence 8. The walker rule does not
 - Standards: two fixture comments describe history, a map mixes key kinds, and one control plants nothing.
 - Spec: the reader rule grades only the first node of a name, and any zero-argument `Token` call counts as a JSON read.
 - Coverage: any jsonfile call satisfies the owner reach, and no case covers mutual recursion between plain functions.
+
+## SJ-C5 repair 1 witness reds
+
+The repair session `ft354-repair-05-1` (opus / high) changed two Go test files at `040c6b18`. The process-lifetime check and the strict JSON owner check now share one callee rule, `packageCallees`, with one function index.
+The new predicate `benchModuleRoot` gates the check on the kit module. The new function value and method value walkers, and a linked module with a gate package, went red on the unfixed check.
+
+| subject | mutation | failing witness | restored |
+| --- | --- | --- | --- |
+| `strict_json_owner_test.go` | the module gate to `if false {` | `TestStrictJSONOwnerBites/absent_empty_and_linked_packages` | yes |
+| `strict_json_owner_test.go` | the module path comparison drops its separator | `TestStrictJSONOwnerHoldsOnTheLiveTree` | yes |
+| `process_lifetime_test.go` | the shared method edge removed | `TestProcessLifetimeOwnerEntries` | yes |
+| `registry/checks.go` | plan probe `conformance`, the registry name changed | `TestStrictJSONOwnerRegisteredPath` | yes |
+
+The coordinator probe narrowed the shared function edge to `n.Obj == nil`, and nine `TestStrictJSONOwnerBites` cases turned red, with restored `yes`.
