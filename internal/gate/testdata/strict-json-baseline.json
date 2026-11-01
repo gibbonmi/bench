@@ -1,0 +1,184 @@
+{
+  "cache": {
+    "absent": {
+      "bytes": 0,
+      "state": "absent"
+    },
+    "directory": {
+      "bytes": 0,
+      "reason": "invalid cache metadata",
+      "state": "invalid"
+    },
+    "duplicate key": {
+      "bytes": 219,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "duplicate plus suffix": {
+      "bytes": 222,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "empty": {
+      "bytes": 0,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "framed": {
+      "bytes": 209,
+      "state": "ready"
+    },
+    "framed second value": {
+      "bytes": 212,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "malformed suffix": {
+      "bytes": 213,
+      "reason": "invalid cache framing",
+      "state": "invalid"
+    },
+    "null": {
+      "bytes": 4,
+      "reason": "invalid cache framing",
+      "state": "invalid"
+    },
+    "oversize": {
+      "bytes": 16592,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "second value": {
+      "bytes": 211,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "surrounding whitespace": {
+      "bytes": 214,
+      "reason": "invalid cache framing",
+      "state": "invalid"
+    },
+    "syntax error": {
+      "bytes": 209,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "under a file": {
+      "bytes": 0,
+      "reason": "cache metadata unavailable",
+      "state": "unavailable"
+    },
+    "unframed": {
+      "bytes": 208,
+      "state": "ready"
+    },
+    "unknown field": {
+      "bytes": 221,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "unknown plus duplicate": {
+      "bytes": 232,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "unknown plus suffix": {
+      "bytes": 224,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "whitespace only": {
+      "bytes": 3,
+      "reason": "invalid cache framing",
+      "state": "invalid"
+    },
+    "wide mode": {
+      "bytes": 0,
+      "reason": "invalid cache metadata",
+      "state": "invalid"
+    },
+    "wrong type": {
+      "bytes": 210,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "wrong type plus duplicate": {
+      "bytes": 221,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    },
+    "wrong type plus suffix": {
+      "bytes": 213,
+      "reason": "invalid cache record",
+      "state": "invalid"
+    }
+  },
+  "manifest": {
+    "duplicate key": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: duplicate name"
+    },
+    "duplicate plus suffix": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: unexpected trailing content"
+    },
+    "empty": {
+      "error": "gate: $ROOT/.bench/phases.json: empty manifest: no phases declared"
+    },
+    "framed": {
+      "phases": [
+        "build"
+      ]
+    },
+    "framed second value": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: unexpected trailing content"
+    },
+    "malformed suffix": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: unexpected trailing content"
+    },
+    "nested duplicate key": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: duplicate name"
+    },
+    "nested unknown field": {
+      "error": "gate: $ROOT/.bench/phases.json: unknown field: need"
+    },
+    "null": {
+      "error": "gate: $ROOT/.bench/phases.json: empty manifest: no phases declared"
+    },
+    "second value": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: unexpected trailing content"
+    },
+    "surrounding whitespace": {
+      "phases": [
+        "build"
+      ]
+    },
+    "syntax error": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: invalid character '}' looking for beginning of object key string"
+    },
+    "unframed": {
+      "phases": [
+        "build"
+      ]
+    },
+    "unknown field": {
+      "error": "gate: $ROOT/.bench/phases.json: unknown field: extra"
+    },
+    "unknown plus duplicate": {
+      "error": "gate: $ROOT/.bench/phases.json: unknown field: extra"
+    },
+    "unknown plus suffix": {
+      "error": "gate: $ROOT/.bench/phases.json: unknown field: extra"
+    },
+    "whitespace only": {
+      "error": "gate: $ROOT/.bench/phases.json: empty manifest: no phases declared"
+    },
+    "wrong type": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: json: cannot unmarshal object into Go struct field manifestDoc.lane of type []gate.manifestPhase"
+    },
+    "wrong type plus duplicate": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: json: cannot unmarshal object into Go struct field manifestDoc.lane of type []gate.manifestPhase"
+    },
+    "wrong type plus suffix": {
+      "error": "gate: $ROOT/.bench/phases.json: parse error: json: cannot unmarshal object into Go struct field manifestDoc.lane of type []gate.manifestPhase"
+    }
+  }
+}

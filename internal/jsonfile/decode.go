@@ -11,6 +11,13 @@ import (
 	"reflect"
 )
 
+// The structural refusals carry these categories, so a caller classes them through
+// errors.Is rather than message text.
+var (
+	ErrDuplicateKey = errors.New("duplicate object field")
+	ErrTrailingData = errors.New("trailing JSON")
+)
+
 // Decode decodes one persisted JSON value into target.
 func Decode(data []byte, target any) error {
 	if len(data) == 0 || data[len(data)-1] != '\n' {
@@ -43,7 +50,7 @@ func decodeDocument(body []byte, target any, schema reflect.Type) error {
 	if err := scanValue(scan, schema); err != nil {
 		return err
 	}
-	if err := rejectTrailing(scan); err != nil {
+	if err := RejectTrailing(scan); err != nil {
 		return err
 	}
 
@@ -52,7 +59,7 @@ func decodeDocument(body []byte, target any, schema reflect.Type) error {
 	if err := decoder.Decode(target); err != nil {
 		return fmt.Errorf("decode persisted JSON: %w", err)
 	}
-	return rejectTrailing(decoder)
+	return RejectTrailing(decoder)
 }
 
 func scanValue(decoder *json.Decoder, schema reflect.Type) error {
@@ -77,7 +84,7 @@ func scanValue(decoder *json.Decoder, schema reflect.Type) error {
 				return errors.New("decode persisted JSON object: field name is not a string")
 			}
 			if seen[name] {
-				return fmt.Errorf("duplicate object field %q", name)
+				return fmt.Errorf("%w %q", ErrDuplicateKey, name)
 			}
 			seen[name] = true
 			child, err := objectField(schema, name)
@@ -103,11 +110,13 @@ func scanValue(decoder *json.Decoder, schema reflect.Type) error {
 	return nil
 }
 
-func rejectTrailing(decoder *json.Decoder) error {
+// RejectTrailing refuses anything except JSON whitespace after the value that decoder
+// last read. Its refusal carries ErrTrailingData.
+func RejectTrailing(decoder *json.Decoder) error {
 	if _, err := decoder.Token(); errors.Is(err, io.EOF) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("trailing JSON data: %w", err)
+		return fmt.Errorf("%w data: %w", ErrTrailingData, err)
 	}
-	return errors.New("trailing JSON value")
+	return fmt.Errorf("%w value", ErrTrailingData)
 }
