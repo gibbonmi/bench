@@ -6,7 +6,7 @@ Roadmap: FT439
 
 Decision source: named reviewed artifact — `roadmap/FT439.md` at its pinned identity `sha256:8bd6b4fe1bfaa7193b00715fed1d003cb2212467a025a1b13bd5da9bdc6600d9` (the source of outcome `FT439-comment-correction` in `.bench/commitment.json`), which holds the reviewer decision of 2026-10-21.
 
-Verification log: pending
+Verification log: 2 iteration(s) to accept — the spec round and the ticket round each took 1 iteration. The spec round folded ten prose and accounting findings. After that round, the CG-C2 slicing scratch runs found two prose-bound reds in exact guidance sentences, and the coordinator refit both sentences before the ticket round graded them. The ticket round folded three prose findings. Reviewer sign-off 2026-11-01.
 
 ## Problem
 
@@ -76,7 +76,7 @@ Harder chunks: CG-C2.
   - The doc comment of `chunkChainAnchors` gains one short sentence that names the retired refreeze sentences. Its current sentence of about 80 words stays as it is.
 - The anchor registry adds no Require row for the new guidance sentences. The admission test refuses a Require row without a label, route, invariant, or command class (`internal/anchors/locate_test.go:93-111`), and these sentences hold none of those.
 - `CHANGELOG.md` gets one `### Review chain after a comment-only correction` section under `## [Unreleased]`. Its two old entries at lines 238 and 239 stay as history.
-- The two scorecard decisions at `capture/agent-performance/claude-models.md:79-80` lose their false reasons. Line 79 no longer says that the review chain refuses any source commit between two chunks. Line 80 says that a refreeze stales the reviews, in place of the claim that it orphans every verification.
+- The two scorecard decisions at `capture/agent-performance/claude-models.md:80-81` lose their false reasons. Line 80 no longer says that the review chain refuses any source commit between two chunks. Line 81 says that a refreeze stales the reviews, in place of the claim that it orphans every verification.
 
 ## Implementation chunks
 
@@ -176,8 +176,8 @@ CG-C2 changes the guidance, the anchor registry, the changelog, and the scorecar
 | CG22 | 15 | The anchor registry reds the implement phase when it holds `Each source change except a record commit or a recorded fold moves the chunk tip` | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | Without the Forbid row, the mirror row that restores the retired sentence raises no diagnostic |
 | CG23 | 16 | The anchor registry reds the implement phase when it holds `comment-only corrections follow the chunk tip` | `internal/anchors/registry_chunk_chain_test.go` (`TestChunkChainAnchors`) | A removal of the Forbid row leaves its mirror row with no diagnostic, so the unscoped wording can return |
 | CG24 | 17 | `CHANGELOG.md` holds one `### Review chain after a comment-only correction` section under `## [Unreleased]` | review-owned: the section in `CHANGELOG.md` | A missing entry leaves a linked repository with no record of the changed rule |
-| CG25 | 18 | The scorecard decision on chunk bases names no review-chain refusal of each source commit between two chunks | review-owned: line 79 of `capture/agent-performance/claude-models.md` | The kept reason is false after CG-C1 |
-| CG26 | 18 | The scorecard decision on comment-only corrections gives the review staleness of a refreeze as its reason | review-owned: line 80 of `capture/agent-performance/claude-models.md` | The kept reason names orphaned verifications, which FT445 made false |
+| CG25 | 18 | The scorecard decision on chunk bases names no review-chain refusal of each source commit between two chunks | review-owned: line 80 of `capture/agent-performance/claude-models.md` | The kept reason is false after CG-C1 |
+| CG26 | 18 | The scorecard decision on comment-only corrections gives the review staleness of a refreeze as its reason | review-owned: line 81 of `capture/agent-performance/claude-models.md` | The kept reason names orphaned verifications, which FT445 made false |
 
 ### Edge inventory
 
@@ -224,14 +224,14 @@ The decision source names the review-chain check and the bounded repair policy. 
 - The implement phase sentence (`.agents/commands/bench-implement-spec.md:60`): the Q2 readers found that it requires a refreeze for each source change except a record commit or a recorded fold.
 - The review phase base rule (`.agents/commands/bench-review-implementation.md:99`): the Q2 readers found that it admits only the predecessor tip.
 - The anchor registry rows (`internal/anchors/registry_chunk_chain.go:20`, `internal/anchors/registry_chunk_chain_test.go:22`): the Q2 readers found a Forbid row on an unscoped wording of the rule that FT439 restores. The spec keeps that row and adds two Forbid rows in the same registry.
-- The scorecard decisions (`capture/agent-performance/claude-models.md:79-80`): the Q2 reader A found that both reasons become false.
+- The scorecard decisions (`capture/agent-performance/claude-models.md:80-81`): the Q2 reader A found that both reasons become false.
 
 ### Flagged additions
 
 - The covered-digest check moves onto the shared predicate. Its behavior stays, and CG13 guards it.
 - The registry adds two Forbid rows for the retired refreeze sentences, with two mirror rows.
 - The bounded repair policy names `Go` in its line 49, which narrows the old sentence to the scope that the checkpoint proves. Lines 48 and 50 already name `Go`.
-- The scorecard decisions at lines 79 and 80 change their reasons.
+- The scorecard decisions at lines 80 and 81 change their reasons.
 
 ### Source-sentence-to-row table
 

@@ -25,7 +25,7 @@ Add one mirror row for each new Forbid row to `TestChunkChainAnchors` in `intern
 
 Add one `### Review chain after a comment-only correction` section under `## [Unreleased]` in `CHANGELOG.md`. Keep lines 238 and 239 as history, and keep the rows that `internal/anchors/registry_data.go:94` and `:158` hold on that file.
 
-Change the reasons of the two decisions at `capture/agent-performance/claude-models.md:79-80`. Line 79 no longer says that the review chain refuses any source commit between two chunks. Line 80 gives the review staleness of a refreeze as its reason, in place of orphaned verifications.
+Change the reasons of the two decisions at `capture/agent-performance/claude-models.md:80-81`. Line 80 no longer says that the review chain refuses any source commit between two chunks. Line 81 gives the review staleness of a refreeze as its reason, in place of orphaned verifications.
 
 The spec-stage close writes the deliverable binding to `.bench/commitment.json`. This ticket names the file so that exactly one ticket holds it.
 
