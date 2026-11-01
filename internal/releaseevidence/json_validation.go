@@ -18,12 +18,15 @@ func decodeStrict(data []byte, value any) error {
 }
 
 // decodeDocument decodes data through jsonfile.DecodeDocument with the release diagnostics. A
-// duplicate key outranks a suffix, and a suffix outranks a typed refusal.
+// duplicate key outranks a suffix, and a suffix outranks a typed refusal. After a decode, it
+// refuses a document that an untyped decode refuses, such as a number out of float64 range.
 func decodeDocument(data []byte, value any) error {
 	err := jsonfile.DecodeDocument(data, value)
 	switch {
 	case err == nil:
-		return nil
+		// The typed decode skips the numbers inside a json.RawMessage value. This untyped decode
+		// reads them.
+		return json.Unmarshal(data, new(any))
 	case errors.Is(err, jsonfile.ErrDuplicateKey):
 		return duplicateKeyError{err}
 	case errors.Is(err, jsonfile.ErrTrailingData):

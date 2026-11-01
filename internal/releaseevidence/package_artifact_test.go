@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/jsonfile/jsonfiletest"
 )
 
 func TestOfflineNetworkControlEnvelopeWriter(t *testing.T) {
@@ -272,4 +274,16 @@ func TestPackageIdentityJSONCompatibility(t *testing.T) {
 			}
 		})
 	}
+
+	overflow := `{` + identity + `,"size":` + overflowNumber + `}`
+	current := map[string]string{}
+	for label, pkg := range map[string]string{
+		"raw overflow":                overflow,
+		"duplicate plus raw overflow": strings.Replace(overflow, "{", `{"name":"other",`, 1),
+	} {
+		current[label] = resultText(validate(t, pkg))
+	}
+	var stored releaseJSONResults
+	jsonfiletest.ReadBaseline(t, releaseJSONBaseline, &stored)
+	t.Run("package baseline", func(t *testing.T) { jsonfiletest.Compare(t, current, stored.Package) })
 }

@@ -209,6 +209,7 @@
     "native proof / wrong type plus duplicate": "duplicate JSON key \"schema_version\"",
     "native proof / wrong type plus suffix": "invalid JSON",
     "producer envelope / duplicate key": "producer record public.ft87.offline_network_control is malformed: duplicate JSON key \"schema_version\"",
+    "producer envelope / duplicate plus raw overflow": "producer record public.ft87.offline_network_control is malformed: duplicate JSON key \"schema_version\"",
     "producer envelope / duplicate plus suffix": "producer record public.ft87.offline_network_control is malformed: invalid JSON",
     "producer envelope / empty": "requirement public.ft87.offline_network_control is missing a final newline",
     "producer envelope / escaped duplicate key": "producer record public.ft87.offline_network_control is malformed: duplicate JSON key \"schema_version\"",
@@ -219,6 +220,7 @@
     "producer envelope / nested unknown field": "producer record public.ft87.offline_network_control is malformed: json: unknown field \"extra\"",
     "producer envelope / null": "producer record public.ft87.offline_network_control has mismatched schema, key, owner, or status",
     "producer envelope / raw duplicate key": "producer record public.ft87.offline_network_control is malformed: duplicate JSON key \"flag\"",
+    "producer envelope / raw overflow": "producer record public.ft87.offline_network_control is malformed: json: cannot unmarshal number 1e999 into Go value of type float64",
     "producer envelope / second value": "producer record public.ft87.offline_network_control is malformed: invalid JSON",
     "producer envelope / surrounding whitespace": "accepted",
     "producer envelope / syntax error": "producer record public.ft87.offline_network_control is malformed: invalid JSON",
@@ -297,5 +299,9 @@
     "wrong type": "component manifest is malformed: json: cannot unmarshal string into Go value of type int",
     "wrong type plus duplicate": "component manifest is malformed: duplicate JSON key \"schema_version\"",
     "wrong type plus suffix": "component manifest is malformed: invalid character '{' after top-level value"
+  },
+  "package": {
+    "duplicate plus raw overflow": "package identity is malformed",
+    "raw overflow": "package identity is malformed"
   }
 }

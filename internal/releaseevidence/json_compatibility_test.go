@@ -23,10 +23,14 @@ const releaseJSONBaseline = "testdata/strict-json-baseline.json"
 type releaseJSONResults struct {
 	Release   map[string]string `json:"release"`
 	Component map[string]string `json:"component"`
+	Package   map[string]string `json:"package"`
 }
 
 // accepted is the result of a document that its reader accepts.
 const accepted = "accepted"
+
+// overflowNumber is a JSON number out of float64 range, which an untyped decode refuses.
+const overflowNumber = "1e999"
 
 // releaseReader is one strict release reader and the seed of its baseline family.
 type releaseReader struct {
@@ -36,8 +40,11 @@ type releaseReader struct {
 	// panics marks an embedded registry loader. Its panic message carries no error chain.
 	panics bool
 	// raw is a member inside a json.RawMessage value, which only the structural check reads.
-	raw  string
-	read func(t *testing.T, body []byte) error
+	raw string
+	// overflow is a document whose raw value holds overflowNumber. An empty overflow omits the
+	// overflow cases.
+	overflow string
+	read     func(t *testing.T, body []byte) error
 }
 
 // cases derives the baseline family of r. The release family adds an escaped duplicate key and
@@ -53,6 +60,10 @@ func (r releaseReader) cases(t *testing.T) map[string]string {
 			t.Fatalf("raw member %q is not in %q", r.raw, r.seed.Valid)
 		}
 		cases["raw duplicate key"] = strings.Replace(r.seed.Valid, r.raw, r.raw+","+r.raw, 1)
+	}
+	if r.overflow != "" {
+		cases["raw overflow"] = r.overflow
+		cases["duplicate plus raw overflow"] = strings.Replace(r.overflow, r.seed.Member, r.seed.Member+","+r.seed.Member, 1)
 	}
 	if r.framed {
 		for name, body := range cases {
@@ -155,15 +166,18 @@ func resultText(err error) string {
 }
 
 // releaseReaders holds the strict release readers. Each reads a body through its real validator.
-// The native proof reader runs the decode and match steps of inspectNativeProofs without its
-// release plan.
+// The native proof reader runs checkNativeProof with fixed digests and no release plan.
 func releaseReaders(t *testing.T) map[string]releaseReader {
 	t.Helper()
 	commit, version := "abc123", fixtureVersion
 	producer := ft87Requirement(t)
+	envelope := func(payload, sum string) string {
+		return fmt.Sprintf(`{"schema_version":1,"key":%q,"owner":%q,"schema":%q,"identity":{"source_commit":%q,"package_version":%q},"status":"satisfied","reason":"","payload":%s,"digest":%q}`,
+			producer.Key, producer.Owner, producer.Schema, commit, version, payload, sum)
+	}
 	payload := `{"flag":"BENCH_OFFLINE=1","journeys":["direct"]}`
-	envelope := fmt.Sprintf(`{"schema_version":1,"key":%q,"owner":%q,"schema":%q,"identity":{"source_commit":%q,"package_version":%q},"status":"satisfied","reason":"","payload":%s,"digest":%q}`,
-		producer.Key, producer.Owner, producer.Schema, commit, version, payload, digest(mustCanonicalPayload([]byte(payload))))
+	// The overflow envelope carries the digest of empty bytes, so only the overflow refusal stops it.
+	overflow := envelope(strings.TrimSuffix(payload, "}")+`,"n":`+overflowNumber+`}`, digest(nil))
 	rootSeed := func(valid string) jsonfiletest.Seed {
 		return jsonfiletest.Seed{Valid: valid, Member: `"schema_version":1`, Wrong: `"schema_version":"1"`}
 	}
@@ -173,7 +187,7 @@ func releaseReaders(t *testing.T) map[string]releaseReader {
 	}
 	reproducibility := jsonfiletest.Seed{Valid: `{"schema_version":1,"status":"green","builds":2,"artifacts":[{"name":"bench.tgz","size":1,"sha256":"aa","match":true}],"evidence":[]}`, Member: `"builds":2`, Wrong: `"builds":"2"`, Nested: `"match":true`}
 	proofTarget := targetEvidence{OS: "linux", Arch: "amd64", Runner: "native"}
-	producerSeed := rootSeed(envelope)
+	producerSeed := rootSeed(envelope(payload, digest(mustCanonicalPayload([]byte(payload)))))
 	producerSeed.Nested = fmt.Sprintf(`"source_commit":%q`, commit)
 
 	readers := map[string]releaseReader{
@@ -187,7 +201,7 @@ func releaseReaders(t *testing.T) map[string]releaseReader {
 			panics: true,
 			read:   embeddedReader(&requirementsJSON, func() { loadRequirements() }),
 		},
-		"producer envelope": {seed: producerSeed, framed: true, raw: `"flag":"BENCH_OFFLINE=1"`, read: func(t *testing.T, body []byte) error {
+		"producer envelope": {seed: producerSeed, framed: true, raw: `"flag":"BENCH_OFFLINE=1"`, overflow: overflow, read: func(t *testing.T, body []byte) error {
 			return validateRequirementBytes(producer, body, Identity{SourceCommit: &commit, PackageVersion: &version})
 		}},
 		"SPDX document": {seed: spdx, read: func(t *testing.T, body []byte) error {
@@ -206,14 +220,14 @@ func releaseReaders(t *testing.T) map[string]releaseReader {
 			return err
 		}},
 		"native proof": {seed: rootSeed(`{"schema_version":1,"target":"linux-amd64","runner":"native","status":"green","rebuilt_sha256":"bin","binary_sha256":"bin","package_sha256":"pkg","archive_sha256":"arc","musl_status":"green","operations_status":"green","strip_status":"green","tools_status":"green"}`), read: func(t *testing.T, body []byte) error {
-			var proof nativeProofEvidence
-			if err := decodeStrict(body, &proof); err != nil {
-				return err
+			_, err := checkNativeProof("native proof", body, proofTarget, func() (nativeProofDigests, error) {
+				return nativeProofDigests{binary: "bin", pkg: "pkg", archive: "arc"}, nil
+			})
+			// The baseline holds the bare decode cause, as decodeStrict reports it.
+			if cause := errors.Unwrap(err); cause != nil {
+				return cause
 			}
-			if !nativeProofMatches(proof, proofTarget, "bin", "pkg", "arc") {
-				return errors.New("native proof does not match inspected artifacts")
-			}
-			return nil
+			return err
 		}},
 	}
 	for key, valid := range governanceSeeds {
