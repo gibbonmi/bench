@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/canonicalpath"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
@@ -259,4 +260,36 @@ func TestGatherAssignmentTarget(t *testing.T) {
 			t.Errorf("AssignmentTarget in the primary checkout = %q, want empty", facts.AssignmentTarget)
 		}
 	})
+}
+
+// TestGatherBinarySealRebuildReadsTheBenchHome drives the gather over a stale seal at a
+// root in the pool of the process Bench home. The gather must grade the pool of that
+// home, so the gathered rebuild names the build verb for the root.
+func TestGatherBinarySealRebuildReadsTheBenchHome(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv(benchhome.Env, home)
+	seeded, slug := preflighttest.SeedConformant(t)
+	root := filepath.Join(home, "worktrees", "k", "x")
+	if err := os.MkdirAll(filepath.Dir(root), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(seeded, root); err != nil {
+		t.Fatalf("Rename(%q, %q): %v", seeded, root, err)
+	}
+	t.Chdir(root)
+	sealFixtureRoot(t, root)
+	publishSealedBinary(t, root)
+	preflighttest.MustWriteFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() { _ = 1 }\n")
+
+	facts, bootErr := Gather(root, "review", slug)
+	if bootErr != nil {
+		t.Fatalf("Gather = %+v, want facts", bootErr)
+	}
+	if facts.BinarySealRefusal == nil {
+		t.Fatal("fixture invalid: the gathered seal is not stale")
+	}
+	want := "bench worktree build '" + root + "'"
+	if !facts.BinarySealRebuild.Worktree || facts.BinarySealRebuild.Action != want {
+		t.Errorf("BinarySealRebuild = %+v, want a worktree rebuild with Action %q", facts.BinarySealRebuild, want)
+	}
 }
