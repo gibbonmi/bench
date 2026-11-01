@@ -356,10 +356,11 @@ bench_env_unicode_octal() {
 # internal/freshness's shellQuote and CheckoutRebuildAction, whose Go half is the source
 # of the invocation. This copy exists only because the invocation is needed at the one
 # moment the Go binary cannot run, so nothing can ask it for the string. The copy keeps
-# the cd form for a pool root too: it prints only while the follow-on guard is off, and
-# then the hook passes the cd form and blocks the worktree build verb. internal/systemtest
-# asserts the printed line against freshness.CheckoutRebuildAction, so a drift between
-# the two reds.
+# the cd form for a pool root too: it prints only while the follow-on guard is off. With
+# an unreachable core, the hook allows every call, but the build verb has no core to run.
+# With a stale core, the hook passes the cd form and blocks every Bench call.
+# internal/systemtest asserts the printed line against freshness.CheckoutRebuildAction,
+# so a drift between the two reds.
 bench_shell_quote() {
   _bench_quote_rest=$1
   _bench_quote_out=''

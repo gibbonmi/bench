@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Rebuild remedy for a pool worktree
+
+- Changed the rebuild remedy for a stale Bench binary in a pool worktree. One owner now names `bench worktree build '<root>'` for each root whose `cd` form the pool guard refuses, and it keeps the `cd` form for every other root. The stale-binary refusal, `bench commands --brief`, and the live-binary warning of a release or clean read that owner. The `binary-seal` row of the build preflight reads the root kind from the same owner: for a pool root, its next step is `bench worktree build '<root>'` in place of `bench worktree build <assignment id>`, and any other root shows the whole refusal with no next step. The shell copy in the hook library keeps the `cd` form, because it prints only while the follow-on guard is off. Before, each Go remedy except the `binary-seal` row named a `cd` into the pool path, which the hooks refuse.
+
 ### Pinned-row decisions with their approved plan
 
 - Changed the read location of a pinned row whose identity a plan changes. `bench commitment plan` and `bench commitment approve` read that row at the working file of the checkout, so the row edit can stay uncommitted until the approval. `bench commit` and the landing read that row at the candidate tree, so the committed bytes must equal the approved identity. One approved plan and one commit now record a pinned-row decision in its row file. Every other source keeps its read, and a pinned-row edit with no exact approved plan still refuses. The working read refuses a linked path component below the checkout, a special file, and an empty, malformed, or oversized row file. Before, plan, approve, and commit read the row at the default-branch tip, so they refused each pinned-row edit.

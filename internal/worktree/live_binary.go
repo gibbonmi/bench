@@ -15,17 +15,18 @@ import (
 // branch too.
 
 // warnBeforeRemovingLiveBinary tells the caller that removing candidate out of root
-// disables the binary answering bench, and names the command that rebuilds it. It stays
-// silent for any other candidate. The warning goes to the ambient warnings writer. The
-// guard runs below every command's writer, so the warning must land while the removal is
-// proposed, not in a plan the caller reads afterward.
+// disables the binary answering bench, and names the command that rebuilds it in the pool
+// of the verb's own home, because the release grades that pool. It stays silent for any
+// other candidate. The warning goes to the ambient warnings writer. The guard runs below
+// every command's writer, so the warning must land while the removal is proposed, not in
+// a plan the caller reads afterward.
 func warnBeforeRemovingLiveBinary(j joins, a ambient, root, candidate string) {
 	if !isRunningBinary(j, candidate) {
 		return
 	}
 	fmt.Fprintf(a.warnings,
 		"bench: %s is the binary currently answering bench; removing it disables the CLI, the git guard it backs, and the gate's BENCH_RUN_BINARY at once. Rebuild it with: %s\n",
-		candidate, freshness.RebuildAction(root))
+		candidate, freshness.RebuildIn(a.home, root).Action)
 }
 
 // isRunningBinary reports whether candidate is the very file this process is running.

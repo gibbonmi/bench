@@ -166,6 +166,9 @@ type Facts struct {
 	// carries the reason and the one rebuild sentence, so the row renders
 	// them rather than composing a second copy.
 	BinarySealRefusal *freshness.Refusal
+
+	// BinarySealRebuild is the owner's rebuild remedy and root kind for that root.
+	BinarySealRebuild freshness.Rebuild
 }
 
 // CheckResult is one verdict row: the check's name, its verdict ("green" or

@@ -9,7 +9,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
-	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // TestBinarySealRedsAMismatchedDestination covers BF26. A build whose
@@ -87,11 +86,11 @@ func TestBinarySealIsBuildModeOnly(t *testing.T) {
 	}
 }
 
-// sealFixtureRoot is the smallest rebuildable root the seal primitives accept: a module
-// whose ./cmd/bench resolves, plus the build-inputs manifest the source digest reads.
-func sealFixtureRoot(t *testing.T) string {
+// sealFixtureRoot writes at root the smallest rebuildable root the seal primitives accept:
+// a module whose ./cmd/bench resolves, plus the build-inputs manifest the source digest
+// reads.
+func sealFixtureRoot(t *testing.T, root string) string {
 	t.Helper()
-	root := t.TempDir()
 	for name, body := range map[string]string{
 		"go.mod":                      "module example.com/sealfixture\n\ngo 1.25\n",
 		"cmd/bench/main.go":           "package main\n\nfunc main() {}\n",
@@ -134,6 +133,7 @@ func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		place   func(*testing.T, string)
+		pool    bool
 		present bool
 		refused bool
 	}{
@@ -179,17 +179,40 @@ func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
 			present: true,
 			refused: true,
 		},
+		{
+			// The root lies in the pool of the explicit home, so the owner names the build
+			// verb for the path.
+			name: "stale seal in the pool",
+			place: func(t *testing.T, root string) {
+				publishSealedBinary(t, root)
+				preflighttest.MustWriteFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() { _ = 1 }\n")
+			},
+			pool:    true,
+			present: true,
+			refused: true,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := sealFixtureRoot(t)
+			home := t.TempDir()
+			root := t.TempDir()
+			if tc.pool {
+				root = filepath.Join(home, "worktrees", "k", "x")
+			}
+			sealFixtureRoot(t, root)
 			tc.place(t, root)
 
-			present, refusal := binarySealFacts(root)
+			present, refusal, rebuild := binarySealFacts(home, root)
 			if present != tc.present {
 				t.Errorf("binarySealFacts present = %v, want %v (refusal %v)", present, tc.present, refusal)
 			}
 			if refused := refusal != nil; refused != tc.refused {
 				t.Errorf("binarySealFacts refusal = %v, want refused = %v", refusal, tc.refused)
+			}
+			if rebuild.Worktree != tc.pool {
+				t.Errorf("binarySealFacts rebuild = %+v, want Worktree %v", rebuild, tc.pool)
+			}
+			if want := "bench worktree build '" + root + "'"; tc.pool && rebuild.Action != want {
+				t.Errorf("binarySealFacts rebuild action = %q, want %q", rebuild.Action, want)
 			}
 		})
 	}
@@ -200,7 +223,7 @@ func TestBinarySealFactsGradeARootOnDisk(t *testing.T) {
 // row an operator reads is the whole point: a --full build that trusts a
 // link to nothing runs an executable nobody can name.
 func TestDanglingDestinationBinaryRedsBinarySealInBuildMode(t *testing.T) {
-	root := sealFixtureRoot(t)
+	root := sealFixtureRoot(t, t.TempDir())
 	executable := freshness.PublishedExecutable(root)
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
@@ -212,7 +235,7 @@ func TestDanglingDestinationBinaryRedsBinarySealInBuildMode(t *testing.T) {
 	f := baseFacts()
 	f.Mode = modeBuild
 	f.TicketsDirExists = true
-	f.BinarySealPresent, f.BinarySealRefusal = binarySealFacts(root)
+	f.BinarySealPresent, f.BinarySealRefusal, f.BinarySealRebuild = binarySealFacts(t.TempDir(), root)
 
 	v := Decide(f)
 	c, ok := checkRow(v, "binary-seal")
@@ -228,39 +251,43 @@ func TestDanglingDestinationBinaryRedsBinarySealInBuildMode(t *testing.T) {
 }
 
 // TestBinarySealRemedyNamesTheWorktreeBuildVerb grades the remedy a stale binary
-// carries. An assignment worktree sits under the pool path, and the hooks refuse a cd
-// into the pool path, so the owned row names `bench worktree build` and no cell names
-// the verifier's cd route. A root no assignment owns keeps the verifier's refusal whole.
+// carries. The hooks refuse a cd into the pool path, so a pool root states the reason
+// alone, names the owner's build remedy as its next step, and no cell names the cd route.
+// Any other root keeps the verifier's refusal whole with no next step, also when an
+// assignment owns it, because the root kind comes from the owner alone.
 func TestBinarySealRemedyNamesTheWorktreeBuildVerb(t *testing.T) {
-	root := sealFixtureRoot(t)
-	publishSealedBinary(t, root)
-	preflighttest.MustWriteFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() { _ = 1 }\n")
+	refusal := &freshness.Refusal{Executable: "/root/dist/bench", RepairRoot: "/root", Cause: errors.New("source digest mismatch")}
+	checkout := freshness.Rebuild{Action: freshness.CheckoutRebuildAction("/root")}
+	pool := freshness.Rebuild{Action: "bench worktree build '/root'", Worktree: true}
+	for _, tc := range []struct {
+		name, target         string
+		rebuild              freshness.Rebuild
+		wantDetail, wantNext string
+	}{
+		{name: "pool root", rebuild: pool, wantDetail: refusal.Reason(), wantNext: pool.Action},
+		{name: "checkout root", rebuild: checkout, wantDetail: refusal.Error()},
+		{name: "owned checkout root", target: "a1b2c3", rebuild: checkout, wantDetail: refusal.Error()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := baseFacts()
+			f.Mode = modeBuild
+			f.TicketsDirExists = true
+			f.BinarySealPresent, f.BinarySealRefusal, f.BinarySealRebuild = true, refusal, tc.rebuild
+			f.AssignmentTarget = tc.target
 
-	f := baseFacts()
-	f.Mode = modeBuild
-	f.TicketsDirExists = true
-	f.BinarySealPresent, f.BinarySealRefusal = binarySealFacts(root)
-
-	f.AssignmentTarget = "a1b2c3"
-	owned, _ := checkRow(Decide(f), "binary-seal")
-	if want := usage.WorktreeBuildFor(f.AssignmentTarget); owned.Verdict != verdictRed || owned.Next != want {
-		t.Errorf("owned binary-seal row = %+v, want red with next %q", owned, want)
-	}
-	// The expectation above reads the fill that the row uses, so this check is the one that
-	// sees a fill that leaves the slot open.
-	if !strings.HasSuffix(owned.Next, " "+f.AssignmentTarget) {
-		t.Errorf("owned binary-seal next %q does not name the target %q", owned.Next, f.AssignmentTarget)
-	}
-	for _, cell := range []string{owned.Detail, owned.Next} {
-		if strings.Contains(cell, "cd ") || strings.Contains(cell, "scripts/go-build.sh") {
-			t.Errorf("owned binary-seal cell %q names the cd route the hooks refuse in the pool path", cell)
-		}
-	}
-
-	f.AssignmentTarget = ""
-	unowned, _ := checkRow(Decide(f), "binary-seal")
-	if unowned.Verdict != verdictRed || !strings.Contains(unowned.Detail, freshness.RebuildAction(root)) || unowned.Next != "" {
-		t.Errorf("unowned binary-seal row = %+v, want red carrying the verifier's rebuild action %q", unowned, freshness.RebuildAction(root))
+			row, _ := checkRow(Decide(f), "binary-seal")
+			if row.Verdict != verdictRed || row.Detail != tc.wantDetail || row.Next != tc.wantNext {
+				t.Errorf("binary-seal row = %+v, want red with detail %q and next %q", row, tc.wantDetail, tc.wantNext)
+			}
+			if !tc.rebuild.Worktree {
+				return
+			}
+			for _, cell := range []string{row.Detail, row.Next} {
+				if strings.Contains(cell, "cd ") || strings.Contains(cell, "scripts/go-build.sh") {
+					t.Errorf("pool binary-seal cell %q names the cd route the hooks refuse in the pool path", cell)
+				}
+			}
+		})
 	}
 }
 

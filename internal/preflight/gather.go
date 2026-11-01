@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
@@ -101,7 +102,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	if defaultTipFailure != nil {
 		return Facts{}, defaultTipFailure
 	}
-	sealPresent, sealRefusal := binarySealFacts(root)
+	sealPresent, sealRefusal, sealRebuild := binarySealFacts(benchhome.Dir(), root)
 	var audited staleness.AuditFacts
 	if audit {
 		source := ownership.Source{Base: resolvedSource.Base, Tip: resolvedSource.Tip, SpecPath: specPath}
@@ -144,6 +145,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		TicketsDirExists:      ticketFacts.dirExists,
 		BinarySealPresent:     sealPresent,
 		BinarySealRefusal:     sealRefusal,
+		BinarySealRebuild:     sealRebuild,
 	})), nil
 }
 
