@@ -300,3 +300,13 @@ Each item is an initial-round concern at severity 2 or lower and is not a correc
 - Standards S2 and Spec P1 (severity 1): the spec delta corrects the FT380 criterion citation. The staleness pass made that correction in its enabling plan commit, so no repair target remains.
 - Coverage C1 (severity 1): the `covered == later` clause of `digestFollows` duplicates the equal-tree answer of `commentgap.Prove`, and a probe that omits it is silent. The spec decision names both forms, and the clause skips a tree diff for equal digests.
 - Spec advice: the `chain base` case writes `correctCommentGap` and then overwrites the same file.
+
+## CG-C2 ticket 02 author witness reds
+
+The ticket 02 author `ft439-author-02` (opus / high) added the two mirror rows before their Forbid rows. It ran `TestChunkChainAnchors` once, and that test went red with two failure lines. The visible line names the retired implement-phase sentence with no diagnostic. The output cut the second line, which is the mirror row of the bounded repair policy.
+The plan probes `anchors` and `guidance` answered `bit` after the ticket commit `dd48bf924`, and the record holds them.
+
+| subject | condition | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/anchors/registry_chunk_chain.go` | no Forbid row on the retired implement-phase sentence | `TestChunkChainAnchors` | CG22 |
+| `internal/anchors/registry_chunk_chain.go` | no Forbid row on `takes a refreeze` | `TestChunkChainAnchors` (second failure line, not seen) | CG21 |
