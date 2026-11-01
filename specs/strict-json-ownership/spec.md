@@ -85,6 +85,7 @@ Use `DecodeDocument` for the exception array. Keep `Decode` for existing persist
 Keep `DecodeExactDocument` for existing exact-schema callers. These choices correspond to rows SJ5, SJ22, SJ23, and SJ24.
 
 Expose duplicate-key and trailing-data error categories through `errors.Is`. Gate adapters map those categories to their existing local sentinels.
+jsonfile.RejectTrailing exposes the shared suffix rule, so a gate adapter keeps its typed-first precedence without a second suffix rule.
 Do not classify unknown fields by a new duplicate walker. Preserve the existing encoding/json field and type semantics.
 Rows SJ25, SJ28, and SJ29 grade this contract.
 

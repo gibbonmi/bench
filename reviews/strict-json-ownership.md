@@ -205,7 +205,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sj-c2-standards-1",
+          "performer": "ft354-review-c2-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cee4624207f1395d09c8a38efa3288218981b4ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c2-standards-1",
+            "digest": "sha256:db178731cee7a4a46d57cea88f7290914f890ec8e7588c5522f75dbecfd41373",
+            "excerpt": "## Standards\n1 finding. Worst issue: a test case name claims a fixture the case does not contain.\n- S1 | sev 5 | conf 9 | auto-fix | internal/jsonfile/decode_test.go:60 | Mysterious Name against SJ17: the case \"repeated key with an escaped spelling\" has the body {\"name\":\"x\",\"name\":\"y\"}; neither key is escaped, so SJ17's mapped evidence is a plain duplicate. Coordinator confirmed the raw bytes.\nAdvice:\n- verdict.go:341 \"The typed decode stays here\" narrates a move.\n- decode.go:14-15 the group comment does not start with a symbol name.\n- json_compatibility_test.go:22 implies a run that writes the baseline.\n- decode_test.go:131-133 repeats earlier bodies in a second table loop; incidental repetition.\n- strictJSON runs the suffix rule three times per call; one source, cost note only.\nHarness reuse: no second harness is pasted; json_compatibility_test.go reuses writeLaneFile, outcomeWrite, phaseTable, manifestPath, defect, phaseNames, inspectJSON, readyVerdict.\nRejectTrailing passes the one-source rule: one suffix owner at decode.go:115; the gate keeps only its typed decode for precedence and maps owner refusals to its sentinels.\nImplementation command: no change. Steps 1-8 done.\n"
+          },
+          "axis": "Standards",
+          "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
+          "tip": "4f88b2d46289a69c396185d1a40de5f0f6182326",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c2-spec-1",
+          "performer": "ft354-review-c2-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cee4624207f1395d09c8a38efa3288218981b4ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c2-spec-1",
+            "digest": "sha256:1ef7e87b8e641a6ff498da06b7a3b4913fb58b48d03626d81607d309b214c65b",
+            "excerpt": "## Spec\n1 finding. Worst issue: row SJ17 is falsely classified as proven.\n- P1, severity 5, confidence 9, auto-fix, SJ17, internal/jsonfile/decode_test.go:60. The case \"repeated key with an escaped spelling\" has the body {\"name\":\"x\",\"name\":\"y\"} with no escape; a raw-byte walker would pass it. Production is correct, because json.Decoder.Token returns unescaped names (decode.go:78-89). The recorded SJ17 red came only from the missing category. Fix: an escaped body, inside ticket 2's Writes.\nRows SJ16 and SJ18-SJ31 hold at the tip; all 16 seam cells name existing tests. strictJSON (verdict.go:343-357) keeps typed, then trailing, then duplicate precedence, and the baseline matches. rejectDuplicateNames is gone; decodeManifest and unknownField are unchanged; the other callers keep their calls; the baseline test only reads its file and normalizes only $ROOT.\nAdvice: record jsonfile.RejectTrailing as a Terms-and-API addition; strictJSON could map trailing data by errors.Is(err, jsonfile.ErrTrailingData) rather than any non-nil result.\nImplementation command: did not contribute. Steps 1-9 done.\n"
+          },
+          "axis": "Spec",
+          "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
+          "tip": "4f88b2d46289a69c396185d1a40de5f0f6182326",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c2-coverage-1",
+          "performer": "ft354-review-c2-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "cee4624207f1395d09c8a38efa3288218981b4ec",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c2-coverage-1",
+            "digest": "sha256:ee8647cd7178cdc5830d499fe3a00665567f4c884e08e7dfaff5abd070e420e1",
+            "excerpt": "## Coverage\n1 finding. Worst issue: SJ17 (escaped-spelling duplicate keys) has a named case but no test.\n- C1, severity 5, confidence 9, auto-fix, SJ17 (spec.md:200), internal/jsonfile/decode_test.go:60. The body {\"name\":\"x\",\"name\":\"y\"} has no escape, so a raw-spelling duplicate check would pass. Production keys on the decoded Token() string (decode.go:82-89). The recorded SJ17 red came from the missing ErrDuplicateKey category.\nClass check (json_compatibility_test.go:98-121, 150-164): present are framed, unframed, whitespace, null, unknown, duplicate root and nested, syntax error, second value, malformed suffix, unknown-plus-suffix, duplicate-plus-suffix, size, mode, regular-file, absent. Unreadable is partial: \"under a file\" covers the Lstat failure; the open/read failure (\"cache unavailable\", verdict.go:285/291) has no case.\nCallers: all six route through strictJSON; tests reach decodeManifest, loadVerdict, and loadEvidence; a keyword sample found no duplicate or trailing case for loadManifest, parseReaderSchedule, loadReaderTable.\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  silent,internal/gate/verdict.go,swap,passed,0,null,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestGateJSONCompatibility,passed,7\nThe mutation swapped occurrence 1 of `Unavailable, \"cache unavailable\"` for `Ready, \"\"`.\nAdvice: the unreadable cache state has no open/read-failure case; one duplicate row per remaining caller would pin each refusal; the hostile-input checklist does not apply.\nImplementation command: did not contribute. Steps 1-10 done.\n"
+          },
+          "axis": "Coverage",
+          "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
+          "tip": "4f88b2d46289a69c396185d1a40de5f0f6182326",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -300,3 +367,28 @@ The author ran three mutant sets after the ticket commit, and every row answered
 | `internal/gate/verdict.go` | one `--expect` set over `TestGateJSONCompatibility` | SJ28, SJ29, SJ30, SJ31, SJ26, SJ27 |
 
 The plan probe `owner-gate` swapped `seen[name] = true` and turned the nested duplicate case red. The ticket adds the export `jsonfile.RejectTrailing`, so the gate keeps one suffix owner.
+
+## SJ-C2 round 1 review
+
+The three axes ran on opus / medium over the frozen pair `533160a7..4f88b2d4`. Each axis raised one finding at severity 5, and all three name one repair target.
+
+## Standards
+
+Findings: 1. Worst issue: S1, auto-fix, confidence 9. The case `repeated key with an escaped spelling` at `internal/jsonfile/decode_test.go:60` has no escaped key.
+
+## Spec
+
+Findings: 1. Worst issue: P1, auto-fix, confidence 9. Row SJ17 has no test, because the case body repeats one raw spelling.
+
+## Coverage
+
+Findings: 1. Worst issue: C1, auto-fix, confidence 9. SJ17 is untested, for the same reason as S1 and P1.
+The Coverage probe of the `cache unavailable` result at `internal/gate/verdict.go` was silent. The orchestrator adds that result to the repair, because SJ27 names the unavailable result.
+
+The de-duplicated repair target count is 1, and the orchestrator adds the SJ27 gap to the same session. The repair count of SJ-C2 is 1 of 2.
+
+## SJ-C2 advice
+
+- Standards: the move narration at `verdict.go:341`, the group comment of the categories, the baseline write wording, the second table loop, and the triple suffix check.
+- Spec: record `jsonfile.RejectTrailing` in Terms and API, and map trailing data by category.
+- Coverage: one duplicate row for each of loadManifest, parseReaderSchedule, and loadReaderTable.
