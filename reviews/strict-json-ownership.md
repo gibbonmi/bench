@@ -835,7 +835,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sj-c5-standards-1",
+          "performer": "ft354-review-c5-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a498bea05d395d2aab2dbf90e5b476c8a6820227",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c5-standards-1",
+            "digest": "sha256:bb340350f21770d533999b2dcbd64f7bea0cb5e49d71ad3fdb2e29c94c5026eb",
+            "excerpt": "## Standards\n1 finding. Worst issue: S1, a second same-package call-graph walker duplicates the callee-selection rule that the process-lifetime check owns.\n- S1 (severity 5, confidence 7, auto-fix): internal/conformance/strict_json_owner_test.go:84-160 at 59f92c5b. strictJSONGraph.add, strictJSONNode, and reaches re-derive the same-package callee selection and the entry-to-owner search that process_lifetime_test.go:101-124 (processLifetimeEntryDiags) and :131-144 (processLifetimeCallee) own; AGENTS.md one source per fact. The copies disagree: strict (:132) drops every selector whose qualifier has Obj == nil; process (:138) drops it only when importedPackage names an import, and only process calls ast.Unparen. Fix: one shared callee rule and function index; the widen to process_lifetime_test.go sits inside the internal/conformance directory.\nReuse is otherwise clean: guardOwnerSources, guardOwnerParse, guardOwnerUnparsed, guardOwnerIrregular (guard_owner_walk_test.go:16-60), guardProjectionImported, guardProjectionStrip, hostileSkillPlanters. The five surfaces (registry/checks.go:31, checks_test.go:65, tier_live_tree_test.go:35, projects/benchkit.md:489, CHANGELOG) each state one fact once.\nAdvice: two fixture comments describe history (:248-249, :262-264); packing sits only in fixture strings and its reason is stated (:241-242); map[any] mixes key kinds; the local adapters control plants nothing.\nSteps 1-7 done.\n"
+          },
+          "axis": "Standards",
+          "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "tip": "59f92c5bb48c44b3199b645f02dc482f45c91a33",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c5-spec-1",
+          "performer": "ft354-review-c5-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a498bea05d395d2aab2dbf90e5b476c8a6820227",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c5-spec-1",
+            "digest": "sha256:5d7327d8657b92ad9bac5887c68d38b72226721bcbc6db8b20471dab8d49edb1",
+            "excerpt": "## Spec\n1 finding. Worst issue: P1, in a linked repository the check refuses a package that only shares a name with a kit caller package.\n- P1; severity 4; confidence 7; ask-user; SJ46/SJ47 (spec line 152 \"grades duplicate-token walkers in the migrated caller packages\", line 155 \"An absent caller package is an absent optional surface\"); internal/conformance/strict_json_owner_test.go:92-111, :226-231 at 59f92c5b.\nStep 7: yes. Subject is SubjectRoot (registry/checks.go:31), and BENCH_CONFORMANCE_ROOT sets the graded root (harness_test.go:158). The check skips a caller dir only on ErrNotExist (:92); a linked repository with internal/gate/*.go gets \"strict reader strictJSON is not defined\" (:229), or \"does not reach internal/jsonfile\" (:230) because the owner import path (:69) cannot be imported across modules; the walker rule (:106-108) also grades its own walkers. The spec scopes the check to the kit's migrated callers (line 270). No module identity guard exists.\nCoverage map: state mapped; SJ1-SJ49 cite real tests; SJ46/SJ47 cite TestStrictJSONOwnerBites (:323), SJ48 TestStrictJSONOwnerNegativeControls (:392), SJ49 TestStrictJSONOwnerRegisteredPath (:417); SJ50 is review-owned. Negative controls cover each Won't-handle reader.\nAdvice: the tests/comments/strings control has no recorded red; bypasses grades only nodes[0] (:230); tokens treats any zero-argument .Token() call as a JSON read (:176); the diagnostic wording differs from the charge.\nSteps 1-8 done.\n"
+          },
+          "axis": "Spec",
+          "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "tip": "59f92c5bb48c44b3199b645f02dc482f45c91a33",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c5-coverage-1",
+          "performer": "ft354-review-c5-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a498bea05d395d2aab2dbf90e5b476c8a6820227",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c5-coverage-1",
+            "digest": "sha256:4371e311ec4d7df6e41019a555be13062d2ef26063086917bdb313b10c109ff8",
+            "excerpt": "## Coverage\n1 finding. Worst issue: the walker rule does not see recursion through a function value or a method value.\n- C1; severity 4; confidence 8; auto-fix; SJ46. The check claims to find a walker that calls itself directly or through other calls (strict_json_owner_test.go:162). add indexes a closure only when the right-hand side is a FuncLit (:96-101), and strictJSONNode adds an edge only for a CallExpr (:114-135). So next := w.members; return next(delim) keys to a Var with no nodes and passes.\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/strict_json_owner_test.go,swap,failed,1,TestStrictJSONOwnerBites/method_walker_beneath_a_caller_package,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestStrictJSONOwnerBites$/^method_walker_beneath_a_caller_package$,passed,2\nEdge inventory: absent and empty (:306-315), unreadable (:294), unparsable (:293), renamed walker function, closure, method (:286-288), bypass (:289), negative controls (:349-360). (a) The test-file skip is at guard_owner_walk_test.go:35, and the empty subcase already plants a walker in a _test.go file (:309); strings and comments cannot go red through any in-fence mutation. (b) Mutual recursion is covered only for methods. (c) Covered: w.d.Token() (:258).\nAdvice: owner is true for any jsonfile call (:119-121); no plain-function mutual recursion case; an empty caller package skips its reader check silently (:64).\nbench test --check strict-json-owner passed (1 test). Steps 1-9 done.\n"
+          },
+          "axis": "Coverage",
+          "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "tip": "59f92c5bb48c44b3199b645f02dc482f45c91a33",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1208,3 +1275,27 @@ After the ticket commit `59f92c5b`, two mutant sets answered `bit` on every row 
 | `internal/conformance/registry/checks.go` | plan probe `conformance`, the registry name changed | SJ49 |
 
 The control for tests, comments, and strings has no mutation inside the fence. Its test-file skip lives in a shared walker helper outside the fence.
+
+## SJ-C5 round 1 review
+
+The three axes ran on opus / medium over the frozen pair `883fc3b2..59f92c5b`. Each axis raised one finding, and one repair session takes all three. The repair count of SJ-C5 is 1 of 2.
+
+## Standards
+
+Findings: 1. Worst issue: S1, severity 5, confidence 7. The check builds a second same-package call graph in `internal/conformance/strict_json_owner_test.go:84-160`.
+The process-lifetime check already owns the callee rule, and the two copies disagree.
+
+## Spec
+
+Findings: 1. Worst issue: P1, severity 4, confidence 7. In a linked repository, the check refuses a package that only shares a name with a kit caller package.
+The orchestrator decides a module identity gate, and flags it for reviewer veto. Outside the kit module, the caller packages are absent optional surfaces.
+
+## Coverage
+
+Findings: 1. Worst issue: C1, severity 4, confidence 8. The walker rule does not see recursion through a function value or a method value, and the Coverage probe confirmed the gap.
+
+## SJ-C5 advice
+
+- Standards: two fixture comments describe history, a map mixes key kinds, and one control plants nothing.
+- Spec: the reader rule grades only the first node of a name, and any zero-argument `Token` call counts as a JSON read.
+- Coverage: any jsonfile call satisfies the owner reach, and no case covers mutual recursion between plain functions.

@@ -152,7 +152,7 @@ The check uses the existing conformance registry and executable binding. No CLI 
 The check grades duplicate-token walkers in the migrated caller packages. It also grades the required caller-to-owner composition.
 It permits local diagnostic and domain adapters. It does not forbid encoding/json for partial projections or stream readers.
 
-An absent caller package is an absent optional surface. An unreadable or unparsable present source produces a named refusal.
+An absent caller package is an absent optional surface. A graded root whose module is not the Bench kit has no caller package. An unreadable or unparsable present source produces a named refusal.
 Synthetic mutation fixtures prove both the owner rule and its exclusions. Root conformance proves the registered check executes.
 
 ### Seam diagram
@@ -314,6 +314,7 @@ SJ-C4
 SJ-C5
 
 - `internal/conformance/strict_json_owner_test.go`
+- `internal/conformance/process_lifetime_test.go`
 - `internal/conformance/registry/checks.go`
 - `internal/conformance/checks_test.go`
 - `internal/conformance/tier_live_tree_test.go`
