@@ -1,7 +1,7 @@
 # Preserve strict and partial release schemas
 
 Blocked by: 3-review-documents.md
-Writes: internal/releaseevidence/json_validation.go, internal/releaseevidence/component_manifest.go, internal/releaseevidence/package_artifact.go, internal/releaseevidence/json_compatibility_test.go (new), internal/releaseevidence/package_artifact_test.go, internal/releaseevidence/testdata/strict-json-baseline.json (new)
+Writes: internal/releaseevidence/json_validation.go, internal/releaseevidence/component_manifest.go, internal/releaseevidence/package_artifact.go, internal/releaseevidence/json_compatibility_test.go (new), internal/releaseevidence/package_artifact_test.go, internal/releaseevidence/testdata/strict-json-baseline.json (new), internal/jsonfile/jsonfiletest/jsonfiletest.go
 Covers: SJ36, SJ37, SJ38, SJ39, SJ40, SJ41, SJ42, SJ43, SJ44, SJ45
 
 ## What to build

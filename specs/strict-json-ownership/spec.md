@@ -306,6 +306,7 @@ SJ-C4
 - `internal/releaseevidence/json_compatibility_test.go`
 - `internal/releaseevidence/package_artifact_test.go`
 - `internal/releaseevidence/testdata/strict-json-baseline.json`
+- `internal/jsonfile/jsonfiletest/jsonfiletest.go`
 
 SJ-C5
 
