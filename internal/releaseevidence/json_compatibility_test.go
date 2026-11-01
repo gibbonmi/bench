@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/jsonfile/jsonfiletest"
 )
 
@@ -17,7 +18,8 @@ import (
 // manifest reader for the hostile document family. An ordinary run reads it and never writes it.
 const releaseJSONBaseline = "testdata/strict-json-baseline.json"
 
-// releaseJSONResults keys each release result by its reader and its case.
+// releaseJSONResults keys each release result by its reader and its case, and each component
+// result by its case.
 type releaseJSONResults struct {
 	Release   map[string]string `json:"release"`
 	Component map[string]string `json:"component"`
@@ -39,7 +41,8 @@ type releaseReader struct {
 }
 
 // cases derives the baseline family of r. The release family adds an escaped duplicate key and
-// a duplicate key that precedes a syntax error.
+// a duplicate key that precedes a syntax error. For a framed reader, each case except unframed
+// and empty ends in a final newline.
 func (r releaseReader) cases(t *testing.T) map[string]string {
 	t.Helper()
 	cases := jsonfiletest.Family(r.seed)
@@ -77,6 +80,24 @@ func TestReleaseJSONCompatibility(t *testing.T) {
 
 	// The specific contracts run before the baseline family, so each drift fails under its own
 	// name first.
+	t.Run("duplicate keys reach jsonfile", func(t *testing.T) {
+		for _, name := range names {
+			reader := readers[name]
+			if reader.panics {
+				continue
+			}
+			cases := reader.cases(t)
+			for _, label := range []string{"duplicate key", "nested duplicate key", "escaped duplicate key", "raw duplicate key"} {
+				body, ok := cases[label]
+				if !ok {
+					continue
+				}
+				if err := reader.read(t, []byte(body)); !errors.Is(err, jsonfile.ErrDuplicateKey) {
+					t.Errorf("%s / %s: error = %v, want jsonfile.ErrDuplicateKey", name, label, err)
+				}
+			}
+		}
+	})
 	t.Run("unknown typed fields", func(t *testing.T) {
 		want := fmt.Sprintf("unknown field %q", jsonfiletest.UnknownKey)
 		for _, name := range names {
@@ -134,6 +155,8 @@ func resultText(err error) string {
 }
 
 // releaseReaders holds the strict release readers. Each reads a body through its real validator.
+// The native proof reader runs the decode and match steps of inspectNativeProofs without its
+// release plan.
 func releaseReaders(t *testing.T) map[string]releaseReader {
 	t.Helper()
 	commit, version := "abc123", fixtureVersion
@@ -287,6 +310,13 @@ func TestComponentJSONCompatibility(t *testing.T) {
 		want := "field " + labels.TargetFields.OS + " is missing"
 		if err := read(body); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("manifest with a replaced target key: error = %v, want %q", err, want)
+		}
+	})
+	t.Run("recursive duplicate keys", func(t *testing.T) {
+		for _, label := range []string{"duplicate key", "nested duplicate key", "escaped duplicate key"} {
+			if err := read(cases[label]); !errors.Is(err, jsonfile.ErrDuplicateKey) {
+				t.Errorf("%s: error = %v, want jsonfile.ErrDuplicateKey", label, err)
+			}
 		}
 	})
 

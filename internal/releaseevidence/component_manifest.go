@@ -65,11 +65,8 @@ func decodeComponentManifest(data []byte) (componentManifest, error) {
 }
 
 func decodeExactObject(data []byte, fields []string) (map[string]json.RawMessage, error) {
-	if err := rejectDuplicateJSONKeys(data); err != nil {
-		return nil, err
-	}
 	var object map[string]json.RawMessage
-	if err := json.Unmarshal(data, &object); err != nil {
+	if err := decodeDocument(data, &object); err != nil {
 		return nil, err
 	}
 	if len(object) != len(fields) {
