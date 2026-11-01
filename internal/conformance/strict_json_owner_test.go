@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"golang.org/x/mod/modfile"
 )
 
 // strictJSONOwnerDir is the one package whose code walks JSON tokens recursively to refuse a
@@ -41,7 +42,11 @@ var strictJSONCallers = []struct {
 // checkStrictJSONOwner refuses a recursive JSON token walker in the production Go beneath each
 // caller package, because only the owner walks object keys. It also refuses each named strict
 // reader that reaches no owner call. An absent caller package is an absent optional surface.
+// A root whose module is not the Bench kit has no caller package.
 func checkStrictJSONOwner(root string) []string {
+	if !benchModuleRoot(root) {
+		return nil
+	}
 	var diags []string
 	for _, caller := range strictJSONCallers {
 		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(caller.dir))); errors.Is(err, fs.ErrNotExist) {
@@ -49,124 +54,52 @@ func checkStrictJSONOwner(root string) []string {
 		}
 		sources, sourceDiags := guardOwnerSources(root, caller.dir, strictJSONOwnerDiagPrefix)
 		diags = append(diags, sourceDiags...)
-		graphs := map[string]strictJSONGraph{}
+		packages := map[string]packageFuncs{}
 		diags = append(diags, guardOwnerParse(root, strictJSONOwnerDiagPrefix, sources, func(fset *token.FileSet, rel string, file *ast.File) []string {
 			dir := path.Dir(rel)
-			if graphs[dir] == nil {
-				graphs[dir] = strictJSONGraph{}
+			if packages[dir] == nil {
+				packages[dir] = packageFuncs{}
 			}
-			graphs[dir].add(fset, rel, file)
+			packages[dir].add(fset, rel, file)
 			return nil
 		})...)
-		for _, dir := range slices.Sorted(maps.Keys(graphs)) {
-			diags = append(diags, graphs[dir].walkers()...)
+		for _, dir := range slices.Sorted(maps.Keys(packages)) {
+			diags = append(diags, strictJSONWalkers(packages[dir])...)
 		}
-		if graph := graphs[caller.dir]; graph != nil {
-			diags = append(diags, graph.bypasses(caller.dir, caller.readers)...)
+		if functions := packages[caller.dir]; functions != nil {
+			diags = append(diags, strictJSONBypasses(functions, caller.dir, caller.readers)...)
 		}
 	}
 	return diags
 }
 
-// strictJSONFunc is one function, method, or closure of a package. Its body calls a Token method
-// when tokens is true, and the owner when owner is true. calls holds a graph key for each call.
-type strictJSONFunc struct {
-	name, at      string
-	tokens, owner bool
-	calls         []any
+// benchModuleRoot reports whether the go.mod of root names the Bench kit module.
+func benchModuleRoot(root string) bool {
+	return modfile.ModulePath([]byte(readIfExists(filepath.Join(root, "go.mod"))))+"/" == benchModule
 }
 
-// strictJSONGraph indexes the functions of one package by call key: a function name, a method
-// name after a dot, or the variable object of a closure, so two closures of one name stay apart.
-type strictJSONGraph map[any][]*strictJSONFunc
-
-// add indexes each function, method, and assigned closure of file.
-func (g strictJSONGraph) add(fset *token.FileSet, rel string, file *ast.File) {
-	for _, decl := range file.Decls {
-		fn, ok := decl.(*ast.FuncDecl)
-		if !ok || fn.Body == nil {
-			continue
-		}
-		key := any(fn.Name.Name)
-		if fn.Recv != nil {
-			key = "." + fn.Name.Name
-		}
-		g[key] = append(g[key], strictJSONNode(fset, rel, file, fn.Name.Name, fn.Pos(), fn.Body))
-		ast.Inspect(fn.Body, func(node ast.Node) bool {
-			if assign, ok := node.(*ast.AssignStmt); ok && len(assign.Lhs) == len(assign.Rhs) {
-				for i, lhs := range assign.Lhs {
-					ident, named := lhs.(*ast.Ident)
-					literal, closure := assign.Rhs[i].(*ast.FuncLit)
-					if named && closure && ident.Obj != nil {
-						g[ident.Obj] = append(g[ident.Obj], strictJSONNode(fset, rel, file, ident.Name, literal.Pos(), literal.Body))
-					}
-				}
-			}
-			return true
-		})
-	}
-}
-
-// strictJSONNode reads the calls of body. A call through an import qualifier other than the owner
-// adds no key, because it cannot reach a function of this package.
-func strictJSONNode(fset *token.FileSet, rel string, file *ast.File, name string, pos token.Pos, body *ast.BlockStmt) *strictJSONFunc {
-	node := &strictJSONFunc{name: name, at: fmt.Sprintf("%s:%d", rel, fset.Position(pos).Line)}
-	ast.Inspect(body, func(n ast.Node) bool {
-		call, ok := n.(*ast.CallExpr)
-		if !ok {
-			return true
-		}
-		if guardProjectionImported(file, call, strictJSONOwnerPath) != "" {
-			node.owner = true
-			return true
-		}
-		switch fun := call.Fun.(type) {
-		case *ast.Ident:
-			if fun.Obj != nil && fun.Obj.Kind == ast.Var {
-				node.calls = append(node.calls, fun.Obj)
-			} else {
-				node.calls = append(node.calls, fun.Name)
-			}
-		case *ast.SelectorExpr:
-			node.tokens = node.tokens || fun.Sel.Name == "Token" && len(call.Args) == 0
-			if qualifier, ok := fun.X.(*ast.Ident); !ok || qualifier.Obj != nil {
-				node.calls = append(node.calls, "."+fun.Sel.Name)
-			}
-		}
-		return true
+// strictJSONCalls reports whether the body of fn holds a call that match accepts.
+func strictJSONCalls(fn *packageFunc, match func(*ast.CallExpr) bool) bool {
+	found := false
+	ast.Inspect(fn.body, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		found = found || ok && match(call)
+		return !found
 	})
-	return node
+	return found
 }
 
-// reaches reports whether a function that from calls, directly or through other calls, is done.
-func (g strictJSONGraph) reaches(from *strictJSONFunc, done func(*strictJSONFunc) bool) bool {
-	seen := map[*strictJSONFunc]bool{}
-	for stack := []*strictJSONFunc{from}; len(stack) > 0; {
-		node := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-		for _, key := range node.calls {
-			for _, next := range g[key] {
-				if done(next) {
-					return true
-				}
-				if !seen[next] {
-					seen[next] = true
-					stack = append(stack, next)
-				}
-			}
-		}
-	}
-	return false
-}
-
-// walkers reports each function that reads a token and calls itself, directly or through other calls.
-func (g strictJSONGraph) walkers() []string {
+// strictJSONWalkers reports each function that reads a token and reaches itself, directly or through other callees.
+func strictJSONWalkers(functions packageFuncs) []string {
 	var diags []string
-	for _, nodes := range g {
-		for _, node := range nodes {
-			recursive := g.reaches(node, func(next *strictJSONFunc) bool { return next == node })
-			if node.tokens && recursive {
-				diags = append(diags, fmt.Sprintf("%s%s: %s walks JSON tokens recursively outside %s", strictJSONOwnerDiagPrefix, node.at, node.name, strictJSONOwnerDir))
+	readsToken := func(call *ast.CallExpr) bool {
+		selector, ok := call.Fun.(*ast.SelectorExpr)
+		return ok && selector.Sel.Name == "Token" && len(call.Args) == 0
+	}
+	for _, fns := range functions {
+		for _, fn := range fns {
+			if strictJSONCalls(fn, readsToken) && functions.reaches(fn, func(next *packageFunc) bool { return next == fn }) {
+				diags = append(diags, fmt.Sprintf("%s%s:%d: %s walks JSON tokens recursively outside %s", strictJSONOwnerDiagPrefix, fn.rel, fn.line, fn.name, strictJSONOwnerDir))
 			}
 		}
 	}
@@ -174,15 +107,20 @@ func (g strictJSONGraph) walkers() []string {
 	return diags
 }
 
-// bypasses reports each named strict reader of the package at dir that is absent or reaches no owner call.
-func (g strictJSONGraph) bypasses(dir string, readers []string) []string {
+// strictJSONBypasses reports each named strict reader of the package at dir that is absent or reaches no owner call.
+func strictJSONBypasses(functions packageFuncs, dir string, readers []string) []string {
+	owner := func(fn *packageFunc) bool {
+		return strictJSONCalls(fn, func(call *ast.CallExpr) bool {
+			return guardProjectionImported(fn.file, call, strictJSONOwnerPath) != ""
+		})
+	}
 	var diags []string
 	for _, name := range readers {
-		nodes := g[name]
+		named := functions.named(name)
 		switch {
-		case len(nodes) == 0:
+		case len(named) == 0:
 			diags = append(diags, fmt.Sprintf("%s%s: strict reader %s is not defined", strictJSONOwnerDiagPrefix, dir, name))
-		case !nodes[0].owner && !g.reaches(nodes[0], func(next *strictJSONFunc) bool { return next.owner }):
+		case !owner(named[0]) && !functions.reaches(named[0], owner):
 			diags = append(diags, fmt.Sprintf("%s%s: strict reader %s does not reach %s", strictJSONOwnerDiagPrefix, dir, name, strictJSONOwnerDir))
 		}
 	}
@@ -218,10 +156,14 @@ func validatePackageEvidence(data []byte, version string) bool { var identity st
 	return decodeDocument(data, new(json.RawMessage)) == nil && json.Unmarshal(data, &identity) == nil && identity.Version == version }`,
 }
 
-// strictJSONOwnerRoot builds a root from the compliant caller tree, with sources and plants laid over it.
+// strictJSONOwnerKitMod is the go.mod of a fixture root whose module is the Bench kit.
+var strictJSONOwnerKitMod = "module " + strings.TrimSuffix(benchModule, "/") + "\n"
+
+// strictJSONOwnerRoot builds a kit root from the compliant caller tree, with sources and plants laid over it.
 func strictJSONOwnerRoot(t *testing.T, sources map[string]string, plants map[string]func(*testing.T, string)) string {
 	t.Helper()
 	files := maps.Clone(strictJSONOwnerCompliant)
+	files["go.mod"] = strictJSONOwnerKitMod
 	maps.Copy(files, sources)
 	return throwawayRoot{files: files, plants: plants}.build(t)
 }
@@ -274,7 +216,8 @@ func strictJSON(data []byte, dst any) error { dec := json.NewDecoder(bytes.NewRe
 )
 
 // TestStrictJSONOwnerBites is the bite proof of the bound check. A renamed recursive walker in a
-// caller package or beneath it is refused. A strict reader that reaches no owner call is refused.
+// caller package or beneath it is refused, also when it recurses through a function or method value.
+// A strict reader that reaches no owner call is refused.
 func TestStrictJSONOwnerBites(t *testing.T) {
 	const outside = " walks JSON tokens recursively outside internal/jsonfile"
 	for _, tc := range []struct {
@@ -286,6 +229,10 @@ func TestStrictJSONOwnerBites(t *testing.T) {
 		{"renamed function walker", map[string]string{"internal/reviewrecord/keys.go": strictJSONOwnerFunctionWalker}, nil, strictJSONOwnerWant("internal/reviewrecord/keys.go:2: keysOnce" + outside)},
 		{"closure walker", map[string]string{"internal/releaseevidence/keys.go": strictJSONOwnerClosureWalker}, nil, strictJSONOwnerWant("internal/releaseevidence/keys.go:3: visit" + outside)},
 		{"method walker beneath a caller package", map[string]string{"internal/gate/cache/walk.go": strictJSONOwnerMethodWalker}, nil, strictJSONOwnerWant("internal/gate/cache/walk.go:2: value" + outside)},
+		{"function value walker", map[string]string{"internal/reviewrecord/keys.go": strings.Replace(strictJSONOwnerFunctionWalker, "err = keysOnce(d)", "next := keysOnce; err = next(d)", 1)}, nil,
+			strictJSONOwnerWant("internal/reviewrecord/keys.go:2: keysOnce" + outside)},
+		{"method value walker", map[string]string{"internal/gate/cache/walk.go": strings.Replace(strictJSONOwnerMethodWalker, "return w.members(delim)", "next := w.members; return next(delim)", 1)}, nil,
+			strictJSONOwnerWant("internal/gate/cache/walk.go:2: value" + outside)},
 		{"readers that bypass the owner", map[string]string{"internal/gate/verdict.go": strictJSONOwnerErrorOnly, "internal/releaseevidence/json_validation.go": strictJSONOwnerBypass}, nil,
 			strictJSONOwnerWant("internal/gate: strict reader strictJSON does not reach internal/jsonfile", "internal/releaseevidence: strict reader decodeStrict does not reach internal/jsonfile")},
 		{"undefined reader", map[string]string{"internal/releasepreflight/vulnerability.go": "package releasepreflight; func validatePolicy() {}"}, nil,
@@ -303,10 +250,12 @@ func TestStrictJSONOwnerBites(t *testing.T) {
 			}
 		})
 	}
-	t.Run("absent and empty packages", func(t *testing.T) {
+	// A linked module's packages only share a name with the caller packages, so the check grades none.
+	t.Run("absent empty and linked packages", func(t *testing.T) {
 		for name, files := range map[string]map[string]string{
-			"absent": {"internal/other/walk.go": strictJSONOwnerFunctionWalker},
-			"empty":  {"internal/gate/README.md": "gate\n", "internal/reviewrecord/keys_test.go": strictJSONOwnerFunctionWalker, "internal/releaseevidence/testdata/keys.go": strictJSONOwnerClosureWalker},
+			"absent": {"go.mod": strictJSONOwnerKitMod, "internal/other/walk.go": strictJSONOwnerFunctionWalker},
+			"empty":  {"go.mod": strictJSONOwnerKitMod, "internal/gate/README.md": "gate\n", "internal/reviewrecord/keys_test.go": strictJSONOwnerFunctionWalker, "internal/releaseevidence/testdata/keys.go": strictJSONOwnerClosureWalker},
+			"linked": {"go.mod": "module example.com/linked\n", "internal/gate/gate.go": "package gate; func Run() {}", "internal/reviewrecord/keys.go": strictJSONOwnerFunctionWalker},
 		} {
 			if diags := strictJSONOwnerRun(t, throwawayRoot{files: files}.build(t)); len(diags) != 0 {
 				t.Errorf("%s packages: diagnostics = %q, want none", name, diags)
@@ -388,6 +337,9 @@ func TestStrictJSONOwnerRegisteredPath(t *testing.T) {
 // in the kit root, so the check grades it, and the check reports nothing there.
 func TestStrictJSONOwnerHoldsOnTheLiveTree(t *testing.T) {
 	h := NewHarness(t)
+	if !benchModuleRoot(h.KitRoot) {
+		t.Errorf("the kit root module is not %s", benchModule)
+	}
 	for _, caller := range strictJSONCallers {
 		if !exists(filepath.Join(h.KitRoot, filepath.FromSlash(caller.dir))) {
 			t.Errorf("caller package %s is absent from the kit root", caller.dir)
