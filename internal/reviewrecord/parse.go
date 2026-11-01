@@ -7,12 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/markdown"
 )
 
@@ -223,54 +223,33 @@ func occurrenceState(state string) bool {
 	return state == "pending" || state == "completed" || state == "failed" || state == "skipped"
 }
 
+// decode bounds data and then reads it into value as one complete JSON document.
 func decode(data []byte, value any) error {
 	c := bounds.ClassifyBytes(bounds.Read(bytes.NewReader(data), bounds.ControlRecordLimit))
 	if c.State != bounds.StateParsed {
 		return fmt.Errorf("invalid record bytes: %s %s", c.State, c.Reason)
 	}
-	tokens := json.NewDecoder(bytes.NewReader(data))
-	if err := uniqueJSON(tokens); err != nil {
-		return fmt.Errorf("invalid JSON: %w", err)
-	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(value); err != nil {
-		return fmt.Errorf("invalid JSON: %w", err)
-	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
+	err := jsonfile.DecodeDocument(data, value)
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, jsonfile.ErrDuplicateKey):
+		return errors.New("invalid JSON: duplicate JSON key")
+	case errors.Is(err, jsonfile.ErrTrailingData):
+		// A typed refusal of the first value outranks its suffix, so an unknown field
+		// keeps its diagnostic when a second value follows it.
+		decoder := json.NewDecoder(bytes.NewReader(data))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(value); err != nil {
+			return fmt.Errorf("invalid JSON: %w", err)
+		}
 		return errors.New("invalid JSON: trailing value")
 	}
-	return nil
-}
-
-func uniqueJSON(d *json.Decoder) error {
-	token, err := d.Token()
-	if err != nil {
-		return err
+	// The record diagnostic names the encoding/json cause without the jsonfile context.
+	if cause := errors.Unwrap(err); cause != nil {
+		err = cause
 	}
-	delimiter, nested := token.(json.Delim)
-	if !nested {
-		return nil
-	}
-	seen := map[string]bool{}
-	for d.More() {
-		if delimiter == '{' {
-			token, err := d.Token()
-			if err != nil {
-				return err
-			}
-			key, ok := token.(string)
-			if !ok || seen[key] {
-				return errors.New("duplicate JSON key")
-			}
-			seen[key] = true
-		}
-		if err := uniqueJSON(d); err != nil {
-			return err
-		}
-	}
-	_, err = d.Token()
-	return err
+	return fmt.Errorf("invalid JSON: %w", err)
 }
 
 func fenced(data []byte, name string) ([]byte, error) {

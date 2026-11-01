@@ -78,12 +78,14 @@ func (f *Fixture) WritePlan() {
 	if err != nil {
 		f.T.Fatal(err)
 	}
-	f.Write(f.spec, planDocument(f.body, data))
+	f.WritePlanPayload(data)
 }
 
-// planDocument is body, then the completion plan section with data as its fence payload.
-func planDocument(body string, data []byte) string {
-	return body + "\n## Completion plan\n\n" + markdown.FenceMarker + "bench-completion-plan\n" + string(data) + "\n" + markdown.FenceMarker + "\n"
+// WritePlanPayload writes the fixture's spec without committing it. The spec is the
+// fixture body, then the completion plan section with data as its fence payload.
+func (f *Fixture) WritePlanPayload(data []byte) {
+	f.T.Helper()
+	f.Write(f.spec, f.body+"\n## Completion plan\n\n"+markdown.FenceMarker+"bench-completion-plan\n"+string(data)+"\n"+markdown.FenceMarker+"\n")
 }
 
 // preparedWrites is the `Writes:` line of every ticket Prepare writes.
@@ -203,7 +205,7 @@ func Prepare(t testing.TB, root string, count int, spec, body string, options ..
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Write(spec, planDocument(body, data))
+	f.WritePlanPayload(data)
 	f.Write("source.txt", "base\n")
 	f.Commit("fixture plan")
 	f.loadPlan(spec)
