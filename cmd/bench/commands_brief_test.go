@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -33,7 +34,7 @@ func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
 	staged := commandsBriefBinary(t)
 
 	t.Run("a matching seal keeps the three-line answer", func(t *testing.T) {
-		root, binary := commandsBriefCheckout(t, staged)
+		root, binary := commandsBriefCheckout(t, staged, filepath.Join(commandsBriefDir(t), "kit"))
 		out, code := commandsBriefProbe(t, root, binary)
 		if code != 0 {
 			t.Fatalf("commands --brief under a matching seal = exit %d:\n%s", code, out)
@@ -44,7 +45,7 @@ func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
 	})
 
 	t.Run("a mismatched seal refuses with the rebuild action", func(t *testing.T) {
-		root, binary := commandsBriefCheckout(t, staged)
+		root, binary := commandsBriefCheckout(t, staged, filepath.Join(commandsBriefDir(t), "kit"))
 		commandsBriefBreakSeal(t, binary)
 		out, code := commandsBriefProbe(t, root, binary)
 		if code == 0 {
@@ -52,6 +53,21 @@ func TestCommandsBriefGradesTheRunningExecutable(t *testing.T) {
 		}
 		if action := freshness.RebuildAction(root); !strings.Contains(out, action) {
 			t.Fatalf("commands --brief refusal = %q, want the rebuild action %q", out, action)
+		}
+	})
+
+	// RB12: a checkout in the pool of the child's Bench home names the build verb, because
+	// the hooks refuse a cd into that pool.
+	t.Run("a mismatched seal in a pool checkout names the worktree build", func(t *testing.T) {
+		home := filepath.Join(commandsBriefDir(t), "home")
+		root, binary := commandsBriefCheckout(t, staged, filepath.Join(home, "worktrees", "k", "x"))
+		commandsBriefBreakSeal(t, binary)
+		out, code := commandsBriefProbe(t, root, binary, benchhome.Env+"="+home)
+		if code == 0 {
+			t.Fatalf("commands --brief under a mismatched seal exited 0:\n%s", out)
+		}
+		if want := "bench worktree build '" + root + "'"; !strings.Contains(out, want) || strings.Contains(out, "cd ") {
+			t.Fatalf("commands --brief refusal = %q, want the remedy %q and no cd", out, want)
 		}
 	})
 }
@@ -74,19 +90,25 @@ func commandsBriefBinary(t *testing.T) string {
 	return staged
 }
 
-// commandsBriefCheckout publishes staged as one synthetic checkout's own dist/bench and
-// returns the checkout with the published executable. The checkout carries the three
-// things the grading branch reads: a git top level for the child's directory, the
-// build-input manifest that scopes the verdict, and a resolvable ./cmd/bench for the
-// digest. The returned root is spelled as git reports it, because the refusal's rebuild
-// action is built from that spelling.
-func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
+// commandsBriefDir returns a fresh temporary directory spelled with its links resolved,
+// so a checkout below it is spelled as git reports it.
+func commandsBriefDir(t *testing.T) string {
 	t.Helper()
-	base, err := filepath.EvalSymlinks(t.TempDir())
+	dir, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	kit := filepath.Join(base, "kit")
+	return dir
+}
+
+// commandsBriefCheckout publishes staged as the dist/bench of one synthetic checkout at
+// kit and returns the checkout with the published executable. The checkout carries the
+// three things the grading branch reads: a git top level for the child's directory, the
+// build-input manifest that scopes the verdict, and a resolvable ./cmd/bench for the
+// digest. The returned root is spelled as git reports it, because the refusal's rebuild
+// action is built from that spelling.
+func commandsBriefCheckout(t *testing.T, staged, kit string) (string, string) {
+	t.Helper()
 	for path, body := range map[string]string{
 		filepath.Join(kit, "go.mod"):                  "module benchprobe\n\ngo 1.21\n",
 		filepath.Join(kit, "cmd", "bench", "main.go"): "package main\n\nfunc main() {}\n",
@@ -111,8 +133,9 @@ func commandsBriefCheckout(t *testing.T, staged string) (string, string) {
 	}
 	// Publish consumes the staged bytes by renaming them, so each row publishes its own
 	// copy and neither depends on the order the other ran in.
-	copyExecutable(t, staged, filepath.Join(base, "staged"))
-	if err := freshness.Publish(root, filepath.Join(base, "staged"), binary, filepath.Dir(binary), "probe"); err != nil {
+	stagedCopy := filepath.Join(t.TempDir(), "staged")
+	copyExecutable(t, staged, stagedCopy)
+	if err := freshness.Publish(root, stagedCopy, binary, filepath.Dir(binary), "probe"); err != nil {
 		t.Fatal(err)
 	}
 	return root, binary
@@ -152,11 +175,13 @@ func commandsBriefBreakSeal(t *testing.T, binary string) {
 	}
 }
 
-func commandsBriefProbe(t *testing.T, root, binary string) (string, int) {
+// commandsBriefProbe runs binary's probe in root. Each entry of env overrides the
+// inherited entry of its name, because the child reads the last one.
+func commandsBriefProbe(t *testing.T, root, binary string, env ...string) (string, int) {
 	t.Helper()
 	cmd := exec.Command(binary, "commands", "--brief")
 	cmd.Dir = root
-	cmd.Env = capability.WithoutEnvironment(os.Environ(), runbinary.Env)
+	cmd.Env = append(capability.WithoutEnvironment(os.Environ(), runbinary.Env), env...)
 	output, err := cmd.CombinedOutput()
 	code := 0
 	if err != nil {

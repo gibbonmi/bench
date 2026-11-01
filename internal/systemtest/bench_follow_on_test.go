@@ -279,9 +279,10 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 	// posture on that answer. A non-Bench call passes, so the shell stays usable while
 	// the binary is rebuilt; a Bench call refuses, so no verb runs stale. Both carry
 	// the one rebuild sentence, which the test reads from its own owner rather than
-	// from a second copy. (Coverage rows BF22 and BF23.)
+	// from a second copy. The shell copy keeps the cd form, so the owner is the cd-form
+	// owner. (Coverage rows BF22 and BF23.)
 	staleRepo := plantWrapperAnswer(t, staleCoreAnswer, 2)
-	action := freshness.RebuildAction(owner.kit)
+	action := freshness.CheckoutRebuildAction(owner.kit)
 	for _, tc := range []struct {
 		row, command string
 		code         int
@@ -319,6 +320,23 @@ func TestBenchFollowOnHookDegradedRim(t *testing.T) {
 		if refused := strings.Contains(result.stderr, "BLOCKED:"); refused != tc.refuses {
 			t.Errorf("%s stderr = %q, want a refusal %t", tc.row, result.stderr, tc.refuses)
 		}
+	}
+
+	// A kit in the pool of the hook's Bench home still gets the cd form, because the
+	// stale hook runs no pool guard and blocks every Bench call, and the stale hook
+	// passes that printed remedy. (Coverage rows RB17 and RB18.)
+	home := t.TempDir()
+	poolKit := filepath.Join(home, "worktrees", "k", "x")
+	pooled := []string{"BENCH_KIT=" + poolKit, "BENCH_HOME=" + home}
+	poolAction := freshness.CheckoutRebuildAction(poolKit)
+	blocked := run(hook, staleRepo, pooled, hookEnvelope(t, "", "bench gate"))
+	if blocked.code != 2 || !strings.Contains(blocked.stderr, "BLOCKED:") || !strings.Contains(blocked.stderr, poolAction) {
+		t.Errorf("RB17 stale core with a pool kit = (%d, %q, %q), want a BLOCKED line with %q", blocked.code, blocked.stdout, blocked.stderr, poolAction)
+	}
+	_, printed, _ := strings.Cut(blocked.stderr, "Rebuild it: ")
+	printed = strings.TrimSpace(printed)
+	if result := run(hook, staleRepo, pooled, hookEnvelope(t, "", printed)); printed == "" || result.code != 0 || strings.Contains(result.stderr, "BLOCKED:") {
+		t.Errorf("RB18 stale core with the printed remedy %q = (%d, %q, %q), want exit 0", printed, result.code, result.stdout, result.stderr)
 	}
 }
 

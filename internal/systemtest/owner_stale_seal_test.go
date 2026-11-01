@@ -28,8 +28,10 @@ func TestSystemOwnerRefusesAStaleSelectedSeal(t *testing.T) {
 	if !strings.Contains(result.stderr, "system owner:") {
 		t.Fatalf("suite setup stderr = %q, want the owner's setup refusal", result.stderr)
 	}
-	if !strings.Contains(result.stderr, freshness.RebuildAction(owner.kit)) {
-		t.Fatalf("suite setup stderr = %q, want the rebuild action %q", result.stderr, freshness.RebuildAction(owner.kit))
+	// The child composes its refusal in the Bench home that owner.runAt gives it, which is
+	// not the home of this process, so the expectation is graded in that home.
+	if action := freshness.RebuildIn(owner.home, owner.kit).Action; !strings.Contains(result.stderr, action) {
+		t.Fatalf("suite setup stderr = %q, want the rebuild action %q", result.stderr, action)
 	}
 }
 
