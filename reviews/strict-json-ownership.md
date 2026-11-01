@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/strict-json-ownership/spec.md",
-  "plan_digest": "sha256:352f91ffc5cbebf5221070c81e6c1f2898a87851ee1d00dd37ec1ab08a479802",
+  "plan_digest": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
   "implementation_session": "",
   "chunks": [
     {
@@ -574,6 +574,58 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SJ-C4",
+      "base": "7e962ba222ab4879f10957a60bfe8ff777630ea7",
+      "tip": "c470a86d0aaef313f7bf73f0ee897db49f81fb33",
+      "plan_digest": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
+      "source_digest": "4b78a2e9e63356b8d6bfe20b8a969e0fce3eb2dd",
+      "acceptance_rows": [
+        "SJ36",
+        "SJ37",
+        "SJ38",
+        "SJ39",
+        "SJ40",
+        "SJ41",
+        "SJ42",
+        "SJ43",
+        "SJ44",
+        "SJ45"
+      ],
+      "verification": [
+        {
+          "id": "sj-c4-release",
+          "performer": "ft354-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4b78a2e9e63356b8d6bfe20b8a969e0fce3eb2dd",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft354-author-04",
+            "digest": "sha256:3196f2ee8e8c73f4e703842169002e65b4624e84a3b281d15e6843a0e701339b",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestComponentJSONCompatibility/declared_key_set,2,1,0,null,yes\n  2,bit,swap,failed,1,TestComponentJSONCompatibility/missing_key,2,1,0,null,yes\n  3,bit,swap,failed,1,TestComponentJSONCompatibility/extra_key,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/releaseevidence,^TestComponentJSONCompatibility$/^declared_key_set$|^TestComponentJSONCompatibility$/^missing_key$|^TestComponentJSONCompatibility$/^extra_key$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "c470a86d0aaef313f7bf73f0ee897db49f81fb33",
+          "requirement": "release",
+          "command": "bench test --package ./internal/releaseevidence",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap 'if len(object) != len(fields) {' for 'if false && len(object) != len(fields) {' in internal/releaseevidence/component_manifest.go, and record that the extra-key case of TestComponentJSONCompatibility turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft354-author-04",
+              "digest": "sha256:3196f2ee8e8c73f4e703842169002e65b4624e84a3b281d15e6843a0e701339b",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestComponentJSONCompatibility/declared_key_set,2,1,0,null,yes\n  2,bit,swap,failed,1,TestComponentJSONCompatibility/missing_key,2,1,0,null,yes\n  3,bit,swap,failed,1,TestComponentJSONCompatibility/extra_key,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/releaseevidence,^TestComponentJSONCompatibility$/^declared_key_set$|^TestComponentJSONCompatibility$/^missing_key$|^TestComponentJSONCompatibility$/^extra_key$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -620,6 +672,21 @@
     {
       "from": "sha256:6d7996b4cd67f9532568e966e905982078cf48a880d96d3e0ae0df593646db72",
       "to": "sha256:352f91ffc5cbebf5221070c81e6c1f2898a87851ee1d00dd37ec1ab08a479802",
+      "chunk_ids": {
+        "SJ-C1": [
+          "SJ-C1"
+        ],
+        "SJ-C2": [
+          "SJ-C2"
+        ],
+        "SJ-C3": [
+          "SJ-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:352f91ffc5cbebf5221070c81e6c1f2898a87851ee1d00dd37ec1ab08a479802",
+      "to": "sha256:13c9e61a5244dbb2d5b6c641e46975250a0efae6a449078f376d6eff3e70984c",
       "chunk_ids": {
         "SJ-C1": [
           "SJ-C1"
