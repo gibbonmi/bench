@@ -401,7 +401,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rb-c2-r1-standards",
+          "performer": "ft344-review-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce8bc432cad049b5f02037098502b2809276c346",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c2-standards",
+            "digest": "sha256:27b845ec3c3328317ef5f1e2cd9167bf7b414c830ae5e9bab41b58fe819526f3",
+            "excerpt": "Standards axis, RB-C2, frozen pair 889242e8..d1f23d5c. Count: 0 findings.\ncd-form expectations read freshness.CheckoutRebuildAction (binary_seal_test.go:243, land_broker_notice_test.go:57,131); env name through benchhome.Env (live_binary_test.go:401); binarySealCheck branches only on BinarySealRebuild.Worktree; gather.go:105 is the one ambient home read; scope matches ticket steps 1-8.\nAdvice: Refusal.Error() for a checkout root reads the ambient home a second time; sealFixtureRoot returns its argument; live_binary.go:18-19 wording; CHANGELOG.md:11 sentence length.\nCommand contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "tip": "d1f23d5cd8d3b03560ebdabe7876f44b2f5bc2fa",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rb-c2-r1-spec",
+          "performer": "ft344-review-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce8bc432cad049b5f02037098502b2809276c346",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c2-spec",
+            "digest": "sha256:a2abea82b658e891e35d5237de6beb513a6f26f8b6650606c52cdbb00f213a5c",
+            "excerpt": "Spec axis, RB-C2, frozen pair 889242e8..d1f23d5c. Count: 1 finding. Worst: rb-c2-spec-1. RB13-RB16, RB23-RB25 hold; step 8 comment correct for both hook states and meets RB21; budgets hold.\nrb-c2-spec-1, severity 2, confidence 7, CHANGELOG.md:11: \"Before, each Go remedy except the binary-seal row named a cd into the pool path\" is too broad; tree_target.go:91 and build.go:221 already named the build verb. auto-fix: narrow to the remedies that read the owner.\nAdvice: step 8 rewraps the next sentence; RB15 fixture uses a synthetic root.\nCommand contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "tip": "d1f23d5cd8d3b03560ebdabe7876f44b2f5bc2fa",
+          "finding_ids": [
+            "rb-c2-spec-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rb-c2-r1-coverage",
+          "performer": "ft344-review-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce8bc432cad049b5f02037098502b2809276c346",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c2-coverage",
+            "digest": "sha256:1b44713040ad6bb1cad97b74085bee112021278684eaf86fe63dd75950fae742",
+            "excerpt": "Coverage axis, RB-C2, frozen pair 889242e8..d1f23d5c. Count: 2 findings. Worst: rb-c2-cov-1.\nrb-c2-cov-1, severity 3, confidence 9, internal/preflight/gather.go:312 (field at :148): no test drives gather over a stale seal under the BENCH_HOME pool; RB24 calls binarySealFacts directly. Probe: swap binarySealFacts(benchhome.Dir(), root) -> binarySealFacts(benchhome.Dir()+\"-other\", root), ./internal/preflight/...: silent (861 ran), restored yes. Proposed ask-user: add a gather-level test or narrow the RB24 why cell.\nrb-c2-cov-2, severity 1, confidence 6, internal/preflight/binary_seal_test.go:214: the RB24 literal is allowed, but the RB16, RB24, RB25 witness reds are reported, not recorded. no-op or record.\nProbe 1 (swap to \"\") invalid: unused import; restored yes.\nAdvice: clean caller has no pool-root warning test; RB15 pool Action uses /root.\nCommand contribution: the plan names no witness for the gather wiring of ticket step 5.\n"
+          },
+          "axis": "Coverage",
+          "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+          "tip": "d1f23d5cd8d3b03560ebdabe7876f44b2f5bc2fa",
+          "finding_ids": [
+            "rb-c2-cov-1",
+            "rb-c2-cov-2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -481,3 +547,34 @@ Findings: 1 accepted. Worst issue: C1.
 The repair session `ft344-author-01-rep1` repaired `rb-c1-std-1`, `rb-c1-std-2`, and `rb-c1-cov-1` with test-only edits at `e0be748b`. RB-C1 has consumed one of its two repair cycles. The repair witness for `rb-c1-cov-1` is red when the `home != ""` clause goes, and `TestRebuildRemedyKind` kills it.
 
 The coordinator probe of the finding mutants bit on both mutants, and the coordinator confirmation closes the round with no confirming axis round. The finding `rb-c1-spec-1` routes to ticket 02. Its widen returns as a plan commit in the chunk gap, because a ticket 02 edit inside the RB-C1 delta makes that delta not test-only.
+
+## RB-C2 review round 1
+
+The three axes ran on opus at medium effort over `889242e8..d1f23d5c`. The repair allowance of RB-C2 is two cycles, and this round consumes none. Cycle 1 repairs the accepted findings below. The repair edits `CHANGELOG.md`, so it is not test-only, and a confirming round of all three axes follows it.
+
+The author `ft344-author-02` reported these witness reds, which this record retains for `rb-c2-cov-2`. RB13 is red before the first production edit, because the warning printed the `cd` form. RB15 and RB23 are red before the check edit. RB16 is red when the check swaps `if !f.BinarySealRebuild.Worktree {` for `if false {`. RB24 is red when `binarySealFacts` calls `RebuildIn("", root)`. RB25 is red when `brokerChangeNotice` builds its remedy for `root+"/x"`.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 1 accepted. Worst issue: `rb-c2-spec-1`.
+
+- `rb-c2-spec-1`, auto-fix, confidence 7: the `CHANGELOG.md` entry says that before the change, every Go remedy but the `binary-seal` row named a `cd`. The tree-target build refusal and the plain-build remedy already named the build verb. Narrow the sentence to the remedies that read the owner.
+
+## Coverage
+
+Findings: 2 accepted. Worst issue: `rb-c2-cov-1`.
+
+- `rb-c2-cov-1`, auto-fix, confidence 9: no test drives `gather` over a stale seal in the pool of the Bench home. So the home read in `internal/preflight/gather.go` and the `BinarySealRebuild` field have no witness. The axis probe that gives the gather another home stays silent across 861 tests. The RB24 why cell names this failure, so the repair adds a gather-level witness. The orchestrator accepts the test under `--auto-approve`, because a narrower why cell would weaken the guarantee.
+- `rb-c2-cov-2`, record-only, confidence 6: the author reported the RB16, RB24, and RB25 witness reds but did not record them. The round 1 prose above records them.
+
+## Advice
+
+- Standards: for a checkout root, `Refusal.Error()` reads the ambient home a second time, after `binarySealFacts` read the injected home. Production passes the same home to both.
+- Standards: `sealFixtureRoot` returns the argument that it receives.
+- Standards: the doc comment of `warnBeforeRemovingLiveBinary` could name the graded pool more plainly.
+- Spec: step 8 also rewraps the sentence after the reworded clause.
+- Coverage: the clean caller has no pool-root warning test of its own. It shares the warning and the ambient value with the release.
