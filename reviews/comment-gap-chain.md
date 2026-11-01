@@ -106,3 +106,18 @@
   }
 }
 ```
+
+## CG-C1 ticket 01 author witness reds
+
+The ticket 01 author `ft439-author-01` (opus / medium) wrote the new and changed tests first. It ran them in one `bench test` call against the unchanged production code at `fb429dbea`, and these cases went red.
+The plan probes `chain-gap` and `checkpoint` answered `bit` after the ticket commit `890370c84`, and the record holds them.
+
+| subject | condition | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/reviewrecord/coverage.go` | equality branch of the chain | `TestChainAcceptsAProvedCommentGap/chunk_then_comment` | CG04 |
+| `internal/reviewrecord/fold.go` | equality in `foldCoversBase` | `TestChainAcceptsAProvedCommentGap/fold_then_comment` | CG05 |
+| `internal/reviewrecord/coverage.go` | equality branch of the chain | `TestReviewCheckpointChainAcceptsACommentGap/chunk` | CG01, CG02 |
+| `internal/reviewrecord/coverage.go` | equality branch of the chain | `TestReviewCheckpointChainAcceptsACommentGap/complete` | CG03 |
+| `internal/reviewrecord/coverage.go` | old refusal clause | `TestReviewCheckpointChainGapNamesTheExpectedBase` | CG11 |
+
+The statement, directive, Markdown, and off-line refusal cases (CG06 to CG09) passed against the old code, because the old chain already refused them.
