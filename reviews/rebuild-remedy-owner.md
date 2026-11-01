@@ -126,7 +126,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rb-c1-r1-standards",
+          "performer": "ft344-review-c1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fb5825339f0f0b051f977f6fd92a3b4d29daf22a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c1-standards",
+            "digest": "sha256:8f959fb95e37850a7f90dc136f0820f8d3e9f00b5f1e2d0d1bd91517ce856ba7",
+            "excerpt": "Standards axis, RB-C1, frozen pair 7d02ba15..40fbf22e. Count: 2 findings. Worst: S1.\nS1, severity 2, confidence 6, internal/benchguard/rebuild_remedy_test.go:20-21,38-40: checkoutRemedy hand-writes the cd form as the expectation of RB02, RB05, RB06; this copies CheckoutRebuildAction knowledge with no recorded red (AGENTS.md test-expectation rule). auto-fix: derive RB02/RB05/RB06 from freshness.CheckoutRebuildAction; keep the literal for RB10 with its recorded red.\nS2, severity 1, confidence 6, internal/systemtest/bench_follow_on_test.go:330: \"BENCH_HOME=\" spelled by hand; benchhome.Env owns the name (owner_environment_test.go:79). auto-fix.\nAdvice: Rebuild.Worktree has no production reader in RB-C1 (RB-C2 reads it); Refusal doc comment wording; spec.md seam-cell edit is the required planned-to-citation swap.\nCommand contribution: ticket step 2 is silent on cd-form expectations.\n"
+          },
+          "axis": "Standards",
+          "base": "7d02ba15a2dc0a589a3352eefb3e11f3948ac89f",
+          "tip": "40fbf22e237dd5c6604e7aa45f3468eaa09005b6",
+          "finding_ids": [
+            "rb-c1-std-1",
+            "rb-c1-std-2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rb-c1-r1-spec",
+          "performer": "ft344-review-c1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fb5825339f0f0b051f977f6fd92a3b4d29daf22a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c1-spec",
+            "digest": "sha256:f32804bb3f1d091fd77531e2298c7ea8c4221578075dee0965b257b79b6df02e",
+            "excerpt": "Spec axis, RB-C1, frozen pair 7d02ba15..40fbf22e. Count: 1 finding. Worst: S1. Every mapped row RB01-RB12, RB17-RB22, RB26 holds; RB19, RB21, RB22, RB26 settled by reading.\nS1, severity 1, confidence 5, .bench/lib/resolve-bench.sh:359-360: the comment says the guard-off hook \"blocks the worktree build verb\"; with an unreachable core the hook allows every call (block-bench-follow-on.sh:24), so the verb cannot run rather than is blocked. auto-fix: reword.\nDivergences accepted: (a) RB18 replays the printed remedy (story 21); (b) RB06 red only under the raw-prefix mutation.\nAdvice: RB18 could also assert printed == poolAction; a relative-root RB06 case belongs to Coverage.\nCommand contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "7d02ba15a2dc0a589a3352eefb3e11f3948ac89f",
+          "tip": "40fbf22e237dd5c6604e7aa45f3468eaa09005b6",
+          "finding_ids": [
+            "rb-c1-spec-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rb-c1-r1-coverage",
+          "performer": "ft344-review-c1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fb5825339f0f0b051f977f6fd92a3b4d29daf22a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft344-review-c1-coverage",
+            "digest": "sha256:86c2bb00e8e078d3e6fd7afa13f362ab58c7f7bac9762f47c360555d8c5ef08e",
+            "excerpt": "Coverage axis, RB-C1, frozen pair 7d02ba15..40fbf22e. Count: 1 finding. Worst: C1.\nC1, severity 2, confidence 9, internal/freshness/freshness_verify.go:144 (fixture internal/benchguard/rebuild_remedy_test.go:36): no test pins the home != \"\" clause; poolkey.Pools(\"\") is relative \"worktrees\", so the absolute RB06 root never matches. auto-fix: add {\"RB06 an empty home, relative root\", \"\", \"worktrees/k/x\", \"\", false} to TestRebuildRemedyKind.\nProbe P1: swap `if home != \"\" && benchguard` -> `if benchguard`, ./internal/benchguard TestRebuildRemedyKind: silent, restored yes.\nAdvice: roots \u003chome>/worktrees and \u003chome>/worktrees/ unexercised; RB18 cut could stop at the first newline.\nCommand contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "7d02ba15a2dc0a589a3352eefb3e11f3948ac89f",
+          "tip": "40fbf22e237dd5c6604e7aa45f3468eaa09005b6",
+          "finding_ids": [
+            "rb-c1-cov-1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -138,3 +206,36 @@
   }
 }
 ```
+
+## RB-C1 review round 1
+
+The three axes ran on opus at medium effort over `7d02ba15..40fbf22e`. The repair allowance of RB-C1 is two cycles, and this round consumes none. Cycle 1 repairs the accepted test findings below. Each finding is at severity 2 or lower. The orchestrator accepts them under `--auto-approve`, because S1 breaks the one-source rule of `AGENTS.md`, and C1 is a production branch with no witness.
+
+The author `ft344-author-01` reported a witness red for each owned row. RB10 is red when `CheckoutRebuildAction` prints the build verb, and `TestRebuildRemedyKind` fails on five lines. RB12 is red before the first production edit. RB19 and RB20 are red after the production edit and before the pin edit.
+
+## Standards
+
+Findings: 2 accepted. Worst issue: S1.
+
+- S1 (`rb-c1-std-1`), auto-fix, confidence 6: `internal/benchguard/rebuild_remedy_test.go:20-21` writes the `cd` form by hand as the expectation of RB02, RB05, and RB06. That expectation copies `CheckoutRebuildAction`. Derive those three expectations from `freshness.CheckoutRebuildAction`, and keep the literal only for RB10, whose red the author recorded.
+- S2 (`rb-c1-std-2`), auto-fix, confidence 6: `internal/systemtest/bench_follow_on_test.go:330` spells `BENCH_HOME` by hand. Use `benchhome.Env`, as `internal/systemtest/owner_environment_test.go:79` does.
+
+## Spec
+
+Findings: 1 accepted. Worst issue: S1.
+
+- S1 (`rb-c1-spec-1`), auto-fix, confidence 5: the comment at `.bench/lib/resolve-bench.sh:359-360` says that the hook blocks the build verb while the guard is off. With an unreachable core, the hook allows every call, so the build verb cannot run there. Reword the clause. This comment-only fix goes to ticket 02, so that the RB-C2 review grades it and the RB-C1 repair stays test-only.
+
+## Coverage
+
+Findings: 1 accepted. Worst issue: C1.
+
+- C1 (`rb-c1-cov-1`), auto-fix, confidence 9: no test pins the `home != ""` clause at `internal/freshness/freshness_verify.go:144`. The axis probe that removes the clause stays silent. Add a relative-root case under an empty home to `TestRebuildRemedyKind`.
+
+## Advice
+
+- Standards: `Rebuild.Worktree` has no production reader in RB-C1. The `binary-seal` row of RB-C2 reads it.
+- Standards: the `Refusal` doc comment could state the contract more plainly.
+- Spec: RB18 could also assert that the printed remedy equals the expected `cd` form.
+- Coverage: no row exercises a root equal to `<home>/worktrees` or a root with a trailing separator. The owner and the guard agree on both by construction.
+- Coverage: the RB18 cut after `Rebuild it: ` could stop at the first newline.
