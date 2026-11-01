@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/rebuild-remedy-owner/spec.md",
-  "plan_digest": "sha256:f88a5adc681f6113ac4a4f6407ea543b190967ae223eb2d01b6d70baac092a69",
+  "plan_digest": "sha256:a86081319e2b12de5666241fe8dc9106c7e23068f95e91de3639f5aec53d61ee",
   "implementation_session": "",
   "chunks": [
     {
@@ -323,6 +323,85 @@
           }
         }
       ]
+    },
+    {
+      "id": "RB-C2",
+      "base": "889242e8c55045e0dcbea11a7a574f9b3c3e56e5",
+      "tip": "d1f23d5cd8d3b03560ebdabe7876f44b2f5bc2fa",
+      "plan_digest": "sha256:a86081319e2b12de5666241fe8dc9106c7e23068f95e91de3639f5aec53d61ee",
+      "source_digest": "ce8bc432cad049b5f02037098502b2809276c346",
+      "acceptance_rows": [
+        "RB13",
+        "RB14",
+        "RB15",
+        "RB16",
+        "RB23",
+        "RB24",
+        "RB25"
+      ],
+      "verification": [
+        {
+          "id": "rb-c2-t02-live-binary",
+          "performer": "ft344-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce8bc432cad049b5f02037098502b2809276c346",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft344-author-02",
+            "digest": "sha256:58994084a136308f1c26d590cf07c2253ef812f51eca564edc6f43a36b0160d5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/live_binary.go,swap,failed,1,TestResidueGuardWarnsBeforeRemovingTheLiveBinary,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,ResidueGuardWarnsBeforeRemovingTheLiveBinary|LandCommandReportsInstallStepForABrokerChangingDiff,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,533\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,969,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestResidueGuardWarnsBeforeRemovingTheLiveBinary,\"live_binary_test.go:61: warning \\\"bench: /dev/shm/NHGV6K/t/TestResidueGuardWarnsBeforeRemovingTheLiveBinary3892320478/001/.bench-home/worktrees/001-1966012913/0e015d90393e14c0b1ea05985b39c858-b1534d7ff38ec915153916709c1fb13c/dist/bench is th… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d1f23d5cd8d3b03560ebdabe7876f44b2f5bc2fa",
+          "requirement": "live-binary",
+          "command": "bench test --package ./internal/worktree --run 'ResidueGuardWarnsBeforeRemovingTheLiveBinary|LandCommandReportsInstallStepForABrokerChangingDiff'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Call freshness.RebuildAction(root) in warnBeforeRemovingLiveBinary in place of the injected home form, and record that TestResidueGuardWarnsBeforeRemovingTheLiveBinary turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft344-author-02",
+              "digest": "sha256:58994084a136308f1c26d590cf07c2253ef812f51eca564edc6f43a36b0160d5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/live_binary.go,swap,failed,1,TestResidueGuardWarnsBeforeRemovingTheLiveBinary,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,ResidueGuardWarnsBeforeRemovingTheLiveBinary|LandCommandReportsInstallStepForABrokerChangingDiff,passed,2\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,533\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,969,2\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestResidueGuardWarnsBeforeRemovingTheLiveBinary,\"live_binary_test.go:61: warning \\\"bench: /dev/shm/NHGV6K/t/TestResidueGuardWarnsBeforeRemovingTheLiveBinary3892320478/001/.bench-home/worktrees/001-1966012913/0e015d90393e14c0b1ea05985b39c858-b1534d7ff38ec915153916709c1fb13c/dist/bench is th… (1020 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rb-c2-t02-binary-seal",
+          "performer": "ft344-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce8bc432cad049b5f02037098502b2809276c346",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft344-author-02",
+            "digest": "sha256:7a7d6a737eee919f6c108a3a211b987698657f298a7c698640b7731ff050a418",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/binary_seal.go,swap,failed,2,TestBinarySealRemedyNamesTheWorktreeBuildVerb/owned_checkout_root,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,BinarySeal,passed,15\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,918\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,400,15\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestBinarySealRemedyNamesTheWorktreeBuildVerb/owned_checkout_root,\"binary_seal_test.go:280: binary-seal row = {Check:binary-seal Verdict:red Detail:bench binary \\\"/root/dist/bench\\\" is untrusted: source digest mismatch Next:cd '/root' && bash scripts/go-build.sh '/root' '/root/dist/bench' exempt:true}, want … (420 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight,TestBinarySealRemedyNamesTheWorktreeBuildVerb/pool_root,\"binary_seal_test.go:280: binary-seal row = {Check:binary-seal Verdict:red Detail:bench binary \\\"/root/dist/bench\\\" is untrusted: source digest mismatch; rebuild with cd '/root' && bash scripts/go-build.sh '/root' '/root/dist/bench' Next: exem… (383 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d1f23d5cd8d3b03560ebdabe7876f44b2f5bc2fa",
+          "requirement": "binary-seal",
+          "command": "bench test --package ./internal/preflight --run 'BinarySeal'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the AssignmentTarget branch in binarySealCheck, and record that TestBinarySealRemedyNamesTheWorktreeBuildVerb turns red on the owned-checkout case.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft344-author-02",
+              "digest": "sha256:7a7d6a737eee919f6c108a3a211b987698657f298a7c698640b7731ff050a418",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/binary_seal.go,swap,failed,2,TestBinarySealRemedyNamesTheWorktreeBuildVerb/owned_checkout_root,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,BinarySeal,passed,15\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,918\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,400,15\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestBinarySealRemedyNamesTheWorktreeBuildVerb/owned_checkout_root,\"binary_seal_test.go:280: binary-seal row = {Check:binary-seal Verdict:red Detail:bench binary \\\"/root/dist/bench\\\" is untrusted: source digest mismatch Next:cd '/root' && bash scripts/go-build.sh '/root' '/root/dist/bench' exempt:true}, want … (420 bytes)\",1\n  github.com/gibbonmi/bench/internal/preflight,TestBinarySealRemedyNamesTheWorktreeBuildVerb/pool_root,\"binary_seal_test.go:280: binary-seal row = {Check:binary-seal Verdict:red Detail:bench binary \\\"/root/dist/bench\\\" is untrusted: source digest mismatch; rebuild with cd '/root' && bash scripts/go-build.sh '/root' '/root/dist/bench' Next: exem… (383 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -345,6 +424,15 @@
     {
       "from": "sha256:ab8510297cf6cb803af526974e2aa57244109ec2adbfcf37919ccff11dd3b6f6",
       "to": "sha256:f88a5adc681f6113ac4a4f6407ea543b190967ae223eb2d01b6d70baac092a69",
+      "chunk_ids": {
+        "RB-C1": [
+          "RB-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f88a5adc681f6113ac4a4f6407ea543b190967ae223eb2d01b6d70baac092a69",
+      "to": "sha256:a86081319e2b12de5666241fe8dc9106c7e23068f95e91de3639f5aec53d61ee",
       "chunk_ids": {
         "RB-C1": [
           "RB-C1"
