@@ -94,7 +94,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cg-c1-standards-r1",
+          "performer": "ft439-review-standards-c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "3a5a29097ed8fb1b61e79f1959bef281bdc80193",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft439-review-standards-c1",
+            "digest": "sha256:777cf8bd11b1a33c617d9be76f0b56cd38aa5cddc16c24410c2ecc3b9b7d1921",
+            "excerpt": "Standards axis, CG-C1, frozen pair beb3b302..890370c8, sonnet/medium. Preflight bind current=true.\nFindings (initial round, all severity \u003c= 2, none a correctness defect; the coordinator routes each to optional advice under the bounded repair policy):\n- S1 sev 2: the chain base case of TestReviewCheckpointKeepsStrictEvidence (internal/gate/review_checkpoint_commits_test.go:245-249) repeats five setup calls of chainedOverCommentGap (107-121). Axis disposition: no-op; incidental text, a shared form would need a callback.\n- S2 sev 1: spec.md:285 rewrites the commitment.json citations in the Won't-handle line. Axis disposition: ask-user or no-op as citation upkeep.\n- S3 sev 2: test doc comments cite spec row IDs (\"covers CG01 to CG03\" at review_checkpoint_commits_test.go:124, \"covers CG04 to CG09\" at fold_test.go:159); craft-comments treats an identifier as provenance. Axis disposition: auto-fix.\nClean: CG12 single call site in digestFollows; refusal clause identical in code, test, and spec; doc comments of digestFollows, follows, foldCoversBase are timeless and start with their names.\nImplementation command contributed: no.\n"
+          },
+          "axis": "Standards",
+          "base": "beb3b30219e9665db63b83c6d385a7a0ccb74553",
+          "tip": "890370c84f8a404e38bff0d77873f9b6b119368d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cg-c1-spec-r1",
+          "performer": "ft439-review-spec-c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "3a5a29097ed8fb1b61e79f1959bef281bdc80193",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft439-review-spec-c1",
+            "digest": "sha256:95b04c0fb60de4d3f20f04b52eaf7f669a07c9e2d6b7d2f6a9371fc0d75a25ab",
+            "excerpt": "Spec axis, CG-C1, frozen pair beb3b302..890370c8, sonnet/medium. Preflight bind current=true.\nFindings: P1 sev 1: spec.md:286 rewrites the FT380 citation to commitment.json:966-967 and 2143-2149; the new lines are real. Axis disposition: no-op.\nPer-row: CG01-CG03 hold (TestReviewCheckpointChainAcceptsACommentGap, chunk and complete exit 0, CG02 compares Base, Tip, SourceDigest, Reviews, Verification). CG04-CG09 hold (TestChainAcceptsAProvedCommentGap: chunk-then-comment, fold-then-comment, statement, directive, markdown, off-line two-parent tip; literal expectations). CG10, CG11 hold. CG12 holds (one call site fold.go:145 in digestFollows). CG13-CG17 hold with no edit.\nFour reader sites read digestFollows; both ancestry conjuncts kept; chain order unchanged.\nAdvice: the chain-base case writes correctCommentGap and then overwrites the same file.\nImplementation command contributed: no.\n"
+          },
+          "axis": "Spec",
+          "base": "beb3b30219e9665db63b83c6d385a7a0ccb74553",
+          "tip": "890370c84f8a404e38bff0d77873f9b6b119368d",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cg-c1-coverage-r1",
+          "performer": "ft439-review-coverage-c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "medium",
+          "source_digest": "3a5a29097ed8fb1b61e79f1959bef281bdc80193",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft439-review-coverage-c1",
+            "digest": "sha256:d24d1f30553e5855fe2bbdc017de69275575bc2d0e5ad060d4f59a98e2bcc761",
+            "excerpt": "Coverage axis, CG-C1, frozen pair beb3b302..890370c8, sonnet/medium. Preflight bind current=true.\nFindings: C1 sev 1: the \"covered == later ||\" clause of digestFollows (internal/reviewrecord/fold.go:149) is redundant, because commentgap.Prove returns nil for equal trees (commentgap.go:27-29). Probe --omit \"covered == later || \" over reviewrecord Chain|Fold|ReviewRecordSource|CommentOnlyGap: silent, restored. Axis disposition: ask-user or no-op.\nNo row gap: CG04-CG09 cases present; CG09 bites only the ancestry conjunct; CG14 error path unchanged; four call sites read digestFollows.\nFinal git status: empty. Implementation command contributed: no.\n"
+          },
+          "axis": "Coverage",
+          "base": "beb3b30219e9665db63b83c6d385a7a0ccb74553",
+          "tip": "890370c84f8a404e38bff0d77873f9b6b119368d",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -121,3 +182,29 @@ The plan probes `chain-gap` and `checkpoint` answered `bit` after the ticket com
 | `internal/reviewrecord/coverage.go` | old refusal clause | `TestReviewCheckpointChainGapNamesTheExpectedBase` | CG11 |
 
 The statement, directive, Markdown, and off-line refusal cases (CG06 to CG09) passed against the old code, because the old chain already refused them.
+
+## CG-C1 round 1 review
+
+The three axes ran on sonnet / medium over the frozen pair `beb3b302..890370c8`. Each axis passes with zero finding IDs. The repair count of CG-C1 is 0 of 2.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
+
+## CG-C1 advice
+
+Each item is an initial-round concern at severity 2 or lower and is not a correctness defect. Thus the bounded repair policy routes each item to optional advice, and no item takes a repair cycle.
+
+- Standards S1 (severity 2): the `chain base` case of `TestReviewCheckpointKeepsStrictEvidence` repeats five setup calls of `chainedOverCommentGap`. A shared form needs a callback, so the repeated text stays.
+- Standards S3 (severity 2): the doc comments of the two new tests cite spec row IDs (`internal/gate/review_checkpoint_commits_test.go:124`, `internal/reviewrecord/fold_test.go:159`). `craft-comments` treats an identifier as provenance. The next edit of those lines removes the row IDs.
+- Standards S2 and Spec P1 (severity 1): the spec delta corrects the FT380 criterion citation. The staleness pass made that correction in its enabling plan commit, so no repair target remains.
+- Coverage C1 (severity 1): the `covered == later` clause of `digestFollows` duplicates the equal-tree answer of `commentgap.Prove`, and a probe that omits it is silent. The spec decision names both forms, and the clause skips a tree diff for equal digests.
+- Spec advice: the `chain base` case writes `correctCommentGap` and then overwrites the same file.
