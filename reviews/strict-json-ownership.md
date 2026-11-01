@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/strict-json-ownership/spec.md",
-  "plan_digest": "sha256:4eb2f514d61a626059587c5896e808e64450264ba12146938389c4f1e1673f57",
+  "plan_digest": "sha256:6d7996b4cd67f9532568e966e905982078cf48a880d96d3e0ae0df593646db72",
   "implementation_session": "",
   "chunks": [
     {
@@ -369,6 +369,52 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SJ-C3",
+      "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+      "tip": "2c72f6478c064633d4d6879c82e54178b835b3aa",
+      "plan_digest": "sha256:6d7996b4cd67f9532568e966e905982078cf48a880d96d3e0ae0df593646db72",
+      "source_digest": "2bcb79a2c20eef4cd362a1b0c870ab1972ba958c",
+      "acceptance_rows": [
+        "SJ32",
+        "SJ33",
+        "SJ34",
+        "SJ35"
+      ],
+      "verification": [
+        {
+          "id": "sj-c3-review",
+          "performer": "ft354-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2bcb79a2c20eef4cd362a1b0c870ab1972ba958c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft354-author-03",
+            "digest": "sha256:a7446f26d49f68013b277518f5cd3951358c9c9a37009e99105b9a8d6aab4bd2",
+            "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestReviewJSONCompatibility/unframed_review_document,2,1,0,null,yes\n  2,bit,swap,failed,1,TestReviewJSONCompatibility/fenced_completion_plan,2,1,0,null,yes\n  3,bit,swap,failed,1,TestReviewJSONCompatibility/record_baseline,2,1,0,null,yes\n  4,bit,swap,failed,1,TestReviewJSONCompatibility/byte_limits,2,1,0,null,yes\n  5,bit,swap,failed,1,TestReviewJSONCompatibility/unframed_review_document,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/reviewrecord,^TestReviewJSONCompatibility$/^unframed_review_document$|^TestReviewJSONCompatibility$/^fenced_completion_plan$|^TestReviewJSONCompatibility$/^record_baseline$|^TestReviewJSONCompatibility$/^byte_limits$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "2c72f6478c064633d4d6879c82e54178b835b3aa",
+          "requirement": "review",
+          "command": "bench test --package ./internal/reviewrecord/...",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap the review bytes for null at the jsonfile.DecodeDocument call in internal/reviewrecord/parse.go, and record that the valid review-document case of TestReviewJSONCompatibility turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft354-author-03",
+              "digest": "sha256:a7446f26d49f68013b277518f5cd3951358c9c9a37009e99105b9a8d6aab4bd2",
+              "excerpt": "mutants[5]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestReviewJSONCompatibility/unframed_review_document,2,1,0,null,yes\n  2,bit,swap,failed,1,TestReviewJSONCompatibility/fenced_completion_plan,2,1,0,null,yes\n  3,bit,swap,failed,1,TestReviewJSONCompatibility/record_baseline,2,1,0,null,yes\n  4,bit,swap,failed,1,TestReviewJSONCompatibility/byte_limits,2,1,0,null,yes\n  5,bit,swap,failed,1,TestReviewJSONCompatibility/unframed_review_document,2,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/reviewrecord,^TestReviewJSONCompatibility$/^unframed_review_document$|^TestReviewJSONCompatibility$/^fenced_completion_plan$|^TestReviewJSONCompatibility$/^record_baseline$|^TestReviewJSONCompatibility$/^byte_limits$,passed,6\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -391,6 +437,18 @@
     {
       "from": "sha256:85b39d6036837dbfefc2ff28e2bb5a87ee2030867effe236f7d8b8a82b7442c4",
       "to": "sha256:4eb2f514d61a626059587c5896e808e64450264ba12146938389c4f1e1673f57",
+      "chunk_ids": {
+        "SJ-C1": [
+          "SJ-C1"
+        ],
+        "SJ-C2": [
+          "SJ-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:4eb2f514d61a626059587c5896e808e64450264ba12146938389c4f1e1673f57",
+      "to": "sha256:6d7996b4cd67f9532568e966e905982078cf48a880d96d3e0ae0df593646db72",
       "chunk_ids": {
         "SJ-C1": [
           "SJ-C1"
