@@ -1636,6 +1636,18 @@
               "path": "roadmap/FT439.md",
               "identity": "sha256:8bd6b4fe1bfaa7193b00715fed1d003cb2212467a025a1b13bd5da9bdc6600d9"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "comment-gap-chain",
+                "path": "specs/comment-gap-chain/spec.md",
+                "identity": "sha256:c3ab2148ec659af3394447fc0c1a30ca1e114b5a4909593146fbf58880d75a2d"
+              },
+              "obligations": [
+                "FT439"
+              ]
+            }
           ]
         },
         {
