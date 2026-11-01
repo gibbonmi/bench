@@ -54,7 +54,7 @@ func TestLandCommandReportsInstallStepForABrokerChangingDiff(t *testing.T) {
 		t.Fatalf("broker-changing landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
 	}
 	notice := brokerNoticeLine(t, r.stderr)
-	if !strings.Contains(notice, freshness.RebuildAction(f.root)) {
+	if !strings.Contains(notice, freshness.CheckoutRebuildAction(f.root)) {
 		t.Fatalf("kit-checkout landing named no rebuild: %q", notice)
 	}
 	if !strings.Contains(notice, "bench doctor --fix") {
@@ -128,7 +128,7 @@ func TestLandCommandNamesTheInstalledRepairRouteOffTheKitCheckout(t *testing.T) 
 	if !strings.Contains(notice, "bench repair") {
 		t.Fatalf("installed-kit landing named no install step: %q", notice)
 	}
-	if strings.Contains(notice, freshness.RebuildAction(f.root)) {
+	if strings.Contains(notice, freshness.CheckoutRebuildAction(f.root)) {
 		t.Fatalf("installed-kit landing named the source-tree rebuild: %q", notice)
 	}
 }

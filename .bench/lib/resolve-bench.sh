@@ -352,12 +352,15 @@ bench_env_unicode_octal() {
 }
 
 # bench_shell_quote prints $1 as one single-quoted shell word. bench_rebuild_action
-# composes the one rebuild command for the kit root $1. Both are the shell spelling of
-# internal/freshness's shellQuote and RebuildAction, whose Go half is the source of the
-# invocation. This copy exists only because the invocation is needed at the one moment
-# the Go binary cannot run, so nothing can ask it for the string. internal/systemtest
-# asserts the printed line against freshness.RebuildAction, so a drift between the two
-# reds.
+# composes the rebuild command for the kit root $1. Both are the shell spelling of
+# internal/freshness's shellQuote and CheckoutRebuildAction, whose Go half is the source
+# of the invocation. This copy exists only because the invocation is needed at the one
+# moment the Go binary cannot run, so nothing can ask it for the string. The copy keeps
+# the cd form for a pool root too: it prints only while the follow-on guard is off. With
+# an unreachable core, the hook allows every call, but the build verb has no core to run.
+# With a stale core, the hook passes the cd form and blocks every Bench call.
+# internal/systemtest asserts the printed line against freshness.CheckoutRebuildAction,
+# so a drift between the two reds.
 bench_shell_quote() {
   _bench_quote_rest=$1
   _bench_quote_out=''

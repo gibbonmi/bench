@@ -16,9 +16,9 @@ import (
 // .bench/hooks/session-start.sh as a subprocess in the state the hint exists for: a
 // session opening in a repository whose Bench core cannot be reached. The wrapper answers
 // with exit 127 and no dashboard. Every launch goes through the owner's process ledger.
-// The expected hint is read from freshness.RebuildAction, the one source of the rebuild
-// invocation. This pins the shell copy in the hook to the Go source rather than to a
-// second hand-written spelling of it.
+// The expected hint is read from freshness.CheckoutRebuildAction, the Go source of the
+// cd form that the shell copy keeps. This pins the shell copy in the hook to the Go source
+// rather than to a second hand-written spelling of it.
 func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) {
 	t.Parallel()
 	hook := sessionStartHook(t)
@@ -28,7 +28,7 @@ func TestSessionStartNamesTheBuildCommandWhenTheCoreIsUnreachable(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	rebuild := freshness.RebuildAction(root)
+	rebuild := freshness.CheckoutRebuildAction(root)
 
 	// H23 — the unreachable half. BENCH_KIT names a directory holding no binary. The
 	// overrides remove BENCH_RUN_BINARY outright as a bare name. The wrapper then runs its

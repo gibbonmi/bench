@@ -74,8 +74,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT254 (MEDIUM) — `bench worktree exec` is the comfortable path for multi-step work.**
 
-**FT344 (MEDIUM) — every rebuild remedy for a pool worktree names `bench worktree build` from one owner.**
-
 **FT406 (MEDIUM) — a commit in a build worktree leaves no stale `dist/bench` for the next preflight or `--in` verb.**
 
 **FT413 (MEDIUM) — parallel landings compose `CHANGELOG.md` with no conflict.**
@@ -362,19 +360,18 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT344-remedy
-2. FT439-comment-correction
-3. FT354-strict-json
-4. FT406-rebuild
-5. FT366-rg-guard
-6. FT380-residual
-7. FT363-member-set
-8. FT354-shell-args
-9. FT343-seam-policy
-10. FT446-cache-store
-11. FT414-preconditions
-12. FT369-charge-slicing
-13. FT365-conformance
-14. FT341-in-only
-15. FT420-concurrent-chunks
-16. FT387-overflow
+1. FT439-comment-correction
+2. FT354-strict-json
+3. FT406-rebuild
+4. FT366-rg-guard
+5. FT380-residual
+6. FT363-member-set
+7. FT354-shell-args
+8. FT343-seam-policy
+9. FT446-cache-store
+10. FT414-preconditions
+11. FT369-charge-slicing
+12. FT365-conformance
+13. FT341-in-only
+14. FT420-concurrent-chunks
+15. FT387-overflow

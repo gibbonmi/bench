@@ -8,6 +8,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/benchguard"
+	"github.com/gibbonmi/bench/internal/benchhome"
+	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // Verify reports whether executable has a matching content seal for root, and names root
@@ -90,9 +95,9 @@ func refusal(repairRoot, executable string, cause error) error {
 }
 
 // Refusal is the verifier's answer for an untrusted executable. Error renders the whole
-// sentence with the one rebuild command. Reason renders the same sentence without that
-// command, for a caller whose root takes another rebuild route: a pool worktree, where
-// the hooks refuse the cd that RebuildAction names.
+// sentence with the owner's rebuild remedy, which names the remedy that runs for every
+// root. Reason renders the same sentence without that remedy, for a caller that prints
+// the remedy in a separate cell.
 type Refusal struct {
 	Executable, RepairRoot string
 	Cause                  error
@@ -116,8 +121,35 @@ func PublishedExecutable(root string) string {
 	return filepath.Join(root, "dist", "bench")
 }
 
-// RebuildAction returns the copy-paste command that republishes root's Bench binary.
+// RebuildAction returns the copy-paste command that republishes root's Bench binary,
+// graded in the pool of the process Bench home. It is the owner's one ambient read of
+// that home, so the remedy and the hook grade the same pool.
 func RebuildAction(root string) string {
+	return RebuildIn(benchhome.Dir(), root).Action
+}
+
+// Rebuild is the rebuild remedy for one root. Action is the copy-paste command, and
+// Worktree is true when Action is the worktree build verb.
+type Rebuild struct {
+	Action   string
+	Worktree bool
+}
+
+// RebuildIn decides the remedy for root in the pool of home. The pool guard refuses a cd
+// into that pool, so a root whose cd form the guard refuses takes the build verb, which
+// resolves the path to the assignment that owns it. The decision asks the guard itself,
+// so the remedy changes exactly where the hook refuses it. An empty home names no pool.
+func RebuildIn(home, root string) Rebuild {
+	checkout := CheckoutRebuildAction(root)
+	if home != "" && benchguard.PoolReference(checkout, poolkey.Pools(home)) != "" {
+		return Rebuild{Action: usage.WorktreeBuildFor(shellQuote(root)), Worktree: true}
+	}
+	return Rebuild{Action: checkout}
+}
+
+// CheckoutRebuildAction returns the cd form of the rebuild remedy, which runs wherever
+// the hooks allow a cd into root. The shell copy in the hook library mirrors this form.
+func CheckoutRebuildAction(root string) string {
 	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(PublishedExecutable(root)))
 }
 

@@ -2303,6 +2303,14 @@
       "identity": "sha256:a02e080262846ab9554ec281f2fa90e0d68dec5da01cd10a7bb9e10b946e4236",
       "source": "008b7988fe13fdffeece06d55a4906b82ffb208e",
       "evidence": "95b3fac44599ec44d0ce69b2242e1f804654ba92"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT344-remedy",
+      "binding": "rebuild-remedy-owner",
+      "identity": "sha256:31ecf8517c0a4c1f511789fec8effb4494446397d7e446ca6d6f09da37f066ca",
+      "source": "8274805c9206a16d997f052745ffe69b00b9cda4",
+      "evidence": "ce96389732f9491a9e1eca34a49be6b198cd4bd4"
     }
   ]
 }

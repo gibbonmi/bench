@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/capability"
-	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 // newResidueGuardFixture builds a repository whose dist/ is both ignored and declared as
@@ -42,22 +42,26 @@ func stubbedLiveBinaryJoins(running string) joins {
 // TestResidueGuardWarnsBeforeRemovingTheLiveBinary is H25. Removing the dist/bench the
 // wrapper resolved takes down the CLI, the git guard that CLI backs, and the gate's
 // BENCH_RUN_BINARY together. Without this test, the guard does that silently. The
-// warning has to name the scripts/go-build.sh invocation, because plain `go build` leaves
-// the package version the version and upgrade contracts read unstamped.
+// creation path lies in the pool of the fixture home, and the hooks refuse a cd into it,
+// so the warning has to name the worktree build verb for that path. The process home
+// differs from the fixture home, so a warning that grades another home names the cd form.
 func TestResidueGuardWarnsBeforeRemovingTheLiveBinary(t *testing.T) {
 	t.Parallel()
 	const request = "landed-live-binary"
 	f := newResidueGuardFixture(t, request)
+	requireTest(t, benchhome.Dir() != f.home, "process %s %q equals the fixture home", benchhome.Env, f.home)
 	live := filepath.Join(f.creation.Path, "dist", "bench")
 	mustWrite(t, live, []byte("binary\n"), 0o755)
 	release := runVerb(t, verbRelease, f.callWith(stubbedLiveBinaryJoins(live), "--request", request, f.creation.Path))
 	requireTest(t, release.exit == 0, "live-binary release exit=%d stdout=%q", release.exit, release.stdout)
 
 	warned := release.stderr
-	rebuild := freshness.RebuildAction(f.creation.Path)
+	rebuild := "bench worktree build '" + f.creation.Path + "'"
 	requireTest(t, strings.Contains(warned, live), "warning %q does not name the binary it removed (%s)", warned, live)
 	requireTest(t, strings.Contains(warned, rebuild), "warning %q does not name the rebuild invocation (%s)", warned, rebuild)
-	requireTest(t, !strings.Contains(warned, "go build "), "warning %q names plain `go build`, which leaves the package version unstamped", warned)
+	for _, refused := range []string{"cd ", "scripts/go-build.sh", "go build "} {
+		requireTest(t, !strings.Contains(warned, refused), "warning %q names %q, which the hooks refuse in the pool path", warned, refused)
+	}
 	if _, err := os.Stat(live); !os.IsNotExist(err) {
 		t.Errorf("H25 live binary still present after release (stat err=%v); a guard that warns and then skips the removal would pass on the warning text alone", err)
 	}

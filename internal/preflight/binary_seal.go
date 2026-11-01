@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/gibbonmi/bench/internal/freshness"
-	"github.com/gibbonmi/bench/internal/usage"
 )
 
 // binarySealFacts grades root's published binary through the seal verifier,
@@ -23,22 +22,26 @@ import (
 // root with no binary to grade. An lstat that fails for any other cause cannot
 // show that no binary exists, so the binary is present and refused with that
 // cause rather than graded.
-func binarySealFacts(root string) (present bool, refusal *freshness.Refusal) {
+//
+// The rebuild is the owner's remedy and root kind for root in the pool of home, so the
+// row and the hook grade the same pool.
+func binarySealFacts(home, root string) (present bool, refusal *freshness.Refusal, rebuild freshness.Rebuild) {
+	rebuild = freshness.RebuildIn(home, root)
 	executable := freshness.PublishedExecutable(root)
 	_, err := os.Lstat(executable)
 	if errors.Is(err, fs.ErrNotExist) {
-		return false, nil
+		return false, nil, rebuild
 	}
 	if err == nil {
 		err = freshness.Verify(root, executable)
 	}
 	if err == nil {
-		return true, nil
+		return true, nil, rebuild
 	}
 	if errors.As(err, &refusal) {
-		return true, refusal
+		return true, refusal, rebuild
 	}
-	return true, &freshness.Refusal{Executable: executable, RepairRoot: root, Cause: err}
+	return true, &freshness.Refusal{Executable: executable, RepairRoot: root, Cause: err}, rebuild
 }
 
 // binarySealCheck grades the published dist/bench a build is about to run.
@@ -48,10 +51,10 @@ func binarySealFacts(root string) (present bool, refusal *freshness.Refusal) {
 // reported on rather than refused. Decide calls this in build mode alone; a
 // review preflight renders no such row.
 //
-// An assignment worktree sits under the pool path, and the hooks refuse the cd
-// the verifier's rebuild sentence names. So an owned root states the reason
-// alone and names the worktree build verb as its remedy. Any other root renders
-// the gathered refusal whole, because its cd leaves the pool path untouched.
+// The gathered rebuild owns the root kind. A worktree rebuild names the build
+// verb, so the row states the reason alone and names that remedy as its next
+// step. Any other root renders the gathered refusal whole, because its remedy
+// runs as the refusal prints it.
 func binarySealCheck(f Facts) CheckResult {
 	if !f.BinarySealPresent {
 		return notApplicable("binary-seal")
@@ -59,10 +62,10 @@ func binarySealCheck(f Facts) CheckResult {
 	if f.BinarySealRefusal == nil {
 		return green("binary-seal")
 	}
-	if f.AssignmentTarget == "" {
+	if !f.BinarySealRebuild.Worktree {
 		return red("binary-seal", f.BinarySealRefusal.Error())
 	}
 	row := red("binary-seal", f.BinarySealRefusal.Reason())
-	row.Next = usage.WorktreeBuildFor(f.AssignmentTarget)
+	row.Next = f.BinarySealRebuild.Action
 	return row
 }
