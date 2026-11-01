@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/strict-json-ownership/spec.md",
-  "plan_digest": "sha256:85b39d6036837dbfefc2ff28e2bb5a87ee2030867effe236f7d8b8a82b7442c4",
+  "plan_digest": "sha256:4eb2f514d61a626059587c5896e808e64450264ba12146938389c4f1e1673f57",
   "implementation_session": "",
   "chunks": [
     {
@@ -152,9 +152,9 @@
     {
       "id": "SJ-C2",
       "base": "533160a782e35a64f68d5944f35f5103e0eadacd",
-      "tip": "4f88b2d46289a69c396185d1a40de5f0f6182326",
-      "plan_digest": "sha256:85b39d6036837dbfefc2ff28e2bb5a87ee2030867effe236f7d8b8a82b7442c4",
-      "source_digest": "cee4624207f1395d09c8a38efa3288218981b4ec",
+      "tip": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+      "plan_digest": "sha256:4eb2f514d61a626059587c5896e808e64450264ba12146938389c4f1e1673f57",
+      "source_digest": "c3b2a959e0f36fdafa82ade2a1e1a7e3e7967248",
       "acceptance_rows": [
         "SJ16",
         "SJ17",
@@ -201,6 +201,36 @@
               "ref": "claude-agent:bench-writer-high:ft354-author-02",
               "digest": "sha256:cfbc7e954a1df4afa108f3b521c91bf1083e6abb75e6365febcf6318de6174fd",
               "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestDocumentStructuralContract/unknown_nested_field,15,1,0,null,yes\n  2,bit,swap,failed,1,TestDocumentStructuralContract/whitespace_after_the_value,15,1,0,null,yes\n  3,bit,swap,failed,2,TestDocumentStructuralContract/nested_duplicate_in_an_array_element,15,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/jsonfile,TestDocumentStructuralContract,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "sj-c2-r1-owner-gate",
+          "performer": "ft354-repair-02-1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c3b2a959e0f36fdafa82ade2a1e1a7e3e7967248",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft354-repair-02-1",
+            "digest": "sha256:aa9b68fe26da7312f4967c1b8801ebe18c8e8172699cfa647e002dee6d29c700",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap+swap+swap,failed,1,TestDocumentStructuralContract/repeated_key_with_an_escaped_spelling,15,1,0,null,yes\n  2,bit,swap,failed,2,TestDocumentStructuralContract/nested_duplicate_in_an_array_element,15,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/jsonfile,TestDocumentStructuralContract,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "requirement": "owner-gate",
+          "command": "bench test --package ./internal/jsonfile --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Swap 'seen[name] = true' for 'seen[name] = false' in internal/jsonfile/decode.go, and record that the nested duplicate case of TestDocumentStructuralContract turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft354-repair-02-1",
+              "digest": "sha256:aa9b68fe26da7312f4967c1b8801ebe18c8e8172699cfa647e002dee6d29c700",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap+swap+swap,failed,1,TestDocumentStructuralContract/repeated_key_with_an_escaped_spelling,15,1,0,null,yes\n  2,bit,swap,failed,2,TestDocumentStructuralContract/nested_duplicate_in_an_array_element,15,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/jsonfile,TestDocumentStructuralContract,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
         }
@@ -289,6 +319,18 @@
       "chunk_ids": {
         "SJ-C1": [
           "SJ-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:85b39d6036837dbfefc2ff28e2bb5a87ee2030867effe236f7d8b8a82b7442c4",
+      "to": "sha256:4eb2f514d61a626059587c5896e808e64450264ba12146938389c4f1e1673f57",
+      "chunk_ids": {
+        "SJ-C1": [
+          "SJ-C1"
+        ],
+        "SJ-C2": [
+          "SJ-C2"
         ]
       }
     }
