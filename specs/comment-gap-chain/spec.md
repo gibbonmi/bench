@@ -91,34 +91,7 @@ CG-C2 changes the guidance, the anchor registry, the changelog, and the scorecar
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 2,
-  "execution": {"mode": "delegate", "run_id": "ft439-build-20261101", "orchestrator_session": "session_01JK5CPcwpGroiAPWzzXxytc", "author_limit": 1, "assignments": {"01-chain-proves-comment-gap.md": [], "02-guidance-states-comment-gap.md": []}},
-  "chunks": [
-    {
-      "id": "CG-C1",
-      "tickets": ["01-chain-proves-comment-gap.md"],
-      "verification": [
-        {"id": "chain-gap", "command": "bench test --package ./internal/reviewrecord/... --run 'Chain|Fold|ReviewRecordSource|CommentOnlyGap'", "probe": "Make foldCoversBase compare the fold digest with the base digest by equality, and record that the fold-then-comment case of TestChainAcceptsAProvedCommentGap turns red.", "ticket": "01-chain-proves-comment-gap.md"},
-        {"id": "checkpoint", "command": "bench test --package ./internal/gate --run 'ReviewCheckpoint|DeltaCheckpointRunsWholeForANonTestDelta'", "probe": "Restore the equality comparison of the base digest with the previous chunk digest in checkSource, and record that TestReviewCheckpointChainAcceptsACommentGap turns red.", "ticket": "01-chain-proves-comment-gap.md"}
-      ]
-    },
-    {
-      "id": "CG-C2",
-      "tickets": ["02-guidance-states-comment-gap.md"],
-      "verification": [
-        {"id": "anchors", "command": "bench test --package ./internal/anchors", "probe": "Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row.", "ticket": "02-guidance-states-comment-gap.md"},
-        {"id": "guidance", "command": "bench test --check docs-currency-workflow", "probe": "Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red.", "ticket": "02-guidance-states-comment-gap.md"}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "owner-packages", "command": "bench test --package ./internal/reviewrecord/... --package ./internal/commentgap --package ./internal/gate --package ./internal/anchors --package ./internal/landing --package ./internal/preflight/..."},
-    {"id": "guidance", "command": "bench test --check docs-currency-workflow"},
-    {"id": "prose", "command": "bench test --check prose-mechanics"},
-    {"id": "coverage", "command": "bench coverage --check comment-gap-chain"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","run_id":"ft439-build-20261101","orchestrator_session":"session_01JK5CPcwpGroiAPWzzXxytc","author_limit":1,"assignments":{"01-chain-proves-comment-gap.md":[{"session":"ft439-author-01","assignment":"58abfa6badfad14b8718236a3ee8a691","model":"opus","effort":"medium","source":"1d08e3dd749824d76d22fa22e752cae34b53a944","native_ref":"claude-agent:bench-writer-medium:ft439-author-01"}],"02-guidance-states-comment-gap.md":[]}},"chunks":[{"id":"CG-C1","tickets":["01-chain-proves-comment-gap.md"],"verification":[{"id":"chain-gap","command":"bench test --package ./internal/reviewrecord/... --run 'Chain|Fold|ReviewRecordSource|CommentOnlyGap'","probe":"Make foldCoversBase compare the fold digest with the base digest by equality, and record that the fold-then-comment case of TestChainAcceptsAProvedCommentGap turns red.","ticket":"01-chain-proves-comment-gap.md"},{"id":"checkpoint","command":"bench test --package ./internal/gate --run 'ReviewCheckpoint|DeltaCheckpointRunsWholeForANonTestDelta'","probe":"Restore the equality comparison of the base digest with the previous chunk digest in checkSource, and record that TestReviewCheckpointChainAcceptsACommentGap turns red.","ticket":"01-chain-proves-comment-gap.md"}]},{"id":"CG-C2","tickets":["02-guidance-states-comment-gap.md"],"verification":[{"id":"anchors","command":"bench test --package ./internal/anchors","probe":"Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row.","ticket":"02-guidance-states-comment-gap.md"},{"id":"guidance","command":"bench test --check docs-currency-workflow","probe":"Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red.","ticket":"02-guidance-states-comment-gap.md"}]}],"final_verification":[{"id":"owner-packages","command":"bench test --package ./internal/reviewrecord/... --package ./internal/commentgap --package ./internal/gate --package ./internal/anchors --package ./internal/landing --package ./internal/preflight/..."},{"id":"guidance","command":"bench test --check docs-currency-workflow"},{"id":"prose","command":"bench test --check prose-mechanics"},{"id":"coverage","command":"bench coverage --check comment-gap-chain"}]}
 ```
 
 ## Testing decisions
