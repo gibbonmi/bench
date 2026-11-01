@@ -880,3 +880,22 @@ The Coverage probe showed a nested-only red. Its mutant ignores every duplicate 
 
 - Standards: `jsonfiletest.UnknownKey` is exported, and no consumer reads it.
 - Spec and Coverage: the shared nested-duplicate case repeats one value, so the baseline cannot tell a first-wins reader from a last-wins one. The gate duplicate sentinel subtest keeps the two-value form.
+
+## SJ-C4 ticket 4 author witness reds
+
+The ticket 4 author `ft354-author-04` (opus / high) committed the release baseline on the unchanged readers at `1ce13623`. The production edit followed at `c470a86d`.
+In one pre-edit call, SJ37 and SJ42 went red, because the old refusals did not carry `jsonfile.ErrDuplicateKey`. Each other row passed before the edit.
+
+| row | subject | mutation | failing witness |
+| --- | --- | --- | --- |
+| SJ36 | `json_validation.go` | `json.Valid` disabled | `release_baseline` |
+| SJ38 | `json_validation.go` | a structural decode and a permissive unmarshal | `unknown_typed_fields` |
+| SJ39 | `release_requirements.go` | the newline check disabled | `requirement_evidence_framing` |
+| SJ40 | `component_manifest.go` | one label hardcoded | `declared_key_set` |
+| SJ41 | `component_manifest.go` | the missing-key loop disabled | `missing_key` |
+| SJ41 | `component_manifest.go` | plan probe `release`, the extra-key check disabled | `extra_key` |
+| SJ43 | `package_artifact.go` | a typed strict decode of the identity | `unrelated_fields` |
+| SJ44 | `package_artifact.go` | the structural check disabled | `duplicate_identity_key` |
+| SJ45 | `internal/jsonfile/decode.go` | child scan errors ignored | `duplicate_inside_an_unrelated_field` |
+
+Each row answered `bit` with restored `yes`. The author claims one residual: an overflow number such as `1e999` in a raw field now passes the structural decode.
