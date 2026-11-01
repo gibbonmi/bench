@@ -21,7 +21,7 @@ In `internal/anchors/registry_chunk_chain.go`, keep the Forbid row with the need
 - the bounded repair policy, needle `takes a refreeze`, diagnostic `chunk chain: the bounded repair policy restored the refreeze of a comment-only correction`;
 - the implement phase, needle `Each source change except a record commit or a recorded fold moves the chunk tip`, diagnostic `chunk chain: the implement phase restored the refreeze of a comment-only correction`.
 
-Add one mirror row for each new Forbid row to `TestChunkChainAnchors` in `internal/anchors/registry_chunk_chain_test.go`. Each mirror row pins the retired sentence whole. Add the retired refreeze sentences to the restorations that the doc comment of `chunkChainAnchors` names. Use the existing file constants: `boundedRepairPolicy` and `implementPhase` in the registry (`registry_chunk_chain.go:58`), and `repairPolicy` in the test (`registry_chunk_chain_test.go:10`).
+Add one mirror row for each new Forbid row to `TestChunkChainAnchors` in `internal/anchors/registry_chunk_chain_test.go`. Each mirror row pins the retired sentence whole. Add one short sentence to the doc comment of `chunkChainAnchors` that names the retired refreeze sentences, and leave its current long sentence as it is. Use the existing file constants: `implementPhase` (`registry_chunk_chain.go:53`) and `boundedRepairPolicy` (`registry_chunk_chain.go:58`) in the registry, and `repairPolicy` in the test (`registry_chunk_chain_test.go:10`).
 
 Add one `### Review chain after a comment-only correction` section under `## [Unreleased]` in `CHANGELOG.md`. Keep lines 238 and 239 as history, and keep the rows that `internal/anchors/registry_data.go:94` and `:158` hold on that file.
 
