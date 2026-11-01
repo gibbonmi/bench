@@ -57,8 +57,8 @@ func TestDocumentStructuralContract(t *testing.T) {
 		category   error
 		errorPart  string
 	}{
-		{name: "repeated key with an escaped spelling", body: `{"name":"x","name":"y"}`, target: new(testDocument), category: ErrDuplicateKey},
 		{name: "nested duplicate in an array element", body: `[{"name":"x","name":"y"}]`, target: new([]testDocument), category: ErrDuplicateKey},
+		{name: "repeated key with an escaped spelling", body: `{"name":"x","name":"y"}`, target: new(testDocument), category: ErrDuplicateKey},
 		{name: "unknown nested field", body: `{"name":"x","child":{"value":1,"extra":2}}`, target: new(testDocument), errorPart: `unknown field "extra"`},
 		{name: "second object", body: testDocumentBody + ` {}`, target: new(testDocument), category: ErrTrailingData},
 		{name: "second array", body: testDocumentBody + ` []`, target: new(testDocument), category: ErrTrailingData},

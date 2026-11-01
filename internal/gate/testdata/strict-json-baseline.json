@@ -87,6 +87,16 @@
       "reason": "invalid cache record",
       "state": "invalid"
     },
+    "unopenable": {
+      "bytes": 0,
+      "reason": "cache unavailable",
+      "state": "unavailable"
+    },
+    "unreadable": {
+      "bytes": 0,
+      "reason": "cache unavailable",
+      "state": "unavailable"
+    },
     "whitespace only": {
       "bytes": 3,
       "reason": "invalid cache framing",

@@ -3,6 +3,7 @@ package gate
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // gateJSONBaseline holds the stored results of the strict gate readers for the hostile
@@ -88,9 +91,17 @@ func TestGateJSONCompatibility(t *testing.T) {
 	for name, result := range cacheFileStates(t, record, now) {
 		current.Cache[name] = result
 	}
+	storedHost := map[string]cacheResult{}
+	for name := range hostCacheFiles {
+		if result, ok := stored.Cache[name]; ok {
+			storedHost[name] = result
+			delete(stored.Cache, name)
+		}
+	}
 
 	t.Run("manifest baseline", func(t *testing.T) { compareGateJSON(t, current.Manifest, stored.Manifest) })
 	t.Run("cache baseline", func(t *testing.T) { compareGateJSON(t, current.Cache, stored.Cache) })
+	t.Run("unreadable cache baseline", func(t *testing.T) { compareGateJSON(t, hostCacheStates(t, now), storedHost) })
 }
 
 // jsonFamily derives the hostile document family from one valid object document. member
@@ -161,6 +172,24 @@ func cacheFileStates(t *testing.T, record string, now time.Time) map[string]cach
 		"directory":    loadedCacheResult(loadVerdict(filepath.Join(dir, "directory"), now)),
 		"under a file": loadedCacheResult(loadVerdict(filepath.Join(dir, "file", "cache"), now)),
 	}
+}
+
+// hostCacheFiles names host files whose metadata the cache reader accepts and whose bytes it
+// cannot read. A process other than root cannot open the memory of pid 1. A read of process
+// memory at offset zero fails.
+var hostCacheFiles = map[string]string{"unopenable": "/proc/1/mem", "unreadable": "/proc/self/mem"}
+
+// hostCacheStates loads each host cache file. It skips t on a host that has no such file.
+func hostCacheStates(t *testing.T, now time.Time) map[string]cacheResult {
+	t.Helper()
+	results := map[string]cacheResult{}
+	for name, path := range hostCacheFiles {
+		if _, err := os.Lstat(path); err != nil {
+			capability.Environment(t, fmt.Sprintf("the host has no %s cache file: %v", name, err))
+		}
+		results[name] = loadedCacheResult(loadVerdict(path, now))
+	}
+	return results
 }
 
 func readGateJSONBaseline(t *testing.T) gateJSONResults {
