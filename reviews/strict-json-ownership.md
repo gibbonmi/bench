@@ -725,3 +725,15 @@ Findings: 0. Worst issue: none. The one Coverage probe did not compile, so it pr
 - Standards: the second strict decode in the trailing branch ranks the diagnostics, and its comment states why.
 - Spec: the mutant selection leaves out `plan_baseline`, and history does not show the pre-edit capture.
 - Coverage: the plan side has no domain refusal beyond null and the unsupported version.
+
+## SJ-C3 repair 1 witness reds
+
+The repair session `ft354-repair-03-1` (opus / medium) moved the hostile-document family, the baseline reader, and the generic compare into `internal/jsonfile/jsonfiletest` at `7e962ba2`. The gate and review tests consume it.
+The review baseline gained four nested entries, captured against the base `parse.go`. The gate entry `nested unknown field` now names the key `extra`, and the repair claims the old result from a code read.
+
+| mutant | mutation in `internal/reviewrecord/parse.go` | first failure | restored |
+| --- | --- | --- | --- |
+| 1 | the duplicate-key case to `false &&` | `TestReviewJSONCompatibility/record_baseline` | yes |
+| 2 | the same mutation | `TestReviewJSONCompatibility/plan_baseline` | yes |
+| 3 | the unwrap skips an unknown-field cause | `TestReviewJSONCompatibility/record_baseline` | yes |
+| 4 | plan probe `review`, the real bytes to `null` | `TestReviewJSONCompatibility/unframed_review_document` | yes |
