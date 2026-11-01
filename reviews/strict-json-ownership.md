@@ -414,7 +414,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "sj-c3-standards-1",
+          "performer": "ft354-review-c3-standards-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2bcb79a2c20eef4cd362a1b0c870ab1972ba958c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c3-standards-1",
+            "digest": "sha256:9a1faf0a5959acb8e0c60c5bccb8f2b22f1dcceb3aeef3e5ed411c311e07626f",
+            "excerpt": "## Standards\n1 finding. Worst issue: S1, the gate baseline-family harness is pasted a second time into the review package, and SJ-C4 would paste a third copy.\n- S1 (severity 5, confidence 8, auto-fix), internal/reviewrecord/json_compatibility_test.go:120, :197, :210 at 2c72f647. AGENTS.md: \"Knowledge duplication is a defect ... a fixture harness pasted N times.\" reviewFamily (:120-145) repeats the 18-case table of jsonFamily (gate json_compatibility_test.go:109-133); compareReviewJSON (:210-232) copies compareGateJSON[T] (gate :208-230); readReviewJSONBaseline (:197-208) copies readGateJSONBaseline (gate :195-206). spec.md:249 makes the case list one fact. Owner: an exported test-support package internal/jsonfile/jsonfiletest (new) with Family, ReadBaseline[T], and Compare[T], consumed by the gate, review, and release tests; the path sits inside the directory of the signed-off SJ-C2 entry internal/jsonfile/decode.go.\nAdvice: the trailing branch of decode (parse.go:239-241) runs a second strict decode to rank diagnostics; its comment states why. Comments pass craft-comments. WritePlanPayload (fixture.go:86) removes the old planDocument duplication.\nImplementation command contributed: no ticket's Writes line holds a shared owner for the harness; ticket 3 forbade only the fence and repository harness copies.\nSteps 1-7 done.\n"
+          },
+          "axis": "Standards",
+          "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "tip": "2c72f6478c064633d4d6879c82e54178b835b3aa",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c3-spec-1",
+          "performer": "ft354-review-c3-spec-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2bcb79a2c20eef4cd362a1b0c870ab1972ba958c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c3-spec-1",
+            "digest": "sha256:a4911c3c79b1ab455329132d13f76ab8c43051566014f4d1f427b99e5cad30e6",
+            "excerpt": "## Spec\n0 findings. Worst issue is advice A1: the review family lacks the nested cases of the gate family.\nbounds.ClassifyBytes runs before jsonfile.DecodeDocument (parse.go:228-232). uniqueJSON is removed; decode maps ErrDuplicateKey (parse.go:236) and re-decodes on ErrTrailingData (parse.go:238-246) so a type error outranks the suffix, which spec.md:113-114 allows.\nCompeting inputs hold against a hand trace of the old code: unknown-plus-suffix, duplicate-plus-suffix, whitespace-only, null, syntax, wrong type, and suffix variants.\nfenced, locate, plan.go, parsePlan, ReadPlan, checkPlan, and the Parse domain checks are untouched. SJ32-SJ35 cells cite TestReviewJSONCompatibility (json_compatibility_test.go:36).\nAdvice: A1 the review family lacks nested duplicate and nested unknown (gate json_compatibility_test.go:82-83), severity 3; A2 the mutant selection leaves out plan_baseline; A3 the pre-edit capture is not visible in history.\nSteps 1-8 done.\n"
+          },
+          "axis": "Spec",
+          "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "tip": "2c72f6478c064633d4d6879c82e54178b835b3aa",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "sj-c3-coverage-1",
+          "performer": "ft354-review-c3-coverage-1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2bcb79a2c20eef4cd362a1b0c870ab1972ba958c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c3-coverage-1",
+            "digest": "sha256:f51bf29eb9f757cf5bfc6de8d625c483351d7c721e1825e96d6ff3dac4eb4abc",
+            "excerpt": "## Coverage\n0 findings. Worst issue is advice only: the review baseline has no nested-duplicate, escaped-duplicate, or empty-array case; old and new code give the same result on all three.\nPresent classes (json_compatibility_test.go:114-151 against spec.md:240-249): valid record and plan seeds, null, unsupported version, wrong type, invalid evidence, invalid spec path, version 2 session, oversize, invalid UTF-8, framed, unframed, whitespace, whitespace only, empty, unknown, root duplicate, syntax, second value, framed second value, malformed suffix, unknown plus suffix, duplicate plus suffix, wrong-type and unknown-plus-duplicate combinations.\nBoth callers: Parse and ReadPlan (through parsePlan, plan.go:64) run the duplicate, suffix, and precedence classes; byte-limit and domain cases run through Parse, and the bounds check sits in the shared decode.\nprobe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  invalid,internal/jsonfile/decode.go,swap,build-failed,0,null,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/reviewrecord,TestReviewJSONCompatibility,passed,0\nAdvice: add nested-duplicate and escaped-duplicate rows to the review family (severity 3, not a correctness defect); the plan side has no domain-refusal rows beyond null and unsupported version.\nImplementation command: did not contribute. Steps 1-9 done (invalid probe).\n"
+          },
+          "axis": "Coverage",
+          "base": "bc1d783e99c01ae3629aa6c40dbd947e4fb7b7fb",
+          "tip": "2c72f6478c064633d4d6879c82e54178b835b3aa",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -594,3 +657,26 @@ After the ticket commit `f7c06590`, one mutant set over `internal/reviewrecord/p
 | 5 | plan probe `review`, the real bytes to `null` | `TestReviewJSONCompatibility/unframed_review_document` | SJ32 |
 
 The author flagged that three review test helpers repeat three gate test helpers. A shared helper needs a path outside the ticket 3 fence.
+
+## SJ-C3 round 1 review
+
+The three axes ran on opus / medium over the frozen pair `bc1d783e..2c72f647`. Spec and Coverage pass with zero finding IDs. The repair count of SJ-C3 is 1 of 2.
+
+## Standards
+
+Findings: 1. Worst issue: S1, severity 5, auto-fix, confidence 8. The review test pastes the gate baseline-family harness at `internal/reviewrecord/json_compatibility_test.go:120`, `:197`, and `:210`.
+The single owner is a new test-support package `internal/jsonfile/jsonfiletest`. The gate, review, and release compatibility tests consume it.
+
+## Spec
+
+Findings: 0. Worst issue: none. Advice A1 says the review family lacks the nested cases of the gate family, and one shared family closes it.
+
+## Coverage
+
+Findings: 0. Worst issue: none. The one Coverage probe did not compile, so it proves nothing.
+
+## SJ-C3 advice
+
+- Standards: the second strict decode in the trailing branch ranks the diagnostics, and its comment states why.
+- Spec: the mutant selection leaves out `plan_baseline`, and history does not show the pre-edit capture.
+- Coverage: the plan side has no domain refusal beyond null and the unsupported version.

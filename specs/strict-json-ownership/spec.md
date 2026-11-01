@@ -294,6 +294,9 @@ SJ-C3
 - `internal/reviewrecord/json_compatibility_test.go`
 - `internal/reviewrecord/testdata/strict-json-baseline.json`
 - `internal/reviewrecord/recordtest/fixture.go`
+- `internal/jsonfile/jsonfiletest/`
+- `internal/gate/json_compatibility_test.go`
+- `internal/gate/testdata/strict-json-baseline.json`
 
 SJ-C4
 
