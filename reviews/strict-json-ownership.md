@@ -579,3 +579,18 @@ The three axes ran on opus / medium over the repair delta `4f88b2d4..bc1d783e`. 
 ## SJ-C2 round 2 advice
 
 - Standards and Coverage: the `/proc/1/mem` case depends on ptrace access, not on root alone. With ptrace access, the case reaches the read refusal and the open witness goes silent.
+
+## SJ-C3 ticket 3 author witness reds
+
+The ticket 3 author `ft354-author-03` (opus / medium) captured the review baseline from the unchanged code. All four rows are preservation rows, so the one pre-edit call passed.
+After the ticket commit `f7c06590`, one mutant set over `internal/reviewrecord/parse.go` turned each row red, with restored `yes`.
+
+| mutant | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| 1 | `DecodeDocument` to `Decode` | `TestReviewJSONCompatibility/unframed_review_document` | SJ32 |
+| 2 | the fence span start moved by one byte | `TestReviewJSONCompatibility/fenced_completion_plan` | SJ33 |
+| 3 | the precedence decode to `new(any)` | `TestReviewJSONCompatibility/record_baseline` | SJ34 |
+| 4 | the byte-limit state check to `false` | `TestReviewJSONCompatibility/byte_limits` | SJ35 |
+| 5 | plan probe `review`, the real bytes to `null` | `TestReviewJSONCompatibility/unframed_review_document` | SJ32 |
+
+The author flagged that three review test helpers repeat three gate test helpers. A shared helper needs a path outside the ticket 3 fence.
