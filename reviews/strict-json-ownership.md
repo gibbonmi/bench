@@ -285,3 +285,18 @@ The Spec reaffirmation found that mutants 1 and 3 named SJ10 cases first. A narr
 - Standards: the history wording of the inventory sentence, the repeated SJ-C5 fence list, and the old missing doc comment.
 - Spec: the census narrowing has a `bench learning` entry, and the SJ-C5 canary narrowing removed paths that a landed commit deleted.
 - Coverage: no test pins a present whitespace-only policy.
+
+## SJ-C2 ticket 2 author witness reds
+
+The ticket 2 author `ft354-author-02` (opus / high) wrote the new tests first. It ran them in one `bench test` call against the unchanged production code at `55a5813c`, with 21 failures.
+The witness rows are SJ16, SJ17, SJ19, SJ20, and SJ25 in `TestDocumentStructuralContract` and `TestDocumentErrorCategories`.
+
+The author ran three mutant sets after the ticket commit, and every row answered `bit` with restored `yes`.
+
+| subject | set | rows |
+| --- | --- | --- |
+| `internal/jsonfile/decode.go` | framing set over `TestDocumentFramingCompatibility` | SJ22, SJ23, SJ24 |
+| `internal/jsonfile/decode.go` | structural set over `TestDocumentStructuralContract`, with the plan probe | SJ18, SJ21, SJ16 |
+| `internal/gate/verdict.go` | one `--expect` set over `TestGateJSONCompatibility` | SJ28, SJ29, SJ30, SJ31, SJ26, SJ27 |
+
+The plan probe `owner-gate` swapped `seen[name] = true` and turned the nested duplicate case red. The ticket adds the export `jsonfile.RejectTrailing`, so the gate keeps one suffix owner.
