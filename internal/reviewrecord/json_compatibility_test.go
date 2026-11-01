@@ -2,13 +2,12 @@ package reviewrecord_test
 
 import (
 	"encoding/json"
-	"os"
-	"reflect"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/jsonfile/jsonfiletest"
 	rr "github.com/gibbonmi/bench/internal/reviewrecord"
 	"github.com/gibbonmi/bench/internal/reviewrecord/recordtest"
 )
@@ -64,15 +63,16 @@ func TestReviewJSONCompatibility(t *testing.T) {
 		}
 	})
 
-	stored := readReviewJSONBaseline(t)
-	t.Run("record baseline", func(t *testing.T) { compareReviewJSON(t, recordResults(t, record, limits), stored.Record) })
-	t.Run("plan baseline", func(t *testing.T) { compareReviewJSON(t, planResults(t), stored.Plan) })
+	var stored reviewJSONResults
+	jsonfiletest.ReadBaseline(t, reviewJSONBaseline, &stored)
+	t.Run("record baseline", func(t *testing.T) { jsonfiletest.Compare(t, recordResults(t, record, limits), stored.Record) })
+	t.Run("plan baseline", func(t *testing.T) { jsonfiletest.Compare(t, planResults(t), stored.Plan) })
 }
 
 // recordResults reads every record case of the baseline family through Parse.
 func recordResults(t *testing.T, record string, limits map[string]string) map[string]reviewResult {
 	t.Helper()
-	records := reviewFamily(record)
+	records := jsonfiletest.Family(reviewSeed(record, recordNested))
 	for name, body := range limits {
 		records[name] = body
 	}
@@ -92,7 +92,7 @@ func planResults(t *testing.T) map[string]reviewResult {
 	t.Helper()
 	current := map[string]reviewResult{}
 	f := recordtest.New(t, 1)
-	plans := reviewFamily(marshalReview(t, f.Plan))
+	plans := jsonfiletest.Family(reviewSeed(marshalReview(t, f.Plan), planNested))
 	unsupported := f.Plan
 	unsupported.Version = 3
 	plans["unsupported version"] = marshalReview(t, unsupported)
@@ -109,33 +109,16 @@ func planResults(t *testing.T) map[string]reviewResult {
 	return current
 }
 
-// reviewFamily derives the hostile document family from one valid object document whose
-// first member is "version":1.
-func reviewFamily(valid string) map[string]string {
-	member, wrong := `"version":1`, `"version":"1"`
-	unknown := strings.Replace(valid, "{", `{"extra":true,`, 1)
-	duplicate := strings.Replace(valid, member, member+","+member, 1)
-	mistyped := strings.Replace(valid, member, wrong, 1)
-	return map[string]string{
-		"framed":                    valid + "\n",
-		"unframed":                  valid,
-		"surrounding whitespace":    " \n" + valid + " \t\r\n",
-		"whitespace only":           " \n\t",
-		"empty":                     "",
-		"null":                      "null",
-		"unknown field":             unknown,
-		"duplicate key":             duplicate,
-		"syntax error":              strings.TrimSuffix(valid, "}") + ",}",
-		"wrong type":                mistyped,
-		"second value":              valid + " {}",
-		"framed second value":       valid + "\n{}\n",
-		"malformed suffix":          valid + " nope",
-		"unknown plus suffix":       unknown + " {}",
-		"duplicate plus suffix":     duplicate + " {}",
-		"unknown plus duplicate":    strings.Replace(duplicate, "{", `{"extra":true,`, 1),
-		"wrong type plus suffix":    mistyped + " {}",
-		"wrong type plus duplicate": strings.Replace(mistyped, wrong, wrong+","+member, 1),
-	}
+// recordNested and planNested are members of an object inside the record and plan seeds.
+const (
+	recordNested = `"reconciliation":null`
+	planNested   = `"tickets":["1.md"]`
+)
+
+// reviewSeed seeds the family from a valid review document, its root version member, and
+// one nested member.
+func reviewSeed(valid, nested string) jsonfiletest.Seed {
+	return jsonfiletest.Seed{Valid: valid, Member: `"version":1`, Wrong: `"version":"1"`, Nested: nested}
 }
 
 // recordLimitCases derives the documents that bounds.ClassifyBytes refuses from the valid
@@ -186,41 +169,4 @@ func planResult(f *recordtest.Fixture) reviewResult {
 		return reviewResult{Error: err.Error()}
 	}
 	return reviewResult{Version: plan.Version}
-}
-
-func readReviewJSONBaseline(t *testing.T) reviewJSONResults {
-	t.Helper()
-	data, err := os.ReadFile(reviewJSONBaseline)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var stored reviewJSONResults
-	if err := json.Unmarshal(data, &stored); err != nil {
-		t.Fatal(err)
-	}
-	return stored
-}
-
-func compareReviewJSON(t *testing.T, current, stored map[string]reviewResult) {
-	t.Helper()
-	names := make([]string, 0, len(current)+len(stored))
-	for name := range current {
-		names = append(names, name)
-	}
-	for name := range stored {
-		if _, ok := current[name]; !ok {
-			names = append(names, name)
-		}
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		got, ok := current[name]
-		want, recorded := stored[name]
-		switch {
-		case !ok:
-			t.Errorf("%q: the baseline case has no current result", name)
-		case !recorded || !reflect.DeepEqual(got, want):
-			t.Errorf("%q: current %+v, baseline %+v", name, got, want)
-		}
-	}
 }

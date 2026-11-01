@@ -1,18 +1,16 @@
 package gate
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
-	"sort"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/jsonfile/jsonfiletest"
 )
 
 // gateJSONBaseline holds the stored results of the strict gate readers for the hostile
@@ -76,15 +74,14 @@ func TestGateJSONCompatibility(t *testing.T) {
 		}
 	})
 
-	stored := readGateJSONBaseline(t)
+	var stored gateJSONResults
+	jsonfiletest.ReadBaseline(t, gateJSONBaseline, &stored)
 	current := gateJSONResults{Manifest: map[string]manifestResult{}, Cache: map[string]cacheResult{}}
-	manifests := jsonFamily(validManifestJSON, `"lane":[]`, `"lane":{}`)
-	manifests["nested duplicate key"] = nestedDuplicateManifest
-	manifests["nested unknown field"] = nestedUnknownManifest
-	for name, body := range manifests {
+	manifests := jsonfiletest.Seed{Valid: validManifestJSON, Member: `"lane":[]`, Wrong: `"lane":{}`, Nested: `"name":"build"`}
+	for name, body := range jsonfiletest.Family(manifests) {
 		current.Manifest[name] = manifestFixtureResult(t, body)
 	}
-	for name, body := range jsonFamily(record, `"schema":1`, `"schema":"1"`) {
+	for name, body := range jsonfiletest.Family(jsonfiletest.Seed{Valid: record, Member: `"schema":1`, Wrong: `"schema":"1"`}) {
 		current.Cache[name] = cacheFixtureResult(t, body, now)
 	}
 	current.Cache["oversize"] = cacheFixtureResult(t, strings.Replace(record, "{", "{"+strings.Repeat(" ", cacheLimit), 1), now)
@@ -99,37 +96,9 @@ func TestGateJSONCompatibility(t *testing.T) {
 		}
 	}
 
-	t.Run("manifest baseline", func(t *testing.T) { compareGateJSON(t, current.Manifest, stored.Manifest) })
-	t.Run("cache baseline", func(t *testing.T) { compareGateJSON(t, current.Cache, stored.Cache) })
-	t.Run("unreadable cache baseline", func(t *testing.T) { compareGateJSON(t, hostCacheStates(t, now), storedHost) })
-}
-
-// jsonFamily derives the hostile document family from one valid object document. member
-// is one field of valid, and wrong gives that field a value of the wrong type.
-func jsonFamily(valid, member, wrong string) map[string]string {
-	unknown := strings.Replace(valid, "{", `{"extra":true,`, 1)
-	duplicate := strings.Replace(valid, member, member+","+member, 1)
-	mistyped := strings.Replace(valid, member, wrong, 1)
-	return map[string]string{
-		"framed":                    valid + "\n",
-		"unframed":                  valid,
-		"surrounding whitespace":    " \n" + valid + " \t\r\n",
-		"whitespace only":           " \n\t",
-		"empty":                     "",
-		"null":                      "null",
-		"unknown field":             unknown,
-		"duplicate key":             duplicate,
-		"syntax error":              strings.TrimSuffix(valid, "}") + ",}",
-		"wrong type":                mistyped,
-		"second value":              valid + " {}",
-		"framed second value":       valid + "\n{}\n",
-		"malformed suffix":          valid + " nope",
-		"unknown plus suffix":       unknown + " {}",
-		"duplicate plus suffix":     duplicate + " {}",
-		"unknown plus duplicate":    strings.Replace(duplicate, "{", `{"extra":true,`, 1),
-		"wrong type plus suffix":    mistyped + " {}",
-		"wrong type plus duplicate": strings.Replace(mistyped, wrong, wrong+","+member, 1),
-	}
+	t.Run("manifest baseline", func(t *testing.T) { jsonfiletest.Compare(t, current.Manifest, stored.Manifest) })
+	t.Run("cache baseline", func(t *testing.T) { jsonfiletest.Compare(t, current.Cache, stored.Cache) })
+	t.Run("unreadable cache baseline", func(t *testing.T) { jsonfiletest.Compare(t, hostCacheStates(t, now), storedHost) })
 }
 
 // manifestFixtureResult loads body as the phase manifest of a fresh root. The diagnostic
@@ -190,41 +159,4 @@ func hostCacheStates(t *testing.T, now time.Time) map[string]cacheResult {
 		results[name] = loadedCacheResult(loadVerdict(path, now))
 	}
 	return results
-}
-
-func readGateJSONBaseline(t *testing.T) gateJSONResults {
-	t.Helper()
-	data, err := os.ReadFile(gateJSONBaseline)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var stored gateJSONResults
-	if err := json.Unmarshal(data, &stored); err != nil {
-		t.Fatal(err)
-	}
-	return stored
-}
-
-func compareGateJSON[T any](t *testing.T, current, stored map[string]T) {
-	t.Helper()
-	names := make([]string, 0, len(current)+len(stored))
-	for name := range current {
-		names = append(names, name)
-	}
-	for name := range stored {
-		if _, ok := current[name]; !ok {
-			names = append(names, name)
-		}
-	}
-	sort.Strings(names)
-	for _, name := range names {
-		got, ok := current[name]
-		want, recorded := stored[name]
-		switch {
-		case !ok:
-			t.Errorf("%q: the baseline case has no current result", name)
-		case !recorded || !reflect.DeepEqual(got, want):
-			t.Errorf("%q: current %s, baseline %s", name, inspectJSON(got), inspectJSON(want))
-		}
-	}
 }

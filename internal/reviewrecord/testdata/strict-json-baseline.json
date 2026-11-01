@@ -27,6 +27,12 @@
     "malformed suffix": {
       "error": "invalid JSON: trailing value"
     },
+    "nested duplicate key": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "nested unknown field": {
+      "error": "invalid JSON: json: unknown field \"extra\""
+    },
     "null": {
       "error": "unsupported version 0"
     },
@@ -91,6 +97,12 @@
     },
     "malformed suffix": {
       "error": "invalid JSON: trailing value"
+    },
+    "nested duplicate key": {
+      "error": "invalid JSON: duplicate JSON key"
+    },
+    "nested unknown field": {
+      "error": "invalid JSON: json: unknown field \"extra\""
     },
     "null": {
       "error": "invalid completion plan version or empty chunks"

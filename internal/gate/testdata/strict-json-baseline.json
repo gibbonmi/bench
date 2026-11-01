@@ -148,7 +148,7 @@
       "error": "gate: $ROOT/.bench/phases.json: parse error: duplicate name"
     },
     "nested unknown field": {
-      "error": "gate: $ROOT/.bench/phases.json: unknown field: need"
+      "error": "gate: $ROOT/.bench/phases.json: unknown field: extra"
     },
     "null": {
       "error": "gate: $ROOT/.bench/phases.json: empty manifest: no phases declared"
