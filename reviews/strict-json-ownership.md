@@ -931,6 +931,72 @@
             "C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "sj-c5-standards-2",
+          "performer": "ft354-review-c5-standards-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "18fb045aa7cc7d19f3e3111b0ff1241d9ced0da2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c5-standards-2",
+            "digest": "sha256:f9c16b5bc4239fbeccdd5dc33dc6804deeeed2a6e42ea61932c2fa2b49501af8",
+            "excerpt": "## Standards\n0 findings. S1 is closed.\nAt 040c6b18 one callee rule and one function index serve both checks: packageCallee, packageFunc, packageFuncs.add, packageCallees, named, and reaches in internal/conformance/process_lifetime_test.go (hunk from line 88). processLifetimeEntryDiags uses named and reaches; strictJSONWalkers and strictJSONBypasses use the same index. strictJSONGraph, strictJSONNode, processLifetimeCallee, and processLifetimeDeclaration are deleted, and the disagreeing qualifier rule exists once.\nbenchModule passes one-source-per-fact: the repair reuses the existing constant at git_fixture_owner_test.go:16, with three derived uses (strict_json_owner_test.go:78, :160, :341); modfile.ModulePath has one caller.\nAdvice: other module-path spellings exist in other packages (otelrecord/provider.go:17, premises_fixture_test.go:78, puritycensus/census_test.go), none new; readsToken reads call.Fun without ast.Unparen.\nSteps 1-5 done.\n"
+          },
+          "axis": "Standards",
+          "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "tip": "040c6b18ff61711308c6a6ad6078dc19f0beb531",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c5-standards-1"
+          ]
+        },
+        {
+          "id": "sj-c5-spec-2",
+          "performer": "ft354-review-c5-spec-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "18fb045aa7cc7d19f3e3111b0ff1241d9ced0da2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c5-spec-2",
+            "digest": "sha256:cc351c53dac67865531582786a2a4b8e534c664da3b49a66a13448d91f82a2ef",
+            "excerpt": "## Spec\n0 findings. P1 is closed. The check returns no diagnostics before any caller walk when !benchModuleRoot(root) (strict_json_owner_test.go:46-48); benchModuleRoot compares modfile.ModulePath with benchModule (:78; git_fixture_owner_test.go:16), which matches spec.md:155. The linked subtest (strict_json_owner_test.go:256-263) checks module example.com/linked with internal/gate and a walker and expects no output.\nStep 5: a root with no go.mod or an unreadable one counts as an absent surface (readIfExists returns \"\", checks_test.go:334-340); the check gives no named refusal. If the kit had an unreadable go.mod, TestStrictJSONOwnerHoldsOnTheLiveTree would still turn red (:340-342), and the Go toolchain also needs go.mod.\nSJ46-SJ49 still hold: strictJSONOwnerRoot fixtures get a kit go.mod (:91-97). The coverage map is mapped with 50 rows; SJ50 is review-owned.\nAdvice: the named-refusal rule does not reach an unreadable or malformed go.mod; the negative controls would pass if benchModuleRoot always returned false, and only the Bites cases guard that.\nSteps 1-5 done.\n"
+          },
+          "axis": "Spec",
+          "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "tip": "040c6b18ff61711308c6a6ad6078dc19f0beb531",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c5-spec-1"
+          ]
+        },
+        {
+          "id": "sj-c5-coverage-2",
+          "performer": "ft354-review-c5-coverage-2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "18fb045aa7cc7d19f3e3111b0ff1241d9ced0da2",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft354-review-c5-coverage-2",
+            "digest": "sha256:518160a1a3beae29584d8306467a6e10e5adef7ea9d7ae46e1a05e84eb0fd33f",
+            "excerpt": "## Coverage\n0 findings. C1 is closed.\npackageCallees adds an edge from every ident and selector reference, skipping composite-literal keys and selector Sel names (process_lifetime_test.go:165-198 at 040c6b18). The function value walker and method value walker cases (strict_json_owner_test.go:462-465) use next := keysOnce and next := w.members, and both go red on the old call-only rule. Process-lifetime goes through the same packageFuncs.reaches (process_lifetime_test.go:28-51, 207-225), and its synthetic and live-tree tests pass. The run was at 9072b469, which differs from 040c6b18 only in the review record.\nStep 5: no false walker diagnostic on the live tree or in a negative control. In synthetic code, a token reader that passes itself as a callback, and a token-reading method value that reads an unrelated field w.opts.value, would trip the check; the second is a narrow false positive.\nNo probe. Conformance passed: 26 tests, 0 failures, 0 skips.\nAdvice: no negative control pins the field-versus-method collision or the self-callback case.\nSteps 1-5 done; 6 not needed.\n"
+          },
+          "axis": "Coverage",
+          "base": "883fc3b2c19c1ca0ed72a90f3a7038b11a9304c0",
+          "tip": "040c6b18ff61711308c6a6ad6078dc19f0beb531",
+          "finding_ids": [],
+          "supersedes": [
+            "sj-c5-coverage-1"
+          ]
         }
       ]
     }
@@ -1364,3 +1430,14 @@ The new predicate `benchModuleRoot` gates the check on the kit module. The new f
 | `registry/checks.go` | plan probe `conformance`, the registry name changed | `TestStrictJSONOwnerRegisteredPath` | yes |
 
 The coordinator probe narrowed the shared function edge to `n.Obj == nil`, and nine `TestStrictJSONOwnerBites` cases turned red, with restored `yes`.
+
+## SJ-C5 round 2 confirming review
+
+The three axes ran on opus / medium over the repair delta `59f92c5b..040c6b18`. Each axis passes with zero finding IDs, and S1, P1, and C1 close. The repair count of SJ-C5 is 1 of 2.
+The round ran because the ticket 5 widen commit sits in the repair delta, so the coordinator confirmation refused.
+
+## SJ-C5 round 2 advice
+
+- Coverage: a token-reading method named `value` that reads an unrelated field `value` now makes a self-edge. This narrow false positive has no negative control.
+- Spec: an unreadable or malformed `go.mod` counts as a root outside the kit, and only the live-tree test catches that case on the kit.
+- Standards: other packages still spell the kit module path, and none of those spellings is new.
