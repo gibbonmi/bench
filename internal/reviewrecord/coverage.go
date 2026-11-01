@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/gibbonmi/bench/internal/commentgap"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -85,7 +84,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				return err
 			}
 			chained := false
-			if baseDigest == previous.SourceDigest {
+			if digestFollows(root, previous.SourceDigest, baseDigest) {
 				if chained, err = isAncestor(root, previous.Tip, chunk.Base); err != nil {
 					return fmt.Errorf("chunk %s: %w", chunk.ID, err)
 				}
@@ -96,7 +95,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 				}
 			}
 			if !chained {
-				return Repair{Form: FormFold, Chunk: chunk.ID, Err: fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits and recorded folds follow a chunk tip until its checkpoint; record the fold or review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)}
+				return Repair{Form: FormFold, Chunk: chunk.ID, Err: fmt.Errorf("chunk %s: stale review chain gap: expected base %s, the chunk %s tip, got %s; plan commits land before the ticket merge, a default-branch merge lands before the first chunk or as a recorded fold, and only record commits, recorded folds, and proved comment-only Go corrections follow a chunk tip until its checkpoint; record the fold or review the uncovered delta", chunk.ID, previous.Tip, previous.ID, chunk.Base)}
 			}
 		}
 		// Verification ownership reads the frozen plan above, so a historical
@@ -147,7 +146,7 @@ func checkSource(root, tree, tip string, record Record, chunkID string, complete
 		return Repair{Form: FormChunk, Chunk: chunkID, Err: fmt.Errorf("missing chunk %s; record its completed evidence", chunkID)}
 	}
 	coveredDigest, coveredTip := coveredAfter(root, record, *previous)
-	if coveredDigest != digest && commentgap.Prove(root, coveredDigest, digest) != nil {
+	if !digestFollows(root, coveredDigest, digest) {
 		// The covered tip and the requested tip bound the delta that no review or fold
 		// covers. When they are one commit, the delta is the uncommitted work past that commit.
 		uncovered := coveredTip + ".." + tip

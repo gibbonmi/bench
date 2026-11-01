@@ -68,6 +68,61 @@ func TestFoldChainAcceptsARecordedFoldBetweenChunks(t *testing.T) {
 	}
 }
 
+// TestChainAcceptsAProvedCommentGap covers CG04 to CG09: the chunk 2 base can follow the
+// chunk 1 tip, or a recorded fold after it, by a proved comment-only Go gap. A statement
+// gap, a directive gap, a Markdown gap, and a base off the chunk 1 line refuse.
+func TestChainAcceptsAProvedCommentGap(t *testing.T) {
+	const goSeed, goComment = "package fixture\n\n// value is one.\nvar value = 1\n", "package fixture\n\n// value is the constant one.\nvar value = 1\n"
+	for _, tc := range []struct {
+		name, path, seed, gap, want string
+		fold, offLine               bool
+	}{
+		{"chunk then comment", "gap.go", goSeed, goComment, "", false, false},
+		{"fold then comment", "gap.go", goSeed, goComment, "", true, false},
+		{"statement", "gap.go", goSeed, "package fixture\n\n// value is one.\nvar value = 2\n", "stale review chain gap", false, false},
+		{"directive", "gap.go", goSeed, "package fixture\n\n//go:generate true\nvar value = 1\n", "stale review chain gap", false, false},
+		{"markdown", "gap.md", "# Gap\n\n<!-- before -->\n", "# Gap\n\n<!-- after -->\n", "stale review chain gap", false, false},
+		{"off-line base", "gap.go", goSeed, goComment, "stale review chain gap", false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f, _ := recordtest.NewLinked(t, 2)
+			f.Write(tc.path, tc.seed)
+			f.AddChunk()
+			f.Save()
+			f.Commit("retain chunk 1")
+			if tc.fold {
+				f.HandFold(f.Mainline(map[string]string{"main.txt": "main\n"}), nil)
+				f.RecordFold(rr.FoldDelta{})
+			}
+			f.Write(tc.path, tc.gap)
+			f.Commit("gap")
+			f.AddChunk()
+			record, tip := f.Record, f.Tip()
+			if tc.offLine {
+				// The gap tree on a parent line that skips the chunk 1 tip, and a two-parent
+				// chunk 2 tip that keeps the pair guard green.
+				record.Chunks = slices.Clone(f.Record.Chunks)
+				chunk := &record.Chunks[1]
+				chunk.Base = f.Git("commit-tree", chunk.Base+"^{tree}", "-p", record.Chunks[0].Base, "-m", "gap off the chunk 1 line")
+				chunk.Tip = f.Git("commit-tree", chunk.Tip+"^{tree}", "-p", chunk.Base, "-p", record.Chunks[0].Tip, "-m", "chunk 2 off the line")
+				chunk.Reviews = slices.Clone(chunk.Reviews)
+				for i := range chunk.Reviews {
+					chunk.Reviews[i].Base, chunk.Reviews[i].Tip = chunk.Base, chunk.Tip
+				}
+				tip = chunk.Tip
+			}
+			err := rr.CheckSource(f.Root, f.Tree(), tip, record, "2", false)
+			if tc.want == "" {
+				if err != nil {
+					t.Errorf("chunk 2 after a proved comment gap: %v", err)
+				}
+				return
+			}
+			foldRepair(t, err, tc.want)
+		})
+	}
+}
+
 // TestChainRefusesAFailedAncestryQuery proves that an ancestry query Git cannot run
 // refuses and names the query. The commit is absent, so merge-base exits 128, and no
 // record form repairs it.
