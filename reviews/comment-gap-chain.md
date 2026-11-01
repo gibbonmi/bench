@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/comment-gap-chain/spec.md",
-  "plan_digest": "sha256:aa15a1af150c53a83df89c155d1d30f25af15bd1fddf360feba92d60b9f278f0",
+  "plan_digest": "sha256:d30f2a0b57067b74d9fa2c187538c772cadc87ed52b44b722869b4fe67279ba4",
   "implementation_session": "",
   "chunks": [
     {
@@ -156,6 +156,87 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "CG-C2",
+      "base": "890370c84f8a404e38bff0d77873f9b6b119368d",
+      "tip": "dd48bf924f651ae4d5a695b59d20391bba07b74c",
+      "plan_digest": "sha256:d30f2a0b57067b74d9fa2c187538c772cadc87ed52b44b722869b4fe67279ba4",
+      "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+      "acceptance_rows": [
+        "CG18",
+        "CG19",
+        "CG20",
+        "CG21",
+        "CG22",
+        "CG23",
+        "CG24",
+        "CG25",
+        "CG26"
+      ],
+      "verification": [
+        {
+          "id": "cg-c2-anchors",
+          "performer": "ft439-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft439-author-02",
+            "digest": "sha256:87736c99b0259d54150566f3c4eee5fa1a4f65bf8b50937e3d2a2070ff252447",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_chunk_chain.go,omit,failed,1,TestChunkChainAnchors,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,^TestChunkChainAnchors$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,76,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestChunkChainAnchors,\"registry_chunk_chain_test.go:51: tree broken at \\\"A comment-only correction before the green checkpoint stays evidence-only and still takes a refreeze.\\\" in .agents/skills/bench-craft-line/references/bounded-repair-policy.md = [], want \\\"chunk… (325 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dd48bf924f651ae4d5a695b59d20391bba07b74c",
+          "requirement": "anchors",
+          "command": "bench test --package ./internal/anchors",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Delete the Forbid row with the needle 'takes a refreeze' from internal/anchors/registry_chunk_chain.go, and record that TestChunkChainAnchors turns red on its mirror row.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft439-author-02",
+              "digest": "sha256:87736c99b0259d54150566f3c4eee5fa1a4f65bf8b50937e3d2a2070ff252447",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_chunk_chain.go,omit,failed,1,TestChunkChainAnchors,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,^TestChunkChainAnchors$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,504\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,76,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestChunkChainAnchors,\"registry_chunk_chain_test.go:51: tree broken at \\\"A comment-only correction before the green checkpoint stays evidence-only and still takes a refreeze.\\\" in .agents/skills/bench-craft-line/references/bounded-repair-policy.md = [], want \\\"chunk… (325 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "cg-c2-guidance",
+          "performer": "ft439-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "c2dded1aef96d333ce550a709c25b5f4b59f4f03",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-high:ft439-author-02",
+            "digest": "sha256:05d1677421f9bd41c6adaf874286864736d2801a3075e91b5c01775d8c09bda3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,447\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3841,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: chunk chain: the implement phase restored the refreeze of a comment-only correction\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dd48bf924f651ae4d5a695b59d20391bba07b74c",
+          "requirement": "guidance",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the sentence 'Each source change except a record commit or a recorded fold moves the chunk tip and takes a refreeze of that chunk.' in the Land section of the implement phase, and record that the docs-currency-workflow check turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-high:ft439-author-02",
+              "digest": "sha256:05d1677421f9bd41c6adaf874286864736d2801a3075e91b5c01775d8c09bda3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,swap,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,447\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3841,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: chunk chain: the implement phase restored the refreeze of a comment-only correction\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -164,7 +245,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:aa15a1af150c53a83df89c155d1d30f25af15bd1fddf360feba92d60b9f278f0",
+      "to": "sha256:d30f2a0b57067b74d9fa2c187538c772cadc87ed52b44b722869b4fe67279ba4",
+      "chunk_ids": {
+        "CG-C1": [
+          "CG-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
