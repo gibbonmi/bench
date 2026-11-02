@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/rg-path-guard/spec.md",
-  "plan_digest": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
+  "plan_digest": "sha256:d96ea735f3a085d172be23c274b2a29171ca1dc2bd702c49dd18f7af18b9178e",
   "implementation_session": "",
   "chunks": [
     {
@@ -738,9 +738,9 @@
     {
       "id": "C3",
       "base": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
-      "tip": "f0c28331b775b7e06b736991368a4f3bde8905d6",
-      "plan_digest": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
-      "source_digest": "7c59bed564a4745868b4ae7f35d2275df9b280df",
+      "tip": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+      "plan_digest": "sha256:d96ea735f3a085d172be23c274b2a29171ca1dc2bd702c49dd18f7af18b9178e",
+      "source_digest": "f379142159ce57929cd7c42159b5d82cf80d5460",
       "acceptance_rows": [
         "R41",
         "R42",
@@ -847,6 +847,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/subcommand_routing_table_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,subcommand-routing,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,533\ncheck[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,25,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cmd/bench/main.go dispatches \\\"guard-rg\\\" with no entry in the subcommand argument-routing registry; record it as routed through usage.Parse or as an exemption with its reason\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "c3-t04-wiring",
+          "performer": "ft366-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f379142159ce57929cd7c42159b5d82cf80d5460",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft366-author-04",
+            "digest": "sha256:124a6dc693cb41eb33d0a060a2048cd8cb2845a99e1a11a4ad7d128ceb57a48c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.claude/settings.json,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,line-routing,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,453\ncheck[1]{name,kind,tests_run,subjects}:\n  line-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,860,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-unsafe-rg.sh\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "requirement": "wiring",
+          "command": "bench test --check line-routing",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the shim from the Claude Bash group and record the R39 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft366-author-04",
+              "digest": "sha256:124a6dc693cb41eb33d0a060a2048cd8cb2845a99e1a11a4ad7d128ceb57a48c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.claude/settings.json,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,line-routing,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,453\ncheck[1]{name,kind,tests_run,subjects}:\n  line-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,860,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-unsafe-rg.sh\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -911,6 +941,21 @@
         ],
         "C2": [
           "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
+      "to": "sha256:d96ea735f3a085d172be23c274b2a29171ca1dc2bd702c49dd18f7af18b9178e",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
         ]
       }
     }
