@@ -1314,3 +1314,18 @@ Findings: 0. Worst issue: none.
 - The test helper `runGitGuardHook` now serves the rg tests too, so a neutral name fits better.
 - The stale-core warning of the rg shim does not name the rebuild action.
 - The lead sentence of the Hook Layers section names only git safety.
+
+## C4 ticket 05 author witness reds
+
+The ticket 05 author `ft366-author-05` (opus / medium) committed ticket 05 at `9a206d1e0` and froze C4 at `39dff2a40`.
+R51 and R52 went red before the production edit and green after it. R53 and R54 are preservation rows, and they passed before and after.
+The plan probe `message-tests` answered `bit` with `restored` `yes`, and the record holds it.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/benchguard/benchguard.go` | the mark of the operator after the span reads false | `TestClassifyNamesCommandSubstitution` | R51 |
+| `internal/benchguard/benchguard.go` | the mark of the lead operator reads false | `TestClassifyNamesCommandSubstitution` | R52 |
+| `internal/benchguard/benchguard.go` | an unmarked `(` also selects the substitution side | `TestClassifyNamesCommandSubstitution` | R54 |
+
+The author selects `SideSubstitution` for any marked ControlOperator, as the spec states. The lexer marks only an operator run that starts with `(`, so a `$((` opener prints `operator=$((`.
+The coordinator probe removed the words `command substitution` from the new repair sentence, and the test failed on R51 and R52.
