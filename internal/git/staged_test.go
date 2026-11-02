@@ -259,6 +259,7 @@ func TestParseNameStatusZ(t *testing.T) {
 		{"multiple statuses", "A\x00a\x00M\x00b\x00D\x00c\x00",
 			[][]string{{"A", "a"}, {"M", "b"}, {"D", "c"}},
 		},
+		{"empty pair skipped", "\x00\x00A\x00a\x00", [][]string{{"A", "a"}}},
 	}
 	for _, c := range cases {
 		if got := ParseNameStatusZ([]byte(c.in)); !reflect.DeepEqual(got, c.want) {
