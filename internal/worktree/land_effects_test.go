@@ -4,6 +4,7 @@ package worktree
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -170,21 +171,21 @@ func TestLandRefreshesTheBrokerAfterPublication(t *testing.T) {
 	}
 }
 
-// TestLandReportsAFailedRefresh is LC4, LC5, and LC13. A build that returns without
+// TestLandReportsAFailedRefresh is LC4, LC5, LC13, and CW46. A build that fails without
 // publishing a verified executable leaves the destination's broker stale. The landing
-// reports the failed effect with the resume every incomplete step names, and it
-// unpublishes nothing. A failed effect stops every later effect, so the cleanup reports
-// pending and the folded sibling's checkout is untouched.
+// states the build failure, reports the failed effect with the resume every incomplete
+// step names, and it unpublishes nothing. A failed effect stops every later effect, so the
+// cleanup reports pending and the folded sibling's checkout is untouched.
 func TestLandReportsAFailedRefresh(t *testing.T) {
 	t.Parallel()
 	request := "land-refresh-failed"
 	f := brokerDestinationFixture(t, request)
 	folded := foldLandingSibling(t, f.root, f.home, request+"-sibling", f.creation)
-	j, calls := refreshJoins(nil)
+	j, calls := refreshJoins(func(string, string) error { return errors.New("compile exploded") })
 
 	r := runVerb(t, verbLand, f.callWith(j, landArgs(request, f.base, folded.tip, f.creation.Path)...))
-	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed", "pending")) {
-		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh", r.exit, r.stdout, r.stderr)
+	if r.exit != 3 || !strings.Contains(r.stdout, wantEffects("failed", "pending")) || !strings.Contains(r.stderr, "landing refresh build failed: compile exploded\n") {
+		t.Fatalf("failed refresh = (%d, %q, %q), want exit 3 with a failed refresh and the build failure text", r.exit, r.stdout, r.stderr)
 	}
 	requirePresent(t, folded.sibling.Path, "sibling worktree")
 	if strings.Contains(r.stderr, "landing cleanup{") {

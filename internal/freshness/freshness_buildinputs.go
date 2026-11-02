@@ -117,9 +117,10 @@ func buildInputs(root string) (inputs, packageDirs []string, err error) {
 // Bench build. It answers true when the diff names a path of BuildInputs(root), or when it
 // deletes a non-test Go file in the directory of a package that BuildInputs reads. The
 // input set at tip cannot name a deleted path, so the second test finds it. The diff reads
-// with no rename detection, so a renamed input reads as the deletion of its old path. A
-// root that declares no build inputs, an input set that does not resolve, and a diff that
-// does not read each answer false.
+// with no rename detection, so a renamed input reads as the deletion of its old path, and
+// with NUL framing, so Git does not quote a path that holds a non-ASCII byte. A root that
+// declares no build inputs, an input set that does not resolve, and a diff that does not
+// read each answer false.
 func DiffChangesBuildInputs(root, base, tip string) bool {
 	if !DeclaresBuildInputs(root) {
 		return false
@@ -128,12 +129,13 @@ func DiffChangesBuildInputs(root, base, tip string) bool {
 	if err != nil {
 		return false
 	}
-	diff, err := git.Output("-C", root, "diff", "--no-renames", "--name-status", base, tip)
+	diff, err := git.Raw("-C", root, "diff", "-z", "--no-renames", "--name-status", base, tip)
 	if err != nil {
 		return false
 	}
-	for _, line := range strings.Split(diff, "\n") {
-		status, name, _ := strings.Cut(line, "\t")
+	fields := strings.Split(string(diff), "\x00")
+	for i := 0; i+1 < len(fields); i += 2 {
+		status, name := fields[i], fields[i+1]
 		if slices.Contains(inputs, name) {
 			return true
 		}

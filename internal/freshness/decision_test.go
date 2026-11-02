@@ -36,8 +36,9 @@ func TestSelectFreshnessFromImmutableDigests(t *testing.T) {
 	}
 }
 
-// TestDiffChangesBuildInputs is CW01, CW02, CW03, CW41, CW42, and CW49. Each row commits
-// the build fixture with a second Go file and a test file in its cmd/bench package, then
+// TestDiffChangesBuildInputs is CW01, CW02, CW03, CW41, CW42, CW49, and CW51. Each row
+// commits the build fixture with two more Go files, one with a non-ASCII name, and a test
+// file in its cmd/bench package, then
 // commits one change and reads the diff between the two commits.
 func TestDiffChangesBuildInputs(t *testing.T) {
 	for _, tc := range []struct {
@@ -53,12 +54,14 @@ func TestDiffChangesBuildInputs(t *testing.T) {
 		{name: "deleted input", change: []string{"rm", "-q", "cmd/bench/second.go"}, want: true},
 		{name: "deleted test file", change: []string{"rm", "-q", "cmd/bench/main_test.go"}},
 		{name: "input renamed to a test file", change: []string{"mv", "cmd/bench/second.go", "cmd/bench/second_test.go"}, want: true},
+		{name: "deleted non-ASCII input", change: []string{"rm", "-q", "cmd/bench/zweiteé.go"}, want: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := writeBuildFixtureAt(t, gittest.RepoOnBranch(t, "main"))
 			writeFixtureFiles(t, root, map[string]string{
 				"cmd/bench/second.go":    "package main\n\nconst second = 2\n",
 				"cmd/bench/main_test.go": "package main\n",
+				"cmd/bench/zweiteé.go":   "package main\n\nconst zweite = 2\n",
 			})
 			if tc.linked {
 				if err := os.Remove(filepath.Join(root, filepath.FromSlash(BuildInputsManifest))); err != nil {
