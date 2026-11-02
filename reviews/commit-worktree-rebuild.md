@@ -463,6 +463,72 @@
             "cw-c1-cov-2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cw-c1-r2-standards",
+          "performer": "ft406-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4de49d6a6a65bc49342369d3735bf52383d138e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c1-r2",
+            "digest": "sha256:e0428dfcb7d3e1427f097645dd139918a88a24669adb9facd01ab24106691251",
+            "excerpt": "Standards axis (unified confirming session), CW-C1, repair delta 2a5c53e3..856141b4. Count: 0 findings.\nO1 closed: git.ParseNameStatusZ at internal/git/status.go:280-295 is the one owner; internal/diff/snapshot.go:43,94 and internal/freshness/freshness_buildinputs.go:136 call it; the moved body is byte-identical; git.Raw errors still answer false (freshness_buildinputs.go:132-135).\nAdvice: internal/freshness/decision_test.go:41 doc comment breaks early (rewrap).\nCommand contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "8fcad8341e760744d06ce632ea0a978684025f81",
+          "tip": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "finding_ids": [],
+          "supersedes": [
+            "cw-c1-r1-standards"
+          ]
+        },
+        {
+          "id": "cw-c1-r2-spec",
+          "performer": "ft406-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4de49d6a6a65bc49342369d3735bf52383d138e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c1-r2",
+            "digest": "sha256:b9ebda5820eb608d862d101861d2e35845996dbf5b66e18222814c6f98d67672",
+            "excerpt": "Spec axis (unified confirming session), CW-C1, repair delta 2a5c53e3..856141b4. Count: 0 findings.\nP1 closed: land_effects_test.go:184-188 fails the build with \"compile exploded\" and checks failed and the exact text \"landing refresh build failed: compile exploded\\n\" (land_effects.go:156, spec row CW46).\nC2/CW51 closed: spec.md:137-138 and row CW51 name git diff -z --no-renames --name-status, matching freshness_buildinputs.go:132; subtest \"deleted non-ASCII input\".\nEvery delta path is on ticket 01's widened Writes line; nothing outside the acceptance rows.\nCommand contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "8fcad8341e760744d06ce632ea0a978684025f81",
+          "tip": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "finding_ids": [],
+          "supersedes": [
+            "cw-c1-r1-spec"
+          ]
+        },
+        {
+          "id": "cw-c1-r2-coverage",
+          "performer": "ft406-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "4de49d6a6a65bc49342369d3735bf52383d138e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c1-r2",
+            "digest": "sha256:3b5a031b1d2c85c3de518ffa807ea064a7015c2f12d606d8546193fc529cfcfd",
+            "excerpt": "Coverage axis (unified confirming session), CW-C1, repair delta 2a5c53e3..856141b4. Count: 0 findings.\nC1 closed: probe land_effects.go swap \"if buildErr != nil {\" -> \"if buildErr == nil {\": bit, TestLandReportsAFailedRefresh, restored yes.\nC2 closed: probe freshness_buildinputs.go guard that skips a non-ASCII name in the deletion test: bit, only TestDiffChangesBuildInputs/deleted_non-ASCII_input, restored yes.\nNo new hostile-input gap: NUL framing keeps tab, newline, and quote bytes; an odd trailing segment drops.\nCommand contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "8fcad8341e760744d06ce632ea0a978684025f81",
+          "tip": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "finding_ids": [],
+          "supersedes": [
+            "cw-c1-r1-coverage"
+          ]
         }
       ]
     }
@@ -554,3 +620,11 @@ The `deleted-input` plan probe ran as `if false && status == "D"`, because a lit
 The orchestrator found one defect in the repair delta. `DiffChangesBuildInputs` now parses NUL-separated `--name-status` pairs itself, and `parseNameStatusZ` in `internal/diff/snapshot.go` already owns that parse. `AGENTS.md` grades duplicated knowledge as a defect.
 
 - O1 (`cw-c1-orch-1`), auto-fix: move the parser to one exported owner in `internal/git/status.go`, beside the porcelain parser, and make both callers read it. Repair cycle 2 of 2 takes this finding. The ticket 01 widen cites `--auto-approve`.
+
+## CW-C1 confirming round
+
+A fresh unified session ran the three axes on opus at medium effort over the repair delta `2a5c53e3..856141b4`.
+It closed P1, C1, C2, and O1, and each axis passes. CW-C1 used both repair cycles of its allowance.
+Its probes used new sites: `buildErr == nil` in `refreshBroker` bit `TestLandReportsAFailedRefresh`, and a non-ASCII skip in the deletion test bit only the CW51 case. Each restored cell reads `yes`.
+
+Advice: the doc comment at `internal/freshness/decision_test.go:41` breaks early and can take a rewrap.
