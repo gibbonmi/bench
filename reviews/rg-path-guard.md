@@ -986,7 +986,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c4-r1-standards",
+          "performer": "ft366-review-c4-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce1eb98edf2930e4523e9cc3d8c3df646bf2771c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c4-r1",
+            "digest": "sha256:4fe3b98f9a51ee1641808d06a3423bcfbd62135c8d6c6e8eacd7c716092092fe",
+            "excerpt": "## Standards\nFindings: 1, no-op. S1: benchguard.go:63 comment says an unquoted $( while refusal selects any marked operator, so $(( also takes it; the edge inventory records that over-refusal. Confidence 4.\nOne source per fact holds; benchguard.go is 368 lines; the CHANGELOG entry is STE-clean and names no specs, decisions, or tests path.\n"
+          },
+          "axis": "Standards",
+          "base": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "tip": "9a206d1e02e66364fdf5f6ba78e59aa82f482827",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4-r1-spec",
+          "performer": "ft366-review-c4-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce1eb98edf2930e4523e9cc3d8c3df646bf2771c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c4-r1",
+            "digest": "sha256:a1e89e40607f4963dcac950c17227c995ad5f4fd1c9c61ef7caff186b83eb62f",
+            "excerpt": "## Spec\nFindings: 0. R51-R54 match; SideSubstitution follows SideUnlexed; the spec wording over the ticket wording is a non-behavioral contradiction, acceptable. The CHANGELOG entry matches the whole build including story 59.\n"
+          },
+          "axis": "Spec",
+          "base": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "tip": "9a206d1e02e66364fdf5f6ba78e59aa82f482827",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c4-r1-coverage",
+          "performer": "ft366-review-c4-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce1eb98edf2930e4523e9cc3d8c3df646bf2771c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c4-r1",
+            "digest": "sha256:6477f136e389a0217b2d2eeaa82104c307545645d986f12227d7993c2388701d",
+            "excerpt": "## Coverage\nFindings: 0. substitution_test.go:114-135 grades R51-R54; bench coverage --check rg-path-guard passed with 59 rows. Probe: removing the $ prefix at benchguard.go:279 bit (R51).\n"
+          },
+          "axis": "Coverage",
+          "base": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "tip": "9a206d1e02e66364fdf5f6ba78e59aa82f482827",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1329,3 +1390,25 @@ The plan probe `message-tests` answered `bit` with `restored` `yes`, and the rec
 
 The author selects `SideSubstitution` for any marked ControlOperator, as the spec states. The lexer marks only an operator run that starts with `(`, so a `$((` opener prints `operator=$((`.
 The coordinator probe removed the words `command substitution` from the new repair sentence, and the test failed on R51 and R52.
+
+## C4 review round 1
+
+One unified session ran the three axes separately on opus at medium effort over `eb315403..9a206d1e`. Every C4 row passes, and the round has no repair target.
+
+## Standards
+
+Findings: 1, no-op. Worst issue: S1.
+
+- S1, no-op, confidence 4: the comment of `SideSubstitution` names an unquoted `$(`, but a marked `$((` opener also takes that side. The edge inventory records the `$((` over-refusal.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
+
+## Advice
+
+- The `CHANGELOG.md` entry says that a pathless call waits on stdin, and the refusal text says that it can wait.
