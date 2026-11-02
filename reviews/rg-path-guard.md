@@ -1084,3 +1084,22 @@ The reviewer probed 14 group and substitution inputs, and no earlier verdict cha
 
 - No test holds a group input that starts with `|&`, such as `cat f |&(rg foo)`.
 - `cat f | $(rg foo)` refuses as pathless, although the substitution can read the pipe. The code before this chunk refused it the same way.
+
+## C3 ticket 03 author witness reds
+
+The ticket 03 author `ft366-author-03` (opus / medium) committed ticket 03 at `f0c28331b` and recorded it at `df454f276`.
+Each witness went red under a `bench probe` mutation after the ticket commit, and each probe restored the file.
+The plan probes `registrations`, `command-contract`, and `routing` answered `bit`, and the record holds them.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/conformance/guard_header_manifests_test.go` | the shim entry omitted from the manifest list | `TestGuardHeaderManifestsCoverTheRgGuard` | R41 |
+| `.bench/hooks/block-unsafe-rg.sh` | a missing resolver or core exits 2 | `TestRgGuardHookFailsOpen` | R42 |
+| `.bench/hooks/block-unsafe-rg.sh` | a stale core exits 2 | `TestRgGuardHookFailsOpen` | R43 |
+| `cmd/bench/guards.go` | an unreadable envelope returns 2 | `TestGuardRgVerb` | R44 |
+| `.bench/hooks/block-unsafe-rg.sh` | the core exit 2 maps to 0 | `TestRgGuardHookRefuses` | R45 |
+| `cmd/bench/guards.go` | a blocked verdict returns 0 | `TestGuardRgVerb` | R45 |
+| `.bench/hooks/block-unsafe-rg.sh` | a core error exits 2 | `TestRgGuardHookFailsOpen` | R42 |
+
+The author traced `guard-bench-follow-on` through the tree and found no registry that ticket 03 or ticket 04 does not name.
+The shim warns and exits 0 for a stale core, as `block-primary-file-write.sh` does, because R43 needs each degraded case to fail open.
