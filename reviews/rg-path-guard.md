@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/rg-path-guard/spec.md",
-  "plan_digest": "sha256:d96ea735f3a085d172be23c274b2a29171ca1dc2bd702c49dd18f7af18b9178e",
+  "plan_digest": "sha256:a6a7d681f1085b0e87e29c76315b02417ca5ee8cfda28a6de92e4661c4345a5b",
   "implementation_session": "",
   "chunks": [
     {
@@ -941,6 +941,52 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "C4",
+      "base": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+      "tip": "9a206d1e02e66364fdf5f6ba78e59aa82f482827",
+      "plan_digest": "sha256:a6a7d681f1085b0e87e29c76315b02417ca5ee8cfda28a6de92e4661c4345a5b",
+      "source_digest": "ce1eb98edf2930e4523e9cc3d8c3df646bf2771c",
+      "acceptance_rows": [
+        "R51",
+        "R52",
+        "R53",
+        "R54"
+      ],
+      "verification": [
+        {
+          "id": "c4-t05-message-tests",
+          "performer": "ft366-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ce1eb98edf2930e4523e9cc3d8c3df646bf2771c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft366-author-05",
+            "digest": "sha256:78525bd3b9fabd5d099917b40aababcc4b820c28e47c70e15ba70342d6e96e5a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/benchguard/benchguard.go,omit,failed,1,TestClassifyNamesCommandSubstitution,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/benchguard,all,passed,35\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,fail,4,35\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/benchguard,TestClassifyNamesCommandSubstitution,\"substitution_test.go:28: R51: message = \\\"BLOCKED: Bench response is bounded, complete, and self-contained. Run the Bench command without a shell follow-on. segment=bench gate $ operator=(\\\", want \\\"Run the Bench command with no unquoted comma… (327 bytes)\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "9a206d1e02e66364fdf5f6ba78e59aa82f482827",
+          "requirement": "message-tests",
+          "command": "bench test --package ./internal/benchguard",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return the plain operator side for a marked opener and record the R51 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft366-author-05",
+              "digest": "sha256:78525bd3b9fabd5d099917b40aababcc4b820c28e47c70e15ba70342d6e96e5a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/benchguard/benchguard.go,omit,failed,1,TestClassifyNamesCommandSubstitution,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/benchguard,all,passed,35\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/benchguard,fail,4,35\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/benchguard,TestClassifyNamesCommandSubstitution,\"substitution_test.go:28: R51: message = \\\"BLOCKED: Bench response is bounded, complete, and self-contained. Run the Bench command without a shell follow-on. segment=bench gate $ operator=(\\\", want \\\"Run the Bench command with no unquoted comma… (327 bytes)\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1008,6 +1054,21 @@
     {
       "from": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
       "to": "sha256:d96ea735f3a085d172be23c274b2a29171ca1dc2bd702c49dd18f7af18b9178e",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d96ea735f3a085d172be23c274b2a29171ca1dc2bd702c49dd18f7af18b9178e",
+      "to": "sha256:a6a7d681f1085b0e87e29c76315b02417ca5ee8cfda28a6de92e4661c4345a5b",
       "chunk_ids": {
         "C1": [
           "C1"
