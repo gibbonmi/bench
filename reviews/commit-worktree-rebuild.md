@@ -724,7 +724,73 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cw-c2-r1-standards",
+          "performer": "ft406-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fb9f7fea5fe182a125f8b2f04d740fa17def5e76",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c2",
+            "digest": "sha256:a57d1cbd4ebc194c4012330d7353aadd5e96f099c4b62815bc554d620f656536",
+            "excerpt": "Standards axis (unified session), CW-C2, frozen pair 856141b4..e3bd4657. Count: 1 finding. Worst: S1.\nS1, confidence 6, CHANGELOG.md:11: the new entry is one paragraph of 7 sentences; ste-prose.md:16 and internal/prose/prose.go:18 bound a paragraph at 6, and .bench/prose-exclusions:7 hides it from the gate. auto-fix.\nDuplication clean: rebuiltLine and the failure format have recorded reds; the pathWithoutGo copy is spec-authorized; the anchor row bytes are a spec-ordered independent rule (omit probe bit); the new test file is 397 lines.\nAdvice: projects/benchkit.md:714 short line; background.go:101-102 \"published published\" stutter.\nCommand contribution: the ticket names the path rule for the entry but not the paragraph bound on a gate-excluded file.\n"
+          },
+          "axis": "Standards",
+          "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "tip": "e3bd465791eca04b831e5443cc1231bbf77d19d6",
+          "finding_ids": [
+            "cw-c2-std-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cw-c2-r1-spec",
+          "performer": "ft406-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fb9f7fea5fe182a125f8b2f04d740fa17def5e76",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c2",
+            "digest": "sha256:7643ceb210144a5fe8b98cfcc03ed147ba27672b62dbe0482103584f662d4d8a",
+            "excerpt": "Spec axis (unified session), CW-C2, frozen pair 856141b4..e3bd4657. Count: 0 findings.\nCW13-CW38, CW43, CW45, CW48, CW50 hold against background.go:108-136 and commit.go:221-226 in the spec order. CW39 passes (BENCH-reference.md:353-354, 19 and 13 words, no anchored needle). CW40 passes (benchkit.md:713, four words added, both predicates kept). Story 34 passes on content.\nNo scope creep.\nCommand contribution: none.\n"
+          },
+          "axis": "Spec",
+          "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "tip": "e3bd465791eca04b831e5443cc1231bbf77d19d6",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "cw-c2-r1-coverage",
+          "performer": "ft406-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fb9f7fea5fe182a125f8b2f04d740fa17def5e76",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c2",
+            "digest": "sha256:ceeda9efcfff50fdb3f9e53086c6dbef313c201d10fbe52268f32f161f9df11e",
+            "excerpt": "Coverage axis (unified session), CW-C2, frozen pair 856141b4..e3bd4657. Count: 2 findings. Worst: C1.\nC1, confidence 7, internal/commit/background.go:112: a dangling or non-regular dist/bench has no row; the spec (line 166 and the edge inventory) says it counts as present and rebuilds. Probe os.Lstat -> os.Stat: silent, restored yes. auto-fix: a dangling-symlink dist/bench with a Markdown commit builds once.\nC2, confidence 5, internal/commit/commit.go:224: no commit-level row grades the home that Run passes. Probe benchhome.Dir() -> benchhome.Dir()+\"x\": silent, restored yes. auto-fix: CW30 compares stderr with freshness.RebuildIn(benchhome.Dir(), root).Action.\nOther probes: err != nil form silent (non-ENOENT only, no finding); registry FT406 row omit bit.\nCommand contribution: the spec's edge inventory claimed the dangling edge with no row.\n"
+          },
+          "axis": "Coverage",
+          "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "tip": "e3bd465791eca04b831e5443cc1231bbf77d19d6",
+          "finding_ids": [
+            "cw-c2-cov-1",
+            "cw-c2-cov-2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -859,3 +925,29 @@ The `known-issues` requirement first ran a synthetic-tree anchor test, and its p
 | `.gitignore` | `dist/` removed | `TestKitIgnoresTheRebuildOutputs` | CW33 |
 
 The coordinator probe swapped the diff parent `published+"^"` for `published` in the step, and CW16 and CW43 went red.
+
+## CW-C2 review round 1
+
+One unified session ran the three axes on opus at medium effort over `856141b4..e3bd4657`.
+The orchestrator accepts S1, C1, and C2 under `--auto-approve`. All three are on paths of ticket 02, so one repair session takes them.
+The spec amendment adds row CW52 for a dangling `dist/bench`, and CW30 also grades the remedy home.
+This round consumes no repair cycle. Repair cycle 1 of 2 of CW-C2 takes these findings.
+
+## Standards
+
+Findings: 1 accepted. Worst issue: S1.
+
+- S1 (`cw-c2-std-1`), auto-fix, confidence 6: the `CHANGELOG.md:11` entry is one paragraph of 7 sentences. The STE limit is 6 sentences (`internal/prose/prose.go:18`), and `.bench/prose-exclusions` hides the file from the gate. Split or join the sentences so that each paragraph holds 6 or fewer.
+
+## Spec
+
+Findings: 0.
+
+## Coverage
+
+Findings: 2 accepted. Worst issue: C1.
+
+- C1 (`cw-c2-cov-1`), auto-fix, confidence 7: no row grades a dangling `dist/bench` at `internal/commit/background.go:112`. A swap of `os.Lstat` for `os.Stat` stays silent. Add the CW52 case.
+- C2 (`cw-c2-cov-2`), auto-fix, confidence 5: no commit-level row grades the home that `Run` passes at `internal/commit/commit.go:224`. A changed home stays silent. Make CW30 compare its failure line with `freshness.RebuildIn(benchhome.Dir(), root).Action`.
+
+Advice: `projects/benchkit.md:714` has a short line after the reflow, and the doc comment at `internal/commit/background.go:101-102` repeats the word "published".
