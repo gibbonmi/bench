@@ -139,18 +139,20 @@ func endOperator(stream shellcommand.Stream, span shellcommand.SimpleCommand) sh
 
 // supplied reports whether a pipe into one span or an input redirection inside it
 // supplies the stdin of the span. A pipe after the span feeds the next command instead.
-// A pipe into a subshell group feeds the first span of the group, so the read steps past
-// one `(` before the span. A marked `(` opens a command substitution, not a group.
+// A pipe into a subshell group feeds the first span of the group. The lexer gives `| (`
+// as two operators and `|(` as one, so the read joins a lone `(` to the token before it
+// and then drops one trailing `(` from the lead.
 func supplied(stream shellcommand.Stream, span shellcommand.SimpleCommand) bool {
-	lead := span.Start - 1
-	if lead > 0 && stream.Tokens[lead].Text == "(" && !stream.Tokens[lead].Substitution {
-		lead--
+	var lead string
+	if span.Start > 0 {
+		lead = stream.Tokens[span.Start-1].Text
 	}
-	if lead >= 0 {
-		switch stream.Tokens[lead].Text {
-		case "|", "|&":
-			return true
-		}
+	if lead == "(" && span.Start > 1 {
+		lead = stream.Tokens[span.Start-2].Text + lead
+	}
+	switch strings.TrimSuffix(lead, "(") {
+	case "|", "|&":
+		return true
 	}
 	return slices.ContainsFunc(stream.Tokens[span.Start:span.End], func(token shellcommand.Token) bool {
 		return token.Kind == shellcommand.Redirection && strings.HasPrefix(strings.TrimLeft(token.Text, "0123456789"), "<")

@@ -73,6 +73,7 @@ func TestClassifyRgCalls(t *testing.T) {
 		{"R58", `bench worktree exec X -- rg "$(x)" .`, refusesSubstitution},
 		{"R58", "bench worktree exec X -- rg `x` .", refusesSubstitution},
 		{"R59", "cat f | (rg foo)", permits},
+		{"R59", "cat f |(rg foo)", permits},
 		{"R59", "cat f | (cd x; rg foo)", refusesPathless},
 	} {
 		got := Classify(tc.command)
