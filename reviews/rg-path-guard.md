@@ -485,3 +485,35 @@ The repair session `ft366-author-01-rep1` (opus / xhigh) added the R03 case `rg 
 Its witness probe omitted `opener = false` and failed the new case, and its rerun of the `mark-tests` plan probe answered `bit`.
 The coordinator probe made the single-quote loop of `lex` set the opener, and the new case failed. The confirmation `c1-r1-confirm` closes C1.
 C1 used one of its two repair cycles.
+
+## C2 ticket 02 author witness reds
+
+The ticket 02 author `ft366-author-02` (opus / xhigh) committed ticket 02 at `eda20a987` and froze C2 at `be4ade1fc`.
+Before the first production edit, a `Classify` stub that permits every call made the refusal rows red.
+These rows are R08, R11, R13–R15, R17, R24, R25, R27–R31, R33, and R58.
+A stub `IsBenchName` that answers false made `TestIsBenchName` red, and R37 was red before `internal/rgguard` joined `guardProjectionGoverned`.
+Each permit row went red under a `bench probe` mutation before the commit, and each probe restored the file.
+
+| row | mutation in `internal/rgguard` |
+| --- | --- |
+| R09 | the one-positional test answers true |
+| R10 | the `\|` lead operator removed |
+| R12 | the input-redirection test answers false |
+| R16 | the mode term of the permit removed |
+| R18 | an unknown option word reads as a flag |
+| R19 | an unlexed stream refuses |
+| R20 | the `ViaXargs` test removed |
+| R21 | the process-substitution test removed |
+| R22 | the inline config assignment test removed |
+| R23 | the one-positional test reads at most one |
+| R26 | the mark test reads raw text for `$` and a backtick |
+| R32 | the fed flag of the exec child cleared |
+| R34 | the `Executes` test removed |
+| R35 | the stdin request cleared |
+| R36 | the one-level wrapper bound removed |
+| R58 | the marks of the outer exec span cleared |
+
+The plan probes `verdict-tests` and `projection-owner` answered `bit` with `restored` `yes`, and the record holds them.
+The first R16 probe was silent, because each R16 call has no pattern and the pathless step already permits it. The author added `rg --files src`, and the R16 probe then failed. For the same reason, R20 gained `xargs rg foo` and R34 gained `command -v rg foo`.
+
+The coordinator probe made the `-e` and `-f` branch of `pathless` count one positional as the pattern. `TestClassifyRgCalls` failed on R15, and the probe restored the file.
