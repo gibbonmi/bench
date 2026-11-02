@@ -146,6 +146,7 @@ The package decodes the envelope through `shellcommand.DecodeEnvelope` (`interna
 6. If the call has a pattern and no path operand, the guard refuses with the pathless reason. Otherwise the guard permits it.
 
 The operator before a span is `Tokens[span.Start-1]`, the same position that `leadRefusal` reads (`internal/benchguard/benchguard.go:201-222`).
+A pipe into a subshell group feeds the first span of the group. The lexer gives `| (` as two operators and `|(` as one, so step 4 also accepts a pipe before a lone `(` and a pipe operator that ends in `(`.
 For a `-c` child, `ShellChildren` parses the operand, so the child stream carries its own marks. The first `rg` span of the child also counts as fed when step 4 feeds the outer span.
 For an exec child, `WorktreeExec` returns plain argv with no tokens and no marks (`internal/shellcommand/projection.go:46-60`). The guard does not join or parse that argv again.
 It reads the child argv as the words of the `rg` call. Step 2 reads the marks of the outer span tokens after `--` and of the operator at the outer span end. Steps 3 and 4 read the operator at the outer span end, the operator before the outer span, and the outer span redirections.
@@ -289,7 +290,7 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 | R56 | 46 | A tree whose hooks directory holds a shim with no parity row reds the entry-point-parity check | `internal/conformance/entry_point_parity_test.go` (`TestEntryPointParityNamesAShimOutsideTheTable`) | A `block-unsafe-rg.sh` with no `entryPointParity` row fails the live check by the same rule |
 | R57 | 46 | A registry name with no `subcommandRouting` row reds the routing check | `internal/conformance/subcommand_routing_test.go` (`TestSubcommandRoutingRegistryBites`) | A `guard-rg` row with no routing row fails the live check by the same rule |
 | R58 | 58 | `Classify("bench worktree exec X -- rg \"$(x)\" .")` and ``Classify("bench worktree exec X -- rg `x` .")`` each refuse with the substitution reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads marks only from the child argv sees none and permits both calls |
-| R59 | 59 | `Classify("cat f \| (rg foo)")` permits and `Classify("cat f \| (cd x; rg foo)")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the token before the span refuses the fed group, and a guard that feeds every group span permits the second call |
+| R59 | 59 | `Classify("cat f \| (rg foo)")` and `Classify("cat f \|(rg foo)")` permit, and `Classify("cat f \| (cd x; rg foo)")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the token before the span refuses the fed group, and a guard that feeds every group span permits the second call |
 
 Not covered: story 56 — an exported `RIPGREP_CONFIG_PATH` is not in the command text, so no guard input reaches it.
 Not covered: story 57 — the digit-only operand loss is pre-existing in `ProjectCommandWords` (`internal/shellcommand/shellcommand.go:104`), and this spec keeps that contract.

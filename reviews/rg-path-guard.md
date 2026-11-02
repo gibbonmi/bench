@@ -536,6 +536,76 @@
             "C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-r2-standards",
+          "performer": "ft366-review-c2-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b9c376541b7dda0724520bd0ae65fe00dc4cf75",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r2",
+            "digest": "sha256:b9b8c097c6d98f856113c07eb9bd3287314f567cf4d4b9081c7cda7b5c5c4bfa",
+            "excerpt": "## Standards\nS1 closed. One-source check passes: supplied is the one lead-operator read in rgguard.\nNew findings: 1. S-n1: internal/rgguard/rgguard.go:146, confidence 5, auto-fix. The !Substitution term on the group-lead ( is dead code (lex.go:79 and :33 keep the $ in the word before a marked (); deleting it is silent. Delete the term and its comment sentence.\n"
+          },
+          "axis": "Standards",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "e11d6e68f84315580fc6e001e296a0ea1dd2be12",
+          "finding_ids": [
+            "S2"
+          ],
+          "supersedes": [
+            "c2-r1-standards"
+          ]
+        },
+        {
+          "id": "c2-r2-spec",
+          "performer": "ft366-review-c2-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b9c376541b7dda0724520bd0ae65fe00dc4cf75",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r2",
+            "digest": "sha256:59ba04286f56312be1f10ee3c85640585653abb4fbb1291d80cabac0a7751c84",
+            "excerpt": "## Spec\nP1 closed. C3/R59 partly closed.\nNew findings: 1. P-n1: spec.md:92 story 59, rgguard.go:146-152, confidence 8, auto-fix. cat f |(rg foo) is refused: the lexer joins |( into one operator token (lex.go:26-33). Treat a pipe operator followed by ( as a supplier and add the input to R59.\n"
+          },
+          "axis": "Spec",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "e11d6e68f84315580fc6e001e296a0ea1dd2be12",
+          "finding_ids": [
+            "P2"
+          ],
+          "supersedes": [
+            "c2-r1-spec"
+          ]
+        },
+        {
+          "id": "c2-r2-coverage",
+          "performer": "ft366-review-c2-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "2b9c376541b7dda0724520bd0ae65fe00dc4cf75",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r2",
+            "digest": "sha256:ad8e0e7fecd01977f03548db6a62d00893c75e31c39a012bb458c23eba7976dd",
+            "excerpt": "## Coverage\nC1 closed. C2 closed. C3 closed for the spaced form only; the no-space form is P-n1.\nNew findings: 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "e11d6e68f84315580fc6e001e296a0ea1dd2be12",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -707,3 +777,25 @@ The repair session reports that the `Substitution` test on the group-lead `(` is
 The spec text of verdict step 4 still names only the token directly before the span. The next plan commit corrects that prose.
 The coordinator probe added `;` to the feeding operators, and `TestClassifyRgCalls` failed on R32 and R59.
 C2 used one of its two repair cycles, and a confirming round of the three axes follows.
+
+## C2 confirming round
+
+One unified session confirmed the repair delta `cbe816fa..e11d6e68` on opus at medium effort. S1, P1, C1, and C2 are closed, and C3 is closed for the spaced form only.
+The orchestrator accepts the two new findings under `--auto-approve`, and both are on ticket 02. They take C2 repair cycle 2, the last cycle of the allowance.
+The spec amendment adds the no-space input to R59 and states the group lead after verdict step 4.
+
+## Standards
+
+Findings: 1 accepted. Worst issue: S2.
+
+- S2 (`c2-r2-standards`), auto-fix, confidence 5: the `Substitution` term of the group-lead test at `internal/rgguard/rgguard.go:146` is dead code. The lexer keeps the `$` in the word before a marked `(`. Delete the term and its comment sentence.
+
+## Spec
+
+Findings: 1 accepted. Worst issue: P2.
+
+- P2 (`c2-r2-spec`), auto-fix, confidence 8: `cat f |(rg foo)` is refused, because the lexer joins `|(` into one operator token. Treat a pipe operator that ends in `(` as a supplier, and add the input to R59.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
