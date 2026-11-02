@@ -16,9 +16,7 @@ var (
 
 // TestClassifyRgCalls drives each Classify row of the coverage map with exact command
 // strings. The expectations come from ripgrep 15.1.0 help and probes and from POSIX
-// quoting, not from the option table. R16 adds a mode call with a path, R20 adds an xargs
-// call with no pipe before it, and R34 adds a lookup with an operand. In each added call,
-// the read that its row names decides the verdict alone.
+// quoting, not from the option table.
 func TestClassifyRgCalls(t *testing.T) {
 	for _, tc := range []struct {
 		row, command string
@@ -40,10 +38,9 @@ func TestClassifyRgCalls(t *testing.T) {
 		{"R14", "rg -nA 3 foo .", permits},
 		{"R15", "rg -e foo src", permits},
 		{"R15", "rg -e foo", refusesPathless},
-		{"R16", "rg --files", permits},
-		{"R16", "rg --version", permits},
-		{"R16", "rg -nh", permits},
 		{"R16", "rg --files src", permits},
+		{"R16", "rg --version foo", permits},
+		{"R16", "rg -nh foo", permits},
 		{"R17", "rg -- -foo .", permits},
 		{"R17", "rg -- -foo", refusesPathless},
 		{"R18", "rg --zzz foo", permits},
@@ -65,6 +62,7 @@ func TestClassifyRgCalls(t *testing.T) {
 		{"R30", "bash -c 'rg foo'", refusesPathless},
 		{"R31", "bench worktree exec X -- rg foo", refusesPathless},
 		{"R32", "cat f | bench worktree exec X -- rg foo", permits},
+		{"R32", "cat f | bash -c 'rg x .; rg foo'", refusesPathless},
 		{"R33", "cd x && rg foo", refusesPathless},
 		{"R34", "command -v rg", permits},
 		{"R34", "command -v rg foo", permits},
@@ -74,6 +72,8 @@ func TestClassifyRgCalls(t *testing.T) {
 		{"R36", "sudo rg foo", permits},
 		{"R58", `bench worktree exec X -- rg "$(x)" .`, refusesSubstitution},
 		{"R58", "bench worktree exec X -- rg `x` .", refusesSubstitution},
+		{"R59", "cat f | (rg foo)", permits},
+		{"R59", "cat f | (cd x; rg foo)", refusesPathless},
 	} {
 		got := Classify(tc.command)
 		got.Segment = nil

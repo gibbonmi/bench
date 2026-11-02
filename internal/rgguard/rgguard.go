@@ -139,9 +139,15 @@ func endOperator(stream shellcommand.Stream, span shellcommand.SimpleCommand) sh
 
 // supplied reports whether a pipe into one span or an input redirection inside it
 // supplies the stdin of the span. A pipe after the span feeds the next command instead.
+// A pipe into a subshell group feeds the first span of the group, so the read steps past
+// one `(` before the span. A marked `(` opens a command substitution, not a group.
 func supplied(stream shellcommand.Stream, span shellcommand.SimpleCommand) bool {
-	if span.Start > 0 {
-		switch stream.Tokens[span.Start-1].Text {
+	lead := span.Start - 1
+	if lead > 0 && stream.Tokens[lead].Text == "(" && !stream.Tokens[lead].Substitution {
+		lead--
+	}
+	if lead >= 0 {
+		switch stream.Tokens[lead].Text {
 		case "|", "|&":
 			return true
 		}
