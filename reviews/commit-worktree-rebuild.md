@@ -415,3 +415,13 @@ Findings: 2 accepted. Worst issue: C1.
 
 - C1 (`cw-c1-cov-1`), auto-fix, confidence 9: the CW46 gap at `internal/worktree/land_effects.go:156`. A swap of the build-failure text stays silent. The repair of P1 closes it.
 - C2 (`cw-c1-cov-2`), auto-fix, confidence 6: `internal/freshness/freshness_buildinputs.go:281,285-291` parses `--name-status` without `-z`. Git quotes a non-ASCII deleted path, so the `.go` suffix test misses it. Add `-z`, parse the NUL-separated fields, and add the CW51 case to `TestDiffChangesBuildInputs`.
+
+## CW-C1 repair cycle 1 verification
+
+The repair session `ft406-author-01-rep1` (opus / medium) committed `8fc874450` and refroze CW-C1 at `667622a78`.
+CW46 went red when the build-failure text was swapped, and CW51 went red when `-z` was removed. Each restored cell reads `yes`.
+The `deleted-input` plan probe ran as `if false && status == "D"`, because a literal removal of the block does not compile. The orchestrator accepts that form, because it removes the deleted-file test as the plan states.
+
+The orchestrator found one defect in the repair delta. `DiffChangesBuildInputs` now parses NUL-separated `--name-status` pairs itself, and `parseNameStatusZ` in `internal/diff/snapshot.go` already owns that parse. `AGENTS.md` grades duplicated knowledge as a defect.
+
+- O1 (`cw-c1-orch-1`), auto-fix: move the parser to one exported owner in `internal/git/status.go`, beside the porcelain parser, and make both callers read it. Repair cycle 2 of 2 takes this finding. The ticket 01 widen cites `--auto-approve`.
