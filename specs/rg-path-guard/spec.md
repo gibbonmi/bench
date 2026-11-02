@@ -189,8 +189,8 @@ The chunks run in table order, because C3 needs C2 and the staged `shell-argumen
 | --- | --- | --- | --- | --- |
 | C1 / 01-mark-live-substitution.md | The projection marks each live command substitution and leaves every existing token fact unchanged | R01, R02, R03, R04, R05, R06, R07, R55 | Substitution-mark table, existing Parse tables, guard differential golden | yes |
 | C2 / 02-classify-rg-calls.md | `rgguard.Classify` refuses a pathless or substituting rg call and permits each uncertain call | R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58 | rgguard verdict tables, projection-owner check | yes |
-| C3 / 03-wire-rg-guard-hook.md | The `guard-rg` verb and its shim refuse in both harnesses, fail open, and appear in the guard surface | R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R56, R57 | Hook system test, parity, seams, routing, wiring, manifest checks | no |
-| C4 / 04-name-substitution-in-follow-on.md | The follow-on refusal names command substitution at a live `$(` and refuses nothing new | R51, R52, R53, R54 | benchguard message tables | no |
+| C3 / 03-add-guard-rg-verb.md, 04-wire-rg-guard-hook.md | The `guard-rg` verb and its shim refuse in both harnesses, fail open, and appear in the guard surface | R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R56, R57 | Hook system test, parity, seams, routing, wiring, manifest checks | no |
+| C4 / 05-name-substitution-in-follow-on.md | The follow-on refusal names command substitution at a live `$(` and refuses nothing new | R51, R52, R53, R54 | benchguard message tables | no |
 
 ### Completion plan
 
@@ -217,7 +217,7 @@ The chunks run in table order, because C3 needs C2 and the staged `shell-argumen
     },
     {
       "id": "C3",
-      "tickets": ["03-wire-rg-guard-hook.md"],
+      "tickets": ["03-add-guard-rg-verb.md", "04-wire-rg-guard-hook.md"],
       "verification": [
         {"id": "registrations", "command": "bench test --check entry-point-parity", "probe": "Remove the guard-rg parity row and record the R56 red, the restore, and the green."},
         {"id": "wiring", "command": "bench test --check line-routing", "probe": "Remove the shim from the Claude Bash group and record the R39 red, the restore, and the green."},
@@ -227,7 +227,7 @@ The chunks run in table order, because C3 needs C2 and the staged `shell-argumen
     },
     {
       "id": "C4",
-      "tickets": ["04-name-substitution-in-follow-on.md"],
+      "tickets": ["05-name-substitution-in-follow-on.md"],
       "verification": [
         {"id": "message-tests", "command": "bench test --package ./internal/benchguard", "probe": "Return the plain operator side for a marked opener and record the R51 red, the restore, and the green."}
       ]
@@ -307,7 +307,7 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 | R34 | 34 | `Classify("command -v rg")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that ignores `Executes` refuses the lookup |
 | R35 | 35 | `Classify("rg foo -")` and `Classify("rg -f -")` each permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that ignores the explicit stdin request refuses both calls as pathless |
 | R36 | 36 | `Classify("bash -c \"bash -c 'rg foo'\"")` and `Classify("sudo rg foo")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that recurses past one level refuses the nested call |
-| R37 | 37 | A private envelope decode planted in `internal/rgguard` reds the projection-owner check | planned TestGuardProjectionOwnerGovernsRgguard in internal/conformance/guard_projection_owner_test.go | A governed list without `internal/rgguard` lets the copy pass |
+| R37 | 37 | A private envelope decode planted in `internal/rgguard` reds the projection-owner check | planned TestGuardProjectionOwnerGovernsRgguard in internal/conformance/guard_projection_rgguard_test.go | A governed list without `internal/rgguard` lets the copy pass |
 | R38 | 38 | `internal/rgguard` is the only Go package that declares ripgrep option words | review-owned: the C2 review searches the tree for a second ripgrep option list | A second table drifts from the first without a red |
 | R39 | 39 | The Claude wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestClaudeHookWiringNeedsTheRgGuard in internal/conformance/line_routing_static_test.go | A missing needle lets an unwired shim pass |
 | R40 | 40 | The Codex wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestCodexHooksNeedTheRgGuard in internal/conformance/validity_checks_test.go | A missing needle lets an unwired shim pass |
