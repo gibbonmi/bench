@@ -666,6 +666,72 @@
           "supersedes": [
             "c2-r1-coverage"
           ]
+        },
+        {
+          "id": "c2-r3-standards",
+          "performer": "ft366-review-c2-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38f2fe6551de667e4f1fd73cd9b8fadaa33b2044",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r3",
+            "digest": "sha256:63ab90b627f1d2a46ad3c75d494fe25195de079fb7927d7738418952891f63a5",
+            "excerpt": "## Standards\nS2 closed: the Substitution term and its comment sentence are gone; one list of pipe texts at rgguard.go:154.\nNew findings: 0.\n"
+          },
+          "axis": "Standards",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r2-standards"
+          ]
+        },
+        {
+          "id": "c2-r3-spec",
+          "performer": "ft366-review-c2-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38f2fe6551de667e4f1fd73cd9b8fadaa33b2044",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r3",
+            "digest": "sha256:24942af5182f39590bb9ba15862de4ca66d37e7b8a2226e004199885addf579c",
+            "excerpt": "## Spec\nP2 closed: cat f |(rg foo) permits; the comment at rgguard.go:142-144 and spec line 149 match the code. Concern (a) probed over 14 inputs: no earlier verdict changed except |&( which P2 covers.\nNew findings: 0.\n"
+          },
+          "axis": "Spec",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r2-spec"
+          ]
+        },
+        {
+          "id": "c2-r3-coverage",
+          "performer": "ft366-review-c2-r3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "38f2fe6551de667e4f1fd73cd9b8fadaa33b2044",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r3",
+            "digest": "sha256:f3f8e0199a369d9604d9c6f1a942b442a3c08dc04c13b3cc43214a2f8c2267e9",
+            "excerpt": "## Coverage\nR59 has both inputs: removing the join fails the spaced input, removing the trim fails the no-space input.\nNew findings: 0.\n"
+          },
+          "axis": "Coverage",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-r2-coverage"
+          ]
         }
       ]
     }
@@ -880,3 +946,13 @@ It keeps the one list of pipe texts.
 
 The new R59 input `cat f |(rg foo)` was red before the edit. A witness probe that restored the old one-step lead failed only that input.
 The plan probes `verdict-tests` and `projection-owner` answered `bit`. C2 used both of its repair cycles, and a confirming round follows.
+
+## C2 second confirming round
+
+One unified session confirmed the repair delta `7cbb9f61..92dda48d` on opus at medium effort. S2 and P2 are closed, and no axis has a new finding.
+The reviewer probed 14 group and substitution inputs, and no earlier verdict changed except `|&(`, which P2 covers.
+
+## Advice
+
+- No test holds a group input that starts with `|&`, such as `cat f |&(rg foo)`.
+- `cat f | $(rg foo)` refuses as pathless, although the substitution can read the pipe. The code before this chunk refused it the same way.
