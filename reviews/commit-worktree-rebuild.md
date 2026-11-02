@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/commit-worktree-rebuild/spec.md",
-  "plan_digest": "sha256:caecfd37289f7819cd30ab7da133e5019f36c7a65df862ec6a16d535b9272523",
+  "plan_digest": "sha256:086b266147d63e0ac6dbbf355ab726e1f706ead33525d9afba8501b37d83da54",
   "implementation_session": "",
   "chunks": [
     {
       "id": "CW-C1",
       "base": "8fcad8341e760744d06ce632ea0a978684025f81",
-      "tip": "2a5c53e3558ed3e39a1720d242a17008a4f1f3ae",
-      "plan_digest": "sha256:caecfd37289f7819cd30ab7da133e5019f36c7a65df862ec6a16d535b9272523",
-      "source_digest": "5d93cb2bfbb1812bf823fb3c46c8381a8efa8fa3",
+      "tip": "8fc874450b0ac60b0fa2f7b1555883d0bc74abe6",
+      "plan_digest": "sha256:086b266147d63e0ac6dbbf355ab726e1f706ead33525d9afba8501b37d83da54",
+      "source_digest": "82340a1a7b9eace8db09de391de358c27f7ad25d",
       "acceptance_rows": [
         "CW01",
         "CW02",
@@ -31,7 +31,8 @@
         "CW44",
         "CW46",
         "CW47",
-        "CW49"
+        "CW49",
+        "CW51"
       ],
       "verification": [
         {
@@ -153,6 +154,126 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,2,TestLandCommandReportsInstallStepForABrokerChangingDiff,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,LandCommandReportsInstallStepForABrokerChangingDiff|LandReportsInstallStepForADeletedBrokerInput|LandRefreshesTheBrokerAfterPublication|LandReportsAFailedRefresh|LandSkipsAFreshBroker|RefreshHoldsAnInstalledCandidate,passed,13\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,909\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2777,13\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandCommandReportsInstallStepForABrokerChangingDiff,\"land_broker_notice_test.go:91: landing printed no broker install notice: \\\"landing source{review_base=d7352d7e0b7d1a7d44a7b9458553c915b7a52f04,assignment_start=f39a468c7bc38e7c3ebf6a7859af4c324417be4f}\\\\\\\\nlanding refresh failed: bench binary \\\\\\\\… (810 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestLandReportsInstallStepForADeletedBrokerInput,\"land_broker_notice_test.go:71: landing printed no broker install notice: \\\"landing source{review_base=caf842eccab40f007d8ffdb9c44678e133301b66,assignment_start=5c5f64848d2f3e42d3a84d12ed11cca2769cf5d5}\\\\\\\\nlanding refresh failed: bench binary \\\\\\\\… (775 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "cw-c1-rep1-owners",
+          "performer": "ft406-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "82340a1a7b9eace8db09de391de358c27f7ad25d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+            "digest": "sha256:b383f7321fdc4d7d37295e93417fe2f76ee5ce7cc9954d8cefe2a5208b0c138c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_verify.go,swap,failed,1,TestRefreshSecondReadDecides/nil_build_that_publishes_nothing,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,DiffChangesBuildInputs|Refresh,passed,15\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,435\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,1342,15\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestRefreshSecondReadDecides/nil_build_that_publishes_nothing,\"decision_test.go:135: Refresh(nil build that publishes nothing) = (true, \u003cnil>, \u003cnil>), want no rebuild, build error \u003cnil>, and a seal refusal\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8fc874450b0ac60b0fa2f7b1555883d0bc74abe6",
+          "requirement": "owners",
+          "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs|Refresh'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make Refresh return rebuilt true after a nil build error without the second Verify read, and record that TestRefreshSecondReadDecides turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+              "digest": "sha256:b383f7321fdc4d7d37295e93417fe2f76ee5ce7cc9954d8cefe2a5208b0c138c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_verify.go,swap,failed,1,TestRefreshSecondReadDecides/nil_build_that_publishes_nothing,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,DiffChangesBuildInputs|Refresh,passed,15\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,435\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,1342,15\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestRefreshSecondReadDecides/nil_build_that_publishes_nothing,\"decision_test.go:135: Refresh(nil build that publishes nothing) = (true, \u003cnil>, \u003cnil>), want no rebuild, build error \u003cnil>, and a seal refusal\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c1-rep1-deleted-input",
+          "performer": "ft406-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "82340a1a7b9eace8db09de391de358c27f7ad25d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+            "digest": "sha256:c74183da5db99eca27ef4ed8241607c3a464cf165820b0f365a5be124ff11cab",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,3,TestDiffChangesBuildInputs/deleted_input,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,DiffChangesBuildInputs,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,737\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,753,8\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/deleted_input,\"decision_test.go:81: DiffChangesBuildInputs(deleted input) = false, want true\",1\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/deleted_non-ASCII_input,\"decision_test.go:81: DiffChangesBuildInputs(deleted non-ASCII input) = false, want true\",1\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/input_renamed_to_a_test_file,\"decision_test.go:81: DiffChangesBuildInputs(input renamed to a test file) = false, want true\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8fc874450b0ac60b0fa2f7b1555883d0bc74abe6",
+          "requirement": "deleted-input",
+          "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the deleted-file test from DiffChangesBuildInputs so that it reads only the post-commit input set, and record that TestDiffChangesBuildInputs turns red on the deleted-input case.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+              "digest": "sha256:c74183da5db99eca27ef4ed8241607c3a464cf165820b0f365a5be124ff11cab",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,3,TestDiffChangesBuildInputs/deleted_input,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,DiffChangesBuildInputs,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,737\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,753,8\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/deleted_input,\"decision_test.go:81: DiffChangesBuildInputs(deleted input) = false, want true\",1\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/deleted_non-ASCII_input,\"decision_test.go:81: DiffChangesBuildInputs(deleted non-ASCII input) = false, want true\",1\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/input_renamed_to_a_test_file,\"decision_test.go:81: DiffChangesBuildInputs(input renamed to a test file) = false, want true\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c1-rep1-renamed-input",
+          "performer": "ft406-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "82340a1a7b9eace8db09de391de358c27f7ad25d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+            "digest": "sha256:17914165d06e58d0ab50af0c65e77635f64c81edc775cf3daef9873a0e7cac9d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,1,TestDiffChangesBuildInputs/input_renamed_to_a_test_file,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,DiffChangesBuildInputs,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,377\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,822,8\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/input_renamed_to_a_test_file,\"decision_test.go:81: DiffChangesBuildInputs(input renamed to a test file) = false, want true\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8fc874450b0ac60b0fa2f7b1555883d0bc74abe6",
+          "requirement": "renamed-input",
+          "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove --no-renames from the diff that DiffChangesBuildInputs reads, and record that TestDiffChangesBuildInputs turns red on the renamed-input case.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+              "digest": "sha256:17914165d06e58d0ab50af0c65e77635f64c81edc775cf3daef9873a0e7cac9d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,1,TestDiffChangesBuildInputs/input_renamed_to_a_test_file,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,DiffChangesBuildInputs,passed,8\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,377\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,822,8\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestDiffChangesBuildInputs/input_renamed_to_a_test_file,\"decision_test.go:81: DiffChangesBuildInputs(input renamed to a test file) = false, want true\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c1-rep1-landing",
+          "performer": "ft406-author-01-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "82340a1a7b9eace8db09de391de358c27f7ad25d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+            "digest": "sha256:544cc0f299db6828ac6e615c6a517b0c19cf9755d2edcfe3b2e4c70bc3ec858d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,2,TestLandCommandReportsInstallStepForABrokerChangingDiff,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,LandCommandReportsInstallStepForABrokerChangingDiff|LandReportsInstallStepForADeletedBrokerInput|LandRefreshesTheBrokerAfterPublication|LandReportsAFailedRefresh|LandSkipsAFreshBroker|RefreshHoldsAnInstalledCandidate,passed,13\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,909\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2895,13\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandCommandReportsInstallStepForABrokerChangingDiff,\"land_broker_notice_test.go:91: landing printed no broker install notice: \\\"landing source{review_base=add5401c323abcefff2591fb4e9342ea42dc0a7a,assignment_start=52e479bf21b0c5b4bb248314d6ae540d03c1b716}\\\\\\\\nlanding refresh failed: bench binary \\\\\\\\… (810 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestLandReportsInstallStepForADeletedBrokerInput,\"land_broker_notice_test.go:71: landing printed no broker install notice: \\\"landing source{review_base=f0371836265b35e06cd44f55cba20432a23d55af,assignment_start=ccfefc9e773f7a60ca2975a19f5603d434b44535}\\\\\\\\nlanding refresh failed: bench binary \\\\\\\\… (770 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "8fc874450b0ac60b0fa2f7b1555883d0bc74abe6",
+          "requirement": "landing",
+          "command": "bench test --package ./internal/worktree --run 'LandCommandReportsInstallStepForABrokerChangingDiff|LandReportsInstallStepForADeletedBrokerInput|LandRefreshesTheBrokerAfterPublication|LandReportsAFailedRefresh|LandSkipsAFreshBroker|RefreshHoldsAnInstalledCandidate'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make DiffChangesBuildInputs return false for every diff, and record that TestLandCommandReportsInstallStepForABrokerChangingDiff turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-01-rep1",
+              "digest": "sha256:544cc0f299db6828ac6e615c6a517b0c19cf9755d2edcfe3b2e4c70bc3ec858d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_buildinputs.go,swap,failed,2,TestLandCommandReportsInstallStepForABrokerChangingDiff,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,LandCommandReportsInstallStepForABrokerChangingDiff|LandReportsInstallStepForADeletedBrokerInput|LandRefreshesTheBrokerAfterPublication|LandReportsAFailedRefresh|LandSkipsAFreshBroker|RefreshHoldsAnInstalledCandidate,passed,13\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,909\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2895,13\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestLandCommandReportsInstallStepForABrokerChangingDiff,\"land_broker_notice_test.go:91: landing printed no broker install notice: \\\"landing source{review_base=add5401c323abcefff2591fb4e9342ea42dc0a7a,assignment_start=52e479bf21b0c5b4bb248314d6ae540d03c1b716}\\\\\\\\nlanding refresh failed: bench binary \\\\\\\\… (810 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestLandReportsInstallStepForADeletedBrokerInput,\"land_broker_notice_test.go:71: landing printed no broker install notice: \\\"landing source{review_base=f0371836265b35e06cd44f55cba20432a23d55af,assignment_start=ccfefc9e773f7a60ca2975a19f5603d434b44535}\\\\\\\\nlanding refresh failed: bench binary \\\\\\\\… (770 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -232,7 +353,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:caecfd37289f7819cd30ab7da133e5019f36c7a65df862ec6a16d535b9272523",
+      "to": "sha256:086b266147d63e0ac6dbbf355ab726e1f706ead33525d9afba8501b37d83da54",
+      "chunk_ids": {
+        "CW-C1": [
+          "CW-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
