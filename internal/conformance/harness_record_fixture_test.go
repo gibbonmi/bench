@@ -50,14 +50,14 @@ func harnessRecordRoot(t *testing.T, fault harnessRecordFault) string {
 			"WorktreeRemove=worktree-lifecycle.sh",
 			"SessionStart=session-start.sh",
 			"Stop:*=stop.sh",
-			"PreToolUse:Bash=block-dangerous-git.sh block-bench-follow-on.sh",
+			"PreToolUse:Bash=block-dangerous-git.sh block-bench-follow-on.sh block-unsafe-rg.sh",
 			"PreToolUse:Agent=check-agent-line.sh",
 			"PreToolUse:Edit|Write|MultiEdit|NotebookEdit=block-primary-file-write.sh",
 		),
 		".codex/hooks.json": harnessRecordConfig(
 			"SessionStart=session-start.sh",
 			"Stop=stop.sh",
-			"PreToolUse:Bash=block-dangerous-git.sh block-bench-follow-on.sh",
+			"PreToolUse:Bash=block-dangerous-git.sh block-bench-follow-on.sh block-unsafe-rg.sh",
 		),
 	}
 	delete(files, fault.drop)
