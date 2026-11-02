@@ -89,6 +89,7 @@ Harder chunks: C1, C2.
 37. As a kit maintainer, I want the new guard package under the projection-owner check, so that it cannot decode an envelope or a wrapper privately.
 38. As a kit maintainer, I want one package to own the ripgrep option table, so that a later reader reuses the same grammar.
 58. As an agent, I want a live substitution in the child of `bench worktree exec <target> -- rg ...` refused, so that the delegate route cannot run a hidden command.
+59. As an agent, I want a pipe into a subshell group to feed the first `rg` call inside the group, so that `cat f | (rg foo)` runs.
 
 ### The hook
 
@@ -189,7 +190,7 @@ The chunks run in table order, because C3 needs C2 and the staged `shell-argumen
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | C1 / 01-mark-live-substitution.md | The projection marks each live command substitution and leaves every existing token fact unchanged | R01, R02, R03, R04, R05, R06, R07, R55 | Substitution-mark table, existing Parse tables, guard differential golden | yes |
-| C2 / 02-classify-rg-calls.md | `rgguard.Classify` refuses a pathless or substituting rg call and permits each uncertain call | R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58 | rgguard verdict tables, projection-owner check | yes |
+| C2 / 02-classify-rg-calls.md | `rgguard.Classify` refuses a pathless or substituting rg call and permits each uncertain call | R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58, R59 | rgguard verdict tables, projection-owner check | yes |
 | C3 / 03-add-guard-rg-verb.md, 04-wire-rg-guard-hook.md | The `guard-rg` verb and its shim refuse in both harnesses, fail open, and appear in the guard surface | R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R56, R57 | Hook system test, parity, seams, routing, wiring, manifest checks | no |
 | C4 / 05-name-substitution-in-follow-on.md | The follow-on refusal names command substitution at a live `$(` and refuses nothing new | R51, R52, R53, R54 | benchguard message tables | no |
 
@@ -245,7 +246,7 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 | R13 | 13 | `Classify("rg -g '*.go' foo")`, `Classify("rg --glob=*.go foo")`, and `Classify("rg -A 3 foo")` each refuse | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A table without the value option counts the value as the pattern and permits |
 | R14 | 14 | `Classify("rg -nA3 foo")` refuses and `Classify("rg -nA 3 foo .")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A bundle reader that skips the attached value miscounts the positionals |
 | R15 | 15 | `Classify("rg -e foo src")` permits and `Classify("rg -e foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A reader that keeps the first positional as the pattern after `-e` refuses `src` |
-| R16 | 16 | `Classify("rg --files")`, `Classify("rg --version")`, and `Classify("rg -nh")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard without the mode list refuses a call that never reads stdin |
+| R16 | 16 | `Classify("rg --files src")`, `Classify("rg --version foo")`, and `Classify("rg -nh foo")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard without the mode list, or with `-h` or `--version` read as a flag, refuses a mode call that also names a pattern |
 | R17 | 17 | `Classify("rg -- -foo .")` permits and `Classify("rg -- -foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A reader that treats `-foo` as an option after `--` miscounts the positionals |
 | R18 | 18 | `Classify("rg --zzz foo")` and `Classify("rg -Zq foo")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A reader that treats an unknown option as a no-value option refuses |
 | R19 | 19 | `Classify("rg foo 'x")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that copies the fail-closed unlexed policy refuses |
@@ -261,7 +262,7 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 | R29 | 29 | `Classify("env X=1 rg foo")` and `Classify("timeout 5 rg foo")` each refuse | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the first word misses the prefixed call |
 | R30 | 30 | `Classify("bash -c 'rg foo'")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that skips shell children permits the wrapped call |
 | R31 | 31 | `Classify("bench worktree exec X -- rg foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that skips the exec child permits the delegate route |
-| R32 | 32 | `Classify("cat f \| bench worktree exec X -- rg foo")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the child stream refuses the fed child |
+| R32 | 32 | `Classify("cat f \| bench worktree exec X -- rg foo")` permits and `Classify("cat f \| bash -c 'rg x .; rg foo'")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the child stream refuses the fed child, and a guard that feeds every child span permits the second call |
 | R33 | 33 | `Classify("cd x && rg foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the first span permits the chained call |
 | R34 | 34 | `Classify("command -v rg")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that ignores `Executes` refuses the lookup |
 | R35 | 35 | `Classify("rg foo -")` and `Classify("rg -f -")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that ignores the explicit stdin request refuses both calls as pathless |
@@ -288,6 +289,7 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 | R56 | 46 | A tree whose hooks directory holds a shim with no parity row reds the entry-point-parity check | `internal/conformance/entry_point_parity_test.go` (`TestEntryPointParityNamesAShimOutsideTheTable`) | A `block-unsafe-rg.sh` with no `entryPointParity` row fails the live check by the same rule |
 | R57 | 46 | A registry name with no `subcommandRouting` row reds the routing check | `internal/conformance/subcommand_routing_test.go` (`TestSubcommandRoutingRegistryBites`) | A `guard-rg` row with no routing row fails the live check by the same rule |
 | R58 | 58 | `Classify("bench worktree exec X -- rg \"$(x)\" .")` and ``Classify("bench worktree exec X -- rg `x` .")`` each refuse with the substitution reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads marks only from the child argv sees none and permits both calls |
+| R59 | 59 | `Classify("cat f \| (rg foo)")` permits and `Classify("cat f \| (cd x; rg foo)")` refuses | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads only the token before the span refuses the fed group, and a guard that feeds every group span permits the second call |
 
 Not covered: story 56 — an exported `RIPGREP_CONFIG_PATH` is not in the command text, so no guard input reaches it.
 Not covered: story 57 — the digit-only operand loss is pre-existing in `ProjectCommandWords` (`internal/shellcommand/shellcommand.go:104`), and this spec keeps that contract.
@@ -340,7 +342,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 | Source clause | Coverage |
 |---|---|
 | A new PreToolUse guard uses the shared projection to inspect `rg` calls. | R29, R30, R31, R33, R37, R39, R40, R45 |
-| It requires a path operand unless a pipe in the same command supplies stdin. | R08, R09, R10, R11, R32 |
+| It requires a path operand unless a pipe in the same command supplies stdin. | R08, R09, R10, R11, R32, R59 |
 | It recognizes options that consume a value. | R13, R14, R15, R16, R17 |
 | It permits a call when that operand analysis is uncertain. | R18, R19, R20, R21, R22 |
 | This new guard's uncertainty policy does not weaken the existing dangerous-command guards. | R07, R55 |

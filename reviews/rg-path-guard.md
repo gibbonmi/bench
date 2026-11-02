@@ -407,7 +407,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-r1-standards",
+          "performer": "ft366-review-c2-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aacdc93af5b100c577ff86add639ceb90937cdca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r1",
+            "digest": "sha256:47a9be35b0fda166e53caf151aab459b77b99d45b2ac0573f2b5fc94d4ea5971",
+            "excerpt": "## Standards\nFindings: 1. Worst issue: S1.\nS1: internal/rgguard/rgguard_test.go:19-21, confidence 5, auto-fix. The comment tells the history of the added inputs and why they turn red, which the review record owns. Cut it to the expectation-source sentence.\nIsBenchName is the one Bench-name test; R38 sweep finds no second option list; no new dependency.\n"
+          },
+          "axis": "Standards",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "eda20a987adc8e38dced29a3fda32b8b07898b04",
+          "finding_ids": [
+            "S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-r1-spec",
+          "performer": "ft366-review-c2-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aacdc93af5b100c577ff86add639ceb90937cdca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r1",
+            "digest": "sha256:14b5ded9adb91fa127a98f3b5033c1e2d2eb9c029af700ee1779cd859f61fa85",
+            "excerpt": "## Spec\nFindings: 1. Worst issue: P1.\nP1: R16 row, options.go:163 and :230-231, confidence 9, auto-fix. rg --version and rg -nh have no pattern, so the pathless step permits them without the mode list; a probe of -h mode to flag was silent. Add rg -nh foo and rg --version foo to R16 and fix the row text.\nAuthor divergences hold; option table matches rg 15.1.0 help; Classify starts no process; verdict order matches steps 2-6.\n"
+          },
+          "axis": "Spec",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "eda20a987adc8e38dced29a3fda32b8b07898b04",
+          "finding_ids": [
+            "P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-r1-coverage",
+          "performer": "ft366-review-c2-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "aacdc93af5b100c577ff86add639ceb90937cdca",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c2-r1",
+            "digest": "sha256:b06f0303416b329866d0ca9127926eae7231ec98f798f9cd27f1845bac5cee6b",
+            "excerpt": "## Coverage\nFindings: 3. Worst issue: C1.\nC1: same gap as P1, confidence 9, auto-fix.\nC2: internal/rgguard/rgguard.go:78, confidence 8, auto-fix. Omitting fed = false is silent; add cat f | bash -c 'rg x .; rg foo' (refuse).\nC3: internal/rgguard/rgguard.go:145, confidence 8, ask-user. cat f | (rg foo) is refused although the pipe is the stdin of rg; decide over-refusal or treat a lead ( after a pipe as fed.\n"
+          },
+          "axis": "Coverage",
+          "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "tip": "eda20a987adc8e38dced29a3fda32b8b07898b04",
+          "finding_ids": [
+            "C1",
+            "C2",
+            "C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -517,3 +586,38 @@ The plan probes `verdict-tests` and `projection-owner` answered `bit` with `rest
 The first R16 probe was silent, because each R16 call has no pattern and the pathless step already permits it. The author added `rg --files src`, and the R16 probe then failed. For the same reason, R20 gained `xargs rg foo` and R34 gained `command -v rg foo`.
 
 The coordinator probe made the `-e` and `-f` branch of `pathless` count one positional as the pattern. `TestClassifyRgCalls` failed on R15, and the probe restored the file.
+
+## C2 review round 1
+
+One unified session ran the three axes separately on opus at medium effort over `c8519a1b..eda20a98`.
+The orchestrator accepts S1, P1, C1, C2, and C3 under `--auto-approve`. P1 and C1 name one repair target, so the round has four repair targets, and all of them are on ticket 02.
+C3 changes production code, so C2 takes a confirming round after the repair.
+The spec amendment corrects the R16 inputs and row text, adds a refusal case to R32, and adds story 59 and row R59 for C3.
+
+The reviewer proposed `ask-user` for C3. The orchestrator decides it. The decision source permits a call when a pipe in the same command supplies stdin, and in `cat f | (rg foo)` the pipe does.
+The refusal advice to add `.` would also change what that call searches. The reviewer can veto R59.
+
+## Standards
+
+Findings: 1 accepted. Worst issue: S1.
+
+- S1 (`c2-r1-standards`), auto-fix, confidence 5: the comment at `internal/rgguard/rgguard_test.go:19-21` tells the history of the added inputs and why they turn red. The review record owns that history, so cut the comment to its expectation-source sentence.
+
+## Spec
+
+Findings: 1 accepted. Worst issue: P1.
+
+- P1 (`c2-r1-spec`), auto-fix, confidence 9: R16 has two inputs that no test can fail. `rg --version` and `rg -nh` name no pattern, so the pathless step permits them without the mode list. Add `rg -nh foo` and `rg --version foo` to R16.
+
+## Coverage
+
+Findings: 3 accepted. Worst issue: C1.
+
+- C1 (`c2-r1-coverage`), auto-fix, confidence 9: the same gap as P1. A probe that reads `-h` as a flag at `internal/rgguard/options.go:163` stays silent.
+- C2 (`c2-r1-coverage`), auto-fix, confidence 8: no row grades that only the first `rg` span of a fed `-c` child is fed. A probe that omits `fed = false` at `internal/rgguard/rgguard.go:78` stays silent. Add `cat f | bash -c 'rg x .; rg foo'` as a refusal case of R32.
+- C3 (`c2-r1-coverage`), auto-fix, confidence 8: `cat f | (rg foo)` is refused, because `internal/rgguard/rgguard.go:145` reads only the token directly before the span. A pipe before a lead `(` feeds the first `rg` span of the group (R59).
+
+## Advice
+
+- The zero `Verdict` holds the pathless reason, so `Message()` on a permit verdict prints the pathless sentence.
+- No row grades the attached value branch, such as `-A=3` or `--hidden=x`.
