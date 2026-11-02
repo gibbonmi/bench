@@ -155,7 +155,75 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "cw-c1-r1-standards",
+          "performer": "ft406-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d93cb2bfbb1812bf823fb3c46c8381a8efa8fa3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c1",
+            "digest": "sha256:f4cb68d25d72080e731af4b897430315dd46a3f17b2480abe8e3bbc3627474b0",
+            "excerpt": "Standards axis (unified session), CW-C1, frozen pair 8fcad834..2a5c53e3. Count: 1 finding. Worst: S1.\nS1, confidence 3, internal/worktree/land_effects.go:137-138: the sentence \"Refresh settles completion from the tree, so a resume needs no journal\" repeats the completion rationale that freshness.Refresh's doc comment owns. no-op.\nNo hard violation: buildInputs returns the inputs and the package directories from one go list call; relativeBuildInputs feeds BuildInputs and the diff owner; no second decoder; no new dependency.\nCommand contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "8fcad8341e760744d06ce632ea0a978684025f81",
+          "tip": "2a5c53e3558ed3e39a1720d242a17008a4f1f3ae",
+          "finding_ids": [
+            "cw-c1-std-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cw-c1-r1-spec",
+          "performer": "ft406-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d93cb2bfbb1812bf823fb3c46c8381a8efa8fa3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c1",
+            "digest": "sha256:9bd59e1632e06ad5e6698fcc6147d97132a65065f39a8110197c95f2abe57e1d",
+            "excerpt": "Spec axis (unified session), CW-C1, frozen pair 8fcad834..2a5c53e3. Count: 1 finding. Worst: P1.\nP1, confidence 9, internal/worktree/land_effects_test.go:183: CW46 is unclosed. TestLandReportsAFailedRefresh uses refreshJoins(nil), whose build returns nil, so no test grades the text \"landing refresh build failed: \". auto-fix: a failing-build assertion on that literal.\nEvery other CW-C1 row holds; CW10 passes (rg name-only finds only a comment at land.go:182).\nCommand contribution: the ticket acceptance line bundles six kept rows under \"keep or gain the answers\"; /bench-write-spec should require a recorded red for each kept-rule row mapped to an existing test.\n"
+          },
+          "axis": "Spec",
+          "base": "8fcad8341e760744d06ce632ea0a978684025f81",
+          "tip": "2a5c53e3558ed3e39a1720d242a17008a4f1f3ae",
+          "finding_ids": [
+            "cw-c1-spec-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "cw-c1-r1-coverage",
+          "performer": "ft406-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5d93cb2bfbb1812bf823fb3c46c8381a8efa8fa3",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c1",
+            "digest": "sha256:0a9d7a7f13f32dd2213ad9ca0acc08471d38b0edd59703af35310138f8c4307e",
+            "excerpt": "Coverage axis (unified session), CW-C1, frozen pair 8fcad834..2a5c53e3. Count: 2 findings. Worst: C1.\nC1, confidence 9, internal/worktree/land_effects.go:156: the CW46 gap; a swap of the \"landing refresh build failed: \" text stays silent (14 landing tests pass, restored yes). auto-fix, same repair as P1.\nC2, confidence 6, internal/freshness/freshness_buildinputs.go:281,285-291: --name-status is parsed without -z, so Git C-quotes a non-ASCII deleted path such as cmd/bench/é.go, the .go suffix test fails, and the owner answers false. No row or Won't handle covers it. ask-user (spec.md:137 fixes the command).\nProbes: build-failure text swap silent; _test.go exclusion omit bit; Refresh drops buildErr bit; status D to Z bit; first seal read disabled bit. Every restored cell yes.\nCommand contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "8fcad8341e760744d06ce632ea0a978684025f81",
+          "tip": "2a5c53e3558ed3e39a1720d242a17008a4f1f3ae",
+          "finding_ids": [
+            "cw-c1-cov-1",
+            "cw-c1-cov-2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -188,3 +256,30 @@ The plan probes `owners`, `deleted-input`, `renamed-input`, and `landing` answer
 
 The author reports one gap: the mutation `if false && buildErr != nil` in `refreshBroker` stays green, because the build of `TestLandReportsAFailedRefresh` returns nil. No test grades the text `landing refresh build failed: ` that CW46 names.
 The coordinator probe swapped the base of the diff test in the stack landing for the tip, and 44 stack tests stayed green. No coverage row of this spec covers the stack landing, so that gap goes to the learnings.
+
+## CW-C1 review round 1
+
+One unified session (`execution.review_mode` is `unified`) ran the three axes separately on opus at medium effort over `8fcad834..2a5c53e3`.
+The orchestrator accepts P1, C1, and C2 under `--auto-approve`, and dismisses S1.
+P1 and C1 name one repair target, and C2 names a second, so the round has two repair targets.
+Both targets are on paths of ticket 01, so one repair session takes both. C2 changes production code, so CW-C1 takes a confirming round after the repair.
+The spec amendment for C2 adds `-z` to the diff of `DiffChangesBuildInputs` and adds row CW51 to ticket 01.
+
+## Standards
+
+Findings: 1, dismissed. Worst issue: S1.
+
+- S1 (`cw-c1-std-1`), no-op, confidence 3: `internal/worktree/land_effects.go:137-138` states that `freshness.Refresh` settles completion. The sentence names the owner and is a short pointer, not a second copy of the rationale.
+
+## Spec
+
+Findings: 1 accepted. Worst issue: P1.
+
+- P1 (`cw-c1-spec-1`), auto-fix, confidence 9: CW46 is unclosed. `TestLandReportsAFailedRefresh` (`internal/worktree/land_effects_test.go:183`) uses a build that returns nil, so no test grades the text `landing refresh build failed: `. Add a failing-build assertion on that text.
+
+## Coverage
+
+Findings: 2 accepted. Worst issue: C1.
+
+- C1 (`cw-c1-cov-1`), auto-fix, confidence 9: the CW46 gap at `internal/worktree/land_effects.go:156`. A swap of the build-failure text stays silent. The repair of P1 closes it.
+- C2 (`cw-c1-cov-2`), auto-fix, confidence 6: `internal/freshness/freshness_buildinputs.go:281,285-291` parses `--name-status` without `-z`. Git quotes a non-ASCII deleted path, so the `.go` suffix test misses it. Add `-z`, parse the NUL-separated fields, and add the CW51 case to `TestDiffChangesBuildInputs`.
