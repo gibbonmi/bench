@@ -1714,6 +1714,18 @@
               "path": "roadmap/FT366.md",
               "identity": "sha256:425277dbe93364a7b7cce28ca37e1872169e3f95a236afe688824344c499bc2d"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "rg-path-guard",
+                "path": "specs/rg-path-guard/spec.md",
+                "identity": "sha256:838c2bdabea90704e38073d1609ce2c6dfd45a4acdbe017574700d6d055e79e3"
+              },
+              "obligations": [
+                "FT366"
+              ]
+            }
           ]
         },
         {
