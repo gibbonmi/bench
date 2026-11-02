@@ -831,3 +831,31 @@ It closed P1, C1, C2, and O1, and each axis passes. CW-C1 used both repair cycle
 Its probes used new sites: `buildErr == nil` in `refreshBroker` bit `TestLandReportsAFailedRefresh`, and a non-ASCII skip in the deletion test bit only the CW51 case. Each restored cell reads `yes`.
 
 Advice: the doc comment at `internal/freshness/decision_test.go:41` breaks early and can take a rewrap.
+
+## CW-C2 ticket 02 author witness reds
+
+The ticket 02 author `ft406-author-02` (opus / medium) committed ticket 02 at `4f104d219` and froze CW-C2 at `e3bd46579` over the chunk base `856141b41`.
+Each witness went red under a `bench probe` mutation after the ticket commit, and each restored cell reads `yes`.
+The plan probes `commit-step`, `failure-line`, `absent-predicate`, `chain`, and `known-issues` answered `bit`. The `failure-line` and `absent-predicate` mutations took the smallest change that compiles.
+The `known-issues` requirement first ran a synthetic-tree anchor test, and its probe stayed silent. The plan commit `e3bd46579` points it at `bench test --check docs-currency-workflow`, which grades the live anchors.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/commit/background.go` | the refresh replaced by no build | `TestWorktreeRebuildRepairsAStaleBuild`, `TestWorktreeRebuildRepairsADeletedInput` | CW13, CW21 |
+| `internal/commit/background.go` | the rebuilt line cut | `TestWorktreeRebuildRepairsAStaleBuild` | CW15 |
+| `internal/commit/background.go` | the build output path changed | `TestWorktreeRebuildRepairsAStaleBuild` | CW14 |
+| `internal/commit/background.go` | an absent build always skips | `TestWorktreeRebuildBuildsAnAbsentBuildForAnInputChange`, `...ForADeletedInput` | CW16, CW43 |
+| `internal/commit/background.go` | always build | `TestWorktreeRebuildSkipsAFreshBuild` | CW17, CW18 |
+| `internal/commit/background.go` | the diff alone decides | `TestWorktreeRebuildRepairsAStaleBuildAfterAMarkdownCommit` | CW20 |
+| `internal/commit/background.go` | `buildErr` ignored | `TestWorktreeRebuildReportsAFailure`, `TestWorktreeRebuildNamesAnAbsentGo` | CW22, CW25 |
+| `internal/commit/background.go` | `Preformatted` in place of `Controls` | `TestWorktreeRebuildReportsAFailure/control_bytes` | CW23 |
+| `internal/commit/background.go` | `buildErr` wins over the seal | `TestWorktreeRebuildReportsAFailure/published_then_failed` | CW50 |
+| `internal/commit/background.go` | the manifest guard answers false | `TestWorktreeRebuildSkipsALinkedRepository` | CW26 |
+| `internal/commit/background.go` | a held-manifest skip inserted | `TestWorktreeRebuildIgnoresAHeldInstall` | CW45 |
+| `internal/commit/commit.go` | the step before publication; stdout output; grade skipped | `TestCommitRebuildsBeforeItsGrade` | CW28, CW29, CW36 |
+| `internal/commit/commit.go` | exit 1 on a build error | `TestCommitKeepsExitZeroOnAFailedRebuild` | CW30 |
+| `internal/commit/commit.go` | the publication guard answers true | `TestUnpublishedCommitRebuildsNothing` | CW31 |
+| `internal/commit/commit.go` | the exit guard dropped | `TestUnreconciledCommitRebuildsNothing` | CW32 |
+| `.gitignore` | `dist/` removed | `TestKitIgnoresTheRebuildOutputs` | CW33 |
+
+The coordinator probe swapped the diff parent `published+"^"` for `published` in the step, and CW16 and CW43 went red.
