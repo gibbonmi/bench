@@ -710,7 +710,8 @@ This host exception overrides the shared command's opener step.
   worktree's own `./dist/bench`. The wrapper on PATH resolves a working
   directory inside a worktree of this repository to that worktree, and it
   prefers that kit's `dist/bench`. So a bare `bench` serves the worktree's own
-  build after `bench worktree build <target>`, and serves the main checkout's
+  build after `bench worktree build <target>` or a publishing `bench commit`,
+  and serves the main checkout's
   build from anywhere else. `bench worktree exec <target> -- ./dist/bench <verb>`
   is the spelling that no working directory can change. Gate and `bench test`
   runs never reuse that artifact: their owner builds one private exact-source

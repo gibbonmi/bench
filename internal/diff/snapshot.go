@@ -28,23 +28,6 @@ func SetSnapshotAfterReadForTest(after func()) func() {
 	return func() { snapshotAfterRead = previous }
 }
 
-// parseNameStatusZ turns `git diff --name-status --no-renames -z` output into
-// status/path rows. The NUL framing carries each path raw (never git C-quoted), so a
-// path with a space, a non-ASCII byte, or a quote arrives intact and is TOON-escaped a
-// single layer downstream.
-func parseNameStatusZ(raw []byte) [][]string {
-	parts := strings.Split(string(raw), "\x00")
-	var rows [][]string
-	for i := 0; i+1 < len(parts); i += 2 {
-		st, p := parts[i], parts[i+1]
-		if st == "" && p == "" {
-			continue
-		}
-		rows = append(rows, []string{st, p})
-	}
-	return rows
-}
-
 // changedFiles renders the files table for a `git diff` range. rangeArgs is passed
 // straight through to `git diff --name-status --no-renames -z`: the resolved base alone
 // for the branch-relative path, so Git includes index and tracked worktree changes, or
@@ -57,7 +40,7 @@ func changedFiles(rangeArgs ...string) ([][]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseNameStatusZ(raw), nil
+	return git.ParseNameStatusZ(raw), nil
 }
 
 // parseLogFormat turns `git log --format=%h%x00%s` output into sha/subject rows. Each
@@ -65,7 +48,7 @@ func changedFiles(rangeArgs ...string) ([][]string, error) {
 // message and carries no embedded newline. The NUL between sha and subject is a
 // delimiter git itself never puts in either field, so a comma or quote in the subject
 // arrives raw for the caller to TOON-escape a single layer downstream, the same
-// NUL-framing discipline parseNameStatusZ uses for paths.
+// NUL-framing discipline git.ParseNameStatusZ uses for paths.
 func parseLogFormat(raw []byte) [][]string {
 	s := strings.TrimRight(string(raw), "\n")
 	if s == "" {
@@ -108,7 +91,7 @@ func changedFilesAt(root string, rangeArgs ...string) ([][]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseNameStatusZ(raw), nil
+	return git.ParseNameStatusZ(raw), nil
 }
 
 func diffBodyAt(root string, rangeArgs ...string) ([]byte, error) {

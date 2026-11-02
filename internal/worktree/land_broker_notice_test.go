@@ -16,24 +16,59 @@ import (
 // the same destination rather than each building one.
 func brokerChangingLanding(t *testing.T, request string) landingFixture {
 	t.Helper()
+	return brokerLanding(t, request, "scripts/go-build.sh", func(worktree string) {
+		commitInWorktree(t, worktree, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
+	})
+}
+
+// brokerSecondSource is a second non-test Go file of the broker's main package, so a
+// reviewed diff can delete a broker input and leave the package listed.
+const brokerSecondSource = "cmd/bench/second.go"
+
+// brokerLanding is the landing fixture whose destination declares broker build inputs and
+// whose ticket may write written. The source worktree commits change as the reviewed diff.
+func brokerLanding(t *testing.T, request, written string, change func(worktree string)) landingFixture {
+	t.Helper()
 	f := publicLandingFixture(t, request, "", "")
 	writeGoMainFixture(t, f.root)
+	mustWrite(t, filepath.Join(f.root, filepath.FromSlash(brokerSecondSource)), []byte("package main\n\nconst second = 2\n"), 0o644)
 	mustWrite(t, filepath.Join(f.root, filepath.FromSlash(freshness.BuildInputsManifest)), []byte(freshness.BuildInputLine("build_script", "scripts/go-build.sh")), 0o644)
 	ticket := filepath.Join(f.root, filepath.FromSlash(landingTicket))
 	body, err := os.ReadFile(ticket)
 	if err != nil {
 		t.Fatal(err)
 	}
-	mustWrite(t, ticket, withTicketWrite(body, "scripts/go-build.sh"), 0o644)
+	mustWrite(t, ticket, withTicketWrite(body, written), 0o644)
 	gitRun(t, f.root, "add", ".")
 	gitRun(t, f.root, withIdentity("commit", "-qm", "broker build inputs")...)
 	gitRun(t, f.creation.Path, "rebase", "main")
 	refreshLandingEvidence(t, f.creation.Path, gitOutput(t, f.root, "rev-parse", "HEAD"))
 	f.base = gitOutput(t, f.root, "rev-parse", "HEAD")
-	commitInWorktree(t, f.creation.Path, "scripts/go-build.sh", "#!/bin/sh\n# next broker\nexit 0\n", "change broker source")
+	change(f.creation.Path)
 	refreshLandingEvidence(t, f.creation.Path, f.base)
 	f.tip = gitOutput(t, f.creation.Path, "rev-parse", "HEAD")
 	return f
+}
+
+// TestLandReportsInstallStepForADeletedBrokerInput is CW44. A reviewed diff that only
+// deletes a non-test Go file of the broker's main package changes the broker, though the
+// input set at the tip no longer names that file. The landing must still name the install
+// step.
+func TestLandReportsInstallStepForADeletedBrokerInput(t *testing.T) {
+	t.Parallel()
+	request := "land-owner-broker-delete"
+	f := brokerLanding(t, request, brokerSecondSource, func(worktree string) {
+		gitRun(t, worktree, "rm", "-q", brokerSecondSource)
+		gitRun(t, worktree, withIdentity("commit", "-qm", "delete broker source")...)
+	})
+	call := f.call(landArgs(request, f.base, f.tip, f.creation.Path)...)
+	call.kit = f.root
+
+	r := runVerb(t, verbLand, call)
+	if r.exit != 3 || !strings.Contains(r.stdout, "worktree=incomplete:refresh") {
+		t.Fatalf("deleted-input landing = (%d, %q, %q), want a failed refresh", r.exit, r.stdout, r.stderr)
+	}
+	brokerNoticeLine(t, r.stderr)
 }
 
 // TestLandCommandReportsInstallStepForABrokerChangingDiff is SOL16 and BF19. A reviewed

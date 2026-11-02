@@ -6,6 +6,16 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Commit rebuild of the worktree build
+
+- Changed `bench commit` in a kit worktree. After the commit publishes, it rebuilds the worktree's `dist/bench` when the seal of that build does not verify. It builds an absent `dist/bench` only when the published commit changes a build input. The rebuild runs before the background grade starts, so the grade uses the fresh build.
+
+  The commit prints one stderr line after a rebuild, or one line with the cause and the rebuild command after a failed rebuild. A failed rebuild keeps the commit's exit 0. Before, a Go commit left a stale `dist/bench`, and the build preflight showed `binary-seal` red until a manual `bench worktree build`.
+
+### Broker notice for a deleted Go build input
+
+- Changed the broker notice of `bench worktree land`. A landing whose reviewed diff only deletes a non-test Go file of a package that the Bench build reads now reports the install step of a broker-changing landing. The same applies when the diff renames that file. The landing reads the diff without rename detection, so it reads a renamed file as a deletion of its old path. Before, the landing compared the diff only with the build inputs at the source tip. Those inputs do not name a deleted file, so the landing reported no install step.
+
 ### Strict JSON owner check
 
 - Added the `strict-json-owner` conformance check. It grades the production Go of each strict JSON caller package and of the packages below it. It refuses a function that reads JSON tokens and calls itself, directly or through other calls, because only `jsonfile` walks object keys. It also refuses each named strict reader that reaches no `jsonfile` call. Stream readers, partial projections, and local diagnostic adapters stay permitted. An absent caller package is an absent optional surface, and an unreadable or unparsable source gets a named diagnostic.

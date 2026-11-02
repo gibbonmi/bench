@@ -228,7 +228,17 @@ func recordFields(t *testing.T, stdout string) (name string, fields map[string]s
 // commit's root, the record, and the published commit.
 func publishedUnreconciled(t *testing.T, dir string) (root, stdout, published string) {
 	t.Helper()
-	root, before := landingRepo(t, 0, unreconcilableGate(dir))
+	return publishedUnreconciledIn(t, dir, func(*testing.T, string) {})
+}
+
+// publishedUnreconciledIn is publishedUnreconciled over a checkout that also holds the files
+// that tree writes.
+func publishedUnreconciledIn(t *testing.T, dir string, tree func(t *testing.T, root string)) (root, stdout, published string) {
+	t.Helper()
+	root, before := landingRepo(t, 0, func(t *testing.T, root string) {
+		tree(t, root)
+		unreconcilableGate(dir)(t, root)
+	})
 	gittest.MustRun(t, root, "reset", "-q", "--hard", "HEAD")
 	namedDir(t, root, dir)
 

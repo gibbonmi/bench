@@ -297,6 +297,15 @@ func writeBuildFixtureAt(t *testing.T, root string) string {
 		"package.json": "{\"version\":\"0.0.0\"}\n",
 		"internal/releaseevidence/requirements.json": "{}\n",
 	}
+	writeFixtureFiles(t, root, files)
+	return root
+}
+
+// writeFixtureFiles writes each body at its slash-separated name under root, for a fixture
+// that adds a file, such as a second Go file of the cmd/bench package, beside the build
+// fixture.
+func writeFixtureFiles(t *testing.T, root string, files map[string]string) {
+	t.Helper()
 	for name, body := range files {
 		path := filepath.Join(root, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -306,7 +315,6 @@ func writeBuildFixtureAt(t *testing.T, root string) string {
 			t.Fatal(err)
 		}
 	}
-	return root
 }
 
 // TestDeclaresBuildInputsReadsPresenceRatherThanContent grades the applicability gate

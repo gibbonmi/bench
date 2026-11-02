@@ -2351,6 +2351,14 @@
       "identity": "sha256:9741209379b687f9a3ca1b816dd83af57dea627341dd9140a892b9d083a574d6",
       "source": "b57e42a360f028fbc5077aaa4110c68be55c48d1",
       "evidence": "7ed927e63f718c4c7188b2ec04a91cf86398c8b4"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT406-rebuild",
+      "binding": "commit-worktree-rebuild",
+      "identity": "sha256:4e7b0f2c0b89102833adeccff4dbcf3786c426c6b1817eb16b0e4e7a8102bf7a",
+      "source": "e675c94f7c3a28e2c6ff0729d625057d8363759d",
+      "evidence": "365b70ed1033e457316cdfdc08562d2f39d58fa4"
     }
   ]
 }

@@ -350,6 +350,9 @@ composes that pair and runs the gate on it before publication and source release
 That run is the whole-project gate, unless the landing plan selects the reader set.
 Executable help owns its flags and positional grammar.
 
+In a kit worktree, a `bench commit` that publishes rebuilds the worktree's `dist/bench` when its seal does not verify.
+It builds an absent `dist/bench` only when the commit changes a build input.
+
 The lane writes the output of each check to the lane log `bench-lane.log`
 in the Git directory of the worktree. It truncates that log at the start of each run.
 A lane pass prints no check line, and a lane red prints the lines of the failing check

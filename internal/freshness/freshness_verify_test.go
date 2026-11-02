@@ -36,7 +36,7 @@ func TestVerifyRefusesSymbolicLinkBeforeReadingExecutable(t *testing.T) {
 
 func TestVerifyUsesContentRatherThanMtime(t *testing.T) {
 	root, executable := writePublishedFixture(t)
-	inputs, err := buildInputs(root)
+	inputs, _, err := buildInputs(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -338,18 +338,24 @@ func TestVerifyRefusesNamedPipeSealBeforeReading(t *testing.T) {
 func writePublishedFixture(t *testing.T) (string, string) {
 	t.Helper()
 	root := writeBuildFixture(t)
+	executable := filepath.Join(root, "dist", "bench")
+	if err := publishFixtureBuild(t, root, executable); err != nil {
+		t.Fatal(err)
+	}
+	return root, executable
+}
+
+// publishFixtureBuild publishes a stand-in executable and its seal at executable for root.
+func publishFixtureBuild(t *testing.T, root, executable string) error {
+	t.Helper()
 	staged := filepath.Join(root, "staged-bench")
 	if err := os.WriteFile(staged, []byte("Bench executable"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	executable := filepath.Join(root, "dist", "bench")
 	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3"); err != nil {
-		t.Fatal(err)
-	}
-	return root, executable
+	return Publish(root, staged, executable, fixtureManifestDir(t, root), "1.2.3")
 }
 
 // fixtureManifestDir gives every publication fixture a manifest directory that is not the

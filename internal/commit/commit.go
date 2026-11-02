@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
@@ -105,6 +106,11 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 	exit := commitAttributed(&measures, root, req, stdout, stderr)
 	finishSpan(exit, measures)
 	outcome.Published = measures.subject
+	// The rebuild comes before the grade, so the grade's wrapper resolves the fresh build. An
+	// exit-3 commit published over a checkout that did not reconcile, so it builds nothing.
+	if exit == 0 && outcome.Published != "" {
+		refreshWorktreeBuild(root, outcome.Published, benchhome.Dir(), worktreeBuild, stderr)
+	}
 	startBackgroundGrade(root, outcome.Published, stderr)
 	return outcome, exit
 }

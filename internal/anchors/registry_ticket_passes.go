@@ -15,6 +15,7 @@ var ticketSlicingAnchors = []Anchor{
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "Cap the witnesses in a charge", Diagnostic: "witness cap: the known-issues row kept a copy of the cap"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "FT405", Diagnostic: "record ticket: the known-issues file kept a row that FT405 retires"},
 	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "FT438", Diagnostic: "assignment exemption: the known-issues file kept a row that FT438 retires"},
+	{Group: AfterImplementSpec, File: knownIssues, Kind: Forbid, Section: "", Needle: "FT406", Diagnostic: "commit rebuild: the known-issues file kept a row that FT406 retires"},
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: Forbid, Section: "", Needle: "## Enforced rules", Diagnostic: "closure removal: the slicing checks kept the enforced-rules copy of the preflight checks"},
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: Forbid, Section: "", Needle: "--propose-writes", Diagnostic: "closure removal: the slicing checks kept a writes-proposal step"},
 	{Group: AfterImplementSpec, File: slicingChecks, Kind: Forbid, Section: "", Needle: "--breakdown", Diagnostic: "closure removal: the slicing checks kept a breakdown step"},
@@ -48,5 +49,5 @@ const mapDiscipline = ".agents/skills/bench-craft-spec/references/map-discipline
 const mapOnlyRoute = ".agents/skills/bench-craft-spec/references/map-only-route.md"
 
 // knownIssues is the known-issues file that never carries a second copy of the witness cap
-// or a row that FT405 or FT438 retires.
+// or a row that FT405, FT406, or FT438 retires.
 const knownIssues = "docs/known-issues.md"

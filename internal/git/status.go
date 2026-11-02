@@ -277,6 +277,23 @@ func ParsePorcelainZ(raw []byte) []PorcelainEntry {
 	return entries
 }
 
+// ParseNameStatusZ turns `git diff --name-status --no-renames -z` output into
+// status/path rows. The NUL framing carries each path raw (never git C-quoted), so a
+// path with a space, a non-ASCII byte, or a quote arrives intact and is TOON-escaped a
+// single layer downstream.
+func ParseNameStatusZ(raw []byte) [][]string {
+	parts := strings.Split(string(raw), "\x00")
+	var rows [][]string
+	for i := 0; i+1 < len(parts); i += 2 {
+		st, p := parts[i], parts[i+1]
+		if st == "" && p == "" {
+			continue
+		}
+		rows = append(rows, []string{st, p})
+	}
+	return rows
+}
+
 // ParsePorcelainZStrict parses and validates NUL-framed porcelain-v1 records. A rename
 // or copy record carries a second, path-only NUL record. The parser returns that record
 // with an empty Status, so callers can preserve the framing while filtering.

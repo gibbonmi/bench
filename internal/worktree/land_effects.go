@@ -132,15 +132,10 @@ func releaseLanded(j joins, a ambient, root, request, path string, stderr io.Wri
 }
 
 // refreshBroker republishes root's own Bench executable after the landing published the
-// sources it is built from. It applies only where the destination declares Bench build
-// inputs, which is the predicate the landing's broker notice reads; a linked installation
-// declares none and stays untouched.
-//
-// Completion is a predicate over the tree, never a recorded step: the published
-// executable verifies against the destination's own sources. The publication owner
-// promotes the seal last and installs the manifest with it, so a verified seal also
-// proves the manifest of that same transaction landed. A resume therefore needs no
-// journal, and an interrupted refresh finishes on the next call.
+// sources it is built from, through freshness.Refresh. It applies only where the
+// destination declares Bench build inputs, which is the predicate the landing's broker
+// notice reads; a linked installation declares none and stays untouched. Refresh settles
+// completion from the tree, so a resume needs no journal.
 //
 // An installed candidate never verifies against the destination's sources, so a rebuild
 // would replace it with an executable that refuses its build's ledger. The refresh therefore
@@ -152,21 +147,15 @@ func refreshBroker(j joins, run *git.Run, root string, stderr io.Writer) string 
 	if j.heldInstall(commitrepo.Store{Root: root, Run: run}) {
 		return effectHeld
 	}
-	executable := freshness.PublishedExecutable(root)
-	if freshness.Verify(root, executable) == nil {
-		return effectComplete
-	}
 	// The build runs the destination's own entry point, which is candidate code. It runs
 	// here and nowhere else, after the release, so it can reach neither the gate, nor the
 	// composition, nor the destination compare-and-swap that published these bytes. The
 	// refresh never executes the published executable itself.
-	if err := j.buildSubject(context.Background(), root, executable); err != nil {
-		fmt.Fprintln(stderr, "landing refresh build failed: "+sanitize.Controls(err.Error()))
+	_, buildErr, err := freshness.Refresh(context.Background(), root, j.buildSubject)
+	if buildErr != nil {
+		fmt.Fprintln(stderr, "landing refresh build failed: "+sanitize.Controls(buildErr.Error()))
 	}
-	// The build's own verdict does not settle the effect, because a build can return
-	// zero and still leave an executable no seal authenticates. So the predicate is read
-	// a second time, and that read is what reports the effect.
-	if err := freshness.Verify(root, executable); err != nil {
+	if err != nil {
 		fmt.Fprintln(stderr, "landing refresh failed: "+sanitize.Controls(err.Error()))
 		return effectFailed
 	}
