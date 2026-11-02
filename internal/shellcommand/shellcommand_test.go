@@ -9,10 +9,10 @@ func TestParsePublishesTokenClassesAndSimpleCommands(t *testing.T) {
 	got := Parse("env X=1 bench help > log && cat <<'EOF'\nbench gate | tail -20\nEOF\ngit push")
 	want := Stream{
 		Tokens: []Token{
-			{Word, "env"}, {Word, "X=1"}, {Word, "bench"}, {Word, "help"},
-			{Redirection, ">"}, {Word, "log"}, {ControlOperator, "&&"},
-			{Word, "cat"}, {Redirection, "<<"}, {Word, "EOF"}, {ControlOperator, ";"},
-			{Word, "git"}, {Word, "push"},
+			{Kind: Word, Text: "env"}, {Kind: Word, Text: "X=1"}, {Kind: Word, Text: "bench"}, {Kind: Word, Text: "help"},
+			{Kind: Redirection, Text: ">"}, {Kind: Word, Text: "log"}, {Kind: ControlOperator, Text: "&&"},
+			{Kind: Word, Text: "cat"}, {Kind: Redirection, Text: "<<"}, {Kind: Word, Text: "EOF"}, {Kind: ControlOperator, Text: ";"},
+			{Kind: Word, Text: "git"}, {Kind: Word, Text: "push"},
 		},
 		Commands: []SimpleCommand{{Start: 0, End: 6}, {Start: 7, End: 10}, {Start: 11, End: 13}},
 	}
@@ -24,7 +24,7 @@ func TestParsePublishesTokenClassesAndSimpleCommands(t *testing.T) {
 func TestParseFoldsQuotedOperators(t *testing.T) {
 	got := Parse("bash -c 'git push && git reset --hard'")
 	want := Stream{
-		Tokens:   []Token{{Word, "bash"}, {Word, "-c"}, {Word, "git push && git reset --hard"}},
+		Tokens:   []Token{{Kind: Word, Text: "bash"}, {Kind: Word, Text: "-c"}, {Kind: Word, Text: "git push && git reset --hard"}},
 		Commands: []SimpleCommand{{Start: 0, End: 3}},
 	}
 	if !reflect.DeepEqual(got, want) {
@@ -47,8 +47,8 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 			command: "echo 'oops && git push --force",
 			want: Stream{
 				Tokens: []Token{
-					{Word, "echo"}, {Word, "'oops"}, {ControlOperator, "&&"},
-					{Word, "git"}, {Word, "push"}, {Word, "--force"},
+					{Kind: Word, Text: "echo"}, {Kind: Word, Text: "'oops"}, {Kind: ControlOperator, Text: "&&"},
+					{Kind: Word, Text: "git"}, {Kind: Word, Text: "push"}, {Kind: Word, Text: "--force"},
 				},
 				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}},
 				Unlexed:  true,
@@ -58,7 +58,7 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 			name:    "unterminated double quote across a newline",
 			command: "echo \"oops\ngit push",
 			want: Stream{
-				Tokens:   []Token{{Word, "echo"}, {Word, "\"oops"}, {ControlOperator, ";"}, {Word, "git"}, {Word, "push"}},
+				Tokens:   []Token{{Kind: Word, Text: "echo"}, {Kind: Word, Text: "\"oops"}, {Kind: ControlOperator, Text: ";"}, {Kind: Word, Text: "git"}, {Kind: Word, Text: "push"}},
 				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 5}},
 				Unlexed:  true,
 			},
@@ -68,8 +68,8 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 			command: "git status | git push origin\\",
 			want: Stream{
 				Tokens: []Token{
-					{Word, "git"}, {Word, "status"}, {ControlOperator, "|"},
-					{Word, "git"}, {Word, "push"}, {Word, "origin\\"},
+					{Kind: Word, Text: "git"}, {Kind: Word, Text: "status"}, {Kind: ControlOperator, Text: "|"},
+					{Kind: Word, Text: "git"}, {Kind: Word, Text: "push"}, {Kind: Word, Text: "origin\\"},
 				},
 				Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}},
 				Unlexed:  true,

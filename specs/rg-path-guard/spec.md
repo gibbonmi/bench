@@ -230,12 +230,12 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| R01 | 1 | `rg "$(x)" .` yields a Word token `$(x)` with the substitution mark | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A lexer that marks only unquoted forms leaves this word unmarked |
-| R02 | 2 | `` rg "`x`" . `` and `` rg `x` . `` each yield a marked Word token | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A lexer without a backtick case leaves both words unmarked |
-| R03 | 3 | `rg $(x) .` yields a marked `(` ControlOperator token after the Word `$` | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark only on Word tokens misses the unquoted opener |
-| R04 | 4 | `rg 'lit$(x)' .` and `` rg 'a`b' . `` yield unmarked tokens | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark from token text alone marks the single-quoted literal |
-| R05 | 5 | `rg \$\(x\) .`, `` rg \`x\` . ``, and `rg "\$(x)" .` yield unmarked tokens | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark that ignores escapes marks the escaped literal |
-| R06 | 6 | `(rg x .)` and `a $ (b)` yield an unmarked `(` operator | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark on every `(` operator marks a subshell |
+| R01 | 1 | `rg "$(x)" .` yields a Word token `$(x)` with the substitution mark | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A lexer that marks only unquoted forms leaves this word unmarked |
+| R02 | 2 | `` rg "`x`" . `` and `` rg `x` . `` each yield a marked Word token | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A lexer without a backtick case leaves both words unmarked |
+| R03 | 3 | `rg $(x) .` yields a marked `(` ControlOperator token after the Word `$` | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark only on Word tokens misses the unquoted opener |
+| R04 | 4 | `rg 'lit$(x)' .` and `` rg 'a`b' . `` yield unmarked tokens | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark from token text alone marks the single-quoted literal |
+| R05 | 5 | `rg \$\(x\) .`, `` rg \`x\` . ``, and `rg "\$(x)" .` yield unmarked tokens | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark that ignores escapes marks the escaped literal |
+| R06 | 6 | `(rg x .)` and `a $ (b)` yield an unmarked `(` operator | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark on every `(` operator marks a subshell |
 | R07 | 7 | Parse keeps the exact token text, kinds, and spans of its existing table | `internal/shellcommand/shellcommand_test.go` (`TestParsePublishesTokenClassesAndSimpleCommands`) | A lexer change that moves text or spans fails the exact DeepEqual |
 | R08 | 8 | `Classify("rg foo")` refuses with the pathless reason | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that never refuses passes every other row |
 | R09 | 9 | `Classify("rg foo .")` and `Classify("rg foo a b")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that refuses every rg call fails this row |
