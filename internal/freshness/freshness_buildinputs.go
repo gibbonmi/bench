@@ -133,9 +133,8 @@ func DiffChangesBuildInputs(root, base, tip string) bool {
 	if err != nil {
 		return false
 	}
-	fields := strings.Split(string(diff), "\x00")
-	for i := 0; i+1 < len(fields); i += 2 {
-		status, name := fields[i], fields[i+1]
+	for _, row := range git.ParseNameStatusZ(diff) {
+		status, name := row[0], row[1]
 		if slices.Contains(inputs, name) {
 			return true
 		}
