@@ -940,6 +940,72 @@
             "cw-c2-cov-2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "cw-c2-r2-standards",
+          "performer": "ft406-review-c2-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c2-r2",
+            "digest": "sha256:bdcb5ed31af0579b98f00537631d95f7306838ac28ffff13b226c1544063dbb7",
+            "excerpt": "Standards axis (unified confirming session), CW-C2, repair delta e3bd4657..aa87a3ef. Count: 0 findings.\nS1 closed: the CHANGELOG.md entry (lines 9-13) is two paragraphs of 4 and 3 sentences with the old text, and names no specs/, decisions/, or tests/ path.\nThe fixture move is sound: newLaunchFixtureWith places the linked worktree under poolkey.Pools(f.home) (background_test.go:77); kitLaunch and swapWorktreeBuild have one source each; all 158 internal/commit tests pass.\nCommand contribution: none.\n"
+          },
+          "axis": "Standards",
+          "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "tip": "aa87a3efce97a04653eb073335da960f376f5196",
+          "finding_ids": [],
+          "supersedes": [
+            "cw-c2-r1-standards"
+          ]
+        },
+        {
+          "id": "cw-c2-r2-spec",
+          "performer": "ft406-review-c2-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c2-r2",
+            "digest": "sha256:e76043bfcce8ac3ec3193bb13c6e18c46320b655ed38c6c2c274f7b4f6c31858",
+            "excerpt": "Spec axis (unified confirming session), CW-C2, repair delta e3bd4657..aa87a3ef. Count: 0 findings.\nCW52 holds (spec.md:297, calls the build once) and CW30 holds (spec.md:278, worktree_rebuild_test.go:348-352). Nothing outside the acceptance rows.\nFlag for reviewer veto (non-behavioral contradiction, the tree wins): spec.md:308 and ticket 02 line 36 say a dangling dist/bench rebuilds; publicationTarget refuses a symbolic link (internal/freshness/freshness_publish.go:353-354), so the step builds once and prints the failure line.\nCommand contribution: none; the wording dates from the spec stage.\n"
+          },
+          "axis": "Spec",
+          "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "tip": "aa87a3efce97a04653eb073335da960f376f5196",
+          "finding_ids": [],
+          "supersedes": [
+            "cw-c2-r1-spec"
+          ]
+        },
+        {
+          "id": "cw-c2-r2-coverage",
+          "performer": "ft406-review-c2-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft406-review-c2-r2",
+            "digest": "sha256:3400ac89efb260b2c7829c5cd3e9e9f8bac1ad2742ffe208a108fbeacdf8f5ff",
+            "excerpt": "Coverage axis (unified confirming session), CW-C2, repair delta e3bd4657..aa87a3ef. Count: 0 findings.\nC1 closed: probe background.go:35 os.Lstat -> os.ReadFile: bit, TestWorktreeRebuildRepairsAStaleBuildAfterAMarkdownCommit (0 builds), restored yes.\nC2 closed: probe background.go:43 RebuildIn(home, root) -> RebuildIn(\"\", root): bit, TestCommitKeepsExitZeroOnAFailedRebuild, restored yes.\nAdvice: the CW52 case sits in a test named for a repair; a dangling dist/bench fails on each commit and its remedy likely meets the same publish refusal.\nCommand contribution: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
+          "tip": "aa87a3efce97a04653eb073335da960f376f5196",
+          "finding_ids": [],
+          "supersedes": [
+            "cw-c2-r1-coverage"
+          ]
         }
       ]
     }
@@ -1114,3 +1180,13 @@ Findings: 2 accepted. Worst issue: C1.
 - C2 (`cw-c2-cov-2`), auto-fix, confidence 5: no commit-level row grades the home that `Run` passes at `internal/commit/commit.go:224`. A changed home stays silent. Make CW30 compare its failure line with `freshness.RebuildIn(benchhome.Dir(), root).Action`.
 
 Advice: `projects/benchkit.md:714` has a short line after the reflow, and the doc comment at `internal/commit/background.go:101-102` repeats the word "published".
+
+## CW-C2 confirming round
+
+A fresh unified session ran the three axes on opus at medium effort over the repair delta `e3bd4657..aa87a3ef`.
+It closed S1, C1, and C2, and each axis passes. CW-C2 used repair cycle 1 of 2.
+Its probes used new sites: `os.ReadFile` in place of `os.Lstat` bit the CW52 case, and an empty home in the remedy bit `TestCommitKeepsExitZeroOnAFailedRebuild`. Each restored cell reads `yes`.
+
+Flag for reviewer veto: the edge inventory of the spec and the acceptance of ticket 02 say that a dangling `dist/bench` rebuilds. The publication refuses a symbolic link (`internal/freshness/freshness_publish.go:353-354`), so the step builds once and prints the failure line. Row CW52 states one build call, and it holds. This contradiction is non-behavioral, so the build follows the tree and leaves the spec wording for the reviewer.
+
+Advice: the CW52 case sits in a test named for a repair. A dangling `dist/bench` fails on each commit, and its printed remedy likely meets the same refusal.
