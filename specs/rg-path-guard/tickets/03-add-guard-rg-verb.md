@@ -1,7 +1,7 @@
 # Add the guard-rg verb and its fail-open shim
 
 Blocked by: 02-classify-rg-calls.md
-Writes: cmd/bench/main.go, cmd/bench/guards.go, cmd/bench/guard_rg_test.go (new), .bench/hooks/block-unsafe-rg.sh (new), internal/otelrecord/registry.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/entry_point_parity_test.go, internal/conformance/entry_point_parity_rows_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/guard_header_manifests_test.go (new), internal/systemtest/rg_guard_hook_test.go (new), internal/packagesurface/assets.go, internal/packagesurface/assets_test.go
+Writes: cmd/bench/main.go, cmd/bench/guards.go, cmd/bench/guard_rg_test.go (new), .bench/hooks/block-unsafe-rg.sh (new), internal/otelrecord/registry.go, internal/conformance/subcommand_routing_table_test.go, internal/conformance/entry_point_parity_test.go, internal/conformance/entry_point_parity_rows_test.go (new), internal/conformance/package_core_checks_test.go, internal/conformance/guard_header_manifests_test.go (new), internal/systemtest/rg_guard_hook_test.go (new)
 Covers: R41, R42, R43, R44, R45, R46, R50, R56, R57
 
 ## What to build
@@ -18,10 +18,10 @@ Register the verb:
 
 - a `hook.guard-rg` seam in `internal/otelrecord/registry.go:36-42`;
 - `"guard-rg": exempt(whyPlumbing)` in `internal/conformance/subcommand_routing_table_test.go:54-67`;
-- an `entryPointParity` row for the shim with `command` `guard-rg`, a benign allowed Bash input such as `rg foo .`, and `compare: true`;
-- the shim in the `checkGuardHeaderManifests` list (`internal/conformance/package_core_checks_test.go:312-323`).
+- an `entryPointParity` row for the shim with `command` `guard-rg`, the existing benign input `parityBenignBash` (`internal/conformance/entry_point_parity_test.go:45`), and `compare: true`;
+- the shim in the `checkGuardHeaderManifests` list (`internal/conformance/package_core_checks_test.go:312-323`), with the bite test `TestGuardHeaderManifestsCoverTheRgGuard` in `internal/conformance/guard_header_manifests_test.go`.
 
-Optionally add the shim to `RequiredPackAssets` (`internal/packagesurface/assets.go:13-36`) and its test. The consumer payload ships `.bench/hooks` as a tree (`.bench/consumer-payload.json:18`), so the payload takes no edit.
+Do not add the shim to `RequiredPackAssets` (`internal/packagesurface/assets.go:13-36`); that list is a spot list, and the `guard-file-write` shim is not in it either. The consumer payload ships `.bench/hooks` as a tree (`.bench/consumer-payload.json:18`), so the payload takes no edit.
 Do not edit `bin/bench.sh`. It has 538 lines over its 400-line budget, and `guard-rg` already reaches the binary through the default route at `bin/bench.sh:537`.
 
 `internal/conformance/entry_point_parity_test.go` (444 lines) and `internal/conformance/package_core_checks_test.go` (451 lines) are over budget with no grant, and the gate lane runs `structure --growth` (`internal/gate/lane.go:94`). A file that grows past its base count reds that lane (`internal/structure/structure.go:309-331`). In each file, move at least as many lines as you add into the named new sibling file (`entry_point_parity_rows_test.go`, `guard_header_manifests_test.go`). Move a cohesive block such as the row table or the manifest check, and change no behavior.

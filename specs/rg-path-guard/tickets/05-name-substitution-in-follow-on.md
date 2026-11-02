@@ -1,6 +1,6 @@
 # Name command substitution in the follow-on refusal
 
-Blocked by: 01-mark-live-substitution.md
+Blocked by: 01-mark-live-substitution.md, 04-wire-rg-guard-hook.md
 Writes: internal/benchguard, CHANGELOG.md, .bench/commitment.json
 Covers: R51, R52, R53, R54
 
@@ -26,3 +26,5 @@ This ticket is the last ticket of the build. Add one `CHANGELOG.md` entry for th
 - [ ] `Classify("true; (bench status)")` keeps the message that ends `operator=(` (R54).
 - [ ] `bench test --package ./internal/benchguard` passes with every existing message table unchanged.
 - [ ] `bench test --check system --run 'GuardProjection|BenchFollowOn|GuardRefusal'` passes with the golden byte-equal.
+- [ ] `CHANGELOG.md` holds one entry under `## [Unreleased]` for the whole spec, and the entry names no `specs/`, `decisions/`, or `tests/` path.
+- [ ] `.bench/commitment.json` is in this ticket's fence for the binding that the spec-stage close commits.

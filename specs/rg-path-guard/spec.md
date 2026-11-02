@@ -132,6 +132,7 @@ The mark adds information only. Token text, token kinds, spans, and `Unlexed` st
 It finds the executable with `ResolveRoutinePrefix` (`internal/shellcommand/shellcommand.go:136-168`) and projects the words with `ProjectCommandWords` (`:100-115`).
 A span is an `rg` call when the basename of the resolved executable is `rg` and `Executes` is true (`:46`, `:149-155`).
 The guard reads one `-c` child level through `ShellChildren` (`internal/shellcommand/projection.go:23-34`) and the exec child through `WorktreeExec` (`:49-61`).
+`WorktreeExec` requires that its caller has already accepted the executable as Bench (`:46-48`). A new exported predicate `shellcommand.IsBenchName` owns the Bench executable names `bench` and `bench.sh`. It replaces the private copies in `internal/gitguard/scan.go:76-78` and in the name half of `isBench` (`internal/benchguard/benchguard.go:309-324`), and the guard calls it before `WorktreeExec`.
 The package decodes the envelope through `shellcommand.DecodeEnvelope` (`internal/shellcommand/envelope.go:32-63`). The package name joins `guardProjectionGoverned` (`internal/conformance/guard_projection_owner_test.go:29`).
 
 **The verdict order.** For each `rg` call, the guard decides in this order:
@@ -309,9 +310,9 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 | R36 | 36 | `Classify("bash -c \"bash -c 'rg foo'\"")` and `Classify("sudo rg foo")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that recurses past one level refuses the nested call |
 | R37 | 37 | A private envelope decode planted in `internal/rgguard` reds the projection-owner check | planned TestGuardProjectionOwnerGovernsRgguard in internal/conformance/guard_projection_rgguard_test.go | A governed list without `internal/rgguard` lets the copy pass |
 | R38 | 38 | `internal/rgguard` is the only Go package that declares ripgrep option words | review-owned: the C2 review searches the tree for a second ripgrep option list | A second table drifts from the first without a red |
-| R39 | 39 | The Claude wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestClaudeHookWiringNeedsTheRgGuard in internal/conformance/line_routing_static_test.go | A missing needle lets an unwired shim pass |
+| R39 | 39 | The Claude wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestClaudeHookWiringNeedsTheRgGuard in internal/conformance/line_routing_static_cases_test.go | A missing needle lets an unwired shim pass |
 | R40 | 40 | The Codex wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestCodexHooksNeedTheRgGuard in internal/conformance/validity_checks_test.go | A missing needle lets an unwired shim pass |
-| R41 | 41 | `checkGuardHeaderManifests` reds when the shim lacks a manifest key | planned TestGuardHeaderManifestsCoverTheRgGuard in internal/conformance/package_core_checks_test.go | A list without the shim leaves its header ungraded |
+| R41 | 41 | `checkGuardHeaderManifests` reds when the shim lacks a manifest key | planned TestGuardHeaderManifestsCoverTheRgGuard in internal/conformance/guard_header_manifests_test.go | A list without the shim leaves its header ungraded |
 | R42 | 42 | The shim with no resolvable core exits 0 and prints a warning | planned TestRgGuardHookFailsOpen in internal/systemtest/rg_guard_hook_test.go | A fail-closed shim exits 2 and blocks every Bash call |
 | R43 | 43 | The shim over a core without `guard-rg` exits 0 | planned TestRgGuardHookFailsOpen in internal/systemtest/rg_guard_hook_test.go | A shim that reads exit 2 as a refusal blocks under a stale core |
 | R44 | 44 | `bench guard-rg` with an unreadable envelope exits 0 and warns | planned TestGuardRgVerb in cmd/bench/guard_rg_test.go | A verb that refuses an unreadable envelope blocks the call |
@@ -373,6 +374,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 
 - The substitution mark on `Token`: `internal/shellcommand/shellcommand.go:23-26` and `:299-365`. The internals readers found that quote folding erases the quote style and that no guard reads word text.
 - The `SideSubstitution` side in benchguard: `internal/benchguard/benchguard.go:245-273`. The internals readers traced `operator=(` to `operatorFor`.
+- The `shellcommand.IsBenchName` predicate: `internal/shellcommand/projection.go:46-48`, `internal/gitguard/scan.go:76-78`, and `internal/benchguard/benchguard.go:309-324`. The ticket review found that the exec child needs a Bench test, and that two private copies of the names already exist.
 - The `internal/rgguard` package: `internal/conformance/guard_projection_owner_test.go:29`. The enforcement readers found that policy lives in each guard package and that a new package must join the governed list.
 
 ### Source-sentence-to-row table
@@ -401,7 +403,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 - Source-row clauses and occurrences: each clause and each occurrence is in the source table.
 - Promised field labels: the field `Token.Substitution`, the side `SideSubstitution`, the verb `guard-rg`, and the seam `hook.guard-rg`.
 - Changed-function callers: `lex` has one caller, `Parse`. `Parse` callers keep their contract (R07, R55). `operatorFor` has one caller, `refusal`.
-- Copy survival: none; no copy is replaced.
+- Copy survival: `shellcommand.IsBenchName` replaces the name copies in `gitguard` and `benchguard`; the C2 review searches for a surviving `"bench.sh"` literal outside `internal/shellcommand` (review-owned under R38's review).
 - Rendered-shape readers: the follow-on message changes only for a marked opener. `rg -n 'operator=' internal/ cmd/ tests/` finds no row with `$(` or a `(` opener, so no existing pin moves.
 - Pin operators: R25 and R28 use substring containment and a suffix; R51 uses containment and a suffix; R55 uses byte equality.
 - Entry reads: `bench guard-rg` reads the envelope on stdin; `Classify` takes the command as a value.
