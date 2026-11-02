@@ -11,7 +11,7 @@ Verification log: <n> iteration(s) to accept — <coordinator fills at close>
 ## Problem
 
 An agent runs `rg` with no path operand. When the stdin of the call is an open pipe, `rg` reads that pipe and waits until the pipe closes.
-Three recorded delegate calls waited between 48 minutes and about two hours (`roadmap/FT254.md:84`, `roadmap/FT254.md:99`, `roadmap/FT366.md:18`).
+Three recorded delegate calls waited on stdin (`roadmap/FT254.md:84`, `roadmap/FT254.md:99`, `roadmap/FT366.md:18`). Two records give a duration, 48 minutes and about two hours, and the third call waited until the orchestrator stopped it.
 Today the main Claude Code Bash tool and the `bench worktree exec` child both get `/dev/null` as stdin, and `rg` then searches the current directory (observed on 2026-11-02).
 The hazard therefore depends on the route, and only a delegate route with an inherited pipe shows it.
 The only statement of the rule is prose in `AGENTS.md:61-63`, and no hook enforces it.
@@ -139,7 +139,7 @@ The package decodes the envelope through `shellcommand.DecodeEnvelope` (`interna
 1. If the stream is `Unlexed`, the guard permits every call (`internal/shellcommand/shellcommand.go:64-68`).
 2. If a token of the span, or the operator token at the span end, carries the substitution mark, the guard refuses with the substitution reason.
 3. If the span is uncertain, the guard permits it. The uncertain kinds are `ViaXargs`, a process-substitution operator (`<(` or `>(`) at the span end, an inline `RIPGREP_CONFIG_PATH=` assignment, and an option word that the table does not list.
-4. If a `|` or `|&` operator comes directly before the span, or the span holds an input redirection, the guard permits the call. An input redirection is a `Redirection` token whose text starts with `<` after an optional descriptor digit (`internal/shellcommand/shellcommand.go:52`, `:72-82`).
+4. If a `|` or `|&` operator comes directly before the span, the span holds an input redirection, or the call holds an explicit stdin request, the guard permits the call. An input redirection is a `Redirection` token whose text starts with `<` after an optional descriptor digit (`internal/shellcommand/shellcommand.go:52`, `:72-82`).
 5. If the call names a no-pattern mode, the guard permits it.
 6. If the call has a pattern and no path operand, the guard refuses with the pathless reason. Otherwise the guard permits it.
 
@@ -155,7 +155,7 @@ A long value option takes its value after `=` or from the next word. Ripgrep has
 In a short bundle, the first value letter takes the rest of the bundle, or the next word when the bundle ends. A value after `=` loses the `=`.
 The modes `--files`, `--type-list`, `-h`, `--help`, `-V`, `--version`, `--pcre2-version`, and `--generate` need no path. A bundle that holds `h` or `V` is a mode.
 After `-e` or `-f`, every positional is a path. Otherwise the first positional is the pattern and each later positional is a path. After `--`, every word is a positional.
-A `-` path operand and the value `-` of `-f` are explicit stdin requests. The guard permits a call that holds one.
+A `-` path operand and the value `-` of `-f` are explicit stdin requests. Step 4 permits a call that holds one, so the substitution refusal of step 2 still wins.
 The table is the one source of ripgrep grammar in the tree. `roadmap/FT478.md` can later read it for census classification. This spec makes no census change.
 
 **The refusal text.** `internal/rgguard` owns both refusal sentences and one message format. The pathless message names the missing path and the `.` repair. The substitution message names command substitution and advises single quotes.
@@ -343,7 +343,8 @@ The hostile-input walk covers quotes, escapes, substitutions, heredocs, operator
 - **Won't handle:** a wrapper below one level, and the unknown prefixes `sudo`, `time`, and `nice` — the existing guards read the same depth, and R30 and R31 cover the one-level routes.
 - **Won't handle:** arithmetic expansion `$((...))` — the lexer marks it like `$(`, so an rg call with it in double quotes is refused as a substitution; R24 covers the ordinary form.
 - **Won't handle:** a substitution in a command that the lexer refuses — step 1 permits every call in an unlexed stream, and R19 keeps that permit; R24 covers each lexed substitution.
-- **Won't handle:** an escaped `\$(` inside a double-quoted `-c` operand, which the outer shell unescapes into a live substitution — the child parse sees an escaped literal, and R30 covers the ordinary `-c` child.- **Won't handle:** a backtick span that holds a double quote inside a double-quoted word — the lexer ends the word at that quote today, and R02 covers the ordinary span.
+- **Won't handle:** an escaped `\$(` inside a double-quoted `-c` operand, which the outer shell unescapes into a live substitution — the child parse sees an escaped literal, and R30 covers the ordinary `-c` child.
+- **Won't handle:** a backtick span that holds a double quote inside a double-quoted word — the lexer ends the word at that quote today, and R02 covers the ordinary span.
 - **Won't handle:** a substitution inside a heredoc body — `stripHeredocBodies` removes the body before the lexer runs (`internal/shellcommand/shellcommand.go:369-397`), and R12 covers the heredoc as a stdin supplier.
 - **Won't handle:** a ripgrep version other than 15.1.0 — the table records the installed grammar, and R18 permits an option that a later version adds.
 
