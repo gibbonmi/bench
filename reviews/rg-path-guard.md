@@ -268,6 +268,41 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "c1-r1-confirm",
+          "performer": "session_01JK5CPdJaS9Xn1VAmFL1sNN",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b69a7389267bef67316b749a3f76c7811a311420",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:session_01JK5CPdJaS9Xn1VAmFL1sNN:c1-confirm",
+            "digest": "sha256:8ff3049f579ef30ec19b9a09bd76ce32eaacee5482f839f4ce7e66ba19c6858f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/shellcommand/lex.go,swap,failed,1,TestParseMarksLiveSubstitution/R03_quoted_word_in_bare_dollar_paren,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/shellcommand,^TestParseMarksLiveSubstitution$,passed,13\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,528\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,fail,2,13\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shellcommand,TestParseMarksLiveSubstitution/R03_quoted_word_in_bare_dollar_paren,\"substitution_test.go:43: marked tokens of Parse(\\\"rg $('x') .\\\") = [{Index:2 Token:{Kind:1 Text:( Substitution:true}} {Index:4 Token:{Kind:1 Text:) Substitution:true}}], want [{Index:2 Token:{Kind:1 Text:( Substitution:true}}]\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "7cc35cbbf401ead2a5b374454e7441a81ec884d0",
+          "reviewed_tip": "eceaeaceb006462864ea135e751b1698768f6cfc",
+          "repaired_tip": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "In lex, the single-quote loop sets opener true, so a punctuation run after a quoted word keeps a stale opener; TestParseMarksLiveSubstitution R03 quoted word in bare dollar paren fails",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:session_01JK5CPdJaS9Xn1VAmFL1sNN:c1-confirm",
+              "digest": "sha256:8ff3049f579ef30ec19b9a09bd76ce32eaacee5482f839f4ce7e66ba19c6858f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/shellcommand/lex.go,swap,failed,1,TestParseMarksLiveSubstitution/R03_quoted_word_in_bare_dollar_paren,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/shellcommand,^TestParseMarksLiveSubstitution$,passed,13\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,528\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/shellcommand,fail,2,13\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/shellcommand,TestParseMarksLiveSubstitution/R03_quoted_word_in_bare_dollar_paren,\"substitution_test.go:43: marked tokens of Parse(\\\"rg $('x') .\\\") = [{Index:2 Token:{Kind:1 Text:( Substitution:true}} {Index:4 Token:{Kind:1 Text:) Substitution:true}}], want [{Index:2 Token:{Kind:1 Text:( Substitution:true}}]\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -330,3 +365,10 @@ Findings: 0. Worst issue: none. The reviewer marks the `guard-preservation` plan
 Findings: 1 accepted. Worst issue: C1.
 
 - C1 (`c1-r1-coverage`), auto-fix, confidence 7: no test grades the reset of the opener flag at `internal/shellcommand/lex.go:34`. A probe that omits `opener = false` stays silent, and then `rg $('x') .` also marks the closing `)`. Add an R03 case such as `rg $('x') .` to `TestParseMarksLiveSubstitution` that expects only the `(` operator marked.
+
+## C1 repair cycle 1
+
+The repair session `ft366-author-01-rep1` (opus / xhigh) added the R03 case `rg $('x') .` at `c8519a1b0` and changed no production code. It refroze C1 at `fb1c15f6c`.
+Its witness probe omitted `opener = false` and failed the new case, and its rerun of the `mark-tests` plan probe answered `bit`.
+The coordinator probe made the single-quote loop of `lex` set the opener, and the new case failed. The confirmation `c1-r1-confirm` closes C1.
+C1 used one of its two repair cycles.
