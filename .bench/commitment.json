@@ -1684,6 +1684,18 @@
               "identity": "sha256:aed754faf293126519efe9467ae9d00323fe84b5238b6bf57e71747e34a45335"
             }
           ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "commit-worktree-rebuild",
+                "path": "specs/commit-worktree-rebuild/spec.md",
+                "identity": "sha256:4e7b0f2c0b89102833adeccff4dbcf3786c426c6b1817eb16b0e4e7a8102bf7a"
+              },
+              "obligations": [
+                "FT406"
+              ]
+            }
+          ],
           "dependencies": [
             "FT344-remedy"
           ]
