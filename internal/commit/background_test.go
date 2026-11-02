@@ -62,6 +62,13 @@ type launchFixture struct {
 // newLaunchFixture builds the fixture.
 func newLaunchFixture(t *testing.T, check string) launchFixture {
 	t.Helper()
+	return newLaunchFixtureWith(t, check, func(*testing.T, string) {})
+}
+
+// newLaunchFixtureWith builds the fixture with the files that tree writes in the worktree
+// before the wrapper, so the wrapper of the fixture replaces any wrapper that tree writes.
+func newLaunchFixtureWith(t *testing.T, check string, tree func(t *testing.T, root string)) launchFixture {
+	t.Helper()
 	notTheKitRoot(t)
 	f := launchFixture{primary: t.TempDir(), home: t.TempDir()}
 	t.Setenv("BENCH_HOME", f.home)
@@ -74,6 +81,7 @@ func newLaunchFixture(t *testing.T, check string) launchFixture {
 	// directory goes away.
 	f.launches = processtest.NewLaunches(t)
 	prepareLandingCheckout(t, linked, func(t *testing.T, root string) {
+		tree(t, root)
 		mustMkdirAll(t, filepath.Join(root, "bin"))
 		mustWrite(t, filepath.Join(root, "bin", "bench.sh"), processtest.Script(t, standInGrade, f.launches.Env()...), 0o755)
 		mustWrite(t, filepath.Join(root, ".bench", "check.sh"), check, 0o755)
@@ -92,6 +100,21 @@ func newLaunchFixture(t *testing.T, check string) launchFixture {
 func (f launchFixture) asKit(t *testing.T) {
 	t.Helper()
 	t.Setenv("BENCH_KIT", f.primary)
+}
+
+// seedRecord writes a red background record of the worktree, so a commit prints the latest
+// background outcome before it starts its grade. It returns that record.
+func (f launchFixture) seedRecord(t *testing.T) backgroundstate.Record {
+	t.Helper()
+	gitdir, err := git.AdminDir(f.root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := backgroundstate.Record{Outcome: backgroundstate.Red, Key: "key", Tip: head(t, f.root), Log: backgroundstate.LogPath(gitdir)}
+	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
+		t.Fatal(err)
+	}
+	return record
 }
 
 // requireNoGrade fails t unless the commit took no slot and no stand-in started.
@@ -157,14 +180,7 @@ func TestRefusedCommitStartsNoGrade(t *testing.T) {
 func TestCommitPrintsTheLastBackgroundOutcome(t *testing.T) {
 	f := newLaunchFixture(t, passingCheck)
 	f.asKit(t)
-	gitdir, err := git.AdminDir(f.root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	record := backgroundstate.Record{Outcome: backgroundstate.Red, Key: "key", Tip: head(t, f.root), Log: backgroundstate.LogPath(gitdir)}
-	if err := backgroundstate.WriteRecord(durablefile.Native(), gitdir, record); err != nil {
-		t.Fatal(err)
-	}
+	record := f.seedRecord(t)
 	code, stdout, stderr := runCommand(t, f.root, "-m", "m", "tracked.txt")
 	if code != 0 {
 		t.Fatalf("commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
