@@ -26,7 +26,7 @@ import (
 var (
 	guardProjectionOwnerDir   = "internal/shellcommand"
 	guardProjectionOwnerFiles = []string{guardProjectionOwnerDir + "/projection.go", guardProjectionOwnerDir + "/envelope.go"}
-	guardProjectionGoverned   = []string{"internal/gitguard", "internal/benchguard", "internal/writeguard"}
+	guardProjectionGoverned   = []string{"internal/gitguard", "internal/benchguard", "internal/writeguard", "internal/rgguard"}
 )
 
 // guardProjectionDiagPrefix starts each diagnostic of checkGuardProjectionOwner. The other constants

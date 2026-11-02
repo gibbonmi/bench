@@ -33,6 +33,17 @@ func ShellChildren(words []string, executable int) []WrapperChild {
 	return children
 }
 
+// IsBenchName reports whether a word names Bench by its basename: the installed CLI
+// `bench` or the repository wrapper `bench.sh`. It is the one name test for Bench, so the
+// guards and each caller of WorktreeExec accept the same executables.
+func IsBenchName(word string) bool {
+	switch filepath.Base(word) {
+	case "bench", "bench.sh":
+		return true
+	}
+	return false
+}
+
 // ExecProjection is the child that a `worktree exec` call runs in another checkout.
 // Head marks the adjacent `worktree exec` words, and HasSeparator marks a later `--`.
 // Child is the argv after that `--`, and DifferentCheckout is true exactly when Child is nonempty.

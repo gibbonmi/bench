@@ -307,10 +307,7 @@ func spanInvokesBench(words []string, resolver Resolver, wrapper bool) bool {
 }
 
 func isBench(word string, r Resolver) bool {
-	if word == "bench" {
-		return true
-	}
-	if base := filepath.Base(word); base == "bench" || base == "bench.sh" {
+	if shellcommand.IsBenchName(word) {
 		return true
 	}
 	if r.Getwd == nil || r.LookPath == nil || r.EvalSymlinks == nil {
@@ -320,8 +317,7 @@ func isBench(word string, r Resolver) bool {
 	if err != nil {
 		return false
 	}
-	base := filepath.Base(target)
-	return base == "bench" || base == "bench.sh"
+	return shellcommand.IsBenchName(target)
 }
 
 func (r Resolver) resolve(word string) (string, error) {

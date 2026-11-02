@@ -78,6 +78,17 @@ func TestShellChildrenBounds(t *testing.T) {
 	}
 }
 
+func TestIsBenchName(t *testing.T) {
+	for word, want := range map[string]bool{
+		"bench": true, "bench.sh": true, "./dist/bench": true, "/opt/kit/bin/bench.sh": true,
+		"benchmark": false, "bench.py": false, "git": false, "": false,
+	} {
+		if got := IsBenchName(word); got != want {
+			t.Errorf("IsBenchName(%q) = %t, want %t", word, got, want)
+		}
+	}
+}
+
 func TestWorktreeExec(t *testing.T) {
 	cases := []struct {
 		name       string
