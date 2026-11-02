@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/rg-path-guard/spec.md",
-  "plan_digest": "sha256:cc4f36a7ad3e0e75becff9ce97c4d929c24cdf9b9b96941687316c202fb103ca",
+  "plan_digest": "sha256:079fe43eda2b77a7eb921c044d8bc4efb857f81a6d1f197acaae4989661a3ce7",
   "implementation_session": "",
   "chunks": [
     {
@@ -308,9 +308,9 @@
     {
       "id": "C2",
       "base": "c8519a1b0514ac355c11bc7b1a65575b3cf4a9eb",
-      "tip": "e11d6e68f84315580fc6e001e296a0ea1dd2be12",
-      "plan_digest": "sha256:cc4f36a7ad3e0e75becff9ce97c4d929c24cdf9b9b96941687316c202fb103ca",
-      "source_digest": "2b9c376541b7dda0724520bd0ae65fe00dc4cf75",
+      "tip": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+      "plan_digest": "sha256:079fe43eda2b77a7eb921c044d8bc4efb857f81a6d1f197acaae4989661a3ce7",
+      "source_digest": "38f2fe6551de667e4f1fd73cd9b8fadaa33b2044",
       "acceptance_rows": [
         "R08",
         "R09",
@@ -464,6 +464,66 @@
               "ref": "claude-agent:bench-writer-xhigh:ft366-author-02-rep1",
               "digest": "sha256:21247a13ddfa32339ebc29c9abf450e4d18069d7321a5b96117caefa051504db",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/rgguard/rgguard.go,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,package-core-guard,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,442\ncheck[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2694,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: guard projection owner internal/rgguard/rgguard.go:18: hook envelope JSON decoding\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c2-t02-rep2-verdict-tests",
+          "performer": "ft366-author-02-rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "38f2fe6551de667e4f1fd73cd9b8fadaa33b2044",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:ft366-author-02-rep2",
+            "digest": "sha256:b3e9fe13dad17ef55a2b3c744b1ae255f12a6732a900f1b4a4b7001a4bd1c01c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/rgguard/options.go,omit,failed,1,TestClassifyRgCalls,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/rgguard,^TestClassifyRgCalls$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,377\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/rgguard,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/rgguard,TestClassifyRgCalls,\"rgguard_test.go:82: R13: Classify(\\\"rg -g '*.go' foo\\\") = {Blocked:false Segment:[] reason:0}, want {Blocked:true Segment:[] reason:0}\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "requirement": "verdict-tests",
+          "command": "bench test --package ./internal/rgguard",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove one value letter from the option table and record the R13 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:ft366-author-02-rep2",
+              "digest": "sha256:b3e9fe13dad17ef55a2b3c744b1ae255f12a6732a900f1b4a4b7001a4bd1c01c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/rgguard/options.go,omit,failed,1,TestClassifyRgCalls,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/rgguard,^TestClassifyRgCalls$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,377\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/rgguard,fail,2,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/rgguard,TestClassifyRgCalls,\"rgguard_test.go:82: R13: Classify(\\\"rg -g '*.go' foo\\\") = {Blocked:false Segment:[] reason:0}, want {Blocked:true Segment:[] reason:0}\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c2-t02-rep2-projection-owner",
+          "performer": "ft366-author-02-rep2",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "xhigh",
+          "source_digest": "38f2fe6551de667e4f1fd73cd9b8fadaa33b2044",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-xhigh:ft366-author-02-rep2",
+            "digest": "sha256:4dc79f1d53f618641e836d2d8ba2b53335dbff584967f9c7069ba996a12d9f58",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/rgguard/rgguard.go,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,package-core-guard,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,442\ncheck[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2546,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: guard projection owner internal/rgguard/rgguard.go:17: hook envelope JSON decoding\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "requirement": "projection-owner",
+          "command": "bench test --check package-core-guard",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Plant a private envelope decode in internal/rgguard and record the R37 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-xhigh:ft366-author-02-rep2",
+              "digest": "sha256:4dc79f1d53f618641e836d2d8ba2b53335dbff584967f9c7069ba996a12d9f58",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/rgguard/rgguard.go,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,package-core-guard,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,442\ncheck[1]{name,kind,tests_run,subjects}:\n  package-core-guard,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2546,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: guard projection owner internal/rgguard/rgguard.go:17: hook envelope JSON decoding\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -639,6 +699,18 @@
     {
       "from": "sha256:6c2edf10a2f6a970760dd07cf4a7b57136b06fac0fc2d8cf365022c799e8afb4",
       "to": "sha256:cc4f36a7ad3e0e75becff9ce97c4d929c24cdf9b9b96941687316c202fb103ca",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cc4f36a7ad3e0e75becff9ce97c4d929c24cdf9b9b96941687316c202fb103ca",
+      "to": "sha256:079fe43eda2b77a7eb921c044d8bc4efb857f81a6d1f197acaae4989661a3ce7",
       "chunk_ids": {
         "C1": [
           "C1"
