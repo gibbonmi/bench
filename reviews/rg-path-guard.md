@@ -115,7 +115,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c1-r1-standards",
+          "performer": "ft366-review-c1-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0f739eaa220393c4db16c40462326410c8702b5d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c1-r1",
+            "digest": "sha256:a3f18338c99513d5c2ebc68b19afee75da82e2ea514bac6023250950bbda0b63",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\ndollarParen is the one $( test; shellcommand.go drops to about 337 lines; the canary anchor at shellcommand.go:18 does not move; comments state current behaviour; the R01-R06 cell rewrite is required by bench-implement-spec.\n"
+          },
+          "axis": "Standards",
+          "base": "7cc35cbbf401ead2a5b374454e7441a81ec884d0",
+          "tip": "eceaeaceb006462864ea135e751b1698768f6cfc",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-r1-spec",
+          "performer": "ft366-review-c1-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0f739eaa220393c4db16c40462326410c8702b5d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c1-r1",
+            "digest": "sha256:66484bf9e4dd0a6c2e680e37ec3cb8f03caebb3964f69229cf828b3199e6ddb2",
+            "excerpt": "## Spec\nFindings: 0. Worst issue: none.\nR01-R06 each have a matching case in substitution_test.go; R07 literals keyed with no text, kind, or span change; R55 golden probe bit; hand traces of lex agree with POSIX and spec:129; plan note (guard-preservation package) is no-op, disclosed in the review record.\n"
+          },
+          "axis": "Spec",
+          "base": "7cc35cbbf401ead2a5b374454e7441a81ec884d0",
+          "tip": "eceaeaceb006462864ea135e751b1698768f6cfc",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c1-r1-coverage",
+          "performer": "ft366-review-c1-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "0f739eaa220393c4db16c40462326410c8702b5d",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c1-r1",
+            "digest": "sha256:bd11dede69134a6f99226bb0d6de40155a49c99358b9539b208eaa491b6251d1",
+            "excerpt": "## Coverage\nFindings: 1. Worst issue: C1.\nC1: internal/shellcommand/lex.go:34, confidence 7, auto-fix. No test grades the opener reset after an operator; bench probe --omit 'opener = false' was silent. Fix: add an R03 case such as rg $('x') . that expects only the ( operator marked.\nProbe 2: swap of the unlexed fallback marks bit (TestFallbackSplitsShellOperators).\n"
+          },
+          "axis": "Coverage",
+          "base": "7cc35cbbf401ead2a5b374454e7441a81ec884d0",
+          "tip": "eceaeaceb006462864ea135e751b1698768f6cfc",
+          "finding_ids": [
+            "C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -146,3 +209,23 @@ The `guard-preservation` plan command names `./internal/gitguard`, `./internal/b
 The first `guard-golden` probe was silent, because its mutation in `lex` was equivalent: `Parse` classifies a lone `|` as an operator through `allPunct`. The second probe made `Parse` keep a `|` run as a Word token, and the golden failed on the `| cat` follow-on tuples. No row case is missing.
 
 The coordinator probe removed the unquoted backtick mark in `lex` at a site that no author probe reached. `TestParseMarksLiveSubstitution` failed on its R02 bare backtick case, and the probe restored the file.
+
+## C1 review round 1
+
+One unified session (`execution.review_mode` is `unified`) ran the three axes separately on opus at medium effort over `7cc35cbb..eceaeace`.
+The orchestrator accepts C1 under `--auto-approve`. The round has one repair target on ticket 01, and the repair adds only a test case.
+A coordinator probe that bites then closes it through `bench record confirmation`.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none. The reviewer marks the `guard-preservation` plan text as a no-op, because the record above discloses the added package.
+
+## Coverage
+
+Findings: 1 accepted. Worst issue: C1.
+
+- C1 (`c1-r1-coverage`), auto-fix, confidence 7: no test grades the reset of the opener flag at `internal/shellcommand/lex.go:34`. A probe that omits `opener = false` stays silent, and then `rg $('x') .` also marks the closing `)`. Add an R03 case such as `rg $('x') .` to `TestParseMarksLiveSubstitution` that expects only the `(` operator marked.
