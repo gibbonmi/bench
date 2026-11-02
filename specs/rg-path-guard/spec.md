@@ -197,40 +197,41 @@ The chunks run in table order, because C3 needs C2 and the staged `shell-argumen
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {"mode": "delegate", "run_id": "ft366-build-20261102", "orchestrator_session": "session_01JK5CPdJaS9Xn1VAmFL1sNN", "author_limit": 1, "review_mode": "unified", "assignments": {"01-mark-live-substitution.md": [], "02-classify-rg-calls.md": [], "03-add-guard-rg-verb.md": [], "04-wire-rg-guard-hook.md": [], "05-name-substitution-in-follow-on.md": []}},
   "chunks": [
     {
       "id": "C1",
       "tickets": ["01-mark-live-substitution.md"],
       "verification": [
-        {"id": "mark-tests", "command": "bench test --package ./internal/shellcommand", "probe": "Drop the double-quote branch of the mark and record the R01 red, the restore, and the green."},
-        {"id": "guard-preservation", "command": "bench test --package ./internal/gitguard --package ./internal/benchguard --package ./internal/census", "probe": "Mark the bare subshell operator and record the R06 red, the restore, and the green."},
-        {"id": "guard-golden", "command": "bench test --check system --run TestGuardProjectionDifferentialFamilies", "probe": "Lex a | operator run as a Word token and record the R55 red, the restore, and the green."}
+        {"id": "mark-tests", "command": "bench test --package ./internal/shellcommand", "probe": "Drop the double-quote branch of the mark and record the R01 red, the restore, and the green.", "ticket": "01-mark-live-substitution.md"},
+        {"id": "guard-preservation", "command": "bench test --package ./internal/gitguard --package ./internal/benchguard --package ./internal/census", "probe": "Mark the bare subshell operator and record the R06 red, the restore, and the green.", "ticket": "01-mark-live-substitution.md"},
+        {"id": "guard-golden", "command": "bench test --check system --run TestGuardProjectionDifferentialFamilies", "probe": "Lex a | operator run as a Word token and record the R55 red, the restore, and the green.", "ticket": "01-mark-live-substitution.md"}
       ]
     },
     {
       "id": "C2",
       "tickets": ["02-classify-rg-calls.md"],
       "verification": [
-        {"id": "verdict-tests", "command": "bench test --package ./internal/rgguard", "probe": "Remove one value letter from the option table and record the R13 red, the restore, and the green."},
-        {"id": "projection-owner", "command": "bench test --check package-core-guard", "probe": "Plant a private envelope decode in internal/rgguard and record the R37 red, the restore, and the green."}
+        {"id": "verdict-tests", "command": "bench test --package ./internal/rgguard", "probe": "Remove one value letter from the option table and record the R13 red, the restore, and the green.", "ticket": "02-classify-rg-calls.md"},
+        {"id": "projection-owner", "command": "bench test --check package-core-guard", "probe": "Plant a private envelope decode in internal/rgguard and record the R37 red, the restore, and the green.", "ticket": "02-classify-rg-calls.md"}
       ]
     },
     {
       "id": "C3",
       "tickets": ["03-add-guard-rg-verb.md", "04-wire-rg-guard-hook.md"],
       "verification": [
-        {"id": "registrations", "command": "bench test --check entry-point-parity", "probe": "Remove the guard-rg parity row and record the R56 red, the restore, and the green."},
-        {"id": "wiring", "command": "bench test --check line-routing", "probe": "Remove the shim from the Claude Bash group and record the R39 red, the restore, and the green."},
-        {"id": "command-contract", "command": "bench test --package ./cmd/bench --run 'HookSeams|GuardRg|CommandRegistry'", "probe": "Remove the hook.guard-rg seam row and record the R46 red, the restore, and the green."},
-        {"id": "routing", "command": "bench test --check subcommand-routing", "probe": "Remove the guard-rg subcommandRouting row and record the R57 red, the restore, and the green."}
+        {"id": "registrations", "command": "bench test --check entry-point-parity", "probe": "Remove the guard-rg parity row and record the R56 red, the restore, and the green.", "ticket": "03-add-guard-rg-verb.md"},
+        {"id": "wiring", "command": "bench test --check line-routing", "probe": "Remove the shim from the Claude Bash group and record the R39 red, the restore, and the green.", "ticket": "04-wire-rg-guard-hook.md"},
+        {"id": "command-contract", "command": "bench test --package ./cmd/bench --run 'HookSeams|GuardRg|CommandRegistry'", "probe": "Remove the hook.guard-rg seam row and record the R46 red, the restore, and the green.", "ticket": "03-add-guard-rg-verb.md"},
+        {"id": "routing", "command": "bench test --check subcommand-routing", "probe": "Remove the guard-rg subcommandRouting row and record the R57 red, the restore, and the green.", "ticket": "03-add-guard-rg-verb.md"}
       ]
     },
     {
       "id": "C4",
       "tickets": ["05-name-substitution-in-follow-on.md"],
       "verification": [
-        {"id": "message-tests", "command": "bench test --package ./internal/benchguard", "probe": "Return the plain operator side for a marked opener and record the R51 red, the restore, and the green."}
+        {"id": "message-tests", "command": "bench test --package ./internal/benchguard", "probe": "Return the plain operator side for a marked opener and record the R51 red, the restore, and the green.", "ticket": "05-name-substitution-in-follow-on.md"}
       ]
     }
   ],
