@@ -1,7 +1,7 @@
 # Rebuild a stale worktree build after a lane-passed commit
 
 Blocked by: 01-shared-freshness-owners.md
-Writes: internal/commit/background.go, internal/commit/commit.go, internal/commit/worktree_rebuild_test.go (new), internal/commit/background_test.go, internal/commit/commitment_test.go, internal/commit/landing_test.go, docs/known-issues.md, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, projects/benchkit.md, .bench/BENCH-reference.md, CHANGELOG.md
+Writes: internal/commit/background.go, internal/commit/commit.go, internal/commit/worktree_rebuild_test.go (new), internal/commit/background_test.go, internal/commit/commitment_test.go, internal/commit/landing_test.go, docs/known-issues.md, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, projects/benchkit.md, .bench/BENCH-reference.md, CHANGELOG.md, .bench/commitment.json
 Covers: CW13, CW14, CW15, CW16, CW17, CW18, CW19, CW20, CW21, CW22, CW23, CW24, CW25, CW26, CW27, CW28, CW29, CW30, CW31, CW32, CW33, CW34, CW35, CW36, CW37, CW38, CW39, CW40, CW43, CW45, CW48, CW50
 
 ## What to build
