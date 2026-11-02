@@ -16,7 +16,7 @@ Put the new table in `internal/benchguard/substitution_test.go` as `TestClassify
 
 This ticket is the last ticket of the build. Add one `CHANGELOG.md` entry for the whole spec: the rg guard in both harnesses, the live-substitution mark, the follow-on message, and the retired `AGENTS.md` bullet.
 
-`benchguard.go` has 363 of its 400 lines, so the change must stay within 37 lines or move a helper to a new file in the package.
+`benchguard.go` must stay within its 400-line budget. It had 363 lines before `02-classify-rg-calls.md` shortened `isBench`; if the change does not fit, move a helper to a new file in the package.
 
 ## Acceptance
 

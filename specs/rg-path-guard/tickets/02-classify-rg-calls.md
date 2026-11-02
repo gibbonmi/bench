@@ -47,4 +47,4 @@ Key the verdict table `TestClassifyRgCalls` and the message table `TestClassifyR
 - [ ] `bench test --check package-core-guard` passes on the real package.
 - [ ] No Go package other than `internal/rgguard` declares ripgrep option words (R38, review-owned).
 - [ ] `Classify` starts no process and reads no file.
-- [ ] `shellcommand.IsBenchName` is the only Go source of the Bench executable names, and `bench test --package ./internal/gitguard --package ./internal/benchguard` passes unchanged.
+- [ ] `shellcommand.IsBenchName` is the only executable-name test for Bench in the guard packages (`gitguard`, `benchguard`, `rgguard`), and `bench test --package ./internal/gitguard --package ./internal/benchguard` passes unchanged.

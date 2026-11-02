@@ -6,7 +6,7 @@ Roadmap: FT366
 
 Decision source: named reviewed artifact `roadmap/FT366.md` (the drained FT366 row), with reviewer decisions D1 and D2 closed in conversation on 2026-11-02.
 
-Verification log: <n> iteration(s) to accept — <coordinator fills at close>
+Verification log: 4 iteration(s) to accept — the spec round took 2 iterations (it found an exec child with no substitution mark, a mistraced R54 message, and two plan requirements with no probe), and the ticket round took 2 iterations (it found that ticket 05 did not wait for ticket 04, and that ticket 02 named no source for the Bench executable names).
 
 ## Problem
 
@@ -403,7 +403,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 - Source-row clauses and occurrences: each clause and each occurrence is in the source table.
 - Promised field labels: the field `Token.Substitution`, the side `SideSubstitution`, the verb `guard-rg`, and the seam `hook.guard-rg`.
 - Changed-function callers: `lex` has one caller, `Parse`. `Parse` callers keep their contract (R07, R55). `operatorFor` has one caller, `refusal`.
-- Copy survival: `shellcommand.IsBenchName` replaces the name copies in `gitguard` and `benchguard`; the C2 review searches for a surviving `"bench.sh"` literal outside `internal/shellcommand` (review-owned under R38's review).
+- Copy survival: `shellcommand.IsBenchName` replaces the name copies in `gitguard` and `benchguard`; the C2 review searches `internal/gitguard`, `internal/benchguard`, and `internal/rgguard` for a surviving `"bench.sh"` literal (review-owned under R38's review). Path literals in other packages state other facts and stay.
 - Rendered-shape readers: the follow-on message changes only for a marked opener. `rg -n 'operator=' internal/ cmd/ tests/` finds no row with `$(` or a `(` opener, so no existing pin moves.
 - Pin operators: R25 and R28 use substring containment and a suffix; R51 uses containment and a suffix; R55 uses byte equality.
 - Entry reads: `bench guard-rg` reads the envelope on stdin; `Classify` takes the command as a value.
