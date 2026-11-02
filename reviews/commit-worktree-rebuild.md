@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/commit-worktree-rebuild/spec.md",
-  "plan_digest": "sha256:b9973dbc617ae463aec57a73e8a4646938b29905d1c55d539c2e7c9e48a92e4a",
+  "plan_digest": "sha256:985d9a0f0e845b936425d5f32ba468a6719197d27c14fa3e9b80650eac0ce049",
   "implementation_session": "",
   "chunks": [
     {
@@ -535,9 +535,9 @@
     {
       "id": "CW-C2",
       "base": "856141b4132375c0b870c48ea8c89d7f7314d809",
-      "tip": "e3bd465791eca04b831e5443cc1231bbf77d19d6",
-      "plan_digest": "sha256:b9973dbc617ae463aec57a73e8a4646938b29905d1c55d539c2e7c9e48a92e4a",
-      "source_digest": "fb9f7fea5fe182a125f8b2f04d740fa17def5e76",
+      "tip": "aa87a3efce97a04653eb073335da960f376f5196",
+      "plan_digest": "sha256:985d9a0f0e845b936425d5f32ba468a6719197d27c14fa3e9b80650eac0ce049",
+      "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
       "acceptance_rows": [
         "CW13",
         "CW14",
@@ -570,7 +570,8 @@
         "CW43",
         "CW45",
         "CW48",
-        "CW50"
+        "CW50",
+        "CW52"
       ],
       "verification": [
         {
@@ -722,6 +723,156 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,docs/known-issues.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,431\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,4264,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: commit rebuild: the known-issues file kept a row that FT406 retires\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "cw-c2-rep1-commit-step",
+          "performer": "ft406-author-02-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+            "digest": "sha256:3a27b8e47a1742820b7f517d47c363bfbfafda65bbd2e4b01003668e12c93578",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCommitRebuildsBeforeItsGrade,24,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit,WorktreeRebuild|CommitRebuildsBeforeItsGrade|CommitKeepsExitZeroOnAFailedRebuild|UnpublishedCommitRebuildsNothing|UnreconciledCommitRebuildsNothing|KitIgnoresTheRebuildOutputs|CommitStartsABackgroundGrade|GreenLandingPublishesTheNamedPath,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "aa87a3efce97a04653eb073335da960f376f5196",
+          "requirement": "commit-step",
+          "command": "bench test --package ./internal/commit --run 'WorktreeRebuild|CommitRebuildsBeforeItsGrade|CommitKeepsExitZeroOnAFailedRebuild|UnpublishedCommitRebuildsNothing|UnreconciledCommitRebuildsNothing|KitIgnoresTheRebuildOutputs|CommitStartsABackgroundGrade|GreenLandingPublishesTheNamedPath'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Move the refreshWorktreeBuild call in Run after startBackgroundGrade, and record that TestCommitRebuildsBeforeItsGrade turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+              "digest": "sha256:3a27b8e47a1742820b7f517d47c363bfbfafda65bbd2e4b01003668e12c93578",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCommitRebuildsBeforeItsGrade,24,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit,WorktreeRebuild|CommitRebuildsBeforeItsGrade|CommitKeepsExitZeroOnAFailedRebuild|UnpublishedCommitRebuildsNothing|UnreconciledCommitRebuildsNothing|KitIgnoresTheRebuildOutputs|CommitStartsABackgroundGrade|GreenLandingPublishesTheNamedPath,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c2-rep1-failure-line",
+          "performer": "ft406-author-02-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+            "digest": "sha256:52e355a2c587a3b8e507adf139e62f7612a6d7cd4bf42bcd656ffa7dce4dcb02",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,3,TestWorktreeRebuildReportsAFailure/build_error,5,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit,WorktreeRebuildReportsAFailure,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "aa87a3efce97a04653eb073335da960f376f5196",
+          "requirement": "failure-line",
+          "command": "bench test --package ./internal/commit --run 'WorktreeRebuildReportsAFailure'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Print err.Error() as the cause for every error, and record that TestWorktreeRebuildReportsAFailure turns red on the seal-refusal case.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+              "digest": "sha256:52e355a2c587a3b8e507adf139e62f7612a6d7cd4bf42bcd656ffa7dce4dcb02",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap,failed,3,TestWorktreeRebuildReportsAFailure/build_error,5,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit,WorktreeRebuildReportsAFailure,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c2-rep1-absent-predicate",
+          "performer": "ft406-author-02-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+            "digest": "sha256:7ca1646a8f197ff4512dcecbd321879f6e4ae8fbd06639bd014142aafa77ff93",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestWorktreeRebuildSkipsAMarkdownCommitWithoutABuild,15,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit,WorktreeRebuild,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "aa87a3efce97a04653eb073335da960f376f5196",
+          "requirement": "absent-predicate",
+          "command": "bench test --package ./internal/commit --run 'WorktreeRebuild'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the DiffChangesBuildInputs test for an absent executable so that the step always calls Refresh, and record that TestWorktreeRebuildSkipsAMarkdownCommitWithoutABuild turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+              "digest": "sha256:7ca1646a8f197ff4512dcecbd321879f6e4ae8fbd06639bd014142aafa77ff93",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestWorktreeRebuildSkipsAMarkdownCommitWithoutABuild,15,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/commit,WorktreeRebuild,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c2-rep1-chain",
+          "performer": "ft406-author-02-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+            "digest": "sha256:e26489e112c53d9627248977c6c25428704a5b5c9250f38b00ca6227285fcb8d",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,4,TestCommitChainRunsThreeSteps,9,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,CommitChain|CommitWithoutPreflightBuild,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "aa87a3efce97a04653eb073335da960f376f5196",
+          "requirement": "chain",
+          "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitWithoutPreflightBuild'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Make commitChainCommand call steps.Build for a plain commit, and record that TestCommitWithoutPreflightBuildRunsCommitAlone turns red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+              "digest": "sha256:e26489e112c53d9627248977c6c25428704a5b5c9250f38b00ca6227285fcb8d",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,4,TestCommitChainRunsThreeSteps,9,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./cmd/bench,CommitChain|CommitWithoutPreflightBuild,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "cw-c2-rep1-known-issues",
+          "performer": "ft406-author-02-rep1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9b7a6bb30d2f320d348d923030f4cdfeae0eb3e9",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+            "digest": "sha256:74142fae8c121e4b56d4ea7880f97bb4a3dddfa5b9da25288f11bc737a2095a7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,docs/known-issues.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,431\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3103,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: commit rebuild: the known-issues file kept a row that FT406 retires\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "aa87a3efce97a04653eb073335da960f376f5196",
+          "requirement": "known-issues",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Insert the retired FT406 row into docs/known-issues.md, and record that the docs-currency-workflow check turns red on the FT406 anchor.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft406-author-02-rep1",
+              "digest": "sha256:74142fae8c121e4b56d4ea7880f97bb4a3dddfa5b9da25288f11bc737a2095a7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,docs/known-issues.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,431\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,3103,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: commit rebuild: the known-issues file kept a row that FT406 retires\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -825,6 +976,18 @@
       "chunk_ids": {
         "CW-C1": [
           "CW-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:b9973dbc617ae463aec57a73e8a4646938b29905d1c55d539c2e7c9e48a92e4a",
+      "to": "sha256:985d9a0f0e845b936425d5f32ba468a6719197d27c14fa3e9b80650eac0ce049",
+      "chunk_ids": {
+        "CW-C1": [
+          "CW-C1"
+        ],
+        "CW-C2": [
+          "CW-C2"
         ]
       }
     }
