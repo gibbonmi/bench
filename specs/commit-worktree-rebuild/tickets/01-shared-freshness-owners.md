@@ -1,7 +1,7 @@
 # Move the landing's diff test and refresh rule into shared freshness owners
 
 Blocked by: none
-Writes: internal/freshness/freshness_buildinputs.go, internal/freshness/freshness_verify.go, internal/freshness/decision_test.go, internal/freshness/freshness_digest_test.go, internal/freshness/freshness_verify_test.go, internal/worktree/land.go, internal/worktree/land_stack.go, internal/worktree/land_effects.go, internal/worktree/land_broker_notice_test.go, internal/worktree/land_effects_test.go, internal/worktree/parallel_census_test.go, CHANGELOG.md
+Writes: internal/freshness/freshness_buildinputs.go, internal/freshness/freshness_verify.go, internal/freshness/decision_test.go, internal/freshness/freshness_digest_test.go, internal/freshness/freshness_verify_test.go, internal/worktree/land.go, internal/worktree/land_stack.go, internal/worktree/land_effects.go, internal/worktree/land_broker_notice_test.go, internal/worktree/land_effects_test.go, internal/worktree/parallel_census_test.go, CHANGELOG.md, internal/freshness/freshness.go
 Covers: CW01, CW02, CW03, CW04, CW05, CW06, CW07, CW08, CW09, CW10, CW11, CW12, CW41, CW42, CW44, CW46, CW47, CW49
 
 ## What to build

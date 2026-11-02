@@ -200,27 +200,28 @@ CW-C2 adds the commit step, its output, and the records.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {"mode": "delegate", "run_id": "ft406-build-20261102", "orchestrator_session": "session_01JK5CPcwpGroiAPWzzXxytc", "author_limit": 1, "review_mode": "unified", "assignments": {"01-shared-freshness-owners.md": [], "02-commit-rebuilds-worktree-build.md": []}},
   "chunks": [
     {
       "id": "CW-C1",
       "tickets": ["01-shared-freshness-owners.md"],
       "verification": [
-        {"id": "owners", "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs|Refresh'", "probe": "Make Refresh return rebuilt true after a nil build error without the second Verify read, and record that TestRefreshSecondReadDecides turns red."},
-        {"id": "deleted-input", "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs'", "probe": "Remove the deleted-file test from DiffChangesBuildInputs so that it reads only the post-commit input set, and record that TestDiffChangesBuildInputs turns red on the deleted-input case."},
-        {"id": "renamed-input", "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs'", "probe": "Remove --no-renames from the diff that DiffChangesBuildInputs reads, and record that TestDiffChangesBuildInputs turns red on the renamed-input case."},
-        {"id": "landing", "command": "bench test --package ./internal/worktree --run 'LandCommandReportsInstallStepForABrokerChangingDiff|LandReportsInstallStepForADeletedBrokerInput|LandRefreshesTheBrokerAfterPublication|LandReportsAFailedRefresh|LandSkipsAFreshBroker|RefreshHoldsAnInstalledCandidate'", "probe": "Make DiffChangesBuildInputs return false for every diff, and record that TestLandCommandReportsInstallStepForABrokerChangingDiff turns red."}
+        {"id": "owners", "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs|Refresh'", "probe": "Make Refresh return rebuilt true after a nil build error without the second Verify read, and record that TestRefreshSecondReadDecides turns red.", "ticket": "01-shared-freshness-owners.md"},
+        {"id": "deleted-input", "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs'", "probe": "Remove the deleted-file test from DiffChangesBuildInputs so that it reads only the post-commit input set, and record that TestDiffChangesBuildInputs turns red on the deleted-input case.", "ticket": "01-shared-freshness-owners.md"},
+        {"id": "renamed-input", "command": "bench test --package ./internal/freshness --run 'DiffChangesBuildInputs'", "probe": "Remove --no-renames from the diff that DiffChangesBuildInputs reads, and record that TestDiffChangesBuildInputs turns red on the renamed-input case.", "ticket": "01-shared-freshness-owners.md"},
+        {"id": "landing", "command": "bench test --package ./internal/worktree --run 'LandCommandReportsInstallStepForABrokerChangingDiff|LandReportsInstallStepForADeletedBrokerInput|LandRefreshesTheBrokerAfterPublication|LandReportsAFailedRefresh|LandSkipsAFreshBroker|RefreshHoldsAnInstalledCandidate'", "probe": "Make DiffChangesBuildInputs return false for every diff, and record that TestLandCommandReportsInstallStepForABrokerChangingDiff turns red.", "ticket": "01-shared-freshness-owners.md"}
       ]
     },
     {
       "id": "CW-C2",
       "tickets": ["02-commit-rebuilds-worktree-build.md"],
       "verification": [
-        {"id": "commit-step", "command": "bench test --package ./internal/commit --run 'WorktreeRebuild|CommitRebuildsBeforeItsGrade|CommitKeepsExitZeroOnAFailedRebuild|UnpublishedCommitRebuildsNothing|UnreconciledCommitRebuildsNothing|KitIgnoresTheRebuildOutputs|CommitStartsABackgroundGrade|GreenLandingPublishesTheNamedPath'", "probe": "Move the refreshWorktreeBuild call in Run after startBackgroundGrade, and record that TestCommitRebuildsBeforeItsGrade turns red."},
-        {"id": "failure-line", "command": "bench test --package ./internal/commit --run 'WorktreeRebuildReportsAFailure'", "probe": "Print err.Error() as the cause for every error, and record that TestWorktreeRebuildReportsAFailure turns red on the seal-refusal case."},
-        {"id": "absent-predicate", "command": "bench test --package ./internal/commit --run 'WorktreeRebuild'", "probe": "Remove the DiffChangesBuildInputs test for an absent executable so that the step always calls Refresh, and record that TestWorktreeRebuildSkipsAMarkdownCommitWithoutABuild turns red."},
-        {"id": "chain", "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitWithoutPreflightBuild'", "probe": "Make commitChainCommand call steps.Build for a plain commit, and record that TestCommitWithoutPreflightBuildRunsCommitAlone turns red."},
-        {"id": "known-issues", "command": "bench test --package ./internal/anchors --run 'TicketSlicingAnchors'", "probe": "Insert the retired FT406 row into docs/known-issues.md, and record that TestTicketSlicingAnchors turns red."}
+        {"id": "commit-step", "command": "bench test --package ./internal/commit --run 'WorktreeRebuild|CommitRebuildsBeforeItsGrade|CommitKeepsExitZeroOnAFailedRebuild|UnpublishedCommitRebuildsNothing|UnreconciledCommitRebuildsNothing|KitIgnoresTheRebuildOutputs|CommitStartsABackgroundGrade|GreenLandingPublishesTheNamedPath'", "probe": "Move the refreshWorktreeBuild call in Run after startBackgroundGrade, and record that TestCommitRebuildsBeforeItsGrade turns red.", "ticket": "02-commit-rebuilds-worktree-build.md"},
+        {"id": "failure-line", "command": "bench test --package ./internal/commit --run 'WorktreeRebuildReportsAFailure'", "probe": "Print err.Error() as the cause for every error, and record that TestWorktreeRebuildReportsAFailure turns red on the seal-refusal case.", "ticket": "02-commit-rebuilds-worktree-build.md"},
+        {"id": "absent-predicate", "command": "bench test --package ./internal/commit --run 'WorktreeRebuild'", "probe": "Remove the DiffChangesBuildInputs test for an absent executable so that the step always calls Refresh, and record that TestWorktreeRebuildSkipsAMarkdownCommitWithoutABuild turns red.", "ticket": "02-commit-rebuilds-worktree-build.md"},
+        {"id": "chain", "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitWithoutPreflightBuild'", "probe": "Make commitChainCommand call steps.Build for a plain commit, and record that TestCommitWithoutPreflightBuildRunsCommitAlone turns red.", "ticket": "02-commit-rebuilds-worktree-build.md"},
+        {"id": "known-issues", "command": "bench test --package ./internal/anchors --run 'TicketSlicingAnchors'", "probe": "Insert the retired FT406 row into docs/known-issues.md, and record that TestTicketSlicingAnchors turns red.", "ticket": "02-commit-rebuilds-worktree-build.md"}
       ]
     }
   ],
