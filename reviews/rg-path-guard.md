@@ -871,3 +871,12 @@ Findings: 1 accepted. Worst issue: P2.
 ## Coverage
 
 Findings: 0. Worst issue: none.
+
+## C2 repair cycle 2
+
+The repair session `ft366-author-02-rep2` (opus / xhigh) closed S2 and P2 at `92dda48de` and refroze C2 at `d82475406`.
+The `supplied` read joins a lone `(` to the token before it and drops one trailing `(`.
+It keeps the one list of pipe texts.
+
+The new R59 input `cat f |(rg foo)` was red before the edit. A witness probe that restored the old one-step lead failed only that input.
+The plan probes `verdict-tests` and `projection-owner` answered `bit`. C2 used both of its repair cycles, and a confirming round follows.
