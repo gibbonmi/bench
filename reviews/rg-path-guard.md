@@ -1148,3 +1148,18 @@ The plan probes `registrations`, `command-contract`, and `routing` answered `bit
 
 The author traced `guard-bench-follow-on` through the tree and found no registry that ticket 03 or ticket 04 does not name.
 The shim warns and exits 0 for a stale core, as `block-primary-file-write.sh` does, because R43 needs each degraded case to fail open.
+
+## C3 ticket 04 author witness reds
+
+The ticket 04 author `ft366-author-04` (opus / medium) committed ticket 04 at `eb315403e` and froze C3 at `3a0166073`.
+Each R39, R40, and R47 test went red before its check gained the shim needle or the rg branch, and then went green.
+The plan probe `wiring` omitted the shim from `.claude/settings.json`, answered `bit` with `restored` `yes`, and the record holds it.
+
+| subject | state before the edit | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/conformance/line_routing_static_test.go` | no shim needle in `checkClaudeHookWiring` | `TestClaudeHookWiringNeedsTheRgGuard` | R39 |
+| `internal/conformance/validity_checks_test.go` | no shim branch in `checkCodexHooks` | `TestCodexHooksNeedTheRgGuard` | R40 |
+| `internal/conformance/refusal_route_guard_test.go` | no rg branch in `stepGuardFaults` | `TestStepGuardFaultsNamesTheRgGuard` | R47 |
+
+No refusal-route step is a pathless `rg` call, so `TestAgentRoutesPassTheWiredGuards` stays green.
+The coordinator probe renamed the shim in the live `.codex/hooks.json`, and `TestRootConformance` failed on the Codex wiring diagnostic.
