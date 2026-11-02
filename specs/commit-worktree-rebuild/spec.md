@@ -6,7 +6,7 @@ Roadmap: FT406
 
 Decision source: named reviewed artifact — `roadmap/FT406.md` at its pinned identity `sha256:aed754faf293126519efe9467ae9d00323fe84b5238b6bf57e71747e34a45335`, read with the bound criterion `FT406-rebuild.fresh` in `.bench/commitment.json` and the reviewer decision of 2026-10-10 in that row, plus the reviewer decision D1 of 2026-11-02 in the `/bench-write-spec FT406` conversation (D1: the trigger is the seal check; when no `dist/bench` exists, the commit builds only when its diff names a build input).
 
-Verification log: <n> iteration(s) to accept — <note>
+Verification log: 4 iteration(s) to accept — the spec round took 3 iterations: iteration 1 rejected on a doubled remedy in the failure line, a Won't handle that narrowed D1 for a deleted build input, and a held-install story with no red-capable row; iteration 2 rejected because rename detection hid the old path of a renamed input; the reviewer raised the cap to 3 on 2026-11-02, and iteration 3 accepted and folded four findings. The ticket round took 1 iteration and folded nine findings. Reviewer sign-off 2026-11-02.
 
 ## Problem
 
