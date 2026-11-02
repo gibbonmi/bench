@@ -694,3 +694,16 @@ Findings: 3 accepted. Worst issue: C1.
 
 - The zero `Verdict` holds the pathless reason, so `Message()` on a permit verdict prints the pathless sentence.
 - No row grades the attached value branch, such as `-A=3` or `--hidden=x`.
+
+## C2 repair cycle 1
+
+The repair session `ft366-author-02-rep1` (opus / xhigh) closed S1, P1, C1, C2, and C3 at `e11d6e68f` and refroze C2 at `0b9571087`.
+Before the production edit, only the R59 permit case was red. The new R16 inputs, the R32 refusal, and the R59 refusal were green on the old code.
+Its three witness probes answered `bit` with `restored` `yes`.
+`-h` read as a flag failed R16, the omitted `fed = false` failed R32, and the removed group lead failed R59.
+It reran the plan probes `verdict-tests` and `projection-owner`, and both answered `bit`.
+
+The repair session reports that the `Substitution` test on the group-lead `(` is unreachable. The lexer marks a `(` only directly after a `$`, so a pipe never comes directly before a marked `(`.
+The spec text of verdict step 4 still names only the token directly before the span. The next plan commit corrects that prose.
+The coordinator probe added `;` to the feeding operators, and `TestClassifyRgCalls` failed on R32 and R59.
+C2 used one of its two repair cycles, and a confirming round of the three axes follows.
