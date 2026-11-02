@@ -167,3 +167,24 @@
   }
 }
 ```
+
+## CW-C1 ticket 01 author witness reds
+
+The ticket 01 author `ft406-author-01` (opus / medium) committed ticket 01 at `2a5c53e35` and froze CW-C1 at `56d53b85c`.
+The CW44 test went red against the unchanged production code, and each other witness went red under a `bench probe` mutation after the ticket commit.
+The plan probes `owners`, `deleted-input`, `renamed-input`, and `landing` answered `bit` with `restored` `yes`, and the record holds them.
+
+| subject | mutation | failing witness | row |
+| --- | --- | --- | --- |
+| `internal/worktree/land.go` | unchanged production code | `TestLandReportsInstallStepForADeletedBrokerInput` | CW44 |
+| `internal/freshness/freshness_buildinputs.go` | intersection removed | `TestDiffChangesBuildInputs/build_script` | CW01 |
+| `internal/freshness/freshness_buildinputs.go` | every changed path counts | `TestDiffChangesBuildInputs/markdown_only` | CW02 |
+| `internal/freshness/freshness_buildinputs.go` | manifest guard answers true | `TestDiffChangesBuildInputs/no_build-input_manifest` | CW03 |
+| `internal/freshness/freshness_buildinputs.go` | test-file exclusion removed | `TestDiffChangesBuildInputs/deleted_test_file` | CW42 |
+| `internal/freshness/freshness_verify.go` | first `Verify` read removed | `TestRefreshBuildsOnlyAStaleExecutable/fresh` | CW04 |
+| `internal/freshness/freshness_verify.go` | build call removed | `TestRefreshBuildsOnlyAStaleExecutable/stale` and `/absent` | CW05, CW08 |
+| `internal/freshness/freshness_verify.go` | `buildErr` dropped | `TestRefreshSecondReadDecides/failing_build` | CW07 |
+| `internal/worktree/land_effects.go` | `err` branch removed | `TestLandReportsAFailedRefresh` | CW46 |
+
+The author reports one gap: the mutation `if false && buildErr != nil` in `refreshBroker` stays green, because the build of `TestLandReportsAFailedRefresh` returns nil. No test grades the text `landing refresh build failed: ` that CW46 names.
+The coordinator probe swapped the base of the diff test in the stack landing for the tip, and 44 stack tests stayed green. No coverage row of this spec covers the stack landing, so that gap goes to the learnings.
