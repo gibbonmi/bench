@@ -2,7 +2,7 @@
 
 Blocked by: 01-mark-live-substitution.md
 Writes: internal/rgguard (new), internal/conformance/guard_projection_owner_test.go, internal/conformance/guard_projection_rgguard_test.go (new), internal/shellcommand/projection.go, internal/shellcommand/projection_test.go, internal/gitguard/scan.go, internal/benchguard/benchguard.go
-Covers: R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58
+Covers: R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58, R59
 
 ## What to build
 

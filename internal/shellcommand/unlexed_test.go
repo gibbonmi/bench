@@ -30,9 +30,9 @@ func TestFallbackSplitsShellOperators(t *testing.T) {
 	got := Parse("git status;git push --force\necho 'x")
 	want := Stream{
 		Tokens: []Token{
-			{Word, "git"}, {Word, "status"}, {ControlOperator, ";"},
-			{Word, "git"}, {Word, "push"}, {Word, "--force"}, {ControlOperator, ";"},
-			{Word, "echo"}, {Word, "'x"},
+			{Kind: Word, Text: "git"}, {Kind: Word, Text: "status"}, {Kind: ControlOperator, Text: ";"},
+			{Kind: Word, Text: "git"}, {Kind: Word, Text: "push"}, {Kind: Word, Text: "--force"}, {Kind: ControlOperator, Text: ";"},
+			{Kind: Word, Text: "echo"}, {Kind: Word, Text: "'x"},
 		},
 		Commands: []SimpleCommand{{Start: 0, End: 2}, {Start: 3, End: 6}, {Start: 7, End: 9}},
 		Unlexed:  true,

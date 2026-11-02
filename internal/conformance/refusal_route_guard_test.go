@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/refusalroute"
+	"github.com/gibbonmi/bench/internal/rgguard"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/shellcommand"
 )
@@ -61,6 +62,9 @@ func stepGuardFaults(command string) []string {
 	if verdict := benchguard.Classify(command, benchguard.DefaultResolver()); verdict.Blocked {
 		faults = append(faults, "benchguard blocks: "+verdict.Message())
 	}
+	if verdict := rgguard.Classify(command); verdict.Blocked {
+		faults = append(faults, "rgguard blocks: "+verdict.Message())
+	}
 	if runsBenchUnderExec(command) {
 		faults = append(faults, "runs a Bench child through bench worktree exec, which FT341 refuses")
 	}
@@ -104,6 +108,14 @@ func TestAgentRoutesPassTheWiredGuards(t *testing.T) {
 	}
 	for _, fault := range faults {
 		t.Error(fault)
+	}
+}
+
+// TestStepGuardFaultsNamesTheRgGuard is R47. A route step `rg foo` has a pattern and no
+// path, so the rg guard refuses it, and the fault list names that refusal.
+func TestStepGuardFaultsNamesTheRgGuard(t *testing.T) {
+	if faults := stepGuardFaults("rg foo"); !anyContains(faults, "rgguard blocks: ") {
+		t.Fatalf("stepGuardFaults(%q) = %q, want an rgguard refusal", "rg foo", faults)
 	}
 }
 

@@ -52,8 +52,6 @@ The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure
 light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 05, 06, and 07
 and the small cuts. The rows below hold the rest.
 
-**FT366 (MEDIUM) — a PreToolUse guard refuses a pathless `rg` call through the shared command projection.**
-
 **FT446 (MEDIUM) — a retired cache store leaves with its cache, inherited registration has one owner, and the Darwin witness runs.**
 
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
@@ -356,15 +354,14 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT366-rg-guard
-2. FT380-residual
-3. FT363-member-set
-4. FT354-shell-args
-5. FT343-seam-policy
-6. FT446-cache-store
-7. FT414-preconditions
-8. FT369-charge-slicing
-9. FT365-conformance
-10. FT341-in-only
-11. FT420-concurrent-chunks
-12. FT387-overflow
+1. FT380-residual
+2. FT363-member-set
+3. FT354-shell-args
+4. FT343-seam-policy
+5. FT446-cache-store
+6. FT414-preconditions
+7. FT369-charge-slicing
+8. FT365-conformance
+9. FT341-in-only
+10. FT420-concurrent-chunks
+11. FT387-overflow

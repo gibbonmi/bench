@@ -47,7 +47,6 @@ func scanWords(tokens []string, chk Checker, allowWrapper, elsewhere bool) strin
 	if !prefix.Executes || j >= len(tokens) {
 		return ""
 	}
-	base := filepath.Base(tokens[j])
 	switch {
 	case isGit(tokens[j]):
 		sub, argsStart, ok := FindSubcommand(tokens, j+1, len(tokens))
@@ -58,7 +57,7 @@ func scanWords(tokens []string, chk Checker, allowWrapper, elsewhere bool) strin
 		return classify(sub, tokens[argsStart:], viaXargs, redirected, chk)
 	case !allowWrapper:
 		return ""
-	case benchExecutables[base]:
+	case shellcommand.IsBenchName(tokens[j]):
 		if exec := shellcommand.WorktreeExec(tokens, j); exec.HasSeparator {
 			return scanWords(exec.Child, chk, false, exec.DifferentCheckout)
 		}
@@ -72,10 +71,6 @@ func scanWords(tokens []string, chk Checker, allowWrapper, elsewhere bool) strin
 
 // isGit reports whether a word names the git executable, bare or by path.
 func isGit(word string) bool { return filepath.Base(word) == "git" }
-
-// benchExecutables are the command names that run Bench: the installed CLI and the
-// repository wrapper.
-var benchExecutables = map[string]bool{"bench": true, "bench.sh": true}
 
 // FindSubcommand skips git's global options (and their values) after the `git` token.
 // It returns the subcommand, the index its args start at, and whether one was found.

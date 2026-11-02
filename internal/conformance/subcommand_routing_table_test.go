@@ -61,6 +61,7 @@ var subcommandRouting = map[string]routingEntry{
 	"guard-bench-follow-on": exempt(whyPlumbing),
 	"guard-file-write":      exempt(whyPlumbing),
 	"guard-git":             exempt(whyPlumbing),
+	"guard-rg":              exempt(whyPlumbing),
 	"resolve-model":         exempt(whyPlumbing),
 	"stop-verdict":          exempt(whyPlumbing),
 	"tree-hash":             exempt(whyPlumbing),

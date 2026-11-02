@@ -214,11 +214,17 @@ func checkCodexHooks(root string) []string {
 	if !anyContains(preCommands, ".bench/hooks/block-bench-follow-on.sh") {
 		diags = append(diags, "codex hooks.json PreToolUse does not run .bench/hooks/block-bench-follow-on.sh")
 	}
+	if !anyContains(preCommands, ".bench/hooks/block-unsafe-rg.sh") {
+		diags = append(diags, "codex hooks.json PreToolUse does not run .bench/hooks/block-unsafe-rg.sh")
+	}
 	if hasAgentMatcher || anyContains(preCommands, ".bench/hooks/check-agent-line.sh") {
 		diags = append(diags, "codex hooks.json must not claim an Agent intent writer")
 	}
 	return diags
 }
+
+// intactCodexHooks is a healthy Codex hook config: every wired Bash hook runs in one group.
+const intactCodexHooks = `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":".bench/hooks/stop.sh"}]}],"SessionStart":[{"hooks":[{"type":"command","command":".bench/hooks/session-start.sh"}]}],"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":".bench/hooks/block-dangerous-git.sh"},{"type":"command","command":".bench/hooks/block-bench-follow-on.sh"},{"type":"command","command":".bench/hooks/block-unsafe-rg.sh"}]}]}}`
 
 func TestCodexFollowOnHookWiringBites(t *testing.T) {
 	root := t.TempDir()
@@ -226,18 +232,38 @@ func TestCodexFollowOnHookWiringBites(t *testing.T) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	const intact = `{"hooks":{"Stop":[{"hooks":[{"type":"command","command":".bench/hooks/stop.sh"}]}],"SessionStart":[{"hooks":[{"type":"command","command":".bench/hooks/session-start.sh"}]}],"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":".bench/hooks/block-dangerous-git.sh"},{"type":"command","command":".bench/hooks/block-bench-follow-on.sh"}]}]}}`
-	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(intact), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(intactCodexHooks), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if diags := checkCodexHooks(root); len(diags) != 0 {
 		t.Fatalf("intact Codex hook wiring = %v, want no diagnostics", diags)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(strings.Replace(intact, `,{"type":"command","command":".bench/hooks/block-bench-follow-on.sh"}`, "", 1)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(strings.Replace(intactCodexHooks, `,{"type":"command","command":".bench/hooks/block-bench-follow-on.sh"}`, "", 1)), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if !containsDiagnostic(checkCodexHooks(root), "codex hooks.json PreToolUse does not run .bench/hooks/block-bench-follow-on.sh") {
 		t.Fatal("missing follow-on hook did not produce its diagnostic")
+	}
+}
+
+// TestCodexHooksNeedTheRgGuard is R40. A Bash group that runs every other hook but not the
+// rg shim fires the shim's diagnostic alone.
+func TestCodexHooksNeedTheRgGuard(t *testing.T) {
+	const want = "codex hooks.json PreToolUse does not run .bench/hooks/block-unsafe-rg.sh"
+	root := t.TempDir()
+	dir := filepath.Join(root, ".codex")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	config := strings.Replace(intactCodexHooks, `,{"type":"command","command":".bench/hooks/block-unsafe-rg.sh"}`, "", 1)
+	if config == intactCodexHooks {
+		t.Fatal("the intact Codex fixture holds no rg shim to drop")
+	}
+	if err := os.WriteFile(filepath.Join(dir, "hooks.json"), []byte(config), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diags := checkCodexHooks(root); len(diags) != 1 || diags[0] != want {
+		t.Fatalf("Bash group without the rg shim: diagnostics = %v, want only %q", diags, want)
 	}
 }
 

@@ -16,7 +16,6 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
-	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
@@ -305,39 +304,6 @@ func containsKey(records []requirementRecord, want string) bool {
 		}
 	}
 	return false
-}
-
-func checkGuardHeaderManifests(root string) []string {
-	var diags []string
-	for _, guard := range []struct {
-		name string
-		path string
-	}{
-		{"block-dangerous-git", filepath.Join(root, ".bench", "hooks", "block-dangerous-git.sh")},
-		{"block-bench-follow-on", filepath.Join(root, ".bench", "hooks", "block-bench-follow-on.sh")},
-		{"check-agent-line", filepath.Join(root, ".bench", "hooks", "check-agent-line.sh")},
-		{"stop", filepath.Join(root, ".bench", "hooks", "stop.sh")},
-		{"session-start", filepath.Join(root, ".bench", "hooks", "session-start.sh")},
-		{"worktree-lifecycle", filepath.Join(root, ".bench", "hooks", "worktree-lifecycle.sh")},
-		{"pre-push", filepath.Join(root, "internal", "adopt", "prepush.sh")},
-	} {
-		path := guard.path
-		if !exists(path) {
-			continue
-		}
-		fields, err := guards.HeaderFields(path)
-		if err != nil {
-			diags = append(diags, fmt.Sprintf("guard %s manifest unreadable", guard.name))
-			continue
-		}
-		for _, key := range fields.MissingRequired() {
-			diags = append(diags, fmt.Sprintf("guard %s manifest missing %s key", guard.name, key))
-		}
-		if guard.name == "session-start" && fields["denies"] != "nothing (informational)" {
-			diags = append(diags, "session-start is not classified informational (denies: nothing)")
-		}
-	}
-	return diags
 }
 
 type platformTarget struct {

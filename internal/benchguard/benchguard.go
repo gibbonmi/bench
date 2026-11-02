@@ -60,6 +60,8 @@ const (
 	SideRedirection
 	// SideUnlexed is a command the lexer refused, where no operator position is known.
 	SideUnlexed
+	// SideSubstitution is an unquoted `$(` beside or around the Bench segment.
+	SideSubstitution
 )
 
 // Verdict is the guard's decision for one command. Segment holds the Bench
@@ -89,6 +91,8 @@ func repairSentence(side Side) string {
 		return "Run the Bench command without a redirection."
 	case SideUnlexed:
 		return shellcommand.UnlexedAdvice
+	case SideSubstitution:
+		return "Run the Bench command with no unquoted command substitution in it or around it."
 	default:
 		return followOnSentence
 	}
@@ -239,11 +243,11 @@ func hasSyntaxFrom(stream shellcommand.Stream, start int) bool {
 }
 
 // operatorFor names the token adjacent to one segment, and the side it sits on, by the
-// refusal's precedence. The heredocAllowed flag marks a segment the exec exception
-// covers: a heredoc there is legal, so it never names the cause, and the next
-// redirection does. A legal lead never names the cause either, so the operator after
-// the span does.
-func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (string, Side) {
+// refusal's precedence, and whether that token opens a live command substitution. The
+// heredocAllowed flag marks a segment the exec exception covers: a heredoc there is
+// legal, so it never names the cause, and the next redirection does. A legal lead never
+// names the cause either, so the operator after the span does.
+func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (string, Side, bool) {
 	span := stream.Commands[index]
 	tokens := stream.Tokens[span.Start:span.End]
 	for i := range tokens {
@@ -253,22 +257,27 @@ func operatorFor(stream shellcommand.Stream, index int, heredocAllowed bool) (st
 		if heredocAllowed && shellcommand.IsHeredoc(tokens[i]) {
 			continue
 		}
-		return shellcommand.RedirectionText(tokens, i), SideRedirection
+		return shellcommand.RedirectionText(tokens, i), SideRedirection, false
 	}
 	if span.Start > 0 && stream.Tokens[span.Start-1].Kind == shellcommand.ControlOperator {
 		if side, refused := leadRefusal(stream, index); refused {
-			return stream.Tokens[span.Start-1].Text, side
+			return stream.Tokens[span.Start-1].Text, side, stream.Tokens[span.Start-1].Substitution
 		}
 	}
 	if span.End < len(stream.Tokens) && stream.Tokens[span.End].Kind == shellcommand.ControlOperator {
-		return stream.Tokens[span.End].Text, SideAfter
+		return stream.Tokens[span.End].Text, SideAfter, stream.Tokens[span.End].Substitution
 	}
-	return "", SideAfter
+	return "", SideAfter, false
 }
 
-// refusal builds the verdict for one refused segment from the adjacent token.
+// refusal builds the verdict for one refused segment from the adjacent token. The lexer
+// splits a live `$(` into a `$` word and a marked operator, so the operator cell puts the
+// `$` back where the reader typed it.
 func refusal(stream shellcommand.Stream, index int, words []string, heredocAllowed bool) Verdict {
-	operator, side := operatorFor(stream, index, heredocAllowed)
+	operator, side, substitution := operatorFor(stream, index, heredocAllowed)
+	if substitution {
+		operator, side = "$"+operator, SideSubstitution
+	}
 	return Verdict{Blocked: true, Segment: words, Operator: operator, Side: side}
 }
 
@@ -307,10 +316,7 @@ func spanInvokesBench(words []string, resolver Resolver, wrapper bool) bool {
 }
 
 func isBench(word string, r Resolver) bool {
-	if word == "bench" {
-		return true
-	}
-	if base := filepath.Base(word); base == "bench" || base == "bench.sh" {
+	if shellcommand.IsBenchName(word) {
 		return true
 	}
 	if r.Getwd == nil || r.LookPath == nil || r.EvalSymlinks == nil {
@@ -320,8 +326,7 @@ func isBench(word string, r Resolver) bool {
 	if err != nil {
 		return false
 	}
-	base := filepath.Base(target)
-	return base == "bench" || base == "bench.sh"
+	return shellcommand.IsBenchName(target)
 }
 
 func (r Resolver) resolve(word string) (string, error) {

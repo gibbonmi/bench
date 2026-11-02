@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Guard for a pathless rg call
+
+- Added the `block-unsafe-rg.sh` PreToolUse guard and its `bench guard-rg` core. Claude Code and Codex run it in their Bash hook group. It refuses an `rg` call that names a pattern but no path, because that call waits on stdin. A pipe or an input redirection that feeds the call supplies stdin, so the guard permits it. A pipe into a subshell group, such as `cat f | (rg foo)`, feeds the first `rg` call in the group. The guard reads the options that take a value, and it permits a call when the analysis is uncertain.
+
+  The guard also refuses an `rg` call with a live command substitution, quoted or unquoted, and it names the cause. A single-quoted or escaped `$(` stays a literal and passes. The shared shell projection now marks each live substitution, so each guard reads one fact. The Bench follow-on refusal names command substitution at an unquoted `$(` and prints `operator=$(`, and it refuses no new command. The guard header and the refusal text state the explicit-path rule, so `AGENTS.md` no longer holds a bullet for it.
+
 ### Commit rebuild of the worktree build
 
 - Changed `bench commit` in a kit worktree. After the commit publishes, it rebuilds the worktree's `dist/bench` when the seal of that build does not verify. It builds an absent `dist/bench` only when the published commit changes a build input. The rebuild runs before the background grade starts, so the grade uses the fresh build.

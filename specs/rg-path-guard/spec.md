@@ -1,6 +1,6 @@
 # Refuse a pathless or substituting rg call
 
-Status: staged
+Status: implemented
 
 Roadmap: FT366
 
@@ -89,6 +89,7 @@ Harder chunks: C1, C2.
 37. As a kit maintainer, I want the new guard package under the projection-owner check, so that it cannot decode an envelope or a wrapper privately.
 38. As a kit maintainer, I want one package to own the ripgrep option table, so that a later reader reuses the same grammar.
 58. As an agent, I want a live substitution in the child of `bench worktree exec <target> -- rg ...` refused, so that the delegate route cannot run a hidden command.
+59. As an agent, I want a pipe into a subshell group to feed the first `rg` call inside the group, so that `cat f | (rg foo)` runs.
 
 ### The hook
 
@@ -145,6 +146,7 @@ The package decodes the envelope through `shellcommand.DecodeEnvelope` (`interna
 6. If the call has a pattern and no path operand, the guard refuses with the pathless reason. Otherwise the guard permits it.
 
 The operator before a span is `Tokens[span.Start-1]`, the same position that `leadRefusal` reads (`internal/benchguard/benchguard.go:201-222`).
+A pipe into a subshell group feeds the first span of the group. The lexer gives `| (` as two operators and `|(` as one, so step 4 also accepts a pipe before a lone `(` and a pipe operator that ends in `(`.
 For a `-c` child, `ShellChildren` parses the operand, so the child stream carries its own marks. The first `rg` span of the child also counts as fed when step 4 feeds the outer span.
 For an exec child, `WorktreeExec` returns plain argv with no tokens and no marks (`internal/shellcommand/projection.go:46-60`). The guard does not join or parse that argv again.
 It reads the child argv as the words of the `rg` call. Step 2 reads the marks of the outer span tokens after `--` and of the operator at the outer span end. Steps 3 and 4 read the operator at the outer span end, the operator before the outer span, and the outer span redirections.
@@ -189,56 +191,14 @@ The chunks run in table order, because C3 needs C2 and the staged `shell-argumen
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | C1 / 01-mark-live-substitution.md | The projection marks each live command substitution and leaves every existing token fact unchanged | R01, R02, R03, R04, R05, R06, R07, R55 | Substitution-mark table, existing Parse tables, guard differential golden | yes |
-| C2 / 02-classify-rg-calls.md | `rgguard.Classify` refuses a pathless or substituting rg call and permits each uncertain call | R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58 | rgguard verdict tables, projection-owner check | yes |
+| C2 / 02-classify-rg-calls.md | `rgguard.Classify` refuses a pathless or substituting rg call and permits each uncertain call | R08, R09, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R58, R59 | rgguard verdict tables, projection-owner check | yes |
 | C3 / 03-add-guard-rg-verb.md, 04-wire-rg-guard-hook.md | The `guard-rg` verb and its shim refuse in both harnesses, fail open, and appear in the guard surface | R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R56, R57 | Hook system test, parity, seams, routing, wiring, manifest checks | no |
 | C4 / 05-name-substitution-in-follow-on.md | The follow-on refusal names command substitution at a live `$(` and refuses nothing new | R51, R52, R53, R54 | benchguard message tables | no |
 
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "C1",
-      "tickets": ["01-mark-live-substitution.md"],
-      "verification": [
-        {"id": "mark-tests", "command": "bench test --package ./internal/shellcommand", "probe": "Drop the double-quote branch of the mark and record the R01 red, the restore, and the green."},
-        {"id": "guard-preservation", "command": "bench test --package ./internal/gitguard --package ./internal/benchguard --package ./internal/census", "probe": "Mark the bare subshell operator and record the R06 red, the restore, and the green."},
-        {"id": "guard-golden", "command": "bench test --check system --run TestGuardProjectionDifferentialFamilies", "probe": "Lex a | operator run as a Word token and record the R55 red, the restore, and the green."}
-      ]
-    },
-    {
-      "id": "C2",
-      "tickets": ["02-classify-rg-calls.md"],
-      "verification": [
-        {"id": "verdict-tests", "command": "bench test --package ./internal/rgguard", "probe": "Remove one value letter from the option table and record the R13 red, the restore, and the green."},
-        {"id": "projection-owner", "command": "bench test --check package-core-guard", "probe": "Plant a private envelope decode in internal/rgguard and record the R37 red, the restore, and the green."}
-      ]
-    },
-    {
-      "id": "C3",
-      "tickets": ["03-add-guard-rg-verb.md", "04-wire-rg-guard-hook.md"],
-      "verification": [
-        {"id": "registrations", "command": "bench test --check entry-point-parity", "probe": "Remove the guard-rg parity row and record the R56 red, the restore, and the green."},
-        {"id": "wiring", "command": "bench test --check line-routing", "probe": "Remove the shim from the Claude Bash group and record the R39 red, the restore, and the green."},
-        {"id": "command-contract", "command": "bench test --package ./cmd/bench --run 'HookSeams|GuardRg|CommandRegistry'", "probe": "Remove the hook.guard-rg seam row and record the R46 red, the restore, and the green."},
-        {"id": "routing", "command": "bench test --check subcommand-routing", "probe": "Remove the guard-rg subcommandRouting row and record the R57 red, the restore, and the green."}
-      ]
-    },
-    {
-      "id": "C4",
-      "tickets": ["05-name-substitution-in-follow-on.md"],
-      "verification": [
-        {"id": "message-tests", "command": "bench test --package ./internal/benchguard", "probe": "Return the plain operator side for a marked opener and record the R51 red, the restore, and the green."}
-      ]
-    }
-  ],
-  "final_verification": [
-    {"id": "system", "command": "bench test --check system"},
-    {"id": "coverage", "command": "bench coverage --check rg-path-guard"}
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","review_mode":"unified","run_id":"ft366-build-20261102","orchestrator_session":"session_01JK5CPdJaS9Xn1VAmFL1sNN","author_limit":1,"assignments":{"01-mark-live-substitution.md":[{"session":"ft366-author-01","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"xhigh","source":"7cc35cbbf401ead2a5b374454e7441a81ec884d0","native_ref":"claude-agent:bench-writer-xhigh:ft366-author-01"},{"session":"ft366-author-01-rep1","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"xhigh","source":"6771a86b8ae90408943fd1ac21c970dde86d37d0","native_ref":"claude-agent:bench-writer-xhigh:ft366-author-01-rep1","predecessor":"ft366-author-01","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:ft366-author-01","preserved":"6771a86b8ae90408943fd1ac21c970dde86d37d0"}],"02-classify-rg-calls.md":[{"session":"ft366-author-02","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"xhigh","source":"edf12755453bd83ef03a76f17c7bd32047357ccb","native_ref":"claude-agent:bench-writer-xhigh:ft366-author-02"},{"session":"ft366-author-02-rep1","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"xhigh","source":"6879c6f77edefbd1dd154f542220c2ebe5f85bb2","native_ref":"claude-agent:bench-writer-xhigh:ft366-author-02-rep1","predecessor":"ft366-author-02","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:ft366-author-02","preserved":"6879c6f77edefbd1dd154f542220c2ebe5f85bb2"},{"session":"ft366-author-02-rep2","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"xhigh","source":"fa7ca475bdd63a24a73bbfc8351859d021d90d84","native_ref":"claude-agent:bench-writer-xhigh:ft366-author-02-rep2","predecessor":"ft366-author-02-rep1","trigger":"user-directed","stopped":"claude-agent:bench-writer-xhigh:ft366-author-02-rep1","preserved":"fa7ca475bdd63a24a73bbfc8351859d021d90d84"}],"03-add-guard-rg-verb.md":[{"session":"ft366-author-03","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"medium","source":"b3115674c64b440c70e1beb1bc092e5408310b4f","native_ref":"claude-agent:bench-writer-medium:ft366-author-03"}],"04-wire-rg-guard-hook.md":[{"session":"ft366-author-04","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"medium","source":"df454f2767275a3586e58a5362cdd7dfaf085c1e","native_ref":"claude-agent:bench-writer-medium:ft366-author-04"}],"05-name-substitution-in-follow-on.md":[{"session":"ft366-author-05","assignment":"c2c10a43fad7a749dd48940a73dbe151","model":"opus","effort":"medium","source":"419528232d833aff67b550006af0c604395afe67","native_ref":"claude-agent:bench-writer-medium:ft366-author-05"}]}},"chunks":[{"id":"C1","tickets":["01-mark-live-substitution.md"],"verification":[{"id":"mark-tests","command":"bench test --package ./internal/shellcommand","probe":"Drop the double-quote branch of the mark and record the R01 red, the restore, and the green.","ticket":"01-mark-live-substitution.md"},{"id":"guard-preservation","command":"bench test --package ./internal/gitguard --package ./internal/benchguard --package ./internal/census","probe":"Mark the bare subshell operator and record the R06 red, the restore, and the green.","ticket":"01-mark-live-substitution.md"},{"id":"guard-golden","command":"bench test --check system --run TestGuardProjectionDifferentialFamilies","probe":"Lex a | operator run as a Word token and record the R55 red, the restore, and the green.","ticket":"01-mark-live-substitution.md"}]},{"id":"C2","tickets":["02-classify-rg-calls.md"],"verification":[{"id":"verdict-tests","command":"bench test --package ./internal/rgguard","probe":"Remove one value letter from the option table and record the R13 red, the restore, and the green.","ticket":"02-classify-rg-calls.md"},{"id":"projection-owner","command":"bench test --check package-core-guard","probe":"Plant a private envelope decode in internal/rgguard and record the R37 red, the restore, and the green.","ticket":"02-classify-rg-calls.md"}]},{"id":"C3","tickets":["03-add-guard-rg-verb.md","04-wire-rg-guard-hook.md"],"verification":[{"id":"registrations","command":"bench test --check entry-point-parity","probe":"Remove the guard-rg parity row and record the R56 red, the restore, and the green.","ticket":"03-add-guard-rg-verb.md"},{"id":"wiring","command":"bench test --check line-routing","probe":"Remove the shim from the Claude Bash group and record the R39 red, the restore, and the green.","ticket":"04-wire-rg-guard-hook.md"},{"id":"command-contract","command":"bench test --package ./cmd/bench --run 'HookSeams|GuardRg|CommandRegistry'","probe":"Remove the hook.guard-rg seam row and record the R46 red, the restore, and the green.","ticket":"03-add-guard-rg-verb.md"},{"id":"routing","command":"bench test --check subcommand-routing","probe":"Remove the guard-rg subcommandRouting row and record the R57 red, the restore, and the green.","ticket":"03-add-guard-rg-verb.md"}]},{"id":"C4","tickets":["05-name-substitution-in-follow-on.md"],"verification":[{"id":"message-tests","command":"bench test --package ./internal/benchguard","probe":"Return the plain operator side for a marked opener and record the R51 red, the restore, and the green.","ticket":"05-name-substitution-in-follow-on.md"}]}],"final_verification":[{"id":"system","command":"bench test --check system"},{"id":"coverage","command":"bench coverage --check rg-path-guard"}]}
 ```
 
 ## Testing decisions
@@ -272,64 +232,65 @@ The guard differential golden (`internal/systemtest/testdata/guard-projection-fa
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| R01 | 1 | `rg "$(x)" .` yields a Word token `$(x)` with the substitution mark | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A lexer that marks only unquoted forms leaves this word unmarked |
-| R02 | 2 | `` rg "`x`" . `` and `` rg `x` . `` each yield a marked Word token | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A lexer without a backtick case leaves both words unmarked |
-| R03 | 3 | `rg $(x) .` yields a marked `(` ControlOperator token after the Word `$` | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark only on Word tokens misses the unquoted opener |
-| R04 | 4 | `rg 'lit$(x)' .` and `` rg 'a`b' . `` yield unmarked tokens | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark from token text alone marks the single-quoted literal |
-| R05 | 5 | `rg \$\(x\) .`, `` rg \`x\` . ``, and `rg "\$(x)" .` yield unmarked tokens | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark that ignores escapes marks the escaped literal |
-| R06 | 6 | `(rg x .)` and `a $ (b)` yield an unmarked `(` operator | planned TestParseMarksLiveSubstitution in internal/shellcommand/substitution_test.go | A mark on every `(` operator marks a subshell |
+| R01 | 1 | `rg "$(x)" .` yields a Word token `$(x)` with the substitution mark | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A lexer that marks only unquoted forms leaves this word unmarked |
+| R02 | 2 | `` rg "`x`" . `` and `` rg `x` . `` each yield a marked Word token | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A lexer without a backtick case leaves both words unmarked |
+| R03 | 3 | `rg $(x) .` yields a marked `(` ControlOperator token after the Word `$` | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark only on Word tokens misses the unquoted opener |
+| R04 | 4 | `rg 'lit$(x)' .` and `` rg 'a`b' . `` yield unmarked tokens | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark from token text alone marks the single-quoted literal |
+| R05 | 5 | `rg \$\(x\) .`, `` rg \`x\` . ``, and `rg "\$(x)" .` yield unmarked tokens | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark that ignores escapes marks the escaped literal |
+| R06 | 6 | `(rg x .)` and `a $ (b)` yield an unmarked `(` operator | `internal/shellcommand/substitution_test.go` (`TestParseMarksLiveSubstitution`) | A mark on every `(` operator marks a subshell |
 | R07 | 7 | Parse keeps the exact token text, kinds, and spans of its existing table | `internal/shellcommand/shellcommand_test.go` (`TestParsePublishesTokenClassesAndSimpleCommands`) | A lexer change that moves text or spans fails the exact DeepEqual |
-| R08 | 8 | `Classify("rg foo")` refuses with the pathless reason | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that never refuses passes every other row |
-| R09 | 9 | `Classify("rg foo .")` and `Classify("rg foo a b")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that refuses every rg call fails this row |
-| R10 | 10 | `Classify("cat f \| rg foo")` and `Classify("cat f \|& rg foo")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that ignores the lead operator refuses the fed call |
-| R11 | 11 | `Classify("rg foo \| wc -l")` refuses with the pathless reason | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that counts any pipe in the command permits this call |
-| R12 | 12 | `Classify("rg foo < f")`, `Classify("rg foo <<< s")`, and a `<<EOF` heredoc call each permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads only the pipe refuses the redirected call |
-| R13 | 13 | `Classify("rg -g '*.go' foo")`, `Classify("rg --glob=*.go foo")`, and `Classify("rg -A 3 foo")` each refuse | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A table without the value option counts the value as the pattern and permits |
-| R14 | 14 | `Classify("rg -nA3 foo")` refuses and `Classify("rg -nA 3 foo .")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A bundle reader that skips the attached value miscounts the positionals |
-| R15 | 15 | `Classify("rg -e foo src")` permits and `Classify("rg -e foo")` refuses | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A reader that keeps the first positional as the pattern after `-e` refuses `src` |
-| R16 | 16 | `Classify("rg --files")`, `Classify("rg --version")`, and `Classify("rg -nh")` each permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard without the mode list refuses a call that never reads stdin |
-| R17 | 17 | `Classify("rg -- -foo .")` permits and `Classify("rg -- -foo")` refuses | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A reader that treats `-foo` as an option after `--` miscounts the positionals |
-| R18 | 18 | `Classify("rg --zzz foo")` and `Classify("rg -Zq foo")` each permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A reader that treats an unknown option as a no-value option refuses |
-| R19 | 19 | `Classify("rg foo 'x")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that copies the fail-closed unlexed policy refuses |
-| R20 | 20 | `Classify("ls \| xargs rg foo")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that ignores `ViaXargs` refuses the call |
-| R21 | 21 | `Classify("rg foo <(cmd)")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads only the span words sees no path and refuses |
-| R22 | 22 | `Classify("RIPGREP_CONFIG_PATH=c rg foo")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that skips the assignment refuses the call |
-| R23 | 23 | `Classify("rg")` and `Classify("rg -i")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that refuses a missing path without a pattern refuses these calls |
-| R24 | 24 | `Classify("rg \"$(x)\" .")` and `Classify("rg foo $(git ls-files)")` each refuse with the substitution reason | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that checks substitution only on pathless calls permits both |
-| R25 | 25 | The substitution message contains `command substitution` and `single quotes` and ends with `segment=` and the call words | planned TestClassifyRgMessages in internal/rgguard/rgguard_test.go | A message without the cause name fails the substring predicate |
-| R26 | 26 | `Classify("rg 'a$(b)' .")` and `` Classify("rg \\`x\\` .") `` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads raw text for `$(` refuses the literal |
-| R27 | 27 | `Classify("rg $(x)")` refuses with the substitution reason | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that decides the pathless reason first names the wrong cause |
-| R28 | 28 | The pathless message contains `no path` and `` `.` `` and ends with `segment=rg foo` | planned TestClassifyRgMessages in internal/rgguard/rgguard_test.go | A message without the repair fails the substring predicate |
-| R29 | 29 | `Classify("env X=1 rg foo")` and `Classify("timeout 5 rg foo")` each refuse | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads only the first word misses the prefixed call |
-| R30 | 30 | `Classify("bash -c 'rg foo'")` refuses | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that skips shell children permits the wrapped call |
-| R31 | 31 | `Classify("bench worktree exec X -- rg foo")` refuses | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that skips the exec child permits the delegate route |
-| R32 | 32 | `Classify("cat f \| bench worktree exec X -- rg foo")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads only the child stream refuses the fed child |
-| R33 | 33 | `Classify("cd x && rg foo")` refuses | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads only the first span permits the chained call |
-| R34 | 34 | `Classify("command -v rg")` permits | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that ignores `Executes` refuses the lookup |
-| R35 | 35 | `Classify("rg foo -")` and `Classify("rg -f -")` each permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that ignores the explicit stdin request refuses both calls as pathless |
-| R36 | 36 | `Classify("bash -c \"bash -c 'rg foo'\"")` and `Classify("sudo rg foo")` permit | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that recurses past one level refuses the nested call |
-| R37 | 37 | A private envelope decode planted in `internal/rgguard` reds the projection-owner check | planned TestGuardProjectionOwnerGovernsRgguard in internal/conformance/guard_projection_rgguard_test.go | A governed list without `internal/rgguard` lets the copy pass |
+| R08 | 8 | `Classify("rg foo")` refuses with the pathless reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that never refuses passes every other row |
+| R09 | 9 | `Classify("rg foo .")` and `Classify("rg foo a b")` permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that refuses every rg call fails this row |
+| R10 | 10 | `Classify("cat f \| rg foo")` and `Classify("cat f \|& rg foo")` permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that ignores the lead operator refuses the fed call |
+| R11 | 11 | `Classify("rg foo \| wc -l")` refuses with the pathless reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that counts any pipe in the command permits this call |
+| R12 | 12 | `Classify("rg foo < f")`, `Classify("rg foo <<< s")`, and a `<<EOF` heredoc call each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the pipe refuses the redirected call |
+| R13 | 13 | `Classify("rg -g '*.go' foo")`, `Classify("rg --glob=*.go foo")`, and `Classify("rg -A 3 foo")` each refuse | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A table without the value option counts the value as the pattern and permits |
+| R14 | 14 | `Classify("rg -nA3 foo")` refuses and `Classify("rg -nA 3 foo .")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A bundle reader that skips the attached value miscounts the positionals |
+| R15 | 15 | `Classify("rg -e foo src")` permits and `Classify("rg -e foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A reader that keeps the first positional as the pattern after `-e` refuses `src` |
+| R16 | 16 | `Classify("rg --files src")`, `Classify("rg --version foo")`, and `Classify("rg -nh foo")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard without the mode list, or with `-h` or `--version` read as a flag, refuses a mode call that also names a pattern |
+| R17 | 17 | `Classify("rg -- -foo .")` permits and `Classify("rg -- -foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A reader that treats `-foo` as an option after `--` miscounts the positionals |
+| R18 | 18 | `Classify("rg --zzz foo")` and `Classify("rg -Zq foo")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A reader that treats an unknown option as a no-value option refuses |
+| R19 | 19 | `Classify("rg foo 'x")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that copies the fail-closed unlexed policy refuses |
+| R20 | 20 | `Classify("ls \| xargs rg foo")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that ignores `ViaXargs` refuses the call |
+| R21 | 21 | `Classify("rg foo <(cmd)")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the span words sees no path and refuses |
+| R22 | 22 | `Classify("RIPGREP_CONFIG_PATH=c rg foo")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that skips the assignment refuses the call |
+| R23 | 23 | `Classify("rg")` and `Classify("rg -i")` permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that refuses a missing path without a pattern refuses these calls |
+| R24 | 24 | `Classify("rg \"$(x)\" .")` and `Classify("rg foo $(git ls-files)")` each refuse with the substitution reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that checks substitution only on pathless calls permits both |
+| R25 | 25 | The substitution message contains `command substitution` and `single quotes` and ends with `segment=` and the call words | `internal/rgguard/rgguard_test.go` (`TestClassifyRgMessages`) | A message without the cause name fails the substring predicate |
+| R26 | 26 | `Classify("rg 'a$(b)' .")` and `` Classify("rg \\`x\\` .") `` permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads raw text for `$(` refuses the literal |
+| R27 | 27 | `Classify("rg $(x)")` refuses with the substitution reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that decides the pathless reason first names the wrong cause |
+| R28 | 28 | The pathless message contains `no path` and `` `.` `` and ends with `segment=rg foo` | `internal/rgguard/rgguard_test.go` (`TestClassifyRgMessages`) | A message without the repair fails the substring predicate |
+| R29 | 29 | `Classify("env X=1 rg foo")` and `Classify("timeout 5 rg foo")` each refuse | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the first word misses the prefixed call |
+| R30 | 30 | `Classify("bash -c 'rg foo'")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that skips shell children permits the wrapped call |
+| R31 | 31 | `Classify("bench worktree exec X -- rg foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that skips the exec child permits the delegate route |
+| R32 | 32 | `Classify("cat f \| bench worktree exec X -- rg foo")` permits and `Classify("cat f \| bash -c 'rg x .; rg foo'")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the child stream refuses the fed child, and a guard that feeds every child span permits the second call |
+| R33 | 33 | `Classify("cd x && rg foo")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the first span permits the chained call |
+| R34 | 34 | `Classify("command -v rg")` permits | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that ignores `Executes` refuses the lookup |
+| R35 | 35 | `Classify("rg foo -")` and `Classify("rg -f -")` each permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that ignores the explicit stdin request refuses both calls as pathless |
+| R36 | 36 | `Classify("bash -c \"bash -c 'rg foo'\"")` and `Classify("sudo rg foo")` permit | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that recurses past one level refuses the nested call |
+| R37 | 37 | A private envelope decode planted in `internal/rgguard` reds the projection-owner check | `internal/conformance/guard_projection_rgguard_test.go` (`TestGuardProjectionOwnerGovernsRgguard`) | A governed list without `internal/rgguard` lets the copy pass |
 | R38 | 38 | `internal/rgguard` is the only Go package that declares ripgrep option words | review-owned: the C2 review searches the tree for a second ripgrep option list | A second table drifts from the first without a red |
-| R39 | 39 | The Claude wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestClaudeHookWiringNeedsTheRgGuard in internal/conformance/line_routing_static_cases_test.go | A missing needle lets an unwired shim pass |
-| R40 | 40 | The Codex wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | planned TestCodexHooksNeedTheRgGuard in internal/conformance/validity_checks_test.go | A missing needle lets an unwired shim pass |
-| R41 | 41 | `checkGuardHeaderManifests` reds when the shim lacks a manifest key | planned TestGuardHeaderManifestsCoverTheRgGuard in internal/conformance/guard_header_manifests_test.go | A list without the shim leaves its header ungraded |
-| R42 | 42 | The shim with no resolvable core exits 0 and prints a warning | planned TestRgGuardHookFailsOpen in internal/systemtest/rg_guard_hook_test.go | A fail-closed shim exits 2 and blocks every Bash call |
-| R43 | 43 | The shim over a core without `guard-rg` exits 0 | planned TestRgGuardHookFailsOpen in internal/systemtest/rg_guard_hook_test.go | A shim that reads exit 2 as a refusal blocks under a stale core |
-| R44 | 44 | `bench guard-rg` with an unreadable envelope exits 0 and warns | planned TestGuardRgVerb in cmd/bench/guard_rg_test.go | A verb that refuses an unreadable envelope blocks the call |
-| R45 | 45 | The shim with an `rg foo` envelope exits 2 and prints the pathless message on stderr | planned TestRgGuardHookRefuses in internal/systemtest/rg_guard_hook_test.go | A shim that drops the core exit lets the call run |
+| R39 | 39 | The Claude wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | `internal/conformance/line_routing_static_cases_test.go` (`TestClaudeHookWiringNeedsTheRgGuard`) | A missing needle lets an unwired shim pass |
+| R40 | 40 | The Codex wiring check reds when the Bash group does not run `block-unsafe-rg.sh` | `internal/conformance/validity_checks_test.go` (`TestCodexHooksNeedTheRgGuard`) | A missing needle lets an unwired shim pass |
+| R41 | 41 | `checkGuardHeaderManifests` reds when the shim lacks a manifest key | `internal/conformance/guard_header_manifests_test.go` (`TestGuardHeaderManifestsCoverTheRgGuard`) | A list without the shim leaves its header ungraded |
+| R42 | 42 | The shim with no resolvable core exits 0 and prints a warning | `internal/systemtest/rg_guard_hook_test.go` (`TestRgGuardHookFailsOpen`) | A fail-closed shim exits 2 and blocks every Bash call |
+| R43 | 43 | The shim over a core without `guard-rg` exits 0 | `internal/systemtest/rg_guard_hook_test.go` (`TestRgGuardHookFailsOpen`) | A shim that reads exit 2 as a refusal blocks under a stale core |
+| R44 | 44 | `bench guard-rg` with an unreadable envelope exits 0 and warns | `cmd/bench/guard_rg_test.go` (`TestGuardRgVerb`) | A verb that refuses an unreadable envelope blocks the call |
+| R45 | 45 | The shim with an `rg foo` envelope exits 2 and prints the pathless message on stderr | `internal/systemtest/rg_guard_hook_test.go` (`TestRgGuardHookRefuses`) | A shim that drops the core exit lets the call run |
 | R46 | 46 | The hook-seam test reds when the `guard-rg` row has no `hook.guard-rg` seam | `cmd/bench/otel_hook_seams_test.go` (`TestHookSeamsMatchTheHookDispatchRows`) | A verb with no seam row fails the set equality |
-| R47 | 47 | `stepGuardFaults` names an rg refusal for a route step `rg foo` | planned TestStepGuardFaultsNamesTheRgGuard in internal/conformance/refusal_route_guard_test.go | A fault list without the rg verdict passes the refused step |
+| R47 | 47 | `stepGuardFaults` names an rg refusal for a route step `rg foo` | `internal/conformance/refusal_route_guard_test.go` (`TestStepGuardFaultsNamesTheRgGuard`) | A fault list without the rg verdict passes the refused step |
 | R48 | 48 | The Hook Layers section names `guard-rg` | review-owned: the C3 review reads the Hook Layers section | Review-owned prose; the row records the obligation |
 | R49 | 49 | `AGENTS.md` holds no bullet that states the explicit-path rule | review-owned: the C3 review searches `AGENTS.md` for the retired sentence | A surviving bullet is a second source of the rule |
 | R50 | 50 | The link plan copies `.bench/hooks/block-unsafe-rg.sh` | review-owned: the C3 review confirms the tree row at `.bench/consumer-payload.json:18` | The payload ships the hooks tree, so the obligation is a review read |
-| R51 | 51 | `Classify("bench gate $(x)")` refuses with a message that names `command substitution` and ends `operator=$(` | planned TestClassifyNamesCommandSubstitution in internal/benchguard/substitution_test.go | A message that keeps the plain side prints `operator=(` |
-| R52 | 52 | `Classify("echo $(bench status)")` refuses with a message that names `command substitution` | planned TestClassifyNamesCommandSubstitution in internal/benchguard/substitution_test.go | A side choice only after the span misses the lead opener |
-| R53 | 53 | `Classify("bench learning t --what \"$(cat f)\"")` stays unblocked | planned TestClassifyNamesCommandSubstitution in internal/benchguard/substitution_test.go | A guard that refuses every marked token blocks this call |
-| R54 | 54 | `Classify("true; (bench status)")` keeps the message that ends `operator=(` | planned TestClassifyNamesCommandSubstitution in internal/benchguard/substitution_test.go | A side choice on every `(` renames the subshell refusal |
+| R51 | 51 | `Classify("bench gate $(x)")` refuses with a message that names `command substitution` and ends `operator=$(` | `internal/benchguard/substitution_test.go` (`TestClassifyNamesCommandSubstitution`) | A message that keeps the plain side prints `operator=(` |
+| R52 | 52 | `Classify("echo $(bench status)")` refuses with a message that names `command substitution` | `internal/benchguard/substitution_test.go` (`TestClassifyNamesCommandSubstitution`) | A side choice only after the span misses the lead opener |
+| R53 | 53 | `Classify("bench learning t --what \"$(cat f)\"")` stays unblocked | `internal/benchguard/substitution_test.go` (`TestClassifyNamesCommandSubstitution`) | A guard that refuses every marked token blocks this call |
+| R54 | 54 | `Classify("true; (bench status)")` keeps the message that ends `operator=(` | `internal/benchguard/substitution_test.go` (`TestClassifyNamesCommandSubstitution`) | A side choice on every `(` renames the subshell refusal |
 | R55 | 55 | The guard differential run matches its golden byte for byte | `internal/systemtest/guard_projection_differential_test.go` (`TestGuardProjectionDifferentialFamilies`) | A projection change that moves a Git or follow-on tuple fails the golden |
 | R56 | 46 | A tree whose hooks directory holds a shim with no parity row reds the entry-point-parity check | `internal/conformance/entry_point_parity_test.go` (`TestEntryPointParityNamesAShimOutsideTheTable`) | A `block-unsafe-rg.sh` with no `entryPointParity` row fails the live check by the same rule |
 | R57 | 46 | A registry name with no `subcommandRouting` row reds the routing check | `internal/conformance/subcommand_routing_test.go` (`TestSubcommandRoutingRegistryBites`) | A `guard-rg` row with no routing row fails the live check by the same rule |
-| R58 | 58 | `Classify("bench worktree exec X -- rg \"$(x)\" .")` and ``Classify("bench worktree exec X -- rg `x` .")`` each refuse with the substitution reason | planned TestClassifyRgCalls in internal/rgguard/rgguard_test.go | A guard that reads marks only from the child argv sees none and permits both calls |
+| R58 | 58 | `Classify("bench worktree exec X -- rg \"$(x)\" .")` and ``Classify("bench worktree exec X -- rg `x` .")`` each refuse with the substitution reason | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads marks only from the child argv sees none and permits both calls |
+| R59 | 59 | `Classify("cat f \| (rg foo)")` and `Classify("cat f \|(rg foo)")` permit, and `Classify("cat f \| (cd x; rg foo)")` refuses | `internal/rgguard/rgguard_test.go` (`TestClassifyRgCalls`) | A guard that reads only the token before the span refuses the fed group, and a guard that feeds every group span permits the second call |
 
 Not covered: story 56 — an exported `RIPGREP_CONFIG_PATH` is not in the command text, so no guard input reaches it.
 Not covered: story 57 — the digit-only operand loss is pre-existing in `ProjectCommandWords` (`internal/shellcommand/shellcommand.go:104`), and this spec keeps that contract.
@@ -382,7 +343,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 | Source clause | Coverage |
 |---|---|
 | A new PreToolUse guard uses the shared projection to inspect `rg` calls. | R29, R30, R31, R33, R37, R39, R40, R45 |
-| It requires a path operand unless a pipe in the same command supplies stdin. | R08, R09, R10, R11, R32 |
+| It requires a path operand unless a pipe in the same command supplies stdin. | R08, R09, R10, R11, R32, R59 |
 | It recognizes options that consume a value. | R13, R14, R15, R16, R17 |
 | It permits a call when that operand analysis is uncertain. | R18, R19, R20, R21, R22 |
 | This new guard's uncertainty policy does not weaken the existing dangerous-command guards. | R07, R55 |

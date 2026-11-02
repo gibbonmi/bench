@@ -124,6 +124,7 @@ var commandRegistry = []commandDefinition{
 	{Name: "guard-bench-follow-on", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardBenchFollowOn(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "check-agent-line", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return checkAgentLine(args, c.Stdin, c.Stdout, c.Stderr) }},
 	{Name: "guard-file-write", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardFileWrite(args, c.Stdin, c.Stdout, c.Stderr) }},
+	{Name: "guard-rg", Hook: true, AXI: axiExempt(axiReasonPlumbing), Inventory: internalInventory, Run: func(c Command, args []string) int { return guardRg(args, c.Stdin, c.Stdout, c.Stderr) }},
 
 	{Name: "setup", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 0, Suffix: " [--plan|--yes]", Description: "inspect, preview, and converge the current repository"}), Bound: boundExempt(boundReasonTerminal), Scope: scopeTree, Run: adoptCommand("setup")},
 	{Name: "link", AXI: axiExempt(axiReasonMutation), Inventory: publicInventory(helpRow{Order: 1, Suffix: " [copy|symlink]", Description: "safely wire the kit into this repo for every harness"}), Bound: boundResponse, Scope: scopeTree, Run: adoptCommand("link")},

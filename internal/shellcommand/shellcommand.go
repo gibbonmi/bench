@@ -23,6 +23,12 @@ const (
 type Token struct {
 	Kind TokenKind
 	Text string
+	// Substitution marks a token that opens a live command substitution: a word that
+	// holds a `$(` or a backtick outside single quotes and not after a backslash, or an
+	// operator that starts with `(` directly after an unquoted, unescaped `$`. Inside
+	// double quotes, `\$` and a backslash before a backtick escape the mark, and the
+	// folded text keeps them. A `$((` arithmetic opener takes the same mark.
+	Substitution bool
 }
 
 // SimpleCommand identifies the half-open token range for one simple command.
@@ -61,14 +67,15 @@ func IsAssignment(word string) bool { return assignmentRe.MatchString(word) }
 // A heredoc's operator stays in the stream because it is an outer redirection.
 func Parse(command string) Stream {
 	command = stripHeredocBodies(command)
-	raw, ok := lex(command)
+	raw, marks, ok := lex(command)
 	if !ok {
 		raw = fallbackSplit(command)
+		marks = make([]bool, len(raw))
 	}
 	stream := Stream{Tokens: make([]Token, 0, len(raw)), Unlexed: !ok}
 	start := 0
-	for _, rawToken := range raw {
-		token := Token{Kind: Word, Text: rawToken}
+	for i, rawToken := range raw {
+		token := Token{Kind: Word, Text: rawToken, Substitution: marks[i]}
 		if allPunct(rawToken) {
 			token.Text = strings.ReplaceAll(rawToken, "\n", "")
 			if token.Text == "" {
@@ -294,74 +301,6 @@ func allPunct(token string) bool {
 		}
 	}
 	return true
-}
-
-func lex(s string) (tokens []string, ok bool) {
-	runes := []rune(s)
-	var current strings.Builder
-	active := false
-	flush := func() {
-		if active {
-			tokens = append(tokens, current.String())
-			current.Reset()
-			active = false
-		}
-	}
-	for i := 0; i < len(runes); {
-		c := runes[i]
-		switch {
-		case isSpace(c):
-			flush()
-			i++
-		case isPunct(c):
-			flush()
-			start := i
-			for i < len(runes) && isPunct(runes[i]) {
-				i++
-			}
-			tokens = append(tokens, string(runes[start:i]))
-		case c == '\'':
-			active = true
-			i++
-			for i < len(runes) && runes[i] != '\'' {
-				current.WriteRune(runes[i])
-				i++
-			}
-			if i >= len(runes) {
-				return nil, false
-			}
-			i++
-		case c == '"':
-			active = true
-			i++
-			for i < len(runes) && runes[i] != '"' {
-				if runes[i] == '\\' && i+1 < len(runes) && (runes[i+1] == '"' || runes[i+1] == '\\') {
-					current.WriteRune(runes[i+1])
-					i += 2
-					continue
-				}
-				current.WriteRune(runes[i])
-				i++
-			}
-			if i >= len(runes) {
-				return nil, false
-			}
-			i++
-		case c == '\\':
-			if i+1 >= len(runes) {
-				return nil, false
-			}
-			active = true
-			current.WriteRune(runes[i+1])
-			i += 2
-		default:
-			active = true
-			current.WriteRune(c)
-			i++
-		}
-	}
-	flush()
-	return tokens, true
 }
 
 var heredocOpRe = regexp.MustCompile(`<<<|<<(-?)[ \t]*(?:'([^']+)'|"([^"]+)"|\\?([A-Za-z0-9_][A-Za-z0-9_-]*))`)

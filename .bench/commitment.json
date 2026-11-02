@@ -2371,6 +2371,14 @@
       "identity": "sha256:4e7b0f2c0b89102833adeccff4dbcf3786c426c6b1817eb16b0e4e7a8102bf7a",
       "source": "e675c94f7c3a28e2c6ff0729d625057d8363759d",
       "evidence": "365b70ed1033e457316cdfdc08562d2f39d58fa4"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT366-rg-guard",
+      "binding": "rg-path-guard",
+      "identity": "sha256:838c2bdabea90704e38073d1609ce2c6dfd45a4acdbe017574700d6d055e79e3",
+      "source": "c2b4c8edac6d4a9d245711ae8c68762ca5333fc9",
+      "evidence": "7f3e852d249bcd6d9f5a78de0cef45a5694cab25"
     }
   ]
 }

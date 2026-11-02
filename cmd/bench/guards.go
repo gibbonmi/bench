@@ -19,6 +19,7 @@ import (
 	"github.com/gibbonmi/bench/internal/modelid"
 	"github.com/gibbonmi/bench/internal/otelrecord"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/rgguard"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
 	"github.com/gibbonmi/bench/internal/writeguard"
@@ -186,6 +187,34 @@ func guardBenchFollowOn(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writ
 		fmt.Fprintln(stderr, rawReadAdvice(read))
 	}
 	return 0
+}
+
+// guardRg is the rg guard subcommand. It reads the PreToolUse envelope on stdin, classifies
+// through internal/rgguard, and yields the verdict as an exit code: 0 allow, 2 block with
+// the `BLOCKED:` message on stderr, or 3 a genuine failure to run. An unreadable envelope
+// warns and allows, because the guard cannot see the call it would refuse. The deferred
+// recover maps any panic to 3, so exit 2 means only an intentional block.
+func guardRg(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
+	defer func() {
+		if recover() != nil {
+			code = 3
+		}
+	}()
+	data, err := io.ReadAll(stdin)
+	if err != nil {
+		return 3
+	}
+	command, err := rgguard.CommandFromEnvelope(data)
+	if err != nil {
+		fmt.Fprintln(stderr, "WARNING: block-unsafe-rg: unreadable command field — allowing Bash.")
+		return 0
+	}
+	verdict := rgguard.Classify(command)
+	if !verdict.Blocked {
+		return 0
+	}
+	fmt.Fprintln(stderr, verdict.Message())
+	return 2
 }
 
 // guardFileWrite is the primary-checkout file-write guard subcommand. It reads the
