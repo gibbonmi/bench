@@ -7,10 +7,14 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
+
+	"github.com/gibbonmi/bench/internal/git"
 )
 
 // BuildInputsManifest is the path, relative to a source root, of the manifest that lists the
@@ -47,16 +51,19 @@ type listedPackage struct {
 	EmbedFiles   []string
 }
 
-func buildInputs(root string) ([]string, error) {
-	root, err := filepath.Abs(root)
+// buildInputs returns the absolute paths that Digest hashes for root, and the absolute
+// directories within root of the packages that `go list -deps ./cmd/bench` lists. One `go
+// list` call answers both.
+func buildInputs(root string) (inputs, packageDirs []string, err error) {
+	root, err = filepath.Abs(root)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	command := exec.Command("go", "list", "-buildvcs=false", "-json", "-deps", "./cmd/bench")
 	command.Dir = root
 	output, err := command.Output()
 	if err != nil {
-		return nil, fmt.Errorf("resolve Bench build inputs: %w", err)
+		return nil, nil, fmt.Errorf("resolve Bench build inputs: %w", err)
 	}
 	decoder := json.NewDecoder(strings.NewReader(string(output)))
 	paths := map[string]struct{}{}
@@ -65,7 +72,10 @@ func buildInputs(root string) ([]string, error) {
 		if err := decoder.Decode(&pkg); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("decode resolved Bench build inputs: %w", err)
+			return nil, nil, fmt.Errorf("decode resolved Bench build inputs: %w", err)
+		}
+		if isWithinRoot(root, pkg.Dir) {
+			packageDirs = append(packageDirs, pkg.Dir)
 		}
 		for _, name := range packageFiles(pkg) {
 			path := filepath.Join(pkg.Dir, name)
@@ -79,13 +89,13 @@ func buildInputs(root string) ([]string, error) {
 	} {
 		path := filepath.Join(root, filepath.FromSlash(name))
 		if _, err := os.Lstat(path); err != nil {
-			return nil, fmt.Errorf("required build input %q: %w", name, err)
+			return nil, nil, fmt.Errorf("required build input %q: %w", name, err)
 		}
 		paths[path] = struct{}{}
 	}
 	auxiliary, err := auxiliaryBuildInputs(root)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for _, path := range auxiliary {
 		paths[path] = struct{}{}
@@ -100,7 +110,38 @@ func buildInputs(root string) ([]string, error) {
 	sort.Slice(ordered, func(i, j int) bool {
 		return filepath.ToSlash(ordered[i]) < filepath.ToSlash(ordered[j])
 	})
-	return ordered, nil
+	return ordered, packageDirs, nil
+}
+
+// DiffChangesBuildInputs reports whether the diff from base to tip in root changes the
+// Bench build. It answers true when the diff names a path of BuildInputs(root), or when it
+// deletes a non-test Go file in the directory of a package that BuildInputs reads. The
+// input set at tip cannot name a deleted path, so the second test finds it. The diff reads
+// with no rename detection, so a renamed input reads as the deletion of its old path. A
+// root that declares no build inputs, an input set that does not resolve, and a diff that
+// does not read each answer false.
+func DiffChangesBuildInputs(root, base, tip string) bool {
+	if !DeclaresBuildInputs(root) {
+		return false
+	}
+	inputs, packageDirs, err := relativeBuildInputs(root)
+	if err != nil {
+		return false
+	}
+	diff, err := git.Output("-C", root, "diff", "--no-renames", "--name-status", base, tip)
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(diff, "\n") {
+		status, name, _ := strings.Cut(line, "\t")
+		if slices.Contains(inputs, name) {
+			return true
+		}
+		if status == "D" && strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") && slices.Contains(packageDirs, path.Dir(name)) {
+			return true
+		}
+	}
+	return false
 }
 
 func auxiliaryBuildInputs(root string) ([]string, error) {

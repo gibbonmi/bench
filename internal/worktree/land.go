@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/census"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
@@ -190,7 +189,7 @@ func landAttributed(ctx context.Context, measures *landingMeasures, j joins, a a
 	printCensusHeads(stderr, a.home, root, assignment.ID)
 	// The release removes the source worktree, so the broker check reads it now and the
 	// notice prints after the effects report the refresh.
-	brokerChanged := brokerSourceChanged(assignment.Worktree, source.base, source.tip)
+	brokerChanged := freshness.DiffChangesBuildInputs(assignment.Worktree, source.base, source.tip)
 	request, publication := sourceRequest(assignment, source, parsed.Flags["--request"], parsed.Flags["-m"], "refs/heads/"+branch)
 	request.Root, request.Destination, request.DestinationBase, request.DestinationFingerprint = root, publication.Destination, destination, destinationFingerprint
 	request.GreenMarker, request.Stdout, request.Stderr = priorMarker, stdout, stderr
@@ -345,33 +344,6 @@ func printCensusHeads(stderr io.Writer, home, root, assignment string) {
 	if breakdown := census.OutputBreakdown(home, root, assignment); breakdown != "" {
 		fmt.Fprintf(stderr, "census output{%s}\n", breakdown)
 	}
-}
-
-// brokerSourceChanged reports whether the reviewed diff in worktree changes the promotion
-// broker's own build inputs. An unresolvable input set reports false; the landing itself
-// stays under the installed owner either way.
-func brokerSourceChanged(worktree, base, tip string) bool {
-	if !freshness.DeclaresBuildInputs(worktree) {
-		return false
-	}
-	inputs, err := freshness.BuildInputs(worktree)
-	if err != nil {
-		return false
-	}
-	names, err := git.Output("-C", worktree, "diff", "--name-only", base, tip)
-	if err != nil {
-		return false
-	}
-	changed := map[string]struct{}{}
-	for _, name := range strings.Split(names, "\n") {
-		changed[name] = struct{}{}
-	}
-	for _, input := range inputs {
-		if _, ok := changed[input]; ok {
-			return true
-		}
-	}
-	return false
 }
 
 // brokerChangeNotice names the install step that a broker-changing landing at root still

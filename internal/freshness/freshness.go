@@ -37,7 +37,7 @@ func Digest(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	paths, err := buildInputs(root)
+	paths, _, err := buildInputs(root)
 	if err != nil {
 		return "", err
 	}
@@ -63,14 +63,31 @@ func Digest(root string) (string, error) {
 // BuildInputs returns the repository-relative, slash-separated, sorted paths that Digest
 // hashes for root.
 func BuildInputs(root string) ([]string, error) {
-	root, err := filepath.Abs(root)
+	inputs, _, err := relativeBuildInputs(root)
+	return inputs, err
+}
+
+// relativeBuildInputs returns BuildInputs(root) and the listed package directories of
+// buildInputs, each in the same repository-relative, slash-separated form.
+func relativeBuildInputs(root string) (inputs, packageDirs []string, err error) {
+	root, err = filepath.Abs(root)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	paths, err := buildInputs(root)
+	paths, dirs, err := buildInputs(root)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	if inputs, err = relativeTo(root, paths); err != nil {
+		return nil, nil, err
+	}
+	if packageDirs, err = relativeTo(root, dirs); err != nil {
+		return nil, nil, err
+	}
+	return inputs, packageDirs, nil
+}
+
+func relativeTo(root string, paths []string) ([]string, error) {
 	relative := make([]string, len(paths))
 	for i, path := range paths {
 		rel, err := filepath.Rel(root, path)

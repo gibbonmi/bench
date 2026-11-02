@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -82,7 +83,7 @@ func landStack(ctx context.Context, measures *landingMeasures, j joins, a ambien
 	for i, l := range landings {
 		// The counts are read before the release step, because that step drops the records.
 		records[i] = censusCount(a.home, root, l.assignment.ID)
-		brokerChanged = brokerChanged || brokerSourceChanged(l.assignment.Worktree, l.source.base, l.source.tip)
+		brokerChanged = brokerChanged || freshness.DiffChangesBuildInputs(l.assignment.Worktree, l.source.base, l.source.tip)
 		printLandingSource(stderr, l.source.base, l.assignment.Start)
 		var member landing.ReviewedRequest
 		member, publications[i] = sourceRequest(l.assignment, l.source, l.member.Request, l.member.Message, request.Destination)

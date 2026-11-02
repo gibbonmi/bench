@@ -2,6 +2,7 @@
 package freshness
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -74,6 +75,29 @@ func verifiedExecutable(executable string) (seal, error) {
 		return seal{}, errors.New(decision.Reason)
 	}
 	return stored, nil
+}
+
+// Refresh republishes root's published executable when it does not verify against root's
+// sources. A verified executable takes no build, and Refresh returns false and no errors.
+// Otherwise it calls build once for root and the published path and returns that error as
+// buildErr. The build's own verdict does not settle the outcome, because a build can return
+// nil and still leave an executable that no seal authenticates. So Refresh reads Verify a
+// second time, returns that answer as err, and reports rebuilt only when err is nil.
+//
+// Completion is a predicate over the tree, never a recorded step. The publication owner
+// promotes the seal last and installs the manifest with it, so a verified seal also proves
+// that the manifest of the same transaction landed. An interrupted refresh therefore
+// finishes on the next call.
+func Refresh(ctx context.Context, root string, build func(context.Context, string, string) error) (rebuilt bool, buildErr, err error) {
+	executable := PublishedExecutable(root)
+	if Verify(root, executable) == nil {
+		return false, nil, nil
+	}
+	buildErr = build(ctx, root, executable)
+	if err = Verify(root, executable); err != nil {
+		return false, buildErr, err
+	}
+	return true, buildErr, nil
 }
 
 // Check verifies an executable from current sources, then requires its freshness subcommand.
