@@ -23,6 +23,7 @@ func TestParseMarksLiveSubstitution(t *testing.T) {
 		{"R02 double-quoted backtick", "rg \"`x`\" .", []mark{{1, Token{Kind: Word, Text: "`x`", Substitution: true}}}},
 		{"R02 bare backtick", "rg `x` .", []mark{{1, Token{Kind: Word, Text: "`x`", Substitution: true}}}},
 		{"R03 bare dollar paren", "rg $(x) .", []mark{{2, Token{Kind: ControlOperator, Text: "(", Substitution: true}}}},
+		{"R03 quoted word in bare dollar paren", "rg $('x') .", []mark{{2, Token{Kind: ControlOperator, Text: "(", Substitution: true}}}},
 		{"R04 single-quoted dollar paren", "rg 'lit$(x)' .", nil},
 		{"R04 single-quoted backtick", "rg 'a`b' .", nil},
 		{"R05 escaped dollar paren", `rg \$\(x\) .`, nil},
