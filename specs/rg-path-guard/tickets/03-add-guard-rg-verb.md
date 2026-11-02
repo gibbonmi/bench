@@ -27,6 +27,7 @@ Do not edit `bin/bench.sh`. It has 538 lines over its 400-line budget, and `guar
 `internal/conformance/entry_point_parity_test.go` (444 lines) and `internal/conformance/package_core_checks_test.go` (451 lines) are over budget with no grant, and the gate lane runs `structure --growth` (`internal/gate/lane.go:94`). A file that grows past its base count reds that lane (`internal/structure/structure.go:309-331`). In each file, move at least as many lines as you add into the named new sibling file (`entry_point_parity_rows_test.go`, `guard_header_manifests_test.go`). Move a cohesive block such as the row table or the manifest check, and change no behavior.
 
 Test the verb in `cmd/bench/guard_rg_test.go` (`TestGuardRgVerb`). Test the shim through a real envelope pipe in `internal/systemtest/rg_guard_hook_test.go` (`TestRgGuardHookFailsOpen`, `TestRgGuardHookRefuses`), after `internal/systemtest/bench_follow_on_test.go` and its `staleCoreAnswer` (`:40`).
+Each hook child gets `BENCH_KIT=` the owner kit and `BENCH_RUN_BINARY=` the selected binary, as `bench_follow_on_test.go:60` does. BENCH_KIT is supplied by `bench test --check system`; never run the tagged suite directly.
 
 ## Acceptance
 
