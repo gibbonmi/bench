@@ -8,7 +8,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Commit rebuild of the worktree build
 
-- Changed `bench commit` in a kit worktree. After the commit publishes, it rebuilds the worktree's `dist/bench` when the seal of that build does not verify. It builds an absent `dist/bench` only when the published commit changes a build input. The rebuild runs before the background grade starts, so the grade uses the fresh build. The commit prints one stderr line after a rebuild, or one line with the cause and the rebuild command after a failed rebuild. A failed rebuild keeps the commit's exit 0. Before, a Go commit left a stale `dist/bench`, and the build preflight showed `binary-seal` red until a manual `bench worktree build`.
+- Changed `bench commit` in a kit worktree. After the commit publishes, it rebuilds the worktree's `dist/bench` when the seal of that build does not verify. It builds an absent `dist/bench` only when the published commit changes a build input. The rebuild runs before the background grade starts, so the grade uses the fresh build.
+
+  The commit prints one stderr line after a rebuild, or one line with the cause and the rebuild command after a failed rebuild. A failed rebuild keeps the commit's exit 0. Before, a Go commit left a stale `dist/bench`, and the build preflight showed `binary-seal` red until a manual `bench worktree build`.
 
 ### Broker notice for a deleted Go build input
 

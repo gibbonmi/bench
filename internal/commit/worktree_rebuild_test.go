@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/brokermanifest"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	commitrepo "github.com/gibbonmi/bench/internal/commitment/repository"
@@ -176,9 +177,22 @@ func TestWorktreeRebuildSkipsAMarkdownCommitWithoutABuild(t *testing.T) {
 	requireRebuild(t, rebuildRow{commits: []string{markdownCommit}})
 }
 
-// TestWorktreeRebuildRepairsAStaleBuildAfterAMarkdownCommit is CW20.
+// TestWorktreeRebuildRepairsAStaleBuildAfterAMarkdownCommit is CW20 and CW52. A dangling
+// dist/bench is present, so a Markdown commit still takes the refresh. That build publishes
+// nothing, so the second seal read fails.
 func TestWorktreeRebuildRepairsAStaleBuildAfterAMarkdownCommit(t *testing.T) {
 	requireRebuild(t, rebuildRow{published: true, commits: []string{inputCommit, markdownCommit}, builds: 1})
+	root := kitRepo(t)
+	executable := freshness.PublishedExecutable(root)
+	mustMkdirAll(t, filepath.Dir(executable))
+	if err := os.Symlink("absent", executable); err != nil {
+		t.Fatal(err)
+	}
+	commitChange(t, root, markdownCommit)
+	build := &fakeBuild{t: t}
+	if _, stderr := runStep(t, root, build.build); len(build.heads) != 1 || !strings.HasPrefix(stderr, "worktree build: failed: ") {
+		t.Fatalf("step = (%d builds, %q), want one build and a failure line", len(build.heads), stderr)
+	}
 }
 
 // TestWorktreeRebuildRepairsADeletedInput is CW21.
@@ -299,24 +313,6 @@ func TestWorktreeRebuildIgnoresAHeldInstall(t *testing.T) {
 	}
 }
 
-// kitLaunch is the launch fixture over a stale kit tree, marked as the kit, whose commits
-// run build as the worktree build.
-func kitLaunch(t *testing.T, check string, build *fakeBuild) launchFixture {
-	t.Helper()
-	f := newLaunchFixtureWith(t, check, staleKit)
-	f.asKit(t)
-	swapWorktreeBuild(t, build)
-	return f
-}
-
-// swapWorktreeBuild makes build the worktree build of each commit until t ends.
-func swapWorktreeBuild(t *testing.T, build *fakeBuild) {
-	t.Helper()
-	old := worktreeBuild
-	t.Cleanup(func() { worktreeBuild = old })
-	worktreeBuild = build.build
-}
-
 // TestCommitRebuildsBeforeItsGrade is CW27 to CW29 and CW36. The build runs once at the
 // published commit, its line comes before the synchronous outcome line of the grade, stdout
 // keeps the commit record last, and the commit still starts one grade.
@@ -345,12 +341,15 @@ func TestCommitRebuildsBeforeItsGrade(t *testing.T) {
 	}
 }
 
-// TestCommitKeepsExitZeroOnAFailedRebuild is CW30.
+// TestCommitKeepsExitZeroOnAFailedRebuild is CW30. The fixture worktree is in the pool of
+// the home that the test process sets, so the failure line names the worktree build verb.
 func TestCommitKeepsExitZeroOnAFailedRebuild(t *testing.T) {
 	build := &fakeBuild{t: t, err: errors.New("boom")}
 	f := kitLaunch(t, passingCheck, build)
-	if code, stdout, stderr := runCommand(t, f.root, "-m", "m", "tracked.txt"); code != 0 || len(build.heads) != 1 {
-		t.Fatalf("commit = (%d, %q, %q) after %d builds, want exit 0 after one failed build", code, stdout, stderr, len(build.heads))
+	rebuild := freshness.RebuildIn(benchhome.Dir(), f.root)
+	line := "worktree build: failed: boom; rebuild with " + rebuild.Action + "\n"
+	if code, stdout, stderr := runCommand(t, f.root, "-m", "m", "tracked.txt"); code != 0 || len(build.heads) != 1 || !rebuild.Worktree || !strings.Contains(stderr, line) {
+		t.Fatalf("commit = (%d, %q, %q) after %d builds, want exit 0 after one failed build and the line %q", code, stdout, stderr, len(build.heads), line)
 	}
 }
 

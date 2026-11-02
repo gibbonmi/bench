@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/poolkey"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
 )
 
@@ -51,9 +52,9 @@ func runStandInGrade() int {
 	return 0
 }
 
-// launchFixture is the worktree of an assignment, at a path with a space, whose wrapper runs the
-// stand-in grade and whose lane runs check, under a private Bench home. The commit reads a kit
-// apart from the fixture until asKit makes the primary checkout its kit.
+// launchFixture is the worktree of an assignment, at a path with a space in the pool of a
+// private Bench home, whose wrapper runs the stand-in grade and whose lane runs check. The
+// commit reads a kit apart from the fixture until asKit makes the primary checkout its kit.
 type launchFixture struct {
 	root, primary, common, home string
 	launches                    *processtest.Launches
@@ -73,7 +74,7 @@ func newLaunchFixtureWith(t *testing.T, check string, tree func(t *testing.T, ro
 	f := launchFixture{primary: t.TempDir(), home: t.TempDir()}
 	t.Setenv("BENCH_HOME", f.home)
 	initializeLandingRepo(t, f.primary, 0)
-	linked := filepath.Join(t.TempDir(), "linked work tree")
+	linked := filepath.Join(poolkey.Pools(f.home), "linked work tree")
 	gittest.MustRun(t, f.primary, "worktree", "add", "-q", "-b", "topic", linked)
 	commitmenttest.Register(t, linked, landingLabel)
 	commitmenttest.Admit(t, linked, landingLabel, "specs/commit-fixture/spec.md")
@@ -100,6 +101,24 @@ func newLaunchFixtureWith(t *testing.T, check string, tree func(t *testing.T, ro
 func (f launchFixture) asKit(t *testing.T) {
 	t.Helper()
 	t.Setenv("BENCH_KIT", f.primary)
+}
+
+// kitLaunch is the launch fixture over a stale kit tree, marked as the kit, whose commits
+// run build as the worktree build.
+func kitLaunch(t *testing.T, check string, build *fakeBuild) launchFixture {
+	t.Helper()
+	f := newLaunchFixtureWith(t, check, staleKit)
+	f.asKit(t)
+	swapWorktreeBuild(t, build)
+	return f
+}
+
+// swapWorktreeBuild makes build the worktree build of each commit until t ends.
+func swapWorktreeBuild(t *testing.T, build *fakeBuild) {
+	t.Helper()
+	old := worktreeBuild
+	t.Cleanup(func() { worktreeBuild = old })
+	worktreeBuild = build.build
 }
 
 // seedRecord writes a red background record of the worktree, so a commit prints the latest
