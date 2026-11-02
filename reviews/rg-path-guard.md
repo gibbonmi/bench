@@ -879,7 +879,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-r1-standards",
+          "performer": "ft366-review-c3-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f379142159ce57929cd7c42159b5d82cf80d5460",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c3-r1",
+            "digest": "sha256:c04e8074d5558d68304a5c9417654196c903803abc94bed31cfbd057ab681ea4",
+            "excerpt": "## Standards\nFindings: 3 raised, 0 accepted as repair targets.\nS1: block-unsafe-rg.sh:27-55 is the third copy of the fail-open runner body; the fix needs a new .bench/lib seam, so it is parked with bench learning.\nS2: BENCH-reference.md:884 restates the shim header; no-op, R48 requires the bullet in the section's form.\nS3: a mktemp failure under a stale core exits 2 (block-unsafe-rg.sh:42-49); no-op here, inherited from both siblings and parked with S1.\n"
+          },
+          "axis": "Standards",
+          "base": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "tip": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3-r1-spec",
+          "performer": "ft366-review-c3-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f379142159ce57929cd7c42159b5d82cf80d5460",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c3-r1",
+            "digest": "sha256:e8505b553230f9daa722555690b97756c98a670421b93f8189135c4f1511ee23",
+            "excerpt": "## Spec\nFindings: 0 repair targets. All C3 rows R39-R50, R56, R57 pass.\nP1 (reviewer decision, not a defect): spec Flagged additions item 8 leaves the AGENTS.md pointer to the reviewer; the build retired the bullet as the approved spec states. Surfaced to the reviewer.\nStale-core posture matches R43; block moves change no behavior; no agent-facing command is a pathless rg.\n"
+          },
+          "axis": "Spec",
+          "base": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "tip": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "c3-r1-coverage",
+          "performer": "ft366-review-c3-r1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f379142159ce57929cd7c42159b5d82cf80d5460",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-reviewer:ft366-review-c3-r1",
+            "digest": "sha256:be2fd61bc48fa32adad62bcb42c3bcb6120a8e789b390f82a1d067af5a4c1a9d",
+            "excerpt": "## Coverage\nFindings: 0.\nProbes: guards.go allow branch returning 2 bit (TestGuardRgVerb); shim stderr forward omitted bit (TestRgGuardHookRefuses).\n"
+          },
+          "axis": "Coverage",
+          "base": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+          "tip": "eb315403e4cb3bb95148af1d60e4c57b30841665",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1163,3 +1224,32 @@ The plan probe `wiring` omitted the shim from `.claude/settings.json`, answered 
 
 No refusal-route step is a pathless `rg` call, so `TestAgentRoutesPassTheWiredGuards` stays green.
 The coordinator probe renamed the shim in the live `.codex/hooks.json`, and `TestRootConformance` failed on the Codex wiring diagnostic.
+
+## C3 review round 1
+
+One unified session ran the three axes separately on opus at medium effort over `92dda48d..eb315403`. Every C3 row passes, and the round has no repair target.
+
+## Standards
+
+Findings: 3 raised, 0 repair targets. Worst issue: S1.
+
+- S1, parked, confidence 6: `.bench/hooks/block-unsafe-rg.sh:27-55` is the third hand copy of the fail-open runner body. The fix needs a new shared seam in `.bench/lib`, so the orchestrator parks it with `bench learning`.
+- S2, no-op, confidence 4: the Hook Layers bullet restates the shim header. R48 requires that bullet, and it keeps the form of the section.
+- S3, no-op, confidence 4: when `mktemp` fails under a stale core, the shim exits 2. Both sibling shims hold the same defect, and the S1 learning carries it.
+
+## Spec
+
+Findings: 0 repair targets. Worst issue: none.
+
+Flagged additions item 8 leaves one reviewer decision open. The `AGENTS.md` bullet can stay as a pointer for a harness that runs no hook.
+The build retired the bullet as the approved spec states. The orchestrator reports the decision to the reviewer.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
+
+## Advice
+
+- The test helper `runGitGuardHook` now serves the rg tests too, so a neutral name fits better.
+- The stale-core warning of the rg shim does not name the rebuild action.
+- The lead sentence of the Hook Layers section names only git safety.
