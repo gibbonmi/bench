@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/rg-path-guard/spec.md",
-  "plan_digest": "sha256:079fe43eda2b77a7eb921c044d8bc4efb857f81a6d1f197acaae4989661a3ce7",
+  "plan_digest": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
   "implementation_session": "",
   "chunks": [
     {
@@ -734,6 +734,122 @@
           ]
         }
       ]
+    },
+    {
+      "id": "C3",
+      "base": "92dda48de69eed72ed8c3de6a1c7b3894ca81f52",
+      "tip": "f0c28331b775b7e06b736991368a4f3bde8905d6",
+      "plan_digest": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
+      "source_digest": "7c59bed564a4745868b4ae7f35d2275df9b280df",
+      "acceptance_rows": [
+        "R41",
+        "R42",
+        "R43",
+        "R44",
+        "R45",
+        "R46",
+        "R50",
+        "R56",
+        "R57",
+        "R39",
+        "R40",
+        "R47",
+        "R48",
+        "R49"
+      ],
+      "verification": [
+        {
+          "id": "c3-t03-registrations",
+          "performer": "ft366-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c59bed564a4745868b4ae7f35d2275df9b280df",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft366-author-03",
+            "digest": "sha256:9b99886972291d95fb8bb018de1da3f0ee31e98dbb0b96600d3eaab92c724203",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/entry_point_parity_rows_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,entry-point-parity,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,484\ncheck[1]{name,kind,tests_run,subjects}:\n  entry-point-parity,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,771,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: entry-point-parity: .bench/hooks/block-unsafe-rg.sh reaches no parity row; give it a row naming the registry command it calls\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f0c28331b775b7e06b736991368a4f3bde8905d6",
+          "requirement": "registrations",
+          "command": "bench test --check entry-point-parity",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the guard-rg parity row and record the R56 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft366-author-03",
+              "digest": "sha256:9b99886972291d95fb8bb018de1da3f0ee31e98dbb0b96600d3eaab92c724203",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/entry_point_parity_rows_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,entry-point-parity,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,484\ncheck[1]{name,kind,tests_run,subjects}:\n  entry-point-parity,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,771,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: entry-point-parity: .bench/hooks/block-unsafe-rg.sh reaches no parity row; give it a row naming the registry command it calls\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c3-t03-command-contract",
+          "performer": "ft366-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c59bed564a4745868b4ae7f35d2275df9b280df",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft366-author-03",
+            "digest": "sha256:1e23a014e4d51d49b89ddce93f866044eb0d3f5f74f268f13c2bb9fb425e0e93",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/otelrecord/registry.go,omit,failed,1,TestHookSeamsMatchTheHookDispatchRows,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,HookSeams|GuardRg|CommandRegistry,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,502\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,7,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestHookSeamsMatchTheHookDispatchRows,\"otel_hook_seams_test.go:40: hook seams: dispatch [hook.check-agent-line hook.guard-bench-follow-on hook.guard-file-write hook.guard-git hook.guard-rg hook.session-inspect hook.stop-verdict hook.worktree-hook], registry [hook.check-agent-lin… (364 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f0c28331b775b7e06b736991368a4f3bde8905d6",
+          "requirement": "command-contract",
+          "command": "bench test --package ./cmd/bench --run 'HookSeams|GuardRg|CommandRegistry'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the hook.guard-rg seam row and record the R46 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft366-author-03",
+              "digest": "sha256:1e23a014e4d51d49b89ddce93f866044eb0d3f5f74f268f13c2bb9fb425e0e93",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/otelrecord/registry.go,omit,failed,1,TestHookSeamsMatchTheHookDispatchRows,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,HookSeams|GuardRg|CommandRegistry,passed,7\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,502\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,7,7\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestHookSeamsMatchTheHookDispatchRows,\"otel_hook_seams_test.go:40: hook seams: dispatch [hook.check-agent-line hook.guard-bench-follow-on hook.guard-file-write hook.guard-git hook.guard-rg hook.session-inspect hook.stop-verdict hook.worktree-hook], registry [hook.check-agent-lin… (364 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c3-t03-routing",
+          "performer": "ft366-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7c59bed564a4745868b4ae7f35d2275df9b280df",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:bench-writer-medium:ft366-author-03",
+            "digest": "sha256:a3caa09cc42439a4f344eac717fe971e53b5af66c2b36b3c9d04ecc09e0169d9",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/subcommand_routing_table_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,subcommand-routing,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,533\ncheck[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,25,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cmd/bench/main.go dispatches \\\"guard-rg\\\" with no entry in the subcommand argument-routing registry; record it as routed through usage.Parse or as an exemption with its reason\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "f0c28331b775b7e06b736991368a4f3bde8905d6",
+          "requirement": "routing",
+          "command": "bench test --check subcommand-routing",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Remove the guard-rg subcommandRouting row and record the R57 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:bench-writer-medium:ft366-author-03",
+              "digest": "sha256:a3caa09cc42439a4f344eac717fe971e53b5af66c2b36b3c9d04ecc09e0169d9",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/subcommand_routing_table_test.go,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,subcommand-routing,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,533\ncheck[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,25,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cmd/bench/main.go dispatches \\\"guard-rg\\\" with no entry in the subcommand argument-routing registry; record it as routed through usage.Parse or as an exemption with its reason\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -777,6 +893,18 @@
     {
       "from": "sha256:cc4f36a7ad3e0e75becff9ce97c4d929c24cdf9b9b96941687316c202fb103ca",
       "to": "sha256:079fe43eda2b77a7eb921c044d8bc4efb857f81a6d1f197acaae4989661a3ce7",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:079fe43eda2b77a7eb921c044d8bc4efb857f81a6d1f197acaae4989661a3ce7",
+      "to": "sha256:e083920ee6f761c9c2504d1360f5c4b9d72bf8cc552eb2fb3781c35a976a926b",
       "chunk_ids": {
         "C1": [
           "C1"
