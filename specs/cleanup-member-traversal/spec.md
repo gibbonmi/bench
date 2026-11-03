@@ -82,7 +82,7 @@ A reached operation returns its current outcome and error.
 The traversal does not derive an assignment identity, fingerprint, ownership proof, or branch classification.
 
 The traversal takes no run parameter.
-Each adapter's operation closures capture that adapter's own `a.run`, and the unclaimed adapter keeps its current signature with no run.
+The explicit and landed closures capture that adapter's own `a.run`. The unrecorded and unclaimed adapters read no run, so their closures capture none.
 Each adapter supplies the predicate that selects a member for a visit.
 The landed visits use [landedApplies](../../internal/worktree/clean_landed.go:218), so a missing-tree release row is visited.
 Landed preflight keeps its current Removes predicate, so it skips that row.
