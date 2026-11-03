@@ -1250,7 +1250,71 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "C4-R1-STD",
+          "performer": "ft363-review-c4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4",
+            "digest": "sha256:52da404750199de126add6ed3aafbf818de4525c8dcabedf25a71f730de6525e",
+            "excerpt": "## Standards\n0 findings. Worst issue: none.\nThe options input and the versioned hash loop each have one production owner (cleanup_members.go:57, :64), used by explicit, landed, and unclaimed (clean_set.go:172,234; clean_landed.go:62,238; clean_unclaimed.go:118). The baseline renders unclaimedFingerprintInputs (cleanup_members_baseline_test.go:381) and holds no hand copy. Test-count pin 885 to 890 matches five new top-level tests.\n"
+          },
+          "axis": "Standards",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C4-R1-SPEC",
+          "performer": "ft363-review-c4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4",
+            "digest": "sha256:792b1c48341d15984e7a28640891a2069058ad37dffff3b228f758d75ed57461",
+            "excerpt": "## Spec\n0 findings. Worst issue: none.\nAll 14 C4 rows audited: R01/R27 clean_set_wiring_test.go:196-211; R02/R04/R05/R28 :212-234; R14/R18/R19 :279-311 (probes unclaimed-stop and unclaimed-suffix bit); R20 :240-273; R21 :317-345 with a real reference-transaction hook (exact-oid bit); R24 TestCleanSetUnclaimedStaleReplanAction; R25 cleanup_members_census_test.go:578 (four restored loops bit); R26 manifest cleanup_members_baseline_test.go:79-85 and unclaimed-fingerprint red. Author decisions 1 (fault appended after the production list) and 2 (literal discard-branch=true) are correct.\n"
+          },
+          "axis": "Spec",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C4-R1-COV",
+          "performer": "ft363-review-c4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4",
+            "digest": "sha256:bc40b3321e8927da83d433065a154d16bf7131ebc02fc0e4e3e7cab788a46aaa",
+            "excerpt": "## Coverage\n0 findings from the axis; two advice items promoted by the orchestrator to C4-COV-1 and C4-COV-2 under --auto-approve, each with a binding requirement.\nC4-COV-1 | sev 3 | conf 9 | auto-fix | internal/worktree/cleanup_members_census_test.go:598-633, :678-679\nRequirement: spec Testing decisions, \"It must fail if any original member-iteration loop remains.\" Probe B: the original loop body pasted into an immediately invoked closure: silent. Probe A: a condition-stopped loop with run behind a dead branch: silent.\nC4-COV-2 | sev 3 | conf 8 | auto-fix | internal/worktree/cleanup_members.go:65, cleanup_members_baseline_test.go:138\nRequirement: spec Solution, \"Keep the current ... fingerprints.\" Probe: version dropped from fingerprintInputs: whole package passed (1663 tests), silent, because renderFingerprintInputs hashes with the same production function and the records normalize digests.\nOther probes: discard-branch=false: bit (7 unclaimed baseline cases). same() dropped at clean_unclaimed.go:224: silent, an equivalent mutant (the branch is unreachable after the fingerprint and length check). All restored. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "finding_ids": [
+            "C4-COV-1",
+            "C4-COV-2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1576,3 +1640,30 @@ The ticket 04 author reported these development reds outside the plan probes. Ea
 | R02 | The member order is reversed. | 4 unclaimed tests |
 
 The author reported that the unclaimed baseline holds a hand copy of the unclaimed fingerprint inputs, which ticket 05 removes.
+
+## C4 review round 1
+
+One unified opus / medium session reviewed the frozen pair `49982b68a..7e2f9e620`. Repair cycles consumed for C4: 0 of 2 before this round's repair.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+
+## Coverage
+
+Findings: 2. Worst issue: C4-COV-1. The axis graded both items as advice, and the orchestrator promoted them under `--auto-approve`, because each fails a binding requirement.
+
+- C4-COV-1, severity 3, confidence 9. The census misses an original loop that is wrapped in an immediately invoked closure (`internal/worktree/cleanup_members_census_test.go:678`). The spec requires that the census fail if any original member-iteration loop remains. Disposition: auto-fix, test-only.
+- C4-COV-2, severity 3, confidence 8. No test sees a uniform change of the fingerprint bytes (`internal/worktree/cleanup_members.go:65`). The spec keeps the current fingerprints. Disposition: auto-fix, test-only, with one known-answer digest for each set version.
+
+## Advice
+
+- The name `explicitFingerprintInput` now covers all three modes, and the type sits in the traversal file.
+- The adapter witnesses widen the stated question of `clean_set_wiring_test.go`.
+- The tuple check `!m.same() ||` in `clean_unclaimed.go` is an equivalent mutant: the branch cannot run after the fingerprint and length check passes.
+
+Both findings route to one test-only repair on ticket 05. The repair also corrects the stale comment at `cleanup_members_baseline_test.go:135`.
