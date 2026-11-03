@@ -314,3 +314,14 @@ The ticket 01 author reported these witness reds. The S01 to S04 reds came from 
 | S15 | The producer still calls `axi.ShellQuote` before the production edit. | `TestTreeBuildArgument/an_embedded_quote`, `TestTargetRefusalEscapesOnlyAnUnsafeLine/a_plain_label` |
 
 The author reported one limit: the S03 probe did not isolate the sentinel-file assertion from the argv and byte failures.
+
+## S-B1 author witness reds
+
+The ticket 02 author reported these witness reds before the first production edit. The packages passed after the migration.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S13 | The history detail operand still renders through the bare-token policy. | `TestSelectedSpecDetailRoute` at `history_selected_test.go:140`, for `--limit`, `x.md.md`, and `quote' name` |
+| S40 | The widen rerun line still renders through the bare-token policy. | `TestWidenRerunArguments`, `TestSpecWidenRefusesAnOutOfScopeEntry` |
+
+The S40 argv recovery replaces the `<reference>` placeholder with `r1` in its recovery input only, because a shell reads a bare `<reference>` as a redirection.
