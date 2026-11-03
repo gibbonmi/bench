@@ -154,6 +154,20 @@ No implementation evidence is claimed here.
 ```bench-completion-plan
 {
   "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "review_mode": "unified",
+    "run_id": "ft363-build",
+    "orchestrator_session": "ft363-orchestrator",
+    "author_limit": 1,
+    "assignments": {
+      "00-capture-cleanup-baseline.md": [],
+      "01-share-recorded-traversal.md": [],
+      "02-migrate-unrecorded-traversal.md": [],
+      "03-migrate-landed-traversal.md": [],
+      "04-migrate-unclaimed-and-contract.md": []
+    }
+  },
   "chunks": [
     {
       "id": "C1",
