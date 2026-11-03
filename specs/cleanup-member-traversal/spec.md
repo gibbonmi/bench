@@ -132,12 +132,13 @@ Shared baseline and registry writes require this serial order.
 | C1 / 00-capture-cleanup-baseline.md, 01-share-recorded-traversal.md | The frozen all-mode baseline exists, and recorded explicit cleanup uses the shared owner with unchanged authority and results | R01, R02, R03, R04, R05, R06, R08, R09, R10, R11, R12, R13, R14, R15, R19, R24, R27, R28 | Frozen baseline capture, shared traversal table, explicit command and outcome witnesses, recorded baseline cases | yes |
 | C2 / 02-migrate-unrecorded-traversal.md | Explicit branch cleanup uses the owner after recorded effects with conditional recovery | R03, R04, R05, R06, R09, R11, R12, R13, R14, R16, R19, R22, R24, R27, R28, R29 | Mixed explicit baseline, discarded-ref and holder-removal witnesses | yes |
 | C3 / 03-migrate-landed-traversal.md | Landed command and folded-sibling cleanup use the owner with unchanged scope | R01, R02, R04, R05, R07, R08, R09, R10, R11, R12, R13, R14, R17, R19, R23, R24, R27, R28 | Landed command, locked drift, suffix, sibling, and baseline witnesses | no |
-| C4 / 04-migrate-unclaimed-and-contract.md | Unclaimed cleanup uses the owner and the complete tree has no original traversal copies | R01, R02, R04, R05, R14, R18, R19, R20, R21, R24, R25, R26, R27, R28 | Post-replan deletion witnesses, exact-OID race, full baseline comparison, copy-survival census | yes |
+| C4 / 04-migrate-unclaimed-and-contract.md, 05-contract-traversal-owner.md | Unclaimed cleanup uses the owner and the complete tree has no original traversal copies | R01, R02, R04, R05, R14, R18, R19, R20, R21, R24, R25, R26, R27, R28 | Post-replan deletion witnesses, exact-OID race, full baseline comparison, copy-survival census | yes |
 
 The previous prospective C1 splits into C1 and C2.
 The previous C2 becomes C3.
 The previous C3 and C4 combine into C4.
 At build entry, ticket 00 takes the baseline capture from ticket 01, and both stay in C1.
+At the C3 checkpoint, ticket 05 takes the census, the fingerprint input owner, and the R26 completion from ticket 04, and both stay in C4.
 
 Each migration removes its own old loop with its preservation evidence.
 Do not retain unreachable legacy loops to create a separate contraction ticket.
@@ -152,7 +153,256 @@ The command, AXI, and routing checks run only in final verification, because no 
 No implementation evidence is claimed here.
 
 ```bench-completion-plan
-{"version":2,"execution":{"mode":"delegate","review_mode":"unified","run_id":"ft363-build","orchestrator_session":"ft363-orchestrator","author_limit":1,"assignments":{"00-capture-cleanup-baseline.md":[{"session":"ft363-author-00","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"cc2d50bb146696de64d6d0b5c08de8a784c422f9","native_ref":"claude-agent:ft363-author-00"}],"01-share-recorded-traversal.md":[{"session":"ft363-author-01","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"21e060fa903ae96ec863e143fb6a8605514d3dda","native_ref":"claude-agent:ft363-author-01"},{"session":"ft363-repair-01-r1","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"f777fc8f3ee43afdff75514cd1438011b63905f8","native_ref":"claude-agent:ft363-repair-01-r1","predecessor":"ft363-author-01","trigger":"user-directed","stopped":"5e0110372b6adf94156ef2a64ac42935e19632a5","preserved":"7b46b1f4f1480d929cc6b79a9782240ca71be116"}],"02-migrate-unrecorded-traversal.md":[{"session":"ft363-author-02","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"d6b33ff0c3bde928cd01ec8a58726d35096e3d4d","native_ref":"claude-agent:ft363-author-02"}],"03-migrate-landed-traversal.md":[{"session":"ft363-author-03","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"e14b832e0c8be46a6a8d445b9a63fbaf6611e2fc","native_ref":"claude-agent:ft363-author-03"},{"session":"ft363-repair-03-r1","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"72c93a33fdd682c6ae6ccd844cb1e31e8c944415","native_ref":"claude-agent:ft363-repair-03-r1","predecessor":"ft363-author-03","trigger":"user-directed","stopped":"9b5c117bd9263b21dfdd99a9f96cf3fd01149d36","preserved":"72c93a33fdd682c6ae6ccd844cb1e31e8c944415"}],"04-migrate-unclaimed-and-contract.md":[]}},"chunks":[{"id":"C1","tickets":["00-capture-cleanup-baseline.md","01-share-recorded-traversal.md"],"verification":[{"id":"baseline-capture","command":"bench test --package ./internal/worktree --run 'CleanupTraversalBaseline'","probe":"Drop the unreached recorded suffix rows from the explicit stopped result and record the R26 red, the restore, and the green.","ticket":"00-capture-cleanup-baseline.md"},{"id":"explicit-preflight","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Skip the explicit all-member preflight before the recorded visits and record the R06 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"later-requalify","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Skip the later requalification before a reached recorded visit and record the R09 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"locked-requalify","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Skip the locked qualification check of the recorded cleanup transaction and record the R10 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"stop-at-failure","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Continue the shared traversal after a failed visit and record the R14 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"recorded-suffix","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Drop the unreached recorded members from the explicit stop projection and record the R15 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"}]},{"id":"C2","tickets":["02-migrate-unrecorded-traversal.md"],"verification":[{"id":"unrecorded-requalify","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'","probe":"Skip the unrecorded requalification after the recorded visits and record the R03 red, the restore, and the green.","ticket":"02-migrate-unrecorded-traversal.md"},{"id":"conditional-recovery","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'","probe":"Write a discarded recovery ref for every unrecorded plan and record the R29 red, the restore, and the green.","ticket":"02-migrate-unrecorded-traversal.md"}]},{"id":"C3","tickets":["03-migrate-landed-traversal.md"],"verification":[{"id":"landed-preflight","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Skip the landed all-member preflight before the landed visits and record the R07 red, the restore, and the green.","ticket":"03-migrate-landed-traversal.md"},{"id":"landed-locked","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Skip the locked qualification check of a landed visit and record the R10 red, the restore, and the green.","ticket":"03-migrate-landed-traversal.md"},{"id":"landed-suffix","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Return only the completed prefix from the landed stop projection and record the R17 red, the restore, and the green.","ticket":"03-migrate-landed-traversal.md"}]},{"id":"C4","tickets":["04-migrate-unclaimed-and-contract.md"],"verification":[{"id":"unclaimed-suffix","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Append unreached rows to the unclaimed stop projection and record the R18 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"exact-oid","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Delete the later unclaimed ref without its planned old OID and record the R21 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"unclaimed-stop","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Continue the unclaimed deletions after a failed deletion and record the R14 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"census-explicit","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original recorded member loop in applyExplicitSet and record the R25 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"census-unrecorded","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original branch loop in applyUnrecordedRows and record the R25 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"census-landed","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original member loop in applyLandedSet and record the R25 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"census-unclaimed","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original member loop in applyUnclaimedAssignmentSet and record the R25 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"}]}],"final_verification":[{"id":"all-mode-tests","command":"bench test --package ./internal/worktree"},{"id":"coverage","command":"bench coverage --check cleanup-member-traversal"},{"id":"command-contract","command":"bench test --package ./cmd/bench"},{"id":"axi-membership","command":"bench test --check axi-query-registry"},{"id":"routing","command":"bench test --check subcommand-routing"}]}
+{
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "review_mode": "unified",
+    "run_id": "ft363-build",
+    "orchestrator_session": "ft363-orchestrator",
+    "author_limit": 1,
+    "assignments": {
+      "00-capture-cleanup-baseline.md": [
+        {
+          "session": "ft363-author-00",
+          "assignment": "0a19b26ab28493880a91ad070681c0fa",
+          "model": "opus",
+          "effort": "medium",
+          "source": "cc2d50bb146696de64d6d0b5c08de8a784c422f9",
+          "native_ref": "claude-agent:ft363-author-00"
+        }
+      ],
+      "01-share-recorded-traversal.md": [
+        {
+          "session": "ft363-author-01",
+          "assignment": "0a19b26ab28493880a91ad070681c0fa",
+          "model": "opus",
+          "effort": "medium",
+          "source": "21e060fa903ae96ec863e143fb6a8605514d3dda",
+          "native_ref": "claude-agent:ft363-author-01"
+        },
+        {
+          "session": "ft363-repair-01-r1",
+          "assignment": "0a19b26ab28493880a91ad070681c0fa",
+          "model": "opus",
+          "effort": "medium",
+          "source": "f777fc8f3ee43afdff75514cd1438011b63905f8",
+          "native_ref": "claude-agent:ft363-repair-01-r1",
+          "predecessor": "ft363-author-01",
+          "trigger": "user-directed",
+          "stopped": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "preserved": "7b46b1f4f1480d929cc6b79a9782240ca71be116"
+        }
+      ],
+      "02-migrate-unrecorded-traversal.md": [
+        {
+          "session": "ft363-author-02",
+          "assignment": "0a19b26ab28493880a91ad070681c0fa",
+          "model": "opus",
+          "effort": "medium",
+          "source": "d6b33ff0c3bde928cd01ec8a58726d35096e3d4d",
+          "native_ref": "claude-agent:ft363-author-02"
+        }
+      ],
+      "03-migrate-landed-traversal.md": [
+        {
+          "session": "ft363-author-03",
+          "assignment": "0a19b26ab28493880a91ad070681c0fa",
+          "model": "opus",
+          "effort": "medium",
+          "source": "e14b832e0c8be46a6a8d445b9a63fbaf6611e2fc",
+          "native_ref": "claude-agent:ft363-author-03"
+        },
+        {
+          "session": "ft363-repair-03-r1",
+          "assignment": "0a19b26ab28493880a91ad070681c0fa",
+          "model": "opus",
+          "effort": "medium",
+          "source": "72c93a33fdd682c6ae6ccd844cb1e31e8c944415",
+          "native_ref": "claude-agent:ft363-repair-03-r1",
+          "predecessor": "ft363-author-03",
+          "trigger": "user-directed",
+          "stopped": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "preserved": "72c93a33fdd682c6ae6ccd844cb1e31e8c944415"
+        }
+      ],
+      "04-migrate-unclaimed-and-contract.md": [],
+      "05-contract-traversal-owner.md": []
+    }
+  },
+  "chunks": [
+    {
+      "id": "C1",
+      "tickets": [
+        "00-capture-cleanup-baseline.md",
+        "01-share-recorded-traversal.md"
+      ],
+      "verification": [
+        {
+          "id": "baseline-capture",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversalBaseline'",
+          "probe": "Drop the unreached recorded suffix rows from the explicit stopped result and record the R26 red, the restore, and the green.",
+          "ticket": "00-capture-cleanup-baseline.md"
+        },
+        {
+          "id": "explicit-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "probe": "Skip the explicit all-member preflight before the recorded visits and record the R06 red, the restore, and the green.",
+          "ticket": "01-share-recorded-traversal.md"
+        },
+        {
+          "id": "later-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "probe": "Skip the later requalification before a reached recorded visit and record the R09 red, the restore, and the green.",
+          "ticket": "01-share-recorded-traversal.md"
+        },
+        {
+          "id": "locked-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "probe": "Skip the locked qualification check of the recorded cleanup transaction and record the R10 red, the restore, and the green.",
+          "ticket": "01-share-recorded-traversal.md"
+        },
+        {
+          "id": "stop-at-failure",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "probe": "Continue the shared traversal after a failed visit and record the R14 red, the restore, and the green.",
+          "ticket": "01-share-recorded-traversal.md"
+        },
+        {
+          "id": "recorded-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "probe": "Drop the unreached recorded members from the explicit stop projection and record the R15 red, the restore, and the green.",
+          "ticket": "01-share-recorded-traversal.md"
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "tickets": [
+        "02-migrate-unrecorded-traversal.md"
+      ],
+      "verification": [
+        {
+          "id": "unrecorded-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
+          "probe": "Skip the unrecorded requalification after the recorded visits and record the R03 red, the restore, and the green.",
+          "ticket": "02-migrate-unrecorded-traversal.md"
+        },
+        {
+          "id": "conditional-recovery",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
+          "probe": "Write a discarded recovery ref for every unrecorded plan and record the R29 red, the restore, and the green.",
+          "ticket": "02-migrate-unrecorded-traversal.md"
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "tickets": [
+        "03-migrate-landed-traversal.md"
+      ],
+      "verification": [
+        {
+          "id": "landed-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Skip the landed all-member preflight before the landed visits and record the R07 red, the restore, and the green.",
+          "ticket": "03-migrate-landed-traversal.md"
+        },
+        {
+          "id": "landed-locked",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Skip the locked qualification check of a landed visit and record the R10 red, the restore, and the green.",
+          "ticket": "03-migrate-landed-traversal.md"
+        },
+        {
+          "id": "landed-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Return only the completed prefix from the landed stop projection and record the R17 red, the restore, and the green.",
+          "ticket": "03-migrate-landed-traversal.md"
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "tickets": [
+        "04-migrate-unclaimed-and-contract.md",
+        "05-contract-traversal-owner.md"
+      ],
+      "verification": [
+        {
+          "id": "unclaimed-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Append unreached rows to the unclaimed stop projection and record the R18 red, the restore, and the green.",
+          "ticket": "04-migrate-unclaimed-and-contract.md"
+        },
+        {
+          "id": "exact-oid",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Delete the later unclaimed ref without its planned old OID and record the R21 red, the restore, and the green.",
+          "ticket": "04-migrate-unclaimed-and-contract.md"
+        },
+        {
+          "id": "unclaimed-stop",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Continue the unclaimed deletions after a failed deletion and record the R14 red, the restore, and the green.",
+          "ticket": "04-migrate-unclaimed-and-contract.md"
+        },
+        {
+          "id": "census-explicit",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Restore the original recorded member loop in applyExplicitSet and record the R25 red, the restore, and the green.",
+          "ticket": "05-contract-traversal-owner.md"
+        },
+        {
+          "id": "census-unrecorded",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Restore the original branch loop in applyUnrecordedRows and record the R25 red, the restore, and the green.",
+          "ticket": "05-contract-traversal-owner.md"
+        },
+        {
+          "id": "census-landed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Restore the original member loop in applyLandedSet and record the R25 red, the restore, and the green.",
+          "ticket": "05-contract-traversal-owner.md"
+        },
+        {
+          "id": "census-unclaimed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Restore the original member loop in applyUnclaimedAssignmentSet and record the R25 red, the restore, and the green.",
+          "ticket": "05-contract-traversal-owner.md"
+        },
+        {
+          "id": "unclaimed-fingerprint",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "probe": "Omit one unclaimed fingerprint input in production and record the R26 red, the restore, and the green.",
+          "ticket": "05-contract-traversal-owner.md"
+        }
+      ]
+    }
+  ],
+  "final_verification": [
+    {
+      "id": "all-mode-tests",
+      "command": "bench test --package ./internal/worktree"
+    },
+    {
+      "id": "coverage",
+      "command": "bench coverage --check cleanup-member-traversal"
+    },
+    {
+      "id": "command-contract",
+      "command": "bench test --package ./cmd/bench"
+    },
+    {
+      "id": "axi-membership",
+      "command": "bench test --check axi-query-registry"
+    },
+    {
+      "id": "routing",
+      "command": "bench test --check subcommand-routing"
+    }
+  ]
+}
 ```
 
 ## Testing decisions

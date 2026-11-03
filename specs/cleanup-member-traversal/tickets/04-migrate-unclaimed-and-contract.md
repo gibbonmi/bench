@@ -1,15 +1,14 @@
-# Migrate unclaimed traversal and remove remaining copies
+# Migrate unclaimed traversal
 
 Blocked by: 03-migrate-landed-traversal.md
 Writes: internal/worktree/clean_unclaimed.go, internal/worktree/clean_set.go, internal/worktree/clean_discard.go, internal/worktree/clean_landed.go, internal/worktree/cleanup_members_census_test.go (new), internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/worktree/cleanup_members_modes_test.go, internal/worktree/cleanup_members_baseline_record_test.go
-Covers: R01, R02, R04, R05, R14, R18, R19, R20, R21, R24, R25, R26, R27, R28
+Covers: R01, R02, R04, R05, R14, R18, R19, R20, R21, R24, R27, R28
 
 ## What to build
 
-Deliver C4: unclaimed cleanup consumes the accepted C1 traversal and the complete migration has one member-loop owner.
+Deliver the first half of C4: unclaimed cleanup consumes the accepted C1 traversal.
 Remove applyUnclaimedAssignmentSet's original loop in this ticket.
 Consume the predecessor baseline records and completed adapter migrations.
-Finish the permanent comparison across every enumerated mode and case.
 Ticket 00 owns the frozen records, and this ticket adds only the post-replan unclaimed witnesses.
 applyUnclaimedAssignmentSet keeps its current signature with no run parameter.
 
@@ -25,11 +24,8 @@ A real reference-transaction hook moves a later ref after an earlier deletion co
 The exact-OID guard must preserve the moved ref's new tip.
 The hook records execution and ignores its nested update.
 
-The final census grades all four adapter bodies against the shared owner.
-Demonstrate its red by restoring each original loop independently through bench probe.
-Remove any remaining obsolete traversal support without retiring public entry points.
-No unreachable legacy loop or second production traversal owner may remain.
-C4 completes R25 and the full R26 comparison.
+Ticket 05 owns the census, the fingerprint input owner, and the full R26 comparison.
+Each mode-agnostic row that this ticket covers needs one witness that drives applyUnclaimedAssignmentSet.
 
 The mandatory registry paths preserve current dispatch, help, AXI membership, and routing.
 This ticket introduces no command or rendered schema change.
@@ -43,9 +39,7 @@ This ticket introduces no command or rendered schema change.
 - [ ] TestCleanupUnclaimedMovedRefAfterReplan proves the hook ran and preserves the moved later ref while the earlier deletion remains complete (R21).
 - [ ] The failed and unvisited refs retain their expected OIDs, including head, tip, and checked-out-ref preservation cases.
 - [ ] Unclaimed stale remedies, original boundary trace, and authority refusals match frozen responses and durable state (R24, R27, R28).
-- [ ] TestCleanupTraversalCopySurvival reds on an original loop restored at each of the four adapter sites, then passes after each restoration (R25).
-- [ ] TestCleanupTraversalBaseline compares every manifest case with meaningful digest relations, OIDs, recovery destinations, output rows, and durable state (R26).
-- [ ] Changed unclaimed suffix projection, an omitted old-OID guard, a continued visit after failure, and each restored loop produce observed behavioral reds.
+- [ ] Changed unclaimed suffix projection, an omitted old-OID guard, and a continued visit after failure produce observed behavioral reds.
 
 ## Checkpoint verification
 
@@ -55,5 +49,4 @@ Record the named red, restoration, green, and baseline comparison in the review 
 Use bench probe for each behavioral omission or swap after implementation.
 A compile failure does not prove a preservation property.
 
-The orchestrator records the green lane commit and freezes C4's delta for independent review.
-That review accepts Standards, Spec, and Coverage before the next chunk starts.
+Ticket 05 is the successor in C4, and its author freezes the chunk delta.
