@@ -584,7 +584,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "C2-R1-STD",
+          "performer": "ft363-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c2",
+            "digest": "sha256:c689cb86a1a70ee6cf8c65a3556c7789fc1450888aefcc5f98128cb51d1a4584",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\nThe new tests take their expectations from production (driftedDetail, notAttemptedDetail, set.plans(), the planned Recovery) and restate none (cleanup_members_modes_test.go:229-265). The hand-written R27 trace (cleanup_members_modes_test.go:134) has its red recorded. The test-count pin moves 882 to 884 (parallel_census_test.go:926), matching two new top-level tests. No edit falls outside an acceptance row.\n"
+          },
+          "axis": "Standards",
+          "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C2-R1-SPEC",
+          "performer": "ft363-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c2",
+            "digest": "sha256:ba79ce3a5ffc200de12de2266186fa4f2af1eba72d316c73e6b181bfecf2c536",
+            "excerpt": "## Spec\nFindings: 0. Worst issue: none.\nAll 16 C2 rows audited: R03/R09 TestDiscardTargetRequalifiesAfterARecordedRemoval; R04/R05/R06 TestCleanupTraversalUnrecordedMixed; R11/R13/R14/R16/R19 TestCleanupTraversalUnrecordedSuffix; R22/R24/R29 existing clean_discard tests and unrecorded baseline records; R27 new subtest; R28 existing discard witnesses and baseline cases. The stop index members[len(set.rows)+failed+1:] matches the old loop (clean_discard.go:225-249). No lifecycle hook added (clean_discard.go:231-240). Frozen unrecorded records unchanged.\n"
+          },
+          "axis": "Spec",
+          "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C2-R1-COV",
+          "performer": "ft363-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c2",
+            "digest": "sha256:7a169a3f2b9c8540b5249a8f7874f5e85b0a8fb2582a3a92d7784e9e27aab418",
+            "excerpt": "## Coverage\nFindings: 0. Worst issue: none.\nR12 is vacuous on the unrecorded stage: with DiscardBranch every class plans as ActionDiscardRemove (clean_discard.go:189), and requalifiedOutcome yields not-attempted or a fault (clean_set_apply.go:113-118). Bypass attempts on the stop offset and on retained visits were caught (cleanup_members_modes_test.go:179-181, 258, 282-285). Probes: requalify replaced by planned,nil: bit (TestDiscardTargetRequalifiesAfterARecordedRemoval, UnrecordedSuffix/R13), restored. classUnique test swapped for true: bit (TestDiscardTargetLandedAndSubsumedWriteNoRef), restored. Focused suite 140 tests pass. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -718,3 +779,25 @@ The ticket 02 author reported these development reds outside the plan probes. Ea
 | R27 | An extra hook is inserted. | `TestCleanupTraversalModeFaultBoundaries/unrecorded/all-success` |
 
 The author reported two divergences. R12 has no unrecorded witness, because under `--discard-branch` every unrecorded class replans as removable. The unrecorded closures capture no run, because `requalifyUnrecordedRow` reads none; the orchestrator corrects the spec sentence that says otherwise.
+
+## C2 review round 1
+
+One unified opus / medium session reviewed the frozen pair `94eb8696d..1c1cb2a10`. Repair cycles consumed for C2: 0 of 2.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+
+## Coverage
+
+Findings: 0. Worst issue: none. R12 does not apply to the unrecorded stage, because every unrecorded class replans as removable under `--discard-branch`.
+
+## Advice
+
+- The doc comment of `unrecordedSuffixSet` names `--discard-branch`, but R04 and R05 build the set with default options.
+- Ticket 02 makes the same false run claim as the spec sentence that the orchestrator corrects.
+- Ticket 02 counts R12 against `TestCleanupTraversalUnrecordedSuffix`, although R12 does not apply to the unrecorded stage.
