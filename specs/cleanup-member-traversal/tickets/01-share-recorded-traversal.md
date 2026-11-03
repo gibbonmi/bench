@@ -1,7 +1,7 @@
 # Share recorded explicit member traversal
 
 Blocked by: 00-capture-cleanup-baseline.md
-Writes: internal/worktree/cleanup_members.go (new), internal/worktree/cleanup_members_test.go (new), internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/cleanup_members.go (new), internal/worktree/cleanup_members_test.go (new), internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go
 Covers: R01, R02, R03, R04, R05, R06, R08, R09, R10, R11, R12, R13, R14, R15, R19, R24, R27, R28
 
 ## What to build
