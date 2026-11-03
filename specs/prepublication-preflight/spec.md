@@ -41,7 +41,7 @@ A plan commit that a dispatch follows still uses plain `bench commit`, because t
 ## User stories
 
 Line: opus / high.
-Implementation-line reason: C1 substitutes the candidate for HEAD across several gather reads, and a missed read is silent unless a differential row varies it, so C1 runs at high. C2 composes existing seams with exact stub rows and one system row, so it runs at medium.
+Implementation-line reason: C1 substitutes the candidate for HEAD across several gather reads, and a missed read is silent unless a differential row varies it, so C1 runs at high. C2 and C3 compose existing seams with exact stub rows and one system row, so they run at medium.
 Harder chunks: C1.
 
 ### The candidate grade
@@ -132,13 +132,15 @@ The commit's own post-publication rebuild stays (`internal/commit/background.go:
 
 ## Implementation chunks
 
-C1 adds the candidate grade and is its own chunk, because its seam is the uncertain one. Its review closes before C2 composes it.
-C2 composes the check seam and the chain. Ticket 02 adds the seam with a stub check, and ticket 03 binds the real chain.
+C1 adds the candidate grade and is its own chunk, because its seam is the uncertain one. Its review closes before C3 composes it.
+C2 adds the check seam with a stub check. Ticket 03 consumes that seam, so C2 is its own chunk too, and its review closes before C3 starts.
+C3 binds the real chain to both seams. C1 and C2 write disjoint paths, so they can author at the same time.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
 | C1 / 01-grade-the-candidate-commit.md | `BuildVerdictAt` grades an unpublished candidate and prints the published verdict text for the same commit | PP01, PP02, PP03, PP04, PP05, PP06, PP07, PP08, PP09, PP32, PP33, PP34 | preflight candidate tables, the published-verdict differential, existing source-tip tests | yes |
-| C2 / 02-check-before-publication.md, 03-chain-before-publication.md | `bench commit --preflight-build` grades the candidate before publication and publishes nothing on red | PP10, PP11, PP12, PP13, PP14, PP15, PP16, PP17, PP18, PP19, PP20, PP21, PP22, PP23, PP24, PP25, PP26, PP27, PP28, PP29, PP30, PP31 | landing check tests, commit check tests, chain stub tests, chain system test, plan-commit anchors | no |
+| C2 / 02-check-before-publication.md | The landing runs a supplied check between the commit object and the ref update, and a red check refuses as `commit-chain-red` with nothing published | PP10, PP11, PP12, PP13, PP14, PP15, PP16 | landing check tests, commit check tests, commit face fixtures | no |
+| C3 / 03-chain-before-publication.md | `bench commit --preflight-build` grades the candidate before publication and publishes nothing on red | PP17, PP18, PP19, PP20, PP21, PP22, PP23, PP24, PP25, PP26, PP27, PP28, PP29, PP30, PP31 | chain stub tests, chain system test, plan-commit anchors | no |
 
 ### Completion plan
 
@@ -155,9 +157,15 @@ C2 composes the check seam and the chain. Ticket 02 adds the seam with a stub ch
     },
     {
       "id": "C2",
-      "tickets": ["02-check-before-publication.md", "03-chain-before-publication.md"],
+      "tickets": ["02-check-before-publication.md"],
       "verification": [
-        {"id": "check-seam", "command": "bench test --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute", "probe": "Call the check after the ref update and record the PP10 red, the restore, and the green."},
+        {"id": "check-seam", "command": "bench test --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute", "probe": "Call the check after the ref update and record the PP10 red, the restore, and the green."}
+      ]
+    },
+    {
+      "id": "C3",
+      "tickets": ["03-chain-before-publication.md"],
+      "verification": [
         {"id": "chain-stubs", "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitHelp'", "probe": "Give the published HEAD in place of the candidate to the preflight step and record the PP18 red, the restore, and the green."},
         {"id": "chain-system", "command": "bench test --check system --run TestCommitChainRefusesRedCandidate", "probe": "Drop the check from the chain commit call and record the PP28 red, the restore, and the green."},
         {"id": "route-anchors", "command": "bench test --package ./internal/anchors --run PlanCommit", "probe": "Delete the dispatch half of the plan-commit route sentence and record the PP29 red, the restore, and the green."}
@@ -176,7 +184,7 @@ C2 composes the check seam and the chain. Ticket 02 adds the seam with a stub ch
 A good test drives one public entry with one exact input and observes the verdict text, the exit, and the ref state.
 The source-tip tests are the prior art for a verdict over a fixture repository (`internal/preflight/source_tip_test.go:23-105`). They use the exported `preflighttest` fixtures (`internal/preflight/preflighttest/fixture.go:161-209`).
 The landing tests are the prior art for a ref-state assertion after a refusal (`internal/landing/landing_test.go:259`, `TestLandRefusesEveryNonGreenAuthorizationWithoutMutation`).
-The chain stub harness `runCommitChain` is the prior art for step order and the chain line (`cmd/bench/commit_chain_test.go:33-61`). C2 changes its stub commit so that it calls the check with a fixed candidate.
+The chain stub harness `runCommitChain` is the prior art for step order and the chain line (`cmd/bench/commit_chain_test.go:33-61`). C3 changes its stub commit so that it calls the check with a fixed candidate.
 Rows PP17 to PP21 and PP24 to PP26 cite existing chain tests whose current assertions are the inverse of the row. Ticket 03 rewrites those assertions, so each row turns red-capable only at that ticket.
 
 The differential row PP04 compares two runs of the same code over one commit: the candidate grade before `update-ref`, and `Command` with `--source-tip` after it. The fixture family varies each source-tip input between HEAD and the candidate. PP33 adds a merge-shaped candidate, so the two direct HEAD reads differ between HEAD and the candidate.
@@ -231,7 +239,7 @@ The system row PP28 drives the real `bench commit` verb in a linked-project work
 | PP28 | 28 | In a linked-project worktree, a red plan commit exits 1 with the branch ref unchanged, and its repaired retry exits 0 with the chain line naming the new branch tip | planned TestCommitChainRefusesRedCandidate in internal/systemtest/commit_chain_test.go | A real verb that drops the check publishes the red plan commit |
 | PP29 | 29 | The implement guidance holds the sentence half "A plan commit that a dispatch follows uses plain `bench commit`" | planned TestPlanCommitAnchors in internal/anchors/registry_plan_commit_test.go | A guidance edit that drops the dispatch route reds the Require anchor |
 | PP30 | 30 | The implement guidance holds the sentence half "a plan commit that no dispatch follows uses `bench commit --preflight-build <slug>`" | planned TestPlanCommitAnchors in internal/anchors/registry_plan_commit_test.go | A guidance edit that drops the chain route reds the Require anchor |
-| PP31 | 31 | The changelog entry states that the chain steps run before publication and that exit 4 retired | review-owned in C2 | A changelog that omits the contract change fails review |
+| PP31 | 31 | The changelog entry states that the chain steps run before publication and that exit 4 retired | review-owned in C3 | A changelog that omits the contract change fails review |
 | PP32 | 32 | The build verdict holds no `check-floor` row | `internal/preflight/charge_cells_test.go` (`TestDecideHasNoCheckFloorRow`) | A grade that restores the row fails this existing test |
 | PP33 | 4 | For a merge candidate whose second parent is the default-branch tip over a HEAD behind that tip, the candidate verdict text equals the published verdict text with `base-current` green | planned TestBuildVerdictAtMatchesThePublishedVerdict in internal/preflight/candidate_test.go | A grade that keeps the HEAD read of `base-current` or of the review base reds `base-current` or changes the changed-path set |
 | PP34 | 4 | With the candidate's edits uncommitted in the checkout and one unfenced changed path equal to the default-branch tip, the candidate verdict text equals the published verdict text with `paths-authorized` green | planned TestBuildVerdictAtMatchesThePublishedVerdict in internal/preflight/candidate_test.go | A grade that keeps the HEAD dirty test drops the default-tip exemption and reds `paths-authorized` |

@@ -1,7 +1,7 @@
 # Grade an unpublished candidate commit
 
 Blocked by: none
-Writes: internal/preflight/candidate.go (new), internal/preflight/candidate_test.go (new), internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/command.go, internal/preflight/default_branch.go, internal/preflight/default_branch_test.go, internal/diff/range.go, internal/diff/review_base_test.go, cmd/bench/commitment_test.go
+Writes: internal/preflight/candidate.go (new), internal/preflight/candidate_test.go (new), internal/preflight/candidate_fixture_test.go (new), internal/git/status.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/command.go, internal/preflight/default_branch.go, internal/preflight/default_branch_test.go, internal/diff/range.go, internal/diff/review_base_test.go, cmd/bench/commitment_test.go
 Covers: PP01, PP02, PP03, PP04, PP05, PP06, PP07, PP08, PP09, PP32, PP33, PP34
 
 ## What to build
@@ -13,11 +13,11 @@ The grade substitutes the candidate for HEAD in each read that the spec lists un
 The grade pins the candidate as the source-tip pin, so the verdict holds a green `tip-current` row.
 With an explicit base, the grade resolves the range from that base to the candidate with `diff.ResolveSourceRange(root, base, candidate)`.
 
-Keep each rule in one source. Add `diff.ResolveReviewBaseAt(root, tip)`, and make `diff.ResolveReviewBase(root)` call it with `HEAD`, so `bench diff` keeps its behavior. Give the default-branch ancestry and the dirty-source test a tip or a tree argument in the same way, and keep the HEAD callers on HEAD.
+Keep each rule in one source. Add `diff.ResolveReviewBaseAt(root, tip)`, and make `diff.ResolveReviewBase(root)` call it with `HEAD`, so `bench diff` keeps its behavior. Give the default-branch ancestry and the dirty-source test a tip or a tree argument in the same way, and keep the HEAD callers on HEAD. The dirty-source test calls `git.WorktreeDirty` (`internal/git/status.go:53`), which compares with HEAD. Add its tree form in that file, so the dirty rule keeps one source.
 Render through the one verdict renderer of `verdictCommand`, and keep the `commitment` row rule. If the `Ready` call moves out of `verdictCommand`, update the route row in `cmd/bench/commitment_test.go` so that the inventory names the new declaration.
 
 `internal/preflight/gather.go` has 3 lines of headroom under the 400-line limit. Put the new grade in `internal/preflight/candidate.go`. Do not extend `internal/preflight/explicit_base_test.go`, which is already over the limit.
-Build the merge-shaped fixture of PP33 inside the test with `RunGit` and `commit-tree -p HEAD -p <default tip>`. The existing `preflighttest` helpers are sufficient.
+Build the merge-shaped fixture of PP33 with `RunGit` and `commit-tree -p HEAD -p <default tip>`. Put the fixture builders in `internal/preflight/candidate_fixture_test.go`, so each test file stays under the line limit. The existing `preflighttest` helpers are sufficient.
 
 The public `--source-tip` flag keeps its HEAD comparison. No check row is added, so the bare row counts in `internal/preflight/source_tip_test.go` stay as they are.
 
