@@ -377,6 +377,72 @@
             "C2-COV-F2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c2-standards-r2",
+          "performer": "ppf-confirm-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "974f76ae86e6685b5121cd072e70db61ef02541b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c2-standards",
+            "digest": "sha256:5d7b6b873b7a62103fd2cd6b09d5f7182b61a482bfb574fa792ebd8dfc10177c",
+            "excerpt": "Standards confirming round, chunk C2 (repair delta 26d3c4d0..40233078, tip 4b6c72d1). C2-STD-1 closed: registeredFace (internal/commit/merge_parent_test.go:228-237) is the one face lookup; faceSteps (check_test.go:58) and refusedLine (merge_parent_test.go:221) call it. C2-STD-2 closed: runChecked (landing_test.go:185) is the one harness; runCommand (:179-181) calls it with a nil check. Routing change: no blocking defect. Advisory (minor, non-blocking): the comment at commit.go:253-254 states what, not why the cause is flattened.\n"
+          },
+          "axis": "Standards",
+          "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "tip": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-standards-r1"
+          ]
+        },
+        {
+          "id": "c2-coverage-r2",
+          "performer": "ppf-confirm-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "974f76ae86e6685b5121cd072e70db61ef02541b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c2-coverage",
+            "digest": "sha256:8e0d40763cf6a03351efa160a790a307a820ae57cd174ee4e1c1def879c5a068",
+            "excerpt": "Coverage confirming round, chunk C2 (repair delta 26d3c4d0..40233078, tip 4b6c72d1). No probe run. C2-COV-F1 closed: check_test.go:88-90 wraps refusalroute.Raised{Name: faceHandback}; :108-111 assert the faceChainRed route and the PreflightBuildFlag rerun. C2-COV-F2 closed: check_test.go:91-93 wraps landing.TipMovedError. Harnesses: no assertion weakened; registeredFace (merge_parent_test.go:229-237) is stricter. New gaps: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "tip": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-coverage-r1"
+          ]
+        },
+        {
+          "id": "c2-spec-r2",
+          "performer": "ppf-confirm-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "974f76ae86e6685b5121cd072e70db61ef02541b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c2-spec",
+            "digest": "sha256:416d57fc45e914851079946dbb63dc834ca85a381e3aea7956b9b4b54a986ec9",
+            "excerpt": "Spec confirming round, chunk C2 (tip 4b6c72d1). C2-SPEC-S1 closed: spec.md:108 now says \"can differ ... for example\", and both examples match internal/git/status.go:53-75 and internal/git/tree.go:30-48. C2-COV-F1 / C2-SPEC-S2 closed: refuse flattens the cause for faceChainRed (commit.go:273-275); PP13 cases at check_test.go:83-119. C2-COV-F2 closed: landingFace tests CheckRefusal first (commit.go:237); only checkCandidate creates a CheckRefusal (landing/check.go:24-25), before updateRef (landing.go:197-201), so a real CAS TipMovedError still prints commit-tip-moved. New findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "tip": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "finding_ids": [],
+          "supersedes": [
+            "c2-spec-r1"
+          ]
         }
       ]
     }
