@@ -1,0 +1,28 @@
+case unrecorded/later-failure
+inputs
+  options discard-ignored=false discard-branch=true full=false
+  unrecorded refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> unique  refs/bench/discarded/20310203/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  unrecorded refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff> unique  refs/bench/discarded/20310203/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  unrecorded refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff> unique  refs/bench/discarded/20310203/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff
+commits
+  commit <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> tree:1ebd8bb9f5d5 parents=<tip:refs/heads/main>
+  commit <tip:refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff> tree:8155acac78aa parents=<tip:refs/heads/main>
+  commit <tip:refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff> tree:8ca8d91b34e9 parents=<tip:refs/heads/main>
+  commit <tip:refs/heads/main> tree:cdd154d572ab parents=
+refs-before
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error baseline discard fault
+  stale false
+  rows 3 nil=false order=prefix 3 of 3
+  row refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff | removed | unclaimed | none | refs/bench/discarded/20310203/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff | <digest:plan> |  | reason-code= | assignment=
+  row refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff | error | unclaimed | none | refs/bench/discarded/20310203/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff | <digest:plan> | baseline discard fault | reason-code= | assignment=
+  row refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff | not-attempted | unclaimed | none | refs/bench/discarded/20310203/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff | <digest:plan> | not attempted; an earlier target in this set did not complete | reason-code= | assignment=
+after
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/bench/discarded/20310203/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/main> refs/heads/main

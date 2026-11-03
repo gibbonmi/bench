@@ -1,0 +1,25 @@
+case landed/outer-preflight-drift
+inputs
+  options discard-ignored=false discard-branch=false full=false
+  landed <m1:id> <m1:path> remove <tip:<m1:branch>> clean 0 none
+  landed <m2:id> <m2:path> remove <tip:<m2:branch>> clean 0 none
+commits
+  commit <member-tip> tree:61d9b03cd7a5 parents=(tree:aae8b72173c2)
+  commit <member-tip> tree:aae8b72173c2 parents=(tree:cdd154d572ab)
+  commit <tip:refs/heads/main> tree:61d9b03cd7a5 parents=(tree:aae8b72173c2)
+refs-before
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:<m2:branch>> <m2:branch>
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error cleanup fingerprint is stale
+  stale true
+  rows 2 nil=false order=prefix 2 of 2
+  row <m1:path> | not-attempted | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:plan> | not attempted; the set did not qualify before the first removal | reason-code= | assignment=<m1:id>
+  row <m2:path> | not-attempted | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:plan> | not attempted; the set did not qualify before the first removal | reason-code= | assignment=<m2:id>
+after
+  member m1 tree=present ledger=active
+  member m2 tree=present ledger=active
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:<m2:branch>> <m2:branch>
+  ref <tip:refs/heads/main> refs/heads/main

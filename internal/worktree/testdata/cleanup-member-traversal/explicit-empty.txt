@@ -1,0 +1,13 @@
+case explicit/empty
+inputs
+  options discard-ignored=false discard-branch=false full=false
+commits
+  commit <tip:refs/heads/main> tree:cdd154d572ab parents=
+refs-before
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error none
+  stale false
+  rows 0 nil=false order=prefix 0 of 0
+after
+  ref <tip:refs/heads/main> refs/heads/main

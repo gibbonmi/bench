@@ -1,0 +1,31 @@
+case explicit/later-failure
+inputs
+  options discard-ignored=false discard-branch=false full=false
+  recorded <m1:id> <m1:path> remove <digest:target:<m1:id>>
+  recorded <m2:id> <m2:path> remove <digest:target:<m2:id>>
+  recorded <m3:id> <m3:path> remove <digest:target:<m3:id>>
+commits
+  commit <member-tip> tree:61d9b03cd7a5 parents=(tree:aae8b72173c2)
+  commit <member-tip> tree:aae8b72173c2 parents=(tree:cdd154d572ab)
+  commit <member-tip> tree:c006b3384e77 parents=(tree:61d9b03cd7a5)
+  commit <tip:refs/heads/main> tree:c006b3384e77 parents=(tree:61d9b03cd7a5)
+refs-before
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:<m2:branch>> <m2:branch>
+  ref <tip:<m3:branch>> <m3:branch>
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error baseline transaction fault
+  stale false
+  rows 3 nil=false order=prefix 3 of 3
+  row <m1:path> | removed | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:target:<m1:id>> |  | reason-code= | assignment=
+  row <m2:path> | error | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:unmapped1> | baseline transaction fault | reason-code= | assignment=<m2:id>
+  row <m3:path> | not-attempted | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:plan> | not attempted; an earlier target in this set did not complete | reason-code= | assignment=<m3:id>
+after
+  member m1 tree=absent ledger=absent
+  member m2 tree=present ledger=active
+  member m3 tree=present ledger=active
+  receipt op=worktree-clean target=<m1:path> state=complete phase=terminal action=removed recovery=none fingerprint=<digest:target:<m1:id>> checkpoint=<digest:target:<m1:id>> branch=<m1:branch> branch-oid=<tip:<m1:branch>> assignment=<m1:id> owner=<m1:owner> owned=true repo=<root>/.git detail=""
+  ref <tip:<m2:branch>> <m2:branch>
+  ref <tip:<m3:branch>> <m3:branch>
+  ref <tip:refs/heads/main> refs/heads/main

@@ -1,0 +1,25 @@
+case landed/all-success
+inputs
+  options discard-ignored=false discard-branch=false full=false
+  landed <m1:id> <m1:path> remove <tip:<m1:branch>> clean 0 none
+  landed <m2:id> <m2:path> remove <tip:<m2:branch>> clean 0 none
+commits
+  commit <member-tip> tree:61d9b03cd7a5 parents=(tree:aae8b72173c2)
+  commit <member-tip> tree:aae8b72173c2 parents=(tree:cdd154d572ab)
+  commit <tip:refs/heads/main> tree:61d9b03cd7a5 parents=(tree:aae8b72173c2)
+refs-before
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:<m2:branch>> <m2:branch>
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error none
+  stale false
+  rows 2 nil=false order=prefix 2 of 2
+  row <m1:path> | removed | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:unmapped1> |  | reason-code= | assignment=
+  row <m2:path> | removed | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:unmapped2> |  | reason-code= | assignment=
+after
+  member m1 tree=absent ledger=absent
+  member m2 tree=absent ledger=absent
+  receipt op=worktree-clean target=<m1:path> state=complete phase=terminal action=removed recovery=none fingerprint=<digest:unmapped1> checkpoint=<digest:unmapped1> branch=<m1:branch> branch-oid=<tip:<m1:branch>> assignment=<m1:id> owner=<m1:owner> owned=true repo=<root>/.git detail=""
+  receipt op=worktree-clean target=<m2:path> state=complete phase=terminal action=removed recovery=none fingerprint=<digest:unmapped2> checkpoint=<digest:unmapped2> branch=<m2:branch> branch-oid=<tip:<m2:branch>> assignment=<m2:id> owner=<m2:owner> owned=true repo=<root>/.git detail=""
+  ref <tip:refs/heads/main> refs/heads/main
