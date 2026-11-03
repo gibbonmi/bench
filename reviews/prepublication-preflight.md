@@ -276,7 +276,79 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c2-standards-r1",
+          "performer": "ppf-review-c2-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61408cb094d9dcb5e936c0e3ea1d33ef3f938581",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ppf-review-c2-standards",
+            "digest": "sha256:ccabdbe6406b9ea8c96c648f0167dbe5283af074f796f755d9540634a83e412f",
+            "excerpt": "Standards axis, chunk C2 (816c402f..7827cb0b). Findings: 4. Worst: C2-STD-1.\nC2-STD-1 internal/commit/check_test.go:71-84 faceSteps duplicates refusedLine in internal/commit/merge_parent_test.go:70-76 (fixture harness, AGENTS.md single source); calls Inventory() twice. medium, auto-fix, confidence 6.\nC2-STD-2 internal/commit/check_test.go:26-35 runChecked is a second command harness beside runCommand (internal/commit/landing_test.go:21-34). low-medium, auto-fix, confidence 6.\nC2-STD-3 the check signature func(root, candidate string) error is written four times (commit.go:149, :167, refusal_route_test.go:221, check_test.go:26). low, ask-user, confidence 4.\nC2-STD-4 repeated ordering doc comments (landing.go:24-26, :173-174; check.go:284-285; commit.go:146-148). low, no-op, confidence 3.\nImplement command contributed (minor): the brief did not ask the author to search the package tests for an existing helper.\n"
+          },
+          "axis": "Standards",
+          "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "tip": "7827cb0bec9a148bd39a3a254dca7052dce2b332",
+          "finding_ids": [
+            "C2-STD-1",
+            "C2-STD-2",
+            "C2-STD-3",
+            "C2-STD-4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-spec-r1",
+          "performer": "ppf-review-c2-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61408cb094d9dcb5e936c0e3ea1d33ef3f938581",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ppf-review-c2-spec",
+            "digest": "sha256:bffa3e4559fbc272bbfdc2b2d2c5bb343c3e4fb8df05a519a50d5c83a3859b31",
+            "excerpt": "Spec axis, chunk C2 (base 816c402f, tip 7827cb0b). PP10-PP16 and the face fixture audited and conforming. Findings: 2, both low. Worst: C2-SPEC-S1.\nC2-SPEC-S1 specs/prepublication-preflight/spec.md:108: the tracked-path-that-.gitignore-excludes example is probably wrong (add -A over a seeded index sees tracked files), and \"only\" is an unlisted universal. auto-fix, confidence 5.\nC2-SPEC-S2 internal/commit/commit.go:237-242 with refusalroute/registry.go:106-109: landingFace order and CheckRefusal.Unwrap let a C3 check error that wraps NamedPathError, TipMovedError, or Raised print another face. no-op for C2, note to C3, confidence 3.\n"
+          },
+          "axis": "Spec",
+          "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "tip": "7827cb0bec9a148bd39a3a254dca7052dce2b332",
+          "finding_ids": [
+            "C2-SPEC-S1",
+            "C2-SPEC-S2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c2-coverage-r1",
+          "performer": "ppf-review-c2-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61408cb094d9dcb5e936c0e3ea1d33ef3f938581",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ppf-review-c2-coverage",
+            "digest": "sha256:0ab8996da6675ca894e12121214edb91e5ec8d2fb40ceee0af3cf6227cd414ff",
+            "excerpt": "Coverage axis, chunk C2 (base 816c402f, tip 7827cb0b). Findings: 2. Worst: C2-COV-F1. No probe run.\nC2-COV-F1 internal/commit/commit.go:272 with internal/refusalroute/registry.go:106-110 and internal/landing/check.go:282: CheckRefusal.Unwrap exposes the check error; refuse -> refusalroute.Printed replaces the face with any Raised in the cause chain, so a C3 chain step error that wraps a Raised prints the inner route, not commit-chain-red, and loses the --preflight-build rerun (story 13). No test. medium, ask-user, confidence 7.\nC2-COV-F2 internal/commit/commit.go:237-242: landingFace tests NamedPathError and TipMovedError before CheckRefusal, and errors.As unwraps into CheckRefusal.Err, so a check error wrapping either type routes wrong. low, ask-user, confidence 6.\nWitness sample verified by reading: PP10/PP11 check_test.go:333-356; PP12 fingerprint :364,:386-387, DryRun :378, reconcile stub :374-377; PP16 :391-406; PP13/PP14 commit check_test.go:89-131; face fixture refusal_route_test.go:336.\n"
+          },
+          "axis": "Coverage",
+          "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "tip": "7827cb0bec9a148bd39a3a254dca7052dce2b332",
+          "finding_ids": [
+            "C2-COV-F1",
+            "C2-COV-F2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -335,3 +407,30 @@ Count: 2. Worst issue: C1-COV-F1.
 
 - C1-COV-F1 (confidence 8): `internal/preflight/gather.go:115` passes the candidate to `withFoldResolution`, and no fixture holds a fold entry. A swap to `headRef` probed `silent`. Disposition: auto-fix. Add a PP04 fixture whose review record folds a changed path.
 - C1-COV-F2 (confidence 6): `internal/preflight/gather.go:131` `buildDeletedPaths` has no candidate fixture where a ticket `Writes:` line names a deleted path. Disposition: auto-fix under the run's advance approval. Add that PP04 fixture.
+
+## C2 round 1 pickup
+
+The frozen pair is 816c402f3..7827cb0be. The axes found 8 raw findings. After the orchestrator collapsed the findings that name the same fix, 3 code repair targets on ticket 02 and 1 spec prose correction remain.
+
+### C2 Standards
+
+Count: 4. Worst issue: C2-STD-1.
+
+- C2-STD-1 (confidence 6): `internal/commit/check_test.go:71-84` `faceSteps` repeats the face lookup of `refusedLine` in `internal/commit/merge_parent_test.go:70-76`. Disposition: auto-fix. Use one shared lookup helper. The plan commit widens `internal/commit/merge_parent_test.go`.
+- C2-STD-2 (confidence 6): `internal/commit/check_test.go:26-35` `runChecked` is a second command harness beside `runCommand` in `internal/commit/landing_test.go:21-34`. Disposition: auto-fix. Keep one harness. The plan commit widens `internal/commit/landing_test.go`.
+- C2-STD-3 (confidence 4): the check signature appears four times. Disposition: no-op. The spec fixes the bare signature, and a Go function type literal is incidental text, not a rule.
+- C2-STD-4 (confidence 3): doc comments repeat the ordering of the check. Disposition: no-op. Each public symbol states its own contract.
+
+### C2 Spec
+
+Count: 2. Worst issue: C2-SPEC-S1.
+
+- C2-SPEC-S1 (confidence 5): `specs/prepublication-preflight/spec.md:108` names a tracked path that `.gitignore` excludes as a difference, and the word "only" claims a complete list. Disposition: auto-fix. The orchestrator corrects the sentence in the repair plan commit.
+- C2-SPEC-S2 (confidence 3): the case order in `landingFace` lets a wrapped check error print another face. Disposition: merged into C2-COV-F1.
+
+### C2 Coverage
+
+Count: 2. Worst issue: C2-COV-F1.
+
+- C2-COV-F1 (confidence 7): `internal/commit/commit.go:272` with `internal/refusalroute/registry.go:106-110` and `internal/landing/check.go:282`. `CheckRefusal.Unwrap` exposes the check error, and `refusalroute.Printed` replaces the face with a `Raised` value in that chain. Disposition: auto-fix. Story 13 requires the `commit-chain-red` face and the caller's rerun for every check refusal. Add a PP13 case whose check error wraps a `Raised` value.
+- C2-COV-F2 (confidence 6): `internal/commit/commit.go:237-242` `landingFace` tests `NamedPathError` and `TipMovedError` before `CheckRefusal`. Disposition: auto-fix with C2-COV-F1. Add a PP13 case whose check error wraps a `TipMovedError`.
