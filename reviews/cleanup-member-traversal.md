@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/cleanup-member-traversal/spec.md",
-  "plan_digest": "sha256:a1b81a57d6b2b74d634bb8d258bbeb281ac6d804e0a679b149ca7fa9f438f38a",
+  "plan_digest": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
   "implementation_session": "",
   "chunks": [
     {
@@ -989,9 +989,9 @@
     {
       "id": "C4",
       "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
-      "tip": "a8c66ea5089175a01ab9e51b6bf44487151bc06d",
-      "plan_digest": "sha256:caffc50ca9f4a7ce3553c0e6c920adc1b8976a639547867c4097b82fc9e74fa5",
-      "source_digest": "79d9432e03392709579fd66f200870ee03d7b92f",
+      "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+      "plan_digest": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
+      "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
       "acceptance_rows": [
         "R01",
         "R02",
@@ -1096,6 +1096,156 @@
               "ref": "claude-agent:ft363-author-04",
               "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
               "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-explicit",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:234298850bad17ea69b5fbfee99ccd833203022e9836a781333627427934cf9d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8485,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyExplicitSet: member-visit loop at line 336 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-explicit",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original recorded member loop in applyExplicitSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:234298850bad17ea69b5fbfee99ccd833203022e9836a781333627427934cf9d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8485,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyExplicitSet: member-visit loop at line 336 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-unrecorded",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:07af9ab7d8389a8f3be87d807e4f2a9be6f9fc414c64913f2f8e2672d4538d76",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_discard.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8334,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyUnrecordedRows: member-visit loop at line 249 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-unrecorded",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original branch loop in applyUnrecordedRows and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:07af9ab7d8389a8f3be87d807e4f2a9be6f9fc414c64913f2f8e2672d4538d76",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_discard.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8334,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyUnrecordedRows: member-visit loop at line 249 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-landed",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:6f9bdd2a0aad113490647d4440c167e544197fd9ae297d602c17739d514cc97c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_landed.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8332,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyLandedSet: member-visit loop at line 388 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-landed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original member loop in applyLandedSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:6f9bdd2a0aad113490647d4440c167e544197fd9ae297d602c17739d514cc97c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_landed.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8332,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyLandedSet: member-visit loop at line 388 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-unclaimed",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-unclaimed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original member loop in applyUnclaimedAssignmentSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-unclaimed-fingerprint",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "unclaimed-fingerprint",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit one unclaimed fingerprint input in production and record the R26 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
         }
@@ -1228,6 +1378,24 @@
     {
       "from": "sha256:caffc50ca9f4a7ce3553c0e6c920adc1b8976a639547867c4097b82fc9e74fa5",
       "to": "sha256:a1b81a57d6b2b74d634bb8d258bbeb281ac6d804e0a679b149ca7fa9f438f38a",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ],
+        "C4": [
+          "C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a1b81a57d6b2b74d634bb8d258bbeb281ac6d804e0a679b149ca7fa9f438f38a",
+      "to": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
       "chunk_ids": {
         "C1": [
           "C1"
