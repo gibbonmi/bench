@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shell-argument-ownership/spec.md",
-  "plan_digest": "sha256:dd10c1e33a504fed07206dd2621197369959e9b0cc4f50eaa6fef622276f7818",
+  "plan_digest": "sha256:74be021ade7410316adf7b5b52ba3e17eb821480cdd19ec6aad7a4f0bfbf7ad9",
   "implementation_session": "",
   "chunks": [
     {
@@ -204,6 +204,80 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "S-B1",
+      "base": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+      "tip": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+      "plan_digest": "sha256:74be021ade7410316adf7b5b52ba3e17eb821480cdd19ec6aad7a4f0bfbf7ad9",
+      "source_digest": "fa087909f4ea9649d0094baa98f3ca249d38002a",
+      "acceptance_rows": [
+        "S13",
+        "S40"
+      ],
+      "verification": [
+        {
+          "id": "S-B1-T02-omission-proof",
+          "performer": "ft354-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fa087909f4ea9649d0094baa98f3ca249d38002a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-02",
+            "digest": "sha256:9a6202ae101cdbf978c83efaf9b3bc2aff4a99c6db4ddc5049f43e4831be3795",
+            "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap+swap,failed,2,TestSpecWidenRefusesAnOutOfScopeEntry,196,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/spec,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Bypass the owner with former bare-token output at historyDetail or at the widen rerun line. The independent exact fixture must fail even if argv still round-trips.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-02",
+              "digest": "sha256:9a6202ae101cdbf978c83efaf9b3bc2aff4a99c6db4ddc5049f43e4831be3795",
+              "excerpt": "mutants[1]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+swap+swap,failed,2,TestSpecWidenRefusesAnOutOfScopeEntry,196,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/spec,all,passed,2\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "S-B1-T02-preservation",
+          "performer": "ft354-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fa087909f4ea9649d0094baa98f3ca249d38002a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-02",
+            "digest": "sha256:fc032360749126f97337e49a5841d828959da8cc32f781c84e8a1d3ac7f7f7b7",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestSelectedHistoryHostileTarget,196,1,0,null,yes\n  2,bit,swap,failed,2,TestSelectedSpecDetailRoute/--limit,196,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/spec,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/spec",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-02",
+              "digest": "sha256:fc032360749126f97337e49a5841d828959da8cc32f781c84e8a1d3ac7f7f7b7",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestSelectedHistoryHostileTarget,196,1,0,null,yes\n  2,bit,swap,failed,2,TestSelectedSpecDetailRoute/--limit,196,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/spec,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -212,7 +286,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:dd10c1e33a504fed07206dd2621197369959e9b0cc4f50eaa6fef622276f7818",
+      "to": "sha256:74be021ade7410316adf7b5b52ba3e17eb821480cdd19ec6aad7a4f0bfbf7ad9",
+      "chunk_ids": {
+        "S-A": [
+          "S-A"
+        ]
+      }
+    }
+  ]
 }
 ```
 
