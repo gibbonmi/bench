@@ -724,6 +724,72 @@
             "C3-COV-F2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c3-standards-r2",
+          "performer": "ppf-confirm-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c3-standards",
+            "digest": "sha256:4f8e6ecb89ac729b091c022d8e6629918c881031d44ab3a11934b49e29523554",
+            "excerpt": "Standards confirming round, chunk C3 (tip e4988587). C3-STD-1 closed: Outcome holds Root, Published, Help (internal/commit/commit.go:68-73); no reader of PreflightBuild or Base remains; readers updated (chain_grammar_test.go:102, cmd/bench/commit_chain_test.go:48). C3-STD-2 closed: commit_chain.go:29. C3-STD-3 closed: CHANGELOG.md:11 sentences are 24 words or fewer. BuildInputs step binds the existing predicate (commit_chain.go:26). New nit: noBuildInputs = -1 overloads buildExit in the test harness (commit_chain_test.go:22, 58); no-op, confidence 4.\n"
+          },
+          "axis": "Standards",
+          "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "tip": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-standards-r1"
+          ]
+        },
+        {
+          "id": "c3-spec-r2",
+          "performer": "ppf-confirm-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c3-spec",
+            "digest": "sha256:6ce107120b81c8ce13384d1adf24eb4d301c7b9185437628df9ce36f7093a9e1",
+            "excerpt": "Spec confirming round, chunk C3 (tip e49885877). C3-SPEC-S1 / PP35 closed: commit_chain.go:26 binds freshness.DeclaresBuildInputs; :50 builds only when true; TestCommitChainSkipsTheBuildWithoutBuildInputs (commit_chain_test.go:109-122). PP17/PP20 keep build-then-preflight (:92, :158). PP28 closed: red retry exit 1, commit=none,build=skipped,preflight=red, ref unchanged; green retry exit 0 names the new tip. C3-SPEC-S3 / C3-COV-F1 closed: the PP29 row and the needle at registry_plan_commit.go:7 agree with bench-implement-spec.md:62. PP31 closed: CHANGELOG.md:11, :13. New findings: none.\n"
+          },
+          "axis": "Spec",
+          "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "tip": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-spec-r1"
+          ]
+        },
+        {
+          "id": "c3-coverage-r2",
+          "performer": "ppf-confirm-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c3-coverage",
+            "digest": "sha256:aa18b48b7bbd76a4e228645012b7ac2d515bc430ee0ee0ab1631bda1b47cb7be",
+            "excerpt": "Coverage confirming round, chunk C3 (tip e4988587). No probe run. C3-COV-F1 closed: the needle at internal/anchors/registry_plan_commit.go:7 leaves the guidance when \"a dispatch\" becomes \"no dispatch\". PP35 inversion closed: an inverted DeclaresBuildInputs binding runs the build in the linked fixture, and internal/systemtest/commit_chain_test.go:46,55 expect build=skipped. No chain assertion weakened (commit_chain_test.go:58; chain_grammar_test.go:102). New gap (low, note, confidence 6): an always-false binding stays green; only the stub harness covers the kit-root build path. Orchestrator disposition: no-op; this build's own chained record commits in the kit root printed build=green.\n"
+          },
+          "axis": "Coverage",
+          "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "tip": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+          "finding_ids": [],
+          "supersedes": [
+            "c3-coverage-r1"
+          ]
         }
       ]
     }
