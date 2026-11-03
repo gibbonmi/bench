@@ -10,9 +10,9 @@
     {
       "id": "C1",
       "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
-      "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
-      "plan_digest": "sha256:3f9255958885eae9a6109137977b57408b8d5287016e33fd22b9d4d306fa75a5",
-      "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+      "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+      "plan_digest": "sha256:8917268dbf6107a6d8cda61954f441bb91d3430e791577ba9c7ee427bc99837c",
+      "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
       "acceptance_rows": [
         "R01",
         "R02",
@@ -211,6 +211,156 @@
               "ref": "claude-agent:ft363-author-01",
               "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
               "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-explicit-preflight",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "explicit-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the explicit all-member preflight before the recorded visits and record the R06 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-later-requalify",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "later-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the later requalification before a reached recorded visit and record the R09 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-locked-requalify",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:d7cc79fa093eaeb4c7925c2c70396f722fbb282d2200f4e83354c4d886bf8795",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/resume.go,swap,failed,5,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1510\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5644,100\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/LIQV7U/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th596009054/001/.bench… (902 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",54\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/landed/locked-drift,\"cleanup_members_baseline_test.go:119: landed/locked-drift differs from its frozen record at line 15: got \\\"  error cleanup receipt has invalid identity\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "locked-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the locked qualification check of the recorded cleanup transaction and record the R10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:d7cc79fa093eaeb4c7925c2c70396f722fbb282d2200f4e83354c4d886bf8795",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/resume.go,swap,failed,5,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1510\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5644,100\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/LIQV7U/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th596009054/001/.bench… (902 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",54\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/landed/locked-drift,\"cleanup_members_baseline_test.go:119: landed/locked-drift differs from its frozen record at line 15: got \\\"  error cleanup receipt has invalid identity\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-stop-at-failure",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4c5fb9d0d78cd4e110dda43d6efb7a951ed0557aa661ff19887a60acc99a1e7b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/cleanup_members.go,swap,failed,13,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,3198\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5566,100\nfailures[13]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th3012840869/001/.benc… (926 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,\"clean_set_refusal_test.go:80: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/explicit_member_drifts_while_still_removable,\"clean_set_refusal_test.go:135: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetPartialApply,\"clean_set_outcomes_test.go:45: apply error = \u003cnil>, want the injected transaction fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetUnstartedOutcomes,\"clean_set_outcomes_test.go:79: partial apply = (0, \\\"worktree_cleanup[3]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetUnstartedOutcomes2585395255/001/.bench-home/worktrees/001-959000473/b5de0a0… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCompletedPrefix,\"cleanup_members_modes_test.go:81: apply error = \u003cnil>, want the injected fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/first,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/later,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "stop-at-failure",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Continue the shared traversal after a failed visit and record the R14 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4c5fb9d0d78cd4e110dda43d6efb7a951ed0557aa661ff19887a60acc99a1e7b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/cleanup_members.go,swap,failed,13,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,3198\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5566,100\nfailures[13]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th3012840869/001/.benc… (926 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,\"clean_set_refusal_test.go:80: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/explicit_member_drifts_while_still_removable,\"clean_set_refusal_test.go:135: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetPartialApply,\"clean_set_outcomes_test.go:45: apply error = \u003cnil>, want the injected transaction fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetUnstartedOutcomes,\"clean_set_outcomes_test.go:79: partial apply = (0, \\\"worktree_cleanup[3]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetUnstartedOutcomes2585395255/001/.bench-home/worktrees/001-959000473/b5de0a0… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCompletedPrefix,\"cleanup_members_modes_test.go:81: apply error = \u003cnil>, want the injected fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/first,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/later,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-recorded-suffix",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "recorded-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the unreached recorded members from the explicit stop projection and record the R15 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
         }
