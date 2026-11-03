@@ -160,6 +160,72 @@
             "C1-COV-F2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "c1-standards-r2",
+          "performer": "ppf-confirm-c1-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bcd174d44e66961aa744235d1d943c2208ab4fc1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c1-standards",
+            "digest": "sha256:dd7ebe90df8055f8cc30e17136d4c3ff5be5bb3fcee37ae483037855d12d37b7",
+            "excerpt": "Standards confirming round, chunk C1 (repair delta 7dfe3ebf..816c402f, tip 4f526e63). C1-STD-F2 closed: one checkoutTree helper (internal/git/tree.go:30) serves TreeHash (tree.go:18) and WorktreeDirtyAt (status.go:71); seed order HEAD then --empty kept; \"none\" kept; indexStep keeps the git %s: %w: %s error. New findings: none. Not verified: no tests run.\n"
+          },
+          "axis": "Standards",
+          "base": "3d0598ba1b589d392eb8d11aa0c658e27e809e4c",
+          "tip": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-standards-r1"
+          ]
+        },
+        {
+          "id": "c1-spec-r2",
+          "performer": "ppf-confirm-c1-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bcd174d44e66961aa744235d1d943c2208ab4fc1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c1-spec",
+            "digest": "sha256:356cb0283dbd2ec53abf23877fb849a2ff6fbf38bc17234e2ae5296b7626a6eb",
+            "excerpt": "Spec confirming round, chunk C1 (tip 4f526e63). C1-SPEC-S1 closed: BuildVerdictAt passes nil args (candidate.go:25); verdictCommand skips snapshotDriftRefusal on nil args (command.go:161-167); public path unchanged (command.go:99). C1-STD-F1 closed: the spec sentence after spec.md:107 matches status.go:64-75. New advisory (low, non-blocking): \"differ only for a staged change that the checkout reverts\" overclaims; assume-unchanged, skip-worktree, and tracked-but-ignored files also differ.\n"
+          },
+          "axis": "Spec",
+          "base": "3d0598ba1b589d392eb8d11aa0c658e27e809e4c",
+          "tip": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-spec-r1"
+          ]
+        },
+        {
+          "id": "c1-coverage-r2",
+          "performer": "ppf-confirm-c1-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bcd174d44e66961aa744235d1d943c2208ab4fc1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-confirm-c1-coverage",
+            "digest": "sha256:ce2da1569a240cc55e8d571f3c8ed2a8064eacbb6e3afb14cd7c70efd2fa22b9",
+            "excerpt": "Coverage confirming round, chunk C1 (tip 4f526e63). C1-COV-F1 closed (gather.go:115; candidate_test.go:209; seedFoldCandidate candidate_fixture_test.go:145). C1-COV-F2 closed (gather.go:131; candidate_test.go:210; seedBuildDeletionCandidate candidate_fixture_test.go:157). Probe set over ./internal/preflight, exit 0, baseline passed:\n1,bit,swap,failed,1,TestBuildVerdictAtMatchesThePublishedVerdict/PP04_fold_resolution,8,1,0,null,yes\n2,bit,swap,failed,1,TestBuildVerdictAtMatchesThePublishedVerdict/PP04_build_deletion,8,1,0,null,yes\nNew gaps: none.\n"
+          },
+          "axis": "Coverage",
+          "base": "3d0598ba1b589d392eb8d11aa0c658e27e809e4c",
+          "tip": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "finding_ids": [],
+          "supersedes": [
+            "c1-coverage-r1"
+          ]
         }
       ]
     }
