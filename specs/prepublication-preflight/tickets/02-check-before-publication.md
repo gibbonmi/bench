@@ -1,7 +1,7 @@
 # Run a supplied check before the commit publishes
 
 Blocked by: none
-Writes: internal/landing/landing.go, internal/landing/check.go (new), internal/landing/attribution.go, internal/landing/check_test.go (new), internal/commit/commit.go, internal/commit/check.go (new), internal/commit/check_test.go (new), internal/commit/refusal_route_test.go, internal/refusalroute/faces_commit.go, internal/refusalroute/routetest/routetest.go, internal/conformance/refusal_route_guard_test.go
+Writes: internal/landing/landing.go, internal/landing/check.go (new), internal/landing/attribution.go, internal/landing/check_test.go (new), internal/commit/commit.go, internal/commit/check.go (new), internal/commit/check_test.go (new), internal/commit/refusal_route_test.go, internal/refusalroute/faces_commit.go, internal/refusalroute/routetest/routetest.go, internal/conformance/refusal_route_guard_test.go, internal/commit/merge_parent_test.go, internal/commit/landing_test.go
 Covers: PP10, PP11, PP12, PP13, PP14, PP15, PP16
 
 ## What to build
