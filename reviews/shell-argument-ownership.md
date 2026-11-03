@@ -142,7 +142,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "S-A-R1-standards",
+          "performer": "ft354-review-S-A",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3af663fa6facc743e27596274e13d17e252df1cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-A",
+            "digest": "sha256:f398efeaf80bd5fd65ed8f29a5c0df5292cec2758a5aa8d3156e346b1a822bdc",
+            "excerpt": "## Standards\nCount: 2, both no-op. Worst: the shell-argv-plus-sentinel test pattern is hand-written per package.\n- internal/worktree/shell_arguments_test.go:161-184 and internal/sanitize/shellquote_test.go:25-35: per-package sentinel setup around axitest.HelpAction.Argv; a shared axitest helper would prevent a pasted harness in tickets 04 and 07. Confidence 4. no-op for S-A.\n- internal/worktree/shell_arguments_test.go:174 repeats the refusal template of internal/treetarget/build_test.go:76; independent expectations with recorded reds meet the AGENTS.md exception. Confidence 3. no-op.\n"
+          },
+          "axis": "Standards",
+          "base": "1586949596564559881814a1695df97030c333ec",
+          "tip": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-A-R1-spec",
+          "performer": "ft354-review-S-A",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3af663fa6facc743e27596274e13d17e252df1cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-A",
+            "digest": "sha256:89f10fc7f826a248d6b94052df797739618dea557a98656be846cecca42bb6bd",
+            "excerpt": "## Spec\nCount: 1, no-op. Worst: the record lists only two of six ticket checkpoint commands.\n- reviews/shell-argument-ownership.md:251-371 verification covers sanitize and worktree only; the reviewer re-ran treetarget (54 pass) and the system tree-target test (pass). Confidence 5. no-op.\nRows S01-S04 and S15 are met; readers quoted at build_test.go:117,118,120,214, target_refusal_test.go:19, systemtest/tree_target_test.go:246.\n"
+          },
+          "axis": "Spec",
+          "base": "1586949596564559881814a1695df97030c333ec",
+          "tip": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-A-R1-coverage",
+          "performer": "ft354-review-S-A",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3af663fa6facc743e27596274e13d17e252df1cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-A",
+            "digest": "sha256:d3a9cbe3463f92fdcc9a19e1665fae00b3604330d180b07fd39758bf4aecb5a0",
+            "excerpt": "## Coverage\nCount: 0.\n- Caller mutation: naive \"'\"+label+\"'\" in PrintTreeBuildRefusal bit TestTreeBuildArgument/an_embedded_quote, restored=yes.\n- Owner mutation: escape changed to the argv-equivalent '\"'\"' form bit 3 byte assertions, restored=yes.\n- The touched=false consumer internal/treetarget/run.go:65 passes the label unchanged.\n"
+          },
+          "axis": "Coverage",
+          "base": "1586949596564559881814a1695df97030c333ec",
+          "tip": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
