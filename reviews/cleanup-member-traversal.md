@@ -917,6 +917,72 @@
           "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "C3-R2-STD",
+          "performer": "ft363-review-c3-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3-r2",
+            "digest": "sha256:4a7ee4e1f0ec626b82cd9f2b7bb804649c3f7c47a38f23000e9384ad2ed1953c",
+            "excerpt": "## Standards\nOutcome: closed. 0 new findings.\nlandedFingerprintInputs (clean_landed.go:31-48) is hashed by fingerprintLandedSet (:51-59); landedRun (cleanup_members_baseline_test.go:295) and explicitRun (:163) render through one helper renderFingerprintInputs (:134-148). The remaining duplication is exactly the routed item: the options input (clean_landed.go:32-33 vs clean_set.go:243-244) and the hash loop (clean_landed.go:51-59 vs clean_set.go:255-263). Digest bytes and frozen records unchanged.\n"
+          },
+          "axis": "Standards",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "finding_ids": [],
+          "supersedes": [
+            "C3-R1-STD"
+          ]
+        },
+        {
+          "id": "C3-R2-SPEC",
+          "performer": "ft363-review-c3-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3-r2",
+            "digest": "sha256:a0b750a703da2cb018864449e8f2c0bbf3f42b9432cf1fa28a88b026d1f8ccd2",
+            "excerpt": "## Spec\nOutcome: closed. C3-SPEC-1 closed. 0 new findings.\nspec.md:325-327 met for the landed baseline: an omitted input leaves the rendered record, and renderFingerprintInputs requires the plan digest to equal the production hash of the rendered inputs (cleanup_members_baseline_test.go:137). Probe: removed row.headOID from landedFingerprintInputs (clean_landed.go:45): bit, 8 failures, first TestCleanupTraversalBaseline/landed/all-success, restored.\n"
+          },
+          "axis": "Spec",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "finding_ids": [],
+          "supersedes": [
+            "C3-R1-SPEC"
+          ]
+        },
+        {
+          "id": "C3-R2-COV",
+          "performer": "ft363-review-c3-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3-r2",
+            "digest": "sha256:6ea95292bb08a2120c945e619852eec0c1e6cd94320dda36bc19973192efbf05",
+            "excerpt": "## Coverage\nOutcome: closed. 0 new findings.\nThe empty-digest skip (cleanup_members_baseline_test.go:137) hides no non-empty case: production emits an empty digest only for an empty landed selection (clean_landed.go:58-60), and the non-empty landed records pin \u003cdigest:plan>. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "finding_ids": [],
+          "supersedes": [
+            "C3-R1-COV"
+          ]
         }
       ]
     }
@@ -1161,3 +1227,7 @@ The repair session ft363-repair-03-r1 closed C3-SPEC-1 at repair commit `49982b6
 | C3-SPEC-1 | R26 | `row.lease` is removed from `landedFingerprintInputs`. | `TestCleanupTraversalBaseline/landed/all-success`, 8 landed subtests |
 
 The repair reported one duplication in its delta. `landedFingerprintInputs` and `explicitFingerprintInputs` each build the options input, and the two fingerprint functions repeat one hash loop. The orchestrator routes the consolidation to ticket 04, which fences both files and adds the unclaimed list.
+
+## C3 confirming round
+
+A fresh unified opus / medium session read the repair delta `9b5c117bd..49982b68a`. It closed C3-SPEC-1 and found no new finding. Its independent probe removed a different landed input, and the baseline went red. Repair cycles consumed for C3: 1 of 2. The routed duplication of the options input and the hash loop goes to ticket 04.
