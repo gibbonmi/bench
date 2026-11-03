@@ -536,6 +536,42 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "S-B2-R1-confirmation",
+          "performer": "ft354-orchestrator",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d47637eae9b735d54f560c950e18a345db627151",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft354-orchestrator",
+            "digest": "sha256:5d43f9f70bc1c8028aee8c6a4af402570fb5b550a2b639f4fbbe000d419afa9e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/consumers/citation.go,insert,failed,1,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/consumers,all,passed,68\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,553\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/consumers,fail,1969,68\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/consumers,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space,\"citation_test.go:208: cmd = \\\"bench consumers '--changed' '--base' 'feature;echo'\\\\\\\\\\\\\\\\''q^{/base|no' 'such subject}' '--source-tip' '410c33073fcb02ecbaaa118d25a304dc42e993e2' '--full'\\\", want \\\"bench consumers '--changed' '--base' 'feature;echo'\\\\\\\\… (337 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "reviewed_tip": "fb2f38e9c09ce5f5cc61b8e7cf691285a3b02001",
+          "repaired_tip": "03bd8984525222136d809db96fa9038cf2524922",
+          "finding_ids": [
+            "S-B2-SPEC-1",
+            "S-B2-COV-1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "insert before the citation.cmd Join return a split of the first space of each quoted token",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ft354-orchestrator",
+              "digest": "sha256:5d43f9f70bc1c8028aee8c6a4af402570fb5b550a2b639f4fbbe000d419afa9e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/consumers/citation.go,insert,failed,1,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/consumers,all,passed,68\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,553\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/consumers,fail,1969,68\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/consumers,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space,\"citation_test.go:208: cmd = \\\"bench consumers '--changed' '--base' 'feature;echo'\\\\\\\\\\\\\\\\''q^{/base|no' 'such subject}' '--source-tip' '410c33073fcb02ecbaaa118d25a304dc42e993e2' '--full'\\\", want \\\"bench consumers '--changed' '--base' 'feature;echo'\\\\\\\\… (337 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -643,3 +679,14 @@ Count: 1. Worst issue: S-B2-COV-1.
 - S-B2-COV-1 (confidence 8, auto-fix): a caller bypass that splits a spaced argument into two shell words stays green. Citation: `internal/consumers/citation.go:58`.
 
 Both findings name one test-only repair on ticket 03. A fresh repair session takes it.
+
+## S-B2 repair 1 witness reds
+
+The repair session ft354-repair-03-r1 reported this witness red. The coordinator probe also bit at a different site and with a different mutation kind.
+
+| Source | Mutation | Red test |
+|---|---|---|
+| Repair witness | At `citation.go:58`, each quoted argument splits on every space. | `TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space` |
+| Coordinator probe | Before the `Join` return, the first space of each token splits. | `TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space` |
+
+Repair allowance: S-B2 consumed 1 of 2 repair cycles.
