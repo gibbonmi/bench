@@ -154,3 +154,17 @@
   }
 }
 ```
+
+## S-A author witness reds
+
+The ticket 01 author reported these witness reds. The S01 to S04 reds came from probe mutations of the owner, and the S15 red came before the production edit. Each mutation was restored, and the packages then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S01 | The empty quoted pair is returned as an empty string. | `TestShellQuoteRoundTrip/empty` |
+| S02 | The embedded quote escape is replaced with a split. | `TestShellQuoteRoundTrip/a_leading_quote` |
+| S03 | The owner returns the bare value. | `TestShellQuoteRoundTrip`, 13 subtest failures |
+| S04 | A safe-token shortcut returns a safe value bare. | `TestShellQuoteAlwaysQuoted/a-b_c.d/e` |
+| S15 | The producer still calls `axi.ShellQuote` before the production edit. | `TestTreeBuildArgument/an_embedded_quote`, `TestTargetRefusalEscapesOnlyAnUnsafeLine/a_plain_label` |
+
+The author reported one limit: the S03 probe did not isolate the sentinel-file assertion from the argv and byte failures.
