@@ -132,7 +132,7 @@ func baselineAmbient(f repoHome) ambient {
 
 // renderFingerprintInputs renders a production input list, so an input the fingerprint omits
 // leaves the record, and the plan digest must be the production hash of exactly these inputs.
-// Only the empty landed selection plans no digest; the frozen record pins that absence.
+// The empty landed and unclaimed selections plan no digest; the frozen records pin that absence.
 func renderFingerprintInputs(t *testing.T, digest string, inputs []explicitFingerprintInput, version string) (lines []string) {
 	t.Helper()
 	hash := fingerprintInputs(version, inputs)
