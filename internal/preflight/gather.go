@@ -30,7 +30,7 @@ type BootstrapFailure struct {
 	Kind, Hint string
 }
 
-func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string, noFollow, audit bool) (Facts, *BootstrapFailure) {
+func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin, head string, noFollow, audit bool) (Facts, *BootstrapFailure) {
 	pinnedTip, pinErr := resolvePin(root, sourceTipPin)
 	if pinErr != nil {
 		return Facts{}, pinErr
@@ -71,11 +71,11 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	if source != nil {
 		resolvedSource = *source
 		reviewBase, reviewBaseResolved = resolvedSource.Base, true
-		landingBase, _, _ = reviewBaseFacts(root)
+		landingBase, _, _ = reviewBaseFacts(root, head)
 	} else {
-		defaultBranch, defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root)
-		resolvedSource.Tip = headTip(root)
-		reviewBase, reviewBaseResolved, reviewBaseHint = reviewBaseFacts(root)
+		defaultBranch, defaultBranchResolved, defaultBranchCurrent = baseCurrentFacts(root, head)
+		resolvedSource.Tip = headTip(root, head)
+		reviewBase, reviewBaseResolved, reviewBaseHint = reviewBaseFacts(root, head)
 		landingBase = reviewBase
 		if reviewBaseResolved {
 			changedPaths, err = diff.ChangedFilePathsAt(root, reviewBase)
@@ -98,7 +98,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 	if ticketErr != nil {
 		return Facts{}, ticketErr
 	}
-	defaultTipPaths, defaultTipFailure := defaultTipEqualPaths(root, resolvedSource.Tip, changedPaths)
+	defaultTipPaths, defaultTipFailure := defaultTipEqualPaths(root, head, resolvedSource.Tip, changedPaths)
 	if defaultTipFailure != nil {
 		return Facts{}, defaultTipFailure
 	}
@@ -112,7 +112,7 @@ func gather(root, mode, slug string, source *diff.SourceRange, sourcePaths []str
 		}
 	}
 
-	return withFoldResolution(root, withCompletionPlan(root, Facts{
+	return withFoldResolution(root, head, withCompletionPlan(root, Facts{
 		Mode:                  mode,
 		SpecPath:              specPath,
 		DefaultBranch:         defaultBranch,
@@ -181,13 +181,12 @@ func resolvePin(root, pin string) (string, *BootstrapFailure) {
 	return resolved, nil
 }
 
-// headTip is the derived source tip of a bare invocation, the counterpart
-// to the snapshot head an explicit source range captures. An unreadable
-// HEAD answers empty. tip-current renders that as its own red rather than
-// a bootstrap failure. A bare invocation with no pin has no use for the
-// value at all.
-func headTip(root string) string {
-	tip, err := git.Output("-C", root, "rev-parse", "HEAD")
+// headTip is the derived source tip of a bare invocation, the counterpart to the
+// snapshot head an explicit source range captures. head is HEAD or a candidate. An
+// unreadable head answers empty. tip-current renders that as its own red rather than
+// a bootstrap failure. A bare invocation with no pin has no use for the value at all.
+func headTip(root, head string) string {
+	tip, err := git.Output("-C", root, "rev-parse", head)
 	if err != nil {
 		return ""
 	}
@@ -388,8 +387,8 @@ func assignmentTarget(root string) string {
 // reviewBaseFacts wraps the exported diff-base resolution, the single
 // source `bench diff` itself consumes. So preflight and `bench diff` can
 // never disagree about the base.
-func reviewBaseFacts(root string) (base string, resolved bool, hint string) {
-	base, _, errKind, errHint := diff.ResolveReviewBase(root)
+func reviewBaseFacts(root, head string) (base string, resolved bool, hint string) {
+	base, _, errKind, errHint := diff.ResolveReviewBaseAt(root, head)
 	if errKind != "" {
 		return "", false, errKind + ": " + errHint
 	}

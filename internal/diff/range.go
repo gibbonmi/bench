@@ -303,15 +303,21 @@ func resolveBranchRangeFromFacts(root string, facts git.DiffFacts) (dr diffRange
 }
 
 // ResolveReviewBase is the single source of the resolved review base for
-// bench diff and its consumers: the recorded `branch.<name>.benchBase` key when
-// it names a reachable ancestor of HEAD, else merge-base with the resolved
-// default branch. method carries which path answered: `recorded`, `merge-base`, or one
-// of the loud fallback labels when a recorded key is present but unusable. A non-empty
-// errKind/errHint with an empty base is the only absence shape; base is never empty on
-// a nil error. Every git read binds root, so the caller's working directory does
-// not matter.
+// bench diff and its consumers: ResolveReviewBaseAt of HEAD.
 func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
-	base, method = resolveBase(root)
+	return ResolveReviewBaseAt(root, "HEAD")
+}
+
+// ResolveReviewBaseAt resolves the review base of tip: the recorded
+// `branch.<name>.benchBase` key of the checked-out branch when it names a reachable
+// ancestor of tip, else merge-base of tip with the resolved default branch. A candidate
+// commit that HEAD does not name yet passes itself as tip. method carries which path
+// answered: `recorded`, `merge-base`, or one of the loud fallback labels when a recorded
+// key is present but unusable. A non-empty errKind/errHint with an empty base is the only
+// absence shape; base is never empty on a nil error. Every git read binds root, so the
+// caller's working directory does not matter.
+func ResolveReviewBaseAt(root, tip string) (base, method, errKind, errHint string) {
+	base, method = resolveBase(root, tip)
 	if base != "" {
 		return base, method, "", ""
 	}
@@ -320,7 +326,7 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 		return "", "", "cannot resolve a review base",
 			"this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>"
 	}
-	mb, err := git.Output("-C", root, "merge-base", def, "HEAD")
+	mb, err := git.Output("-C", root, "merge-base", def, tip)
 	if err != nil {
 		return "", "", "cannot resolve a review base",
 			"no merge-base with '" + def + "'; record one with: git config branch.<name>.benchBase <sha>"
@@ -332,9 +338,9 @@ func ResolveReviewBase(root string) (base, method, errKind, errHint string) {
 }
 
 // resolveBase returns the recorded-key base and `recorded` when the key names a
-// reachable ancestor, or ("", <loud fallback method>) when the key is present but
+// reachable ancestor of tip, or ("", <loud fallback method>) when the key is present but
 // unreachable/divergent, or ("","") when there is no usable recorded key.
-func resolveBase(root string) (base, method string) {
+func resolveBase(root, tip string) (base, method string) {
 	branch, _ := git.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
 	if branch == "" {
 		return "", ""
@@ -346,7 +352,7 @@ func resolveBase(root string) (base, method string) {
 	switch {
 	case !git.OK("-C", root, "cat-file", "-e", key+"^{commit}"):
 		return "", "merge-base (recorded sha unreachable)"
-	case !git.OK("-C", root, "merge-base", "--is-ancestor", key, "HEAD"):
+	case !git.OK("-C", root, "merge-base", "--is-ancestor", key, tip):
 		return "", "merge-base (recorded sha not an ancestor)"
 	default:
 		return key, "recorded"
