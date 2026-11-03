@@ -1792,6 +1792,18 @@
               "path": "roadmap/FT354.md",
               "identity": "sha256:08a9689d0b5a09eb6b8dcf1280eda6b3db39af86ee08b3b1777a6cbddfdaf9a1"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "shell-argument-ownership",
+                "path": "specs/shell-argument-ownership/spec.md",
+                "identity": "sha256:8b264be063d438132a70b624579d44022dfaf171be93737dfcd6de7b82633030"
+              },
+              "obligations": [
+                "FT354"
+              ]
+            }
           ]
         },
         {
