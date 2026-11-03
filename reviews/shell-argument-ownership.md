@@ -471,3 +471,13 @@ The ticket 02 author reported these witness reds before the first production edi
 | S40 | The widen rerun line still renders through the bare-token policy. | `TestWidenRerunArguments`, `TestSpecWidenRefusesAnOutOfScopeEntry` |
 
 The S40 argv recovery replaces the `<reference>` placeholder with `r1` in its recovery input only, because a shell reads a bare `<reference>` as a redirection.
+
+## S-B2 author witness reds
+
+The ticket 03 author reported this witness red before the production edit. The package passed after the migration.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S14 | The citation cmd cell still renders through the bare-token policy. | `TestCitationCmdRoundTripsThroughAPOSIXShellSplit` at `citation_test.go:200`, `TestCitationNamesHeadVersionAndReplaySpelling` at `citation_test.go:166` |
+
+The author folded the package-local `shellSplit` harness into `axitest.HelpAction.Argv`. A git ref cannot hold a space, so the S14 fixture uses an embedded quote and a metacharacter, and the owner tests cover spaces.
