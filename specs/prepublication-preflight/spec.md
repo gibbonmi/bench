@@ -6,7 +6,7 @@ Roadmap: FT380
 
 Decision source: named reviewed artifact `roadmap/FT380.md` (the drained FT380 row) and its approved commitment criterion `FT380-residual.before-publication`, with reviewer decision D1 closed in conversation on 2026-11-02: drop the `check-floor` clause, because build-cost retired that row.
 
-Verification log: 0 iteration(s) to accept — pending review.
+Verification log: 4 iteration(s) to accept — the spec round took 2 iterations (it found two direct HEAD reads, in the default-branch ancestry and the derived review base, that the candidate grade must move, and it added PP33), and the ticket round took 2 iterations (it found that ticket 02 creates a seam that ticket 03 consumes, so C2 split into C2 and C3). The slicing research found the HEAD-relative dirty-source test and added PP34.
 
 ## Problem
 
@@ -41,7 +41,7 @@ A plan commit that a dispatch follows still uses plain `bench commit`, because t
 ## User stories
 
 Line: opus / high.
-Implementation-line reason: C1 substitutes the candidate for HEAD across several gather reads, and a missed read is silent unless a differential row varies it, so C1 runs at high. C2 and C3 compose existing seams with exact stub rows and one system row, so they run at medium.
+Implementation-line reason: C1 substitutes the candidate for HEAD across several gather reads, and a missed read is silent unless a differential row varies it, so C1 runs at high. C2 adds the check seam over the existing landing and commit harnesses, and C3 composes both seams with exact stub rows and one system row, so each runs at medium.
 Harder chunks: C1.
 
 ### The candidate grade
