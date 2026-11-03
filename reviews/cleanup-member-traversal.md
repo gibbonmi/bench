@@ -429,6 +429,72 @@
             "C1-COV-1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "C1-R2-STD",
+          "performer": "ft363-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1-r2",
+            "digest": "sha256:b8373c36c7367562dc404a81f0ccceb5a4b4290cec2cfaad15029ea9b5e59271",
+            "excerpt": "## Standards\nOutcome: closed. Findings: 0.\nThe test no longer holds its own copy of the fingerprint inputs; it renders explicitFingerprintInputs (cleanup_members_baseline_test.go:148-161), which fingerprintExplicitSet hashes (clean_set.go:173, 239-263). The frozen records did not change. requalifyExplicitRow moved byte-identical to clean_set_apply.go:229-241; call sites unchanged.\n"
+          },
+          "axis": "Standards",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "finding_ids": [],
+          "supersedes": [
+            "C1-R1-STD"
+          ]
+        },
+        {
+          "id": "C1-R2-SPEC",
+          "performer": "ft363-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1-r2",
+            "digest": "sha256:144e5060ceaaa6e39fa14c07162340880c91cb335e4452feb414f424daf17249",
+            "excerpt": "## Spec (C1-SPEC-1)\nOutcome: closed. Findings: 0.\nOmitting an input now fails the baseline (cleanup_members_baseline_test.go:118, spec.md:327). Each plan digest must equal fingerprintExplicitSet of the rendered inputs in the same run (cleanup_members_baseline_test.go:149-151, spec.md:325). Probe: removed options.Full at clean_set.go:240: bit, 15 failures, first TestCleanupTraversalBaseline/explicit/all-success, restored yes.\n"
+          },
+          "axis": "Spec",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "finding_ids": [],
+          "supersedes": [
+            "C1-R1-SPEC"
+          ]
+        },
+        {
+          "id": "C1-R2-COV",
+          "performer": "ft363-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1-r2",
+            "digest": "sha256:ff907a100723b64b530737df2d8661e7eb8298d6358d792584cf837133850120",
+            "excerpt": "## Coverage (C1-COV-1)\nOutcome: closed. Findings: 0.\nThe new subtest (clean_set_refusal_test.go:116-143) drifts the second member at its own in-loop requalify (clean_set.go:337-340) and asserts errStaleFingerprint, a not-attempted row, and that the member survives. Probe: inserted `if current.plan.Action.Removes() { err = nil }` before clean_set.go:341: bit, 1 failure, explicit_member_drifts_while_still_removable at clean_set_refusal_test.go:135, restored yes. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "finding_ids": [],
+          "supersedes": [
+            "C1-R1-COV"
+          ]
         }
       ]
     }
@@ -524,3 +590,7 @@ The repair session ft363-repair-01-r1 closed both findings at repair commit `94e
 | C1-SPEC-1 | R26 | `options.Full` is removed from `explicitFingerprintInputs`. | `TestCleanupTraversalBaseline`, 15 failures |
 
 The repair moved `requalifyExplicitRow` unchanged from `clean_set.go` to `clean_set_apply.go`, so that `clean_set.go` stays within the 400-line bound.
+
+## C1 confirming round
+
+A fresh unified opus / medium session read the repair delta `5e0110372..94eb8696d`. It closed C1-SPEC-1 and C1-COV-1, and it found no new finding. Each axis replayed its finding's probe, and each probe bit. Repair cycles consumed for C1: 1 of 2.
