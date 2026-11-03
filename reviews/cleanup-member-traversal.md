@@ -247,3 +247,17 @@
   ]
 }
 ```
+
+## C1 author witness reds
+
+The ticket 01 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R01, R05 | The visit predicate is forced false. | `TestCleanupTraversalEmptyModes/explicit/retained-only`, `TestCleanupTraversalRetainedVisits` |
+| R02 | Each outcome is prepended, not appended. | `TestCleanupTraversalOrder` |
+| R19 | The stop projection has no completed prefix. | `TestCleanupTraversalCompletedPrefix` |
+| R27 | The `StepMemberRequalify` hit is omitted. | `TestCleanupTraversalModeFaultBoundaries/explicit/all-success` |
+| R28 | The locked fingerprint check is disabled. | `TestCleanupTraversalAuthorityPreservation` |
+
+The author reported one gap: the only cited R13 witness, the subtest for drift that stays removable, drives landed mode only.
