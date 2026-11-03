@@ -402,6 +402,7 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `cmd/bench/planning_read_advice.go`
 - `cmd/bench/planning_read_advice_test.go`
 - `cmd/bench/planning_reader_commands_test.go`
+- `cmd/bench/preflight_version_test.go`
 - `cmd/bench/worktree_leaves_test.go`
 - `decisions/architecture-primitives.md`
 - `internal/axi/action.go`
