@@ -1,7 +1,7 @@
 # Quote direct recovery-route operands
 
 Blocked by: 01-quote-tree-build-arguments.md, 03-quote-citation-commands.md
-Writes: internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, internal/worktree/shell_arguments_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/unlanded_route_test.go, internal/worktree/identifier_operand_test.go
+Writes: internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, internal/worktree/shell_arguments_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/unlanded_route_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/parallel_census_test.go
 Covers: S16
 
 ## What to build

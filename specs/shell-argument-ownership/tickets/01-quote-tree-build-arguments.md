@@ -1,7 +1,7 @@
 # Quote tree-build arguments through the existing owner
 
 Blocked by: none
-Writes: internal/sanitize/shellquote_test.go (new), internal/worktree/tree_target.go, internal/worktree/shell_arguments_test.go (new), internal/treetarget/build_test.go, internal/worktree/target_refusal_test.go, internal/systemtest/tree_target_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/sanitize/shellquote_test.go (new), internal/worktree/tree_target.go, internal/worktree/shell_arguments_test.go (new), internal/treetarget/build_test.go, internal/worktree/target_refusal_test.go, internal/systemtest/tree_target_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go
 Covers: S01, S02, S03, S04, S15
 
 ## What to build
