@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/prepublication-preflight/spec.md",
-  "plan_digest": "sha256:439822b5cbe0fa3d7522f3a589cf67fd2fd93e440fb9f9beed6a74d913859390",
+  "plan_digest": "sha256:eb3e51dca0f37f18117f06ce2c8ec17848d0ac921cc1b5598a9d43b0830ca3c6",
   "implementation_session": "",
   "chunks": [
     {
@@ -228,6 +228,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "C2",
+      "base": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+      "tip": "7827cb0bec9a148bd39a3a254dca7052dce2b332",
+      "plan_digest": "sha256:eb3e51dca0f37f18117f06ce2c8ec17848d0ac921cc1b5598a9d43b0830ca3c6",
+      "source_digest": "61408cb094d9dcb5e936c0e3ea1d33ef3f938581",
+      "acceptance_rows": [
+        "PP10",
+        "PP11",
+        "PP12",
+        "PP13",
+        "PP14",
+        "PP15",
+        "PP16"
+      ],
+      "verification": [
+        {
+          "id": "c2-02-check-seam",
+          "performer": "ppf-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "61408cb094d9dcb5e936c0e3ea1d33ef3f938581",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-author-02",
+            "digest": "sha256:f143aa77912fd3340f09b8fd4c0844ced286c82e9f5d0d5d91659bfae0e52eb0",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/landing/landing.go,swap,failed,1,TestLandRunsTheCheckBeforePublication,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,^TestLandRunsTheCheckBeforePublication$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,416\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,28,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandRunsTheCheckBeforePublication,\"check_test.go:39: destination inside the check = 24e370f26c78a4f3118999ce965cbc07cf0149eb, want the expected base 44f3953a32ecff70b28d871779d02a569b6cf367\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7827cb0bec9a148bd39a3a254dca7052dce2b332",
+          "requirement": "check-seam",
+          "command": "bench test --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Call the check after the ref update and record the PP10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ppf-author-02",
+              "digest": "sha256:f143aa77912fd3340f09b8fd4c0844ced286c82e9f5d0d5d91659bfae0e52eb0",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/landing/landing.go,swap,failed,1,TestLandRunsTheCheckBeforePublication,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/landing,^TestLandRunsTheCheckBeforePublication$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,416\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/landing,fail,28,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/landing,TestLandRunsTheCheckBeforePublication,\"check_test.go:39: destination inside the check = 24e370f26c78a4f3118999ce965cbc07cf0149eb, want the expected base 44f3953a32ecff70b28d871779d02a569b6cf367\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -241,6 +290,15 @@
     {
       "from": "sha256:351505691273d6505a9a5fcf36349186e657baf3e6769643711555ead6885e4d",
       "to": "sha256:439822b5cbe0fa3d7522f3a589cf67fd2fd93e440fb9f9beed6a74d913859390",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:439822b5cbe0fa3d7522f3a589cf67fd2fd93e440fb9f9beed6a74d913859390",
+      "to": "sha256:eb3e51dca0f37f18117f06ce2c8ec17848d0ac921cc1b5598a9d43b0830ca3c6",
       "chunk_ids": {
         "C1": [
           "C1"
