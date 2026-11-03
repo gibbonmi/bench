@@ -1835,3 +1835,15 @@ Findings: 2. Worst issue: C4-COV-1. The axis graded both items as advice, and th
 - The tuple check `!m.same() ||` in `clean_unclaimed.go` is an equivalent mutant: the branch cannot run after the fingerprint and length check passes.
 
 Both findings route to one test-only repair on ticket 05. The repair also corrects the stale comment at `cleanup_members_baseline_test.go:135`.
+
+## C4 repair 1 witness reds
+
+The test-only repair session ft363-repair-05-r1 closed both findings at repair commit `4e9607517`. Repair cycles consumed for C4: 1 of 2. Each mutation was restored, and the package then passed.
+
+| Finding | Mutation | Red test |
+|---|---|---|
+| C4-COV-1 | In `applyExplicitSet`, a dead traversal run plus the original visit loop in an immediately invoked closure. | `TestCleanupTraversalCopySurvival` |
+| C4-COV-1 | In `applyExplicitSet`, the traversal run behind `if len(members) < 0` plus a condition-stopped visit loop. | `TestCleanupTraversalCopySurvival` |
+| C4-COV-2 | The version is dropped from `fingerprintInputs`. | `TestCleanupTraversalFingerprintKnownAnswer` |
+
+The coordinator probe of the closure-wrapped loop also bit. The test-only confirmation route refused, because the repair window holds a prose-only spec correction, so a unified confirming round grades the repair delta.
