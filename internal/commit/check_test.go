@@ -1,32 +1,19 @@
 package commit
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/refusalroute"
 	"github.com/gibbonmi/bench/internal/refusalroute/routetest"
 	"github.com/gibbonmi/bench/internal/sanitize"
 )
-
-// runChecked invokes the real command from root with check, the way the chain does. With no
-// check it is runCommand.
-func runChecked(t *testing.T, root string, check func(root, candidate string) error, args ...string) (code int, stdout, stderr string) {
-	t.Helper()
-	if check == nil {
-		return runCommand(t, root, args...)
-	}
-	t.Chdir(root)
-	var out, errOut bytes.Buffer
-	_, code = RunChecked(args, &out, &errOut, check)
-	return code, out.String(), errOut.String()
-}
 
 // errChainRed is the refusal of the stub chain check.
 var errChainRed = errors.New("the chain's preflight is red on a.txt")
@@ -65,11 +52,10 @@ func chainRedFixture(rerun func(label string, flags ...string) string) commitFac
 func faceSteps(t *testing.T, name, stderr string) []string {
 	t.Helper()
 	next, printed := printedNext(stderr)
-	index := slices.IndexFunc(refusalroute.Inventory(), func(face refusalroute.Face) bool { return face.Name == name })
-	if !printed || index < 0 {
+	if !printed {
 		t.Fatalf("stderr = %q, want one next= route of the registered face %s", stderr, name)
 	}
-	face := refusalroute.Inventory()[index]
+	face := registeredFace(t, name)
 	steps := routetest.Steps(t, face, next, "", nil)
 	if first := face.Route[0].Filled(func(string) string { return "" }); steps[0] != first {
 		t.Fatalf("%s next = %q, want the first step %q", name, next, first)
@@ -79,28 +65,47 @@ func faceSteps(t *testing.T, name, stderr string) []string {
 
 // PP13: a red check refuses the commit at exit 1 with the commit-chain-red route, whose rerun
 // keeps the caller's --preflight-build, and HEAD does not move. The check receives the
-// checkout and the candidate commit.
+// checkout and the candidate commit. A check error that wraps another face's refusal still
+// prints the chain-red route, because every check refusal routes as commit-chain-red.
 func TestRunCheckedRefusesARedCheck(t *testing.T) {
 	quoted := sanitize.ShellQuote
-	f := assignedCommitSet(t, "chain", gateScript("exit 0"))
-	mustWrite(t, filepath.Join(f.checkout, "a.txt"), "red\n", 0o644)
-	before := gittest.Output(t, f.checkout, "rev-parse", "HEAD")
-	var roots, candidates []string
-	check := func(root, candidate string) error {
-		roots, candidates = append(roots, root), append(candidates, candidate)
-		return redCandidateCheck(root, candidate)
-	}
-	code, stdout, stderr := runChecked(t, f.checkout, check, PreflightBuildFlag, "commit-fixture", "-m", "m", "--", "a.txt")
-	steps := faceSteps(t, faceChainRed, stderr)
-	want := callerCommit(quoted("chain"), PreflightBuildFlag, quoted("commit-fixture"), "-m", quoted("m"), "--", quoted("a.txt"))
-	if code != 1 || steps[len(steps)-1] != want || !strings.Contains(stderr, errChainRed.Error()) {
-		t.Fatalf("commit = (%d, %q, %q), want exit 1, the chain-red sentence, and a next= route that repairs the chain and ends with %q", code, stdout, stderr, want)
-	}
-	if head := gittest.Output(t, f.checkout, "rev-parse", "HEAD"); head != before {
-		t.Fatalf("HEAD moved from %s to %s", before, head)
-	}
-	if top := gittest.Output(t, f.checkout, "rev-parse", "--show-toplevel"); len(roots) != 1 || roots[0] != top || candidates[0] == before {
-		t.Fatalf("check calls = roots %q candidates %q, want one call at %s with a candidate other than HEAD", roots, candidates, top)
+	for _, tc := range []struct {
+		name string
+		wrap func(error) error
+	}{
+		{"plain", func(err error) error { return err }},
+		{"wraps a raised face", func(err error) error {
+			return fmt.Errorf("chain: %w", refusalroute.Raised{Name: faceHandback, Err: err})
+		}},
+		{"wraps a tip-moved refusal", func(err error) error {
+			return fmt.Errorf("chain: %w", landing.TipMovedError{Err: err})
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := assignedCommitSet(t, "chain", gateScript("exit 0"))
+			mustWrite(t, filepath.Join(f.checkout, "a.txt"), "red\n", 0o644)
+			before := gittest.Output(t, f.checkout, "rev-parse", "HEAD")
+			var roots, candidates []string
+			check := func(root, candidate string) error {
+				roots, candidates = append(roots, root), append(candidates, candidate)
+				if err := redCandidateCheck(root, candidate); err != nil {
+					return tc.wrap(err)
+				}
+				return nil
+			}
+			code, stdout, stderr := runChecked(t, f.checkout, check, PreflightBuildFlag, "commit-fixture", "-m", "m", "--", "a.txt")
+			steps := faceSteps(t, faceChainRed, stderr)
+			want := callerCommit(quoted("chain"), PreflightBuildFlag, quoted("commit-fixture"), "-m", quoted("m"), "--", quoted("a.txt"))
+			if code != 1 || steps[len(steps)-1] != want || !strings.Contains(stderr, errChainRed.Error()) {
+				t.Fatalf("commit = (%d, %q, %q), want exit 1, the chain-red sentence, and a next= route that repairs the chain and ends with %q", code, stdout, stderr, want)
+			}
+			if head := gittest.Output(t, f.checkout, "rev-parse", "HEAD"); head != before {
+				t.Fatalf("HEAD moved from %s to %s", before, head)
+			}
+			if top := gittest.Output(t, f.checkout, "rev-parse", "--show-toplevel"); len(roots) != 1 || roots[0] != top || candidates[0] == before {
+				t.Fatalf("check calls = roots %q candidates %q, want one call at %s with a candidate other than HEAD", roots, candidates, top)
+			}
+		})
 	}
 }
 

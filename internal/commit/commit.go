@@ -228,18 +228,18 @@ const (
 	faceHandback              = "commit-handback"
 )
 
-// landingFace picks the face of a refusal by its type: a named path that the caller corrects,
-// a moved tip, a red pre-publication check, the attributed kind of an authorization refusal,
-// or else the handback.
+// landingFace picks the face of a refusal by its type: a red pre-publication check, whatever
+// its error wraps, a named path that the caller corrects, a moved tip, the attributed kind of
+// an authorization refusal, or else the handback.
 func landingFace(err error) string {
 	var refused landing.AuthorizationRefusal
 	switch {
+	case errors.As(err, new(landing.CheckRefusal)):
+		return faceChainRed
 	case errors.As(err, new(landing.NamedPathError)):
 		return faceNamedPath
 	case errors.As(err, new(landing.TipMovedError)):
 		return faceTipMoved
-	case errors.As(err, new(landing.CheckRefusal)):
-		return faceChainRed
 	case !errors.As(err, &refused):
 	case refused.Result.Kind == authorization.Infrastructure:
 		return faceInfrastructure
@@ -250,7 +250,8 @@ func landingFace(err error) string {
 }
 
 // refuse prints a refusal that published nothing, cause and then on its own next= line the
-// route of the face that cause raised, or else of face, and answers exit 1. The route re-runs
+// route of the face that cause raised, or else of face, and answers exit 1. A chain-red face
+// keeps its own route whatever the check error raised. The route re-runs
 // the caller's commit in the worktree of the active assignment that owns root; with no owner,
 // the zero owner's empty label prints the slot.
 func refuse(stderr io.Writer, root string, req request, face string, cause error) int {
@@ -269,6 +270,9 @@ func refuse(stderr io.Writer, root string, req request, face string, cause error
 	}
 	values := map[string]string{refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: strings.Join(args, " ")}
 	values[refusalroute.FactRerun] = refusalroute.CommitRerun(values)
+	if face == faceChainRed && cause != nil {
+		cause = errors.New(cause.Error())
+	}
 	refusal := refusalroute.Printed(face, cause, values)
 	if refusal.Sentence != "" {
 		fmt.Fprintln(stderr, "error: "+refusal.Sentence)
