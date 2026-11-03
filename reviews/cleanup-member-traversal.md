@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/cleanup-member-traversal/spec.md",
-  "plan_digest": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
+  "plan_digest": "sha256:ca9d4220f35deed20943e5889f652505dd32b91ece74766d446d38e370f51c96",
   "implementation_session": "",
   "chunks": [
     {
@@ -1460,6 +1460,24 @@
     {
       "from": "sha256:a1b81a57d6b2b74d634bb8d258bbeb281ac6d804e0a679b149ca7fa9f438f38a",
       "to": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ],
+        "C4": [
+          "C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
+      "to": "sha256:ca9d4220f35deed20943e5889f652505dd32b91ece74766d446d38e370f51c96",
       "chunk_ids": {
         "C1": [
           "C1"
