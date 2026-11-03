@@ -343,6 +343,9 @@ Ticket slicing changes only this spec and its ticket files.
 - `internal/worktree/cleanup_members_test.go` (new)
 - `internal/worktree/cleanup_members_census_test.go` (new)
 - `internal/worktree/cleanup_members_baseline_test.go` (new)
+- `internal/worktree/cleanup_members_baseline_record_test.go` (new)
+- `internal/worktree/cleanup_members_modes_test.go` (new)
+- `internal/worktree/parallel_census_test.go`
 - `internal/worktree/testdata/cleanup-member-traversal/` (new)
 - `internal/worktree/clean_set.go`
 - `internal/worktree/clean_landed.go`
