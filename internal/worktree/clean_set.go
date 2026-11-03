@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
@@ -170,7 +169,7 @@ func planExplicitSet(j joins, a ambient, root string, targets []string, options 
 	sort.Slice(set.rows, func(a, b int) bool { return set.rows[a].assignment.ID < set.rows[b].assignment.ID })
 	sort.Slice(set.unrecorded, func(a, b int) bool { return set.unrecorded[a].ref < set.unrecorded[b].ref })
 	if len(set.failures) == 0 {
-		set.fingerprint = fingerprintExplicitSet(explicitFingerprintInputs(set, options))
+		set.fingerprint = fingerprintInputs(explicitSetFingerprintVersion, explicitFingerprintInputs(set, options))
 	}
 	fingerprint := unapplicableFingerprint
 	if set.fingerprint != "" {
@@ -227,21 +226,12 @@ func selectionFailurePlan(target string, err error) CleanupPlan {
 	}
 }
 
-// explicitFingerprintInput is one entry of the explicit set's canonical fingerprint inputs:
-// its kind and its values in hash order. A key names a modifier value; a member's values are
-// positional, so it has no keys. The fingerprint hashes the values alone.
-type explicitFingerprintInput struct {
-	kind         string
-	keys, values []string
-}
-
 // explicitFingerprintInputs binds complete membership and each member's own removal-relevant
 // state. The per-target digest is that state for a recorded member: the explicit planner
 // already derives it from every fact a removal reads, so the set never derives the same tuple
 // a second time. An unclaimed member binds its ref, tip, class, holder, and discarded ref.
 func explicitFingerprintInputs(set explicitCleanupSet, options CleanupOptions) []explicitFingerprintInput {
-	inputs := []explicitFingerprintInput{{"options", []string{"discard-ignored", "discard-branch", "full"},
-		[]string{strconv.FormatBool(options.DiscardIgnored), strconv.FormatBool(options.DiscardBranch), strconv.FormatBool(options.Full)}}}
+	inputs := []explicitFingerprintInput{optionsFingerprintInput(options)}
 	for _, row := range set.rows {
 		inputs = append(inputs, explicitFingerprintInput{"recorded", nil, []string{row.assignment.ID, row.plan.Target, string(row.plan.Action), row.targetFingerprint}})
 	}
@@ -249,17 +239,6 @@ func explicitFingerprintInputs(set explicitCleanupSet, options CleanupOptions) [
 		inputs = append(inputs, explicitFingerprintInput{"unrecorded", nil, []string{row.ref, row.oid, string(row.class), row.holder, row.discarded}})
 	}
 	return inputs
-}
-
-// fingerprintExplicitSet hashes the version, then each input value in order.
-func fingerprintExplicitSet(inputs []explicitFingerprintInput) string {
-	parts := [][]byte{[]byte(explicitSetFingerprintVersion)}
-	for _, input := range inputs {
-		for _, value := range input.values {
-			parts = append(parts, []byte(value))
-		}
-	}
-	return fingerprintParts(parts...)
 }
 
 // plans is every selection outcome in one order: the recorded members by canonical

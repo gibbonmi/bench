@@ -59,7 +59,7 @@ func planLandedSet(j joins, run *git.Run, root string, options CleanupOptions, s
 	if len(set.rows) == 0 {
 		return set, nil
 	}
-	set.fingerprint = fingerprintLandedSet(landedFingerprintInputs(set.rows, options))
+	set.fingerprint = fingerprintInputs(landedSetFingerprintVersion, landedFingerprintInputs(set.rows, options))
 	for i := range set.rows {
 		set.rows[i].plan.Fingerprint = set.fingerprint
 	}
@@ -235,24 +235,12 @@ func assignmentLeaseStates(run *git.Run, root string) (map[string]string, error)
 // explicit set's input shape. A later apply compares the digest before touching the first
 // checkout. Adding a row or changing one preserving verdict must change the shared value.
 func landedFingerprintInputs(rows []landedCleanupRow, options CleanupOptions) []explicitFingerprintInput {
-	inputs := []explicitFingerprintInput{{"options", []string{"discard-ignored", "discard-branch", "full"},
-		[]string{strconv.FormatBool(options.DiscardIgnored), strconv.FormatBool(options.DiscardBranch), strconv.FormatBool(options.Full)}}}
+	inputs := []explicitFingerprintInput{optionsFingerprintInput(options)}
 	for _, row := range rows {
 		inputs = append(inputs, explicitFingerprintInput{"landed", nil, []string{row.assignment.ID, row.assignment.Worktree,
 			string(row.plan.Action), row.headOID, row.plan.Tracked, strconv.Itoa(row.plan.Ignored.Count), row.lease}})
 	}
 	return inputs
-}
-
-// fingerprintLandedSet hashes the version, then each input value in order.
-func fingerprintLandedSet(inputs []explicitFingerprintInput) string {
-	parts := [][]byte{[]byte(landedSetFingerprintVersion)}
-	for _, input := range inputs {
-		for _, value := range input.values {
-			parts = append(parts, []byte(value))
-		}
-	}
-	return fingerprintParts(parts...)
 }
 
 // landedRowPlans is the plan each selected member carries, in selection order.

@@ -6,8 +6,13 @@
 //
 // The traversal derives no fingerprint, ownership proof, classification, or assignment
 // identity, and it takes no run: a mode's visit closure captures the run it answers to.
+//
+// Beside it sits the one shape and hash every set fingerprint shares: each mode builds its
+// own input list, and the set digest is the versioned hash of that list's values.
 
 package worktree
+
+import "strconv"
 
 // cleanupTraversal is one mode's adapter to the shared traversal over members of type M.
 type cleanupTraversal[M any] struct {
@@ -38,4 +43,30 @@ func (c cleanupTraversal[M]) run(members []M, plans []CleanupPlan) ([]CleanupPla
 		}
 	}
 	return plans, nil
+}
+
+// explicitFingerprintInput is one entry of the set's canonical fingerprint inputs:
+// its kind and its values in hash order. A key names a modifier value; a member's values are
+// positional, so it has no keys. The fingerprint hashes the values alone.
+type explicitFingerprintInput struct {
+	kind         string
+	keys, values []string
+}
+
+// optionsFingerprintInput is the modifier input the explicit and landed sets bind first.
+func optionsFingerprintInput(options CleanupOptions) explicitFingerprintInput {
+	return explicitFingerprintInput{"options", []string{"discard-ignored", "discard-branch", "full"},
+		[]string{strconv.FormatBool(options.DiscardIgnored), strconv.FormatBool(options.DiscardBranch), strconv.FormatBool(options.Full)}}
+}
+
+// fingerprintInputs hashes the version, then each input value in order. Every set
+// fingerprint is this hash of its own version and input list.
+func fingerprintInputs(version string, inputs []explicitFingerprintInput) string {
+	parts := [][]byte{[]byte(version)}
+	for _, input := range inputs {
+		for _, value := range input.values {
+			parts = append(parts, []byte(value))
+		}
+	}
+	return fingerprintParts(parts...)
 }

@@ -109,17 +109,25 @@ func planUnclaimedAssignmentSet(root string, options CleanupOptions) (unclaimedA
 	if err != nil {
 		return unclaimedAssignmentSet{}, err
 	}
-	parts := [][]byte{[]byte(unclaimedAssignmentFingerprintVersion), []byte("discard-branch=true"), []byte(fmt.Sprintf("unclaimed=%t", options.Unclaimed))}
 	for i := range set.rows {
 		set.rows[i].refVerdict = verdicts[i]
-		row := set.rows[i]
-		parts = append(parts, []byte(row.ref), []byte(row.oid), []byte(row.class), []byte(row.holder))
 	}
 	if len(set.rows) == 0 || set.faulted() {
 		return set, nil
 	}
-	set.fingerprint = fingerprintParts(parts...)
+	set.fingerprint = fingerprintInputs(unclaimedAssignmentFingerprintVersion, unclaimedFingerprintInputs(set.rows, options))
 	return set, nil
+}
+
+// unclaimedFingerprintInputs binds this mode's modifiers, then each classified branch's ref,
+// tip, class, and holder. The modifier values carry their own names, so the hash reads them
+// as the mode has always spelled them.
+func unclaimedFingerprintInputs(rows []unclaimedAssignmentBranch, options CleanupOptions) []explicitFingerprintInput {
+	inputs := []explicitFingerprintInput{{"options", nil, []string{"discard-branch=true", fmt.Sprintf("unclaimed=%t", options.Unclaimed)}}}
+	for _, row := range rows {
+		inputs = append(inputs, explicitFingerprintInput{"unclaimed", nil, []string{row.ref, row.oid, string(row.class), row.holder}})
+	}
+	return inputs
 }
 
 // renderUnclaimedAssignmentSet prints the plan rows, then the apply command when a row
