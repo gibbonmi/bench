@@ -60,32 +60,34 @@ func TestCleanSetPreflightFaultNamesItsMember(t *testing.T) {
 // claiming a removal that never started.
 func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 	t.Parallel()
-	t.Run("drifts to retained", func(t *testing.T) {
-		t.Parallel()
-		root, home := ignoringRepo(t)
-		first := landedMember(t, root, home, "drift-retained-first", "first.txt")
-		second := landedMember(t, root, home, "drift-retained-second", "second.txt")
-		j := defaultJoins()
-		set := planExplicitSet(j, repoHome{root, home}.ambient(), root, explicitIdentities([]Creation{first, second}), CleanupOptions{})
-		if set.fingerprint == "" || len(set.rows) != 2 {
-			t.Fatalf("explicit set = %#v, want two applicable members", set)
-		}
-		drifted := memberByID(t, []Creation{first, second}, set.rows[1].assignment.ID)
-		j.cleanupBoundary = driftAtSecondRequalify(t, func() {
-			mustWrite(t, filepath.Join(drifted.Path, "ignored-late.txt"), []byte("residue\n"), 0o644)
-		})
+	for _, landed := range []bool{false, true} {
+		t.Run(map[bool]string{false: "drifts to retained", true: "landed member drifts to retained"}[landed], func(t *testing.T) {
+			t.Parallel()
+			root, home := ignoringRepo(t)
+			first := landedMember(t, root, home, "drift-retained-first", "first.txt")
+			second := landedMember(t, root, home, "drift-retained-second", "second.txt")
+			j := defaultJoins()
+			ids, planned, apply := modeApply(t, &j, repoHome{root, home}, landed, explicitIdentities([]Creation{first, second}))
+			if len(ids) != 2 || len(planned) != 2 || !planned[1].Action.Removes() {
+				t.Fatalf("planned rows = %#v, want two removable members", planned)
+			}
+			drifted := memberByID(t, []Creation{first, second}, ids[1])
+			j.cleanupBoundary = driftAtSecondRequalify(t, func() {
+				mustWrite(t, filepath.Join(drifted.Path, "ignored-late.txt"), []byte("residue\n"), 0o644)
+			})
 
-		plans, err := applyExplicitSet(j, repoHome{root, home}.ambient(), root, set, CleanupOptions{})
-		if !errors.Is(err, errStaleFingerprint) {
-			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
-		}
-		if len(plans) != 2 || plans[1].Action != ActionRetain {
-			t.Fatalf("refused rows = %#v, want the drifted member reported as retained", plans)
-		}
-		if _, statErr := os.Stat(drifted.Path); statErr != nil {
-			t.Fatalf("the retained member %s was removed: %v", drifted.Path, statErr)
-		}
-	})
+			plans, err := apply()
+			if !errors.Is(err, errStaleFingerprint) {
+				t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
+			}
+			if len(plans) != 2 || plans[0].Action != ActionRemoved || plans[1].Action != ActionRetain || plans[1].Target != drifted.Path {
+				t.Fatalf("refused rows = %#v, want the drifted member reported as retained", plans)
+			}
+			if _, statErr := os.Stat(drifted.Path); statErr != nil {
+				t.Fatalf("the retained member %s was removed: %v", drifted.Path, statErr)
+			}
+		})
+	}
 	t.Run("drifts while still removable", func(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)
@@ -103,6 +105,34 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		})
 
 		plans, err := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
+		if !errors.Is(err, errStaleFingerprint) {
+			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
+		}
+		if len(plans) != 2 || plans[1].Action != ActionNotAttempted || plans[1].Reason != "not attempted; this target no longer matches the approved plan" {
+			t.Fatalf("refused rows = %#v, want the drifted member reported as not attempted", plans)
+		}
+		requireMembersPresent(t, []Creation{drifted})
+	})
+	t.Run("explicit member drifts while still removable", func(t *testing.T) {
+		t.Parallel()
+		root, home := ignoringRepo(t)
+		first := landedMember(t, root, home, "drift-removable-first", "first.txt")
+		second := landedMember(t, root, home, "drift-removable-second", "second.txt")
+		members := []Creation{first, second}
+		options := CleanupOptions{DiscardIgnored: true}
+		j := defaultJoins()
+		set := planExplicitSet(j, repoHome{root, home}.ambient(), root, explicitIdentities(members), options)
+		if set.fingerprint == "" || len(set.rows) != 2 || !set.rows[1].plan.Action.Removes() {
+			t.Fatalf("explicit set = %#v, want two removable members", set)
+		}
+		// The approved set discards ignored residue, so new residue keeps the member removable
+		// while its ignored digest no longer matches the approved row.
+		drifted := memberByID(t, members, set.rows[1].assignment.ID)
+		j.cleanupBoundary = driftAtSecondRequalify(t, func() {
+			mustWrite(t, filepath.Join(drifted.Path, "ignored-late.txt"), []byte("residue\n"), 0o644)
+		})
+
+		plans, err := applyExplicitSet(j, repoHome{root, home}.ambient(), root, set, options)
 		if !errors.Is(err, errStaleFingerprint) {
 			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
 		}

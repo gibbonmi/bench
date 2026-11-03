@@ -1,0 +1,18 @@
+case unclaimed/retained-only
+inputs
+  options discard-branch=true unclaimed=true
+  unclaimed refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff> unique  
+commits
+  commit <tip:refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff> tree:cb4324672e0a parents=<tip:refs/heads/main>
+  commit <tip:refs/heads/main> tree:cdd154d572ab parents=
+refs-before
+  ref <tip:refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error none
+  stale false
+  rows 1 nil=false order=prefix 1 of 1
+  row refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff | retain | unclaimed | none | none | <digest:plan> | class=unique; bench worktree clean --discard-branch --target bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff | reason-code= | assignment=
+after
+  ref <tip:refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/main> refs/heads/main

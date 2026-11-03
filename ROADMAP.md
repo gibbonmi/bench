@@ -352,13 +352,12 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT363-member-set
-2. FT354-shell-args
-3. FT343-seam-policy
-4. FT446-cache-store
-5. FT414-preconditions
-6. FT369-charge-slicing
-7. FT365-conformance
-8. FT341-in-only
-9. FT420-concurrent-chunks
-10. FT387-overflow
+1. FT354-shell-args
+2. FT343-seam-policy
+3. FT446-cache-store
+4. FT414-preconditions
+5. FT369-charge-slicing
+6. FT365-conformance
+7. FT341-in-only
+8. FT420-concurrent-chunks
+9. FT387-overflow

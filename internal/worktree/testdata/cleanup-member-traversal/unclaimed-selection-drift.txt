@@ -1,0 +1,21 @@
+case unclaimed/selection-drift
+inputs
+  options discard-branch=true unclaimed=true
+  unclaimed refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> landed  
+  unclaimed refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> landed  
+commits
+  commit <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> tree:cdd154d572ab parents=
+refs-before
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/main
+response
+  error cleanup fingerprint is stale
+  stale true
+  rows 0 nil=true order=prefix 0 of 2
+after
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/cccccccccccccccccccccccccccccccc/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/main

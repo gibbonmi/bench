@@ -1,0 +1,2044 @@
+# Review outcomes
+
+```bench-review-record
+{
+  "version": 2,
+  "spec": "specs/cleanup-member-traversal/spec.md",
+  "plan_digest": "sha256:ca9d4220f35deed20943e5889f652505dd32b91ece74766d446d38e370f51c96",
+  "implementation_session": "",
+  "chunks": [
+    {
+      "id": "C1",
+      "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+      "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+      "plan_digest": "sha256:8917268dbf6107a6d8cda61954f441bb91d3430e791577ba9c7ee427bc99837c",
+      "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+      "acceptance_rows": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R19",
+        "R24",
+        "R27",
+        "R28"
+      ],
+      "verification": [
+        {
+          "id": "C1-T00-baseline-capture",
+          "performer": "ft363-author-00",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "bcf5a3429fd19b30b7c757a360d84adb7d409f61",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-00",
+            "digest": "sha256:b028b4908e6a66b54905ff12c08946e28cd530db54da1839bb84eeca90acace2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,swap,failed,2,TestCleanupTraversalBaseline/explicit/first-failure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversalBaseline,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,788\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2118,32\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 20: got \\\"  rows 1 nil=false order=prefix 1 of 3\\\", frozen \\\"  rows 3 nil=false order=prefix 3 of 3\\\"\",63\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 20: got \\\"  rows 2 nil=false order=prefix 2 of 3\\\", frozen \\\"  rows 3 nil=false order=prefix 3 of 3\\\"\",64\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "74e7512e3d459d25f184f1bf2cef1a6d547748a6",
+          "requirement": "baseline-capture",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversalBaseline'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the unreached recorded suffix rows from the explicit stopped result and record the R26 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-00",
+              "digest": "sha256:b028b4908e6a66b54905ff12c08946e28cd530db54da1839bb84eeca90acace2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,swap,failed,2,TestCleanupTraversalBaseline/explicit/first-failure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversalBaseline,passed,32\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,788\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,2118,32\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 20: got \\\"  rows 1 nil=false order=prefix 1 of 3\\\", frozen \\\"  rows 3 nil=false order=prefix 3 of 3\\\"\",63\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 20: got \\\"  rows 2 nil=false order=prefix 2 of 3\\\", frozen \\\"  rows 3 nil=false order=prefix 3 of 3\\\"\",64\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-explicit-preflight",
+          "performer": "ft363-author-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-01",
+            "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "requirement": "explicit-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the explicit all-member preflight before the recorded visits and record the R06 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-01",
+              "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-later-requalify",
+          "performer": "ft363-author-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-01",
+            "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "requirement": "later-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the later requalification before a reached recorded visit and record the R09 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-01",
+              "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-locked-requalify",
+          "performer": "ft363-author-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-01",
+            "digest": "sha256:7c192a48811fefd3562e8dca807f3c4a6a20a986f960d41dca7ea616e249a1c2",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/resume.go,swap,failed,5,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,99\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1509\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5577,99\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/KVVQSZ/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th1971209900/001/.benc… (904 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",54\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/landed/locked-drift,\"cleanup_members_baseline_test.go:119: landed/locked-drift differs from its frozen record at line 15: got \\\"  error cleanup receipt has invalid identity\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "requirement": "locked-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the locked qualification check of the recorded cleanup transaction and record the R10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-01",
+              "digest": "sha256:7c192a48811fefd3562e8dca807f3c4a6a20a986f960d41dca7ea616e249a1c2",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/resume.go,swap,failed,5,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,99\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1509\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5577,99\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/KVVQSZ/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th1971209900/001/.benc… (904 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",54\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/landed/locked-drift,\"cleanup_members_baseline_test.go:119: landed/locked-drift differs from its frozen record at line 15: got \\\"  error cleanup receipt has invalid identity\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-stop-at-failure",
+          "performer": "ft363-author-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-01",
+            "digest": "sha256:6df584a8fda30d3e65694d3ff826ba518809579683c723303d6fcc6198f19373",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/cleanup_members.go,swap,failed,12,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,99\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2970\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5481,99\nfailures[12]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/EYV6UO/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th182124007/001/.bench… (924 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,\"clean_set_refusal_test.go:80: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetPartialApply,\"clean_set_outcomes_test.go:45: apply error = \u003cnil>, want the injected transaction fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetUnstartedOutcomes,\"clean_set_outcomes_test.go:79: partial apply = (0, \\\"worktree_cleanup[3]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/EYV6UO/t/TestCleanSetUnstartedOutcomes2527818133/001/.bench-home/worktrees/001-1852413856/95bb73… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCompletedPrefix,\"cleanup_members_modes_test.go:81: apply error = \u003cnil>, want the injected fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/first,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/later,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "requirement": "stop-at-failure",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Continue the shared traversal after a failed visit and record the R14 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-01",
+              "digest": "sha256:6df584a8fda30d3e65694d3ff826ba518809579683c723303d6fcc6198f19373",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/cleanup_members.go,swap,failed,12,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,99\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2970\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5481,99\nfailures[12]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/EYV6UO/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th182124007/001/.bench… (924 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,\"clean_set_refusal_test.go:80: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetPartialApply,\"clean_set_outcomes_test.go:45: apply error = \u003cnil>, want the injected transaction fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetUnstartedOutcomes,\"clean_set_outcomes_test.go:79: partial apply = (0, \\\"worktree_cleanup[3]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/EYV6UO/t/TestCleanSetUnstartedOutcomes2527818133/001/.bench-home/worktrees/001-1852413856/95bb73… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCompletedPrefix,\"cleanup_members_modes_test.go:81: apply error = \u003cnil>, want the injected fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/first,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/later,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-recorded-suffix",
+          "performer": "ft363-author-01",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-01",
+            "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "requirement": "recorded-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the unreached recorded members from the explicit stop projection and record the R15 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-01",
+              "digest": "sha256:7904ee497271b27c230dd9e6585279ab4442914ae23c43100c61a5598809342d",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,99,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,99,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,99,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-explicit-preflight",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "explicit-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the explicit all-member preflight before the recorded visits and record the R06 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-later-requalify",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "later-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the later requalification before a reached recorded visit and record the R09 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-locked-requalify",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:d7cc79fa093eaeb4c7925c2c70396f722fbb282d2200f4e83354c4d886bf8795",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/resume.go,swap,failed,5,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1510\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5644,100\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/LIQV7U/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th596009054/001/.bench… (902 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",54\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/landed/locked-drift,\"cleanup_members_baseline_test.go:119: landed/locked-drift differs from its frozen record at line 15: got \\\"  error cleanup receipt has invalid identity\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "locked-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the locked qualification check of the recorded cleanup transaction and record the R10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:d7cc79fa093eaeb4c7925c2c70396f722fbb282d2200f4e83354c4d886bf8795",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/resume.go,swap,failed,5,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1510\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5644,100\nfailures[5]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/LIQV7U/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th596009054/001/.bench… (902 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",54\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/landed/locked-drift,\"cleanup_members_baseline_test.go:119: landed/locked-drift differs from its frozen record at line 15: got \\\"  error cleanup receipt has invalid identity\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-stop-at-failure",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4c5fb9d0d78cd4e110dda43d6efb7a951ed0557aa661ff19887a60acc99a1e7b",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/cleanup_members.go,swap,failed,13,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,3198\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5566,100\nfailures[13]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th3012840869/001/.benc… (926 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,\"clean_set_refusal_test.go:80: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/explicit_member_drifts_while_still_removable,\"clean_set_refusal_test.go:135: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetPartialApply,\"clean_set_outcomes_test.go:45: apply error = \u003cnil>, want the injected transaction fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetUnstartedOutcomes,\"clean_set_outcomes_test.go:79: partial apply = (0, \\\"worktree_cleanup[3]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetUnstartedOutcomes2585395255/001/.bench-home/worktrees/001-959000473/b5de0a0… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCompletedPrefix,\"cleanup_members_modes_test.go:81: apply error = \u003cnil>, want the injected fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/first,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/later,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "stop-at-failure",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Continue the shared traversal after a failed visit and record the R14 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4c5fb9d0d78cd4e110dda43d6efb7a951ed0557aa661ff19887a60acc99a1e7b",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/cleanup_members.go,swap,failed,13,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,3198\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,5566,100\nfailures[13]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetApplyTimeStaleRefusal/explicit_late_drift_through_the_command,\"clean_set_outcomes_test.go:322: late-drift apply = (0, \\\"worktree_cleanup[2]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetApplyTimeStaleRefusalexplicit_late_drift_through_th3012840869/001/.benc… (926 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetLateDrift,\"clean_set_apply_test.go:204: apply = (\u003cnil>, mutated=true), want the under-lock recheck to refuse the raced member\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,\"clean_set_refusal_test.go:80: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetMemberDriftAfterPreflight/explicit_member_drifts_while_still_removable,\"clean_set_refusal_test.go:135: apply error = \u003cnil>, want the member's own requalify to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetPartialApply,\"clean_set_outcomes_test.go:45: apply error = \u003cnil>, want the injected transaction fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanSetUnstartedOutcomes,\"clean_set_outcomes_test.go:79: partial apply = (0, \\\"worktree_cleanup[3]{target,action,tracked,ignored,recovery,fingerprint,detail}:\\\\\\\\n  /dev/shm/6DPH3O/t/TestCleanSetUnstartedOutcomes2585395255/001/.bench-home/worktrees/001-959000473/b5de0a0… (1020 bytes)\",2\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalAuthorityPreservation,\"cleanup_members_modes_test.go:150: apply error = \u003cnil>, want the locked recheck to refuse\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/first-failure,\"cleanup_members_baseline_test.go:119: explicit/first-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/later-failure,\"cleanup_members_baseline_test.go:119: explicit/later-failure differs from its frozen record at line 18: got \\\"  error none\\\", frozen \\\"  error baseline transaction fault\\\"\",65\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalBaseline/explicit/locked-drift,\"cleanup_members_baseline_test.go:119: explicit/locked-drift differs from its frozen record at line 15: got \\\"  error none\\\", frozen \\\"  error cleanup fingerprint is stale\\\"\",53\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCompletedPrefix,\"cleanup_members_modes_test.go:81: apply error = \u003cnil>, want the injected fault\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/first,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalStopsAtFailedVisit/later,\"cleanup_members_test.go:97: error = \u003cnil>, want the failed visit's own error\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C1-T01-R1-recorded-suffix",
+          "performer": "ft363-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-01-r1",
+            "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "requirement": "recorded-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the unreached recorded members from the explicit stop projection and record the R15 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-01-r1",
+              "digest": "sha256:4e37adc266d9a56817a2bf680a14ddfacd2ef11cafa4e670d7ac245759a82d17",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,2,TestCleanSetPreflightAllRows/explicit,100,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanSetMemberDriftAfterPreflight/drifts_to_retained,100,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanSetPartialApply,100,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "C1-R1-STD",
+          "performer": "ft363-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1",
+            "digest": "sha256:2b8c0eb1e1d37da894c55a97d11e4b02c02a713b03ab3f01d143d1817731fd72",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\nThe shared owner at internal/worktree/cleanup_members.go:97-125 handles only iteration, pass-through, accumulation and the stop. It derives no fingerprint, identity or classification, and it takes no run. The explicit adapter supplies the predicate, the visit, the retained row and the stop projection; its visit closure captures a.run (internal/worktree/clean_set.go:333-353). The test-count pin went from 874 to 882 (internal/worktree/parallel_census_test.go:926), matching 8 new top-level tests.\n"
+          },
+          "axis": "Standards",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C1-R1-SPEC",
+          "performer": "ft363-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1",
+            "digest": "sha256:c312b7b875a0f49780143f7d639dfcf58c4d7f77bb1f41492042536a37a322c0",
+            "excerpt": "## Spec\nFindings: 1. Worst issue: C1-SPEC-1.\nC1-SPEC-1 | sev 4 | conf 8 | ask-user | internal/worktree/cleanup_members_baseline_record_test.go:131-134, internal/worktree/cleanup_members_baseline_test.go:146-153\nRequirement: spec.md:325-327 \"Verify that each fingerprint binds the same inputs within its own run\" and \"A changed digest relation, input omission, ... must fail the comparison.\" Defect: digests are named by role and nothing derives a digest from its rendered inputs. Probe: removed options.Full from fingerprintExplicitSet (clean_set.go:239), ran CleanupTraversalBaseline: silent.\nRow audit: R01, R02, R04, R05, R08, R11, R12, R14, R15, R19, R24, R28 witnessed in explicit mode; R27 explicit only; R03 held by the unchanged successor; R06, R09, R10 rest on the recorded plan probes; R26 baseline part has 31 cases, ticket 00 is test-only and ticket 01 left the records unchanged; R13 partial (C1-COV-1).\n"
+          },
+          "axis": "Spec",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "finding_ids": [
+            "C1-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "C1-R1-COV",
+          "performer": "ft363-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1",
+            "digest": "sha256:ac970814bd12a17e0f32c39c5cab91395d0d79618380bfbd1f519f11b2bda6d3",
+            "excerpt": "## Coverage\nFindings: 1. Worst issue: C1-COV-1.\nC1-COV-1 | sev 4 | conf 7 | auto-fix | internal/worktree/clean_set.go:341; witness internal/worktree/clean_set_refusal_test.go:89-113\nInput: in explicit mode, a member that drifts after preflight but stays removable, at its in-loop requalify. Gap: the only R13 witness drives applyLandedSet. Probe: inserted `if current.plan.Action.Removes() { return current.plan, err }` before line 341, ran CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval: 99 tests passed, silent. Fix: add an explicit subtest to TestCleanSetMemberDriftAfterPreflight.\nProbes: explicit visits predicate forced true: bit (7 failures). Stop projection members[failed+1:] to members[failed+2:]: bit (TestCleanSetPartialApply). Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "finding_ids": [
+            "C1-COV-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "C1-R2-STD",
+          "performer": "ft363-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1-r2",
+            "digest": "sha256:b8373c36c7367562dc404a81f0ccceb5a4b4290cec2cfaad15029ea9b5e59271",
+            "excerpt": "## Standards\nOutcome: closed. Findings: 0.\nThe test no longer holds its own copy of the fingerprint inputs; it renders explicitFingerprintInputs (cleanup_members_baseline_test.go:148-161), which fingerprintExplicitSet hashes (clean_set.go:173, 239-263). The frozen records did not change. requalifyExplicitRow moved byte-identical to clean_set_apply.go:229-241; call sites unchanged.\n"
+          },
+          "axis": "Standards",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "finding_ids": [],
+          "supersedes": [
+            "C1-R1-STD"
+          ]
+        },
+        {
+          "id": "C1-R2-SPEC",
+          "performer": "ft363-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1-r2",
+            "digest": "sha256:144e5060ceaaa6e39fa14c07162340880c91cb335e4452feb414f424daf17249",
+            "excerpt": "## Spec (C1-SPEC-1)\nOutcome: closed. Findings: 0.\nOmitting an input now fails the baseline (cleanup_members_baseline_test.go:118, spec.md:327). Each plan digest must equal fingerprintExplicitSet of the rendered inputs in the same run (cleanup_members_baseline_test.go:149-151, spec.md:325). Probe: removed options.Full at clean_set.go:240: bit, 15 failures, first TestCleanupTraversalBaseline/explicit/all-success, restored yes.\n"
+          },
+          "axis": "Spec",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "finding_ids": [],
+          "supersedes": [
+            "C1-R1-SPEC"
+          ]
+        },
+        {
+          "id": "C1-R2-COV",
+          "performer": "ft363-review-c1-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "23e60de8115a289143ee457b2b5ebe265a9e5923",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1-r2",
+            "digest": "sha256:ff907a100723b64b530737df2d8661e7eb8298d6358d792584cf837133850120",
+            "excerpt": "## Coverage (C1-COV-1)\nOutcome: closed. Findings: 0.\nThe new subtest (clean_set_refusal_test.go:116-143) drifts the second member at its own in-loop requalify (clean_set.go:337-340) and asserts errStaleFingerprint, a not-attempted row, and that the member survives. Probe: inserted `if current.plan.Action.Removes() { err = nil }` before clean_set.go:341: bit, 1 failure, explicit_member_drifts_while_still_removable at clean_set_refusal_test.go:135, restored yes. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "finding_ids": [],
+          "supersedes": [
+            "C1-R1-COV"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+      "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+      "plan_digest": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
+      "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+      "acceptance_rows": [
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R09",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R16",
+        "R19",
+        "R22",
+        "R24",
+        "R27",
+        "R28",
+        "R29"
+      ],
+      "verification": [
+        {
+          "id": "C2-T02-unrecorded-requalify",
+          "performer": "ft363-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-02",
+            "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "requirement": "unrecorded-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the unrecorded requalification after the recorded visits and record the R03 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-02",
+              "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C2-T02-conditional-recovery",
+          "performer": "ft363-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-02",
+            "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "requirement": "conditional-recovery",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Write a discarded recovery ref for every unrecorded plan and record the R29 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-02",
+              "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "C2-R1-STD",
+          "performer": "ft363-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c2",
+            "digest": "sha256:c689cb86a1a70ee6cf8c65a3556c7789fc1450888aefcc5f98128cb51d1a4584",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\nThe new tests take their expectations from production (driftedDetail, notAttemptedDetail, set.plans(), the planned Recovery) and restate none (cleanup_members_modes_test.go:229-265). The hand-written R27 trace (cleanup_members_modes_test.go:134) has its red recorded. The test-count pin moves 882 to 884 (parallel_census_test.go:926), matching two new top-level tests. No edit falls outside an acceptance row.\n"
+          },
+          "axis": "Standards",
+          "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C2-R1-SPEC",
+          "performer": "ft363-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c2",
+            "digest": "sha256:ba79ce3a5ffc200de12de2266186fa4f2af1eba72d316c73e6b181bfecf2c536",
+            "excerpt": "## Spec\nFindings: 0. Worst issue: none.\nAll 16 C2 rows audited: R03/R09 TestDiscardTargetRequalifiesAfterARecordedRemoval; R04/R05/R06 TestCleanupTraversalUnrecordedMixed; R11/R13/R14/R16/R19 TestCleanupTraversalUnrecordedSuffix; R22/R24/R29 existing clean_discard tests and unrecorded baseline records; R27 new subtest; R28 existing discard witnesses and baseline cases. The stop index members[len(set.rows)+failed+1:] matches the old loop (clean_discard.go:225-249). No lifecycle hook added (clean_discard.go:231-240). Frozen unrecorded records unchanged.\n"
+          },
+          "axis": "Spec",
+          "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C2-R1-COV",
+          "performer": "ft363-review-c2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c2",
+            "digest": "sha256:7a169a3f2b9c8540b5249a8f7874f5e85b0a8fb2582a3a92d7784e9e27aab418",
+            "excerpt": "## Coverage\nFindings: 0. Worst issue: none.\nR12 is vacuous on the unrecorded stage: with DiscardBranch every class plans as ActionDiscardRemove (clean_discard.go:189), and requalifiedOutcome yields not-attempted or a fault (clean_set_apply.go:113-118). Bypass attempts on the stop offset and on retained visits were caught (cleanup_members_modes_test.go:179-181, 258, 282-285). Probes: requalify replaced by planned,nil: bit (TestDiscardTargetRequalifiesAfterARecordedRemoval, UnrecordedSuffix/R13), restored. classUnique test swapped for true: bit (TestDiscardTargetLandedAndSubsumedWriteNoRef), restored. Focused suite 140 tests pass. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+          "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+      "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+      "plan_digest": "sha256:67468ab8ad3c76e7d40d12ff586d6e3852a6bc494fdd834ca0822a20668361d6",
+      "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+      "acceptance_rows": [
+        "R01",
+        "R02",
+        "R04",
+        "R05",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R17",
+        "R19",
+        "R23",
+        "R24",
+        "R27",
+        "R28"
+      ],
+      "verification": [
+        {
+          "id": "C3-T03-landed-preflight",
+          "performer": "ft363-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-03",
+            "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "requirement": "landed-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the landed all-member preflight before the landed visits and record the R07 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-03",
+              "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-landed-locked",
+          "performer": "ft363-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-03",
+            "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "requirement": "landed-locked",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the locked qualification check of a landed visit and record the R10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-03",
+              "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-landed-suffix",
+          "performer": "ft363-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-03",
+            "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "requirement": "landed-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return only the completed prefix from the landed stop projection and record the R17 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-03",
+              "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-R1-landed-preflight",
+          "performer": "ft363-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-03-r1",
+            "digest": "sha256:1e5dcf91b485721ebff8034ef78f72f3edfc68192ca3264300a2f8b42b888af5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,1,TestCleanupTraversalBaseline/landed/locked-drift,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "requirement": "landed-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the landed all-member preflight before the landed visits and record the R07 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-03-r1",
+              "digest": "sha256:1e5dcf91b485721ebff8034ef78f72f3edfc68192ca3264300a2f8b42b888af5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,1,TestCleanupTraversalBaseline/landed/locked-drift,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-R1-landed-locked",
+          "performer": "ft363-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-03-r1",
+            "digest": "sha256:1e5dcf91b485721ebff8034ef78f72f3edfc68192ca3264300a2f8b42b888af5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,1,TestCleanupTraversalBaseline/landed/locked-drift,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "requirement": "landed-locked",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the locked qualification check of a landed visit and record the R10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-03-r1",
+              "digest": "sha256:1e5dcf91b485721ebff8034ef78f72f3edfc68192ca3264300a2f8b42b888af5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,1,TestCleanupTraversalBaseline/landed/locked-drift,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-R1-landed-suffix",
+          "performer": "ft363-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-03-r1",
+            "digest": "sha256:1e5dcf91b485721ebff8034ef78f72f3edfc68192ca3264300a2f8b42b888af5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,1,TestCleanupTraversalBaseline/landed/locked-drift,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "requirement": "landed-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return only the completed prefix from the landed stop projection and record the R17 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-03-r1",
+              "digest": "sha256:1e5dcf91b485721ebff8034ef78f72f3edfc68192ca3264300a2f8b42b888af5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,1,TestCleanupTraversalBaseline/landed/locked-drift,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "C3-R1-STD",
+          "performer": "ft363-review-c3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3",
+            "digest": "sha256:88d101c6b72dffa839d20ee7cb6b80bc03fa2371beca58c263c8aadcd3c0ba09",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\nThe adapter at internal/worktree/clean_landed.go:375-399 keeps all-member preflight first (:372), StepMemberRequalify and requalifyLandedRow before each visit, and the locked planner, tuple compare, and terminal callback in applyCleanupTransaction; closures capture a.run (spec.md:85). Callers worktree.go:342 and land_effects.go:213 unchanged (touched=false). modeApply (cleanup_members_modes_test.go:209-227) is one reused helper and duplicates no production knowledge. Census pin 884 to 885 matches one new top-level test.\n"
+          },
+          "axis": "Standards",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C3-R1-SPEC",
+          "performer": "ft363-review-c3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3",
+            "digest": "sha256:9e232122fce55fc2bdf5996f0c38f2849f78327d7f5bc3bf27595bc1ff6535e0",
+            "excerpt": "## Spec\nFindings: 1. Worst issue: C3-SPEC-1.\nC3-SPEC-1 | sev 4 | conf 9 | auto-fix | internal/worktree/cleanup_members_baseline_test.go:294-296\nRequirement: spec.md:325 and spec.md:327 (input omission must fail the comparison). Defect: landedRun holds a hand copy of the fingerprintLandedSet input list (clean_landed.go:237-256). Probe: removed []byte(row.lease) from fingerprintLandedSet, ran CleanupTraversalBaseline: silent, 32 tests, restored yes. Fix: the C1-SPEC-1 route, landedFingerprintInputs in clean_landed.go, rendered by landedRun with a same-run digest check.\nVisit predicate correct: visits uses landedApplies (clean_landed.go:376), preflight keeps Removes() (clean_set_apply.go:245).\n"
+          },
+          "axis": "Spec",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "finding_ids": [
+            "C3-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "C3-R1-COV",
+          "performer": "ft363-review-c3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3",
+            "digest": "sha256:4135cc5667f9a103f7514c3de89506ea92e5825dfdc1ecb63ca64fa3dd517f3e",
+            "excerpt": "## Coverage\nFindings: 0. Worst issue: none.\nEdges tested: missing-tree release visited but not preflighted; drift that keeps the tuple selected; failed apply with no fault rewrite; the failed+1 suffix projection. Probes: visits landedApplies to Removes(): bit (TestCleanLandedRetiresAMissingTree, baseline/landed/missing-tree-release). Drop sameLandedCleanupTuple in the planner: bit (baseline/landed/locked-drift). faultedPlan to raw applied: bit (5 failures, first TestCleanupLandedUnreachedSuffix). All restored. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C3-R2-STD",
+          "performer": "ft363-review-c3-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3-r2",
+            "digest": "sha256:4a7ee4e1f0ec626b82cd9f2b7bb804649c3f7c47a38f23000e9384ad2ed1953c",
+            "excerpt": "## Standards\nOutcome: closed. 0 new findings.\nlandedFingerprintInputs (clean_landed.go:31-48) is hashed by fingerprintLandedSet (:51-59); landedRun (cleanup_members_baseline_test.go:295) and explicitRun (:163) render through one helper renderFingerprintInputs (:134-148). The remaining duplication is exactly the routed item: the options input (clean_landed.go:32-33 vs clean_set.go:243-244) and the hash loop (clean_landed.go:51-59 vs clean_set.go:255-263). Digest bytes and frozen records unchanged.\n"
+          },
+          "axis": "Standards",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "finding_ids": [],
+          "supersedes": [
+            "C3-R1-STD"
+          ]
+        },
+        {
+          "id": "C3-R2-SPEC",
+          "performer": "ft363-review-c3-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3-r2",
+            "digest": "sha256:a0b750a703da2cb018864449e8f2c0bbf3f42b9432cf1fa28a88b026d1f8ccd2",
+            "excerpt": "## Spec\nOutcome: closed. C3-SPEC-1 closed. 0 new findings.\nspec.md:325-327 met for the landed baseline: an omitted input leaves the rendered record, and renderFingerprintInputs requires the plan digest to equal the production hash of the rendered inputs (cleanup_members_baseline_test.go:137). Probe: removed row.headOID from landedFingerprintInputs (clean_landed.go:45): bit, 8 failures, first TestCleanupTraversalBaseline/landed/all-success, restored.\n"
+          },
+          "axis": "Spec",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "finding_ids": [],
+          "supersedes": [
+            "C3-R1-SPEC"
+          ]
+        },
+        {
+          "id": "C3-R2-COV",
+          "performer": "ft363-review-c3-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7d46cc9a50a0a466b81d23576d5536622b41c03c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3-r2",
+            "digest": "sha256:6ea95292bb08a2120c945e619852eec0c1e6cd94320dda36bc19973192efbf05",
+            "excerpt": "## Coverage\nOutcome: closed. 0 new findings.\nThe empty-digest skip (cleanup_members_baseline_test.go:137) hides no non-empty case: production emits an empty digest only for an empty landed selection (clean_landed.go:58-60), and the non-empty landed records pin \u003cdigest:plan>. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "finding_ids": [],
+          "supersedes": [
+            "C3-R1-COV"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+      "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+      "plan_digest": "sha256:ca9d4220f35deed20943e5889f652505dd32b91ece74766d446d38e370f51c96",
+      "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+      "acceptance_rows": [
+        "R01",
+        "R02",
+        "R04",
+        "R05",
+        "R14",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R24",
+        "R27",
+        "R28",
+        "R25",
+        "R26"
+      ],
+      "verification": [
+        {
+          "id": "C4-T04-unclaimed-suffix",
+          "performer": "ft363-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "79d9432e03392709579fd66f200870ee03d7b92f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-04",
+            "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "a8c66ea5089175a01ab9e51b6bf44487151bc06d",
+          "requirement": "unclaimed-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Append unreached rows to the unclaimed stop projection and record the R18 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-04",
+              "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T04-exact-oid",
+          "performer": "ft363-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "79d9432e03392709579fd66f200870ee03d7b92f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-04",
+            "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "a8c66ea5089175a01ab9e51b6bf44487151bc06d",
+          "requirement": "exact-oid",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Delete the later unclaimed ref without its planned old OID and record the R21 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-04",
+              "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T04-unclaimed-stop",
+          "performer": "ft363-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "79d9432e03392709579fd66f200870ee03d7b92f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-04",
+            "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "a8c66ea5089175a01ab9e51b6bf44487151bc06d",
+          "requirement": "unclaimed-stop",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Continue the unclaimed deletions after a failed deletion and record the R14 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-04",
+              "digest": "sha256:de693095f07b2786b60726402247680c378e15e6a9d8c68370e0e5e0710b1ab1",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\n  2,bit,swap,failed,1,TestCleanupUnclaimedMovedRefAfterReplan,228,1,0,null,yes\n  3,bit,swap,failed,5,TestCleanupTraversalBaseline/unclaimed/first-failure,228,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-explicit",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:234298850bad17ea69b5fbfee99ccd833203022e9836a781333627427934cf9d",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8485,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyExplicitSet: member-visit loop at line 336 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-explicit",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original recorded member loop in applyExplicitSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:234298850bad17ea69b5fbfee99ccd833203022e9836a781333627427934cf9d",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8485,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyExplicitSet: member-visit loop at line 336 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-unrecorded",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:07af9ab7d8389a8f3be87d807e4f2a9be6f9fc414c64913f2f8e2672d4538d76",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_discard.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8334,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyUnrecordedRows: member-visit loop at line 249 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-unrecorded",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original branch loop in applyUnrecordedRows and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:07af9ab7d8389a8f3be87d807e4f2a9be6f9fc414c64913f2f8e2672d4538d76",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_discard.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8334,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyUnrecordedRows: member-visit loop at line 249 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-landed",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:6f9bdd2a0aad113490647d4440c167e544197fd9ae297d602c17739d514cc97c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_landed.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8332,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyLandedSet: member-visit loop at line 388 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-landed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original member loop in applyLandedSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:6f9bdd2a0aad113490647d4440c167e544197fd9ae297d602c17739d514cc97c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_landed.go,swap,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,229\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8332,229\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:31: applyLandedSet: member-visit loop at line 388 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-census-unclaimed",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "census-unclaimed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original member loop in applyUnclaimedAssignmentSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-unclaimed-fingerprint",
+          "performer": "ft363-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-05",
+            "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "requirement": "unclaimed-fingerprint",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit one unclaimed fingerprint input in production and record the R26 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-05",
+              "digest": "sha256:cb20daba896731755ed107dba5ad96542b31a805ec6d3e33a8b8c6239e81acdd",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,1,TestCleanupTraversalCopySurvival,229,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanUnclaimedDiscardBranchRefusesMovedPlan,229,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-R1-census-explicit",
+          "performer": "ft363-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-05-r1",
+            "digest": "sha256:dbad2db6ce2008dc4869717514b25b078c999a8a89c4cc16030113ac901dc656",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,insert,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,230\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8193,230\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:33: applyExplicitSet: member-visit loop at line 312 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "requirement": "census-explicit",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original recorded member loop in applyExplicitSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-05-r1",
+              "digest": "sha256:dbad2db6ce2008dc4869717514b25b078c999a8a89c4cc16030113ac901dc656",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_set.go,insert,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,230\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,369\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8193,230\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:33: applyExplicitSet: member-visit loop at line 312 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-R1-census-unrecorded",
+          "performer": "ft363-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-05-r1",
+            "digest": "sha256:8677a350872d4b2c5f43c05d4a7698ff8bae9d976502192399260da0af22ded3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_discard.go,insert,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,230\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8189,230\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:33: applyUnrecordedRows: member-visit loop at line 227 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "requirement": "census-unrecorded",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original branch loop in applyUnrecordedRows and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-05-r1",
+              "digest": "sha256:8677a350872d4b2c5f43c05d4a7698ff8bae9d976502192399260da0af22ded3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_discard.go,insert,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,230\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,372\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8189,230\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:33: applyUnrecordedRows: member-visit loop at line 227 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-R1-census-landed",
+          "performer": "ft363-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-05-r1",
+            "digest": "sha256:99a468771d694df7904b0954478e1076f136078dad645a54a132bd53fa1f5435",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_landed.go,insert,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,230\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8226,230\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:33: applyLandedSet: member-visit loop at line 354 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "requirement": "census-landed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original member loop in applyLandedSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-05-r1",
+              "digest": "sha256:99a468771d694df7904b0954478e1076f136078dad645a54a132bd53fa1f5435",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/clean_landed.go,insert,failed,1,TestCleanupTraversalCopySurvival,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,230\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,367\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,8226,230\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestCleanupTraversalCopySurvival,\"cleanup_members_census_test.go:33: applyLandedSet: member-visit loop at line 354 appends inside its body\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-R1-census-unclaimed",
+          "performer": "ft363-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-05-r1",
+            "digest": "sha256:91dea7dd3152c5e333719a459a650d5f49edc29f2694e2e72e86a27e98f3f98f",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestCleanupTraversalCopySurvival,230,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanupTraversalBaseline/unclaimed/all-success,230,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "requirement": "census-unclaimed",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Restore the original member loop in applyUnclaimedAssignmentSet and record the R25 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-05-r1",
+              "digest": "sha256:91dea7dd3152c5e333719a459a650d5f49edc29f2694e2e72e86a27e98f3f98f",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestCleanupTraversalCopySurvival,230,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanupTraversalBaseline/unclaimed/all-success,230,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C4-T05-R1-unclaimed-fingerprint",
+          "performer": "ft363-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-repair-05-r1",
+            "digest": "sha256:91dea7dd3152c5e333719a459a650d5f49edc29f2694e2e72e86a27e98f3f98f",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestCleanupTraversalCopySurvival,230,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanupTraversalBaseline/unclaimed/all-success,230,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "requirement": "unclaimed-fingerprint",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Omit one unclaimed fingerprint input in production and record the R26 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-repair-05-r1",
+              "digest": "sha256:91dea7dd3152c5e333719a459a650d5f49edc29f2694e2e72e86a27e98f3f98f",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,insert,failed,1,TestCleanupTraversalCopySurvival,230,1,0,null,yes\n  2,bit,swap,failed,7,TestCleanupTraversalBaseline/unclaimed/all-success,230,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": [
+        {
+          "id": "C4-R1-STD",
+          "performer": "ft363-review-c4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4",
+            "digest": "sha256:52da404750199de126add6ed3aafbf818de4525c8dcabedf25a71f730de6525e",
+            "excerpt": "## Standards\n0 findings. Worst issue: none.\nThe options input and the versioned hash loop each have one production owner (cleanup_members.go:57, :64), used by explicit, landed, and unclaimed (clean_set.go:172,234; clean_landed.go:62,238; clean_unclaimed.go:118). The baseline renders unclaimedFingerprintInputs (cleanup_members_baseline_test.go:381) and holds no hand copy. Test-count pin 885 to 890 matches five new top-level tests.\n"
+          },
+          "axis": "Standards",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C4-R1-SPEC",
+          "performer": "ft363-review-c4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4",
+            "digest": "sha256:792b1c48341d15984e7a28640891a2069058ad37dffff3b228f758d75ed57461",
+            "excerpt": "## Spec\n0 findings. Worst issue: none.\nAll 14 C4 rows audited: R01/R27 clean_set_wiring_test.go:196-211; R02/R04/R05/R28 :212-234; R14/R18/R19 :279-311 (probes unclaimed-stop and unclaimed-suffix bit); R20 :240-273; R21 :317-345 with a real reference-transaction hook (exact-oid bit); R24 TestCleanSetUnclaimedStaleReplanAction; R25 cleanup_members_census_test.go:578 (four restored loops bit); R26 manifest cleanup_members_baseline_test.go:79-85 and unclaimed-fingerprint red. Author decisions 1 (fault appended after the production list) and 2 (literal discard-branch=true) are correct.\n"
+          },
+          "axis": "Spec",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C4-R1-COV",
+          "performer": "ft363-review-c4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "31fcba429fa5ddb2b32516894c669ea9bad73e6a",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4",
+            "digest": "sha256:bc40b3321e8927da83d433065a154d16bf7131ebc02fc0e4e3e7cab788a46aaa",
+            "excerpt": "## Coverage\n0 findings from the axis; two advice items promoted by the orchestrator to C4-COV-1 and C4-COV-2 under --auto-approve, each with a binding requirement.\nC4-COV-1 | sev 3 | conf 9 | auto-fix | internal/worktree/cleanup_members_census_test.go:598-633, :678-679\nRequirement: spec Testing decisions, \"It must fail if any original member-iteration loop remains.\" Probe B: the original loop body pasted into an immediately invoked closure: silent. Probe A: a condition-stopped loop with run behind a dead branch: silent.\nC4-COV-2 | sev 3 | conf 8 | auto-fix | internal/worktree/cleanup_members.go:65, cleanup_members_baseline_test.go:138\nRequirement: spec Solution, \"Keep the current ... fingerprints.\" Probe: version dropped from fingerprintInputs: whole package passed (1663 tests), silent, because renderFingerprintInputs hashes with the same production function and the records normalize digests.\nOther probes: discard-branch=false: bit (7 unclaimed baseline cases). same() dropped at clean_unclaimed.go:224: silent, an equivalent mutant (the branch is unreachable after the fingerprint and length check). All restored. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "7e2f9e6200482bc507ff3ecb84d9d53674702255",
+          "finding_ids": [
+            "C4-COV-1",
+            "C4-COV-2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "C4-R2-STD",
+          "performer": "ft363-review-c4-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4-r2",
+            "digest": "sha256:3d3be5497ad8668249dd1f7e193fcc5024a9d5b6e6297ec8a7186ac214e0431f",
+            "excerpt": "## Standards\nOutcome: closed. Findings: 0.\nThe known-answer test builds digests only through the production input builders and fingerprintInputs (cleanup_members_census_test.go:208-226); the three literal digests meet the AGENTS.md exception, with the red recorded under \"C4 repair 1 witness reds\". The run check has one helper, traversalRun (:98-106). Pin 890 to 891 for one new top-level test.\n"
+          },
+          "axis": "Standards",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "finding_ids": [],
+          "supersedes": [
+            "C4-R1-STD"
+          ]
+        },
+        {
+          "id": "C4-R2-SPEC",
+          "performer": "ft363-review-c4-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4-r2",
+            "digest": "sha256:b473367ec0dd2b49120c2e30447e66e23ce81e18d2167c020dddbb393482bfde",
+            "excerpt": "## Spec\nOutcome: closed. Findings: 0.\nSpec lines 270 and 287 now place R18 and R21 in internal/worktree/clean_set_wiring_test.go, matching coverage rows 233 and 236 and the tests at clean_set_wiring_test.go:258 and :296. The requirement sentences are unchanged; the plan block adds only the repair assignment.\n"
+          },
+          "axis": "Spec",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "finding_ids": [],
+          "supersedes": [
+            "C4-R1-SPEC"
+          ]
+        },
+        {
+          "id": "C4-R2-COV",
+          "performer": "ft363-review-c4-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4-r2",
+            "digest": "sha256:2002fd1ded23f6729213555bebc4c43dd80747fbdd9e594d871c53d6e739b779",
+            "excerpt": "## Coverage\nOutcome: closed. Findings: 0. C4-COV-1 and C4-COV-2 closed.\nC4-COV-1: the loop-body scan follows function literals and bound closures and flags a call on the bound traversal inside a loop (cleanup_members_census_test.go:133-170); liveTopLevelRun rejects a run behind a branch, loop, closure, or earlier return (:109-130). Probe: probeB.txt swapped at clean_set.go:335: bit, TestCleanupTraversalCopySurvival, restored. C4-COV-2: probe: a fixed salt part added after the version in fingerprintInputs: bit, only TestCleanupTraversalFingerprintKnownAnswer on all three versions, restored. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "finding_ids": [],
+          "supersedes": [
+            "C4-R1-COV"
+          ]
+        }
+      ]
+    }
+  ],
+  "completion": {
+    "state": "completed",
+    "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+    "performer": "ft363-orchestrator",
+    "reconciliation": {
+      "R01": "covered",
+      "R02": "covered",
+      "R03": "covered",
+      "R04": "covered",
+      "R05": "covered",
+      "R06": "covered",
+      "R07": "covered",
+      "R08": "covered",
+      "R09": "covered",
+      "R10": "covered",
+      "R11": "covered",
+      "R12": "covered",
+      "R13": "covered",
+      "R14": "covered",
+      "R15": "covered",
+      "R16": "covered",
+      "R17": "covered",
+      "R18": "covered",
+      "R19": "covered",
+      "R20": "covered",
+      "R21": "covered",
+      "R22": "covered",
+      "R23": "covered",
+      "R24": "covered",
+      "R25": "covered",
+      "R26": "covered",
+      "R27": "covered",
+      "R28": "covered",
+      "R29": "covered"
+    },
+    "verification": [
+      {
+        "id": "FV-all-mode-tests",
+        "performer": "ft363-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft363-orchestrator",
+          "digest": "sha256:8ec2d6a8cc8be1cc3eed32afa308839b531de9123443ef703fe84a7c1d349c9d",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,pass,72724,1664\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "all-mode-tests",
+        "command": "bench test --package ./internal/worktree",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-coverage",
+        "performer": "ft363-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft363-orchestrator",
+          "digest": "sha256:3835620dcbce11b55694d587c3af70bf7f7565ebeccfb6a2380ef4d26c4bf318",
+          "excerpt": "ok: coverage map valid — 29 row(s)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check cleanup-member-traversal",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-command-contract",
+        "performer": "ft363-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft363-orchestrator",
+          "digest": "sha256:cf77f12c5da1a3c0f878777dc7ac6dbf2f6636c4f57809c43ac0167fc80eefbd",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,pass,39235,588\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "command-contract",
+        "command": "bench test --package ./cmd/bench",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-axi-membership",
+        "performer": "ft363-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft363-orchestrator",
+          "digest": "sha256:945ed42bc8506a59c3a98e468a4380dc6dc7bfb668bcd12bbcf937a6c8909cd6",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  axi-query-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,11,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "axi-membership",
+        "command": "bench test --check axi-query-registry",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-routing",
+        "performer": "ft363-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "medium",
+        "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft363-orchestrator",
+          "digest": "sha256:1a56c372d519e38cbed202dacfb66d75ac4d3ee1b8b1ab04bb7e32fe13dc2acf",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,25,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "routing",
+        "command": "bench test --check subcommand-routing",
+        "exit_code": 0
+      }
+    ]
+  },
+  "amendments": [
+    {
+      "from": "sha256:589aa35576d3e85b161c9894002d688f6dfec0850944362a1a8aaf21c17a0e1d",
+      "to": "sha256:6326ba026c86a6e50db4f8cfb3e74eec9c5d576e5d39b782ab0072a0fbb3fd77",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:6326ba026c86a6e50db4f8cfb3e74eec9c5d576e5d39b782ab0072a0fbb3fd77",
+      "to": "sha256:3f9255958885eae9a6109137977b57408b8d5287016e33fd22b9d4d306fa75a5",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3f9255958885eae9a6109137977b57408b8d5287016e33fd22b9d4d306fa75a5",
+      "to": "sha256:8917268dbf6107a6d8cda61954f441bb91d3430e791577ba9c7ee427bc99837c",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:8917268dbf6107a6d8cda61954f441bb91d3430e791577ba9c7ee427bc99837c",
+      "to": "sha256:1d496d4c503b237b85a3ff1a792a104c59aec97c4f6a12914c822434704c6ca4",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1d496d4c503b237b85a3ff1a792a104c59aec97c4f6a12914c822434704c6ca4",
+      "to": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
+      "to": "sha256:e6d53a8fc505866266a7ae442ea6a469779b24d7ec8053ca498f3fa3627d7d44",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6d53a8fc505866266a7ae442ea6a469779b24d7ec8053ca498f3fa3627d7d44",
+      "to": "sha256:0b87b9700392dc2d8b6d722f075bb0afa59f404da5a94593c793d5015399fcaa",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:0b87b9700392dc2d8b6d722f075bb0afa59f404da5a94593c793d5015399fcaa",
+      "to": "sha256:67468ab8ad3c76e7d40d12ff586d6e3852a6bc494fdd834ca0822a20668361d6",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:67468ab8ad3c76e7d40d12ff586d6e3852a6bc494fdd834ca0822a20668361d6",
+      "to": "sha256:2758c5eab4521f5d548d0c102a516dffb89f2ea88e6dc82c673e827e5644433e",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:2758c5eab4521f5d548d0c102a516dffb89f2ea88e6dc82c673e827e5644433e",
+      "to": "sha256:caffc50ca9f4a7ce3553c0e6c920adc1b8976a639547867c4097b82fc9e74fa5",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:caffc50ca9f4a7ce3553c0e6c920adc1b8976a639547867c4097b82fc9e74fa5",
+      "to": "sha256:a1b81a57d6b2b74d634bb8d258bbeb281ac6d804e0a679b149ca7fa9f438f38a",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ],
+        "C4": [
+          "C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:a1b81a57d6b2b74d634bb8d258bbeb281ac6d804e0a679b149ca7fa9f438f38a",
+      "to": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ],
+        "C4": [
+          "C4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e1670cb05277d698546a2858729427b0da273c33a04364c01c4c78a7a4671fb5",
+      "to": "sha256:ca9d4220f35deed20943e5889f652505dd32b91ece74766d446d38e370f51c96",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
+        ],
+        "C4": [
+          "C4"
+        ]
+      }
+    }
+  ]
+}
+```
+
+## C1 author witness reds
+
+The ticket 01 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R01, R05 | The visit predicate is forced false. | `TestCleanupTraversalEmptyModes/explicit/retained-only`, `TestCleanupTraversalRetainedVisits` |
+| R02 | Each outcome is prepended, not appended. | `TestCleanupTraversalOrder` |
+| R19 | The stop projection has no completed prefix. | `TestCleanupTraversalCompletedPrefix` |
+| R27 | The `StepMemberRequalify` hit is omitted. | `TestCleanupTraversalModeFaultBoundaries/explicit/all-success` |
+| R28 | The locked fingerprint check is disabled. | `TestCleanupTraversalAuthorityPreservation` |
+
+The author reported one gap: the only cited R13 witness, the subtest for drift that stays removable, drives landed mode only.
+
+## C1 review round 1
+
+One unified opus / medium session reviewed the frozen pair `76c8d256c..5e0110372`. Repair cycles consumed: 0 of 2 before this round's repair.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 1. Worst issue: C1-SPEC-1.
+
+- C1-SPEC-1, severity 4, confidence 8. The baseline does not fail when a fingerprint input is omitted (`internal/worktree/cleanup_members_baseline_test.go:146`). The test holds a hand copy of the input list of `fingerprintExplicitSet`. Disposition: auto-fix, by orchestrator decision under `--auto-approve`, flagged for reviewer veto. The repair moves the explicit input list into one production function that the fingerprint hashes, and the baseline renders that list from production.
+
+## Coverage
+
+Findings: 1. Worst issue: C1-COV-1.
+
+- C1-COV-1, severity 4, confidence 7. Explicit mode has no witness for drift that stays removable at the in-loop requalification (`internal/worktree/clean_set.go:341`). Disposition: auto-fix. The repair adds an explicit subtest to `TestCleanSetMemberDriftAfterPreflight`.
+
+## Advice
+
+- With `BENCH_CAPTURE_CLEANUP_BASELINE=1`, the baseline test rewrites the records and still passes. A failed test after a capture write is safer.
+- Cases that name members by label sort their rows, so row order is checked only against the planned order of the current run.
+- The commits section collapses member tips to one rank name, so the member-to-commit relation is not compared.
+
+Both findings route to one repair session on ticket 01, which holds every path of both fixes.
+
+## C1 repair 1 witness reds
+
+The repair session ft363-repair-01-r1 closed both findings at repair commit `94eb8696d`. Repair cycles consumed: 1 of 2. Each mutation was restored, and the package then passed.
+
+| Finding | Row | Mutation | Red test |
+|---|---|---|---|
+| C1-COV-1 | R13 | The requalification returns the current plan when it still removes. | `TestCleanSetMemberDriftAfterPreflight/explicit_member_drifts_while_still_removable` |
+| C1-SPEC-1 | R26 | `options.Full` is removed from `explicitFingerprintInputs`. | `TestCleanupTraversalBaseline`, 15 failures |
+
+The repair moved `requalifyExplicitRow` unchanged from `clean_set.go` to `clean_set_apply.go`, so that `clean_set.go` stays within the 400-line bound.
+
+## C1 confirming round
+
+A fresh unified opus / medium session read the repair delta `5e0110372..94eb8696d`. It closed C1-SPEC-1 and C1-COV-1, and it found no new finding. Each axis replayed its finding's probe, and each probe bit. Repair cycles consumed for C1: 1 of 2.
+
+## C2 author witness reds
+
+The ticket 02 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R16 | The suffix offset is dropped. | `TestCleanupTraversalUnrecordedSuffix` |
+| R11 | The fault row is replaced by the current plan. | `TestCleanupTraversalUnrecordedSuffix` |
+| R13 | Drift becomes a fault. | `TestCleanupTraversalUnrecordedSuffix` |
+| R19 | The removed action is omitted. | `TestCleanupTraversalUnrecordedSuffix` |
+| R14 | Visits continue after a failure. | `TestCleanupTraversalUnrecordedSuffix` |
+| R05 | Every branch is visited. | `TestCleanupTraversalUnrecordedMixed` |
+| R04 | A retained row is rewritten. | `TestCleanupTraversalUnrecordedMixed` |
+| R06 | The unrecorded preflight is disabled. | `TestCleanupTraversalUnrecordedMixed` |
+| R27 | An extra hook is inserted. | `TestCleanupTraversalModeFaultBoundaries/unrecorded/all-success` |
+
+The author reported two divergences. R12 has no unrecorded witness, because under `--discard-branch` every unrecorded class replans as removable. The unrecorded closures capture no run, because `requalifyUnrecordedRow` reads none; the orchestrator corrects the spec sentence that says otherwise.
+
+## C2 review round 1
+
+One unified opus / medium session reviewed the frozen pair `94eb8696d..1c1cb2a10`. Repair cycles consumed for C2: 0 of 2.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+
+## Coverage
+
+Findings: 0. Worst issue: none. R12 does not apply to the unrecorded stage, because every unrecorded class replans as removable under `--discard-branch`.
+
+## Advice
+
+- The doc comment of `unrecordedSuffixSet` names `--discard-branch`, but R04 and R05 build the set with default options.
+- Ticket 02 makes the same false run claim as the spec sentence that the orchestrator corrects.
+- Ticket 02 counts R12 against `TestCleanupTraversalUnrecordedSuffix`, although R12 does not apply to the unrecorded stage.
+
+## C3 author witness reds
+
+The ticket 03 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R01, R05 | The `landedApplies` predicate returns true. | `TestCleanupTraversalEmptyModes/landed/retained-only` |
+| R12 | `requalifiedOutcome` is replaced by `faultedPlan`. | `TestCleanSetMemberDriftAfterPreflight/landed_member_drifts_to_retained` |
+| R27 | The landed `StepMemberRequalify` hit is omitted. | `TestCleanupTraversalModeFaultBoundaries/landed/all-success` |
+
+The author reported one open gap. `landedRun` in `cleanup_members_baseline_test.go` holds a hand copy of the input list of `fingerprintLandedSet`, which is the C1-SPEC-1 defect class in landed mode.
+
+## C3 review round 1
+
+One unified opus / medium session reviewed the frozen pair `1c1cb2a10..9b5c117bd`. Repair cycles consumed for C3: 0 of 2 before this round's repair.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 1. Worst issue: C3-SPEC-1.
+
+- C3-SPEC-1, severity 4, confidence 9. The landed baseline does not fail when a fingerprint input is omitted (`internal/worktree/cleanup_members_baseline_test.go:294`). `landedRun` holds a hand copy of the input list of `fingerprintLandedSet`. Disposition: auto-fix by the C1-SPEC-1 route. A production `landedFingerprintInputs` in `clean_landed.go` holds the list, the fingerprint hashes it, and `landedRun` renders it and checks the digest in the same run.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
+
+## Advice
+
+- `landedRun` and `modeApply` each plan the landed set with default options and wrap `applyLandedSet`. One helper could own both.
+- Two explicit subtests lost the precondition guard on an empty fingerprint.
+- The subtest-name idiom `map[bool]string{...}[landed]` is hard to scan.
+
+The finding routes to one repair session on ticket 03, which holds both paths.
+
+## C3 repair 1 witness reds
+
+The repair session ft363-repair-03-r1 closed C3-SPEC-1 at repair commit `49982b68a`. Repair cycles consumed for C3: 1 of 2. The mutation was restored, and the package then passed.
+
+| Finding | Row | Mutation | Red test |
+|---|---|---|---|
+| C3-SPEC-1 | R26 | `row.lease` is removed from `landedFingerprintInputs`. | `TestCleanupTraversalBaseline/landed/all-success`, 8 landed subtests |
+
+The repair reported one duplication in its delta. `landedFingerprintInputs` and `explicitFingerprintInputs` each build the options input, and the two fingerprint functions repeat one hash loop. The orchestrator routes the consolidation to ticket 04, which fences both files and adds the unclaimed list.
+
+## C3 confirming round
+
+A fresh unified opus / medium session read the repair delta `9b5c117bd..49982b68a`. It closed C3-SPEC-1 and found no new finding. Its independent probe removed a different landed input, and the baseline went red. Repair cycles consumed for C3: 1 of 2. The routed duplication of the options input and the hash loop goes to ticket 04.
+
+## C4 ticket 04 witness reds
+
+The ticket 04 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R04, R05 | The `visits` predicate is always true. | `TestCleanupUnclaimedModeWitnesses` mixed case, both failure cases, and `TestCleanupUnclaimedMovedRefAfterReplan` |
+| R20 | The fingerprint and exact-length check is dropped. | `TestCleanupUnclaimedSelectionDrift` addition and tuple-change cases |
+| R27 | An extra `StepRemoval` hit is added. | `TestCleanupUnclaimedModeWitnesses` empty and mixed cases |
+| R02 | The member order is reversed. | 4 unclaimed tests |
+
+The author reported that the unclaimed baseline holds a hand copy of the unclaimed fingerprint inputs, which ticket 05 removes.
+
+## C4 review round 1
+
+One unified opus / medium session reviewed the frozen pair `49982b68a..7e2f9e620`. Repair cycles consumed for C4: 0 of 2 before this round's repair.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+
+## Coverage
+
+Findings: 2. Worst issue: C4-COV-1. The axis graded both items as advice, and the orchestrator promoted them under `--auto-approve`, because each fails a binding requirement.
+
+- C4-COV-1, severity 3, confidence 9. The census misses an original loop that is wrapped in an immediately invoked closure (`internal/worktree/cleanup_members_census_test.go:678`). The spec requires that the census fail if any original member-iteration loop remains. Disposition: auto-fix, test-only.
+- C4-COV-2, severity 3, confidence 8. No test sees a uniform change of the fingerprint bytes (`internal/worktree/cleanup_members.go:65`). The spec keeps the current fingerprints. Disposition: auto-fix, test-only, with one known-answer digest for each set version.
+
+## Advice
+
+- The name `explicitFingerprintInput` now covers all three modes, and the type sits in the traversal file.
+- The adapter witnesses widen the stated question of `clean_set_wiring_test.go`.
+- The tuple check `!m.same() ||` in `clean_unclaimed.go` is an equivalent mutant: the branch cannot run after the fingerprint and length check passes.
+
+Both findings route to one test-only repair on ticket 05. The repair also corrects the stale comment at `cleanup_members_baseline_test.go:135`.
+
+## C4 repair 1 witness reds
+
+The test-only repair session ft363-repair-05-r1 closed both findings at repair commit `4e9607517`. Repair cycles consumed for C4: 1 of 2. Each mutation was restored, and the package then passed.
+
+| Finding | Mutation | Red test |
+|---|---|---|
+| C4-COV-1 | In `applyExplicitSet`, a dead traversal run plus the original visit loop in an immediately invoked closure. | `TestCleanupTraversalCopySurvival` |
+| C4-COV-1 | In `applyExplicitSet`, the traversal run behind `if len(members) < 0` plus a condition-stopped visit loop. | `TestCleanupTraversalCopySurvival` |
+| C4-COV-2 | The version is dropped from `fingerprintInputs`. | `TestCleanupTraversalFingerprintKnownAnswer` |
+
+The coordinator probe of the closure-wrapped loop also bit. The test-only confirmation route refused, because the repair window holds a prose-only spec correction, so a unified confirming round grades the repair delta.
+
+## C4 confirming round
+
+A fresh unified opus / medium session read the repair delta `7e2f9e620..4e9607517`. It closed C4-COV-1 and C4-COV-2 and found no new finding. Each finding's replayed probe bit. Repair cycles consumed for C4: 1 of 2.
+
+## Advice
+
+- The census closure map collects only function literals that `:=` or `=` binds, so a `var visit = func(...)` declaration that a loop calls escapes it. This shape is not an original loop.

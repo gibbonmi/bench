@@ -1,0 +1,24 @@
+case unrecorded/holder-removal
+inputs
+  options discard-ignored=false discard-branch=true full=false
+  recorded <m1:id> <m1:path> remove <digest:target:<m1:id>>
+  unrecorded refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> subsumed <m1:branch> 
+commits
+  commit <member-tip> tree:da810130e839 parents=<tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff>
+  commit <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> tree:60e20274bd5d parents=<tip:refs/heads/main>
+  commit <tip:refs/heads/main> tree:cdd154d572ab parents=
+refs-before
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error cleanup fingerprint is stale
+  stale true
+  rows 2 nil=false order=prefix 2 of 2
+  row <m1:path> | removed | clean | count=0 bytes=0 shown=0 truncated=false | none | <digest:target:<m1:id>> |  | reason-code= | assignment=
+  row refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff | not-attempted | unclaimed | none | refs/bench/discarded/20310203/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff | <digest:plan> | not attempted; this target no longer matches the approved plan | reason-code= | assignment=
+after
+  member m1 tree=absent ledger=absent
+  receipt op=worktree-clean target=<m1:path> state=complete phase=terminal action=removed recovery=none fingerprint=<digest:target:<m1:id>> checkpoint=<digest:target:<m1:id>> branch=<m1:branch> branch-oid=<tip:<m1:branch>> assignment=<m1:id> owner=<m1:owner> owned=true repo=<root>/.git detail=""
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/main> refs/heads/main

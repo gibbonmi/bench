@@ -1,0 +1,26 @@
+case unrecorded/mixed
+inputs
+  options discard-ignored=false discard-branch=true full=false
+  recorded <set-retained-residue:id> <set-retained-residue:path> retain <digest:target:<set-retained-residue:id>>
+  unrecorded refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> landed  
+commits
+  commit <tip:<set-retained-removable:branch>> tree:6b24ff4d7c27 parents=(tree:5f905c2f921d)
+  commit <tip:<set-retained-residue:branch>> tree:a7593bf5901f parents=(tree:6b24ff4d7c27)
+  commit <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> tree:a7593bf5901f parents=(tree:6b24ff4d7c27)
+refs-before
+  ref <tip:<set-retained-removable:branch>> <set-retained-removable:branch>
+  ref <tip:<set-retained-residue:branch>> <set-retained-residue:branch>
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/main
+response
+  error none
+  stale false
+  rows 2 nil=false order=prefix 2 of 2
+  row <set-retained-residue:path> | retain | clean | count=1 bytes=8 shown=1 truncated=false | none | <digest:plan> | ignored residuals require --discard-ignored | reason-code=ignored | assignment=<set-retained-residue:id>
+  row refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff | removed | unclaimed | none | none | <digest:plan> |  | reason-code= | assignment=
+after
+  member set-retained-removable tree=present ledger=active
+  member set-retained-residue tree=present ledger=active
+  ref <tip:<set-retained-removable:branch>> <set-retained-removable:branch>
+  ref <tip:<set-retained-residue:branch>> <set-retained-residue:branch>
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/main

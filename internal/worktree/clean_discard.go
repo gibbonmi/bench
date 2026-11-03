@@ -219,29 +219,33 @@ func requalifyUnrecordedRow(a ambient, root string, planned unrecordedCleanupRow
 	return planned, errStaleFingerprint
 }
 
-// applyUnrecordedRows runs each unrecorded member after every recorded one. Each removing
-// member re-plans just before its own transaction, because an earlier member's removal can
-// take away the holder a subsumed member relied on.
+// applyUnrecordedRows runs each unrecorded member, through the shared cleanup traversal,
+// after every recorded one. Each removing member re-plans just before its own transaction,
+// because an earlier member's removal can take away the holder a subsumed member relied on.
 func applyUnrecordedRows(j joins, a ambient, root string, set explicitCleanupSet, options CleanupOptions, plans []CleanupPlan) ([]CleanupPlan, error) {
 	members := set.plans()
-	for k, planned := range set.unrecorded {
-		unreached := members[len(set.rows)+k+1:]
-		if !planned.plan.Action.Removes() {
-			plans = append(plans, planned.plan)
-			continue
-		}
-		current, err := requalifyUnrecordedRow(a, root, planned, options)
-		if err != nil {
-			return notAttemptedPlans(append(plans, requalifiedOutcome(planned.plan, current.plan, err)), unreached, notAttemptedDetail), err
-		}
-		if err := discardUnrecordedBranch(j, root, current); err != nil {
-			return notAttemptedPlans(append(plans, faultedPlan(current.plan, CleanupPlan{}, err)), unreached, notAttemptedDetail), err
-		}
-		removed := current.plan
-		removed.Action, removed.Reason = ActionRemoved, ""
-		plans = append(plans, removed)
+	unrecorded := cleanupTraversal[unrecordedCleanupRow]{
+		visits:   func(planned unrecordedCleanupRow) bool { return planned.plan.Action.Removes() },
+		retained: func(planned unrecordedCleanupRow) CleanupPlan { return planned.plan },
+		visit: func(planned unrecordedCleanupRow) (CleanupPlan, error) {
+			current, err := requalifyUnrecordedRow(a, root, planned, options)
+			if err != nil {
+				return requalifiedOutcome(planned.plan, current.plan, err), err
+			}
+			if err := discardUnrecordedBranch(j, root, current); err != nil {
+				return faultedPlan(current.plan, CleanupPlan{}, err), err
+			}
+			removed := current.plan
+			removed.Action, removed.Reason = ActionRemoved, ""
+			return removed, nil
+		},
+		// The set's plans list the unrecorded members after every recorded one, so an
+		// unrecorded member's index there is offset by the recorded count.
+		stopped: func(plans []CleanupPlan, failed int) []CleanupPlan {
+			return notAttemptedPlans(plans, members[len(set.rows)+failed+1:], notAttemptedDetail)
+		},
 	}
-	return plans, nil
+	return unrecorded.run(set.unrecorded, plans)
 }
 
 // discardUnrecordedBranch writes the discarded ref, then deletes the branch at the exact tip

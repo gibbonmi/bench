@@ -1,12 +1,12 @@
 # Share recorded explicit member traversal
 
-Blocked by: none
-Writes: internal/worktree/cleanup_members.go (new), internal/worktree/cleanup_members_test.go (new), internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Blocked by: 00-capture-cleanup-baseline.md
+Writes: internal/worktree/cleanup_members.go (new), internal/worktree/cleanup_members_test.go (new), internal/worktree/clean_set.go, internal/worktree/clean_set_apply.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/worktree/cleanup_members_baseline_record_test.go, internal/worktree/cleanup_members_modes_test.go (new)
 Covers: R01, R02, R03, R04, R05, R06, R08, R09, R10, R11, R12, R13, R14, R15, R19, R24, R27, R28
 
 ## What to build
 
-Deliver C1: recorded explicit cleanup uses one package-local ordered traversal.
+Deliver the second half of C1: recorded explicit cleanup uses one package-local ordered traversal.
 Create the seam and its unit table while migrating applyExplicitSet's recorded visits.
 Leave applyUnrecordedRows as the existing successor adapter until C2.
 Keep the four existing adapter entry points.
@@ -18,17 +18,18 @@ It derives no fingerprint, ownership proof, classification, or assignment identi
 A reached operation returns its current outcome and error.
 The accepted C1 interface is the contract that C2 through C4 consume.
 
+The owner takes no run parameter, and each adapter's operation closures capture its own `a.run`.
+Each adapter supplies the predicate that selects a member for a visit.
+
 Keep explicit all-member preflight before either stage performs an effect.
 Keep StepMemberRequalify, later requalification, and applyExplicitWith in their current sequence.
 The locked, receipted applyCleanupTransaction remains authoritative.
 A recorded failure projects both recorded and unrecorded suffix members.
 Call the unrecorded adapter only after recorded visits succeed.
 
-Before the first production edit, capture the complete original case manifest for all modes once.
-Use the existing fixture owners and the spec's explicit identity and digest mappings.
-C1 checks recorded cases while C2 through C4 add their mode comparisons.
+Ticket 00 captured the frozen all-mode baseline before this ticket's first production edit.
+TestCleanupTraversalBaseline stays green after the recorded migration.
 No ordinary test restores source or rewrites the frozen records.
-The captured baseline remains the predecessor value consumed by later tickets.
 
 The mandatory registry paths preserve current dispatch, help, AXI membership, and routing.
 This ticket introduces no command or rendered schema change.

@@ -1,0 +1,20 @@
+case unclaimed/first-failure
+inputs
+  options discard-branch=true unclaimed=true
+  unclaimed refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> landed  
+  unclaimed refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> landed  
+commits
+  commit <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> tree:cdd154d572ab parents=
+refs-before
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/main
+response
+  error update exact branch ref: exit status 1: error: cannot lock ref 'refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff': Unable to create '<root>/.git/refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff.lock': File exists.\n\nAnother git process seems to be running in this repository, e.g.\nan editor opened by 'git commit'. Please make sure all processes\nare terminated then try again. If it still fails, a git process\nmay have crashed in this repository earlier:\nremove the file manually to continue.
+  stale false
+  rows 1 nil=false order=prefix 1 of 2
+  row refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff | error | unclaimed | none | none | <digest:plan> | update exact branch ref: exit status 1: error: cannot lock ref 'refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff': Unable to create '<root>/.git/refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff.lock': File exists.\n\nAnother git process seems to be running in this repository, e.g.\nan editor opened by 'git commit'. Please make sure all processes\nare terminated then try again. If it still fails, a git process\nmay have crashed in this repository earlier:\nremove the file manually to continue. | reason-code= | assignment=
+after
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/bench/assign/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ffffffffffffffffffffffffffffffff
+  ref <tip:refs/heads/bench/assign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ffffffffffffffffffffffffffffffff> refs/heads/main

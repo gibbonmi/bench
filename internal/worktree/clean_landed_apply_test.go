@@ -358,3 +358,43 @@ func TestCleanLandedRetainsUnparseableLeaseAndSkipsUnprovableBranch(t *testing.T
 		t.Fatalf("unknown lease path disappeared: %v", err)
 	}
 }
+
+// TestCleanupLandedUnreachedSuffix is R17, with R02, R11, R14, and R19 for the landed mode. A
+// fault at the second member's lock keeps the first removal, names the fault on the second
+// row, reaches no later lock, and reports the unreached third member, all in planned order.
+// Its detail literal is the agent-facing text the unreached row promises.
+func TestCleanupLandedUnreachedSuffix(t *testing.T) {
+	t.Parallel()
+	f := removableSetFixture(t, 3)
+	j := defaultJoins()
+	set, err := planLandedSet(j, nil, f.root, CleanupOptions{}, "")
+	if err != nil || len(set.rows) != 3 {
+		t.Fatalf("landed set = %#v, %v; want three removable members", set.rows, err)
+	}
+	stop, locks := errors.New("stop at the second landed member"), 0
+	faultAtSecondLock(&j, stop)
+	inner := j.cleanupBoundary
+	j.cleanupBoundary = func(step LifecycleStep) error {
+		if step == StepApplyLocked {
+			locks++
+		}
+		return inner(step)
+	}
+	plans, err := applyLandedSet(j, f.ambient(), f.root, set, CleanupOptions{}, "")
+	if !errors.Is(err, stop) || len(plans) != 3 || locks != 2 {
+		t.Fatalf("apply = (%#v, %v, locks=%d), want one row per member, the fault, and no later lock", plans, err, locks)
+	}
+	for i, row := range set.rows {
+		if plans[i].Target != row.plan.Target {
+			t.Fatalf("row %d target = %q, want the planned order at %q", i, plans[i].Target, row.plan.Target)
+		}
+	}
+	if plans[0].Action != ActionRemoved || plans[1].Action != ActionError || !strings.Contains(plans[1].Reason, stop.Error()) ||
+		plans[2].Action != ActionNotAttempted || plans[2].Reason != "not attempted; an earlier target in this set did not complete" {
+		t.Fatalf("rows = %#v, want the removal, the failed member, then the unreached member", plans)
+	}
+	if _, statErr := os.Lstat(plans[0].Target); !os.IsNotExist(statErr) {
+		t.Fatalf("the completed member %s came back: %v", plans[0].Target, statErr)
+	}
+	requireMembersPresent(t, []Creation{memberByID(t, f.creations, set.rows[1].assignment.ID), memberByID(t, f.creations, set.rows[2].assignment.ID)})
+}

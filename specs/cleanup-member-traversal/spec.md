@@ -1,6 +1,6 @@
 # Share cleanup member traversal
 
-Status: staged
+Status: implemented
 Roadmap: FT363
 Decision source: ready compiled map [architecture-cleanup](decisions/architecture-cleanup.md), including its resolved decision tickets.
 Verification log: 2 iteration(s) to accept — FT363-SPEC-R2 accepted the repaired spec before ticket slicing.
@@ -12,9 +12,9 @@ Cleanup selections repeat the ordered visit and stop mechanism.
 The explicit adapter visits recorded members before its unrecorded branch members.
 The landed adapter visits selected assignments.
 The unclaimed adapter visits its replanned branch selection.
-Their current loops live in [clean_set.go](../../internal/worktree/clean_set.go:325),
-[clean_discard.go](../../internal/worktree/clean_discard.go:224),
-[clean_landed.go](../../internal/worktree/clean_landed.go:333), and
+Their current loops live in [clean_set.go](../../internal/worktree/clean_set.go:326),
+[clean_discard.go](../../internal/worktree/clean_discard.go:225),
+[clean_landed.go](../../internal/worktree/clean_landed.go:361), and
 [clean_unclaimed.go](../../internal/worktree/clean_unclaimed.go:191).
 
 The FT363 premise that every mode reports unreached members is stale.
@@ -38,7 +38,7 @@ It makes no elapsed-time or reduced-test-count promise.
 
 ## User stories
 
-Line: gpt-6.1-sol / high.
+Line: opus / medium, by reviewer direction on 2026-11-03.
 Implementation-line reason: the difficult work preserves effect order across distinct authority checks and failure adapters.
 Harder chunks: C1, C2, and C4.
 
@@ -81,6 +81,12 @@ An adapter supplies the operation for a removable member and the stopped-result 
 A reached operation returns its current outcome and error.
 The traversal does not derive an assignment identity, fingerprint, ownership proof, or branch classification.
 
+The traversal takes no run parameter.
+The explicit and landed closures capture that adapter's own `a.run`. The unrecorded and unclaimed adapters read no run, so their closures capture none.
+Each adapter supplies the predicate that selects a member for a visit.
+The landed visits use [landedApplies](../../internal/worktree/clean_landed.go:218), so a missing-tree release row is visited.
+Landed preflight keeps its current Removes predicate, so it skips that row.
+
 Keep the four existing function entry points as adapters.
 Keep explicit all-row preflight ahead of the recorded and unrecorded visits.
 Keep landed all-row preflight ahead of its visits.
@@ -88,7 +94,7 @@ Keep unclaimed full fingerprint and length replan before visits.
 Keep each tuple equality check at its current position immediately before that member's retained or deletion visit.
 Do not add per-member lifecycle fault hooks to modes that lack them today.
 
-The current preflight owners are [preflightExplicitSet and preflightLandedSet](../../internal/worktree/clean_set_apply.go:208).
+The current preflight owners are [preflightExplicitSet](../../internal/worktree/clean_set_apply.go:209) and [preflightLandedSet](../../internal/worktree/clean_set_apply.go:229).
 The unclaimed replan and exact-delete route is [applyUnclaimedAssignmentSet](../../internal/worktree/clean_unclaimed.go:191).
 
 Keep [applyCleanupTransaction](../../internal/worktree/resume.go:104) as the locked, receipted owner for recorded cleanup.
@@ -96,15 +102,15 @@ The outer traversal does not replace its locked planner check.
 Only classUnique plans name a discarded recovery ref.
 Landed and subsumed branch plans carry recovery none and create no discarded ref.
 R22 and R29 preserve both sides of this condition.
-The current rule is [planUnrecordedRow](../../internal/worktree/clean_discard.go:189), and [writeDiscardedRef](../../internal/worktree/clean_discard.go:274) skips an absent recovery ref.
+The current rule is [planUnrecordedRow](../../internal/worktree/clean_discard.go:180), and [writeDiscardedRef](../../internal/worktree/clean_discard.go:274) skips an absent recovery ref.
 
-Unrecorded branches retain [discardUnrecordedBranch](../../internal/worktree/clean_discard.go:249).
+Unrecorded branches retain [discardUnrecordedBranch](../../internal/worktree/clean_discard.go:250).
 Unclaimed refs retain their direct exact-OID deletion operation.
 These separate effect owners must not be forced through recorded-worktree authority.
 
 Use the existing outcome helpers in [clean_set_apply.go](../../internal/worktree/clean_set_apply.go:42).
 Its internal drift outcomes and command rendering are separate contracts.
-[applyOutcomes](../../internal/worktree/clean_set_apply.go:192) replaces stale internal outcomes with the mode's refusal form.
+[applyOutcomes](../../internal/worktree/clean_set_apply.go:193) replaces stale internal outcomes with the mode's refusal form.
 Tests must cover both contracts.
 
 [ADR0005](../../docs/adr/0005-worktree-cleanup-requires-verifiable-ownership.md:3) remains binding.
@@ -123,14 +129,16 @@ Shared baseline and registry writes require this serial order.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| C1 / 01-share-recorded-traversal.md | Recorded explicit cleanup uses the shared owner with unchanged authority and results | R01, R02, R03, R04, R05, R06, R08, R09, R10, R11, R12, R13, R14, R15, R19, R24, R27, R28 | Shared traversal table, explicit command and outcome witnesses, recorded baseline cases | yes |
+| C1 / 00-capture-cleanup-baseline.md, 01-share-recorded-traversal.md | The frozen all-mode baseline exists, and recorded explicit cleanup uses the shared owner with unchanged authority and results | R01, R02, R03, R04, R05, R06, R08, R09, R10, R11, R12, R13, R14, R15, R19, R24, R27, R28 | Frozen baseline capture, shared traversal table, explicit command and outcome witnesses, recorded baseline cases | yes |
 | C2 / 02-migrate-unrecorded-traversal.md | Explicit branch cleanup uses the owner after recorded effects with conditional recovery | R03, R04, R05, R06, R09, R11, R12, R13, R14, R16, R19, R22, R24, R27, R28, R29 | Mixed explicit baseline, discarded-ref and holder-removal witnesses | yes |
 | C3 / 03-migrate-landed-traversal.md | Landed command and folded-sibling cleanup use the owner with unchanged scope | R01, R02, R04, R05, R07, R08, R09, R10, R11, R12, R13, R14, R17, R19, R23, R24, R27, R28 | Landed command, locked drift, suffix, sibling, and baseline witnesses | no |
-| C4 / 04-migrate-unclaimed-and-contract.md | Unclaimed cleanup uses the owner and the complete tree has no original traversal copies | R01, R02, R04, R05, R14, R18, R19, R20, R21, R24, R25, R26, R27, R28 | Post-replan deletion witnesses, exact-OID race, full baseline comparison, copy-survival census | yes |
+| C4 / 04-migrate-unclaimed-and-contract.md, 05-contract-traversal-owner.md | Unclaimed cleanup uses the owner and the complete tree has no original traversal copies | R01, R02, R04, R05, R14, R18, R19, R20, R21, R24, R25, R26, R27, R28 | Post-replan deletion witnesses, exact-OID race, full baseline comparison, copy-survival census | yes |
 
 The previous prospective C1 splits into C1 and C2.
 The previous C2 becomes C3.
 The previous C3 and C4 combine into C4.
+At build entry, ticket 00 takes the baseline capture from ticket 01, and both stay in C1.
+At the C3 checkpoint, ticket 05 takes the census, the fingerprint input owner, and the R26 completion from ticket 04, and both stay in C4.
 
 Each migration removes its own old loop with its preservation evidence.
 Do not retain unreachable legacy loops to create a separate contraction ticket.
@@ -139,155 +147,13 @@ No chunk may weaken an existing witness to obtain green.
 
 ## Completion plan
 
-This version 1 plan records author verification and final integration checks.
-The orchestrator amends it to version 2 before the first author dispatch.
-The amendment records fresh authors and independent chunk review results.
-No implementation evidence or ticket-review acceptance is claimed here.
+This version 2 plan gives each named ticket mutation one probe-bearing requirement.
+Each chunk's command runs the witnesses of its probes.
+The command, AXI, and routing checks run only in final verification, because no ticket changes a command.
+No implementation evidence is claimed here.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "C1",
-      "tickets": [
-        "01-share-recorded-traversal.md"
-      ],
-      "verification": [
-        {
-          "id": "mode-tests",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry|HelpInventory|AXI'"
-        },
-        {
-          "id": "axi-membership",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'",
-          "probe": "Compare this mode with frozen baseline records and record each named behavioral red, restoration, and green."
-        }
-      ]
-    },
-    {
-      "id": "C2",
-      "tickets": [
-        "02-migrate-unrecorded-traversal.md"
-      ],
-      "verification": [
-        {
-          "id": "mode-tests",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry|HelpInventory|AXI'"
-        },
-        {
-          "id": "axi-membership",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
-          "probe": "Compare this mode with frozen baseline records and record each named behavioral red, restoration, and green."
-        }
-      ]
-    },
-    {
-      "id": "C3",
-      "tickets": [
-        "03-migrate-landed-traversal.md"
-      ],
-      "verification": [
-        {
-          "id": "mode-tests",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|CleanupLanded|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry|HelpInventory|AXI'"
-        },
-        {
-          "id": "axi-membership",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|CleanupLanded|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
-          "probe": "Compare this mode with frozen baseline records and record each named behavioral red, restoration, and green."
-        }
-      ]
-    },
-    {
-      "id": "C4",
-      "tickets": [
-        "04-migrate-unclaimed-and-contract.md"
-      ],
-      "verification": [
-        {
-          "id": "mode-tests",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'"
-        },
-        {
-          "id": "command-contract",
-          "command": "bench test --package ./cmd/bench --run 'CommandRegistry|HelpInventory|AXI'"
-        },
-        {
-          "id": "axi-membership",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
-          "probe": "Compare this mode with frozen baseline records and record each named behavioral red, restoration, and green."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "all-mode-tests",
-      "command": "bench test --package ./internal/worktree"
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check cleanup-member-traversal"
-    },
-    {
-      "id": "command-contract",
-      "command": "bench test --package ./cmd/bench"
-    },
-    {
-      "id": "axi-membership",
-      "command": "bench test --check axi-query-registry"
-    },
-    {
-      "id": "routing",
-      "command": "bench test --check subcommand-routing"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","review_mode":"unified","run_id":"ft363-build","orchestrator_session":"ft363-orchestrator","author_limit":1,"assignments":{"00-capture-cleanup-baseline.md":[{"session":"ft363-author-00","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"cc2d50bb146696de64d6d0b5c08de8a784c422f9","native_ref":"claude-agent:ft363-author-00"}],"01-share-recorded-traversal.md":[{"session":"ft363-author-01","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"21e060fa903ae96ec863e143fb6a8605514d3dda","native_ref":"claude-agent:ft363-author-01"},{"session":"ft363-repair-01-r1","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"f777fc8f3ee43afdff75514cd1438011b63905f8","native_ref":"claude-agent:ft363-repair-01-r1","predecessor":"ft363-author-01","trigger":"user-directed","stopped":"5e0110372b6adf94156ef2a64ac42935e19632a5","preserved":"7b46b1f4f1480d929cc6b79a9782240ca71be116"}],"02-migrate-unrecorded-traversal.md":[{"session":"ft363-author-02","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"d6b33ff0c3bde928cd01ec8a58726d35096e3d4d","native_ref":"claude-agent:ft363-author-02"}],"03-migrate-landed-traversal.md":[{"session":"ft363-author-03","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"e14b832e0c8be46a6a8d445b9a63fbaf6611e2fc","native_ref":"claude-agent:ft363-author-03"},{"session":"ft363-repair-03-r1","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"72c93a33fdd682c6ae6ccd844cb1e31e8c944415","native_ref":"claude-agent:ft363-repair-03-r1","predecessor":"ft363-author-03","trigger":"user-directed","stopped":"9b5c117bd9263b21dfdd99a9f96cf3fd01149d36","preserved":"72c93a33fdd682c6ae6ccd844cb1e31e8c944415"}],"04-migrate-unclaimed-and-contract.md":[{"session":"ft363-author-04","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"5a5136db7137fed5db707b61105840f4d1f826b5","native_ref":"claude-agent:ft363-author-04"}],"05-contract-traversal-owner.md":[{"session":"ft363-author-05","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"6ce878cb17681e3944a2c98cbdcf23af6e81762e","native_ref":"claude-agent:ft363-author-05"},{"session":"ft363-repair-05-r1","assignment":"0a19b26ab28493880a91ad070681c0fa","model":"opus","effort":"medium","source":"0348695f88f8d160cd95bd152cad4a6c0044c772","native_ref":"claude-agent:ft363-repair-05-r1","predecessor":"ft363-author-05","trigger":"user-directed","stopped":"7e2f9e6200482bc507ff3ecb84d9d53674702255","preserved":"eaf2356d229ded57186a3106514a2f828ec4903b"}]}},"chunks":[{"id":"C1","tickets":["00-capture-cleanup-baseline.md","01-share-recorded-traversal.md"],"verification":[{"id":"baseline-capture","command":"bench test --package ./internal/worktree --run 'CleanupTraversalBaseline'","probe":"Drop the unreached recorded suffix rows from the explicit stopped result and record the R26 red, the restore, and the green.","ticket":"00-capture-cleanup-baseline.md"},{"id":"explicit-preflight","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Skip the explicit all-member preflight before the recorded visits and record the R06 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"later-requalify","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Skip the later requalification before a reached recorded visit and record the R09 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"locked-requalify","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Skip the locked qualification check of the recorded cleanup transaction and record the R10 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"stop-at-failure","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Continue the shared traversal after a failed visit and record the R14 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"},{"id":"recorded-suffix","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval'","probe":"Drop the unreached recorded members from the explicit stop projection and record the R15 red, the restore, and the green.","ticket":"01-share-recorded-traversal.md"}]},{"id":"C2","tickets":["02-migrate-unrecorded-traversal.md"],"verification":[{"id":"unrecorded-requalify","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'","probe":"Skip the unrecorded requalification after the recorded visits and record the R03 red, the restore, and the green.","ticket":"02-migrate-unrecorded-traversal.md"},{"id":"conditional-recovery","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'","probe":"Write a discarded recovery ref for every unrecorded plan and record the R29 red, the restore, and the green.","ticket":"02-migrate-unrecorded-traversal.md"}]},{"id":"C3","tickets":["03-migrate-landed-traversal.md"],"verification":[{"id":"landed-preflight","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Skip the landed all-member preflight before the landed visits and record the R07 red, the restore, and the green.","ticket":"03-migrate-landed-traversal.md"},{"id":"landed-locked","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Skip the locked qualification check of a landed visit and record the R10 red, the restore, and the green.","ticket":"03-migrate-landed-traversal.md"},{"id":"landed-suffix","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Return only the completed prefix from the landed stop projection and record the R17 red, the restore, and the green.","ticket":"03-migrate-landed-traversal.md"}]},{"id":"C4","tickets":["04-migrate-unclaimed-and-contract.md","05-contract-traversal-owner.md"],"verification":[{"id":"unclaimed-suffix","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Append unreached rows to the unclaimed stop projection and record the R18 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"exact-oid","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Delete the later unclaimed ref without its planned old OID and record the R21 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"unclaimed-stop","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Continue the unclaimed deletions after a failed deletion and record the R14 red, the restore, and the green.","ticket":"04-migrate-unclaimed-and-contract.md"},{"id":"census-explicit","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original recorded member loop in applyExplicitSet and record the R25 red, the restore, and the green.","ticket":"05-contract-traversal-owner.md"},{"id":"census-unrecorded","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original branch loop in applyUnrecordedRows and record the R25 red, the restore, and the green.","ticket":"05-contract-traversal-owner.md"},{"id":"census-landed","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original member loop in applyLandedSet and record the R25 red, the restore, and the green.","ticket":"05-contract-traversal-owner.md"},{"id":"census-unclaimed","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Restore the original member loop in applyUnclaimedAssignmentSet and record the R25 red, the restore, and the green.","ticket":"05-contract-traversal-owner.md"},{"id":"unclaimed-fingerprint","command":"bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupUnclaimed|CleanUnclaimed|CleanSet|DiscardTarget|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'","probe":"Omit one unclaimed fingerprint input in production and record the R26 red, the restore, and the green.","ticket":"05-contract-traversal-owner.md"}]}],"final_verification":[{"id":"all-mode-tests","command":"bench test --package ./internal/worktree"},{"id":"coverage","command":"bench coverage --check cleanup-member-traversal"},{"id":"command-contract","command":"bench test --package ./cmd/bench"},{"id":"axi-membership","command":"bench test --check axi-query-registry"},{"id":"routing","command":"bench test --check subcommand-routing"}]}
 ```
 
 ## Testing decisions
@@ -347,34 +213,34 @@ Tests observe surviving trees and refs as well as reported rows.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| R01 | 1 | Empty applicable selections produce no effects | worktree cleanup command, planned TestCleanupTraversalEmptyModes in internal/worktree/cleanup_members_baseline_test.go | A spurious visit changes the effect trace |
-| R02 | 2 | Visits retain the approved member order | shared traversal table, planned TestCleanupTraversalOrder in internal/worktree/cleanup_members_test.go | Reordering changes the expected trace |
+| R01 | 1 | Empty applicable selections produce no effects | `internal/worktree/cleanup_members_modes_test.go` (`TestCleanupTraversalEmptyModes`) | A spurious visit changes the effect trace |
+| R02 | 2 | Visits retain the approved member order | `internal/worktree/cleanup_members_test.go` (`TestCleanupTraversalOrder`) | Reordering changes the expected trace |
 | R03 | 3 | Recorded visits precede unrecorded visits | `internal/worktree/clean_discard_transaction_test.go` (`TestDiscardTargetRequalifiesAfterARecordedRemoval`) | Reversing the stages removes a branch that must survive |
 | R04 | 4 | A retained row passes through unchanged | `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetRetainedMember`) and mode baseline cases | Rewriting its digest or verdict changes the stored row |
-| R05 | 5 | Retained rows invoke no qualification or effect | planned TestCleanupTraversalRetainedVisits in internal/worktree/cleanup_members_test.go | A redundant call changes the expected call trace |
+| R05 | 5 | Retained rows invoke no qualification or effect | `internal/worktree/cleanup_members_test.go` (`TestCleanupTraversalRetainedVisits`) | A redundant call changes the expected call trace |
 | R06 | 6 | Explicit preflight checks every removable member before removal | `internal/worktree/clean_set_apply_test.go` (`TestCleanSetPreflightAllRows`) | Omitting later preflight permits an earlier deletion |
 | R07 | 7 | Landed preflight checks every removable member before removal | `internal/worktree/clean_set_apply_test.go` (`TestCleanSetPreflightAllRows`) | A late invalid assignment leaves an earlier effect |
 | R08 | 8 | A preflight fault names its actual offender after a retained leading row | `internal/worktree/clean_set_refusal_test.go` (`TestCleanSetPreflightFaultOnLaterMember`) and `internal/worktree/clean_set_refusal_test.go` (`TestCleanSetExplicitPreflightFaultOnLaterMember`) | An offset bug attributes the error to the retained member |
 | R09 | 9 | Requalification observes effects from earlier members | `internal/worktree/clean_set_apply_test.go` (`TestCleanSetLateDrift`) and `internal/worktree/clean_discard_transaction_test.go` (`TestDiscardTargetRequalifiesAfterARecordedRemoval`) | Omitting the later check removes newly unsafe work |
 | R10 | 10 | The recorded transaction rechecks qualification while locked | `internal/worktree/clean_set_apply_test.go` (`TestCleanSetLateDrift`) | Omitting the locked check removes a changed later member |
-| R11 | 11 | A failed visit produces the failed member's fault outcome | `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetPartialApply`) and traversal fault table | A generic stop loses target identity or fault reason |
+| R11 | 11 | A failed visit produces the failed member's fault outcome | `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetPartialApply`) and `internal/worktree/cleanup_members_test.go` (`TestCleanupTraversalStopsAtFailedVisit`) | A generic stop loses target identity or fault reason |
 | R12 | 12 | Drift to retention preserves the current retained outcome internally | `internal/worktree/clean_set_refusal_test.go` (`TestCleanSetMemberDriftAfterPreflight`) | Turning drift into a fault changes the internal row |
 | R13 | 13 | Drift while still removable produces not-attempted internally | `internal/worktree/clean_set_refusal_test.go` (`TestCleanSetMemberDriftAfterPreflight`) | Reporting removed or error changes the internal action |
-| R14 | 14 | No visit runs after the first failed visit | planned TestCleanupTraversalStopsAtFailedVisit in internal/worktree/cleanup_members_test.go | A continued loop changes later durable state |
+| R14 | 14 | No visit runs after the first failed visit | `internal/worktree/cleanup_members_test.go` (`TestCleanupTraversalStopsAtFailedVisit`) | A continued loop changes later durable state |
 | R15 | 15 | Explicit recorded members after a failure receive unreached outcomes | `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetUnstartedOutcomes`) | Dropping the suffix loses selected member rows |
-| R16 | 16 | Explicit unrecorded members after a failure receive unreached outcomes | planned TestCleanupTraversalUnrecordedSuffix in internal/worktree/cleanup_members_baseline_test.go | A mixed selection loses its branch suffix |
-| R17 | 17 | Landed members after a failure receive unreached outcomes | planned TestCleanupLandedUnreachedSuffix in internal/worktree/cleanup_members_baseline_test.go | Prefix-only projection loses the required suffix |
-| R18 | 18 | Unclaimed deletion failure returns only its completed prefix and failed row | planned TestCleanupUnclaimedDeletionFailureAfterReplan in internal/worktree/cleanup_members_baseline_test.go | Appending unreached rows changes this mode's contract |
-| R19 | 19 | A completed earlier effect remains completed after a later failure | planned TestCleanupTraversalCompletedPrefix in internal/worktree/cleanup_members_baseline_test.go | A rollback claim or row rewrite contradicts durable state |
-| R20 | 20 | Unclaimed selection drift refuses before deletion | planned TestCleanupUnclaimedSelectionDrift in internal/worktree/cleanup_members_baseline_test.go | Omitting full replan permits a changed selection |
-| R21 | 21 | Unclaimed deletion checks the planned exact OID | planned TestCleanupUnclaimedMovedRefAfterReplan in internal/worktree/cleanup_members_baseline_test.go | Deleting a moved ref changes the survivor check |
+| R16 | 16 | Explicit unrecorded members after a failure receive unreached outcomes | `internal/worktree/cleanup_members_modes_test.go` (`TestCleanupTraversalUnrecordedSuffix`) | A mixed selection loses its branch suffix |
+| R17 | 17 | Landed members after a failure receive unreached outcomes | `internal/worktree/clean_landed_apply_test.go` (`TestCleanupLandedUnreachedSuffix`) | Prefix-only projection loses the required suffix |
+| R18 | 18 | Unclaimed deletion failure returns only its completed prefix and failed row | `internal/worktree/clean_set_wiring_test.go` (`TestCleanupUnclaimedDeletionFailureAfterReplan`) | Appending unreached rows changes this mode's contract |
+| R19 | 19 | A completed earlier effect remains completed after a later failure | `internal/worktree/cleanup_members_modes_test.go` (`TestCleanupTraversalCompletedPrefix`) | A rollback claim or row rewrite contradicts durable state |
+| R20 | 20 | Unclaimed selection drift refuses before deletion | `internal/worktree/clean_set_wiring_test.go` (`TestCleanupUnclaimedSelectionDrift`) | Omitting full replan permits a changed selection |
+| R21 | 21 | Unclaimed deletion checks the planned exact OID | `internal/worktree/clean_set_wiring_test.go` (`TestCleanupUnclaimedMovedRefAfterReplan`) | Deleting a moved ref changes the survivor check |
 | R22 | 22 | Unique unrecorded branch deletion preserves its planned tip under the planned recovery ref | `internal/worktree/clean_discard_test.go` (`TestDiscardTargetWritesTheDiscardedRefFirst`) | Omitting unique-branch recovery loses the preserved tip |
 | R23 | 23 | Folded-sibling cleanup retains the narrowed landed scope | `internal/worktree/land_effects_cleanup_test.go` (`TestLandCleansTheFoldedSibling`), `internal/worktree/land_effects_cleanup_test.go` (`TestLandLeavesAPriorLandedAssignment`), `internal/worktree/land_effects_cleanup_test.go` (`TestLandRetainsAnUnprovenSibling`) | Broadening scope removes an unrelated or unproven assignment |
 | R24 | 24 | Stale command rendering preserves its refusal and exact replan action | `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetStaleReplanAction`), `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetUnclaimedStaleReplanAction`), `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetApplyTimeStaleRefusal`) | Rendering internal rows directly changes the public refusal |
-| R25 | 25 | Every adapter uses the sole member traversal owner | planned TestCleanupTraversalCopySurvival in internal/worktree/cleanup_members_census_test.go | Restoring any original iteration loop turns the census red |
-| R26 | 26 | Each enumerated baseline case preserves response and durable-state outcome | planned TestCleanupTraversalBaseline in internal/worktree/cleanup_members_baseline_test.go | A per-mode behavior delta changes the captured result |
-| R27 | 27 | Each mode retains its existing injected fault boundaries | planned TestCleanupTraversalModeFaultBoundaries in internal/worktree/cleanup_members_baseline_test.go | Adding or omitting a boundary changes the mode trace |
-| R28 | 28 | Existing authority and preservation refusals remain effective | planned TestCleanupTraversalAuthorityPreservation in internal/worktree/cleanup_members_baseline_test.go | A bypass removes work that the refusal fixture retains |
+| R25 | 25 | Every adapter uses the sole member traversal owner | `internal/worktree/cleanup_members_census_test.go` (`TestCleanupTraversalCopySurvival`) | Restoring any original iteration loop turns the census red |
+| R26 | 26 | Each enumerated baseline case preserves response and durable-state outcome | `internal/worktree/cleanup_members_baseline_test.go` (`TestCleanupTraversalBaseline`) | A per-mode behavior delta changes the captured result |
+| R27 | 27 | Each mode retains its existing injected fault boundaries | `internal/worktree/cleanup_members_modes_test.go` (`TestCleanupTraversalModeFaultBoundaries`) | Adding or omitting a boundary changes the mode trace |
+| R28 | 28 | Existing authority and preservation refusals remain effective | `internal/worktree/cleanup_members_modes_test.go` (`TestCleanupTraversalAuthorityPreservation`) | A bypass removes work that the refusal fixture retains |
 | R29 | 29 | Landed and subsumed unrecorded deletion reports recovery none and writes no discarded ref | `internal/worktree/clean_discard_test.go` (`TestDiscardTargetLandedAndSubsumedWriteNoRef`) | Unconditional recovery creation changes the ref namespace |
 
 Planned tests are future evidence.
@@ -389,6 +255,7 @@ Cover stale selection before entry, before the first effect, after an earlier ef
 Cover drift to retained and drift that remains removable separately.
 Cover unclaimed namespace additions, removals, tuple changes, and a ref moved before exact deletion.
 Cover original fault hooks and zero hooks where the current adapter has none.
+Cover a landed missing-tree release row, which preflight skips and the landed visits apply (R26).
 Cover partial completion without rollback and replay without repeated deletion.
 
 Won't handle: a new uniform failure-row format — all existing cleanup callers keep their mode's current format.
@@ -400,7 +267,7 @@ Won't handle: performance claims — existing recorded timing cannot establish t
 
 ### Unclaimed deletion witnesses after successful replan
 
-R18 uses planned TestCleanupUnclaimedDeletionFailureAfterReplan in internal/worktree/cleanup_members_baseline_test.go.
+R18 uses TestCleanupUnclaimedDeletionFailureAfterReplan in internal/worktree/clean_set_wiring_test.go.
 Run first-failure and later-failure cases through applyUnclaimedAssignmentSet.
 Build a stable selection with multiple removable refs and retained rows.
 Place a Git ref lock on the selected first or later removable ref.
@@ -417,7 +284,7 @@ Also assert retained prefix rows remain unchanged.
 A first-failure fixture proves that no prior deletion occurs.
 The later-failure fixture proves that the completed prefix is not rolled back.
 
-R21 uses planned TestCleanupUnclaimedMovedRefAfterReplan in internal/worktree/cleanup_members_baseline_test.go.
+R21 uses TestCleanupUnclaimedMovedRefAfterReplan in internal/worktree/clean_set_wiring_test.go.
 Install a real Git reference-transaction hook in the disposable fixture repository.
 On committed deletion of the first selected removable ref, move a later selected ref to a different OID.
 This event occurs after the complete replan and after the first completed deletion.
@@ -477,6 +344,9 @@ Ticket slicing changes only this spec and its ticket files.
 - `internal/worktree/cleanup_members_test.go` (new)
 - `internal/worktree/cleanup_members_census_test.go` (new)
 - `internal/worktree/cleanup_members_baseline_test.go` (new)
+- `internal/worktree/cleanup_members_baseline_record_test.go` (new)
+- `internal/worktree/cleanup_members_modes_test.go` (new)
+- `internal/worktree/parallel_census_test.go`
 - `internal/worktree/testdata/cleanup-member-traversal/` (new)
 - `internal/worktree/clean_set.go`
 - `internal/worktree/clean_landed.go`
@@ -500,7 +370,7 @@ Ticket slicing changes only this spec and its ticket files.
 - `reviews/cleanup-member-traversal.md` (new)
 
 No public symbol is moved or retired.
-The unchanged non-command caller is internal/worktree/land_effects.go:134.
+The unchanged non-command caller is internal/worktree/land_effects.go:199.
 Do not replace its landed adapter or widen its scope.
 The binding registry requires every ticket to co-name the five command registry paths.
 They preserve current dispatch, help, AXI membership, and routing.
@@ -527,7 +397,7 @@ No Bench test execution verified the planned composition.
 The changed-function caller census used bench consumers with worktree-qualified symbols.
 Its production routes are cleanExplicitSet to applyExplicitSet, applyExplicitSet to applyUnrecordedRows,
 cleanLanded and cleanLandedSiblings to applyLandedSet, and cleanUnclaimed to applyUnclaimedAssignmentSet.
-The non-command caller is [cleanLandedSiblings](../../internal/worktree/land_effects.go:134).
+The non-command caller is [cleanLandedSiblings](../../internal/worktree/land_effects.go:199).
 Existing internal adapter tests remain in the fence.
 The author must refresh this census before slice lock if the source advances.
 

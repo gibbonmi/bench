@@ -2399,6 +2399,14 @@
       "identity": "sha256:fcdcba6bad056d08932f01ce8ddaaef0f35761a5167dcdab247078a1bf8c72f9",
       "source": "bd6be4066838c041bc313d891e3c3391734119cf",
       "evidence": "e02a14fec9bd864876250c3d47ff60e635bece67"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT363-member-set",
+      "binding": "cleanup-member-traversal",
+      "identity": "sha256:fc37cb1be76e7304075c9550383f2bf04b5ac5a5331836009bd2b508188deeec",
+      "source": "4d0ff498a21c2b5b2d8684ef69bb43e457de0395",
+      "evidence": "d53d5ddc3cd0edfbef1b865a19a91b9ac83786eb"
     }
   ]
 }

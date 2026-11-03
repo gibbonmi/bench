@@ -1,0 +1,19 @@
+case landed/retained-only
+inputs
+  options discard-ignored=false discard-branch=false full=false
+  landed <m1:id> <m1:path> retain <tip:<m1:branch>> clean 1 none
+commits
+  commit <member-tip> tree:7f0c29c32b54 parents=(tree:5f905c2f921d)
+  commit <tip:refs/heads/main> tree:7f0c29c32b54 parents=(tree:5f905c2f921d)
+refs-before
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:refs/heads/main> refs/heads/main
+response
+  error none
+  stale false
+  rows 1 nil=false order=prefix 1 of 1
+  row <m1:path> | retain | clean | count=1 bytes=8 shown=1 truncated=false | none | <digest:plan> | ignored residuals require --discard-ignored | reason-code=ignored | assignment=<m1:id>
+after
+  member m1 tree=present ledger=active
+  ref <tip:<m1:branch>> <m1:branch>
+  ref <tip:refs/heads/main> refs/heads/main
