@@ -945,3 +945,15 @@ Findings: 0. Worst issue: none. R12 does not apply to the unrecorded stage, beca
 - The doc comment of `unrecordedSuffixSet` names `--discard-branch`, but R04 and R05 build the set with default options.
 - Ticket 02 makes the same false run claim as the spec sentence that the orchestrator corrects.
 - Ticket 02 counts R12 against `TestCleanupTraversalUnrecordedSuffix`, although R12 does not apply to the unrecorded stage.
+
+## C3 author witness reds
+
+The ticket 03 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R01, R05 | The `landedApplies` predicate returns true. | `TestCleanupTraversalEmptyModes/landed/retained-only` |
+| R12 | `requalifiedOutcome` is replaced by `faultedPlan`. | `TestCleanSetMemberDriftAfterPreflight/landed_member_drifts_to_retained` |
+| R27 | The landed `StepMemberRequalify` hit is omitted. | `TestCleanupTraversalModeFaultBoundaries/landed/all-success` |
+
+The author reported one open gap. `landedRun` in `cleanup_members_baseline_test.go` holds a hand copy of the input list of `fingerprintLandedSet`, which is the C1-SPEC-1 defect class in landed mode.
