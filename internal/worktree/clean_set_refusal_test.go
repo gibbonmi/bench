@@ -111,6 +111,34 @@ func TestCleanSetMemberDriftAfterPreflight(t *testing.T) {
 		}
 		requireMembersPresent(t, []Creation{drifted})
 	})
+	t.Run("explicit member drifts while still removable", func(t *testing.T) {
+		t.Parallel()
+		root, home := ignoringRepo(t)
+		first := landedMember(t, root, home, "drift-removable-first", "first.txt")
+		second := landedMember(t, root, home, "drift-removable-second", "second.txt")
+		members := []Creation{first, second}
+		options := CleanupOptions{DiscardIgnored: true}
+		j := defaultJoins()
+		set := planExplicitSet(j, repoHome{root, home}.ambient(), root, explicitIdentities(members), options)
+		if set.fingerprint == "" || len(set.rows) != 2 || !set.rows[1].plan.Action.Removes() {
+			t.Fatalf("explicit set = %#v, want two removable members", set)
+		}
+		// The approved set discards ignored residue, so new residue keeps the member removable
+		// while its ignored digest no longer matches the approved row.
+		drifted := memberByID(t, members, set.rows[1].assignment.ID)
+		j.cleanupBoundary = driftAtSecondRequalify(t, func() {
+			mustWrite(t, filepath.Join(drifted.Path, "ignored-late.txt"), []byte("residue\n"), 0o644)
+		})
+
+		plans, err := applyExplicitSet(j, repoHome{root, home}.ambient(), root, set, options)
+		if !errors.Is(err, errStaleFingerprint) {
+			t.Fatalf("apply error = %v, want the member's own requalify to refuse", err)
+		}
+		if len(plans) != 2 || plans[1].Action != ActionNotAttempted || plans[1].Reason != "not attempted; this target no longer matches the approved plan" {
+			t.Fatalf("refused rows = %#v, want the drifted member reported as not attempted", plans)
+		}
+		requireMembersPresent(t, []Creation{drifted})
+	})
 	t.Run("faults while requalifying", func(t *testing.T) {
 		t.Parallel()
 		f := removableSetFixture(t, 2)

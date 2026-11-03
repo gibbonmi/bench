@@ -226,6 +226,20 @@ func preflightExplicitSet(j joins, a ambient, root string, set explicitCleanupSe
 	return -1, nil
 }
 
+// requalifyExplicitRow re-plans one member against the repository as it stands now and
+// refuses a member the approved set no longer describes. The preflight and the apply loop
+// read the same proof, so neither can admit a member the other would refuse.
+func requalifyExplicitRow(j joins, run *git.Run, root string, planned explicitCleanupRow, options CleanupOptions) (explicitCleanupRow, error) {
+	current, err := planExplicitCleanupRow(j, run, root, planned.assignment, options)
+	if err != nil {
+		return current, err
+	}
+	if !sameExplicitCleanupTuple(planned, current) {
+		return current, errStaleFingerprint
+	}
+	return current, nil
+}
+
 func preflightLandedSet(j joins, run *git.Run, root string, set landedCleanupSet, options CleanupOptions, scope string) (int, error) {
 	for i, planned := range set.rows {
 		if !planned.plan.Action.Removes() {

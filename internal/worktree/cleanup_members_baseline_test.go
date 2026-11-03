@@ -143,13 +143,24 @@ func explicitRun(t *testing.T, f repoHome, byRole bool, targets []string, option
 		t.Fatalf("explicit set failures = %#v, want a resolved selection", set.failures)
 	}
 	run := baselineRun{repoHome: f, byRole: byRole, planDigest: set.fingerprint, targetDigests: map[string]string{}}
-	run.inputs = append(run.inputs, fmt.Sprintf("options discard-ignored=%t discard-branch=%t full=%t", options.DiscardIgnored, options.DiscardBranch, options.Full))
-	for _, row := range set.rows {
-		run.inputs = append(run.inputs, fmt.Sprintf("recorded %s %s %s %s", row.assignment.ID, row.plan.Target, row.plan.Action, row.targetFingerprint))
-		run.targetDigests[row.targetFingerprint] = row.assignment.ID
+	// The record renders the production input list, so an input the fingerprint omits leaves the
+	// record, and the plan digest must be the production fingerprint of exactly these inputs.
+	inputs := explicitFingerprintInputs(set, options)
+	if digest := fingerprintExplicitSet(inputs); digest != set.fingerprint {
+		t.Fatalf("plan digest %s is not the fingerprint %s of its rendered inputs", set.fingerprint, digest)
 	}
-	for _, row := range set.unrecorded {
-		run.inputs = append(run.inputs, fmt.Sprintf("unrecorded %s %s %s %s %s", row.ref, row.oid, row.class, row.holder, row.discarded))
+	for _, input := range inputs {
+		line := input.kind
+		for i, value := range input.values {
+			if i < len(input.keys) {
+				value = input.keys[i] + "=" + value
+			}
+			line += " " + value
+		}
+		run.inputs = append(run.inputs, line)
+	}
+	for _, row := range set.rows {
+		run.targetDigests[row.targetFingerprint] = row.assignment.ID
 	}
 	for _, plan := range set.plans() {
 		run.planned = append(run.planned, plan.Target)
