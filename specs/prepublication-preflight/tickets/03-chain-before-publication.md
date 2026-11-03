@@ -15,6 +15,7 @@ The chain line keeps its fields and their order: `commit-chain{commit=<sha|none>
 `chainSteps.Commit` takes the check, and `chainSteps.Preflight` takes the root, the slug, the base, and the candidate. Change the stub commit of `runCommitChain` so that it calls the check with a fixed candidate. Rewrite the inverse assertions of the chain tests that rows PP17 to PP21 and PP24 to PP26 cite, and retire the local `wantPublishedStepRedExit`.
 
 Add `internal/systemtest/commit_chain_test.go` after the linked-project precedent of `internal/systemtest/otel_verbs_test.go:40`. A red plan commit exits 1 with the branch ref unchanged, and its repaired retry exits 0 with the chain line that names the new branch tip.
+BENCH_KIT is supplied by `bench test --check system`. Never run the tagged suite directly.
 
 Add `internal/anchors/registry_plan_commit.go` with two Require anchors on `.agents/commands/bench-implement-spec.md`, and register the slice in the `registry` chain of `internal/anchors/registry_data.go:63`. The needles are "A plan commit that a dispatch follows uses plain `bench commit`" and "a plan commit that no dispatch follows uses `bench commit --preflight-build <slug>`". Add the test mirror after the precedent of `internal/anchors/registry_check_floor_test.go`. The guidance text does not change.
 
