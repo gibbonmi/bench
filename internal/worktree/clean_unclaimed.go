@@ -184,7 +184,8 @@ func cleanCommand(options CleanupOptions, selectors ...string) string {
 }
 
 // applyUnclaimedAssignmentSet deletes each landed and subsumed branch at the exact object
-// the plan named, and it reports a retained row as planned. It reports the outcome rows
+// the plan named, through the shared cleanup traversal, and it reports a retained row as
+// planned. It reports the outcome rows
 // alone. A stale refusal carries no rows, because the refusal row is this command surface's
 // own spelling and the caller renders it; a row returned here would be a second derivation
 // the caller discards.
@@ -203,22 +204,42 @@ func applyUnclaimedAssignmentSet(j joins, root string, set unclaimedAssignmentSe
 	if current.fingerprint != set.fingerprint || len(current.rows) != len(set.rows) {
 		return nil, errStaleFingerprint
 	}
-	plans := make([]CleanupPlan, 0, len(set.rows))
+	members := make([]unclaimedMember, len(set.rows))
 	for i, planned := range set.rows {
-		if current.rows[i] != planned {
-			return nil, errStaleFingerprint
-		}
-		if !planned.action().Removes() {
-			plans = append(plans, planned.plan(set.fingerprint))
-			continue
-		}
-		if err := git.DeleteBranchExact(root, planned.ref, planned.oid); err != nil {
-			return append(plans, CleanupPlan{Target: planned.ref, Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: err.Error()}), err
-		}
-		plans = append(plans, CleanupPlan{Target: planned.ref, Action: ActionRemoved, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint})
+		members[i] = unclaimedMember{planned: planned, current: current.rows[i]}
 	}
-	return plans, nil
+	unclaimed := cleanupTraversal[unclaimedMember]{
+		// A member whose re-planned tuple differs is visited whatever its action, so a retained
+		// row that differs also refuses the set at its own position.
+		visits:   func(m unclaimedMember) bool { return !m.same() || m.planned.action().Removes() },
+		retained: func(m unclaimedMember) CleanupPlan { return m.planned.plan(set.fingerprint) },
+		visit: func(m unclaimedMember) (CleanupPlan, error) {
+			if !m.same() {
+				return CleanupPlan{}, errStaleFingerprint
+			}
+			if err := git.DeleteBranchExact(root, m.planned.ref, m.planned.oid); err != nil {
+				return CleanupPlan{Target: m.planned.ref, Action: ActionError, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint, Reason: err.Error()}, err
+			}
+			return CleanupPlan{Target: m.planned.ref, Action: ActionRemoved, Tracked: "unclaimed", ignoredSummary: "none", Recovery: "none", Fingerprint: set.fingerprint}, nil
+		},
+		// A stale refusal carries no rows. A deletion fault reports the completed prefix and
+		// the failed row alone: this mode reports no unreached member.
+		stopped: func(plans []CleanupPlan, failed int) []CleanupPlan {
+			if !members[failed].same() {
+				return nil
+			}
+			return plans
+		},
+	}
+	return unclaimed.run(members, make([]CleanupPlan, 0, len(set.rows)))
 }
+
+// unclaimedMember is one planned row beside the row the apply's own re-plan reads at the same
+// position.
+type unclaimedMember struct{ planned, current unclaimedAssignmentBranch }
+
+// same reports whether the re-plan still describes the planned row exactly.
+func (m unclaimedMember) same() bool { return m.planned == m.current }
 
 // unclaimedClassOrder is the order the class counts are reported in.
 var unclaimedClassOrder = []refClass{classLanded, classSubsumed, classUnique}
