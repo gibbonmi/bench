@@ -32,6 +32,14 @@ var commitFaces = []Face{
 		Route:     []Step{Instruction(Text("repair each failure that the run reports")), commitRerun},
 	},
 	{
+		// The pre-publication check of the caller's chain refused the candidate commit, so no
+		// ref moved. The landing owns the sentence.
+		Verb:      Commit,
+		Name:      "commit-chain-red",
+		Authority: Agent,
+		Route:     []Step{Instruction(Text("repair each red chain step")), commitRerun},
+	},
+	{
 		// The authorization policy owns the sentence.
 		Verb:      Commit,
 		Name:      "commit-infrastructure",
