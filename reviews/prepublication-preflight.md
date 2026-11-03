@@ -795,11 +795,84 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+    "performer": "ppf-orchestrator",
+    "reconciliation": {
+      "PP01": "covered",
+      "PP02": "covered",
+      "PP03": "covered",
+      "PP04": "covered",
+      "PP05": "covered",
+      "PP06": "covered",
+      "PP07": "covered",
+      "PP08": "covered",
+      "PP09": "covered",
+      "PP10": "covered",
+      "PP11": "covered",
+      "PP12": "covered",
+      "PP13": "covered",
+      "PP14": "covered",
+      "PP15": "covered",
+      "PP16": "covered",
+      "PP17": "covered",
+      "PP18": "covered",
+      "PP19": "covered",
+      "PP20": "covered",
+      "PP21": "covered",
+      "PP22": "covered",
+      "PP23": "covered",
+      "PP24": "covered",
+      "PP25": "covered",
+      "PP26": "covered",
+      "PP27": "covered",
+      "PP28": "covered",
+      "PP29": "covered",
+      "PP30": "covered",
+      "PP31": "covered",
+      "PP32": "covered",
+      "PP33": "covered",
+      "PP34": "covered",
+      "PP35": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-system",
+        "performer": "ppf-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench-test-check-system",
+          "digest": "sha256:acb4efd0faf3dd4f5695298bd012274d9a2c6d75254ab95cfc83b5805b3bafc5",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,288,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,66809,288\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "final-coverage",
+        "performer": "ppf-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench-coverage-check",
+          "digest": "sha256:31b5e01870d28293d712e901c06f0b02f6522b2f52894362559a7147e8e9cf94",
+          "excerpt": "ok: coverage map valid — 35 row(s)\nuncited: 1 row(s) with no seam-cell citation — PP31\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check prepublication-preflight",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
