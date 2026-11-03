@@ -277,7 +277,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "S-B1-R1-standards",
+          "performer": "ft354-review-S-B1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fa087909f4ea9649d0094baa98f3ca249d38002a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B1",
+            "digest": "sha256:b2e93aa1d837a5360b8e6bfa71f2518cd4eeee47a20c3c7d7993376b840a087d",
+            "excerpt": "## Standards\nCount: 1, no-op. Worst: overlapping widen rerun expectations across two files.\n- internal/spec/widen_test.go:142-147 and internal/spec/widen_rerun_test.go:117 build the same fixture and assert the same rerun prefix; the widen_test.go block predates this change and the diff only updated its literal. Confidence 4. no-op.\n"
+          },
+          "axis": "Standards",
+          "base": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+          "tip": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-B1-R1-spec",
+          "performer": "ft354-review-S-B1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fa087909f4ea9649d0094baa98f3ca249d38002a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B1",
+            "digest": "sha256:e20e76d6959c0c9a720e9d65d31f2ab488879794d221da91653a8eb1fbaa3eba",
+            "excerpt": "## Spec\nCount: 0.\n- S13: history_selected.go:120 uses sanitize.ShellQuote; the -- marker (:117-118) and LineSafe (:64) remain.\n- S40: widen.go:129-131 quotes slug, basename, and entries; --ticket, --decision, and \u003creference> stay bare.\n"
+          },
+          "axis": "Spec",
+          "base": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+          "tip": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-B1-R1-coverage",
+          "performer": "ft354-review-S-B1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "fa087909f4ea9649d0094baa98f3ca249d38002a",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B1",
+            "digest": "sha256:b19a78f23baf3cbf66c78eefc5d1eab3aa341339b78c2adf9220f6bb32ec2f42",
+            "excerpt": "## Coverage\nCount: 0.\n- Argv-equivalent escape at historyDetail bit TestSelectedSpecDetailRoute/quote'_name; restored=yes.\n- Argv-equivalent escape at the widen entries bit TestWidenRerunArguments; restored=yes.\n- Quoting \u003creference> and dropping the last entry each bit both widen tests; restored=yes.\n## Advice\n- The r1 placeholder substitution at widen_rerun_test.go:125 runs only after the exact-bytes assertion; the exact fixture carries the S40 detection.\n"
+          },
+          "axis": "Coverage",
+          "base": "e9c03d6b5704fb9c4fb24c2cf1923effa6eaac8c",
+          "tip": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
