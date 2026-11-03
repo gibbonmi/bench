@@ -561,7 +561,80 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "c3-standards-r1",
+          "performer": "ppf-review-c3-standards",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03cf2035deba1918ad29781e6be8540c5d56b7d9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ppf-review-c3-standards",
+            "digest": "sha256:fe003346e6aecdefb7df02f5de754593cbcb0ebebcbb2a52c69fa2b6e5f0def6",
+            "excerpt": "Standards axis, chunk C3 (40233078..102ed39a). ChainValues (internal/commit/grammar.go:63-66) only calls parseRequest; no second parser. Findings: 4. Worst: C3-STD-1.\nC3-STD-1 internal/commit/commit.go:73,103: Outcome.PreflightBuild and Outcome.Base are set but no production code reads them; the chain reads ChainValues (commit_chain.go:80). One fact, two channels. moderate, auto-fix (widen commit.go), confidence 7.\nC3-STD-2 cmd/bench/commit_chain.go:60: chain help repeats the meaning of exit 1 that the commit help owns (grammar.go:23). minor, auto-fix, confidence 5.\nC3-STD-3 CHANGELOG.md:11: one descriptive sentence is about 28 words (STE limit 25). minor, auto-fix, confidence 6.\nC3-STD-4 cmd/bench/commit_chain_test.go:290: TestCommitChainStopsAtRemainder no longer stops; PP24 pins the name. judgment, ask-user, confidence 6.\nImplement command: no contribution.\n"
+          },
+          "axis": "Standards",
+          "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "tip": "102ed39ad1273c0a929d3c93895c376b56e9e3f8",
+          "finding_ids": [
+            "C3-STD-1",
+            "C3-STD-2",
+            "C3-STD-3",
+            "C3-STD-4"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-spec-r1",
+          "performer": "ppf-review-c3-spec",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03cf2035deba1918ad29781e6be8540c5d56b7d9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ppf-review-c3-spec",
+            "digest": "sha256:251d7b5ab97adf58f9585fc61eb71bdfd19499524a9605b5ea5d695c412b9b22",
+            "excerpt": "Spec axis, chunk C3 (40233078..102ed39). Rows PP17-PP31 match (PP31 CHANGELOG.md:9-13 passes). Findings: 3. Worst: C3-SPEC-S1.\nC3-SPEC-S1 internal/worktree/build.go:36,:84-86 -> internal/runbinary/runbinary.go:334-338 runs bash \u003croot>/scripts/go-build.sh with no existence test; in a linked project with no script the build step exits 1, the check errs (cmd/bench/commit_chain.go:104-106), and every --preflight-build commit refuses (before: published with exit 4). The system test plants a script (internal/systemtest/commit_chain_test.go:472-475). Edge inventory spec.md:222 says the change serves every linked repository; no Won't-handle line covers it. Not an acceptance shortfall; an undecided behavior change. high, ask-user, confidence 8.\nC3-SPEC-S2 internal/anchors/registry_plan_commit.go:7 shortened PP29 needle pins the dispatch half (route needles cap at 6 words, locate_test.go:38-39). low, no-op, confidence 7.\nC3-SPEC-S3 spec.md:210 PP29 row still quotes the full needle. low, auto-fix prose, confidence 8.\n"
+          },
+          "axis": "Spec",
+          "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "tip": "102ed39ad1273c0a929d3c93895c376b56e9e3f8",
+          "finding_ids": [
+            "C3-SPEC-S1",
+            "C3-SPEC-S2",
+            "C3-SPEC-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "c3-coverage-r1",
+          "performer": "ppf-review-c3-coverage",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "03cf2035deba1918ad29781e6be8540c5d56b7d9",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ppf-review-c3-coverage",
+            "digest": "sha256:82dbc80dbc2eb426c276c73061edd80b8a5e7d3d997ec0819984fe665ba84c17",
+            "excerpt": "Coverage axis, chunk C3 (base 40233078, tip 102ed39a). Findings: 2. Worst: C3-COV-F1.\nC3-COV-F1 internal/anchors/registry_plan_commit.go:7 (mirror registry_plan_commit_test.go:9): the PP29 needle \"dispatch follows uses plain `bench commit`\" stays green when the guidance swaps \"a dispatch\" for \"no dispatch\". medium, auto-fix, confidence 8.\nC3-COV-F2 cmd/bench/commit_chain.go:117-118: a green check followed by a CAS refusal prints commit=none,build=green,preflight=green at exit 1; no row. low, no-op, confidence 5.\nProbe set on .agents/commands/bench-implement-spec.md, --package ./internal/conformance:\n1,bit,omit,failed,1,TestRootConformance,1210,1,0,null,yes\n2,silent,swap,passed,0,null,1210,0,1,null,yes\n3,bit,omit,failed,1,TestRootConformance,1210,1,0,null,yes\nThe real gate check is TestRootConformance (internal/conformance/docs_workflow_helpers_test.go:36), not the internal/anchors mirror.\n"
+          },
+          "axis": "Coverage",
+          "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
+          "tip": "102ed39ad1273c0a929d3c93895c376b56e9e3f8",
+          "finding_ids": [
+            "C3-COV-F1",
+            "C3-COV-F2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -671,3 +744,31 @@ Count: 2. Worst issue: C2-COV-F1.
 
 - C2-COV-F1 (confidence 7): `internal/commit/commit.go:272` with `internal/refusalroute/registry.go:106-110` and `internal/landing/check.go:282`. `CheckRefusal.Unwrap` exposes the check error, and `refusalroute.Printed` replaces the face with a `Raised` value in that chain. Disposition: auto-fix. Story 13 requires the `commit-chain-red` face and the caller's rerun for every check refusal. Add a PP13 case whose check error wraps a `Raised` value.
 - C2-COV-F2 (confidence 6): `internal/commit/commit.go:237-242` `landingFace` tests `NamedPathError` and `TipMovedError` before `CheckRefusal`. Disposition: auto-fix with C2-COV-F1. Add a PP13 case whose check error wraps a `TipMovedError`.
+
+## C3 round 1 pickup
+
+The frozen pair is 40233078f..102ed39ad. The axes found 9 raw findings. After the orchestrator collapsed the findings that name the same fix, 4 code repair targets on ticket 03 and 1 reviewer decision remain.
+
+### C3 Standards
+
+Count: 4. Worst issue: C3-STD-1.
+
+- C3-STD-1 (confidence 7): `internal/commit/commit.go:73`, `:103`. No production code reads `Outcome.PreflightBuild` and `Outcome.Base`, because the chain reads `commit.ChainValues`. Disposition: auto-fix. Remove the two fields and their doc words, and update their test readers.
+- C3-STD-2 (confidence 5): `cmd/bench/commit_chain.go:60`. The chain help states the meaning of exit 1, which the commit help owns. Disposition: auto-fix. Remove that clause.
+- C3-STD-3 (confidence 6): `CHANGELOG.md:11` has a descriptive sentence of about 28 words. Disposition: auto-fix. Split the sentence.
+- C3-STD-4 (confidence 6): `TestCommitChainStopsAtRemainder` keeps a name that row PP24 pins. Disposition: no-op. The test still grades the remainder exit of the commit.
+
+### C3 Spec
+
+Count: 3. Worst issue: C3-SPEC-S1.
+
+- C3-SPEC-S1 (confidence 8): `internal/worktree/build.go:36` runs `scripts/go-build.sh` with no test that the script exists (`internal/runbinary/runbinary.go:334-338`). In a linked project without that script, the build step is red, and every chained commit refuses. Before this change, such a commit published at exit 4. The spec does not decide this case. Disposition: ask-user.
+- C3-SPEC-S2 (confidence 7): the short PP29 needle pins the dispatch half. Disposition: merged into C3-COV-F1.
+- C3-SPEC-S3 (confidence 8): `specs/prepublication-preflight/spec.md:210` quotes a needle that the code does not use. Disposition: auto-fix with C3-COV-F1. The row text states the needle that ships.
+
+### C3 Coverage
+
+Count: 2. Worst issue: C3-COV-F1.
+
+- C3-COV-F1 (confidence 8): `internal/anchors/registry_plan_commit.go:7`. The PP29 needle stays green when the guidance swaps "a dispatch" for "no dispatch", and the probe of that swap read `silent`. Disposition: auto-fix. Use a needle that holds "a dispatch follows" inside the word limit of its class.
+- C3-COV-F2 (confidence 5): `cmd/bench/commit_chain.go:117-118`. A compare-and-swap refusal after a green check prints both steps green at exit 1, and no row covers that line. Disposition: no-op. The line is accurate, and C2 covers the face.
