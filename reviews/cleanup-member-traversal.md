@@ -1377,3 +1377,16 @@ The repair reported one duplication in its delta. `landedFingerprintInputs` and 
 ## C3 confirming round
 
 A fresh unified opus / medium session read the repair delta `9b5c117bd..49982b68a`. It closed C3-SPEC-1 and found no new finding. Its independent probe removed a different landed input, and the baseline went red. Repair cycles consumed for C3: 1 of 2. The routed duplication of the options input and the hash loop goes to ticket 04.
+
+## C4 ticket 04 witness reds
+
+The ticket 04 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R04, R05 | The `visits` predicate is always true. | `TestCleanupUnclaimedModeWitnesses` mixed case, both failure cases, and `TestCleanupUnclaimedMovedRefAfterReplan` |
+| R20 | The fingerprint and exact-length check is dropped. | `TestCleanupUnclaimedSelectionDrift` addition and tuple-change cases |
+| R27 | An extra `StepRemoval` hit is added. | `TestCleanupUnclaimedModeWitnesses` empty and mixed cases |
+| R02 | The member order is reversed. | 4 unclaimed tests |
+
+The author reported that the unclaimed baseline holds a hand copy of the unclaimed fingerprint inputs, which ticket 05 removes.
