@@ -4,12 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
@@ -162,26 +162,15 @@ func TestCitationNamesHeadVersionAndReplaySpelling(t *testing.T) {
 	if cells[2] != testVersion {
 		t.Fatalf("version = %q, want %q", cells[2], testVersion)
 	}
-	if cells[3] != "bench consumers target.Symbol --full" {
+	if cells[3] != "bench consumers 'target.Symbol' '--full'" {
 		t.Fatalf("cmd = %q, want the replay spelling", cells[3])
 	}
 }
 
-// shellSplit recovers the argv a POSIX shell reads from one printed command line. It is
-// the same recovery internal/axi applies to a help row, so a citation's replay spelling is
-// graded against a real shell rather than against a re-spelling.
-func shellSplit(t *testing.T, command string) []string {
-	t.Helper()
-	out, err := exec.Command("sh", "-c", "set -- "+command+`; for argument do printf '%s\000' "$argument"; done`).Output()
-	if err != nil {
-		t.Fatalf("shell split %q: %v", command, err)
-	}
-	fields := strings.Split(string(out), "\x00")
-	return fields[:len(fields)-1]
-}
-
-// A revision name carrying a shell metacharacter keeps its token boundary in
-// the citation's replay spelling, so the printed line replays as the argv that answered.
+// A revision name carrying a shell metacharacter and an embedded quote keeps its token
+// boundary in the citation's replay spelling, so the printed line replays as the argv
+// that answered. The cell is read through the TOON decoder, because the quote's escape
+// carries a backslash that the encoder escapes in turn.
 func TestCitationCmdRoundTripsThroughAPOSIXShellSplit(t *testing.T) {
 	base := blastRepo(t)
 	stubLoad(t, tipFixture)
@@ -189,16 +178,29 @@ func TestCitationCmdRoundTripsThroughAPOSIXShellSplit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("git root: %v", err)
 	}
-	const ref = "feature;echo"
+	const ref = "feature;echo'q"
 	gittest.MustRun(t, root, "branch", ref, base)
-	args := []string{"--changed", "--base", ref, "--source-tip", head(t), "--full"}
+	tip := head(t)
+	args := []string{"--changed", "--base", ref, "--source-tip", tip, "--full"}
 	out, code := run(t, args...)
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; out=%q", code, out)
 	}
-	cells, _ := citationCells(t, out)
+	document, err := axitest.DecodeDocument(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := document.Rows("citation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd, _ := rows[0].(map[string]any)["cmd"].(string)
+	wantCmd := `bench consumers '--changed' '--base' 'feature;echo'\''q' '--source-tip' '` + tip + `' '--full'`
+	if cmd != wantCmd {
+		t.Fatalf("cmd = %q, want %q", cmd, wantCmd)
+	}
 	want := append([]string{"bench", "consumers"}, args...)
-	if got := shellSplit(t, cells[3]); !slices.Equal(got, want) {
-		t.Fatalf("shell argv = %q, want %q (cmd cell %q)", got, want, cells[3])
+	if got, err := (axitest.HelpAction{Cmd: cmd}).Argv(); err != nil || !slices.Equal(got, want) {
+		t.Fatalf("shell argv = (%q, %v), want %q (cmd cell %q)", got, err, want, cmd)
 	}
 }
