@@ -355,46 +355,46 @@ func requalifyLandedRow(j joins, run *git.Run, root string, planned landedCleanu
 	return current, nil
 }
 
-// applyLandedSet removes every qualified member through its own locked transaction. The
-// first member that cannot finish stops the set, and every member the set never started
-// reports its own unstarted outcome.
+// applyLandedSet runs every member landedApplies selects, through the shared cleanup traversal,
+// into its own locked transaction, so a planned release the preflight skips is still visited.
+// The first member that cannot finish stops the set, and each unstarted member reports so.
 func applyLandedSet(j joins, a ambient, root string, set landedCleanupSet, options CleanupOptions, scope string) ([]CleanupPlan, error) {
 	plans := make([]CleanupPlan, 0, len(set.rows))
 	if offender, err := preflightLandedSet(j, a.run, root, set, options, scope); err != nil {
 		return preflightOutcomes(plans, landedRowPlans(set.rows), offender, err), err
 	}
-	for i, planned := range set.rows {
-		if !landedApplies(planned.plan.Action) {
-			plans = append(plans, planned.plan)
-			continue
-		}
-		if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
-			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
-			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
-		}
-		current, err := requalifyLandedRow(j, a.run, root, planned, options, scope)
-		if err != nil {
-			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
-			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), err
-		}
-		planner := func(string) (CleanupPlan, error) {
-			fresh, stillSelected, planErr := replanLandedCleanupRow(j, a.run, root, planned.assignment.ID, options, scope)
-			if planErr != nil {
-				return CleanupPlan{}, planErr
+	landed := cleanupTraversal[landedCleanupRow]{
+		visits:   func(planned landedCleanupRow) bool { return landedApplies(planned.plan.Action) },
+		retained: func(planned landedCleanupRow) CleanupPlan { return planned.plan },
+		visit: func(planned landedCleanupRow) (CleanupPlan, error) {
+			if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
+				return faultedPlan(planned.plan, CleanupPlan{}, err), err
 			}
-			if !stillSelected || !sameLandedCleanupTuple(planned, fresh) {
-				return CleanupPlan{Target: planned.assignment.Worktree}, nil
+			current, err := requalifyLandedRow(j, a.run, root, planned, options, scope)
+			if err != nil {
+				return requalifiedOutcome(planned.plan, current.plan, err), err
 			}
-			return fresh.plan, nil
-		}
-		// The terminal callback keeps the lifecycle's post-settlement fault boundary between
-		// completed rows, where a later-row drift must still stop the set apply.
-		applied, applyErr := applyCleanupTransaction(j, a, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
-		if applyErr != nil {
-			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
-			return notAttemptedPlans(plans, landedRowPlans(set.rows[i+1:]), notAttemptedDetail), applyErr
-		}
-		plans = append(plans, applied)
+			planner := func(string) (CleanupPlan, error) {
+				fresh, stillSelected, planErr := replanLandedCleanupRow(j, a.run, root, planned.assignment.ID, options, scope)
+				if planErr != nil {
+					return CleanupPlan{}, planErr
+				}
+				if !stillSelected || !sameLandedCleanupTuple(planned, fresh) {
+					return CleanupPlan{Target: planned.assignment.Worktree}, nil
+				}
+				return fresh.plan, nil
+			}
+			// The terminal callback keeps the lifecycle's post-settlement fault boundary between
+			// completed rows, where a later-row drift must still stop the set apply.
+			applied, applyErr := applyCleanupTransaction(j, a, root, planned.assignment.Worktree, current.plan.Fingerprint, planner, nil, func(CleanupPlan) error { return nil })
+			if applyErr != nil {
+				return faultedPlan(current.plan, applied, applyErr), applyErr
+			}
+			return applied, nil
+		},
+		stopped: func(plans []CleanupPlan, failed int) []CleanupPlan {
+			return notAttemptedPlans(plans, landedRowPlans(set.rows[failed+1:]), notAttemptedDetail)
+		},
 	}
-	return plans, nil
+	return landed.run(set.rows, plans)
 }

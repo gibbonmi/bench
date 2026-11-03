@@ -24,38 +24,74 @@ func stepTrace() (*[]LifecycleStep, Fault) {
 	}
 }
 
+// modeApply plans one selection through the explicit adapter, or through the landed adapter
+// over the whole repository, which ignores targets. It returns each recorded row's assignment
+// identity, the planned rows, and the apply, which runs under the joins j holds at that time.
+func modeApply(t *testing.T, j *joins, f repoHome, landed bool, targets []string) ([]string, []CleanupPlan, func() ([]CleanupPlan, error)) {
+	t.Helper()
+	var ids []string
+	if landed {
+		set, err := planLandedSet(*j, nil, f.root, CleanupOptions{}, "")
+		mustNoError(t, err)
+		for _, row := range set.rows {
+			ids = append(ids, row.assignment.ID)
+		}
+		return ids, landedRowPlans(set.rows), func() ([]CleanupPlan, error) {
+			return applyLandedSet(*j, f.ambient(), f.root, set, CleanupOptions{}, "")
+		}
+	}
+	set := planExplicitSet(*j, f.ambient(), f.root, targets, CleanupOptions{})
+	for _, row := range set.rows {
+		ids = append(ids, row.assignment.ID)
+	}
+	return ids, set.plans(), func() ([]CleanupPlan, error) { return applyExplicitSet(*j, f.ambient(), f.root, set, CleanupOptions{}) }
+}
+
 // TestCleanupTraversalEmptyModes is R01. A selection with no removable member reaches no
 // lifecycle boundary, changes no ref or record, and reports each retained row as planned.
 func TestCleanupTraversalEmptyModes(t *testing.T) {
 	t.Parallel()
+	empty := func(t *testing.T) (repoHome, []string) {
+		root := newWorktreeRepo(t)
+		return repoHome{root, filepath.Join(root, ".bench-home")}, nil
+	}
 	for _, tc := range []struct {
-		name  string
-		build func(*testing.T) (repoHome, []string)
+		name   string
+		landed bool
+		rows   int
+		build  func(*testing.T) (repoHome, []string)
 	}{
-		{"explicit/empty", func(t *testing.T) (repoHome, []string) {
-			root := newWorktreeRepo(t)
-			return repoHome{root, filepath.Join(root, ".bench-home")}, nil
-		}},
-		{"explicit/retained-only", func(t *testing.T) (repoHome, []string) {
+		{"explicit/empty", false, 0, empty},
+		{"explicit/retained-only", false, 1, func(t *testing.T) (repoHome, []string) {
 			f := retainedMemberFixture(t)
 			return f.repoHome, []string{f.retained.Assignment.ID}
+		}},
+		{"landed/empty", true, 0, empty},
+		{"landed/retained-only", true, 1, func(t *testing.T) (repoHome, []string) {
+			root, home := ignoringRepo(t)
+			retained := landedMember(t, root, home, "set-retained-residue", "retained.txt")
+			mustWrite(t, filepath.Join(retained.Path, "ignored-one.txt"), []byte("residue\n"), 0o644)
+			return repoHome{root, home}, nil
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			f, targets := tc.build(t)
 			j := defaultJoins()
-			set := planExplicitSet(j, f.ambient(), f.root, targets, CleanupOptions{})
+			_, want, apply := modeApply(t, &j, f, tc.landed, targets)
+			if len(want) != tc.rows {
+				t.Fatalf("planned rows = %#v, want %d", want, tc.rows)
+			}
 			steps, trace := stepTrace()
 			j.cleanupBoundary = trace
 			before := strings.Join(baselineRefs(t, f.root), "\n") + repositoryState(t, f.root)
 
-			plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
+			plans, err := apply()
 			mustNoError(t, err)
 			if len(*steps) != 0 {
 				t.Fatalf("apply reached %v, want no lifecycle boundary", *steps)
 			}
-			if want := set.plans(); len(plans) != len(want) || (len(want) != 0 && !reflect.DeepEqual(plans, want)) {
+			if len(plans) != len(want) || (len(want) != 0 && !reflect.DeepEqual(plans, want)) {
 				t.Fatalf("rows = %#v, want the planned rows %#v unchanged", plans, want)
 			}
 			if after := strings.Join(baselineRefs(t, f.root), "\n") + repositoryState(t, f.root); after != before {
@@ -102,21 +138,29 @@ func TestCleanupTraversalCompletedPrefix(t *testing.T) {
 // ones the original adapters produced.
 func TestCleanupTraversalModeFaultBoundaries(t *testing.T) {
 	t.Parallel()
-	t.Run("explicit/all-success", func(t *testing.T) {
-		t.Parallel()
-		f := removableSetFixture(t, 2)
-		j := defaultJoins()
-		set := planExplicitSet(j, f.ambient(), f.root, explicitIdentities(f.creations), CleanupOptions{})
-		steps, trace := stepTrace()
-		j.cleanupBoundary = trace
+	for _, tc := range []struct {
+		name   string
+		landed bool
+		member []LifecycleStep
+	}{
+		{"explicit/all-success", false, []LifecycleStep{StepMemberRequalify, StepApplyLocked, StepReceipt, StepUnlock, StepRemovalAttempt, StepRemoval, StepBranch}},
+		{"landed/all-success", true, []LifecycleStep{StepMemberRequalify, StepApplyLocked, StepReceipt, StepUnlock, StepRemovalAttempt, StepRemoval, StepBranch, StepTerminalReceipt}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			f := removableSetFixture(t, 2)
+			j := defaultJoins()
+			_, _, apply := modeApply(t, &j, f.repoHome, tc.landed, explicitIdentities(f.creations))
+			steps, trace := stepTrace()
+			j.cleanupBoundary = trace
 
-		_, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
-		mustNoError(t, err)
-		member := []LifecycleStep{StepMemberRequalify, StepApplyLocked, StepReceipt, StepUnlock, StepRemovalAttempt, StepRemoval, StepBranch}
-		if want := append(append([]LifecycleStep{}, member...), member...); !reflect.DeepEqual(*steps, want) {
-			t.Fatalf("boundaries = %v, want %v", *steps, want)
-		}
-	})
+			_, err := apply()
+			mustNoError(t, err)
+			if want := append(append([]LifecycleStep{}, tc.member...), tc.member...); !reflect.DeepEqual(*steps, want) {
+				t.Fatalf("boundaries = %v, want %v", *steps, want)
+			}
+		})
+	}
 	// A landed branch writes no discarded ref, so only the unique branch reaches the discard
 	// windows, and the unrecorded stage has no requalify boundary.
 	t.Run("unrecorded/all-success", func(t *testing.T) {
@@ -142,37 +186,42 @@ func TestCleanupTraversalModeFaultBoundaries(t *testing.T) {
 // residue stay, and the retained member behind it keeps its planned verdict.
 func TestCleanupTraversalAuthorityPreservation(t *testing.T) {
 	t.Parallel()
-	f := retainedMemberFixture(t)
-	j := defaultJoins()
-	set := planExplicitSet(j, f.ambient(), f.root, []string{f.removable.Assignment.ID, f.retained.Assignment.ID}, CleanupOptions{})
-	if set.fingerprint == "" || len(set.rows) != 2 {
-		t.Fatalf("explicit set = %#v, want two applicable members", set.rows)
-	}
-	// The set orders its members by identity, so the removable member's row index is read
-	// from the plan rather than assumed.
-	removable, retained := 0, 1
-	if set.rows[0].assignment.ID != f.removable.Assignment.ID {
-		removable, retained = 1, 0
-	}
-	if !set.rows[removable].plan.Action.Removes() || set.rows[retained].plan.Action.Removes() {
-		t.Fatalf("explicit set = %#v, want one removable and one retained member", set.rows)
-	}
-	residue := filepath.Join(f.removable.Path, "ignored-late.txt")
-	j.cleanupBoundary = atStep(StepApplyLocked, func() error {
-		mustWrite(t, residue, []byte("residue\n"), 0o644)
-		return nil
-	})
+	for _, landed := range []bool{false, true} {
+		t.Run(map[bool]string{false: "explicit", true: "landed"}[landed], func(t *testing.T) {
+			t.Parallel()
+			f := retainedMemberFixture(t)
+			j := defaultJoins()
+			ids, planned, apply := modeApply(t, &j, f.repoHome, landed, []string{f.removable.Assignment.ID, f.retained.Assignment.ID})
+			if len(ids) != 2 || len(planned) != 2 {
+				t.Fatalf("planned rows = %#v, want two applicable members", planned)
+			}
+			// The set orders its members by identity, so the removable member's row index is read
+			// from the plan rather than assumed.
+			removable, retained := 0, 1
+			if ids[0] != f.removable.Assignment.ID {
+				removable, retained = 1, 0
+			}
+			if !planned[removable].Action.Removes() || planned[retained].Action.Removes() {
+				t.Fatalf("planned rows = %#v, want one removable and one retained member", planned)
+			}
+			residue := filepath.Join(f.removable.Path, "ignored-late.txt")
+			j.cleanupBoundary = atStep(StepApplyLocked, func() error {
+				mustWrite(t, residue, []byte("residue\n"), 0o644)
+				return nil
+			})
 
-	plans, err := applyExplicitSet(j, f.ambient(), f.root, set, CleanupOptions{})
-	if !errors.Is(err, errStaleFingerprint) {
-		t.Fatalf("apply error = %v, want the locked recheck to refuse", err)
-	}
-	if _, statErr := os.Stat(residue); statErr != nil {
-		t.Fatalf("the preserved residue %s was removed: %v", residue, statErr)
-	}
-	requireMembersPresent(t, []Creation{f.removable, f.retained})
-	if len(plans) != 2 || plans[removable].Action != ActionError || !reflect.DeepEqual(plans[retained], set.rows[retained].plan) {
-		t.Fatalf("rows = %#v, want the refused member failed and the retained member as planned", plans)
+			plans, err := apply()
+			if !errors.Is(err, errStaleFingerprint) {
+				t.Fatalf("apply error = %v, want the locked recheck to refuse", err)
+			}
+			if _, statErr := os.Stat(residue); statErr != nil {
+				t.Fatalf("the preserved residue %s was removed: %v", residue, statErr)
+			}
+			requireMembersPresent(t, []Creation{f.removable, f.retained})
+			if len(plans) != 2 || plans[removable].Action != ActionError || !reflect.DeepEqual(plans[retained], planned[retained]) {
+				t.Fatalf("rows = %#v, want the refused member failed and the retained member as planned", plans)
+			}
+		})
 	}
 }
 
