@@ -104,6 +104,8 @@ The grade substitutes the candidate for HEAD in each read of this list:
 - the derived review base, through the merge base and the recorded-key ancestry (`internal/diff/range.go:323`, `:349`);
 - the source tip of the default-tip paths, the build deletions, the decision maps, the completion plan, and the fold resolutions (`internal/preflight/gather.go:77`, `:101`, `:125`, `:131`, `:141`, `internal/preflight/plan.go:17`, `internal/preflight/gather_inputs.go:106`).
 
+The dirty-source test of the unchanged-path comparison reads the checkout against HEAD (`internal/preflight/gather_inputs.go:141-147`), and the default-tip paths and the fold resolutions reach it (`internal/preflight/default_branch.go:50`, `internal/preflight/gather_inputs.go:124`). Before publication, the candidate's own edits make the checkout dirty against HEAD. So the candidate grade tests the checkout against the candidate tree.
+
 The changed paths are a checkout diff from the review base (`internal/diff/snapshot.go:88-89`), so they follow the candidate only through that base.
 The grade pins the candidate as the source-tip pin, so its verdict holds the `tip-current` row, as the published grade does when the chain passes `--source-tip` (`cmd/bench/commit_chain.go:58`).
 The grade renders through the same verdict renderer as `bench preflight build` (`internal/preflight/command.go:153-213`). It appends the `commitment` row under the same rule.
@@ -135,7 +137,7 @@ C2 composes the check seam and the chain. Ticket 02 adds the seam with a stub ch
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| C1 / 01-grade-the-candidate-commit.md | `BuildVerdictAt` grades an unpublished candidate and prints the published verdict text for the same commit | PP01, PP02, PP03, PP04, PP05, PP06, PP07, PP08, PP09, PP32, PP33 | preflight candidate tables, the published-verdict differential, existing source-tip tests | yes |
+| C1 / 01-grade-the-candidate-commit.md | `BuildVerdictAt` grades an unpublished candidate and prints the published verdict text for the same commit | PP01, PP02, PP03, PP04, PP05, PP06, PP07, PP08, PP09, PP32, PP33, PP34 | preflight candidate tables, the published-verdict differential, existing source-tip tests | yes |
 | C2 / 02-check-before-publication.md, 03-chain-before-publication.md | `bench commit --preflight-build` grades the candidate before publication and publishes nothing on red | PP10, PP11, PP12, PP13, PP14, PP15, PP16, PP17, PP18, PP19, PP20, PP21, PP22, PP23, PP24, PP25, PP26, PP27, PP28, PP29, PP30, PP31 | landing check tests, commit check tests, chain stub tests, chain system test, plan-commit anchors | no |
 
 ### Completion plan
@@ -232,6 +234,7 @@ The system row PP28 drives the real `bench commit` verb in a linked-project work
 | PP31 | 31 | The changelog entry states that the chain steps run before publication and that exit 4 retired | review-owned in C2 | A changelog that omits the contract change fails review |
 | PP32 | 32 | The build verdict holds no `check-floor` row | `internal/preflight/charge_cells_test.go` (`TestDecideHasNoCheckFloorRow`) | A grade that restores the row fails this existing test |
 | PP33 | 4 | For a merge candidate whose second parent is the default-branch tip over a HEAD behind that tip, the candidate verdict text equals the published verdict text with `base-current` green | planned TestBuildVerdictAtMatchesThePublishedVerdict in internal/preflight/candidate_test.go | A grade that keeps the HEAD read of `base-current` or of the review base reds `base-current` or changes the changed-path set |
+| PP34 | 4 | With the candidate's edits uncommitted in the checkout and one unfenced changed path equal to the default-branch tip, the candidate verdict text equals the published verdict text with `paths-authorized` green | planned TestBuildVerdictAtMatchesThePublishedVerdict in internal/preflight/candidate_test.go | A grade that keeps the HEAD dirty test drops the default-tip exemption and reds `paths-authorized` |
 
 Not covered: story 33 — no recorded `bench commit` repro of a skipped parser exists, so the lane stays as it is.
 Not covered: story 34 — FT439 owns the comment-only correction after a chunk freeze.
@@ -268,7 +271,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 
 ### Seams beyond the decision source
 
-- `preflight.BuildVerdictAt`: the gather reads the source tip at `internal/preflight/gather.go:77`, `internal/preflight/plan.go:17`, `internal/preflight/map_sources.go:19`, `internal/preflight/gather_inputs.go:106`, `internal/preflight/default_branch.go:27`, and `internal/diff/range.go:323`, `:349`. The coordinator's own read found the first four reads, and the spec review found the last two. No research reader found them, and every reader proposed a checkout grade before `Land`.
+- `preflight.BuildVerdictAt`: the gather reads the source tip at `internal/preflight/gather.go:77`, `internal/preflight/plan.go:17`, `internal/preflight/map_sources.go:19`, `internal/preflight/gather_inputs.go:106`, `internal/preflight/default_branch.go:27`, and `internal/diff/range.go:323`, `:349`. The coordinator's own read found the first four reads, and the spec review found the last two. The slicing research found the dirty-source test at `internal/preflight/gather_inputs.go:141-147`. No research reader found them, and every reader proposed a checkout grade before `Land`.
 - The `landing.Request.Check` field: `internal/landing/landing.go:184-193`. The enforcement readers found that no step runs between `commit-tree` and `updateRef`.
 - `commit.RunChecked` and the `commit-chain-red` face: `internal/commit/commit.go:82-116`, `:209-236`, and `internal/refusalroute/faces_commit.go:7-69`. The reader sweep found every caller of `commit.Run` and the face registry.
 
@@ -312,7 +315,7 @@ Each item below goes beyond the literal decision source. The reviewer can veto e
 - Entry reads: `BuildVerdictAt` reads the repository at `root`, and its candidate and base are values. `RunChecked` reads the Git root from the working directory, as `Run` does.
 - Derived expectations: the PP04 expectation comes from the published `Command` run, not from the candidate grade; every other expectation is an authored literal.
 - Consolidated rules: none.
-- Quantified obligations: "every source-tip read" holds for each read that the candidate grade lists, PP04 varies the completion plan, the decision maps, and the green case, and PP33 varies the two direct HEAD reads.
+- Quantified obligations: "every source-tip read" holds for each read that the candidate grade lists, PP04 varies the completion plan, the decision maps, and the green case, PP33 varies the two direct HEAD reads, and PP34 varies the dirty-source test.
 - Workflow-step writes: the check writes no file. It reads HEAD as the expected base, the review record at the candidate, and the checkout spec and tickets. The landing's compare-and-swap reads the destination ref after the check.
 
 ### Research comparison
