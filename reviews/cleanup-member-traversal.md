@@ -1463,6 +1463,72 @@
             "C4-COV-2"
           ],
           "supersedes": []
+        },
+        {
+          "id": "C4-R2-STD",
+          "performer": "ft363-review-c4-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4-r2",
+            "digest": "sha256:3d3be5497ad8668249dd1f7e193fcc5024a9d5b6e6297ec8a7186ac214e0431f",
+            "excerpt": "## Standards\nOutcome: closed. Findings: 0.\nThe known-answer test builds digests only through the production input builders and fingerprintInputs (cleanup_members_census_test.go:208-226); the three literal digests meet the AGENTS.md exception, with the red recorded under \"C4 repair 1 witness reds\". The run check has one helper, traversalRun (:98-106). Pin 890 to 891 for one new top-level test.\n"
+          },
+          "axis": "Standards",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "finding_ids": [],
+          "supersedes": [
+            "C4-R1-STD"
+          ]
+        },
+        {
+          "id": "C4-R2-SPEC",
+          "performer": "ft363-review-c4-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4-r2",
+            "digest": "sha256:b473367ec0dd2b49120c2e30447e66e23ce81e18d2167c020dddbb393482bfde",
+            "excerpt": "## Spec\nOutcome: closed. Findings: 0.\nSpec lines 270 and 287 now place R18 and R21 in internal/worktree/clean_set_wiring_test.go, matching coverage rows 233 and 236 and the tests at clean_set_wiring_test.go:258 and :296. The requirement sentences are unchanged; the plan block adds only the repair assignment.\n"
+          },
+          "axis": "Spec",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "finding_ids": [],
+          "supersedes": [
+            "C4-R1-SPEC"
+          ]
+        },
+        {
+          "id": "C4-R2-COV",
+          "performer": "ft363-review-c4-r2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "b0826a0478b6cfd93a89d2f216cdb678b2d82e02",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c4-r2",
+            "digest": "sha256:2002fd1ded23f6729213555bebc4c43dd80747fbdd9e594d871c53d6e739b779",
+            "excerpt": "## Coverage\nOutcome: closed. Findings: 0. C4-COV-1 and C4-COV-2 closed.\nC4-COV-1: the loop-body scan follows function literals and bound closures and flags a call on the bound traversal inside a loop (cleanup_members_census_test.go:133-170); liveTopLevelRun rejects a run behind a branch, loop, closure, or earlier return (:109-130). Probe: probeB.txt swapped at clean_set.go:335: bit, TestCleanupTraversalCopySurvival, restored. C4-COV-2: probe: a fixed salt part added after the version in fingerprintInputs: bit, only TestCleanupTraversalFingerprintKnownAnswer on all three versions, restored. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "49982b68aa7f8ab61798882a624b203e76e18d77",
+          "tip": "4e96075172dde7aaa04041154e8ff69c902e4ee1",
+          "finding_ids": [],
+          "supersedes": [
+            "C4-R1-COV"
+          ]
         }
       ]
     }
@@ -1847,3 +1913,11 @@ The test-only repair session ft363-repair-05-r1 closed both findings at repair c
 | C4-COV-2 | The version is dropped from `fingerprintInputs`. | `TestCleanupTraversalFingerprintKnownAnswer` |
 
 The coordinator probe of the closure-wrapped loop also bit. The test-only confirmation route refused, because the repair window holds a prose-only spec correction, so a unified confirming round grades the repair delta.
+
+## C4 confirming round
+
+A fresh unified opus / medium session read the repair delta `7e2f9e620..4e9607517`. It closed C4-COV-1 and C4-COV-2 and found no new finding. Each finding's replayed probe bit. Repair cycles consumed for C4: 1 of 2.
+
+## Advice
+
+- The census closure map collects only function literals that `:=` or `=` binds, so a `var visit = func(...)` declaration that a loop calls escapes it. This shape is not an original loop.
