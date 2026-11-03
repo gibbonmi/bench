@@ -9,6 +9,7 @@ Covers: S01, S02, S03, S04, S15
 Use existing sanitize.ShellQuote in PrintTreeBuildRefusal and add its accepted owner oracles.
 Keep the owner algorithm unchanged and always quoted.
 Update all three tree-build readers from the accepted eleven-file closure in this same checkpoint.
+In build_test.go, the readers include TestRunReusesAMatchingBuild at its no-candidate refusal, beside the TT44-TT46 rows.
 Keep fixed command tokens, whole-line control escaping, child non-start, and destination authority.
 
 Review chunk: S-A.

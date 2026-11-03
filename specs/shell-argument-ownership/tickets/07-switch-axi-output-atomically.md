@@ -1,12 +1,13 @@
 # Switch AXI known arguments with their complete output closure
 
 Blocked by: 01-quote-tree-build-arguments.md, 02-quote-selected-history.md, 03-quote-citation-commands.md, 04-quote-recovery-operands.md, 05-quote-evidence-commands.md, 06-share-rebuild-and-fixture-quotes.md
-Writes: internal/axi/action.go, internal/axi/action_test.go, internal/consumers/blast_edges_test.go, internal/consumers/blast_test.go, internal/consumers/candidates_test.go, internal/consumers/citation_test.go, internal/consumers/command_test.go, internal/consumers/loader_test.go, internal/consumers/query_test.go, internal/consumers/refuse_test.go, internal/consumers/shell_arguments_test.go (new), internal/coverage/coverage_command_test.go, internal/coverage/coverage_schema_test.go, internal/coverage/shell_arguments_test.go (new), internal/gate/run_outcomes_test.go, internal/guards/guards_test.go, internal/maps/freshness_test.go, internal/maps/maps_command_test.go, internal/preflight/explicit_base_test.go, internal/preflight/shell_arguments_test.go (new), internal/worktree/identifier_operand_test.go, internal/worktree/landed_test.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, internal/worktree/shell_arguments_test.go (new), internal/worktree/unlanded_route_test.go, internal/worktree/pool_reclaim_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/clean_landed_hostile_test.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_command_test.go, internal/worktree/clean_set_test.go, internal/worktree/clean_landed_test.go, cmd/bench/anchor_help_test.go, cmd/bench/anchors_dir_test.go, cmd/bench/main_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
-Covers: S05, S06, S07, S08, S09, S10, S11, S12, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31, S32, S33, S34, S35, S36, S38, S39
+Writes: internal/axi/action.go, internal/axi/action_test.go, internal/consumers/blast_edges_test.go, internal/consumers/blast_test.go, internal/consumers/candidates_test.go, internal/consumers/citation_test.go, internal/consumers/command_test.go, internal/consumers/loader_test.go, internal/consumers/query_test.go, internal/consumers/refuse_test.go, internal/consumers/shell_arguments_test.go (new), internal/coverage/coverage_command_test.go, internal/coverage/coverage_schema_test.go, internal/coverage/shell_arguments_test.go (new), internal/gate/run_outcomes_test.go, internal/guards/guards_test.go, internal/maps/freshness_test.go, internal/maps/maps_command_test.go, internal/preflight/explicit_base_test.go, internal/preflight/shell_arguments_test.go (new), internal/worktree/identifier_operand_test.go, internal/worktree/landed_test.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, internal/worktree/shell_arguments_test.go (new), internal/worktree/unlanded_route_test.go, internal/worktree/pool_reclaim_test.go, internal/worktree/clean_set_wiring_test.go, internal/worktree/clean_landed_hostile_test.go, internal/worktree/clean_unclaimed_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/clean_set_command_test.go, internal/worktree/clean_set_test.go, internal/worktree/clean_landed_test.go, cmd/bench/anchor_help_test.go, cmd/bench/anchors_dir_test.go, cmd/bench/main_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, cmd/bench/planning_read_advice.go, cmd/bench/planning_read_advice_test.go, cmd/bench/planning_reader_commands_test.go, cmd/bench/worktree_leaves_test.go, cmd/bench/census_output_test.go, cmd/bench/axi_query_cases_test.go, internal/responsebound/read.go, internal/responsebound/read_test.go, internal/responsebound/shell_arguments_test.go (new), internal/outline/outline_test.go, internal/outline/outline_filter_test.go, internal/outline/outline_kinds_test.go, internal/outline/declaration_test.go, internal/outline/shell_arguments_test.go (new), internal/worktree/related_test.go, internal/worktree/list_selected_test.go, internal/treetarget/family_test.go, decisions/architecture-primitives.md
+Covers: S05, S06, S07, S08, S09, S10, S11, S12, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31, S32, S33, S34, S35, S36, S38, S39, S41, S42, S43, S44
 
 ## What to build
 
 Switch renderKnownArgument to sanitize.ShellQuote and remove axi.ShellQuote after all direct callers have migrated.
+Migrate the remaining direct callers in this checkpoint: responsebound firstPage, cmd/bench rawReadAdvice, and the worktree_leaves_test.go test callers.
 Keep empty, unsupported control, and angle-bracket refusal, accepted layout bytes, future slots, harness syntax, ordering, and deduplication.
 Compare the raw declared first value for the bench-command authority check.
 Update every affected executable-action fixture in this same checkpoint.
@@ -44,7 +45,7 @@ No-replay checks must search the new quoted command spelling, never an obsolete 
 - [ ] The consumers blast producer emits the approved quoted command shape. (S22).
 - [ ] The guards producer emits the approved quoted command shape. (S23).
 - [ ] The maps producer emits the approved quoted command shape. (S24).
-- [ ] The gate retry producer emits the approved quoted command shape. (S25).
+- [ ] The gate subject fault prints its fresh rerun as one refusal-route next line and no AXI help row. (S25).
 - [ ] The preflight retry producer emits the approved quoted command shape. (S26).
 - [ ] The worktree list producer emits the approved quoted command shape. (S27).
 - [ ] The worktree selected list producer emits the approved quoted command shape. (S28).
@@ -57,6 +58,10 @@ No-replay checks must search the new quoted command spelling, never an obsolete 
 - [ ] Direct callers retain their current refusal or escape policy for control-bearing operands. (S35).
 - [ ] Differential fixtures change only the approved argument quote spellings. (S36).
 - [ ] Each migrated caller family fails its declared quote-bypass mutation. (S38).
+- [ ] The outline producers emit the approved quoted command shape. (S41).
+- [ ] The bounded read next-page action and the first-page command preserve their argv through the surviving owner. (S42).
+- [ ] The worktree read action emits the approved quoted command shape with its path slot unchanged. (S43).
+- [ ] The raw read advice quotes its path through the surviving owner. (S44).
 - [ ] All eleven affected output-reader files preserve their existing behavioral assertions with only approved quote-byte updates. (S39).
 
 ## Checkpoint verification
@@ -83,7 +88,8 @@ Modify a registry only when the approved caller change requires its exact dispos
 ## Source headroom
 
 Update existing command literals without growing over-budget fixture files.
-Put new worktree list-help tests in internal/worktree/shell_arguments_test.go.
+Put new worktree list-help and read-action tests in internal/worktree/shell_arguments_test.go.
+Put new outline tests in internal/outline/shell_arguments_test.go and new bounded read tests in internal/responsebound/shell_arguments_test.go.
 Keep existing shared fixture helpers and their assertion purpose.
 The orchestrator must name any further exact extraction destination before it is used.
 No structure-budget or acceptance-grant edit is authorized.

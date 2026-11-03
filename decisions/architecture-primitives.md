@@ -38,9 +38,9 @@ Use craft-spec, craft-seams, and craft-cli for the separate specs.
 
 ## Sources
 
-- Path: `roadmap/FT354.md`
+- Path: `decisions/architecture-primitives/tickets/4.md`
   Supports: the existing primitive ownership questions.
-  Drift: a change to the row.
+  Drift: a change to the split decision.
 - Path: `internal/jsonfile/decode.go`
   Supports: complete-document and persisted-record readers.
   Drift: a change to framing or strictness.
