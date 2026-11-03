@@ -4,15 +4,15 @@
 {
   "version": 2,
   "spec": "specs/prepublication-preflight/spec.md",
-  "plan_digest": "sha256:351505691273d6505a9a5fcf36349186e657baf3e6769643711555ead6885e4d",
+  "plan_digest": "sha256:439822b5cbe0fa3d7522f3a589cf67fd2fd93e440fb9f9beed6a74d913859390",
   "implementation_session": "",
   "chunks": [
     {
       "id": "C1",
       "base": "3d0598ba1b589d392eb8d11aa0c658e27e809e4c",
-      "tip": "411b02763e57c9f901b47697ab5271e03b4d45fd",
-      "plan_digest": "sha256:351505691273d6505a9a5fcf36349186e657baf3e6769643711555ead6885e4d",
-      "source_digest": "52ea596345ba18cf4db25e522c2d2a8acf93aa5f",
+      "tip": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+      "plan_digest": "sha256:439822b5cbe0fa3d7522f3a589cf67fd2fd93e440fb9f9beed6a74d913859390",
+      "source_digest": "bcd174d44e66961aa744235d1d943c2208ab4fc1",
       "acceptance_rows": [
         "PP01",
         "PP02",
@@ -55,6 +55,36 @@
               "ref": "claude-agent:ppf-author-01",
               "digest": "sha256:3241a28cd297394534a83bcb28401c9755c441fc7989d1eae245f821bb03c8e3",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/plan.go,swap,failed,1,TestBuildVerdictAtGradesTheCandidate/PP02_completion_plan_at_the_candidate,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestBuildVerdictAtGradesTheCandidate$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,397\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,333,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestBuildVerdictAtGradesTheCandidate/PP02_completion_plan_at_the_candidate,\"candidate_test.go:36: plan candidate = (0), want 1 with completion-plan red at the candidate:\",4\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c1-01-r1-candidate-tests",
+          "performer": "ppf-repair-01-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "bcd174d44e66961aa744235d1d943c2208ab4fc1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-repair-01-r1",
+            "digest": "sha256:802cf6107e6fa7d8d7c4bf3a7bc29c98f0f7e5a92e8352fac1020da365a2b1d0",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/plan.go,swap,failed,1,TestBuildVerdictAtGradesTheCandidate/PP02_completion_plan_at_the_candidate,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestBuildVerdictAtGradesTheCandidate$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,397\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,327,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestBuildVerdictAtGradesTheCandidate/PP02_completion_plan_at_the_candidate,\"candidate_test.go:37: plan candidate = (0), want 1 with completion-plan red at the candidate:\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "816c402f3e370e4cadf906470e5b5a62b9d72349",
+          "requirement": "candidate-tests",
+          "command": "bench test --package ./internal/preflight",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Read the completion plan at HEAD in the candidate grade and record the PP02 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ppf-repair-01-r1",
+              "digest": "sha256:802cf6107e6fa7d8d7c4bf3a7bc29c98f0f7e5a92e8352fac1020da365a2b1d0",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preflight/plan.go,swap,failed,1,TestBuildVerdictAtGradesTheCandidate/PP02_completion_plan_at_the_candidate,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preflight,^TestBuildVerdictAtGradesTheCandidate$,passed,5\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,397\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preflight,fail,327,5\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preflight,TestBuildVerdictAtGradesTheCandidate/PP02_completion_plan_at_the_candidate,\"candidate_test.go:37: plan candidate = (0), want 1 with completion-plan red at the candidate:\",4\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -140,7 +170,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:351505691273d6505a9a5fcf36349186e657baf3e6769643711555ead6885e4d",
+      "to": "sha256:439822b5cbe0fa3d7522f3a589cf67fd2fd93e440fb9f9beed6a74d913859390",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
