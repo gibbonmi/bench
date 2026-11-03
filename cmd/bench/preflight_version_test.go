@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
@@ -118,7 +119,7 @@ func readManifestStream(t *testing.T, identity string) string {
 		t.Fatalf("evidence_summary rows = %d", len(summary))
 	}
 	next, _ := summary[0]["next"].(string)
-	args := strings.Fields(next)[1:]
+	args := nextArgs(t, next)
 	for i := 0; i < 10000; i++ {
 		rows := tableValue(t, decodeVersionTOON(t, runPreflight(t, args)), "page")
 		if len(rows) != 1 {
@@ -137,10 +138,21 @@ func readManifestStream(t *testing.T, identity string) string {
 		if next == "" {
 			return manifest.String()
 		}
-		args = strings.Fields(next)[1:]
+		args = nextArgs(t, next)
 	}
 	t.Fatal("manifest traversal did not end")
 	return ""
+}
+
+// nextArgs returns the arguments after `bench` that one printed next command expands to in
+// a POSIX shell.
+func nextArgs(t *testing.T, next string) []string {
+	t.Helper()
+	argv, err := axitest.HelpAction{Cmd: next}.Argv()
+	if err != nil || len(argv) < 2 || argv[0] != "bench" {
+		t.Fatalf("next = %q expands to (%q, %v), want a bench command", next, argv, err)
+	}
+	return argv[1:]
 }
 
 func decodeVersionTOON(t *testing.T, output string) map[string]any {

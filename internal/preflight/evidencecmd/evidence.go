@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/chargeevidence"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -220,17 +220,15 @@ func Verify(root, identity string) (string, int) {
 }
 
 // evidenceInvocation is the exact read command for one artifact position. An empty cursor
-// is the manifest-first command, and a source read repeats its source flag.
+// is the manifest-first command, and a source read repeats its source flag. Each value is
+// one quoted shell argument; the fixed tokens stay bare.
 func evidenceInvocation(identity, source, cursor string) string {
-	args := []string{"bench", "preflight", modeEvidence, identity}
+	args := []string{"bench", "preflight", modeEvidence, sanitize.ShellQuote(identity)}
 	if source != "" {
-		args = append(args, flagSource, source)
+		args = append(args, flagSource, sanitize.ShellQuote(source))
 	}
 	if cursor != "" {
-		args = append(args, flagCursor, cursor)
-	}
-	for i := range args {
-		args[i] = axi.ShellQuote(args[i])
+		args = append(args, flagCursor, sanitize.ShellQuote(cursor))
 	}
 	return strings.Join(args, " ")
 }

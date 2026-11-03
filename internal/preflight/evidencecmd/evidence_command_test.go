@@ -291,7 +291,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 func TestEvidencePreparationNext(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	identity, row, _ := prepareEvidence(t, preflighttest.ChargeArgs(t, root, slug))
-	if want := "bench preflight evidence " + identity; row["next"] != want || !strings.HasPrefix(identity, "sha256:") {
+	if want := "bench preflight evidence '" + identity + "'"; row["next"] != want || !strings.HasPrefix(identity, "sha256:") {
 		t.Fatalf("prepared next = %q, want %q", row["next"], want)
 	}
 }
@@ -319,7 +319,7 @@ func TestEvidenceNextActions(t *testing.T) {
 		if following["stream"] == "source" {
 			kind, ordinal = "s", strings.TrimPrefix(following["source"].(string), "s")
 		}
-		want := "bench preflight evidence " + identity + " --cursor v1." + hex + "." + kind + "." + ordinal + "." + formatIndex(following["index"])
+		want := "bench preflight evidence '" + identity + "' --cursor 'v1." + hex + "." + kind + "." + ordinal + "." + formatIndex(following["index"]) + "'"
 		if page.row["next"] != want {
 			t.Fatalf("page %d next = %q, want %q", i, page.row["next"], want)
 		}

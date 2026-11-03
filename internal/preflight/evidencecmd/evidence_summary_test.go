@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
@@ -27,11 +28,12 @@ func readSummary(t *testing.T, identity string) map[string]any {
 	return rows[0]
 }
 
-// commandArgs returns the preflight arguments of one printed next command.
+// commandArgs returns the preflight arguments that one printed next command expands to in
+// a POSIX shell.
 func commandArgs(t *testing.T, next string) []string {
 	t.Helper()
-	fields := strings.Fields(next)
-	if len(fields) < 4 || strings.Join(fields[:2], " ") != "bench preflight" {
+	fields, err := axitest.HelpAction{Cmd: next}.Argv()
+	if err != nil || len(fields) < 4 || strings.Join(fields[:2], " ") != "bench preflight" {
 		t.Fatalf("next = %q is not a preflight command", next)
 	}
 	return fields[2:]
