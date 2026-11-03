@@ -411,7 +411,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "S-B2-R1-standards",
+          "performer": "ft354-review-S-B2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ad5b5a96cd34ff88839539d6965cd29321df8534",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B2",
+            "digest": "sha256:97bfa5674035ff501e562c25969a02aef04c093dfd7c818768353aec757363b2",
+            "excerpt": "## Standards\nCount: 0.\n- citation.go:58 uses sanitize.ShellQuote; the bench consumers prefix at :56 stays bare.\n- The removed shellSplit duplicated axitest.shellArgv (help.go:50); the fold removes a duplicated harness.\n## Advice\n- citationCells (citation_test.go:37) is a hand-written TOON row splitter beside axitest.DecodeDocument; it predates the diff.\n"
+          },
+          "axis": "Standards",
+          "base": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "tip": "fb2f38e9c09ce5f5cc61b8e7cf691285a3b02001",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-B2-R1-spec",
+          "performer": "ft354-review-S-B2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ad5b5a96cd34ff88839539d6965cd29321df8534",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B2",
+            "digest": "sha256:b9202a81291b3d450d39e1b39080a9079f2cb305c077b8129555c2db0456844d",
+            "excerpt": "## Spec\nCount: 1. Worst: the acceptance input class \"spaces\" was dropped on a premise that does not hold.\n- S-B2-SPEC-1: ticket 03 acceptance names spaces; citation_test.go:181 has no spaced operand. --base and --source-tip take git revisions (internal/git/git.go:259-261), and the reviewer ran bench consumers --changed --base \"HEAD^{/assign ticket 03}\" --source-tip HEAD at exit 0. Confidence 8. auto-fix (test-only, inside Writes). Implementation command contributed: an author who omits a named acceptance input class must show the producer refuses it.\n"
+          },
+          "axis": "Spec",
+          "base": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "tip": "fb2f38e9c09ce5f5cc61b8e7cf691285a3b02001",
+          "finding_ids": [
+            "S-B2-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "S-B2-R1-coverage",
+          "performer": "ft354-review-S-B2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "ad5b5a96cd34ff88839539d6965cd29321df8534",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B2",
+            "digest": "sha256:8696caaefbf9c6f519968b89f53c5307f9d02eab6d2abee63a9d25873bd53ef9",
+            "excerpt": "## Coverage\nCount: 1. Worst: a space-splitting caller bypass survives.\n- S-B2-COV-1: at citation.go:58, strings.ReplaceAll(sanitize.ShellQuote(arg), \" \", \"' '\") reads silent (66 tests pass, restored=yes). Missing: a spaced-revision case with an exact literal and recovered argv in TestCitationCmdRoundTripsThroughAPOSIXShellSplit. Confidence 8. auto-fix.\n"
+          },
+          "axis": "Coverage",
+          "base": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
+          "tip": "fb2f38e9c09ce5f5cc61b8e7cf691285a3b02001",
+          "finding_ids": [
+            "S-B2-COV-1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -481,3 +546,25 @@ The ticket 03 author reported this witness red before the production edit. The p
 | S14 | The citation cmd cell still renders through the bare-token policy. | `TestCitationCmdRoundTripsThroughAPOSIXShellSplit` at `citation_test.go:200`, `TestCitationNamesHeadVersionAndReplaySpelling` at `citation_test.go:166` |
 
 The author folded the package-local `shellSplit` harness into `axitest.HelpAction.Argv`. A git ref cannot hold a space, so the S14 fixture uses an embedded quote and a metacharacter, and the owner tests cover spaces.
+
+## S-B2 review round 1 pickup
+
+Repair allowance: S-B2 consumed 0 of 2 repair cycles before this round.
+
+### Standards
+
+Count: 0. Worst issue: none.
+
+### Spec
+
+Count: 1. Worst issue: S-B2-SPEC-1.
+
+- S-B2-SPEC-1 (confidence 8, auto-fix): the ticket 03 acceptance names spaces, but the S14 fixture has no spaced operand. A `--base` or `--source-tip` revision can hold a space, for example `HEAD^{/assign ticket 03}`. Citation: `internal/consumers/citation_test.go:181`, `internal/git/git.go:259`.
+
+### Coverage
+
+Count: 1. Worst issue: S-B2-COV-1.
+
+- S-B2-COV-1 (confidence 8, auto-fix): a caller bypass that splits a spaced argument into two shell words stays green. Citation: `internal/consumers/citation.go:58`.
+
+Both findings name one test-only repair on ticket 03. A fresh repair session takes it.
