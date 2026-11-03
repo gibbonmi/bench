@@ -1,7 +1,7 @@
 # Run the commit chain before publication
 
 Blocked by: 01-grade-the-candidate-commit.md, 02-check-before-publication.md
-Writes: cmd/bench/commit_chain.go, cmd/bench/commit_chain_test.go, internal/systemtest/commit_chain_test.go (new), internal/anchors/registry_plan_commit.go (new), internal/anchors/registry_plan_commit_test.go (new), internal/anchors/registry_data.go, CHANGELOG.md, .bench/commitment.json
+Writes: cmd/bench/commit_chain.go, cmd/bench/commit_chain_test.go, internal/systemtest/commit_chain_test.go (new), internal/anchors/registry_plan_commit.go (new), internal/anchors/registry_plan_commit_test.go (new), internal/anchors/registry_data.go, CHANGELOG.md, .bench/commitment.json, internal/commit/grammar.go, internal/commit/check_test.go
 Covers: PP17, PP18, PP19, PP20, PP21, PP22, PP23, PP24, PP25, PP26, PP27, PP28, PP29, PP30, PP31
 
 ## What to build
