@@ -1733,7 +1733,7 @@
           "criteria": [
             {
               "id": "FT380-residual.before-publication",
-              "text": "A plan commit that no dispatch follows runs the coverage parser, the build preflight, and the check-floor row before it publishes. A plan commit that a dispatch follows takes its build preflight from the charge preparation (FT445)."
+              "text": "A plan commit that no dispatch follows runs the coverage parser and the build preflight before it publishes. A plan commit that a dispatch follows takes its build preflight from the charge preparation (FT445)."
             }
           ],
           "sources": [
@@ -1741,6 +1741,18 @@
               "id": "FT380",
               "path": "roadmap/FT380.md",
               "identity": "sha256:973c1bdd832a91921d4dfbb214c7dc3e5edc6d19adc980e4ad8e2a2a48dcd693"
+            }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "prepublication-preflight",
+                "path": "specs/prepublication-preflight/spec.md",
+                "identity": "sha256:fcdcba6bad056d08932f01ce8ddaaef0f35761a5167dcdab247078a1bf8c72f9"
+              },
+              "obligations": [
+                "FT380"
+              ]
             }
           ]
         },
