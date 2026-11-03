@@ -146,32 +146,43 @@ C3 binds the real chain to both seams. C1 and C2 write disjoint paths, so they c
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
   "chunks": [
     {
       "id": "C1",
       "tickets": ["01-grade-the-candidate-commit.md"],
       "verification": [
-        {"id": "candidate-tests", "command": "bench test --package ./internal/preflight", "probe": "Read the completion plan at HEAD in the candidate grade and record the PP02 red, the restore, and the green."}
+        {"id": "candidate-tests", "ticket": "01-grade-the-candidate-commit.md", "command": "bench test --package ./internal/preflight", "probe": "Read the completion plan at HEAD in the candidate grade and record the PP02 red, the restore, and the green."}
       ]
     },
     {
       "id": "C2",
       "tickets": ["02-check-before-publication.md"],
       "verification": [
-        {"id": "check-seam", "command": "bench test --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute", "probe": "Call the check after the ref update and record the PP10 red, the restore, and the green."}
+        {"id": "check-seam", "ticket": "02-check-before-publication.md", "command": "bench test --package ./internal/landing --package ./internal/commit --package ./internal/refusalroute", "probe": "Call the check after the ref update and record the PP10 red, the restore, and the green."}
       ]
     },
     {
       "id": "C3",
       "tickets": ["03-chain-before-publication.md"],
       "verification": [
-        {"id": "chain-stubs", "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitHelp'", "probe": "Give the published HEAD in place of the candidate to the preflight step and record the PP18 red, the restore, and the green."},
-        {"id": "chain-system", "command": "bench test --check system --run TestCommitChainRefusesRedCandidate", "probe": "Drop the check from the chain commit call and record the PP28 red, the restore, and the green."},
-        {"id": "route-anchors", "command": "bench test --package ./internal/anchors --run PlanCommit", "probe": "Delete the dispatch half of the plan-commit route sentence and record the PP29 red, the restore, and the green."}
+        {"id": "chain-stubs", "ticket": "03-chain-before-publication.md", "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitHelp'", "probe": "Give the published HEAD in place of the candidate to the preflight step and record the PP18 red, the restore, and the green."},
+        {"id": "chain-system", "ticket": "03-chain-before-publication.md", "command": "bench test --check system --run TestCommitChainRefusesRedCandidate", "probe": "Drop the check from the chain commit call and record the PP28 red, the restore, and the green."},
+        {"id": "route-anchors", "ticket": "03-chain-before-publication.md", "command": "bench test --package ./internal/anchors --run PlanCommit", "probe": "Delete the dispatch half of the plan-commit route sentence and record the PP29 red, the restore, and the green."}
       ]
     }
   ],
+  "execution": {
+    "mode": "delegate",
+    "run_id": "ppf-build",
+    "orchestrator_session": "ppf-orchestrator",
+    "author_limit": 2,
+    "assignments": {
+      "01-grade-the-candidate-commit.md": [],
+      "02-check-before-publication.md": [],
+      "03-chain-before-publication.md": []
+    }
+  },
   "final_verification": [
     {"id": "system", "command": "bench test --check system"},
     {"id": "coverage", "command": "bench coverage --check prepublication-preflight"}
