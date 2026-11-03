@@ -114,10 +114,10 @@ func TestRunKitWorktreeBuild(t *testing.T) {
 		change func(t *testing.T, k kitTarget, build string)
 		stderr string
 	}{
-		{name: "TT44 no build", label: "alpha", stderr: buildRefusal(buildMissing, "alpha")},
-		{name: "TT45 a changed build input", label: "alpha", stderr: buildRefusal(buildStale, "alpha"),
+		{name: "TT44 no build", label: "alpha", stderr: buildRefusal(buildMissing, "'alpha'")},
+		{name: "TT45 a changed build input", label: "alpha", stderr: buildRefusal(buildStale, "'alpha'"),
 			change: func(t *testing.T, k kitTarget, _ string) { kittest.EditBuildInput(t, k.tree) }},
-		{name: "TT46 one appended byte", label: "alpha", stderr: buildRefusal(buildStale, "alpha"),
+		{name: "TT46 one appended byte", label: "alpha", stderr: buildRefusal(buildStale, "'alpha'"),
 			change: func(t *testing.T, _ kitTarget, build string) { appendByte(t, build) }},
 		{name: "TT47 a label that needs quoting", label: "my alpha", stderr: buildRefusal(buildMissing, "'my alpha'")},
 		// A line with no control rune prints as is, so the pasted repair names this label.
@@ -211,7 +211,7 @@ func TestRunReusesAMatchingBuild(t *testing.T) {
 			stdout, stderr, code := k.run(wrapper, paths[running], "status", "alpha")
 			requireNoChild(t, wrapperMarker)
 			if row.runs < 0 {
-				if want := buildRefusal(buildMissing, "alpha"); code != 1 || stdout != "" || stderr != want {
+				if want := buildRefusal(buildMissing, "'alpha'"); code != 1 || stdout != "" || stderr != want {
 					t.Fatalf("status --in alpha = (%d, %q, %q), want (1, \"\", %q)", code, stdout, stderr, want)
 				}
 			} else if code != 0 || stdout != "" || stderr != "" {

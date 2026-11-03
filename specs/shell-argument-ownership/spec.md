@@ -315,10 +315,10 @@ The whole-project gate remains the acceptance oracle.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| S01 | 1 | The shared owner renders an empty string as one empty POSIX-shell argument. | planned internal/sanitize/shellquote_test.go (TestShellQuoteRoundTrip) | A bare empty string loses its argument. |
-| S02 | 2 | An embedded single quote survives a POSIX-shell round trip. | planned internal/sanitize/shellquote_test.go (TestShellQuoteRoundTrip) | The shell oracle detects a split or altered argument. |
-| S03 | 3 | Spaces, glob characters, dollar signs, and shell operators round-trip literally. | planned internal/sanitize/shellquote_test.go (TestShellQuoteRoundTrip) | A sentinel file and NUL-framed argv detect expansion or execution. |
-| S04 | 4 | A safe nonempty value still renders with surrounding single quotes. | planned internal/sanitize/shellquote_test.go (TestShellQuoteAlwaysQuoted) | A safe-token shortcut violates the exact output predicate. |
+| S01 | 1 | The shared owner renders an empty string as one empty POSIX-shell argument. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteRoundTrip`) | A bare empty string loses its argument. |
+| S02 | 2 | An embedded single quote survives a POSIX-shell round trip. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteRoundTrip`) | The shell oracle detects a split or altered argument. |
+| S03 | 3 | Spaces, glob characters, dollar signs, and shell operators round-trip literally. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteRoundTrip`) | A sentinel file and NUL-framed argv detect expansion or execution. |
+| S04 | 4 | A safe nonempty value still renders with surrounding single quotes. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteAlwaysQuoted`) | A safe-token shortcut violates the exact output predicate. |
 | S05 | 5 | AXI executable actions quote each accepted known argument through sanitize.ShellQuote. | planned internal/axi/action_test.go (TestRenderHelpAlwaysQuoted) | A round trip alone misses the approved quote-policy delta. |
 | S06 | 6 | Future-input slots retain their exact placeholder spelling. | planned internal/axi/action_test.go (TestRenderHelpFutureInputs) | Quoting a future slot changes the action grammar. |
 | S07 | 7 | A known empty AXI argument still produces the honest empty help envelope. | `internal/axi/action_test.go` (`TestRenderHelpUsesHonestEmptyForUnsupportedDisclosureValue`) | Accepting empty at this caller changes a pre-existing assertion. |
@@ -329,7 +329,7 @@ The whole-project gate remains the acceptance oracle.
 | S12 | 12 | Harness-phase actions retain their current rendered argument bytes. | `internal/axi/action_test.go` (`TestRenderHelpRendersReusableInvocationAndHarnessPhase`) | Applying shell quotes to a harness operand changes a distinct interface. |
 | S13 | 13 | Selected-history detail operands use the surviving quote owner. | `internal/spec/history_selected_test.go` (`TestSelectedSpecDetailRoute`) | The command executes through a shell and reaches the selected history. |
 | S14 | 14 | Citation commands preserve the supplied argv through the surviving owner. | `internal/consumers/citation_test.go` (`TestCitationCmdRoundTripsThroughAPOSIXShellSplit`) | An omitted flag or bare metacharacter changes recovered argv. |
-| S15 | 15 | Tree-build refusal commands preserve the exact assignment label. | planned internal/worktree/shell_arguments_test.go (TestTreeBuildArgument) | A hostile label and shell argv oracle detect a bypass. |
+| S15 | 15 | Tree-build refusal commands preserve the exact assignment label. | `internal/worktree/shell_arguments_test.go` (`TestTreeBuildArgument`) | A hostile label and shell argv oracle detect a bypass. |
 | S16 | 16 | RecoveryRoute.line quotes its path through the surviving owner. | planned internal/worktree/shell_arguments_test.go (TestRecoveryRouteArgument) | The raw refusal line must preserve argv independently of help output. |
 | S17 | 17 | Evidence commands preserve identity, source, and cursor arguments through the surviving owner. | planned internal/preflight/evidencecmd/shell_arguments_test.go (TestEvidenceArgumentCommands) | A producer-level test detects a direct helper bypass. |
 | S18 | 18 | Freshness rebuild commands use sanitize.ShellQuote for each path. | `internal/freshness/freshness_verify_test.go` (`TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths`) | The existing real-script fixture observes cwd and both arguments. |
