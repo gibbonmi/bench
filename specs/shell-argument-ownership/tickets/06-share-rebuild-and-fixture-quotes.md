@@ -1,6 +1,6 @@
 # Share rebuild and fixture shell quoting
 
-Blocked by: 01-quote-tree-build-arguments.md, 04-quote-recovery-operands.md
+Blocked by: 01-quote-tree-build-arguments.md, 03-quote-citation-commands.md
 Writes: internal/freshness/freshness_verify.go, internal/freshness/freshness_verify_test.go, internal/diff/identity_test.go, internal/preprelease/preprelease_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: S18, S37
 
