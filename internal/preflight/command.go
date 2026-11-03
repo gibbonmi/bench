@@ -156,11 +156,12 @@ func boundedVerdict(verdict Verdict) Verdict {
 // Decide. The audit form prints its staleness tables after the checks. A supported audit red
 // exits 1 like a readiness red, and a diagnostic-only audit exits 0 with manual review still
 // required. The audit decides only after the commitment check, so its omission needs that row
-// green too. args is the invocation that a snapshot-drift refusal retries.
+// green too. args is the invocation that a snapshot-drift refusal retries. Nil args name no
+// public invocation, so the refusal prints no retry action.
 func verdictCommand(root string, kind evidencecmd.Kind, mode string, args []string, gathered func() (Facts, *BootstrapFailure)) (string, int) {
 	facts, bootErr := gathered()
 	if bootErr != nil {
-		if bootErr.Kind == "snapshot drift" {
+		if bootErr.Kind == "snapshot drift" && args != nil {
 			return snapshotDriftRefusal(args, bootErr.Hint), 1
 		}
 		return toon.Errorf(bootErr.Kind, bootErr.Hint) + "\n", 1

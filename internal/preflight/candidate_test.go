@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/preflight/preflighttest"
 )
 
@@ -90,6 +91,24 @@ func TestBuildVerdictAtRefusesBadInput(t *testing.T) {
 	}
 }
 
+// TestBuildVerdictAtDriftNamesNoPublicRetry holds the candidate's snapshot-drift refusal to its
+// error line. The public --source-tip rerun reds tip-current until HEAD names the candidate,
+// so the refusal names no retry action.
+func TestBuildVerdictAtDriftNamesNoPublicRetry(t *testing.T) {
+	f := seedGreenCandidate(t)
+	base := preflighttest.RunGit(t, "rev-parse", "main")
+	calls := 0
+	restore := diff.SetSnapshotAfterReadForTest(func() {
+		calls++
+		preflighttest.MustWriteFile(t, "internal/"+f.slug+"/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
+	})
+	defer restore()
+	out, code := BuildVerdictAt(f.root, f.slug, base, f.candidate)
+	if code != 1 || calls != 2 || !strings.HasPrefix(out, "error: snapshot drift") || strings.Count(out, "\n") != 1 {
+		t.Fatalf("candidate drift = (%d, %d), want 1 with one error line:\n%s", code, calls, out)
+	}
+}
+
 // TestBuildVerdictAtMatchesThePublishedVerdict covers PP04, PP33, and PP34. Each fixture
 // varies one HEAD read between HEAD and the candidate. The candidate verdict must equal, byte
 // for byte, the --source-tip verdict that the published command prints after HEAD moves to
@@ -103,6 +122,8 @@ func TestBuildVerdictAtMatchesThePublishedVerdict(t *testing.T) {
 		{name: "PP04 green source tip", seed: seedGreenCandidate},
 		{name: "PP04 completion plan", seed: seedPlanCandidate},
 		{name: "PP04 decision maps", seed: seedMapCandidate},
+		{name: "PP04 fold resolution", seed: seedFoldCandidate, green: "paths-authorized"},
+		{name: "PP04 build deletion", seed: seedBuildDeletionCandidate, green: "writes-resolve"},
 		{name: "PP33 merge candidate", seed: seedMergeCandidate, green: "base-current"},
 		{name: "PP34 default-equal path", seed: seedDefaultEqualCandidate, green: "paths-authorized"},
 	} {

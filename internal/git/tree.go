@@ -11,33 +11,50 @@ import (
 )
 
 // TreeHash returns the content hash of tracked and untracked, unignored files under root.
-// It computes the hash through a THROWAWAY index, so the real index stays untouched; the
-// gate uses this hash as its verdict cache key. It returns the literal "none" on any
-// failure or an empty result. The temp index lives outside the repo, so it cannot join
-// the tree it hashes. `git add -A` respects .gitignore, which is the intended scope.
+// The gate uses this hash as its verdict cache key. The checkout tree seeds from HEAD, and in
+// a repo with no commits yet it falls back to an empty tree. It returns the literal "none" on
+// any failure or an empty result.
 func TreeHash(root string) string {
-	dir, err := os.MkdirTemp("", "bench-tree")
-	if err != nil {
-		return "none"
-	}
-	defer os.RemoveAll(dir)
-	idx := filepath.Join(dir, "index")
-
-	// Seed the throwaway index from HEAD. In a repo with no commits yet, fall back to an
-	// empty tree. Then stage everything on disk and write the tree.
-	if !idxOK(root, idx, "read-tree", "HEAD") {
-		if !idxOK(root, idx, "read-tree", "--empty") {
-			return "none"
-		}
-	}
-	if !idxOK(root, idx, "add", "-A") {
-		return "none"
-	}
-	hash, err := idxOutput(root, idx, "write-tree")
+	hash, err := checkoutTree(root, "HEAD", "--empty")
 	if err != nil || hash == "" {
 		return "none"
 	}
 	return hash
+}
+
+// checkoutTree writes the tree of the tracked and untracked, unignored files under root. It
+// stages them through a THROWAWAY index, so the real index stays untouched. The index starts
+// from the first of seeds that read-tree accepts. The temp index lives outside the repo, so
+// it cannot join the tree it writes. `git add -A` respects .gitignore, which is the intended
+// scope.
+func checkoutTree(root string, seeds ...string) (string, error) {
+	dir, err := os.MkdirTemp("", "bench-tree")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+	idx := filepath.Join(dir, "index")
+	for _, seed := range seeds {
+		if err = indexStep(root, idx, "read-tree", seed); err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return "", err
+	}
+	if err := indexStep(root, idx, "add", "-A"); err != nil {
+		return "", err
+	}
+	return idxOutput(root, idx, "write-tree")
+}
+
+// indexStep runs one throwaway-index git command. Its error names the command and carries
+// Git's output.
+func indexStep(root, idx string, args ...string) error {
+	if out, err := IndexCommand(root, idx, args...).CombinedOutput(); err != nil {
+		return fmt.Errorf("git %s: %w: %s", args[0], err, bytes.TrimSpace(out))
+	}
+	return nil
 }
 
 // ChangedPathsBetweenTrees reports the root-relative paths whose content differs between

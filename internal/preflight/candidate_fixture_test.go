@@ -105,6 +105,29 @@ func seedDefaultEqualCandidate(t *testing.T) candidateFixture {
 	return writeCandidate(t, root, slug, "HEAD")
 }
 
+// seedFoldCandidate is a candidate whose review record holds a fold entry over HEAD. The fold
+// resolves foldedPath, a changed path that no fence covers and that the candidate keeps
+// unchanged since the fold commit. HEAD lacks the record.
+func seedFoldCandidate(t *testing.T) candidateFixture {
+	t.Helper()
+	root, slug, base := seedFoldedMain(t)
+	fold := commitFold(t, "package outside\n// resolved\n", "--amend", "--no-edit")
+	commitFoldRecord(t, slug, base, []string{foldedPath}, fold)
+	preflighttest.RunGit(t, "reset", "-q", "--soft", "HEAD~1")
+	return writeCandidate(t, root, slug, "HEAD")
+}
+
+// seedBuildDeletionCandidate is a candidate that deletes internal/example/gone.go, which the
+// ticket `Writes:` line names, and that adds a review record with a chunk. HEAD still holds
+// the path and lacks the record.
+func seedBuildDeletionCandidate(t *testing.T) candidateFixture {
+	t.Helper()
+	root, slug, base, _ := seedDeletionReview(t, "", false)
+	commitFoldRecord(t, slug, base, nil)
+	preflighttest.RunGit(t, "reset", "-q", "--soft", "HEAD~1")
+	return writeCandidate(t, root, slug, "HEAD")
+}
+
 // publish moves HEAD to the candidate, as the landing's compare-and-swap does.
 func (f candidateFixture) publish(t *testing.T) {
 	t.Helper()
