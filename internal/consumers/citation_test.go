@@ -167,40 +167,50 @@ func TestCitationNamesHeadVersionAndReplaySpelling(t *testing.T) {
 	}
 }
 
-// A revision name carrying a shell metacharacter and an embedded quote keeps its token
-// boundary in the citation's replay spelling, so the printed line replays as the argv
+// A revision name carrying a shell metacharacter, an embedded quote, or a space keeps its
+// token boundary in the citation's replay spelling, so the printed line replays as the argv
 // that answered. The cell is read through the TOON decoder, because the quote's escape
 // carries a backslash that the encoder escapes in turn.
 func TestCitationCmdRoundTripsThroughAPOSIXShellSplit(t *testing.T) {
-	base := blastRepo(t)
-	stubLoad(t, tipFixture)
-	root, err := git.Root()
-	if err != nil {
-		t.Fatalf("git root: %v", err)
-	}
 	const ref = "feature;echo'q"
-	gittest.MustRun(t, root, "branch", ref, base)
-	tip := head(t)
-	args := []string{"--changed", "--base", ref, "--source-tip", tip, "--full"}
-	out, code := run(t, args...)
-	if code != 0 {
-		t.Fatalf("exit = %d, want 0; out=%q", code, out)
-	}
-	document, err := axitest.DecodeDocument(out)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rows, err := document.Rows("citation")
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd, _ := rows[0].(map[string]any)["cmd"].(string)
-	wantCmd := `bench consumers '--changed' '--base' 'feature;echo'\''q' '--source-tip' '` + tip + `' '--full'`
-	if cmd != wantCmd {
-		t.Fatalf("cmd = %q, want %q", cmd, wantCmd)
-	}
-	want := append([]string{"bench", "consumers"}, args...)
-	if got, err := (axitest.HelpAction{Cmd: cmd}).Argv(); err != nil || !slices.Equal(got, want) {
-		t.Fatalf("shell argv = (%q, %v), want %q (cmd cell %q)", got, err, want, cmd)
+	for _, tc := range []struct {
+		name, base, quotedBase string
+	}{
+		{"metacharacter and quote", ref, `'feature;echo'\''q'`},
+		// A git revision can hold a space: the message search resolves to the base commit.
+		{"space", ref + "^{/base|no such subject}", `'feature;echo'\''q^{/base|no such subject}'`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			base := blastRepo(t)
+			stubLoad(t, tipFixture)
+			root, err := git.Root()
+			if err != nil {
+				t.Fatalf("git root: %v", err)
+			}
+			gittest.MustRun(t, root, "branch", ref, base)
+			tip := head(t)
+			args := []string{"--changed", "--base", tc.base, "--source-tip", tip, "--full"}
+			out, code := run(t, args...)
+			if code != 0 {
+				t.Fatalf("exit = %d, want 0; out=%q", code, out)
+			}
+			document, err := axitest.DecodeDocument(out)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rows, err := document.Rows("citation")
+			if err != nil {
+				t.Fatal(err)
+			}
+			cmd, _ := rows[0].(map[string]any)["cmd"].(string)
+			wantCmd := `bench consumers '--changed' '--base' ` + tc.quotedBase + ` '--source-tip' '` + tip + `' '--full'`
+			if cmd != wantCmd {
+				t.Fatalf("cmd = %q, want %q", cmd, wantCmd)
+			}
+			want := append([]string{"bench", "consumers"}, args...)
+			if got, err := (axitest.HelpAction{Cmd: cmd}).Argv(); err != nil || !slices.Equal(got, want) {
+				t.Fatalf("shell argv = (%q, %v), want %q (cmd cell %q)", got, err, want, cmd)
+			}
+		})
 	}
 }
