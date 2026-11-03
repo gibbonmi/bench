@@ -2,72 +2,65 @@ package main
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/gibbonmi/bench/internal/commit"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/preflight"
-	"github.com/gibbonmi/bench/internal/preflight/evidencecmd"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // chainSteps are the steps of `bench commit --preflight-build`, each with its owner's own
-// signature, so a test replaces one step without touching the others.
+// signature, so a test replaces one step without touching the others. BuildInputs decides
+// whether the root has a worktree build at all.
 type chainSteps struct {
-	Commit    func(args []string, stdout, stderr io.Writer) (commit.Outcome, int)
-	Build     func(root, home string, args []string, stdout, stderr io.Writer) int
-	Preflight func(args []string) (string, int)
+	Commit      func(args []string, stdout, stderr io.Writer, check func(root, candidate string) error) (commit.Outcome, int)
+	BuildInputs func(root string) bool
+	Build       func(root, home string, args []string, stdout, stderr io.Writer) int
+	Preflight   func(root, slug, base, candidate string) (string, int)
 }
 
 // commitChain binds each step to its owner.
-var commitChain = chainSteps{Commit: commit.Run, Build: worktree.BuildCommand, Preflight: preflight.CommandWithVersion(version)}
-
-// publishedStepRedExit is the chain's exit when the commit published and the build or the
-// build preflight then failed. No exit of the commit step means this, so a caller that reads
-// the commit's exit 1 as "nothing was committed" stays right. The exit and the help line
-// read this one value.
-const publishedStepRedExit = 4
+var commitChain = chainSteps{Commit: commit.RunChecked, BuildInputs: freshness.DeclaresBuildInputs, Build: worktree.BuildCommand, Preflight: preflight.BuildVerdictAt}
 
 // chainHelp is the help line for the chain that commitChainCommand runs.
-var chainHelp = commit.PreflightBuildGroup + ": after a commit that publishes, run bench worktree build on this worktree, then bench preflight build <slug> at the published commit, with " + commit.BaseFlag + " when the commit names one; end with commit-chain{commit,build,preflight}; " +
-	"exit " + strconv.Itoa(publishedStepRedExit) + ": published; a later step failed, so the commit exists and the commit-chain line names it; the commit's own exits keep their meaning"
+var chainHelp = commit.PreflightBuildGroup + ": before publication, run bench worktree build on this worktree when its root declares Bench build inputs, then bench preflight build <slug> at the candidate commit, with " + commit.BaseFlag + " when the commit names one; a red step publishes nothing; end with commit-chain{commit,build,preflight}"
 
-// commitChainCommand runs the commit and, when --preflight-build names a slug, the worktree
-// build and the build preflight at the published commit. Each step prints its own
-// response, then one commit-chain line states every step. A commit exit that is not 0 is
-// the chain's exit. A build or preflight failure after a published commit exits
-// publishedStepRedExit, whatever the failed step's own exit. A help answer gets the
-// chain's help line after the commit's help.
+// commitChainCommand runs the commit and, when --preflight-build names a slug, hands it a
+// check that runs the worktree build and then the build preflight at the candidate commit
+// before publication. A root that declares no Bench build inputs has no worktree build, so
+// the check skips the build there and runs the preflight alone. Each step prints its own
+// response, then one commit-chain line states every step. A red step refuses the commit, so
+// the commit's exit is the chain's exit. A help answer gets the chain's help line after the
+// commit's help.
 func commitChainCommand(c Command, args []string) int {
 	steps := commitChain
-	outcome, exit := steps.Commit(args, c.Stdout, c.Stderr)
-	if outcome.Help {
-		fmt.Fprintln(c.Stdout, chainHelp)
-	}
-	if outcome.PreflightBuild == "" {
+	slug, base := commit.ChainValues(args)
+	if slug == "" {
+		outcome, exit := steps.Commit(args, c.Stdout, c.Stderr, nil)
+		if outcome.Help {
+			fmt.Fprintln(c.Stdout, chainHelp)
+		}
 		return exit
 	}
 	build, preflight := "skipped", "skipped"
-	// Exit 3 published a commit that the checkout does not match, so a build would grade
-	// an unreconciled tree. It stops the chain the way a refusal does.
-	if exit == 0 {
-		exit = steps.Build(outcome.Root, worktree.Home(), []string{outcome.Root}, c.Stdout, c.Stderr)
-		build = stepState[exit == 0]
-		if exit == 0 {
-			args := []string{evidencecmd.ModeBuild, outcome.PreflightBuild, evidencecmd.FlagTip, outcome.Published}
-			// A commit that names no base passes none, so the preflight reads its own default.
-			if outcome.Base != "" {
-				args = append(args, evidencecmd.FlagBase, outcome.Base)
+	check := func(root, candidate string) error {
+		if steps.BuildInputs(root) {
+			code := steps.Build(root, worktree.Home(), []string{root}, c.Stdout, c.Stderr)
+			if build = stepState[code == 0]; code != 0 {
+				return errors.New("the worktree build is red")
 			}
-			out, code := steps.Preflight(args)
-			fmt.Fprint(c.Stdout, out)
-			exit, preflight = code, stepState[code == 0]
 		}
-		if exit != 0 {
-			exit = publishedStepRedExit
+		out, code := steps.Preflight(root, slug, base, candidate)
+		fmt.Fprint(c.Stdout, out)
+		if preflight = stepState[code == 0]; code != 0 {
+			return fmt.Errorf("the build preflight of %s is red at the candidate commit", slug)
 		}
+		return nil
 	}
+	outcome, exit := steps.Commit(args, c.Stdout, c.Stderr, check)
 	fmt.Fprintf(c.Stdout, "commit-chain{commit=%s,build=%s,preflight=%s}\n", cmp.Or(outcome.Published, "none"), build, preflight)
 	return exit
 }

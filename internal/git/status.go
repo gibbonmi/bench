@@ -55,6 +55,26 @@ func WorktreeDirty(root string) (bool, error) {
 	return out != "", err
 }
 
+// WorktreeDirtyAt is the tree form of WorktreeDirty: it reports whether the checkout differs
+// from commit. HEAD keeps the WorktreeDirty answer. Another commit is a candidate that HEAD
+// does not name yet, so the index can still hold the old HEAD. The checkout is dirty against
+// that candidate when its checkout tree, seeded from the candidate, is not the candidate's
+// tree.
+func WorktreeDirtyAt(root, commit string) (bool, error) {
+	if commit == "HEAD" {
+		return WorktreeDirty(root)
+	}
+	tree, err := Output("-C", root, "rev-parse", "--verify", commit+"^{tree}")
+	if err != nil {
+		return false, err
+	}
+	checkout, err := checkoutTree(root, tree)
+	if err != nil {
+		return false, err
+	}
+	return checkout != tree, nil
+}
+
 // LandedState derives checkout-local dirtiness and repository-wide commit and branch
 // facts. The dirty count omits excludedDirtyPaths, but only for the named checkout.
 func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, error) {

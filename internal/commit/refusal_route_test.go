@@ -60,8 +60,11 @@ func TestPublishedUnreconciledRouteIsTheResetPlan(t *testing.T) {
 }
 
 // commitSet is one commit route fixture: the primary checkout, the Bench home that holds
-// its assignments, and the checkout the caller commits in.
-type commitSet struct{ primary, home, checkout string }
+// its assignments, the checkout the caller commits in, and the check its commits supply.
+type commitSet struct {
+	primary, home, checkout string
+	check                   func(root, candidate string) error
+}
 
 // commitFaceFixture produces exactly one commit face. build makes the set and breaks it so
 // the commit prints that face. The registry walk requires a fixture for each commit face,
@@ -136,7 +139,7 @@ func TestCommitFacesFollowTheirRoutes(t *testing.T) {
 func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFixture) {
 	f := fixture.build(t)
 	args := slices.Concat(fixture.flags, commitArgs, fixture.paths)
-	code, stdout, stderr := runCommand(t, f.checkout, args...)
+	code, stdout, stderr := runChecked(t, f.checkout, f.check, args...)
 	next, printed := printedNext(stderr)
 	if fixture.exit == 3 {
 		_, fields, _ := recordFields(t, stdout)
@@ -169,7 +172,7 @@ func followCommitFace(t *testing.T, face refusalroute.Face, fixture commitFaceFi
 	if fixture.after != nil {
 		f = fixture.after(t, f, last)
 	}
-	code, stdout, stderr = runCommand(t, f.checkout, args...)
+	code, stdout, stderr = runChecked(t, f.checkout, f.check, args...)
 	if fixture.settled != nil {
 		fixture.settled(t, f, code, stdout, stderr)
 	} else if code != 0 {
@@ -196,7 +199,7 @@ func runRouteStep(t *testing.T, f commitSet, step string) string {
 			t.Fatalf("printed step %q names no worktree: %v", step, err)
 		}
 		var out, errOut string
-		code, out, errOut = runCommand(t, dir, words[4:]...)
+		code, out, errOut = runChecked(t, dir, f.check, words[4:]...)
 		stdout.WriteString(out)
 		stderr.WriteString(errOut)
 	case "bench worktree create":
@@ -330,6 +333,7 @@ func commitFaceFixtures() []commitFaceFixture {
 		red("", nil, gateScript),
 		red("lane", nil, laneCheck),
 		red("dry run", []string{"--dry-run"}, gateScript),
+		chainRedFixture(rerun),
 		{
 			// The gate cannot open its lock until the fixture frees it.
 			face:   faceInfrastructure,

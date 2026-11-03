@@ -24,6 +24,9 @@ type Request struct {
 	Root, Destination, Expected, Message string
 	Paths                                []string
 	Stdout, Stderr                       io.Writer
+	// Check is the optional pre-publication check. Land calls it with the candidate commit
+	// before the ref update, and DryRun never calls it.
+	Check func(candidate string) error
 }
 
 // Result identifies a successfully published commit and its authorized tree.
@@ -167,7 +170,8 @@ func (o Owner) DryRun(ctx context.Context, r Request) error {
 // Land publishes a commit only when the exact composed tree receives green authorization.
 // Parent 1 is the expected base, and each merge head that the composition read follows in
 // file order. Land reads the pending merge again after authorization and refuses a changed
-// answer before publication. After the ref update, Git ends a recorded merge before the
+// answer before publication. A request's check then grades the candidate commit, and its
+// refusal publishes nothing. After the ref update, Git ends a recorded merge before the
 // named paths reconcile, so a reconcile failure leaves no pending merge.
 func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	paths, snapshot, err := o.composeAuthorized(ctx, r)
@@ -189,6 +193,9 @@ func (o Owner) Land(ctx context.Context, r Request) (Result, error) {
 	commit, err := output(r.Root, append(args, "-m", r.Message)...)
 	if err != nil {
 		return Result{}, fmt.Errorf("create landing commit: %w", err)
+	}
+	if err := checkCandidate(r, commit); err != nil {
+		return Result{}, err
 	}
 	if err := o.updateRef(r.Root, r.Destination, commit, r.Expected); err != nil {
 		return Result{}, destinationUpdateFailure(r.Root, r.Destination, r.Expected, err)

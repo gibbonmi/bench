@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Commit chain before publication
+
+- Changed `bench commit --preflight-build <slug> [--base <commit>]`. The chain steps now run before publication. The commit writes the candidate commit. Then it runs `bench worktree build` and the build preflight at that candidate commit. Only a green chain moves the branch ref. A root without Bench build inputs skips the build step, and the chain line shows `build=skipped`. A red build or a red preflight publishes nothing: the commit exits 1 with the `commit-chain-red` refusal, and the chain line names no commit.
+
+  Exit 4 retired, because no chain step runs after publication. The commit's exits keep their meanings: 0, 1, 2, and 3. Before, the chain ran after the commit published, and a red step exited 4 with the red commit on the branch.
+
 ### Guard for a pathless rg call
 
 - Added the `block-unsafe-rg.sh` PreToolUse guard and its `bench guard-rg` core. Claude Code and Codex run it in their Bash hook group. It refuses an `rg` call that names a pattern but no path, because that call waits on stdin. A pipe or an input redirection that feeds the call supplies stdin, so the guard permits it. A pipe into a subshell group, such as `cat f | (rg foo)`, feeds the first `rg` call in the group. The guard reads the options that take a value, and it permits a call when the analysis is uncertain.

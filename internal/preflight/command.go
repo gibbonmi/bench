@@ -91,7 +91,14 @@ func dispatch(version string, op evidencecmd.Operation, slug string, flags map[s
 	case evidencecmd.KindCleanApply:
 		return evidencecmd.CleanApply(root, flags)
 	}
-	return verdictCommand(root, op.Kind, op.Mode, slug, base, sourceTip, args)
+	// The audit form gathers its staleness facts in the same movement-checked attempt.
+	gatherFacts := GatherPinned
+	if op.Kind == evidencecmd.KindAuditSpec {
+		gatherFacts = gatherAudit
+	}
+	return verdictCommand(root, op.Kind, op.Mode, args, func() (Facts, *BootstrapFailure) {
+		return gatherFacts(root, op.Mode, slug, base, sourceTip)
+	})
 }
 
 // prepareEvidenceCommand runs the movement-checked build preparation and hands each
@@ -144,20 +151,17 @@ func boundedVerdict(verdict Verdict) Verdict {
 	return verdict
 }
 
-// verdictCommand renders the ordinary, plan-only, or audit verdict. kind is the operation
-// that the dispatcher selected, and the facts carry it into Decide. The audit form gathers
-// its staleness facts in the same movement-checked attempt and prints their tables after the
-// checks. A supported audit red exits 1 like a readiness red, and a diagnostic-only audit
-// exits 0 with manual review still required. The audit decides only after the commitment
-// check, so its omission needs that row green too.
-func verdictCommand(root string, kind evidencecmd.Kind, mode, slug, base, sourceTip string, args []string) (string, int) {
-	gatherFacts := GatherPinned
-	if kind == evidencecmd.KindAuditSpec {
-		gatherFacts = gatherAudit
-	}
-	facts, bootErr := gatherFacts(root, mode, slug, base, sourceTip)
+// verdictCommand renders the ordinary, plan-only, or audit verdict of the facts that gathered
+// returns. kind is the operation that the dispatcher selected, and the facts carry it into
+// Decide. The audit form prints its staleness tables after the checks. A supported audit red
+// exits 1 like a readiness red, and a diagnostic-only audit exits 0 with manual review still
+// required. The audit decides only after the commitment check, so its omission needs that row
+// green too. args is the invocation that a snapshot-drift refusal retries. Nil args name no
+// public invocation, so the refusal prints no retry action.
+func verdictCommand(root string, kind evidencecmd.Kind, mode string, args []string, gathered func() (Facts, *BootstrapFailure)) (string, int) {
+	facts, bootErr := gathered()
 	if bootErr != nil {
-		if bootErr.Kind == "snapshot drift" {
+		if bootErr.Kind == "snapshot drift" && args != nil {
 			return snapshotDriftRefusal(args, bootErr.Hint), 1
 		}
 		return toon.Errorf(bootErr.Kind, bootErr.Hint) + "\n", 1

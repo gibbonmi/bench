@@ -2391,6 +2391,14 @@
       "identity": "sha256:838c2bdabea90704e38073d1609ce2c6dfd45a4acdbe017574700d6d055e79e3",
       "source": "c2b4c8edac6d4a9d245711ae8c68762ca5333fc9",
       "evidence": "7f3e852d249bcd6d9f5a78de0cef45a5694cab25"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT380-residual",
+      "binding": "prepublication-preflight",
+      "identity": "sha256:fcdcba6bad056d08932f01ce8ddaaef0f35761a5167dcdab247078a1bf8c72f9",
+      "source": "bd6be4066838c041bc313d891e3c3391734119cf",
+      "evidence": "e02a14fec9bd864876250c3d47ff60e635bece67"
     }
   ]
 }

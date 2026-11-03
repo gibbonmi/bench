@@ -20,6 +20,13 @@ const ticketsSlug = "ft900 tickets [x]*"
 // runCommand invokes the real command from root, the way the CLI does.
 func runCommand(t *testing.T, root string, args ...string) (code int, stdout, stderr string) {
 	t.Helper()
+	return runChecked(t, root, nil, args...)
+}
+
+// runChecked invokes the real command from root with check, the way the chain does. A nil
+// check is the CLI's own commit.
+func runChecked(t *testing.T, root string, check func(root, candidate string) error, args ...string) (code int, stdout, stderr string) {
+	t.Helper()
 	oldwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -29,7 +36,7 @@ func runCommand(t *testing.T, root string, args ...string) (code int, stdout, st
 	}
 	defer os.Chdir(oldwd)
 	var out, errOut bytes.Buffer
-	code = Command(args, &out, &errOut)
+	_, code = RunChecked(args, &out, &errOut, check)
 	return code, out.String(), errOut.String()
 }
 

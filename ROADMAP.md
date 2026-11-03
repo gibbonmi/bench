@@ -142,8 +142,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT241 (LOW, decision required) — versioned acceptance promises with retained evidence.**
 
-**FT380 (MEDIUM) — a plan commit passes the coverage parser and the `check-floor` row before publication.**
-
 **FT381 (MEDIUM, decision required) — a delegated full run has decided risk classes, repair routing, and author-replacement records.**
 
 **FT384 (MEDIUM, decision required) — legacy closure and the production path check share one scope matcher.**
@@ -354,14 +352,13 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT380-residual
-2. FT363-member-set
-3. FT354-shell-args
-4. FT343-seam-policy
-5. FT446-cache-store
-6. FT414-preconditions
-7. FT369-charge-slicing
-8. FT365-conformance
-9. FT341-in-only
-10. FT420-concurrent-chunks
-11. FT387-overflow
+1. FT363-member-set
+2. FT354-shell-args
+3. FT343-seam-policy
+4. FT446-cache-store
+5. FT414-preconditions
+6. FT369-charge-slicing
+7. FT365-conformance
+8. FT341-in-only
+9. FT420-concurrent-chunks
+10. FT387-overflow

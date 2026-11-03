@@ -66,20 +66,26 @@ func beginCommitSpan(root string) func(int, commitMeasures) {
 }
 
 // Outcome is what one commit call hands the command layer: the checkout the commit ran
-// in, the commit it published, the spec slug that --preflight-build named, the base that
-// --base named, and whether the call answered a help request. A call that published
-// nothing leaves Published empty.
+// in, the commit it published, and whether the call answered a help request. A call that
+// published nothing leaves Published empty.
 type Outcome struct {
-	Root, Published, PreflightBuild, Base string
-	Help                                  bool
+	Root, Published string
+	Help            bool
 }
 
 // Run runs a path-attributed prospective landing and returns its Outcome, so the commit
 // chain reads the published commit from the call that published it. Help exits 0,
 // grammar errors exit 2, operational refusals exit 1, and a commit that published without
 // reconciling its checkout exits 3; the landing owner alone composes, authorizes, and
-// publishes the prospective tree.
+// publishes the prospective tree. Run supplies no pre-publication check.
 func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
+	return RunChecked(args, stdout, stderr, nil)
+}
+
+// RunChecked is Run with a pre-publication check. A non-nil check receives the checkout and
+// the candidate commit after the authorization and before the ref update, and its error
+// refuses the commit as commit-chain-red with nothing published.
+func RunChecked(args []string, stdout, stderr io.Writer, check func(root, candidate string) error) (Outcome, int) {
 	req, help, usageErr := parseRequest(args)
 	if help != "" {
 		fmt.Fprintln(stdout, helpText)
@@ -93,7 +99,7 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 		fmt.Fprintln(stderr, grammar.Help+" ("+usageErr+")")
 		return Outcome{}, 2
 	}
-	outcome := Outcome{PreflightBuild: req.preflightBuild, Base: req.base}
+	var outcome Outcome
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
@@ -103,7 +109,7 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 	// The seam record is addressed by repository, so a grammar answer records nothing.
 	var measures commitMeasures
 	finishSpan := beginCommitSpan(root)
-	exit := commitAttributed(&measures, root, req, stdout, stderr)
+	exit := commitAttributed(&measures, root, req, check, stdout, stderr)
 	finishSpan(exit, measures)
 	outcome.Published = measures.subject
 	// The rebuild comes before the grade, so the grade's wrapper resolves the fresh build. An
@@ -118,7 +124,7 @@ func Run(args []string, stdout, stderr io.Writer) (Outcome, int) {
 // commitAttributed is the verb's own work, with the span's measures written to measures
 // as each becomes known. The exit code it returns is the verb's, so the record and the
 // shell agree about the same commit.
-func commitAttributed(measures *commitMeasures, root string, req request, stdout, stderr io.Writer) int {
+func commitAttributed(measures *commitMeasures, root string, req request, check func(root, candidate string) error, stdout, stderr io.Writer) int {
 	refused := func(err error) int { return refuse(stderr, root, req, landingFace(err), err) }
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
@@ -178,6 +184,9 @@ func commitAttributed(measures *commitMeasures, root string, req request, stdout
 		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
 		Message: req.msg, Paths: named, Stdout: stdout, Stderr: stderr,
 	}
+	if check != nil {
+		landingRequest.Check = func(candidate string) error { return check(root, candidate) }
+	}
 	if req.dryRun {
 		if err := owner.DryRun(context.Background(), landingRequest); err != nil {
 			return refused(err)
@@ -211,17 +220,21 @@ const (
 	facePublishedUnreconciled = "commit-published-unreconciled"
 	facePrimaryCheckout       = "commit-primary-checkout"
 	faceRed                   = "commit-red"
+	faceChainRed              = "commit-chain-red"
 	faceInfrastructure        = "commit-infrastructure"
 	faceNamedPath             = "commit-named-path"
 	faceTipMoved              = "commit-tip-moved"
 	faceHandback              = "commit-handback"
 )
 
-// landingFace picks the face of a refusal by its type: a named path that the caller corrects,
-// a moved tip, the attributed kind of an authorization refusal, or else the handback.
+// landingFace picks the face of a refusal by its type: a red pre-publication check, whatever
+// its error wraps, a named path that the caller corrects, a moved tip, the attributed kind of
+// an authorization refusal, or else the handback.
 func landingFace(err error) string {
 	var refused landing.AuthorizationRefusal
 	switch {
+	case errors.As(err, new(landing.CheckRefusal)):
+		return faceChainRed
 	case errors.As(err, new(landing.NamedPathError)):
 		return faceNamedPath
 	case errors.As(err, new(landing.TipMovedError)):
@@ -236,7 +249,8 @@ func landingFace(err error) string {
 }
 
 // refuse prints a refusal that published nothing, cause and then on its own next= line the
-// route of the face that cause raised, or else of face, and answers exit 1. The route re-runs
+// route of the face that cause raised, or else of face, and answers exit 1. A chain-red face
+// keeps its own route whatever the check error raised. The route re-runs
 // the caller's commit in the worktree of the active assignment that owns root; with no owner,
 // the zero owner's empty label prints the slot.
 func refuse(stderr io.Writer, root string, req request, face string, cause error) int {
@@ -255,6 +269,9 @@ func refuse(stderr io.Writer, root string, req request, face string, cause error
 	}
 	values := map[string]string{refusalroute.FactLabel: owner.Label, refusalroute.FactArguments: strings.Join(args, " ")}
 	values[refusalroute.FactRerun] = refusalroute.CommitRerun(values)
+	if face == faceChainRed && cause != nil {
+		cause = errors.New(cause.Error())
+	}
 	refusal := refusalroute.Printed(face, cause, values)
 	if refusal.Sentence != "" {
 		fmt.Fprintln(stderr, "error: "+refusal.Sentence)

@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -67,17 +68,22 @@ func refusedLine(t *testing.T, root, before, face string, code int, stderr strin
 	if code != 1 || len(lines) != 2 || !printed {
 		t.Fatalf("commit = (%d, %q), want exit 1, one error line, and one next= line", code, stderr)
 	}
-	var registered refusalroute.Face
-	for _, candidate := range refusalroute.Inventory() {
-		if candidate.Name == face {
-			registered = candidate
-		}
-	}
-	steps := routetest.Steps(t, registered, next, "", nil)
+	steps := routetest.Steps(t, registeredFace(t, face), next, "", nil)
 	if after := head(t, root); after != before {
 		t.Fatalf("HEAD moved from %s to %s", before, after)
 	}
 	return lines[0], steps
+}
+
+// registeredFace is the registry's face of name, and it fails t when no face has that name.
+func registeredFace(t *testing.T, name string) refusalroute.Face {
+	t.Helper()
+	inventory := refusalroute.Inventory()
+	index := slices.IndexFunc(inventory, func(face refusalroute.Face) bool { return face.Name == name })
+	if index < 0 {
+		t.Fatalf("no registered face is named %s", name)
+	}
+	return inventory[index]
 }
 
 // TestCommitRefusesAnUnreadableMergeState proves that a directory at MERGE_HEAD refuses the

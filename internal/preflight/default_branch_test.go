@@ -36,7 +36,7 @@ func TestBaseCurrentFactsReadsTheDefaultTip(t *testing.T) {
 		preflighttest.RunGit(t, "tag", "-a", "main", "-m", "a tag named like the branch")
 		preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
 
-		branch, resolved, current := baseCurrentFacts(root)
+		branch, resolved, current := baseCurrentFacts(root, headRef)
 		if branch != "main" || !resolved || !current {
 			t.Fatalf("baseCurrentFacts = (%q, %t, %t), want (main, true, true)", branch, resolved, current)
 		}
@@ -44,7 +44,7 @@ func TestBaseCurrentFactsReadsTheDefaultTip(t *testing.T) {
 	t.Run("an unresolved default branch", func(t *testing.T) {
 		root := seedUnresolvedDefaultRepo(t)
 
-		branch, resolved, current := baseCurrentFacts(root)
+		branch, resolved, current := baseCurrentFacts(root, headRef)
 		if branch != "" || resolved || current {
 			t.Fatalf("baseCurrentFacts = (%q, %t, %t), want (\"\", false, false)", branch, resolved, current)
 		}
@@ -57,11 +57,28 @@ func TestDefaultTipEqualPathsUnresolvedAnswersNone(t *testing.T) {
 	root := seedUnresolvedDefaultRepo(t)
 	sourceTip := preflighttest.RunGit(t, "rev-parse", "HEAD")
 
-	equal, failure := defaultTipEqualPaths(root, sourceTip, []string{"internal/x/y.go"})
+	equal, failure := defaultTipEqualPaths(root, headRef, sourceTip, []string{"internal/x/y.go"})
 	if failure != nil {
 		t.Fatalf("failure = %+v, want none for an unresolved default branch", failure)
 	}
 	if equal != nil {
 		t.Fatalf("equal = %q, want none for an unresolved default branch", equal)
+	}
+}
+
+// The HEAD grade keeps the porcelain dirty test: a staged change that the worktree reverts
+// still makes the source dirty against HEAD, so no changed path keeps the default-tip
+// exemption.
+func TestDefaultTipEqualPathsHeadCountsTheIndex(t *testing.T) {
+	root := seedDefaultBranchRepo(t)
+	preflighttest.RunGit(t, "checkout", "-q", "-b", "feature")
+	sourceTip := preflighttest.RunGit(t, "rev-parse", "HEAD")
+	preflighttest.MustWriteFile(t, "internal/x/y.go", "package x\n\nvar Staged = 1\n")
+	preflighttest.RunGit(t, "add", "internal/x/y.go")
+	preflighttest.MustWriteFile(t, "internal/x/y.go", "package x\n")
+
+	equal, failure := defaultTipEqualPaths(root, headRef, sourceTip, []string{"internal/x/y.go"})
+	if failure != nil || equal != nil {
+		t.Fatalf("defaultTipEqualPaths = (%q, %+v), want none for a staged change", equal, failure)
 	}
 }

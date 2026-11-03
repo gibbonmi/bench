@@ -1,7 +1,7 @@
 # Grade an unpublished candidate commit
 
 Blocked by: none
-Writes: internal/preflight/candidate.go (new), internal/preflight/candidate_test.go (new), internal/preflight/candidate_fixture_test.go (new), internal/git/status.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/command.go, internal/preflight/default_branch.go, internal/preflight/default_branch_test.go, internal/diff/range.go, internal/diff/review_base_test.go, cmd/bench/commitment_test.go
+Writes: internal/preflight/candidate.go (new), internal/preflight/candidate_test.go (new), internal/preflight/candidate_fixture_test.go (new), internal/git/status.go, internal/preflight/gather.go, internal/preflight/gather_inputs.go, internal/preflight/command.go, internal/preflight/default_branch.go, internal/preflight/default_branch_test.go, internal/diff/range.go, internal/diff/review_base_test.go, cmd/bench/commitment_test.go, internal/git/tree.go
 Covers: PP01, PP02, PP03, PP04, PP05, PP06, PP07, PP08, PP09, PP32, PP33, PP34
 
 ## What to build

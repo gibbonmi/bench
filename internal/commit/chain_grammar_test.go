@@ -99,11 +99,7 @@ func TestRunOutcomeNamesThePublishedCommit(t *testing.T) {
 			t.Chdir(root)
 			outcome, code := Run([]string{"-m", "m", "--preflight-build", "slug", "--base", "chunk-base", tc.path}, io.Discard, io.Discard)
 			head := gittest.Output(t, root, "rev-parse", "HEAD")
-			want := Outcome{
-				Root:           gittest.Output(t, root, "rev-parse", "--show-toplevel"),
-				PreflightBuild: "slug",
-				Base:           "chunk-base",
-			}
+			want := Outcome{Root: gittest.Output(t, root, "rev-parse", "--show-toplevel")}
 			if tc.published {
 				want.Published = head
 			}

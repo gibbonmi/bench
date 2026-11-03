@@ -29,28 +29,34 @@ func GatherPinned(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *
 }
 
 func gatherCharge(root, mode, slug string, source *diff.SourceRange, sourcePaths []string, sourceTipPin string) (Facts, *BootstrapFailure) {
-	return gather(root, mode, slug, source, sourcePaths, sourceTipPin, true, false)
+	return gather(root, mode, slug, source, sourcePaths, sourceTipPin, headRef, true, false)
 }
 
 func gatherPinned(root, mode, slug, explicitBase, sourceTipPin string, noFollow bool) (Facts, *BootstrapFailure) {
-	return gatherSource(root, mode, slug, explicitBase, sourceTipPin, noFollow, false)
+	return gatherSource(root, mode, slug, explicitBase, sourceTipPin, headRef, noFollow, false)
 }
 
 // gatherAudit is GatherPinned for the audit form. Its movement-checked attempt refuses a dirty
 // checkout before any read, follows no link, and also collects the staleness facts of the
 // explicit pair, so a persistent movement replaces the whole attempt.
 func gatherAudit(root, mode, slug, explicitBase, sourceTipPin string) (Facts, *BootstrapFailure) {
-	return gatherSource(root, mode, slug, explicitBase, sourceTipPin, true, true)
+	return gatherSource(root, mode, slug, explicitBase, sourceTipPin, headRef, true, true)
 }
 
-func gatherSource(root, mode, slug, explicitBase, sourceTipPin string, noFollow, audit bool) (Facts, *BootstrapFailure) {
+// gatherSource gathers the facts of the source whose tip is head. The head is HEAD, which an
+// explicit base reads as the snapshot head, or the candidate commit of the candidate grade.
+func gatherSource(root, mode, slug, explicitBase, sourceTipPin, head string, noFollow, audit bool) (Facts, *BootstrapFailure) {
 	if explicitBase != "" {
 		var gathered Facts
 		var gatherFailure *BootstrapFailure
 		result := diff.MovementCheckedRetry(root, func(snapshot diff.MovementSnapshot) (string, string) {
 			var err error
 			var resolveKind, resolveHint string
-			source, resolveKind, resolveHint := snapshot.ResolveSourceRange(explicitBase)
+			tip := head
+			if head == headRef {
+				tip = snapshot.Facts.Head
+			}
+			source, resolveKind, resolveHint := diff.ResolveSourceRange(root, explicitBase, tip)
 			if resolveKind != "" {
 				return resolveKind, resolveHint
 			}
@@ -67,7 +73,7 @@ func gatherSource(root, mode, slug, explicitBase, sourceTipPin string, noFollow,
 					return "source not clean", "review source has uncommitted changes"
 				}
 			}
-			gathered, gatherFailure = gather(root, mode, slug, &source, paths, sourceTipPin, noFollow, audit)
+			gathered, gatherFailure = gather(root, mode, slug, &source, paths, sourceTipPin, head, noFollow, audit)
 			if gatherFailure != nil {
 				return gatherFailure.Kind, gatherFailure.Hint
 			}
@@ -84,7 +90,7 @@ func gatherSource(root, mode, slug, explicitBase, sourceTipPin string, noFollow,
 		}
 		return gathered, nil
 	}
-	return gather(root, mode, slug, nil, nil, sourceTipPin, noFollow, audit)
+	return gather(root, mode, slug, nil, nil, sourceTipPin, head, noFollow, audit)
 }
 
 func resolveSpecInput(root, slug string, noFollow bool) ([]byte, string, []string, bool, error) {
@@ -101,8 +107,9 @@ func gatherTickets(root, dir, mode, tag string) (ticketFacts, *BootstrapFailure)
 // withFoldResolution reads the review record at the source tip and returns facts with the
 // admitted resolution paths. A path is admitted while it keeps its bytes and mode from the
 // newest fold that lists it. The fold review graded only those bytes. A record or a tree
-// that does not read lists no path, so each changed path keeps the fence rule.
-func withFoldResolution(root string, facts Facts) Facts {
+// that does not read lists no path, so each changed path keeps the fence rule. The
+// unchanged-path comparison tests the checkout against head.
+func withFoldResolution(root, head string, facts Facts) Facts {
 	record, err := reviewrecord.ReadTree(root, facts.SourceTip, facts.SpecPath)
 	if err != nil {
 		return facts
@@ -121,7 +128,7 @@ func withFoldResolution(root string, facts Facts) Facts {
 				listed = append(listed, path)
 			}
 		}
-		unchanged, failure := unchangedPaths(root, fold.Commit, facts.SourceTip, listed)
+		unchanged, failure := unchangedPaths(root, head, fold.Commit, facts.SourceTip, listed)
 		if failure != nil {
 			return facts
 		}
@@ -133,12 +140,13 @@ func withFoldResolution(root string, facts Facts) Facts {
 
 // unchangedPaths is the subset of paths whose bytes and mode at to equal those at from.
 // The raw tree diff owns the comparison, so a gitlink compares by its commit too.
-// An untracked path is absent at both commits, so a dirty source answers none.
-func unchangedPaths(root, from, to string, paths []string) ([]string, *BootstrapFailure) {
+// An untracked path is absent at both commits, so a source whose checkout is dirty against
+// head answers none.
+func unchangedPaths(root, head, from, to string, paths []string) ([]string, *BootstrapFailure) {
 	if len(paths) == 0 {
 		return nil, nil
 	}
-	dirty, err := git.WorktreeDirty(root)
+	dirty, err := git.WorktreeDirtyAt(root, head)
 	if err != nil {
 		return nil, &BootstrapFailure{"source status unreadable", err.Error()}
 	}
