@@ -33,8 +33,8 @@ var grammar = usage.Grammar{
 	MaxArgs: -1,
 }
 
-// PreflightBuildFlag names the spec slug whose build the command layer chains after a
-// commit that publishes.
+// PreflightBuildFlag names the spec slug whose build the command layer grades at the
+// candidate commit before publication.
 const PreflightBuildFlag = "--preflight-build"
 
 // BaseFlag names the base that the command layer passes to the chained build preflight.
@@ -60,6 +60,13 @@ func ChainArgs(slug, base string) []string {
 	return args
 }
 
+// ChainValues answers the slug and the base of a commit call that parses. A call that does
+// not parse answers two empty values.
+func ChainValues(args []string) (slug, base string) {
+	req, _, _ := parseRequest(args)
+	return req.preflightBuild, req.base
+}
+
 // HelpRowSuffix is the argument shape of the `bench help` row.
 const HelpRowSuffix = " -m <msg> [" + PreflightBuildGroup + "] <path>..."
 
@@ -82,7 +89,7 @@ func parseRequest(args []string) (req request, help string, usageErr string) {
 	}
 	_, req.dryRun = parsed.Flags["--dry-run"]
 	req.preflightBuild = parsed.Flags[PreflightBuildFlag]
-	// A dry run publishes nothing, so the chain would have no commit to build.
+	// A dry run writes no candidate commit, so the chain would have no commit to grade.
 	if req.dryRun && req.preflightBuild != "" {
 		return request{}, "", "--dry-run excludes " + PreflightBuildFlag
 	}

@@ -109,6 +109,22 @@ func TestRunCheckedRefusesARedCheck(t *testing.T) {
 	}
 }
 
+// ChainValues reads the chain values through the commit grammar: a chained call answers its
+// slug and base, and a call without the chain answers empty values.
+func TestChainValuesReadsTheChainFlags(t *testing.T) {
+	for _, tc := range []struct {
+		args               []string
+		wantSlug, wantBase string
+	}{
+		{[]string{PreflightBuildFlag, "s", BaseFlag, "b", "-m", "m", "--", "a.txt"}, "s", "b"},
+		{[]string{"-m", "m", "--", "a.txt"}, "", ""},
+	} {
+		if slug, base := ChainValues(tc.args); slug != tc.wantSlug || base != tc.wantBase {
+			t.Fatalf("ChainValues(%q) = (%q, %q), want (%q, %q)", tc.args, slug, base, tc.wantSlug, tc.wantBase)
+		}
+	}
+}
+
 // PP14: a lane red refuses with the lane's own route before any commit object exists, so a
 // supplied check never runs.
 func TestRunCheckedLaneRedWinsOverTheCheck(t *testing.T) {
