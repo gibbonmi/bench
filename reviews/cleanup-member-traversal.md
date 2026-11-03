@@ -215,7 +215,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "C1-R1-STD",
+          "performer": "ft363-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1",
+            "digest": "sha256:2b8c0eb1e1d37da894c55a97d11e4b02c02a713b03ab3f01d143d1817731fd72",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\nThe shared owner at internal/worktree/cleanup_members.go:97-125 handles only iteration, pass-through, accumulation and the stop. It derives no fingerprint, identity or classification, and it takes no run. The explicit adapter supplies the predicate, the visit, the retained row and the stop projection; its visit closure captures a.run (internal/worktree/clean_set.go:333-353). The test-count pin went from 874 to 882 (internal/worktree/parallel_census_test.go:926), matching 8 new top-level tests.\n"
+          },
+          "axis": "Standards",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C1-R1-SPEC",
+          "performer": "ft363-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1",
+            "digest": "sha256:c312b7b875a0f49780143f7d639dfcf58c4d7f77bb1f41492042536a37a322c0",
+            "excerpt": "## Spec\nFindings: 1. Worst issue: C1-SPEC-1.\nC1-SPEC-1 | sev 4 | conf 8 | ask-user | internal/worktree/cleanup_members_baseline_record_test.go:131-134, internal/worktree/cleanup_members_baseline_test.go:146-153\nRequirement: spec.md:325-327 \"Verify that each fingerprint binds the same inputs within its own run\" and \"A changed digest relation, input omission, ... must fail the comparison.\" Defect: digests are named by role and nothing derives a digest from its rendered inputs. Probe: removed options.Full from fingerprintExplicitSet (clean_set.go:239), ran CleanupTraversalBaseline: silent.\nRow audit: R01, R02, R04, R05, R08, R11, R12, R14, R15, R19, R24, R28 witnessed in explicit mode; R27 explicit only; R03 held by the unchanged successor; R06, R09, R10 rest on the recorded plan probes; R26 baseline part has 31 cases, ticket 00 is test-only and ticket 01 left the records unchanged; R13 partial (C1-COV-1).\n"
+          },
+          "axis": "Spec",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "finding_ids": [
+            "C1-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "C1-R1-COV",
+          "performer": "ft363-review-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f83eb0463ad351fd34d053f3eaade732acdb79b1",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c1",
+            "digest": "sha256:ac970814bd12a17e0f32c39c5cab91395d0d79618380bfbd1f519f11b2bda6d3",
+            "excerpt": "## Coverage\nFindings: 1. Worst issue: C1-COV-1.\nC1-COV-1 | sev 4 | conf 7 | auto-fix | internal/worktree/clean_set.go:341; witness internal/worktree/clean_set_refusal_test.go:89-113\nInput: in explicit mode, a member that drifts after preflight but stays removable, at its in-loop requalify. Gap: the only R13 witness drives applyLandedSet. Probe: inserted `if current.plan.Action.Removes() { return current.plan, err }` before line 341, ran CleanupTraversal|CleanSet|DiscardTargetRequalifiesAfterARecordedRemoval: 99 tests passed, silent. Fix: add an explicit subtest to TestCleanSetMemberDriftAfterPreflight.\nProbes: explicit visits predicate forced true: bit (7 failures). Stop projection members[failed+1:] to members[failed+2:]: bit (TestCleanSetPartialApply). Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "76c8d256cd35d5c74fba8d9273d2bfcb51f89a71",
+          "tip": "5e0110372b6adf94156ef2a64ac42935e19632a5",
+          "finding_ids": [
+            "C1-COV-1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -261,3 +326,31 @@ The ticket 01 author reported these development reds outside the plan probes. Ea
 | R28 | The locked fingerprint check is disabled. | `TestCleanupTraversalAuthorityPreservation` |
 
 The author reported one gap: the only cited R13 witness, the subtest for drift that stays removable, drives landed mode only.
+
+## C1 review round 1
+
+One unified opus / medium session reviewed the frozen pair `76c8d256c..5e0110372`. Repair cycles consumed: 0 of 2 before this round's repair.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 1. Worst issue: C1-SPEC-1.
+
+- C1-SPEC-1, severity 4, confidence 8. The baseline does not fail when a fingerprint input is omitted (`internal/worktree/cleanup_members_baseline_test.go:146`). The test holds a hand copy of the input list of `fingerprintExplicitSet`. Disposition: auto-fix, by orchestrator decision under `--auto-approve`, flagged for reviewer veto. The repair moves the explicit input list into one production function that the fingerprint hashes, and the baseline renders that list from production.
+
+## Coverage
+
+Findings: 1. Worst issue: C1-COV-1.
+
+- C1-COV-1, severity 4, confidence 7. Explicit mode has no witness for drift that stays removable at the in-loop requalification (`internal/worktree/clean_set.go:341`). Disposition: auto-fix. The repair adds an explicit subtest to `TestCleanSetMemberDriftAfterPreflight`.
+
+## Advice
+
+- With `BENCH_CAPTURE_CLEANUP_BASELINE=1`, the baseline test rewrites the records and still passes. A failed test after a capture write is safer.
+- Cases that name members by label sort their rows, so row order is checked only against the planned order of the current run.
+- The commits section collapses member tips to one rank name, so the member-to-commit relation is not compared.
+
+Both findings route to one repair session on ticket 01, which holds every path of both fixes.
