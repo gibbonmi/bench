@@ -1,7 +1,7 @@
 # Migrate landed and sibling cleanup traversal
 
 Blocked by: 02-migrate-unrecorded-traversal.md
-Writes: internal/worktree/clean_landed.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/land_effects_cleanup_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/clean_landed.go, internal/worktree/clean_landed_apply_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/clean_set_refusal_test.go, internal/worktree/clean_set_outcomes_test.go, internal/worktree/land_effects_cleanup_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/worktree/cleanup_members_modes_test.go, internal/worktree/cleanup_members_baseline_record_test.go
 Covers: R01, R02, R04, R05, R07, R08, R09, R10, R11, R12, R13, R14, R17, R19, R23, R24, R27, R28
 
 ## What to build

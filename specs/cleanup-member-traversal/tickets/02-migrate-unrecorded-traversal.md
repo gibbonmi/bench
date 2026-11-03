@@ -1,7 +1,7 @@
 # Migrate explicit unrecorded branch traversal
 
 Blocked by: 01-share-recorded-traversal.md
-Writes: internal/worktree/clean_discard.go, internal/worktree/clean_discard_test.go, internal/worktree/clean_discard_transaction_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/worktree/clean_discard.go, internal/worktree/clean_discard_test.go, internal/worktree/clean_discard_transaction_test.go, internal/worktree/clean_set_apply_test.go, internal/worktree/cleanup_members_baseline_test.go (new), internal/worktree/testdata/cleanup-member-traversal/ (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go, internal/worktree/cleanup_members_modes_test.go, internal/worktree/cleanup_members_baseline_record_test.go
 Covers: R03, R04, R05, R06, R09, R11, R12, R13, R14, R16, R19, R22, R24, R27, R28, R29
 
 ## What to build
