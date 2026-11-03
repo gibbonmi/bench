@@ -262,13 +262,29 @@ All eleven reader files remain required by the final S39 reconciliation.
 
 ### Completion plan
 
-The authored version 1 plan records future implementation evidence.
+The version 2 plan declares the delegated execution block and records future implementation evidence.
 It claims no current implementation red, pass, native qualification, or benchmark.
 The implementation orchestrator records author sessions in the required version 2 amendment before dispatch.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "review_mode": "unified",
+    "run_id": "ft354-build",
+    "orchestrator_session": "ft354-orchestrator",
+    "author_limit": 1,
+    "assignments": {
+      "01-quote-tree-build-arguments.md": [],
+      "02-quote-selected-history.md": [],
+      "03-quote-citation-commands.md": [],
+      "04-quote-recovery-operands.md": [],
+      "05-quote-evidence-commands.md": [],
+      "06-share-rebuild-and-fixture-quotes.md": [],
+      "07-switch-axi-output-atomically.md": []
+    }
+  },
   "chunks": [
     {
       "id": "S-A",
@@ -279,22 +295,26 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "owner-omission-proof",
           "command": "bench test --package ./internal/sanitize",
-          "probe": "Return bare alpha, split an embedded quote, or drop the empty owner argument. The exact quoted-byte and NUL-framed recovered-argv owner assertions must fail, then pass after source restoration."
+          "probe": "Return bare alpha, split an embedded quote, or drop the empty owner argument. The exact quoted-byte and NUL-framed recovered-argv owner assertions must fail, then pass after source restoration.",
+          "ticket": "01-quote-tree-build-arguments.md"
         },
         {
           "id": "owner-preservation",
           "command": "bench test --package ./internal/sanitize",
-          "probe": "Alter the existing always-quoted owner result for spaces, Unicode, or embedded quotes. The independent input-to-argv witness must fail, then pass after restoration."
+          "probe": "Alter the existing always-quoted owner result for spaces, Unicode, or embedded quotes. The independent input-to-argv witness must fail, then pass after restoration.",
+          "ticket": "01-quote-tree-build-arguments.md"
         },
         {
           "id": "caller-bypass-proof",
           "command": "bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'",
-          "probe": "Bypass sanitize.ShellQuote in PrintTreeBuildRefusal or restore its former bare alpha spelling. The actual tree-build producer fixture and recovered argv assertion must fail, then pass after source restoration."
+          "probe": "Bypass sanitize.ShellQuote in PrintTreeBuildRefusal or restore its former bare alpha spelling. The actual tree-build producer fixture and recovered argv assertion must fail, then pass after source restoration.",
+          "ticket": "01-quote-tree-build-arguments.md"
         },
         {
           "id": "caller-preservation",
           "command": "bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'",
-          "probe": "Drop the tree-build operand, change its exact quoted spelling, or bypass retained whole-line control escaping. The real producer or refusal assertion must fail, then pass after restoration."
+          "probe": "Drop the tree-build operand, change its exact quoted spelling, or bypass retained whole-line control escaping. The real producer or refusal assertion must fail, then pass after restoration.",
+          "ticket": "01-quote-tree-build-arguments.md"
         }
       ]
     },
@@ -307,12 +327,14 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/spec",
-          "probe": "Bypass the owner with former bare-token output at historyDetail or at the widen rerun line. The independent exact fixture must fail even if argv still round-trips."
+          "probe": "Bypass the owner with former bare-token output at historyDetail or at the widen rerun line. The independent exact fixture must fail even if argv still round-trips.",
+          "ticket": "02-quote-selected-history.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/spec",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "02-quote-selected-history.md"
         }
       ]
     },
@@ -325,12 +347,14 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/consumers",
-          "probe": "Return the former bare spelling at citation.cmd or omit a supplied flag. The exact fixture or recovered argv must turn red."
+          "probe": "Return the former bare spelling at citation.cmd or omit a supplied flag. The exact fixture or recovered argv must turn red.",
+          "ticket": "03-quote-citation-commands.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/consumers",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "03-quote-citation-commands.md"
         }
       ]
     },
@@ -343,12 +367,14 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/worktree --run 'RecoveryRouteArgument|List|PathIdentifier'",
-          "probe": "Bypass the owner only at recoveryRoute.line. The raw command fixture must fail independently of AXI help tests."
+          "probe": "Bypass the owner only at recoveryRoute.line. The raw command fixture must fail independently of AXI help tests.",
+          "ticket": "04-quote-recovery-operands.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/worktree --run 'RecoveryRouteArgument|List|PathIdentifier'",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "04-quote-recovery-operands.md"
         }
       ]
     },
@@ -361,12 +387,14 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "omission-proof",
           "command": "bench test --package ./internal/preflight/evidencecmd",
-          "probe": "Return a bare cursor or bypass the owner at evidenceInvocation. The exact producer fixture and argv oracle must detect each omission."
+          "probe": "Return a bare cursor or bypass the owner at evidenceInvocation. The exact producer fixture and argv oracle must detect each omission.",
+          "ticket": "05-quote-evidence-commands.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./internal/preflight/evidencecmd",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "05-quote-evidence-commands.md"
         }
       ]
     },
@@ -379,22 +407,26 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "preservation",
           "command": "bench test --package ./internal/freshness",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "06-share-rebuild-and-fixture-quotes.md"
         },
         {
           "id": "rebuild-argument-proof",
           "command": "bench test --package ./internal/freshness",
-          "probe": "Emit a malformed quoted rebuild operand or drop a supplied rebuild operand. Its real producer fixture and independent shell argv assertion must fail, then pass after source restoration."
+          "probe": "Emit a malformed quoted rebuild operand or drop a supplied rebuild operand. Its real producer fixture and independent shell argv assertion must fail, then pass after source restoration.",
+          "ticket": "06-share-rebuild-and-fixture-quotes.md"
         },
         {
           "id": "diff-fixture-argument-proof",
           "command": "bench test --package ./internal/diff",
-          "probe": "Corrupt quote escaping for a hostile diff fixture operand. Its independent observed argv assertion must fail, then pass after source restoration."
+          "probe": "Corrupt quote escaping for a hostile diff fixture operand. Its independent observed argv assertion must fail, then pass after source restoration.",
+          "ticket": "06-share-rebuild-and-fixture-quotes.md"
         },
         {
           "id": "release-fixture-argument-proof",
           "command": "bench test --package ./internal/preprelease",
-          "probe": "Corrupt quote escaping for a hostile preprelease fixture operand. Its independent observed argv assertion must fail, then pass after source restoration."
+          "probe": "Corrupt quote escaping for a hostile preprelease fixture operand. Its independent observed argv assertion must fail, then pass after source restoration.",
+          "ticket": "06-share-rebuild-and-fixture-quotes.md"
         }
       ]
     },
@@ -407,12 +439,14 @@ The implementation orchestrator records author sessions in the required version 
         {
           "id": "omission-proof",
           "command": "bench test --package ./...",
-          "probe": "Return former bare-token spelling at each enumerated family, including the outline, bounded read, worktree read, and raw read advice families, quote a future slot, compare the rendered first command, or omit a fixture update. Record each independent exact-byte red and restoration separately from shell argv evidence. Keep the accepted empty-helper observation separate from reachable AXI empty refusal. Reconcile all source definitions and fixture helpers without granting status_route_converge rewrite authority."
+          "probe": "Return former bare-token spelling at each enumerated family, including the outline, bounded read, worktree read, and raw read advice families, quote a future slot, compare the rendered first command, or omit a fixture update. Record each independent exact-byte red and restoration separately from shell argv evidence. Keep the accepted empty-helper observation separate from reachable AXI empty refusal. Reconcile all source definitions and fixture helpers without granting status_route_converge rewrite authority.",
+          "ticket": "07-switch-axi-output-atomically.md"
         },
         {
           "id": "preservation",
           "command": "bench test --package ./...",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
+          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+          "ticket": "07-switch-axi-output-atomically.md"
         }
       ]
     }
