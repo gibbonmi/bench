@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shell-argument-ownership/spec.md",
-  "plan_digest": "sha256:1a12724ba4cfce35272a0d678e74da28c1130d4ade56e7dd1a8f2c0c25fdf235",
+  "plan_digest": "sha256:07216e7d8d911629ed14a562af6382f4a3a8345713d694278b971ea038f8134e",
   "implementation_session": "",
   "chunks": [
     {
@@ -343,9 +343,9 @@
     {
       "id": "S-B2",
       "base": "7cc8d6d041fa0dbc117d77c8c74beb51a2555bab",
-      "tip": "fb2f38e9c09ce5f5cc61b8e7cf691285a3b02001",
-      "plan_digest": "sha256:1a12724ba4cfce35272a0d678e74da28c1130d4ade56e7dd1a8f2c0c25fdf235",
-      "source_digest": "ad5b5a96cd34ff88839539d6965cd29321df8534",
+      "tip": "03bd8984525222136d809db96fa9038cf2524922",
+      "plan_digest": "sha256:07216e7d8d911629ed14a562af6382f4a3a8345713d694278b971ea038f8134e",
+      "source_digest": "d47637eae9b735d54f560c950e18a345db627151",
       "acceptance_rows": [
         "S14"
       ],
@@ -407,6 +407,66 @@
               "ref": "claude-agent:ft354-author-03",
               "digest": "sha256:0ecade0736af8589b29af7280786872112f535948df2ae3013165a8be412914f",
               "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestCitationCmdRoundTripsThroughAPOSIXShellSplit,66,1,0,null,yes\n  2,bit,swap,failed,2,TestCitationCmdRoundTripsThroughAPOSIXShellSplit,66,1,0,null,yes\n  3,bit,swap,failed,2,TestCitationCmdRoundTripsThroughAPOSIXShellSplit,66,1,0,null,yes\n  4,bit,swap,failed,2,TestCitationCmdRoundTripsThroughAPOSIXShellSplit,66,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/consumers,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "S-B2-T03-R1-omission-proof",
+          "performer": "ft354-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d47637eae9b735d54f560c950e18a345db627151",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-repair-03-r1",
+            "digest": "sha256:8260701e46c5ccdac6674ec1068e99d808768bf8b5954a0358c964dfe6ee632d",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\n  2,bit,swap,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/consumers,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "03bd8984525222136d809db96fa9038cf2524922",
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return the former bare spelling at citation.cmd or omit a supplied flag. The exact fixture or recovered argv must turn red.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-repair-03-r1",
+              "digest": "sha256:8260701e46c5ccdac6674ec1068e99d808768bf8b5954a0358c964dfe6ee632d",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\n  2,bit,swap,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/consumers,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "S-B2-T03-R1-preservation",
+          "performer": "ft354-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "d47637eae9b735d54f560c950e18a345db627151",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-repair-03-r1",
+            "digest": "sha256:8260701e46c5ccdac6674ec1068e99d808768bf8b5954a0358c964dfe6ee632d",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\n  2,bit,swap,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/consumers,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "03bd8984525222136d809db96fa9038cf2524922",
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/consumers",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-repair-03-r1",
+              "digest": "sha256:8260701e46c5ccdac6674ec1068e99d808768bf8b5954a0358c964dfe6ee632d",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap+omit,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\n  2,bit,swap,failed,3,TestCitationCmdRoundTripsThroughAPOSIXShellSplit/metacharacter_and_quote,68,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/consumers,all,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
         }
@@ -505,6 +565,21 @@
         ],
         "S-B1": [
           "S-B1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1a12724ba4cfce35272a0d678e74da28c1130d4ade56e7dd1a8f2c0c25fdf235",
+      "to": "sha256:07216e7d8d911629ed14a562af6382f4a3a8345713d694278b971ea038f8134e",
+      "chunk_ids": {
+        "S-A": [
+          "S-A"
+        ],
+        "S-B1": [
+          "S-B1"
+        ],
+        "S-B2": [
+          "S-B2"
         ]
       }
     }
