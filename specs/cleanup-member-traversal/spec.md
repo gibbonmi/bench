@@ -267,7 +267,7 @@ Won't handle: performance claims — existing recorded timing cannot establish t
 
 ### Unclaimed deletion witnesses after successful replan
 
-R18 uses planned TestCleanupUnclaimedDeletionFailureAfterReplan in internal/worktree/cleanup_members_baseline_test.go.
+R18 uses TestCleanupUnclaimedDeletionFailureAfterReplan in internal/worktree/clean_set_wiring_test.go.
 Run first-failure and later-failure cases through applyUnclaimedAssignmentSet.
 Build a stable selection with multiple removable refs and retained rows.
 Place a Git ref lock on the selected first or later removable ref.
@@ -284,7 +284,7 @@ Also assert retained prefix rows remain unchanged.
 A first-failure fixture proves that no prior deletion occurs.
 The later-failure fixture proves that the completed prefix is not rolled back.
 
-R21 uses planned TestCleanupUnclaimedMovedRefAfterReplan in internal/worktree/cleanup_members_baseline_test.go.
+R21 uses TestCleanupUnclaimedMovedRefAfterReplan in internal/worktree/clean_set_wiring_test.go.
 Install a real Git reference-transaction hook in the disposable fixture repository.
 On committed deletion of the first selected removable ref, move a later selected ref to a different OID.
 This event occurs after the complete replan and after the first completed deletion.
