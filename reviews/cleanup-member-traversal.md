@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/cleanup-member-traversal/spec.md",
-  "plan_digest": "sha256:e6d53a8fc505866266a7ae442ea6a469779b24d7ec8053ca498f3fa3627d7d44",
+  "plan_digest": "sha256:0b87b9700392dc2d8b6d722f075bb0afa59f404da5a94593c793d5015399fcaa",
   "implementation_session": "",
   "chunks": [
     {
@@ -646,6 +646,126 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "C3",
+      "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+      "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+      "plan_digest": "sha256:0b87b9700392dc2d8b6d722f075bb0afa59f404da5a94593c793d5015399fcaa",
+      "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+      "acceptance_rows": [
+        "R01",
+        "R02",
+        "R04",
+        "R05",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R17",
+        "R19",
+        "R23",
+        "R24",
+        "R27",
+        "R28"
+      ],
+      "verification": [
+        {
+          "id": "C3-T03-landed-preflight",
+          "performer": "ft363-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-03",
+            "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "requirement": "landed-preflight",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the landed all-member preflight before the landed visits and record the R07 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-03",
+              "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-landed-locked",
+          "performer": "ft363-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-03",
+            "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "requirement": "landed-locked",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the locked qualification check of a landed visit and record the R10 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-03",
+              "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C3-T03-landed-suffix",
+          "performer": "ft363-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-03",
+            "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "requirement": "landed-suffix",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return only the completed prefix from the landed stop projection and record the R17 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-03",
+              "digest": "sha256:4f9af8dca022b974f5db9259a7693589d9de6030dfb62a9f8fc2515be18d43e5",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,3,TestCleanSetPreflightAllRows/landed,150,1,0,null,yes\n  2,bit,insert,failed,2,TestCleanupTraversalAuthorityPreservation/landed,150,1,0,null,yes\n  3,bit,swap,failed,4,TestCleanupLandedUnreachedSuffix,150,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanupLanded|CleanSet|CleanLanded|LandCleansTheFoldedSibling|LandLeavesAPriorLandedAssignment|LandRetainsAnUnprovenSibling,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -704,6 +824,18 @@
     {
       "from": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
       "to": "sha256:e6d53a8fc505866266a7ae442ea6a469779b24d7ec8053ca498f3fa3627d7d44",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:e6d53a8fc505866266a7ae442ea6a469779b24d7ec8053ca498f3fa3627d7d44",
+      "to": "sha256:0b87b9700392dc2d8b6d722f075bb0afa59f404da5a94593c793d5015399fcaa",
       "chunk_ids": {
         "C1": [
           "C1"
