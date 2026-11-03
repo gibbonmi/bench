@@ -513,3 +513,14 @@ Findings: 1. Worst issue: C1-COV-1.
 - The commits section collapses member tips to one rank name, so the member-to-commit relation is not compared.
 
 Both findings route to one repair session on ticket 01, which holds every path of both fixes.
+
+## C1 repair 1 witness reds
+
+The repair session ft363-repair-01-r1 closed both findings at repair commit `94eb8696d`. Repair cycles consumed: 1 of 2. Each mutation was restored, and the package then passed.
+
+| Finding | Row | Mutation | Red test |
+|---|---|---|---|
+| C1-COV-1 | R13 | The requalification returns the current plan when it still removes. | `TestCleanSetMemberDriftAfterPreflight/explicit_member_drifts_while_still_removable` |
+| C1-SPEC-1 | R26 | `options.Full` is removed from `explicitFingerprintInputs`. | `TestCleanupTraversalBaseline`, 15 failures |
+
+The repair moved `requalifyExplicitRow` unchanged from `clean_set.go` to `clean_set_apply.go`, so that `clean_set.go` stays within the 400-line bound.
