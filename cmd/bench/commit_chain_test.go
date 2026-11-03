@@ -18,6 +18,8 @@ const (
 	chainWorktree  = "/fixture/worktree"
 	chainCandidate = "fedcba9876543210fedcba9876543210fedcba98"
 	chainPublished = "0123456789abcdef0123456789abcdef01234567"
+	// noBuildInputs is the buildExit that makes the chain root declare no Bench build inputs.
+	noBuildInputs = -1
 )
 
 // chainCalls records the root, the home, and the argv each injected build received, and
@@ -33,7 +35,8 @@ type chainCalls struct {
 // commitExit of 1 is a refusal before the check, so it calls no check; otherwise it calls a
 // supplied check with chainWorktree and chainCandidate, and a check error refuses at exit 1
 // with nothing published. It then prints one line and answers published and commitExit. The
-// build and preflight steps print one line each and answer their own exits.
+// root declares Bench build inputs unless buildExit is noBuildInputs. The build and preflight
+// steps print one line each and answer their own exits.
 func runCommitChain(t *testing.T, slug, base, published string, commitExit, buildExit, preflightExit int) (stdout string, code int, calls *chainCalls) {
 	t.Helper()
 	t.Setenv(benchhome.Env, t.TempDir())
@@ -42,7 +45,7 @@ func runCommitChain(t *testing.T, slug, base, published string, commitExit, buil
 	calls = &chainCalls{}
 	commitChain = chainSteps{
 		Commit: func(_ []string, stdout, _ io.Writer, check func(root, candidate string) error) (commit.Outcome, int) {
-			outcome := commit.Outcome{Root: chainWorktree, PreflightBuild: slug, Base: base}
+			outcome := commit.Outcome{Root: chainWorktree}
 			if commitExit != 1 && check != nil && check(chainWorktree, chainCandidate) != nil {
 				commitExit = 1
 			}
@@ -52,6 +55,7 @@ func runCommitChain(t *testing.T, slug, base, published string, commitExit, buil
 			}
 			return outcome, commitExit
 		},
+		BuildInputs: func(string) bool { return buildExit != noBuildInputs },
 		Build: func(root, home string, args []string, stdout, _ io.Writer) int {
 			calls.builds = append(calls.builds, append([]string{root, home}, args...))
 			fmt.Fprintln(stdout, "build step")
@@ -99,6 +103,21 @@ func TestCommitChainRunsThreeSteps(t *testing.T) {
 	}
 	if want := [][]string{{chainWorktree, chainSlug, "", chainCandidate}}; !reflect.DeepEqual(calls.preflights, want) {
 		t.Fatalf("preflight calls = %q, want %q: the candidate commit, not the published one", calls.preflights, want)
+	}
+}
+
+// PP35: a root that declares no Bench build inputs has no worktree build, so the chain calls
+// no build, runs the preflight at the candidate commit, and publishes at exit 0.
+func TestCommitChainSkipsTheBuildWithoutBuildInputs(t *testing.T) {
+	stdout, code, calls := runCommitChain(t, chainSlug, "", chainPublished, 0, noBuildInputs, 0)
+	if want := wantChainLine(chainPublished, "skipped", "green"); code != 0 || lastLine(stdout) != want {
+		t.Fatalf("chain = (%d, %q), want exit 0 ending in %q", code, stdout, want)
+	}
+	if len(calls.builds) != 0 {
+		t.Fatalf("a root without build inputs ran builds %q", calls.builds)
+	}
+	if want := [][]string{{chainWorktree, chainSlug, "", chainCandidate}}; !reflect.DeepEqual(calls.preflights, want) {
+		t.Fatalf("preflight calls = %q, want %q", calls.preflights, want)
 	}
 }
 

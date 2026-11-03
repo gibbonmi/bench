@@ -66,12 +66,11 @@ func beginCommitSpan(root string) func(int, commitMeasures) {
 }
 
 // Outcome is what one commit call hands the command layer: the checkout the commit ran
-// in, the commit it published, the spec slug that --preflight-build named, the base that
-// --base named, and whether the call answered a help request. A call that published
-// nothing leaves Published empty.
+// in, the commit it published, and whether the call answered a help request. A call that
+// published nothing leaves Published empty.
 type Outcome struct {
-	Root, Published, PreflightBuild, Base string
-	Help                                  bool
+	Root, Published string
+	Help            bool
 }
 
 // Run runs a path-attributed prospective landing and returns its Outcome, so the commit
@@ -100,7 +99,7 @@ func RunChecked(args []string, stdout, stderr io.Writer, check func(root, candid
 		fmt.Fprintln(stderr, grammar.Help+" ("+usageErr+")")
 		return Outcome{}, 2
 	}
-	outcome := Outcome{PreflightBuild: req.preflightBuild, Base: req.base}
+	var outcome Outcome
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())

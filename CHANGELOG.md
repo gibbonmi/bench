@@ -8,7 +8,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Commit chain before publication
 
-- Changed `bench commit --preflight-build <slug> [--base <commit>]`. The chain steps now run before publication. The commit writes the candidate commit, then it runs `bench worktree build` and the build preflight at that candidate commit, and only a green chain moves the branch ref. A red build or a red preflight publishes nothing: the commit exits 1 with the `commit-chain-red` refusal, and the chain line names no commit.
+- Changed `bench commit --preflight-build <slug> [--base <commit>]`. The chain steps now run before publication. The commit writes the candidate commit. Then it runs `bench worktree build` and the build preflight at that candidate commit. Only a green chain moves the branch ref. A root without Bench build inputs skips the build step, and the chain line shows `build=skipped`. A red build or a red preflight publishes nothing: the commit exits 1 with the `commit-chain-red` refusal, and the chain line names no commit.
 
   Exit 4 retired, because no chain step runs after publication. The commit's exits keep their meanings: 0, 1, 2, and 3. Before, the chain ran after the commit published, and a red step exited 4 with the red commit on the branch.
 
