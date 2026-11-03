@@ -1,7 +1,7 @@
 # Quote selected-history command operands
 
 Blocked by: 01-quote-tree-build-arguments.md
-Writes: internal/spec/history_selected.go, internal/spec/history_selected_test.go, internal/spec/widen.go, internal/spec/widen_test.go
+Writes: internal/spec/history_selected.go, internal/spec/history_selected_test.go, internal/spec/widen.go, internal/spec/widen_test.go, internal/spec/widen_rerun_test.go (new)
 Covers: S13, S40
 
 ## What to build
