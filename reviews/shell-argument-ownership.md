@@ -778,3 +778,14 @@ The repair session ft354-repair-03-r1 reported this witness red. The coordinator
 | Coordinator probe | Before the `Join` return, the first space of each token splits. | `TestCitationCmdRoundTripsThroughAPOSIXShellSplit/space` |
 
 Repair allowance: S-B2 consumed 1 of 2 repair cycles.
+
+## S-B4 author witness reds
+
+The ticket 05 author reported this witness red before the production edit. The package passed after the migration.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S17 | The evidence next command still renders through the bare-token policy. | `TestEvidenceArgumentCommands/preparation`, `/summary`, and `/source_page` at `shell_arguments_test.go:53` |
+
+The producer refuses a hostile identity, source, or cursor before any command renders. Thus the S17 test shows those refusals and a sentinel absence.
+The orchestrator decision, flagged for reviewer veto: only the identity, source, and cursor values take `sanitize.ShellQuote`, and the fixed tokens stay bare.
