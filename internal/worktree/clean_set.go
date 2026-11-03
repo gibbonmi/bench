@@ -316,40 +316,45 @@ func requalifyExplicitRow(j joins, run *git.Run, root string, planned explicitCl
 	return current, nil
 }
 
-// applyExplicitSet runs every removable recorded member through the existing per-target
-// locked transaction, so each member keeps its own authority checks, receipt, and recovery,
-// and then every unclaimed member through the discard transaction. A member the plan retained
-// passes through as the plan reported it. Each member re-plans immediately before its own
-// transaction, which gives that transaction the digest the repository answers to now. The
-// first member that cannot finish stops the set, and every member the set never started
-// reports its own unstarted outcome.
+// applyExplicitSet runs every removable recorded member, through the shared cleanup
+// traversal, into the existing per-target locked transaction, so each member keeps its own
+// authority checks, receipt, and recovery, and then every unclaimed member through the
+// discard transaction. A member the plan retained passes through as the plan reported it.
+// Each member re-plans immediately before its own transaction, which gives that transaction
+// the digest the repository answers to now. The first member that cannot finish stops the
+// set, and every member the set never started reports its own unstarted outcome.
 func applyExplicitSet(j joins, a ambient, root string, set explicitCleanupSet, options CleanupOptions) ([]CleanupPlan, error) {
 	members := set.plans()
 	plans := make([]CleanupPlan, 0, len(members))
 	if offender, err := preflightExplicitSet(j, a, root, set, options); err != nil {
 		return preflightOutcomes(plans, members, offender, err), err
 	}
-	for i, planned := range set.rows {
-		if !planned.plan.Action.Removes() {
-			plans = append(plans, planned.plan)
-			continue
-		}
-		unreached := func() []CleanupPlan { return members[i+1:] }
-		if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
-			plans = append(plans, faultedPlan(planned.plan, CleanupPlan{}, err))
-			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
-		}
-		current, err := requalifyExplicitRow(j, a.run, root, planned, options)
-		if err != nil {
-			plans = append(plans, requalifiedOutcome(planned.plan, current.plan, err))
-			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), err
-		}
-		applied, applyErr := applyExplicitWith(j, a, root, current.plan.Target, current.targetFingerprint, options)
-		if applyErr != nil {
-			plans = append(plans, faultedPlan(current.plan, applied, applyErr))
-			return notAttemptedPlans(plans, unreached(), notAttemptedDetail), applyErr
-		}
-		plans = append(plans, applied)
+	recorded := cleanupTraversal[explicitCleanupRow]{
+		visits:   func(planned explicitCleanupRow) bool { return planned.plan.Action.Removes() },
+		retained: func(planned explicitCleanupRow) CleanupPlan { return planned.plan },
+		visit: func(planned explicitCleanupRow) (CleanupPlan, error) {
+			if err := hit(j.cleanupBoundary, StepMemberRequalify); err != nil {
+				return faultedPlan(planned.plan, CleanupPlan{}, err), err
+			}
+			current, err := requalifyExplicitRow(j, a.run, root, planned, options)
+			if err != nil {
+				return requalifiedOutcome(planned.plan, current.plan, err), err
+			}
+			applied, applyErr := applyExplicitWith(j, a, root, current.plan.Target, current.targetFingerprint, options)
+			if applyErr != nil {
+				return faultedPlan(current.plan, applied, applyErr), applyErr
+			}
+			return applied, nil
+		},
+		// The set's plans list the recorded members first, so a recorded member's index is
+		// its index there, and its unreached suffix carries every unrecorded member too.
+		stopped: func(plans []CleanupPlan, failed int) []CleanupPlan {
+			return notAttemptedPlans(plans, members[failed+1:], notAttemptedDetail)
+		},
+	}
+	plans, err := recorded.run(set.rows, plans)
+	if err != nil {
+		return plans, err
 	}
 	return applyUnrecordedRows(j, a, root, set, options, plans)
 }
