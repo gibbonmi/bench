@@ -117,6 +117,24 @@ func TestCleanupTraversalModeFaultBoundaries(t *testing.T) {
 			t.Fatalf("boundaries = %v, want %v", *steps, want)
 		}
 	})
+	// A landed branch writes no discarded ref, so only the unique branch reaches the discard
+	// windows, and the unrecorded stage has no requalify boundary.
+	t.Run("unrecorded/all-success", func(t *testing.T) {
+		t.Parallel()
+		root, home := unclaimedBranchFixture(t, "a")
+		unique, _ := uniqueBranch(t, root, "e")
+		f, options := repoHome{root, home}, CleanupOptions{DiscardBranch: true}
+		set := planExplicitSet(defaultJoins(), baselineAmbient(f), root, branchTargets(unclaimedBranchRef("a"), unique), options)
+		j := defaultJoins()
+		steps, trace := stepTrace()
+		j.cleanupBoundary = trace
+
+		_, err := applyExplicitSet(j, baselineAmbient(f), root, set, options)
+		mustNoError(t, err)
+		if want := []LifecycleStep{StepDiscardedRefWrite, StepDiscardedRefAbsent, StepDiscardedBranchDelete}; !reflect.DeepEqual(*steps, want) {
+			t.Fatalf("boundaries = %v, want %v", *steps, want)
+		}
+	})
 }
 
 // TestCleanupTraversalAuthorityPreservation is R28. Ignored residue that appears inside a
@@ -156,4 +174,167 @@ func TestCleanupTraversalAuthorityPreservation(t *testing.T) {
 	if len(plans) != 2 || plans[removable].Action != ActionError || !reflect.DeepEqual(plans[retained], set.rows[retained].plan) {
 		t.Fatalf("rows = %#v, want the refused member failed and the retained member as planned", plans)
 	}
+}
+
+// unrecordedSuffixSet is one recorded removable member ahead of three unique unclaimed
+// branches, planned with --discard-branch at the fixed plan day. The recorded member makes the
+// branches' indexes in the set's plans differ from their indexes among the branches.
+type unrecordedSuffixSet struct {
+	removableSet
+	a    ambient
+	set  explicitCleanupSet
+	tips map[string]string
+}
+
+func unrecordedSuffixFixture(t *testing.T, options CleanupOptions) unrecordedSuffixSet {
+	t.Helper()
+	f := unrecordedSuffixSet{removableSet: removableSetFixture(t, 1), tips: map[string]string{}}
+	targets := explicitIdentities(f.creations)
+	for _, owner := range []string{"a", "b", "c"} {
+		ref, tip := uniqueBranch(t, f.root, owner)
+		f.tips[ref] = tip
+		targets = append(targets, branchTargets(ref)...)
+	}
+	f.a = baselineAmbient(f.repoHome)
+	f.set = planExplicitSet(defaultJoins(), f.a, f.root, targets, options)
+	if f.set.fingerprint == "" || len(f.set.rows) != 1 || len(f.set.unrecorded) != 3 {
+		t.Fatalf("explicit set = %#v, want one recorded and three unrecorded members", f.set)
+	}
+	return f
+}
+
+// TestCleanupTraversalUnrecordedSuffix is R11, R13, R14, R16, and R19 for the unrecorded stage.
+// A stop at the second branch keeps the recorded member and the first branch removed, names the
+// stopped branch in its own row, reports the unreached branch as not attempted, and leaves the
+// stopped and unreached branches at their tips with no discarded ref.
+func TestCleanupTraversalUnrecordedSuffix(t *testing.T) {
+	t.Parallel()
+	options := CleanupOptions{DiscardBranch: true}
+	stop := errors.New("stop at the second branch")
+	for _, tc := range []struct {
+		name string
+		// fault installs the stop. It returns the error the apply must return and the tip the
+		// stopped branch must keep.
+		fault func(*testing.T, *joins, unrecordedSuffixSet) (error, func() string)
+		// stopped checks the stopped branch's own row against its planned row.
+		stopped func(planned, got CleanupPlan) bool
+		// writes is how many visits reach a discarded-ref write. A fault stops inside the second
+		// write, and drift stops the second visit before its write.
+		writes int
+	}{
+		{"R11 a fault in the second discard", func(_ *testing.T, j *joins, f unrecordedSuffixSet) (error, func() string) {
+			j.cleanupBoundary = atSecondHit(StepDiscardedRefWrite, func() error { return stop })
+			ref := f.set.unrecorded[1].ref
+			return stop, func() string { return f.tips[ref] }
+		}, func(planned, got CleanupPlan) bool {
+			return got.Target == planned.Target && got.Action == ActionError && got.Reason == stop.Error() && got.Recovery == planned.Recovery
+		}, 2},
+		{"R13 the second branch moves and stays removable", func(t *testing.T, j *joins, f unrecordedSuffixSet) (error, func() string) {
+			ref, moved := f.set.unrecorded[1].ref, ""
+			j.cleanupBoundary = atStep(StepDiscardedBranchDelete, func() error {
+				if moved == "" {
+					moved = commitOnBranch(t, f.root, ref, "moved.txt", "moved\n")
+				}
+				return nil
+			})
+			return errStaleFingerprint, func() string { return moved }
+		}, func(planned, got CleanupPlan) bool {
+			return got.Target == planned.Target && got.Action == ActionNotAttempted && got.Reason == driftedDetail
+		}, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			f := unrecordedSuffixFixture(t, options)
+			j := defaultJoins()
+			want, stoppedTip := tc.fault(t, &j, f)
+			steps, trace := stepTrace()
+			inner := j.cleanupBoundary
+			j.cleanupBoundary = func(step LifecycleStep) error { _ = trace(step); return inner(step) }
+
+			plans, err := applyExplicitSet(j, f.a, f.root, f.set, options)
+			if !errors.Is(err, want) {
+				t.Fatalf("apply error = %v, want %v", err, want)
+			}
+			members := f.set.plans()
+			if len(plans) != len(members) {
+				t.Fatalf("rows = %#v, want one row per selected member", plans)
+			}
+			first, second, third := f.set.unrecorded[0], f.set.unrecorded[1], f.set.unrecorded[2]
+			if plans[0].Action != ActionRemoved || plans[1].Action != ActionRemoved || plans[1].Target != first.plan.Target || plans[1].Recovery != first.discarded {
+				t.Fatalf("rows = %#v, want the recorded member and the first branch removed", plans)
+			}
+			if refTip(f.root, first.ref) != "" || refTip(f.root, first.discarded) != f.tips[first.ref] {
+				t.Fatalf("the first branch %s reads %q and its discarded ref %q, want it gone under %s", first.ref, refTip(f.root, first.ref), refTip(f.root, first.discarded), f.tips[first.ref])
+			}
+			if !tc.stopped(second.plan, plans[2]) {
+				t.Fatalf("stopped row = %#v, want the outcome of %s", plans[2], second.ref)
+			}
+			if got := plans[3]; got.Target != third.plan.Target || got.Action != ActionNotAttempted || got.Reason != notAttemptedDetail {
+				t.Fatalf("unreached row = %#v, want %s not attempted", got, third.ref)
+			}
+			if refTip(f.root, second.ref) != stoppedTip() || refTip(f.root, third.ref) != f.tips[third.ref] || refTip(f.root, second.discarded) != "" || refTip(f.root, third.discarded) != "" {
+				t.Fatalf("refs = %q, want the stopped and unreached branches kept with no discarded ref", discardedRefs(t, f.root))
+			}
+			writes := 0
+			for _, step := range *steps {
+				if step == StepDiscardedRefWrite {
+					writes++
+				}
+			}
+			if writes != tc.writes {
+				t.Fatalf("boundaries = %v, want no discard visit after the stopped branch", *steps)
+			}
+		})
+	}
+}
+
+// TestCleanupTraversalUnrecordedMixed is R04, R05, and R06 for the unrecorded stage. Without
+// --discard-branch the branches pass through as planned behind a removed recorded member and
+// reach no discard boundary. With it, a branch that moved before the apply refuses the set in
+// its preflight, so the recorded member ahead of it stays.
+func TestCleanupTraversalUnrecordedMixed(t *testing.T) {
+	t.Parallel()
+	t.Run("R04 R05 retained branches", func(t *testing.T) {
+		t.Parallel()
+		f := unrecordedSuffixFixture(t, CleanupOptions{})
+		j := defaultJoins()
+		steps, trace := stepTrace()
+		j.cleanupBoundary = trace
+
+		plans, err := applyExplicitSet(j, f.a, f.root, f.set, CleanupOptions{})
+		mustNoError(t, err)
+		if len(plans) != 4 || plans[0].Action != ActionRemoved || !reflect.DeepEqual(plans[1:], f.set.plans()[1:]) {
+			t.Fatalf("rows = %#v, want the recorded member removed and each branch as planned", plans)
+		}
+		for _, step := range *steps {
+			if step == StepDiscardedRefWrite || step == StepDiscardedRefAbsent || step == StepDiscardedBranchDelete {
+				t.Fatalf("boundaries = %v, want no discard visit of a retained branch", *steps)
+			}
+		}
+		for ref, tip := range f.tips {
+			if refTip(f.root, ref) != tip {
+				t.Fatalf("retained branch %s reads %q, want %s", ref, refTip(f.root, ref), tip)
+			}
+		}
+	})
+	t.Run("R06 a branch moved before the apply", func(t *testing.T) {
+		t.Parallel()
+		options := CleanupOptions{DiscardBranch: true}
+		f := unrecordedSuffixFixture(t, options)
+		moved := commitOnBranch(t, f.root, f.set.unrecorded[2].ref, "moved.txt", "moved\n")
+
+		plans, err := applyExplicitSet(defaultJoins(), f.a, f.root, f.set, options)
+		if !errors.Is(err, errStaleFingerprint) {
+			t.Fatalf("apply error = %v, want the preflight to refuse", err)
+		}
+		requireMembersPresent(t, f.creations)
+		for _, plan := range plans {
+			if plan.Action == ActionRemoved {
+				t.Fatalf("rows = %#v, want no removal", plans)
+			}
+		}
+		if discardedRefs(t, f.root) != "" || refTip(f.root, f.set.unrecorded[2].ref) != moved {
+			t.Fatalf("refs = %q, want no discarded ref and the moved branch at %s", discardedRefs(t, f.root), moved)
+		}
+	})
 }
