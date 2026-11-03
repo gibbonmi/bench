@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/prepublication-preflight/spec.md",
-  "plan_digest": "sha256:f4a926e232141572df2fd2c516a29ce4b0e77962dd3c03d7816b987abe2de4d0",
+  "plan_digest": "sha256:1e047b5c20810d9793fbd4cfb4abb506662fdba458bc5d22a004c39d8892987d",
   "implementation_session": "",
   "chunks": [
     {
@@ -449,9 +449,9 @@
     {
       "id": "C3",
       "base": "40233078fd0e28982cea11a89d0f6f8afd8b1a02",
-      "tip": "102ed39ad1273c0a929d3c93895c376b56e9e3f8",
-      "plan_digest": "sha256:f4a926e232141572df2fd2c516a29ce4b0e77962dd3c03d7816b987abe2de4d0",
-      "source_digest": "03cf2035deba1918ad29781e6be8540c5d56b7d9",
+      "tip": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+      "plan_digest": "sha256:1e047b5c20810d9793fbd4cfb4abb506662fdba458bc5d22a004c39d8892987d",
+      "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
       "acceptance_rows": [
         "PP17",
         "PP18",
@@ -467,7 +467,8 @@
         "PP28",
         "PP29",
         "PP30",
-        "PP31"
+        "PP31",
+        "PP35"
       ],
       "verification": [
         {
@@ -557,6 +558,96 @@
               "ref": "claude-agent:ppf-author-03",
               "digest": "sha256:09cb7f93f418330fc50a18ec0e27e065651b90c9994244d3880ccbd909fd3ad3",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/anchors/registry_plan_commit.go,omit,failed,1,TestPlanCommitAnchors,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/anchors,PlanCommit,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,502\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/anchors,fail,7,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/anchors,TestPlanCommitAnchors,\"registry_plan_commit_test.go:11: tree broken at \\\"dispatch follows uses plain `bench commit`\\\" in .agents/commands/bench-implement-spec.md = [prepared build guidance: bench-implement-spec.md dropped charge preparation or fence, dependency, an… (747 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c3-03-r1-chain-stubs",
+          "performer": "ppf-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-repair-03-r1",
+            "digest": "sha256:0a974b7a580caa99c60cde8c4d206528a15d5c5fd875ade39f43985c1c3ed1fd",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/commit_chain.go,swap,failed,1,TestCommitChainRunsThreeSteps,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestCommitChainRunsThreeSteps$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,487\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,105,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestCommitChainRunsThreeSteps,\"commit_chain_test.go:105: preflight calls = [[\\\"/fixture/worktree\\\" \\\"chain-fixture\\\" \\\"\\\" \\\"HEAD\\\"]], want [[\\\"/fixture/worktree\\\" \\\"chain-fixture\\\" \\\"\\\" \\\"fedcba9876543210fedcba9876543210fedcba98\\\"]]: the candidate commit, not the published one\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+          "requirement": "chain-stubs",
+          "command": "bench test --package ./cmd/bench --run 'CommitChain|CommitHelp'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Give the published HEAD in place of the candidate to the preflight step and record the PP18 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ppf-repair-03-r1",
+              "digest": "sha256:0a974b7a580caa99c60cde8c4d206528a15d5c5fd875ade39f43985c1c3ed1fd",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/commit_chain.go,swap,failed,1,TestCommitChainRunsThreeSteps,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./cmd/bench,^TestCommitChainRunsThreeSteps$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,487\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/cmd/bench,fail,105,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/cmd/bench,TestCommitChainRunsThreeSteps,\"commit_chain_test.go:105: preflight calls = [[\\\"/fixture/worktree\\\" \\\"chain-fixture\\\" \\\"\\\" \\\"HEAD\\\"]], want [[\\\"/fixture/worktree\\\" \\\"chain-fixture\\\" \\\"\\\" \\\"fedcba9876543210fedcba9876543210fedcba98\\\"]]: the candidate commit, not the published one\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c3-03-r1-chain-system",
+          "performer": "ppf-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-repair-03-r1",
+            "digest": "sha256:d303238a0e00b93bbf648abeddb8cd2940219928ca1d40c88a34684cbabd242a",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/commit_chain.go,swap,failed,1,TestCommitChainRefusesRedCandidate,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,TestCommitChainRefusesRedCandidate,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,591\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,562,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestCommitChainRefusesRedCandidate,\"commit_chain_test.go:47: red plan commit = (0, \\\"tree[1]{target,head,dirty}:\\\\\\\\n  commit-chain,f4099fd7caff396064835397f996b9025d5d387a,true\\\\\\\\ncommitted{published_commit=f7ac254aeeff22fc638fcd62ed139e9187820e14,path_count=1}\\\\\\\\ncommit-chain{commi… (404 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+          "requirement": "chain-system",
+          "command": "bench test --check system --run TestCommitChainRefusesRedCandidate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the check from the chain commit call and record the PP28 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ppf-repair-03-r1",
+              "digest": "sha256:d303238a0e00b93bbf648abeddb8cd2940219928ca1d40c88a34684cbabd242a",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,cmd/bench/commit_chain.go,swap,failed,1,TestCommitChainRefusesRedCandidate,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,system,TestCommitChainRefusesRedCandidate,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,591\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,fail,562,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/systemtest,TestCommitChainRefusesRedCandidate,\"commit_chain_test.go:47: red plan commit = (0, \\\"tree[1]{target,head,dirty}:\\\\\\\\n  commit-chain,f4099fd7caff396064835397f996b9025d5d387a,true\\\\\\\\ncommitted{published_commit=f7ac254aeeff22fc638fcd62ed139e9187820e14,path_count=1}\\\\\\\\ncommit-chain{commi… (404 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "c3-03-r1-route-anchors",
+          "performer": "ppf-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "df4d89bd6955396b4f3565194bac8c06a96525c8",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ppf-repair-03-r1",
+            "digest": "sha256:4717f08f25ba72982f4bf36c7c35ee02e9c7aee739cc9aeffcb6632b238c5c1f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,358\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,16757,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: plan commit: a plan commit that a dispatch follows uses plain bench commit\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "d08df82d5c455fa52ac246a0ff96380863e86d8e",
+          "requirement": "route-anchors",
+          "command": "bench test --package ./internal/anchors --run PlanCommit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Delete the dispatch half of the plan-commit route sentence and record the PP29 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ppf-repair-03-r1",
+              "digest": "sha256:4717f08f25ba72982f4bf36c7c35ee02e9c7aee739cc9aeffcb6632b238c5c1f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,.agents/commands/bench-implement-spec.md,omit,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,358\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,16757,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: plan commit: a plan commit that a dispatch follows uses plain bench commit\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -684,6 +775,21 @@
         ],
         "C2": [
           "C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f4a926e232141572df2fd2c516a29ce4b0e77962dd3c03d7816b987abe2de4d0",
+      "to": "sha256:1e047b5c20810d9793fbd4cfb4abb506662fdba458bc5d22a004c39d8892987d",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ],
+        "C2": [
+          "C2"
+        ],
+        "C3": [
+          "C3"
         ]
       }
     }
