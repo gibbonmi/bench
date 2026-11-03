@@ -700,3 +700,21 @@ The repair moved `requalifyExplicitRow` unchanged from `clean_set.go` to `clean_
 ## C1 confirming round
 
 A fresh unified opus / medium session read the repair delta `5e0110372..94eb8696d`. It closed C1-SPEC-1 and C1-COV-1, and it found no new finding. Each axis replayed its finding's probe, and each probe bit. Repair cycles consumed for C1: 1 of 2.
+
+## C2 author witness reds
+
+The ticket 02 author reported these development reds outside the plan probes. Each mutation was restored, and the package then passed.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| R16 | The suffix offset is dropped. | `TestCleanupTraversalUnrecordedSuffix` |
+| R11 | The fault row is replaced by the current plan. | `TestCleanupTraversalUnrecordedSuffix` |
+| R13 | Drift becomes a fault. | `TestCleanupTraversalUnrecordedSuffix` |
+| R19 | The removed action is omitted. | `TestCleanupTraversalUnrecordedSuffix` |
+| R14 | Visits continue after a failure. | `TestCleanupTraversalUnrecordedSuffix` |
+| R05 | Every branch is visited. | `TestCleanupTraversalUnrecordedMixed` |
+| R04 | A retained row is rewritten. | `TestCleanupTraversalUnrecordedMixed` |
+| R06 | The unrecorded preflight is disabled. | `TestCleanupTraversalUnrecordedMixed` |
+| R27 | An extra hook is inserted. | `TestCleanupTraversalModeFaultBoundaries/unrecorded/all-success` |
+
+The author reported two divergences. R12 has no unrecorded witness, because under `--discard-branch` every unrecorded class replans as removable. The unrecorded closures capture no run, because `requalifyUnrecordedRow` reads none; the orchestrator corrects the spec sentence that says otherwise.
