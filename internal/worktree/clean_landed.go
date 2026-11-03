@@ -59,7 +59,7 @@ func planLandedSet(j joins, run *git.Run, root string, options CleanupOptions, s
 	if len(set.rows) == 0 {
 		return set, nil
 	}
-	set.fingerprint = fingerprintLandedSet(set.rows, options)
+	set.fingerprint = fingerprintLandedSet(landedFingerprintInputs(set.rows, options))
 	for i := range set.rows {
 		set.rows[i].plan.Fingerprint = set.fingerprint
 	}
@@ -231,26 +231,26 @@ func assignmentLeaseStates(run *git.Run, root string) (map[string]string, error)
 	return states, nil
 }
 
-// fingerprintLandedSet binds both membership and every removal-relevant row fact. A
-// later apply compares this digest before touching the first checkout. Adding a row or
-// changing one preserving verdict must change the value shared by every output row.
-func fingerprintLandedSet(rows []landedCleanupRow, options CleanupOptions) string {
-	parts := [][]byte{
-		[]byte(landedSetFingerprintVersion),
-		[]byte(strconv.FormatBool(options.DiscardIgnored)),
-		[]byte(strconv.FormatBool(options.DiscardBranch)),
-		[]byte(strconv.FormatBool(options.Full)),
-	}
+// landedFingerprintInputs binds both membership and every removal-relevant row fact, in the
+// explicit set's input shape. A later apply compares the digest before touching the first
+// checkout. Adding a row or changing one preserving verdict must change the shared value.
+func landedFingerprintInputs(rows []landedCleanupRow, options CleanupOptions) []explicitFingerprintInput {
+	inputs := []explicitFingerprintInput{{"options", []string{"discard-ignored", "discard-branch", "full"},
+		[]string{strconv.FormatBool(options.DiscardIgnored), strconv.FormatBool(options.DiscardBranch), strconv.FormatBool(options.Full)}}}
 	for _, row := range rows {
-		parts = append(parts,
-			[]byte(row.assignment.ID),
-			[]byte(row.assignment.Worktree),
-			[]byte(row.plan.Action),
-			[]byte(row.headOID),
-			[]byte(row.plan.Tracked),
-			[]byte(strconv.Itoa(row.plan.Ignored.Count)),
-			[]byte(row.lease),
-		)
+		inputs = append(inputs, explicitFingerprintInput{"landed", nil, []string{row.assignment.ID, row.assignment.Worktree,
+			string(row.plan.Action), row.headOID, row.plan.Tracked, strconv.Itoa(row.plan.Ignored.Count), row.lease}})
+	}
+	return inputs
+}
+
+// fingerprintLandedSet hashes the version, then each input value in order.
+func fingerprintLandedSet(inputs []explicitFingerprintInput) string {
+	parts := [][]byte{[]byte(landedSetFingerprintVersion)}
+	for _, input := range inputs {
+		for _, value := range input.values {
+			parts = append(parts, []byte(value))
+		}
 	}
 	return fingerprintParts(parts...)
 }

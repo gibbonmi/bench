@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/intent"
@@ -130,6 +131,22 @@ func baselineAmbient(f repoHome) ambient {
 	return a
 }
 
+// renderFingerprintInputs renders a production input list, so an input the fingerprint omits
+// leaves the record, and the plan digest must be the production hash of exactly these inputs.
+// Only the empty landed selection plans no digest; the frozen record pins that absence.
+func renderFingerprintInputs(t *testing.T, digest string, inputs []explicitFingerprintInput, hash func([]explicitFingerprintInput) string) (lines []string) {
+	t.Helper()
+	requireTest(t, digest == "" || hash(inputs) == digest, "plan digest %s is not the fingerprint %s of its rendered inputs", digest, hash(inputs))
+	for _, input := range inputs {
+		fields := append([]string{input.kind}, input.values...)
+		for i, key := range input.keys {
+			fields[i+1] = key + "=" + fields[i+1]
+		}
+		lines = append(lines, strings.Join(fields, " "))
+	}
+	return lines
+}
+
 // --- explicit and unrecorded cases: applyExplicitSet and its unrecorded stage ---
 
 // explicitRun plans targets through the explicit planner. prepare runs after the plan and
@@ -143,22 +160,7 @@ func explicitRun(t *testing.T, f repoHome, byRole bool, targets []string, option
 		t.Fatalf("explicit set failures = %#v, want a resolved selection", set.failures)
 	}
 	run := baselineRun{repoHome: f, byRole: byRole, planDigest: set.fingerprint, targetDigests: map[string]string{}}
-	// The record renders the production input list, so an input the fingerprint omits leaves the
-	// record, and the plan digest must be the production fingerprint of exactly these inputs.
-	inputs := explicitFingerprintInputs(set, options)
-	if digest := fingerprintExplicitSet(inputs); digest != set.fingerprint {
-		t.Fatalf("plan digest %s is not the fingerprint %s of its rendered inputs", set.fingerprint, digest)
-	}
-	for _, input := range inputs {
-		line := input.kind
-		for i, value := range input.values {
-			if i < len(input.keys) {
-				value = input.keys[i] + "=" + value
-			}
-			line += " " + value
-		}
-		run.inputs = append(run.inputs, line)
-	}
+	run.inputs = renderFingerprintInputs(t, set.fingerprint, explicitFingerprintInputs(set, options), fingerprintExplicitSet)
 	for _, row := range set.rows {
 		run.targetDigests[row.targetFingerprint] = row.assignment.ID
 	}
@@ -282,8 +284,7 @@ func unrecordedRecoveryConflictCase(t *testing.T) baselineRun {
 
 // --- landed cases: applyLandedSet ---
 
-// landedRun plans the whole-repository landed set. prepare runs after the plan and before the
-// apply.
+// landedRun plans the whole-repository landed set. prepare runs after the plan, before the apply.
 func landedRun(t *testing.T, f repoHome, byRole bool, prepare func(*joins, landedCleanupSet)) baselineRun {
 	t.Helper()
 	j := defaultJoins()
@@ -291,9 +292,8 @@ func landedRun(t *testing.T, f repoHome, byRole bool, prepare func(*joins, lande
 	set, err := planLandedSet(j, nil, f.root, options, "")
 	mustNoError(t, err)
 	run := baselineRun{repoHome: f, byRole: byRole, planDigest: set.fingerprint}
-	run.inputs = append(run.inputs, fmt.Sprintf("options discard-ignored=%t discard-branch=%t full=%t", options.DiscardIgnored, options.DiscardBranch, options.Full))
+	run.inputs = renderFingerprintInputs(t, set.fingerprint, landedFingerprintInputs(set.rows, options), fingerprintLandedSet)
 	for _, row := range set.rows {
-		run.inputs = append(run.inputs, fmt.Sprintf("landed %s %s %s %s %s %d %s", row.assignment.ID, row.assignment.Worktree, row.plan.Action, row.headOID, row.plan.Tracked, row.plan.Ignored.Count, row.lease))
 		run.planned = append(run.planned, row.plan.Target)
 	}
 	if prepare != nil {
