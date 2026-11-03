@@ -10,6 +10,8 @@ Deliver C4: unclaimed cleanup consumes the accepted C1 traversal and the complet
 Remove applyUnclaimedAssignmentSet's original loop in this ticket.
 Consume the predecessor baseline records and completed adapter migrations.
 Finish the permanent comparison across every enumerated mode and case.
+Ticket 00 owns the frozen records, and this ticket adds only the post-replan unclaimed witnesses.
+applyUnclaimedAssignmentSet keeps its current signature with no run parameter.
 
 Keep StepUnlockedReplan before full fingerprint and length replan.
 Keep each tuple equality check immediately before that member's retained or deletion visit.

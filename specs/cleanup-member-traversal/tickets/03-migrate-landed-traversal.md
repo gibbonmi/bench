@@ -17,6 +17,11 @@ Keep the locked planner and terminal callback in applyCleanupTransaction.
 They preserve locked drift and the post-settlement fault boundary.
 A failure projects landed unreached outcomes and retains every completed effect.
 
+The landed visit predicate stays landedApplies, so a missing-tree release row is visited.
+Landed preflight keeps its current Removes predicate, so it skips that row.
+The requalify and replan closures capture `a.run`.
+The frozen missing-tree release case of ticket 00 stays green.
+
 cleanLandedSiblings keeps its narrowed base scope and existing landed adapter call.
 Do not edit its caller or broaden its selection.
 Use the frozen C1 records for landed command and sibling outcomes.

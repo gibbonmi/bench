@@ -16,6 +16,7 @@ Keep discardUnrecordedBranch as the effect owner and exact branch deletion as it
 Only classUnique plans carry a recovery ref.
 Landed and subsumed plans retain recovery none and create no discarded ref.
 Do not add lifecycle fault hooks to this adapter.
+The closures read the `run` field of discardCandidates, and the shared owner takes no run.
 
 A failure retains the completed recorded and branch prefix and projects every unreached member.
 Retained rows remain unchanged and skip qualification and effects.
