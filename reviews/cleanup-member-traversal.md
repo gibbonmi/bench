@@ -1151,3 +1151,13 @@ Findings: 0. Worst issue: none.
 - The subtest-name idiom `map[bool]string{...}[landed]` is hard to scan.
 
 The finding routes to one repair session on ticket 03, which holds both paths.
+
+## C3 repair 1 witness reds
+
+The repair session ft363-repair-03-r1 closed C3-SPEC-1 at repair commit `49982b68a`. Repair cycles consumed for C3: 1 of 2. The mutation was restored, and the package then passed.
+
+| Finding | Row | Mutation | Red test |
+|---|---|---|---|
+| C3-SPEC-1 | R26 | `row.lease` is removed from `landedFingerprintInputs`. | `TestCleanupTraversalBaseline/landed/all-success`, 8 landed subtests |
+
+The repair reported one duplication in its delta. `landedFingerprintInputs` and `explicitFingerprintInputs` each build the options input, and the two fingerprint functions repeat one hash loop. The orchestrator routes the consolidation to ticket 04, which fences both files and adds the unclaimed list.
