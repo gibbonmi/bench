@@ -765,7 +765,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "C3-R1-STD",
+          "performer": "ft363-review-c3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3",
+            "digest": "sha256:88d101c6b72dffa839d20ee7cb6b80bc03fa2371beca58c263c8aadcd3c0ba09",
+            "excerpt": "## Standards\nFindings: 0. Worst issue: none.\nThe adapter at internal/worktree/clean_landed.go:375-399 keeps all-member preflight first (:372), StepMemberRequalify and requalifyLandedRow before each visit, and the locked planner, tuple compare, and terminal callback in applyCleanupTransaction; closures capture a.run (spec.md:85). Callers worktree.go:342 and land_effects.go:213 unchanged (touched=false). modeApply (cleanup_members_modes_test.go:209-227) is one reused helper and duplicates no production knowledge. Census pin 884 to 885 matches one new top-level test.\n"
+          },
+          "axis": "Standards",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "C3-R1-SPEC",
+          "performer": "ft363-review-c3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3",
+            "digest": "sha256:9e232122fce55fc2bdf5996f0c38f2849f78327d7f5bc3bf27595bc1ff6535e0",
+            "excerpt": "## Spec\nFindings: 1. Worst issue: C3-SPEC-1.\nC3-SPEC-1 | sev 4 | conf 9 | auto-fix | internal/worktree/cleanup_members_baseline_test.go:294-296\nRequirement: spec.md:325 and spec.md:327 (input omission must fail the comparison). Defect: landedRun holds a hand copy of the fingerprintLandedSet input list (clean_landed.go:237-256). Probe: removed []byte(row.lease) from fingerprintLandedSet, ran CleanupTraversalBaseline: silent, 32 tests, restored yes. Fix: the C1-SPEC-1 route, landedFingerprintInputs in clean_landed.go, rendered by landedRun with a same-run digest check.\nVisit predicate correct: visits uses landedApplies (clean_landed.go:376), preflight keeps Removes() (clean_set_apply.go:245).\n"
+          },
+          "axis": "Spec",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "finding_ids": [
+            "C3-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "C3-R1-COV",
+          "performer": "ft363-review-c3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "6de67a81a40764c7c7ccee3179597b7297ef040c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-review-c3",
+            "digest": "sha256:4135cc5667f9a103f7514c3de89506ea92e5825dfdc1ecb63ca64fa3dd517f3e",
+            "excerpt": "## Coverage\nFindings: 0. Worst issue: none.\nEdges tested: missing-tree release visited but not preflighted; drift that keeps the tuple selected; failed apply with no fault rewrite; the failed+1 suffix projection. Probes: visits landedApplies to Removes(): bit (TestCleanLandedRetiresAMissingTree, baseline/landed/missing-tree-release). Drop sameLandedCleanupTuple in the planner: bit (baseline/landed/locked-drift). faultedPlan to raw applied: bit (5 failures, first TestCleanupLandedUnreachedSuffix). All restored. Final git status: clean.\n"
+          },
+          "axis": "Coverage",
+          "base": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "tip": "9b5c117bd9263b21dfdd99a9f96cf3fd01149d36",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -957,3 +1020,29 @@ The ticket 03 author reported these development reds outside the plan probes. Ea
 | R27 | The landed `StepMemberRequalify` hit is omitted. | `TestCleanupTraversalModeFaultBoundaries/landed/all-success` |
 
 The author reported one open gap. `landedRun` in `cleanup_members_baseline_test.go` holds a hand copy of the input list of `fingerprintLandedSet`, which is the C1-SPEC-1 defect class in landed mode.
+
+## C3 review round 1
+
+One unified opus / medium session reviewed the frozen pair `1c1cb2a10..9b5c117bd`. Repair cycles consumed for C3: 0 of 2 before this round's repair.
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 1. Worst issue: C3-SPEC-1.
+
+- C3-SPEC-1, severity 4, confidence 9. The landed baseline does not fail when a fingerprint input is omitted (`internal/worktree/cleanup_members_baseline_test.go:294`). `landedRun` holds a hand copy of the input list of `fingerprintLandedSet`. Disposition: auto-fix by the C1-SPEC-1 route. A production `landedFingerprintInputs` in `clean_landed.go` holds the list, the fingerprint hashes it, and `landedRun` renders it and checks the digest in the same run.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
+
+## Advice
+
+- `landedRun` and `modeApply` each plan the landed set with default options and wrap `applyLandedSet`. One helper could own both.
+- Two explicit subtests lost the precondition guard on an empty fingerprint.
+- The subtest-name idiom `map[bool]string{...}[landed]` is hard to scan.
+
+The finding routes to one repair session on ticket 03, which holds both paths.
