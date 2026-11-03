@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/cleanup-member-traversal/spec.md",
-  "plan_digest": "sha256:1d496d4c503b237b85a3ff1a792a104c59aec97c4f6a12914c822434704c6ca4",
+  "plan_digest": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
   "implementation_session": "",
   "chunks": [
     {
@@ -497,6 +497,94 @@
           ]
         }
       ]
+    },
+    {
+      "id": "C2",
+      "base": "94eb8696d87a613cebca4cefdcffea5b37389019",
+      "tip": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+      "plan_digest": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
+      "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+      "acceptance_rows": [
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R09",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R16",
+        "R19",
+        "R22",
+        "R24",
+        "R27",
+        "R28",
+        "R29"
+      ],
+      "verification": [
+        {
+          "id": "C2-T02-unrecorded-requalify",
+          "performer": "ft363-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-02",
+            "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "requirement": "unrecorded-requalify",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Skip the unrecorded requalification after the recorded visits and record the R03 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-02",
+              "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "C2-T02-conditional-recovery",
+          "performer": "ft363-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f1d7a531955a1138b472d1f547a7052f3701c81f",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft363-author-02",
+            "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+            "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "1c1cb2a10903d6b503b9fb4ed24464d0ecf81e11",
+          "requirement": "conditional-recovery",
+          "command": "bench test --package ./internal/worktree --run 'CleanupTraversal|CleanSet|DiscardTarget'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Write a discarded recovery ref for every unrecorded plan and record the R29 red, the restore, and the green.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft363-author-02",
+              "digest": "sha256:2d199496ba47656123be06eeec063c8e1eb380747d58bf20b5b05c138b10e66e",
+              "excerpt": "mutants[2]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestCleanupTraversalBaseline/unrecorded/holder-removal,140,1,0,null,yes\n  2,bit,swap,failed,6,TestCleanupTraversalBaseline/unrecorded/all-success,140,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/worktree,CleanupTraversal|CleanSet|DiscardTarget,passed,3\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -537,6 +625,15 @@
     {
       "from": "sha256:8917268dbf6107a6d8cda61954f441bb91d3430e791577ba9c7ee427bc99837c",
       "to": "sha256:1d496d4c503b237b85a3ff1a792a104c59aec97c4f6a12914c822434704c6ca4",
+      "chunk_ids": {
+        "C1": [
+          "C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:1d496d4c503b237b85a3ff1a792a104c59aec97c4f6a12914c822434704c6ca4",
+      "to": "sha256:ffbaed0cf2f98d0b3407327299980ba43e7ec97226758b1e97f14c70dd35d628",
       "chunk_ids": {
         "C1": [
           "C1"
