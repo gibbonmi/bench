@@ -353,7 +353,7 @@ The whole-project gate remains the acceptance oracle.
 | S36 | 36 | Differential fixtures change only the approved argument quote spellings. | planned domain fixtures from the output-reader inventory | The comparison detects changed schema, counts, reason text, exit codes, or command order. |
 | S37 | 37 | Fixture shell arguments use sanitize.ShellQuote instead of independent helpers. | planned migrated fixture tests from the ownership fences | A source inspection plus fixture execution detects surviving helpers or altered fixture argv. |
 | S38 | 38 | Each migrated caller family fails its declared quote-bypass mutation. | planned production caller tests from the inventory | Returning the former bare-token output turns the exact producer fixture red. |
-| S40 | 40 | The spec widen rerun line quotes the slug, the ticket, and each entry through the surviving owner. | planned internal/spec/widen_test.go (TestWidenRerunArguments) | A reviewed exact fixture and recovered argv detect a bypass or a lost entry. |
+| S40 | 40 | The spec widen rerun line quotes the slug, the ticket, and each entry through the surviving owner. | `internal/spec/widen_rerun_test.go` (`TestWidenRerunArguments`) | A reviewed exact fixture and recovered argv detect a bypass or a lost entry. |
 | S41 | 41 | The outline producers emit the approved quoted command shape. | planned internal/outline/shell_arguments_test.go (TestOutlineHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
 | S42 | 42 | The bounded read next-page action and the first-page command preserve their argv through the surviving owner. | planned internal/responsebound/shell_arguments_test.go (TestReadPageArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or a lost operand. |
 | S43 | 43 | The worktree read action emits the approved quoted command shape with its path slot unchanged. | planned internal/worktree/shell_arguments_test.go (TestReadActionArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or a quoted future slot. |
@@ -451,6 +451,7 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/spec/history_selected_test.go`
 - `internal/spec/widen.go`
 - `internal/spec/widen_test.go`
+- `internal/spec/widen_rerun_test.go`
 - `internal/systemtest/tree_target_test.go`
 - `internal/treetarget/build_test.go`
 - `internal/treetarget/family_test.go`

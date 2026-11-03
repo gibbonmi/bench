@@ -137,11 +137,11 @@ func TestSpecWidenRefusesAnOutOfScopeEntry(t *testing.T) {
 	requireRefusal(t, root, before, out, code, "internal/other/z.go", "--decision <reference>")
 	// The rerun names the whole request, with each argument as one shell token.
 	out, code = runWiden(t, root, "internal/x/w.go", "internal/other/z.go (new)", "internal/other/a b.go")
-	requireRefusal(t, root, before, out, code, "rerun bench spec widen s --ticket a.md --decision <reference> internal/x/w.go 'internal/other/z.go (new)' 'internal/other/a b.go'\n")
+	requireRefusal(t, root, before, out, code, "rerun bench spec widen 's' --ticket 'a.md' --decision <reference> 'internal/x/w.go' 'internal/other/z.go (new)' 'internal/other/a b.go'\n")
 	// A slug and a ticket basename with a space each stay one shell token.
 	spaced := retireWorktree(t, retirePrimary(t, "s t", "Status: staged\n", map[string]string{"specs/s t/tickets/a b.md": widenTicket("internal/x/y.go")}))
 	out, code = runSpec(t, spaced, "widen", "s t", "--ticket", "a b.md", "internal/other/z.go")
-	if want := "rerun bench spec widen 's t' --ticket 'a b.md' --decision <reference> internal/other/z.go\n"; code != 1 || !strings.Contains(out, want) {
+	if want := "rerun bench spec widen 's t' --ticket 'a b.md' --decision <reference> 'internal/other/z.go'\n"; code != 1 || !strings.Contains(out, want) {
 		t.Errorf("spaced widen = (%d, %q), want exit 1 and %q", code, out, want)
 	}
 }

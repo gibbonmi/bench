@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -118,5 +117,5 @@ func historyDetail(target, slug string) string {
 	if strings.HasPrefix(operand, "-") || operand == "help" {
 		command += "-- "
 	}
-	return command + axi.ShellQuote(operand)
+	return command + sanitize.ShellQuote(operand)
 }
