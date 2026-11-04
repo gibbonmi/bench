@@ -958,3 +958,11 @@ Count: 1. Worst issue: S-B4-COV-1.
 - S-B4-COV-1 (confidence 8, auto-fix): the sentinel check of the hostile loop cannot red, because no output reaches a shell there. Citation: `internal/preflight/evidencecmd/shell_arguments_test.go:76`.
 
 S-B4-STD-1 and S-B4-COV-1 name one test-only repair on ticket 05. A fresh repair session takes it.
+
+## S-B4 repair 1 confirmation
+
+The repair session ft354-repair-05-r1 added no expectation. It rewrote the oracle comment and removed the sentinel check that could not red.
+The coordinator probe omitted the source validation in `operandRefusal`, and `TestEvidenceArgumentCommands/source_with_an_embedded_quote` went red. The hostile refusal rows therefore still bite.
+The spec reword makes the delta more than test-only, so a three-axis confirming round closes the findings.
+
+Repair allowance: S-B4 consumed 1 of 2 repair cycles.
