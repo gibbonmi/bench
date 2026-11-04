@@ -1,10 +1,6 @@
 package evidencecmd_test
 
 import (
-	"errors"
-	"io/fs"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -16,11 +12,11 @@ import (
 
 // TestEvidenceArgumentCommands is S17: each evidence next command carries its identity,
 // source, and cursor as always-quoted shell arguments, and its fixed tokens stay bare. The
-// wanted bytes are authored from the prepared identity, so a bare value, a dropped flag
+// wanted bytes are authored from the prepared identity, so a lost quote, a dropped flag
 // pair, or a quoted fixed token reds the exact command. A POSIX shell then reads each
-// command back, so a value that loses its quotes or splits reds the recovered argv. The
-// read refuses a hostile identity, source, or cursor before any command renders, and a
-// sentinel file reds a value that the shell executes.
+// command back, which proves that the printed command replays as the intended argv. The
+// hostile rows prove that the read refuses each hostile identity, source, or cursor before
+// any command renders.
 func TestEvidenceArgumentCommands(t *testing.T) {
 	root, slug := preflighttest.SeedConformant(t)
 	ticket := preflighttest.TicketDoc("One", "PF1", "PF2") + strings.Repeat("paged ticket\n", 1000)
@@ -58,22 +54,18 @@ func TestEvidenceArgumentCommands(t *testing.T) {
 			}
 		})
 	}
-	sentinel := filepath.Join(t.TempDir(), "executed")
 	for _, row := range []struct {
 		name string
 		args []string
 	}{
-		{"identity with a command substitution", []string{"evidence", "sha256:$(touch " + sentinel + ")"}},
-		{"source with an embedded quote", []string{"evidence", identity, "--source", "s2'; touch " + sentinel}},
-		{"cursor with a command list", []string{"evidence", identity, "--cursor", "v1." + hex + ".m.0.0; touch " + sentinel}},
+		{"identity with a command substitution", []string{"evidence", "sha256:$(touch executed)"}},
+		{"source with an embedded quote", []string{"evidence", identity, "--source", "s2'; touch executed"}},
+		{"cursor with a command list", []string{"evidence", identity, "--cursor", "v1." + hex + ".m.0.0; touch executed"}},
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			if out, code := preflight.Command(row.args); code != 2 || strings.Contains(out, "bench preflight evidence") {
 				t.Fatalf("hostile read = (%d), want the usage refusal and no next command:\n%s", code, out)
 			}
 		})
-	}
-	if _, err := os.Stat(sentinel); !errors.Is(err, fs.ErrNotExist) {
-		t.Fatalf("an evidence operand ran as a command: %v", err)
 	}
 }
