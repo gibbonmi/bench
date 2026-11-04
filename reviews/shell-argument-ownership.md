@@ -771,6 +771,72 @@
             "S-B4-COV-1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "S-B4-R2-standards",
+          "performer": "ft354-review-S-B4-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "88c0d3ced019a22c65fee32bb46078550dbdd808",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B4-c1",
+            "digest": "sha256:e7032b8ae3ccaf815e94f3a18560894567cea2e5caf7a94415707a29be309594",
+            "excerpt": "## Standards\nCount: 0 open.\n- S-B4-STD-1 closed: shell_arguments_test.go:15-17 credits the exact bytes with the lost-quote catch (:48) and the shell read-back with replay (:51-53). Confidence 9.\n"
+          },
+          "axis": "Standards",
+          "base": "03bd8984525222136d809db96fa9038cf2524922",
+          "tip": "18517a9a7824394d85a6d262579584f76d60cf2d",
+          "finding_ids": [],
+          "supersedes": [
+            "S-B4-R1-standards"
+          ]
+        },
+        {
+          "id": "S-B4-R2-spec",
+          "performer": "ft354-review-S-B4-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "88c0d3ced019a22c65fee32bb46078550dbdd808",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B4-c1",
+            "digest": "sha256:f2570b4baea561e9b1172210c4076242c5d9fe074802557a4b09d717a3b69207",
+            "excerpt": "## Spec\nCount: 0 open.\n- S-B4-SPEC-1 closed: spec.md:125 names the identity, source, and cursor values and the reviewer decision; the fixtures at shell_arguments_test.go:38-45 match. Confidence 9.\n"
+          },
+          "axis": "Spec",
+          "base": "03bd8984525222136d809db96fa9038cf2524922",
+          "tip": "18517a9a7824394d85a6d262579584f76d60cf2d",
+          "finding_ids": [],
+          "supersedes": [
+            "S-B4-R1-spec"
+          ]
+        },
+        {
+          "id": "S-B4-R2-coverage",
+          "performer": "ft354-review-S-B4-c1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "88c0d3ced019a22c65fee32bb46078550dbdd808",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B4-c1",
+            "digest": "sha256:f0481cd0c2653781fecce8c16d3c13a5d1be28dbdcfa6f2ef758dbe029377b07",
+            "excerpt": "## Coverage\nCount: 0 open.\n- S-B4-COV-1 closed: the dead sentinel and its imports are removed; the hostile loop (:57-70) keeps its exit-code and no-next assertions. Confidence 9.\n"
+          },
+          "axis": "Coverage",
+          "base": "03bd8984525222136d809db96fa9038cf2524922",
+          "tip": "18517a9a7824394d85a6d262579584f76d60cf2d",
+          "finding_ids": [],
+          "supersedes": [
+            "S-B4-R1-coverage"
+          ]
         }
       ]
     }
@@ -932,7 +998,7 @@ The ticket 05 author reported this witness red before the production edit. The p
 |---|---|---|
 | S17 | The evidence next command still renders through the bare-token policy. | `TestEvidenceArgumentCommands/preparation`, `/summary`, and `/source_page` at `shell_arguments_test.go:53` |
 
-The producer refuses a hostile identity, source, or cursor before any command renders. Thus the S17 test shows those refusals and a sentinel absence.
+The producer refuses a hostile identity, source, or cursor before any command renders. Thus the S17 test shows those refusals.
 The orchestrator decision, flagged for reviewer veto: only the identity, source, and cursor values take `sanitize.ShellQuote`, and the fixed tokens stay bare.
 
 ## S-B4 review round 1 pickup
