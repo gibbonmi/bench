@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shell-argument-ownership/spec.md",
-  "plan_digest": "sha256:13292e498640b06e3de0bd8d00eb08d63e38c71a9b09efcbd62ea4757f71ec98",
+  "plan_digest": "sha256:cb192f02c39a015884882b7ad75e3747b70e693f02ac4763a1ef507632a07852",
   "implementation_session": "",
   "chunks": [
     {
@@ -577,9 +577,9 @@
     {
       "id": "S-B4",
       "base": "03bd8984525222136d809db96fa9038cf2524922",
-      "tip": "e93f34e3705456c6cd8fc9bdfad72c9b4218b733",
-      "plan_digest": "sha256:13292e498640b06e3de0bd8d00eb08d63e38c71a9b09efcbd62ea4757f71ec98",
-      "source_digest": "de67355581646dd0c88b00cffd79357d0a5d4213",
+      "tip": "18517a9a7824394d85a6d262579584f76d60cf2d",
+      "plan_digest": "sha256:cb192f02c39a015884882b7ad75e3747b70e693f02ac4763a1ef507632a07852",
+      "source_digest": "88c0d3ced019a22c65fee32bb46078550dbdd808",
       "acceptance_rows": [
         "S17"
       ],
@@ -641,6 +641,66 @@
               "ref": "claude-agent:ft354-author-05",
               "digest": "sha256:3446816b9b58afa47933d0c5ff02a02cd4ba144f9cb95d0fc318ed5fe2117d66",
               "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,3,TestEvidenceArgumentCommands/source_page,239,1,0,null,yes\n  2,bit,swap,failed,6,TestEvidenceArgumentCommands/preparation,239,1,0,null,yes\n  3,bit,omit,failed,4,TestEvidenceArgumentCommands/source_page,239,1,0,null,yes\n  4,bit,swap,failed,6,TestEvidenceArgumentCommands/preparation,239,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/evidencecmd,all,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "S-B4-T05-R1-omission-proof",
+          "performer": "ft354-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "88c0d3ced019a22c65fee32bb46078550dbdd808",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-repair-05-r1",
+            "digest": "sha256:746a67ef1bb9edcadee2ca16f273ba7cf750dc90ca32e3978a5d1901b6b200dd",
+            "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  2,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\n  3,bit,omit,failed,1,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  4,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/evidencecmd,^TestEvidenceArgumentCommands$,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "18517a9a7824394d85a6d262579584f76d60cf2d",
+          "requirement": "omission-proof",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Return a bare cursor or bypass the owner at evidenceInvocation. The exact producer fixture and argv oracle must detect each omission.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-repair-05-r1",
+              "digest": "sha256:746a67ef1bb9edcadee2ca16f273ba7cf750dc90ca32e3978a5d1901b6b200dd",
+              "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  2,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\n  3,bit,omit,failed,1,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  4,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/evidencecmd,^TestEvidenceArgumentCommands$,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "S-B4-T05-R1-preservation",
+          "performer": "ft354-repair-05-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "88c0d3ced019a22c65fee32bb46078550dbdd808",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-repair-05-r1",
+            "digest": "sha256:746a67ef1bb9edcadee2ca16f273ba7cf750dc90ca32e3978a5d1901b6b200dd",
+            "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  2,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\n  3,bit,omit,failed,1,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  4,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/evidencecmd,^TestEvidenceArgumentCommands$,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "18517a9a7824394d85a6d262579584f76d60cf2d",
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/preflight/evidencecmd",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-repair-05-r1",
+              "digest": "sha256:746a67ef1bb9edcadee2ca16f273ba7cf750dc90ca32e3978a5d1901b6b200dd",
+              "excerpt": "mutants[4]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,swap,failed,2,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  2,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\n  3,bit,omit,failed,1,TestEvidenceArgumentCommands/source_page,7,1,0,null,yes\n  4,bit,swap,failed,3,TestEvidenceArgumentCommands/preparation,7,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/preflight/evidencecmd,^TestEvidenceArgumentCommands$,passed,5\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
             }
           }
         }
@@ -771,6 +831,24 @@
         ],
         "S-B2": [
           "S-B2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:13292e498640b06e3de0bd8d00eb08d63e38c71a9b09efcbd62ea4757f71ec98",
+      "to": "sha256:cb192f02c39a015884882b7ad75e3747b70e693f02ac4763a1ef507632a07852",
+      "chunk_ids": {
+        "S-A": [
+          "S-A"
+        ],
+        "S-B1": [
+          "S-B1"
+        ],
+        "S-B2": [
+          "S-B2"
+        ],
+        "S-B4": [
+          "S-B4"
         ]
       }
     }
