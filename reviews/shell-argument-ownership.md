@@ -645,7 +645,74 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "S-B4-R1-standards",
+          "performer": "ft354-review-S-B4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de67355581646dd0c88b00cffd79357d0a5d4213",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B4",
+            "digest": "sha256:bf1562047cb903f9ebe41bdec0c968d817a5a9fc69ec9352f9f1456acb8ac7ea",
+            "excerpt": "## Standards\nCount: 1. Worst: S-B4-STD-1.\n- S-B4-STD-1: internal/preflight/evidencecmd/shell_arguments_test.go:20-21 claims that a lost quote or a split reds the recovered argv, but the producer renders only safe-alphabet values (chargeevidence/manifest.go:63,78), so only the exact-byte check at :52 can red. Confidence 8. auto-fix.\n"
+          },
+          "axis": "Standards",
+          "base": "03bd8984525222136d809db96fa9038cf2524922",
+          "tip": "e93f34e3705456c6cd8fc9bdfad72c9b4218b733",
+          "finding_ids": [
+            "S-B4-STD-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "S-B4-R1-spec",
+          "performer": "ft354-review-S-B4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de67355581646dd0c88b00cffd79357d0a5d4213",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B4",
+            "digest": "sha256:1574ddf751776774ae64e09af95f66b7d1eb350ae7761eba46f223fca96763f6",
+            "excerpt": "## Spec\nCount: 1. Worst: S-B4-SPEC-1.\n- S-B4-SPEC-1: spec.md:125 \"Each rendered argv value becomes always quoted\" disagrees with the values-only spelling. Reviewer decision 2026-11-03: values only; the row is reworded. Confidence 5. ask-user, resolved by the reviewer.\nThe hostile-value refusal before render is verified at internal/preflight/command.go:65-82 and evidence.go:54-55,115-132.\n"
+          },
+          "axis": "Spec",
+          "base": "03bd8984525222136d809db96fa9038cf2524922",
+          "tip": "e93f34e3705456c6cd8fc9bdfad72c9b4218b733",
+          "finding_ids": [
+            "S-B4-SPEC-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "S-B4-R1-coverage",
+          "performer": "ft354-review-S-B4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "de67355581646dd0c88b00cffd79357d0a5d4213",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-B4",
+            "digest": "sha256:b645bea5b91102275db336c3fc0de30a985300bef87e55bd7694769f0dd2bb38",
+            "excerpt": "## Coverage\nCount: 1. Worst: S-B4-COV-1.\n- S-B4-COV-1: the sentinel check at shell_arguments_test.go:76 cannot red, because the hostile loop (:61-78) passes no output to a shell; the comment at :22-23 claims it as a guard. Confidence 8. auto-fix.\n## Advice\n- nextArgs and commandArgs are thin wrappers over axitest.HelpAction.Argv in two packages; incidental repetition.\n"
+          },
+          "axis": "Coverage",
+          "base": "03bd8984525222136d809db96fa9038cf2524922",
+          "tip": "e93f34e3705456c6cd8fc9bdfad72c9b4218b733",
+          "finding_ids": [
+            "S-B4-COV-1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -789,3 +856,27 @@ The ticket 05 author reported this witness red before the production edit. The p
 
 The producer refuses a hostile identity, source, or cursor before any command renders. Thus the S17 test shows those refusals and a sentinel absence.
 The orchestrator decision, flagged for reviewer veto: only the identity, source, and cursor values take `sanitize.ShellQuote`, and the fixed tokens stay bare.
+
+## S-B4 review round 1 pickup
+
+Repair allowance: S-B4 consumed 0 of 2 repair cycles before this round.
+
+### Standards
+
+Count: 1. Worst issue: S-B4-STD-1.
+
+- S-B4-STD-1 (confidence 8, auto-fix): the test comment claims an argv oracle that cannot red for safe-alphabet values. Citation: `internal/preflight/evidencecmd/shell_arguments_test.go:20`.
+
+### Spec
+
+Count: 1. Worst issue: S-B4-SPEC-1.
+
+- S-B4-SPEC-1 (confidence 5, ask-user): the direct inventory row read as quoting every word. The reviewer decided values only on 2026-11-03, and the row now names the identity, source, and cursor values. Citation: `specs/shell-argument-ownership/spec.md:125`.
+
+### Coverage
+
+Count: 1. Worst issue: S-B4-COV-1.
+
+- S-B4-COV-1 (confidence 8, auto-fix): the sentinel check of the hostile loop cannot red, because no output reaches a shell there. Citation: `internal/preflight/evidencecmd/shell_arguments_test.go:76`.
+
+S-B4-STD-1 and S-B4-COV-1 name one test-only repair on ticket 05. A fresh repair session takes it.

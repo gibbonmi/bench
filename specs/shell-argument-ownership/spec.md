@@ -122,7 +122,7 @@ A caller or renderer change invalidates its inventory row.
 | consumers.citation.cmd | `internal/consumers/citation.go:58` | Each argv value becomes always quoted. | S14 |
 | worktree.PrintTreeBuildRefusal | `internal/worktree/tree_target.go:91` | The assignment label becomes always quoted. | S15 |
 | worktree.recoveryRoute.line | `internal/worktree/list.go:300` | The line renders the command of its help row. With the S-E switch, every word and the path become always quoted. | S16 |
-| evidencecmd.evidenceInvocation | `internal/preflight/evidencecmd/evidence.go:233` | Each rendered argv value becomes always quoted. | S17 |
+| evidencecmd.evidenceInvocation | `internal/preflight/evidencecmd/evidence.go:233` | The identity, source, and cursor values become always quoted. The fixed tokens keep their spelling (reviewer decision, 2026-11-03). | S17 |
 | freshness.RebuildIn and CheckoutRebuildAction | `internal/freshness/freshness_verify.go:169` and `:177` | No approved byte delta. The owner changes for the pool worktree-build form and the checkout form. | S18 |
 | responsebound.firstPage | `internal/responsebound/read.go:288` | Each first-page argv value becomes always quoted. | S42 |
 | cmd/bench rawReadAdvice | `cmd/bench/planning_read_advice.go:14` | The read path becomes always quoted. | S44 |
