@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shell-argument-ownership/spec.md",
-  "plan_digest": "sha256:ba5cd9dee92e0db74c09fc55407444b2d0c5e1f094ca6df0cd67710c797db240",
+  "plan_digest": "sha256:c20f6c65e343e0a2334a915e1df675c951ffcad45fc3ce413f0cd12dd2a0d76e",
   "implementation_session": "",
   "chunks": [
     {
@@ -1034,6 +1034,81 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "S-E",
+      "base": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+      "tip": "80356fc1252d49563f727e91b417482f28320e55",
+      "plan_digest": "sha256:c20f6c65e343e0a2334a915e1df675c951ffcad45fc3ce413f0cd12dd2a0d76e",
+      "source_digest": "097cae6c5d08f3b33c93e89abdf49865d12bf8b7",
+      "acceptance_rows": [
+        "S16",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "S12",
+        "S19",
+        "S20",
+        "S21",
+        "S22",
+        "S23",
+        "S24",
+        "S25",
+        "S26",
+        "S27",
+        "S28",
+        "S29",
+        "S30",
+        "S31",
+        "S32",
+        "S33",
+        "S34",
+        "S35",
+        "S36",
+        "S38",
+        "S39",
+        "S41",
+        "S42",
+        "S43",
+        "S44"
+      ],
+      "verification": [
+        {
+          "id": "S-E-T04-recovery-line-agreement",
+          "performer": "ft354-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "097cae6c5d08f3b33c93e89abdf49865d12bf8b7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-04",
+            "digest": "sha256:41b5dc50c874a42ebfb2ace48a41dea20475b0df86ab71da8049ec002a238bcb",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/list.go,omit,failed,7,TestRecoveryRouteArgument/a_command_list/discard,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,RecoveryRouteArgument|MissingTreeRoute|UnlandedRelease|IdentifierOperand,passed,20\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2668\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,193,20\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/a_command_list/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/a; touch /dev/shm/SL67ZH/t/TestRecoveryRouteArgument1822496834/002/executed'\\\" and help commands = [\\\"bench worktree clean '/gone/a; touch /dev/shm/SL67ZH/t/TestRecovery… (539 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/a_command_substitution/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/$(touch /dev/shm/SL67ZH/t/TestRecoveryRouteArgument1822496834/002/executed)'\\\" and help commands = [\\\"bench worktree clean '/gone/$(touch /dev/shm/SL67ZH/t/TestRecoveryR… (539 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/an_angle_bracket/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/a\u003cb>'\\\" and help commands = [], want \\\"bench worktree clean --discard-branch '/gone/a\u003cb>'\\\" and []\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/an_embedded_quote/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/it'\\\\\\\\\\\"'\\\\\\\\\\\"'s'\\\" and help commands = [\\\"bench worktree clean '/gone/it'\\\\\\\\\\\"'\\\\\\\\\\\"'s'\\\"], want \\\"bench worktree clean --discard-branch '/gone/it'\\\\\\\\\\\"'\\\\\\\\\\\"'s'\\\" and [\\\"bench worktree clea… (279 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/spaces/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/my  tree '\\\" and help commands = [\\\"bench worktree clean '/gone/my  tree '\\\"], want \\\"bench worktree clean --discard-branch '/gone/my  tree '\\\" and [\\\"bench worktree clean -… (275 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestUnlandedReleaseRefusalNamesTheDiscardClean/no_own_commit_with_output,\"unlanded_route_test.go:70: release refusal = \\\"bench worktree release: worktree retained (unmerged): assignment branch has not landed; next=bench worktree clean /dev/shm/SL67ZH/t/TestUnlandedReleaseRefusalNamesTheDiscardCleanno_own_commit_wi… (611 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestUnlandedReleaseRefusalNamesTheDiscardClean/unlanded_commit,\"unlanded_route_test.go:70: release refusal = \\\"bench worktree release: worktree retained (unmerged): assignment branch has not landed; next=bench worktree clean /dev/shm/SL67ZH/t/TestUnlandedReleaseRefusalNamesTheDiscardCleanunlanded_commit4… (607 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "80356fc1252d49563f727e91b417482f28320e55",
+          "requirement": "recovery-line-agreement",
+          "command": "bench test --package ./internal/worktree --run 'RecoveryRouteArgument|MissingTreeRoute|UnlandedRelease|IdentifierOperand'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Drop the path from the shared recovery argument list, or drop a route word. The real producer fixture and the line-and-help-row agreement assertion must fail, then pass after restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-04",
+              "digest": "sha256:41b5dc50c874a42ebfb2ace48a41dea20475b0df86ab71da8049ec002a238bcb",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/worktree/list.go,omit,failed,7,TestRecoveryRouteArgument/a_command_list/discard,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/worktree,RecoveryRouteArgument|MissingTreeRoute|UnlandedRelease|IdentifierOperand,passed,20\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,2668\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/worktree,fail,193,20\nfailures[7]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/a_command_list/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/a; touch /dev/shm/SL67ZH/t/TestRecoveryRouteArgument1822496834/002/executed'\\\" and help commands = [\\\"bench worktree clean '/gone/a; touch /dev/shm/SL67ZH/t/TestRecovery… (539 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/a_command_substitution/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/$(touch /dev/shm/SL67ZH/t/TestRecoveryRouteArgument1822496834/002/executed)'\\\" and help commands = [\\\"bench worktree clean '/gone/$(touch /dev/shm/SL67ZH/t/TestRecoveryR… (539 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/an_angle_bracket/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/a\u003cb>'\\\" and help commands = [], want \\\"bench worktree clean --discard-branch '/gone/a\u003cb>'\\\" and []\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/an_embedded_quote/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/it'\\\\\\\\\\\"'\\\\\\\\\\\"'s'\\\" and help commands = [\\\"bench worktree clean '/gone/it'\\\\\\\\\\\"'\\\\\\\\\\\"'s'\\\"], want \\\"bench worktree clean --discard-branch '/gone/it'\\\\\\\\\\\"'\\\\\\\\\\\"'s'\\\" and [\\\"bench worktree clea… (279 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestRecoveryRouteArgument/spaces/discard,\"shell_arguments_test.go:89: recovery line = \\\"bench worktree clean '/gone/my  tree '\\\" and help commands = [\\\"bench worktree clean '/gone/my  tree '\\\"], want \\\"bench worktree clean --discard-branch '/gone/my  tree '\\\" and [\\\"bench worktree clean -… (275 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestUnlandedReleaseRefusalNamesTheDiscardClean/no_own_commit_with_output,\"unlanded_route_test.go:70: release refusal = \\\"bench worktree release: worktree retained (unmerged): assignment branch has not landed; next=bench worktree clean /dev/shm/SL67ZH/t/TestUnlandedReleaseRefusalNamesTheDiscardCleanno_own_commit_wi… (611 bytes)\",1\n  github.com/gibbonmi/bench/internal/worktree,TestUnlandedReleaseRefusalNamesTheDiscardClean/unlanded_commit,\"unlanded_route_test.go:70: release refusal = \\\"bench worktree release: worktree retained (unmerged): assignment branch has not landed; next=bench worktree clean /dev/shm/SL67ZH/t/TestUnlandedReleaseRefusalNamesTheDiscardCleanunlanded_commit4… (607 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -1128,6 +1203,27 @@
         ],
         "S-B4": [
           "S-B4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ba5cd9dee92e0db74c09fc55407444b2d0c5e1f094ca6df0cd67710c797db240",
+      "to": "sha256:c20f6c65e343e0a2334a915e1df675c951ffcad45fc3ce413f0cd12dd2a0d76e",
+      "chunk_ids": {
+        "S-A": [
+          "S-A"
+        ],
+        "S-B1": [
+          "S-B1"
+        ],
+        "S-B2": [
+          "S-B2"
+        ],
+        "S-B4": [
+          "S-B4"
+        ],
+        "S-D1": [
+          "S-D1"
         ]
       }
     }
