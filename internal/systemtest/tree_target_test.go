@@ -243,7 +243,7 @@ func TestTreeTargetRefusesStaleKitBuild(t *testing.T) {
 	}
 	kittest.EditBuildInput(t, alpha.path)
 	result := runTreeTarget(t, fixture, fixture.root, "status", "--in", "alpha")
-	want := "bench status --in: worktree build does not match the tree\nnext=bench worktree build alpha\n"
+	want := "bench status --in: worktree build does not match the tree\nnext=bench worktree build 'alpha'\n"
 	if result.code != 1 || result.stdout != "" || result.stderr != want {
 		t.Fatalf("bench status --in alpha = (%d, %q, %q), want (1, \"\", %q)", result.code, result.stdout, result.stderr, want)
 	}

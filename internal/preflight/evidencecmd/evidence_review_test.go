@@ -239,7 +239,7 @@ func preparedCount(t *testing.T, row map[string]any, field string) int {
 // retrieval command for the artifact it just published, never a source or verify form.
 func TestEvidenceReviewPreparationNext(t *testing.T) {
 	_, identity, row, _ := prepareReview(t)
-	want := "bench preflight evidence " + identity
+	want := "bench preflight evidence '" + identity + "'"
 	if row["next"] != want {
 		t.Fatalf("prepared next = %q, want %q", row["next"], want)
 	}

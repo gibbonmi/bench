@@ -1,15 +1,14 @@
 # Share rebuild and fixture shell quoting
 
-Blocked by: 01-quote-tree-build-arguments.md, 04-quote-recovery-operands.md
+Blocked by: 01-quote-tree-build-arguments.md, 03-quote-citation-commands.md
 Writes: internal/freshness/freshness_verify.go, internal/freshness/freshness_verify_test.go, internal/diff/identity_test.go, internal/preprelease/preprelease_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
 Covers: S18, S37
 
 ## What to build
 
-Replace freshness.shellQuote with sanitize.ShellQuote and remove that independent algorithm.
+Replace freshness.shellQuote with sanitize.ShellQuote at each call site, the pool worktree-build form in RebuildIn and the checkout form in CheckoutRebuildAction, and remove that independent algorithm.
 Remove the freshness quoteForShell fixture helper and independent diff and preprelease fixture quote helpers.
 Use the surviving owner for fixture script arguments while keeping their observed argv expectations independent.
-Keep systemtest.shellQuoteJSON because it encodes a separate JSON tool envelope.
 
 Review chunk: S-D1.
 The predecessor supplies the accepted contract named above.
@@ -20,6 +19,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 
 Execute the real rebuild action against hostile paths and retain its exact cwd and arguments with no output-byte delta.
 Migrated fixture scripts preserve their observed argument bytes and count.
+No preprelease fixture input holds a quote, so its `'"'"'` escape never runs, and its independent argv assertion stays the check.
 
 - [ ] Freshness rebuild commands use sanitize.ShellQuote for each path. (S18).
 - [ ] Fixture shell arguments use sanitize.ShellQuote instead of independent helpers. (S37).

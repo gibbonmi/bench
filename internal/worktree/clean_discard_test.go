@@ -103,7 +103,7 @@ func TestDiscardTargetResolvesAnUnrecordedBranch(t *testing.T) {
 				row["recovery"] != intent.DiscardedRef(discardDay, ref) || !strings.HasPrefix(row["detail"], classField+string(classUnique)) {
 				t.Fatalf("plan exit=%d stdout=%q stderr=%q, want one unique row for %s with its discarded ref", plan.exit, plan.stdout, plan.stderr, ref)
 			}
-			if !strings.Contains(plan.stdout, "--apply "+plan.mustFingerprint(t)) {
+			if !strings.Contains(plan.stdout, "'--apply' '"+plan.mustFingerprint(t)+"'") {
 				t.Fatalf("plan = %q, want the apply action", plan.stdout)
 			}
 		})

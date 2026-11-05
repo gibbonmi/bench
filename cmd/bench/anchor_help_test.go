@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/anchors"
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -262,6 +263,27 @@ func TestAnchorsRefusesAnUnreadableFile(t *testing.T) {
 			t.Fatalf("anchors denied.md stdout = %q, want a structured unreadable refusal", result.stdout)
 		}
 	})
+}
+
+// TestAnchorHelpArguments is S19: a directory grade with a file that did not pass names the
+// file form with its verb quoted and its file slot unchanged. The command is authored by
+// hand, and a POSIX shell reads back the known prefix before the slot.
+func TestAnchorHelpArguments(t *testing.T) {
+	root := newAXIEnvelopeRepo(t)
+	writeAXIFixture(t, filepath.Join(root, "AGENTS.md"), readAnchorsFixture(t, "AGENTS.md"))
+	result := runAXICommandAt(t, root, []string{"anchors", "."})
+	document, err := axitest.DecodeDocument(result.stdout)
+	if result.code != 1 || err != nil {
+		t.Fatalf("anchors . = %#v, %v; want exit 1 with a decodable document", result, err)
+	}
+	actions, err := document.HelpActions()
+	want := []axitest.HelpAction{{Cmd: "bench 'anchors' <file>", Why: "read the anchor rows and diagnostics of a file that did not pass"}}
+	if err != nil || !slices.Equal(actions, want) {
+		t.Fatalf("help actions = (%q, %v), want %q", actions, err, want)
+	}
+	if argv, err := (axitest.HelpAction{Cmd: "bench 'anchors'"}).Argv(); err != nil || !slices.Equal(argv, []string{"bench", "anchors"}) {
+		t.Fatalf("known prefix argv = (%q, %v), want [bench anchors]", argv, err)
+	}
 }
 
 // TestAnchorsUsageRefusesAMissingArgument keeps the argument-count refusal pinned

@@ -193,7 +193,7 @@ func TestVerbResultFingerprintReadsTheTableCell(t *testing.T) {
 	t.Parallel()
 	result := landedRunnerPlan(t)
 	value, err := readVerbFingerprint(result.stdout)
-	if err != nil || len(value) != 64 || !strings.Contains(result.stdout, "--landed --apply "+value) {
+	if err != nil || len(value) != 64 || !strings.Contains(result.stdout, "'--landed' '--apply' '"+value+"'") {
 		t.Fatalf("fingerprint = %q, %v; want the set fingerprint that the apply action names in %q", value, err, result.stdout)
 	}
 	for _, row := range result.mustRows(t, cleanupTable) {

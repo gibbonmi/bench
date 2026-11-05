@@ -2419,6 +2419,14 @@
       "identity": "sha256:fc37cb1be76e7304075c9550383f2bf04b5ac5a5331836009bd2b508188deeec",
       "source": "4d0ff498a21c2b5b2d8684ef69bb43e457de0395",
       "evidence": "d53d5ddc3cd0edfbef1b865a19a91b9ac83786eb"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT354-shell-args",
+      "binding": "shell-argument-ownership",
+      "identity": "sha256:8b264be063d438132a70b624579d44022dfaf171be93737dfcd6de7b82633030",
+      "source": "572f85ac3ec6b3e7302f341e48a9d8b8ef06d2f3",
+      "evidence": "7b92f110b33a2a4d773a12fa4ab594ba7d097dec"
     }
   ]
 }

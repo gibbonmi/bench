@@ -97,7 +97,7 @@ func TestCleanLandedPlanAdvertisesApplyAndRemedies(t *testing.T) {
 		t.Fatalf("CleanCommand exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
 	fingerprint := plan.mustFingerprint(t)
-	if !strings.Contains(plan.stdout, "bench worktree clean --landed --apply "+fingerprint) || !strings.Contains(plan.stdout, "bench worktree clean "+f.dirty.Path) {
+	if !strings.Contains(plan.stdout, "bench 'worktree' 'clean' '--landed' '--apply' '"+fingerprint+"'") || !strings.Contains(plan.stdout, "bench 'worktree' 'clean' '"+f.dirty.Path+"'") {
 		t.Fatalf("output=%q, want apply and dirty-row remedy", plan.stdout)
 	}
 	for _, creation := range []Creation{f.first, f.second, f.dirty} {
@@ -205,7 +205,7 @@ func TestCleanLandedPlanApplyCarriesModifiers(t *testing.T) {
 	if plan.exit != 0 || plan.stderr != "" {
 		t.Fatalf("plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 	}
-	want := "bench worktree clean --discard-ignored --full --landed --apply " + plan.mustFingerprint(t)
+	want := "bench 'worktree' 'clean' '--discard-ignored' '--full' '--landed' '--apply' '" + plan.mustFingerprint(t) + "'"
 	if !strings.Contains(plan.stdout, want) {
 		t.Fatalf("plan = %q, want the advertised apply command %q", plan.stdout, want)
 	}

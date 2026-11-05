@@ -10,11 +10,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/maps"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/tickets"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -126,9 +126,9 @@ func widenCommand(args []string) (string, int) {
 			"drop the "+tickets.NewMarker+" marker from each named entry and rerun, because the ticket edits a path that exists") + "\n", 1
 	}
 	if len(refused) > 0 {
-		rerun := []string{widenCmd, axi.ShellQuote(slug), "--ticket", axi.ShellQuote(basename), "--decision", "<reference>"}
+		rerun := []string{widenCmd, sanitize.ShellQuote(slug), "--ticket", sanitize.ShellQuote(basename), "--decision", "<reference>"}
 		for _, entry := range entries {
-			rerun = append(rerun, axi.ShellQuote(entry))
+			rerun = append(rerun, sanitize.ShellQuote(entry))
 		}
 		return toon.Errorf(outsideScope+": "+strings.Join(refused, maps.FieldSeparator),
 			"after the reviewer admits the path, rerun "+strings.Join(rerun, " ")) + "\n", 1

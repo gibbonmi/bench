@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -285,7 +286,7 @@ func (r ReadRequest) arguments(extra ...string) []axi.InvocationArgument {
 func (r ReadRequest) firstPage() string {
 	quoted := make([]string, len(r.Command))
 	for i, argument := range r.Command {
-		quoted[i] = axi.ShellQuote(argument)
+		quoted[i] = sanitize.ShellQuote(argument)
 	}
 	return "bench " + strings.Join(quoted, " ")
 }

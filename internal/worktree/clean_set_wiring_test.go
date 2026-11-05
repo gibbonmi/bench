@@ -54,7 +54,7 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 			t.Fatalf("landed apply = (%d, %q, %q) mutated=%t, want an apply-time refusal", stale.exit, stale.stdout, stale.stderr, mutated)
 		}
 		requireStaleRefusalRow(t, stale, "unknown", "unknown", digest)
-		if !strings.Contains(stale.stdout, "bench worktree clean --landed") {
+		if !strings.Contains(stale.stdout, "bench 'worktree' 'clean' '--landed'") {
 			t.Fatalf("landed apply = %q, want the selector-preserving re-plan command", stale.stdout)
 		}
 	})
@@ -94,7 +94,7 @@ func TestCleanSetApplyTimeStaleWiring(t *testing.T) {
 				t.Fatalf("%s = (%d, %q, %q) raced=%t, want an apply-time refusal", tc.name, stale.exit, stale.stdout, stale.stderr, raced)
 			}
 			requireStaleRefusalRow(t, stale, "unclaimed", "none", set.fingerprint)
-			if !strings.Contains(stale.stdout, "bench worktree clean --discard-branch --unclaimed") {
+			if !strings.Contains(stale.stdout, "bench 'worktree' 'clean' '--discard-branch' '--unclaimed'") {
 				t.Fatalf("%s = %q, want the selector-preserving re-plan command", tc.name, stale.stdout)
 			}
 			for _, row := range set.rows {

@@ -140,7 +140,7 @@ outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_
   "4","4","0","9","9","0","false"
 outline_skips[0]{file,reason}:
 help[1]{cmd,why}:
-  bench outline --symbol <name>,read one listed Go declaration
+  bench 'outline' '--symbol' <name>,read one listed Go declaration
 `
 
 const newOutline = `outline[10]{file,line,kind,name}:
@@ -158,7 +158,7 @@ outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_
   "4","4","0","10","10","0","false"
 outline_skips[0]{file,reason}:
 help[1]{cmd,why}:
-  bench outline --symbol <name>,read one listed Go declaration
+  bench 'outline' '--symbol' <name>,read one listed Go declaration
 `
 
 // OI4: the old-to-new fixture pair reds on any outline byte delta. The

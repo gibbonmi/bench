@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // TestStepsNameScriptsThisRepoShips grades the step plan against the tree it will run
@@ -159,7 +160,7 @@ func TestCanaryCompatibilityShimAttributesInventoryFailures(t *testing.T) {
 func runCanaryCompatibilityShim(t *testing.T, dir, bin string) string {
 	t.Helper()
 	shim := filepath.Join(repoRoot(t), ".bench", "lib", "canary-run.sh")
-	command := "root='fixture root'\nerr() { printf 'ERR:%s\\n' \"$1\"; }\n. " + shellQuote(shim)
+	command := "root=" + sanitize.ShellQuote("fixture root") + "\nerr() { printf 'ERR:%s\\n' \"$1\"; }\n. " + sanitize.ShellQuote(shim)
 	cmd := exec.Command("bash", "-c", command)
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "PATH="+bin+":/usr/bin:/bin")
@@ -175,10 +176,6 @@ func writeExecutable(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o755); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func shellQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\\"'\\\"'") + "'"
 }
 
 func runFilter(t *testing.T, argv []string) string {

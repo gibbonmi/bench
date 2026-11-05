@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gittest"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestCommandRefusesEachSnapshotIdentityDimensionAfterOneRetry(t *testing.T) {
@@ -177,13 +178,22 @@ func TestCommandResolvesRecordedBaseOncePerAttempt(t *testing.T) {
 	root, c0, _, _ := seedDivergedRepo(t)
 	gittest.MustRun(t, "", "config", "branch.feature.benchBase", c0)
 	mustWriteFile(t, "f.txt", "dirty\n")
-	realGit, err := exec.LookPath("git")
+	installedGit, err := exec.LookPath("git")
 	if err != nil {
+		t.Fatal(err)
+	}
+	// The wrapper execs git through a hostile path, so a malformed quote of that operand
+	// breaks every git call and the observed argv counts below.
+	realGit := filepath.Join(t.TempDir(), "real git [*] $HOME with ' quote", "git")
+	if err := os.MkdirAll(filepath.Dir(realGit), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(installedGit, realGit); err != nil {
 		t.Fatal(err)
 	}
 	bin := t.TempDir()
 	logPath := filepath.Join(bin, "git.log")
-	wrapper := "#!/bin/sh\nprintf '%s\\n' \"$*\" >> " + shellQuote(logPath) + "\nexec " + shellQuote(realGit) + " \"$@\"\n"
+	wrapper := "#!/bin/sh\nprintf '%s\\n' \"$*\" >> " + sanitize.ShellQuote(logPath) + "\nexec " + sanitize.ShellQuote(realGit) + " \"$@\"\n"
 	if err := os.WriteFile(filepath.Join(bin, "git"), []byte(wrapper), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -254,8 +264,4 @@ func mustWriteFileAt(t *testing.T, root, path, body string) {
 	if err := os.WriteFile(filepath.Join(root, path), []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func shellQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
 }

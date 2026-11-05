@@ -25,7 +25,7 @@ func TestCleanExplicitSetPlan(t *testing.T) {
 		t.Fatalf("set plan rows = %#v, want one row per selected target", rows)
 	}
 	shared := plan.mustFingerprint(t)
-	if !strings.Contains(plan.stdout, "bench worktree clean --target ") || !strings.Contains(plan.stdout, "--apply "+shared) {
+	if !strings.Contains(plan.stdout, "bench 'worktree' 'clean' '--target' ") || !strings.Contains(plan.stdout, "'--apply' '"+shared+"'") {
 		t.Fatalf("set plan = %q, want the whole-set apply action", plan.stdout)
 	}
 	for _, creation := range []Creation{f.first, f.second} {
@@ -120,7 +120,7 @@ func TestCleanExplicitSetSelectionFailure(t *testing.T) {
 				t.Fatalf("failed selection = %q, want the reported failure", plan.stdout)
 			}
 			plan.mustNoFingerprint(t)
-			if strings.Contains(plan.stdout, "bench worktree clean --target") {
+			if strings.Contains(plan.stdout, "bench 'worktree' 'clean' '--target'") {
 				t.Fatalf("failed selection = %q, want no applicable fingerprint and no apply action", plan.stdout)
 			}
 			applied := runVerb(t, verbClean, f.call("--target", f.first.Assignment.ID, "--target", failing, "--apply", strings.Repeat("a", 64)))

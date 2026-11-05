@@ -149,9 +149,9 @@ func requireReclaimAggregate(t *testing.T, out, header, keys, first, retained, f
 	requireTest(t, got == want, "%s row = %v, want %v: %q", header, got, want, out)
 }
 
-// reclaimApplyHead is the apply invocation a plan prints before its fingerprint. Each test
-// reads the fingerprint from the aggregate and requires this invocation to carry it.
-const reclaimApplyHead = "bench worktree reclaim --apply "
+// reclaimApplyHead is the apply invocation a plan prints before its quoted fingerprint. Each
+// test reads the fingerprint from the aggregate and requires this invocation to carry it.
+const reclaimApplyHead = "bench 'worktree' 'reclaim' '--apply' '"
 
 // [PL1][PL5] The plan's whole job is to separate the keys a deleted repository left behind
 // from the ones still holding work. A plan that names every key, or none, is useless.
@@ -172,7 +172,7 @@ func TestReclaimCommandPlansOnlyTheProvablyDeadKeys(t *testing.T) {
 	}
 	requireTest(t, strings.Contains(out.stdout, poolReclaimAggregateTable+"[1]{keys,reclaimable,retained,fingerprint}:"), "plan printed no aggregate header: %q", out.stdout)
 	fingerprint := out.mustFingerprint(t)
-	requireTest(t, strings.Contains(out.stdout, reclaimApplyHead+fingerprint), "plan printed no apply invocation: %q", out.stdout)
+	requireTest(t, strings.Contains(out.stdout, reclaimApplyHead+fingerprint+"'"), "plan printed no apply invocation: %q", out.stdout)
 	requireReclaimAggregate(t, out.stdout, poolReclaimAggregateTable+"[", "3", "2", "1", fingerprint)
 }
 
@@ -287,7 +287,7 @@ func TestReclaimCommandPrintsTheApplyInvocationCarryingTheFingerprint(t *testing
 	plan, err := planPoolReclaim(f.root, filepath.Dir(f.pool))
 	mustNoError(t, err)
 	requireTest(t, len(plan.fingerprint) == 64, "plan fingerprint = %q, want a sha256 digest", plan.fingerprint)
-	requireTest(t, strings.Contains(out.stdout, reclaimApplyHead+plan.fingerprint),
+	requireTest(t, strings.Contains(out.stdout, reclaimApplyHead+plan.fingerprint+"'"),
 		"plan did not print the apply invocation carrying %s: %q", plan.fingerprint, out.stdout)
 }
 
@@ -316,7 +316,7 @@ func TestReclaimApplyRemovesExactlyThePlannedKeys(t *testing.T) {
 
 	plan := runVerb(t, verbReclaim, f.call())
 	fingerprint := plan.mustFingerprint(t)
-	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
+	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint+"'"), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 
 	out := runVerb(t, verbReclaim, f.call("--apply", fingerprint))
 	requireTest(t, out.stderr == "" && out.exit == 0, "apply code=%d out=%q stderr=%q", out.exit, out.stdout, out.stderr)
@@ -370,14 +370,14 @@ func TestReclaimApplyRefusesAFingerprintThePoolNoLongerMatches(t *testing.T) {
 
 	plan := runVerb(t, verbReclaim, f.call())
 	fingerprint := plan.mustFingerprint(t)
-	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
+	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint+"'"), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 
 	plantDeadChild(t, f.pool, "arrived-later", "wt")
 	before := poolListing(t, f.pool)
 
 	out := runVerb(t, verbReclaim, f.call("--apply", fingerprint))
 	requireTest(t, out.stderr == "" && out.exit == 1, "stale apply code=%d out=%q stderr=%q", out.exit, out.stdout, out.stderr)
-	requireTest(t, strings.Contains(out.stdout, "worktree pool reclaim plan is stale") && strings.Contains(out.stdout, "bench worktree reclaim,"),
+	requireTest(t, strings.Contains(out.stdout, "worktree pool reclaim plan is stale") && strings.Contains(out.stdout, "bench 'worktree' 'reclaim',"),
 		"stale refusal did not name the re-plan command: %q", out.stdout)
 	requireTest(t, poolListing(t, f.pool) == before, "a stale apply changed the pool:\nbefore\n%s\nafter\n%s", before, poolListing(t, f.pool))
 }
@@ -496,7 +496,7 @@ func TestReclaimReclaimsTheKeyOfADeletedRepository(t *testing.T) {
 
 	plan := runVerb(t, verbReclaim, f.call())
 	fingerprint := plan.mustFingerprint(t)
-	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
+	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint+"'"), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	_, verdicts := reclaimVerdicts(t, plan.stdout)
 	requireTest(t, verdicts[key][0] == poolVerdictReclaim, "deleted repository key %s = %q/%q, want reclaim", key, verdicts[key][0], verdicts[key][1])
 
@@ -519,7 +519,7 @@ func TestReclaimApplyExitsNonZeroWhenAPlannedKeySurvives(t *testing.T) {
 
 	plan := runVerb(t, verbReclaim, f.call())
 	fingerprint := plan.mustFingerprint(t)
-	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
+	requireTest(t, plan.stderr == "" && plan.exit == 0 && strings.Contains(plan.stdout, reclaimApplyHead+fingerprint+"'"), "plan code=%d out=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 
 	mustNoError(t, os.Chmod(f.pool, 0o500))
 	t.Cleanup(func() { _ = os.Chmod(f.pool, 0o700) })

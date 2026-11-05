@@ -7,8 +7,8 @@ guards[3]{guard,boundary,denies,branch,provenance,currency,wired}:
 guard_scan[1]{status,inspected,total,omitted,reason}:
   complete,"3","3","0",none
 help[2]{cmd,why}:
-  bench link,repair multi-stale
-  bench link,repair multi-unwired
+  bench 'link',repair multi-stale
+  bench 'link',repair multi-unwired
 --- stderr
 --- args ["--brief"] exit 0
 one: denies of one [wired: claude]
@@ -169,9 +169,9 @@ guards[4]{guard,boundary,denies,branch,provenance,currency,wired}:
 guard_scan[1]{status,inspected,total,omitted,reason}:
   complete,"5","5","0",none
 help[3]{cmd,why}:
-  bench link,repair full-guard
-  bench link,repair headerless
-  bench link,repair incomplete
+  bench 'link',repair full-guard
+  bench 'link',repair headerless
+  bench 'link',repair incomplete
 --- stderr
 --- args ["--brief"] exit 0
 full-guard: full-guard denials [wired: none]
@@ -193,8 +193,8 @@ guards[4]{guard,boundary,denies,branch,provenance,currency,wired}:
 guard_scan[1]{status,inspected,total,omitted,reason}:
   complete,"4","4","0",none
 help[2]{cmd,why}:
-  bench link,repair full-guard
-  bench link,repair missing
+  bench 'link',repair full-guard
+  bench 'link',repair missing
 --- stderr
 --- args ["--brief"] exit 0
 full-guard: full-guard denials [wired: none]
@@ -214,7 +214,7 @@ guards[2]{guard,boundary,denies,branch,provenance,currency,wired}:
 guard_scan[1]{status,inspected,total,omitted,reason}:
   complete,"2","2","0",none
 help[1]{cmd,why}:
-  bench link,repair special
+  bench 'link',repair special
 --- stderr
 --- args ["--brief"] exit 0
 special: no manifest [wired: none]
@@ -233,7 +233,7 @@ guards[3]{guard,boundary,denies,branch,provenance,currency,wired}:
 guard_scan[1]{status,inspected,total,omitted,reason}:
   complete,"3","3","0",none
 help[1]{cmd,why}:
-  bench link,repair z-unwired
+  bench 'link',repair z-unwired
 --- stderr
 --- args ["--brief"] exit 0
 a-wired: a-wired denials [wired: claude,codex]
@@ -252,7 +252,7 @@ guards[2]{guard,boundary,denies,branch,provenance,currency,wired}:
 guard_scan[1]{status,inspected,total,omitted,reason}:
   complete,"2","2","0",none
 help[1]{cmd,why}:
-  bench link,repair a-wired
+  bench 'link',repair a-wired
 --- stderr
 --- args ["--brief"] exit 0
 a-wired: a-wired denials [wired: none]

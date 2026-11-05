@@ -21,8 +21,8 @@ func TestCommandProjectsOneRowShapeAcrossSchemas(t *testing.T) {
 		"  \"1\",does x,cli seam\n" +
 		"  \"2\",does y,gate\n" +
 		"help[2]{cmd,why}:\n" +
-		"  bench coverage --check spec.md,check coverage for stories 1\n" +
-		"  bench coverage --check spec.md,check coverage for stories 2\n"
+		"  bench 'coverage' '--check' 'spec.md',check coverage for stories 1\n" +
+		"  bench 'coverage' '--check' 'spec.md',check coverage for stories 2\n"
 	rows := [][4]string{{"AB1", "1", "does x", "cli seam"}, {"AB2", "2", "does y", "gate"}}
 	for _, shape := range mapShapes {
 		t.Run(shape.name, func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestCommandActionListIsUnchangedByTheSchema(t *testing.T) {
 	const want = "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n" +
 		"  \"9\",does x,cli seam\n" +
 		"help[1]{cmd,why}:\n" +
-		"  bench coverage --check spec.md,retry after repairing coverage map\n"
+		"  bench 'coverage' '--check' 'spec.md',retry after repairing coverage map\n"
 	rows := [][4]string{{"AB1", "9", "does x", "cli seam"}} // story 9 is undeclared
 	for _, shape := range mapShapes {
 		t.Run(shape.name, func(t *testing.T) {

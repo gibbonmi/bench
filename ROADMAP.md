@@ -74,8 +74,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT413 (MEDIUM) — parallel landings compose `CHANGELOG.md` with no conflict.**
 
-**FT354 (MEDIUM) — strict JSON and shell quoting each have one owner.**
-
 **FT312 (MEDIUM) — a native `bench` verb codifies the cross-harness reviewer invocation.**
 
 **FT283 (MEDIUM, decision required) — `bench worktree land --spec` has one phase-scoped transition contract.**
@@ -352,12 +350,11 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT354-shell-args
-2. FT343-seam-policy
-3. FT446-cache-store
-4. FT414-preconditions
-5. FT369-charge-slicing
-6. FT365-conformance
-7. FT341-in-only
-8. FT420-concurrent-chunks
-9. FT387-overflow
+1. FT343-seam-policy
+2. FT446-cache-store
+3. FT414-preconditions
+4. FT369-charge-slicing
+5. FT365-conformance
+6. FT341-in-only
+7. FT420-concurrent-chunks
+8. FT387-overflow

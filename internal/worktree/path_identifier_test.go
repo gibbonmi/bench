@@ -61,7 +61,7 @@ func TestListActiveRowsUseTargetSlot(t *testing.T) {
 	}
 }
 
-// The list advertises `bench worktree path <target>` once, and the id cell of an active
+// The list advertises `bench 'worktree' 'path' <target>` once, and the id cell of an active
 // row fills the slot. So the id cell has to be the address the resolver accepts. The id
 // fills the slot rather than the label, because ids are unique and labels can collide.
 // It is the only address an agent has for a worktree it did not create.
@@ -81,7 +81,7 @@ func TestListPathActionRunsAsAdvertised(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !slices.ContainsFunc(actions, func(action axitest.HelpAction) bool { return action.Cmd == "bench worktree path <target>" }) {
+	if !slices.ContainsFunc(actions, func(action axitest.HelpAction) bool { return action.Cmd == "bench 'worktree' 'path' <target>" }) {
 		t.Fatalf("list advertised no target-slot path action:\n%s", listed)
 	}
 	rows, err := document.Rows(listTable)

@@ -170,14 +170,16 @@ func TestReleaseRetainsAMissingTreeUnderAnUnknownLease(t *testing.T) {
 
 // TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot: a missing tree whose request or
 // path is not line-safe prints the release with its command words, and the placeholder only
-// in the slot of each unsafe value, so no control byte reaches the record.
+// in the slot of each unsafe value, so no control byte reaches the record. A safe request
+// spelled as the placeholder is a value, so it prints quoted.
 func TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
 	unsafePath := filepath.Join(t.TempDir(), "gone\nline")
 	for _, tc := range []struct{ request, want string }{
-		{"req-gone", "bench worktree release --request req-gone <checkout>"},
-		{"req\x1bgone", "bench worktree release --request <request> <checkout>"},
+		{"req-gone", "bench 'worktree' 'release' '--request' 'req-gone' <checkout>"},
+		{"req\x1bgone", "bench 'worktree' 'release' '--request' <request> <checkout>"},
+		{"<request>", "bench 'worktree' 'release' '--request' '<request>' <checkout>"},
 	} {
 		gone := intent.Assignment{ID: "gone", RequestToken: tc.request, Branch: "refs/heads/bench/gone", Worktree: unsafePath}
 		var refused refusalError
@@ -207,7 +209,7 @@ func TestMissingTreeRouteAgreesWithTheLandedSelector(t *testing.T) {
 			next, printed := recordField(r.stdout, "refused{detail="+refusalroute.Sentence(faceResetTreeMissing), refusalroute.NextField)
 			plan := runVerb(t, verbClean, f.call("--landed"))
 			selected := strings.Contains(plan.stdout, f.creation.Assignment.ID)
-			if !printed || (next == "bench worktree clean --landed") != selected || selected == leased {
+			if !printed || (next == "bench 'worktree' 'clean' '--landed'") != selected || selected == leased {
 				t.Fatalf("missing-tree route = %q (printed %t) and clean --landed selects the assignment = %t, want the route to agree with the selector", next, printed, selected)
 			}
 			if list := runVerb(t, verbList, f.call()); !strings.Contains(list.stdout, "\n  "+next+",") {

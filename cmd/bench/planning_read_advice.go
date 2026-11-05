@@ -1,17 +1,17 @@
 package main
 
 import (
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/responsebound"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // rawReadAdvice renders the advisory line for one eligible raw read. It names the native
 // file read, or the line-range read when the raw read prints one range, from the read
 // grammar and the line-range owner. The line advises only: the raw read still runs.
 func rawReadAdvice(read census.Read) string {
-	form := readGrammar.Cmd + " " + axi.ShellQuote(read.Path)
+	form := readGrammar.Cmd + " " + sanitize.ShellQuote(read.Path)
 	if read.Ranged() {
 		form += " " + responsebound.LinesFlag + " " + responsebound.LineRange(read.First, read.Last)
 	}

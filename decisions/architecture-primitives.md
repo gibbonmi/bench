@@ -38,9 +38,9 @@ Use craft-spec, craft-seams, and craft-cli for the separate specs.
 
 ## Sources
 
-- Path: `roadmap/FT354.md`
+- Path: `decisions/architecture-primitives/tickets/4.md`
   Supports: the existing primitive ownership questions.
-  Drift: a change to the row.
+  Drift: a change to the split decision.
 - Path: `internal/jsonfile/decode.go`
   Supports: complete-document and persisted-record readers.
   Drift: a change to framing or strictness.
@@ -54,6 +54,6 @@ Use craft-spec, craft-seams, and craft-cli for the separate specs.
   Supports: the existing always-quoted shell argument function.
   Drift: a change to ShellQuote.
 - Path: `internal/axi/action.go`
-  Supports: the differing bare-token rule.
-  Drift: a change to ShellQuote.
+  Supports: the AXI known-argument renderer, which quotes each value through ShellQuote.
+  Drift: a change to renderKnownArgument.
 

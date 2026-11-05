@@ -1,7 +1,7 @@
 # Quote evidence pagination command arguments
 
 Blocked by: 01-quote-tree-build-arguments.md
-Writes: internal/preflight/evidencecmd/evidence.go, internal/preflight/evidencecmd/evidence_command_test.go, internal/preflight/evidencecmd/evidence_modes_test.go, internal/preflight/evidencecmd/evidence_summary_test.go, internal/preflight/evidencecmd/evidence_review_test.go, internal/preflight/evidencecmd/evidence_cleanup_test.go, internal/preflight/evidencecmd/shell_arguments_test.go (new)
+Writes: internal/preflight/evidencecmd/evidence.go, internal/preflight/evidencecmd/evidence_command_test.go, internal/preflight/evidencecmd/evidence_modes_test.go, internal/preflight/evidencecmd/evidence_summary_test.go, internal/preflight/evidencecmd/evidence_review_test.go, internal/preflight/evidencecmd/evidence_cleanup_test.go, internal/preflight/evidencecmd/shell_arguments_test.go (new), cmd/bench/preflight_version_test.go
 Covers: S17
 
 ## What to build

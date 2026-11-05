@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -131,6 +132,17 @@ func RenderHelp(actions []Action) (string, error) {
 	return toon.Table("help", []string{"cmd", "why"}, rows)
 }
 
+// Command renders the command of the help row that action gives, so a caller that prints
+// the same route on a line outside the help block prints the same bytes. An action that
+// the help block refuses to disclose refuses here too.
+func (action Action) Command() (string, error) {
+	if action.hasUnsupportedDisclosureValue() {
+		return "", errors.New("action holds a value that no help row discloses")
+	}
+	command, _, err := action.render()
+	return command, err
+}
+
 func (action Action) hasUnsupportedDisclosureValue() bool {
 	if hasUnsupportedControl(action.why) || hasUnsupportedControl(action.phaseArgument) {
 		return true
@@ -210,7 +222,9 @@ func (action Action) render() (string, string, error) {
 			}
 			args = append(args, "<"+argument.future+">")
 		}
-		if len(args) == 0 || args[0] == "bench" {
+		// The first word is compared as declared: its rendered bytes carry quotes, so a
+		// declared `bench` would pass a comparison of the rendered word.
+		if len(args) == 0 || action.arguments[0].known == "bench" {
 			return "", "", errors.New("executable action requires a command without prose")
 		}
 		if !sameStrings(action.invocation, args) {
@@ -278,21 +292,14 @@ func validHarnessPhase(phase string) bool {
 	}
 }
 
-// ShellQuote renders one value as a single POSIX shell token for a command line that a
-// reader replays. A value of only shell-safe characters stays bare, so a plain slug or
-// path prints without quotes.
-func ShellQuote(value string) string {
-	if shellSafeToken(value) {
-		return value
-	}
-	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
-}
-
+// renderKnownArgument renders one accepted known value as the single POSIX shell token
+// that sanitize owns. The validation here is the AXI disclosure policy; the quote owner
+// authorizes nothing.
 func renderKnownArgument(value string) (string, error) {
 	if !validKnownArgument(value) {
 		return "", errors.New("known argument is invalid")
 	}
-	return ShellQuote(value), nil
+	return sanitize.ShellQuote(value), nil
 }
 
 func validKnownArgument(value string) bool {

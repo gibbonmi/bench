@@ -103,7 +103,7 @@ func TestAnchorsDirectoryGradesEachAnchoredFile(t *testing.T) {
 			if !strings.HasPrefix(result.stdout, want) {
 				t.Fatalf("anchors %s stdout = %q, want the table %q", operand, result.stdout, want)
 			}
-			if rest := strings.TrimPrefix(result.stdout, want); !strings.HasPrefix(rest, "help[1]{cmd,why}:\n") || !strings.Contains(rest, "bench anchors <file>") {
+			if rest := strings.TrimPrefix(result.stdout, want); !strings.HasPrefix(rest, "help[1]{cmd,why}:\n") || !strings.Contains(rest, "bench 'anchors' <file>") {
 				t.Fatalf("anchors %s help = %q, want one row that names the file form", operand, rest)
 			}
 			if dir != "." && strings.Contains(result.stdout, "\n  AGENTS.md,") {

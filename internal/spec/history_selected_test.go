@@ -96,9 +96,28 @@ func TestSelectedSpecOmissions(t *testing.T) {
 	}
 }
 
+// TestSelectedSpecDetailRoute: each detail command spells its operand as one always-quoted
+// shell argument, so a bypassed owner or a former bare token reds the exact spelling even
+// when a shell still reads the same argv. The shell then runs the command, which must reach
+// the selected history, and a sentinel file reds an operand that the shell executes.
 func TestSelectedSpecDetailRoute(t *testing.T) {
 	f := historyFixture(t)
-	targets := []string{"mixed", "a space", "quote' name", "café", "--limit", "help", "$(touch sentinel)", "[x]*?", "x.md.md", ".md"}
+	cases := []struct{ target, detail string }{
+		{"mixed", "bench spec history 'mixed'"},
+		{"a space", "bench spec history 'a space'"},
+		{"quote' name", `bench spec history 'quote'\'' name'`},
+		{"café", "bench spec history 'café'"},
+		{"--limit", "bench spec history -- '--limit'"},
+		{"help", "bench spec history -- 'help'"},
+		{"$(touch sentinel)", "bench spec history '$(touch sentinel)'"},
+		{"[x]*?", "bench spec history '[x]*?'"},
+		{"x.md.md", "bench spec history 'x.md.md'"},
+		{".md", "bench spec history '.md'"},
+	}
+	var targets []string
+	for _, c := range cases {
+		targets = append(targets, c.target)
+	}
 	for i, target := range targets[1:] {
 		if target != ".md" {
 			f.commit(t, target, i+9, "spec-retire: "+SlugOf(target))
@@ -117,6 +136,9 @@ func TestSelectedSpecDetailRoute(t *testing.T) {
 			// The shell function prints each word of the recovery command NUL-framed, so
 			// the test reads the argv that a shell gives the command.
 			detail := row["detail"].(string)
+			if detail != cases[i].detail {
+				t.Fatalf("detail = %q, want %q", detail, cases[i].detail)
+			}
 			raw, err := exec.Command("sh", "-c", "bench() { printf '%s\\000' \"$@\"; }; "+detail).Output()
 			if err != nil {
 				t.Fatalf("detail %q: %v", detail, err)

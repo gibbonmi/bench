@@ -1,6 +1,6 @@
 # Shell argument ownership
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact `decisions/architecture-primitives.md`, resolved tickets `3.md` and `4.md` (2026-10-06).
 
@@ -11,7 +11,7 @@ Verification log: 2 spec iterations and 2 ticket iterations to accept — spec a
 AXI and freshness define shell quote algorithms beside the sanitize owner.
 AXI prints safe values bare, while sanitize always quotes values.
 The differing spellings reach direct command lines and AXI executable actions.
-Sources: `internal/axi/action.go:284`, `internal/sanitize/sanitize.go:109`, and `internal/freshness/freshness_verify.go:124`.
+Sources: `internal/axi/action.go:284`, `internal/sanitize/sanitize.go:109`, and `internal/freshness/freshness_verify.go:180`.
 
 AXI shellSafeToken accepts an empty string.
 Its renderKnownArgument caller refuses empty first.
@@ -74,6 +74,11 @@ Author line: gpt-6.1-sol / high / one draft plus at most two review repair round
 37. As a maintainer, I want to use the owner in fixture scripts, so that test fixture quote policy has one source.
 38. As a maintainer, I want to prove the caller composition, so that a shared-helper test cannot hide a bypass.
 39. As a maintainer, I want to update affected output readers, so that quoting preserves their original behavioral assertions.
+40. As a spec widen reader, I want to replay the rerun line, so that the rerun names the original slug, ticket, and entries.
+41. As an outline reader, I want to retain the exact rendered invocation, so that the action reaches the same command.
+42. As a bounded read reader, I want to replay the next page and the first page, so that the command retains its read operands.
+43. As a worktree read reader, I want to retain the exact rendered invocation, so that the action reaches the same command.
+44. As a planning read reader, I want to replay the raw read advice, so that the advice names the original path.
 
 ## Implementation decisions
 
@@ -106,20 +111,23 @@ No new argument, flag, next action, schema field, or exit code belongs to this m
 
 ### Current direct caller inventory
 
-Sources pin the tree at `a382f4848d432815968f044820fad593e856e297`.
+Sources pin the tree at `1173cd012d70ce92bf466aa3f4e520fc6d5d7d86`, after the build-entry staleness pass.
 A caller or renderer change invalidates its inventory row.
 
 | current function | call site | approved byte delta | row |
 |---|---|---|---|
 | axi.renderKnownArgument | `internal/axi/action.go:291` | Accepted known values become always quoted. | S05-S12 |
+| spec.widen rerun line | `internal/spec/widen.go:129` and `:131` | The slug, ticket, and each entry become always quoted. The `--decision <reference>` placeholder keeps its spelling. | S40 |
 | spec.historyDetail | `internal/spec/history_selected.go:121` | The operand uses the selected always-quoted spelling. | S13 |
 | consumers.citation.cmd | `internal/consumers/citation.go:58` | Each argv value becomes always quoted. | S14 |
-| worktree.PrintTreeBuildRefusal | `internal/worktree/tree_target.go:78` | The assignment label becomes always quoted. | S15 |
-| worktree.recoveryRoute.line | `internal/worktree/list.go:252` | The optional path becomes always quoted. | S16 |
-| evidencecmd.evidenceInvocation | `internal/preflight/evidencecmd/evidence.go:233` | Each rendered argv value becomes always quoted. | S17 |
-| freshness.RebuildAction | `internal/freshness/freshness_verify.go:121` | No approved byte delta. The owner changes. | S18 |
+| worktree.PrintTreeBuildRefusal | `internal/worktree/tree_target.go:91` | The assignment label becomes always quoted. | S15 |
+| worktree.recoveryRoute.line | `internal/worktree/list.go:300` | The line renders the command of its help row. With the S-E switch, every word and the path become always quoted. When the AXI renderer refuses the route, the line still quotes each word, the path keeps its refusal escape, and the request placeholder stays bare as a future slot (reviewer decision, 2026-11-05). | S16 |
+| evidencecmd.evidenceInvocation | `internal/preflight/evidencecmd/evidence.go:233` | The identity, source, and cursor values become always quoted. The fixed tokens keep their spelling (reviewer decision, 2026-11-03). | S17 |
+| freshness.RebuildIn and CheckoutRebuildAction | `internal/freshness/freshness_verify.go:169` and `:177` | No approved byte delta. The owner changes for the pool worktree-build form and the checkout form. | S18 |
+| responsebound.firstPage | `internal/responsebound/read.go:288` | Each first-page argv value becomes always quoted. | S42 |
+| cmd/bench rawReadAdvice | `cmd/bench/planning_read_advice.go:14` | The read path becomes always quoted. | S44 |
 
-The AXI function also has test callers in identifier_operand_test.go and unlanded_route_test.go.
+The AXI function also has test callers in identifier_operand_test.go, unlanded_route_test.go, and cmd/bench/worktree_leaves_test.go.
 The static census includes those callers.
 Existing sanitize callers retain their behavior because the owner implementation already exists.
 
@@ -132,20 +140,23 @@ For a future-input placeholder, compare its bytes without executing the placehol
 | producer | source | current command family | row |
 |---|---|---|---|
 | anchors | `cmd/bench/anchors_command.go:86` | `anchors <file>` | S19 |
-| coverage | `internal/coverage/coverage.go:587` | `coverage --check <spec>` | S20 |
-| consumers query | `internal/consumers/query.go:141` | `consumers <qualified-symbol> [scope] [--full]` | S21 |
-| consumers blast | `internal/consumers/blast.go:320` | `consumers [original-args] --full` | S22 |
-| guards | `internal/guards/guards.go:323` | `link` | S23 |
+| coverage | `internal/coverage/coverage.go:326` and `:329` | `coverage --check <spec>` | S20 |
+| consumers query | `internal/consumers/query.go:141` and `:148` | `consumers <qualified-symbol> [scope] [--full]` | S21 |
+| consumers blast | `internal/consumers/blast.go:320` and `:334` | `consumers [original-args] --full` | S22 |
+| guards | `internal/guards/guards.go:324` | `link` | S23 |
 | maps | `internal/maps/maps.go:258` | `maps --template` | S24 |
-| gate retry | `internal/gate/gate.go:332` | `gate --fresh` | S25 |
-| preflight retry | `internal/preflight/command.go:214` | `preflight [original-args]` | S26 |
-| worktree list | `internal/worktree/list.go:152` | `worktree path, exec, release, or clean` | S27 |
+| gate retry | `internal/gate/checkpoint.go:294` through refusalroute | `bench doctor; then` a `--fresh` rerun, with no AXI help row | S25 |
+| preflight retry | `internal/preflight/command.go:258` | `preflight [original-args]` | S26 |
+| worktree list | `internal/worktree/list.go:198`, `:218`, `:219`, `:226`, and `:315` | `worktree path, exec, release, or clean` | S27 |
 | worktree selected list | `internal/worktree/list_selected.go:90` | `worktree list` | S28 |
-| worktree explicit clean | `internal/worktree/clean_set.go:296` | `worktree clean [selection] --apply <fingerprint>` | S29 |
-| worktree clean refusal | `internal/worktree/clean_set_apply.go:163` | `worktree clean [selection]` | S30 |
-| worktree landed clean | `internal/worktree/clean_landed.go:248` | `worktree clean --landed or worktree exec [assignment] -- [command]` | S31 |
-| worktree unclaimed clean | `internal/worktree/clean_unclaimed.go:145` | `worktree clean [branch selection] --apply <fingerprint>` | S32 |
-| worktree pool reclaim | `internal/worktree/pool_reclaim.go:318` | `worktree reclaim [--apply <fingerprint>]` | S33 |
+| worktree explicit clean | `internal/worktree/clean_set.go:291` | `worktree clean [selection] --apply <fingerprint>` | S29 |
+| worktree clean refusal | `internal/worktree/clean_set_apply.go:165` | `worktree clean [selection]` | S30 |
+| worktree landed clean | `internal/worktree/clean_landed.go:264`, `:273`, and `:280` | `worktree clean --landed or worktree exec [assignment] -- [command]` | S31 |
+| worktree unclaimed clean | `internal/worktree/clean_unclaimed.go:153` | `worktree clean [branch selection] --apply <fingerprint>` | S32 |
+| worktree pool reclaim | `internal/worktree/pool_reclaim.go:321` and `:348` | `worktree reclaim [--apply <fingerprint>]` | S33 |
+| outline | `internal/outline/command.go:224` and `:236`, `internal/outline/declaration.go:285` and `:288` | `outline <path> [--symbol <name>]` or `read <path> --lines <range>` | S41 |
+| bounded read next page | `internal/responsebound/read.go:192` | `read [original-args] --offset <n> --source <token>` | S42 |
+| worktree read | `internal/worktree/list.go:234` | `worktree read --in <label> <path>` | S43 |
 
 ### Output readers and fixtures
 
@@ -161,7 +172,10 @@ Update only the approved quote spellings in exact command expectations.
 | Worktree | `list_actions_test.go`, `identifier_operand_test.go`, `landed_test.go`, `unlanded_route_test.go`, `path_identifier_test.go` under internal/worktree | Update executable help and direct recovery operands. Keep identity and clean policy. |
 | Maps, guards, coverage | `internal/maps/maps_command_test.go`, `internal/maps/freshness_test.go`, `internal/guards/guards_test.go`, `internal/coverage/coverage_command_test.go`, `internal/coverage/coverage_schema_test.go` | Update executable-help command literals. Keep empty help and harness-phase assertions. |
 | Command facade | `cmd/bench/anchor_help_test.go`, `cmd/bench/anchors_dir_test.go`, `cmd/bench/main_test.go`, `cmd/bench/command_registry_test.go` | Update changed anchors command literals only. Registry and help grammar remain unchanged. |
-| Gate and preflight | `internal/gate/run_outcomes_test.go`, `internal/preflight/explicit_base_test.go` | Update retry command literals. Keep retries and refusal semantics. |
+| Gate and preflight | `internal/gate/run_outcomes_test.go`, `internal/preflight/explicit_base_test.go` | Update preflight retry command literals. The gate test already asserts the refusal-route rerun and needs no edit. Keep retries and refusal semantics. |
+| Spec widen | `internal/spec/widen_test.go` | Update the exact rerun literals. Keep the refusal, the placeholder, and the decision semantics. |
+| Outline and bounded read | `outline_test.go`, `outline_filter_test.go`, `outline_kinds_test.go`, `declaration_test.go` under internal/outline, `internal/responsebound/read_test.go` | Update executable-help command literals. Keep listing, filter, and page semantics. |
+| Planning readers and worktree read | `planning_read_advice_test.go`, `planning_reader_commands_test.go`, `worktree_leaves_test.go`, `census_output_test.go`, `axi_query_cases_test.go` under cmd/bench, `related_test.go` and `list_selected_test.go` under internal/worktree, `internal/treetarget/family_test.go` | Update only the changed command literals. Keep refusal text, inventory, and read semantics. These are candidate readers from the build-entry census; an unchanged file stays untouched. |
 | Selected history | `internal/spec/history_selected_test.go` | Preserve the real-shell history route test and add exact quote fixtures. |
 | Evidence | `internal/preflight/evidencecmd/evidence_command_test.go`, `evidence_modes_test.go`, `evidence_summary_test.go`, `evidence_review_test.go`, `evidence_cleanup_test.go` in that package | Update next-command fixtures and preserve evidence selection. |
 | Freshness | `internal/freshness/freshness_verify_test.go` | Preserve the executable rebuild fixture and its exact observed arguments. |
@@ -177,9 +191,9 @@ S39 requires all listed readers to retain their behavioral assertions.
 
 | affected fixture and existing seam | producer / row | approved assertion update and preserved purpose |
 |---|---|---|
-| `internal/treetarget/build_test.go:95`, TestRunKitWorktreeBuild | PrintTreeBuildRefusal / S15 | Quote alpha in TT44-TT46 expected repair lines. Keep hostile-label bytes, child non-start, environment, argv, and cwd assertions. |
+| `internal/treetarget/build_test.go:84`, TestRunKitWorktreeBuild and TestRunReusesAMatchingBuild | PrintTreeBuildRefusal / S15 | Quote alpha in the TT44-TT46 expected repair lines (`:117`, `:118`, `:120`) and in the BC61-BC65 no-candidate refusal (`:214`). Do not quote a hostile label twice when the shared buildRefusal helper changes. Keep hostile-label bytes, child non-start, environment, argv, and cwd assertions. |
 | `internal/worktree/target_refusal_test.go:19`, TestTargetRefusalEscapesOnlyAnUnsafeLine | PrintTreeBuildRefusal / S15 | Change the plain-label repair to `bench worktree build 'alpha'`. Keep every control escape and single-line expectation. |
-| `internal/systemtest/tree_target_test.go:108`, TestTreeTargetRefusesStaleKitBuild | PrintTreeBuildRefusal / S15 | Quote alpha in the exact stderr repair. Keep exit, empty stdout, stale reason, and child-marker absence. |
+| `internal/systemtest/tree_target_test.go:231`, TestTreeTargetRefusesStaleKitBuild | PrintTreeBuildRefusal / S15 | Quote alpha in the exact stderr repair. Keep exit, empty stdout, stale reason, and child-marker absence. |
 | `internal/worktree/pool_reclaim_test.go:154`, reclaimApplyHead and TestReclaimCommandPlansOnlyTheProvablyDeadKeys | poolReclaimAction / S33 | Quote worktree, reclaim, --apply, and the fingerprint in the decoded action. Keep aggregate counts and dead-versus-live classification. |
 | `internal/worktree/clean_set_wiring_test.go:53`, TestCleanSetApplyTimeStaleWiring | clean refusal / S30 | Update landed and unclaimed selector command literals. Keep stale refusal, race execution, retained refs, and rejected fingerprint. |
 | `internal/worktree/clean_landed_hostile_test.go:30`, TestCleanLandedQuotesSpaceAndGlobPaths and TestCleanLandedControlBytePathRetained | landed clean / S31 | Quote every known verb, flag, path, and assignment operand. Keep safe removal, dirty retention, escaped controls, and the single safe exec pointer. |
@@ -214,26 +228,40 @@ Their command guidance names command tokens, not the changed quote-owner return 
 They receive no rewrite authority from this spec.
 Any later exact-byte hit requires a fence and coverage amendment before slicing.
 
+#### Build-time closure amendment
+
+The ticket 07 author found six more exact-byte readers after the AXI switch. Each reader goes red only through its approved quote spelling. These six readers join the S39 closure under the same rules as the eleven readers above.
+
+| affected fixture and existing seam | producer / row | approved assertion update and preserved purpose |
+|---|---|---|
+| `internal/guards/testdata/scan-family-s.golden`, read by TestScanLoopDifferentialCommandFamilies | guards help rows / S23 | Quote the known arguments in the golden help rows. Keep the family membership and the differential comparison. |
+| `internal/preflight/testdata/legacy-charge/refusal-persistent-movement.toon`, read by TestLegacyPreparedPackDifferential | preflight retry / S26 | Quote the known arguments in the golden retry row. Keep the legacy pack refusal and its other rows. |
+| `internal/treetarget/run_test.go:192`, TestRunRefusesBeforeChild | recovery line / S16, S27 | Quote the words of the expected `next=` recovery line. Keep child non-start and the refusal reason. |
+| `internal/worktree/clean_discard_test.go:106`, TestDiscardTargetResolvesAnUnrecordedBranch | explicit clean / S29 | Quote the apply flag and the fingerprint in the expected substring. Keep branch resolution and each subtest outcome. |
+| `internal/worktree/verb_runner_check_test.go:196`, TestVerbResultFingerprintReadsTheTableCell | landed clean / S31 | Quote the landed selector, the apply flag, and the fingerprint in the expected substring. Keep the fingerprint read from the table cell. |
+| `internal/worktree/testdata/selected-defaults.json`, read by TestSelectedWorktreesPreserveDefault | worktree list and selected list / S27, S28 | Quote the known arguments in the stored help rows. Keep the frozen baseline of the default response and its comparison. |
+
 ## Implementation chunks
 
 Each ticket is one green checkpoint on a retained integration source.
+The tests column names the probe requirements of each chunk. The final verification runs the treetarget package, the AXI registry, routing, ticket grammar, coverage, and the system suite once.
 Each named chunk receives independent Standards, Spec, and Coverage review before its dependent successors.
 Independent ticket graph review accepted the frozen source recorded in assets/spec-review.md.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 |---|---|---|---|---|
-| S-A / 01-quote-tree-build-arguments.md | Quote tree-build arguments through the existing owner | S01, S02, S03, S04, S15 | owner-tests, worktree-tests, target-tests, system-tests, axi-registry, routing | yes |
-| S-B1 / 02-quote-selected-history.md | Quote selected-history command operands | S13 | caller-tests | no |
-| S-B2 / 03-quote-citation-commands.md | Quote citation command arguments | S14 | caller-tests, axi-registry, routing | no |
-| S-B3 / 04-quote-recovery-operands.md | Quote direct recovery-route operands | S16 | caller-tests, axi-registry, routing | no |
-| S-B4 / 05-quote-evidence-commands.md | Quote evidence pagination command arguments | S17 | caller-tests | no |
-| S-D1 / 06-share-rebuild-and-fixture-quotes.md | Share rebuild and fixture shell quoting | S18, S37 | rebuild-tests, diff-tests, release-fixtures, axi-registry, routing | no |
-| S-E / 07-switch-axi-output-atomically.md | Switch AXI known arguments with their complete output closure | S05, S06, S07, S08, S09, S10, S11, S12, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31, S32, S33, S34, S35, S36, S38, S39 | ordinary-tests, axi-registry, routing, coverage | yes |
+| S-A / 01-quote-tree-build-arguments.md | Quote tree-build arguments through the existing owner | S01, S02, S03, S04, S15 | owner-omission-proof, owner-preservation, caller-bypass-proof, caller-preservation | yes |
+| S-B1 / 02-quote-selected-history.md | Quote selected-history command operands | S13, S40 | omission-proof, preservation | no |
+| S-B2 / 03-quote-citation-commands.md | Quote citation command arguments | S14 | omission-proof, preservation | no |
+| S-B4 / 05-quote-evidence-commands.md | Quote evidence pagination command arguments | S17 | omission-proof, preservation | no |
+| S-D1 / 06-share-rebuild-and-fixture-quotes.md | Share rebuild and fixture shell quoting | S18, S37 | preservation, rebuild-argument-proof, diff-fixture-argument-proof, release-fixture-argument-proof | no |
+| S-E / 04-quote-recovery-operands.md, 07-switch-axi-output-atomically.md | Render the recovery line through the help-row renderer, then switch AXI known arguments with their complete output closure | S16, S05, S06, S07, S08, S09, S10, S11, S12, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31, S32, S33, S34, S35, S36, S38, S39, S41, S42, S43, S44 | recovery-line-agreement, omission-proof, preservation | yes |
 
 Stable chunk mapping: S-A becomes S-A and S-E.
 S-B becomes S-B1 through S-B4, with its freshness caller in S-D1.
 S-C becomes S-E, the complete global AXI output checkpoint.
 S-D becomes S-D1 and the final source census in S-E.
+S-B3 joins S-E. Ticket 04 renders the recovery line through the help-row renderer before ticket 07 switches that renderer, so the line and the help row keep one spelling (reviewer decision, 2026-11-03).
 
 S-A serves the existing quote owner through a real tree-build caller.
 Its three exact reader fixtures land with that behavior.
@@ -241,278 +269,18 @@ S-E follows every direct migration and switches AXI output with all affected exe
 The renderer change and its fixture closure must remain one green ticket.
 No temporary bare-versus-quoted presentation policy is permitted.
 
-Shared registries order S-A, S-B2, S-B3, S-D1, and S-E.
+Shared registries order S-A, S-B2, S-D1, and S-E.
 The approved eight clean and reclaim reader paths belong to S-E.
-All eleven reader files remain required by the final S39 reconciliation.
+All eleven reader files and the six build-time readers remain required by the final S39 reconciliation.
 
 ### Completion plan
 
-The authored version 1 plan records future implementation evidence.
+The version 2 plan declares the delegated execution block and records future implementation evidence.
 It claims no current implementation red, pass, native qualification, or benchmark.
 The implementation orchestrator records author sessions in the required version 2 amendment before dispatch.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "S-A",
-      "tickets": [
-        "01-quote-tree-build-arguments.md"
-      ],
-      "verification": [
-        {
-          "id": "owner-tests",
-          "command": "bench test --package ./internal/sanitize"
-        },
-        {
-          "id": "worktree-tests",
-          "command": "bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'"
-        },
-        {
-          "id": "target-tests",
-          "command": "bench test --package ./internal/treetarget"
-        },
-        {
-          "id": "system-tests",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "owner-omission-proof",
-          "command": "bench test --package ./internal/sanitize",
-          "probe": "Return bare alpha, split an embedded quote, or drop the empty owner argument. The exact quoted-byte and NUL-framed recovered-argv owner assertions must fail, then pass after source restoration."
-        },
-        {
-          "id": "owner-preservation",
-          "command": "bench test --package ./internal/sanitize",
-          "probe": "Alter the existing always-quoted owner result for spaces, Unicode, or embedded quotes. The independent input-to-argv witness must fail, then pass after restoration."
-        },
-        {
-          "id": "caller-bypass-proof",
-          "command": "bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'",
-          "probe": "Bypass sanitize.ShellQuote in PrintTreeBuildRefusal or restore its former bare alpha spelling. The actual tree-build producer fixture and recovered argv assertion must fail, then pass after source restoration."
-        },
-        {
-          "id": "caller-preservation",
-          "command": "bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'",
-          "probe": "Drop the tree-build operand, change its exact quoted spelling, or bypass retained whole-line control escaping. The real producer or refusal assertion must fail, then pass after restoration."
-        }
-      ]
-    },
-    {
-      "id": "S-B1",
-      "tickets": [
-        "02-quote-selected-history.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/spec"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/spec",
-          "probe": "Bypass the owner with former bare-token output. The independent exact fixture must fail even if argv still round-trips."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/spec",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "S-B2",
-      "tickets": [
-        "03-quote-citation-commands.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/consumers"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/consumers",
-          "probe": "Return the former bare spelling at citation.cmd or omit a supplied flag. The exact fixture or recovered argv must turn red."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/consumers",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "S-B3",
-      "tickets": [
-        "04-quote-recovery-operands.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/worktree --run 'RecoveryRouteArgument|List|PathIdentifier'"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/worktree --run 'RecoveryRouteArgument|List|PathIdentifier'",
-          "probe": "Bypass the owner only at recoveryRoute.line. The raw command fixture must fail independently of AXI help tests."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/worktree --run 'RecoveryRouteArgument|List|PathIdentifier'",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "S-B4",
-      "tickets": [
-        "05-quote-evidence-commands.md"
-      ],
-      "verification": [
-        {
-          "id": "caller-tests",
-          "command": "bench test --package ./internal/preflight/evidencecmd"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./internal/preflight/evidencecmd",
-          "probe": "Return a bare cursor or bypass the owner at evidenceInvocation. The exact producer fixture and argv oracle must detect each omission."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/preflight/evidencecmd",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    },
-    {
-      "id": "S-D1",
-      "tickets": [
-        "06-share-rebuild-and-fixture-quotes.md"
-      ],
-      "verification": [
-        {
-          "id": "rebuild-tests",
-          "command": "bench test --package ./internal/freshness"
-        },
-        {
-          "id": "diff-tests",
-          "command": "bench test --package ./internal/diff"
-        },
-        {
-          "id": "release-fixtures",
-          "command": "bench test --package ./internal/preprelease"
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./internal/freshness",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        },
-        {
-          "id": "rebuild-argument-proof",
-          "command": "bench test --package ./internal/freshness",
-          "probe": "Emit a malformed quoted rebuild operand or drop a supplied rebuild operand. Its real producer fixture and independent shell argv assertion must fail, then pass after source restoration."
-        },
-        {
-          "id": "diff-fixture-argument-proof",
-          "command": "bench test --package ./internal/diff",
-          "probe": "Corrupt quote escaping for a hostile diff fixture operand. Its independent observed argv assertion must fail, then pass after source restoration."
-        },
-        {
-          "id": "release-fixture-argument-proof",
-          "command": "bench test --package ./internal/preprelease",
-          "probe": "Corrupt quote escaping for a hostile preprelease fixture operand. Its independent observed argv assertion must fail, then pass after source restoration."
-        }
-      ]
-    },
-    {
-      "id": "S-E",
-      "tickets": [
-        "07-switch-axi-output-atomically.md"
-      ],
-      "verification": [
-        {
-          "id": "ordinary-tests",
-          "command": "bench test --package ./..."
-        },
-        {
-          "id": "axi-registry",
-          "command": "bench test --check axi-query-registry"
-        },
-        {
-          "id": "routing",
-          "command": "bench test --check subcommand-routing"
-        },
-        {
-          "id": "coverage",
-          "command": "bench coverage --check shell-argument-ownership"
-        },
-        {
-          "id": "omission-proof",
-          "command": "bench test --package ./...",
-          "probe": "Return former bare-token spelling at each enumerated family, quote a future slot, compare the rendered first command, or omit a fixture update. Record each independent exact-byte red and restoration separately from shell argv evidence. Keep the accepted empty-helper observation separate from reachable AXI empty refusal. Reconcile all source definitions and fixture helpers without granting status_route_converge rewrite authority."
-        },
-        {
-          "id": "preservation",
-          "command": "bench test --package ./...",
-          "probe": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass."
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "ordinary-integration",
-      "command": "bench test --package ./..."
-    },
-    {
-      "id": "coverage",
-      "command": "bench coverage --check shell-argument-ownership"
-    },
-    {
-      "id": "ticket-grammar",
-      "command": "bench test --check ticket-grammar"
-    },
-    {
-      "id": "system-integration",
-      "command": "bench test --check system"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","review_mode":"unified","run_id":"ft354-build","orchestrator_session":"ft354-orchestrator","author_limit":1,"assignments":{"01-quote-tree-build-arguments.md":[{"session":"ft354-author-01","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"high","source":"c32ef0f29fb6007562916ba7f60764a67944fbe6","native_ref":"claude-agent:ft354-author-01"}],"02-quote-selected-history.md":[{"session":"ft354-author-02","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"85e1192cf875ac0f037a5a81b99ba57e1e529afa","native_ref":"claude-agent:ft354-author-02"}],"03-quote-citation-commands.md":[{"session":"ft354-author-03","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"f0c49d1eb83c751885288cb2f19453cdcfde6837","native_ref":"claude-agent:ft354-author-03"},{"session":"ft354-repair-03-r1","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"18d8f388a895c7afafb10cc1fea691dbbfdba898","native_ref":"claude-agent:ft354-repair-03-r1","predecessor":"ft354-author-03","trigger":"user-directed","stopped":"fb2f38e9c09ce5f5cc61b8e7cf691285a3b02001","preserved":"18d8f388a895c7afafb10cc1fea691dbbfdba898"}],"04-quote-recovery-operands.md":[{"session":"ft354-author-04","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"2dc3a7e46b6a8e3bc2559328be659fb69db22504","native_ref":"claude-agent:ft354-author-04"}],"05-quote-evidence-commands.md":[{"session":"ft354-author-05","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"d38f122b77367007661b1558226de87cea6fdc99","native_ref":"claude-agent:ft354-author-05"},{"session":"ft354-repair-05-r1","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"5c6c3806baa873438e851579db4656aeec320aa3","native_ref":"claude-agent:ft354-repair-05-r1","predecessor":"ft354-author-05","trigger":"user-directed","stopped":"e93f34e3705456c6cd8fc9bdfad72c9b4218b733","preserved":"5c6c3806baa873438e851579db4656aeec320aa3"}],"06-share-rebuild-and-fixture-quotes.md":[{"session":"ft354-author-06","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"medium","source":"4ac0f5b42b6d39a58999544e3b7835a3d40b3009","native_ref":"claude-agent:ft354-author-06"}],"07-switch-axi-output-atomically.md":[{"session":"ft354-author-07","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"high","source":"a70c173235b914bfd1224df61dcc9edd4db14eb5","native_ref":"claude-agent:ft354-author-07"},{"session":"ft354-repair-07-r1","assignment":"fd18cdff051ae983e7281a7aa2607a68","model":"opus","effort":"high","source":"d05ec471e93bfd57e33928076d9514c5ba97d794","native_ref":"claude-agent:ft354-repair-07-r1","predecessor":"ft354-author-07","trigger":"user-directed","stopped":"0d7cdbefe829c70614676c68c6cfd78dab3b7b3f","preserved":"d05ec471e93bfd57e33928076d9514c5ba97d794"}]}},"chunks":[{"id":"S-A","tickets":["01-quote-tree-build-arguments.md"],"verification":[{"id":"owner-omission-proof","command":"bench test --package ./internal/sanitize","probe":"Return bare alpha, split an embedded quote, or drop the empty owner argument. The exact quoted-byte and NUL-framed recovered-argv owner assertions must fail, then pass after source restoration.","ticket":"01-quote-tree-build-arguments.md"},{"id":"owner-preservation","command":"bench test --package ./internal/sanitize","probe":"Alter the existing always-quoted owner result for spaces, Unicode, or embedded quotes. The independent input-to-argv witness must fail, then pass after restoration.","ticket":"01-quote-tree-build-arguments.md"},{"id":"caller-bypass-proof","command":"bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'","probe":"Bypass sanitize.ShellQuote in PrintTreeBuildRefusal or restore its former bare alpha spelling. The actual tree-build producer fixture and recovered argv assertion must fail, then pass after source restoration.","ticket":"01-quote-tree-build-arguments.md"},{"id":"caller-preservation","command":"bench test --package ./internal/worktree --run 'TreeBuildArgument|TargetRefusal'","probe":"Drop the tree-build operand, change its exact quoted spelling, or bypass retained whole-line control escaping. The real producer or refusal assertion must fail, then pass after restoration.","ticket":"01-quote-tree-build-arguments.md"}]},{"id":"S-B1","tickets":["02-quote-selected-history.md"],"verification":[{"id":"omission-proof","command":"bench test --package ./internal/spec","probe":"Bypass the owner with former bare-token output at historyDetail or at the widen rerun line. The independent exact fixture must fail even if argv still round-trips.","ticket":"02-quote-selected-history.md"},{"id":"preservation","command":"bench test --package ./internal/spec","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"02-quote-selected-history.md"}]},{"id":"S-B2","tickets":["03-quote-citation-commands.md"],"verification":[{"id":"omission-proof","command":"bench test --package ./internal/consumers","probe":"Return the former bare spelling at citation.cmd or omit a supplied flag. The exact fixture or recovered argv must turn red.","ticket":"03-quote-citation-commands.md"},{"id":"preservation","command":"bench test --package ./internal/consumers","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"03-quote-citation-commands.md"}]},{"id":"S-B4","tickets":["05-quote-evidence-commands.md"],"verification":[{"id":"omission-proof","command":"bench test --package ./internal/preflight/evidencecmd","probe":"Return a bare cursor or bypass the owner at evidenceInvocation. The exact producer fixture and argv oracle must detect each omission.","ticket":"05-quote-evidence-commands.md"},{"id":"preservation","command":"bench test --package ./internal/preflight/evidencecmd","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"05-quote-evidence-commands.md"}]},{"id":"S-D1","tickets":["06-share-rebuild-and-fixture-quotes.md"],"verification":[{"id":"preservation","command":"bench test --package ./internal/freshness","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"06-share-rebuild-and-fixture-quotes.md"},{"id":"rebuild-argument-proof","command":"bench test --package ./internal/freshness","probe":"Emit a malformed quoted rebuild operand or drop a supplied rebuild operand. Its real producer fixture and independent shell argv assertion must fail, then pass after source restoration.","ticket":"06-share-rebuild-and-fixture-quotes.md"},{"id":"diff-fixture-argument-proof","command":"bench test --package ./internal/diff","probe":"Corrupt quote escaping for a hostile diff fixture operand. Its independent observed argv assertion must fail, then pass after source restoration.","ticket":"06-share-rebuild-and-fixture-quotes.md"},{"id":"release-fixture-argument-proof","command":"bench test --package ./internal/preprelease","probe":"Corrupt quote escaping for a hostile preprelease fixture operand. Its independent observed argv assertion must fail, then pass after source restoration.","ticket":"06-share-rebuild-and-fixture-quotes.md"}]},{"id":"S-E","tickets":["04-quote-recovery-operands.md","07-switch-axi-output-atomically.md"],"verification":[{"id":"recovery-line-agreement","command":"bench test --package ./internal/worktree --run 'RecoveryRouteArgument|MissingTreeRoute|UnlandedRelease|IdentifierOperand'","probe":"Drop the path from the shared recovery argument list, or drop a route word. The real producer fixture and the line-and-help-row agreement assertion must fail, then pass after restoration.","ticket":"04-quote-recovery-operands.md"},{"id":"omission-proof","command":"bench test --package ./...","probe":"Return former bare-token spelling at each enumerated family, restore the separate word-join spelling of recoveryRoute.line, including the outline, bounded read, worktree read, and raw read advice families, quote a future slot, compare the rendered first command, or omit a fixture update. Record each independent exact-byte red and restoration separately from shell argv evidence. Keep the accepted empty-helper observation separate from reachable AXI empty refusal. Reconcile all source definitions and fixture helpers without granting status_route_converge rewrite authority.","ticket":"07-switch-axi-output-atomically.md"},{"id":"preservation","command":"bench test --package ./...","probe":"Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.","ticket":"07-switch-axi-output-atomically.md"}]}],"final_verification":[{"id":"ordinary-integration","command":"bench test --package ./..."},{"id":"coverage","command":"bench coverage --check shell-argument-ownership"},{"id":"ticket-grammar","command":"bench test --check ticket-grammar"},{"id":"system-integration","command":"bench test --check system"},{"id":"target-tests","command":"bench test --package ./internal/treetarget"},{"id":"axi-registry","command":"bench test --check axi-query-registry"},{"id":"routing","command":"bench test --check subcommand-routing"}]}
 ```
 
 ## Testing decisions
@@ -537,10 +305,10 @@ The exact producer fixture must turn red when it returns the former bare-token p
 The shell oracle must turn red when a value loses a quote or an argument.
 Existing tests alone do not establish the approved output delta.
 
-Prior art: `internal/axi/axitest/help.go:15` recovers argv through sh.
-Prior art: `internal/consumers/citation_test.go:190` crosses the real citation producer.
-Prior art: `internal/spec/history_selected_test.go:98` executes the printed history detail command.
-Prior art: `internal/freshness/freshness_verify_test.go:246` executes the printed rebuild action.
+Prior art: `internal/axi/axitest/help.go:16` recovers argv through sh.
+Prior art: `internal/consumers/citation_test.go:185` crosses the real citation producer.
+Prior art: `internal/spec/history_selected_test.go:99` executes the printed history detail command.
+Prior art: `internal/freshness/freshness_verify_test.go:247` executes the printed rebuild action.
 Read enforcement: `internal/conformance/axi_query_registry_test.go:27` grades the declared query inventory.
 
 The dev gate unit phase executes the affected package tests.
@@ -560,45 +328,50 @@ The whole-project gate remains the acceptance oracle.
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| S01 | 1 | The shared owner renders an empty string as one empty POSIX-shell argument. | planned internal/sanitize/shellquote_test.go (TestShellQuoteRoundTrip) | A bare empty string loses its argument. |
-| S02 | 2 | An embedded single quote survives a POSIX-shell round trip. | planned internal/sanitize/shellquote_test.go (TestShellQuoteRoundTrip) | The shell oracle detects a split or altered argument. |
-| S03 | 3 | Spaces, glob characters, dollar signs, and shell operators round-trip literally. | planned internal/sanitize/shellquote_test.go (TestShellQuoteRoundTrip) | A sentinel file and NUL-framed argv detect expansion or execution. |
-| S04 | 4 | A safe nonempty value still renders with surrounding single quotes. | planned internal/sanitize/shellquote_test.go (TestShellQuoteAlwaysQuoted) | A safe-token shortcut violates the exact output predicate. |
-| S05 | 5 | AXI executable actions quote each accepted known argument through sanitize.ShellQuote. | planned internal/axi/action_test.go (TestRenderHelpAlwaysQuoted) | A round trip alone misses the approved quote-policy delta. |
-| S06 | 6 | Future-input slots retain their exact placeholder spelling. | planned internal/axi/action_test.go (TestRenderHelpFutureInputs) | Quoting a future slot changes the action grammar. |
+| S01 | 1 | The shared owner renders an empty string as one empty POSIX-shell argument. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteRoundTrip`) | A bare empty string loses its argument. |
+| S02 | 2 | An embedded single quote survives a POSIX-shell round trip. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteRoundTrip`) | The shell oracle detects a split or altered argument. |
+| S03 | 3 | Spaces, glob characters, dollar signs, and shell operators round-trip literally. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteRoundTrip`) | A sentinel file and NUL-framed argv detect expansion or execution. |
+| S04 | 4 | A safe nonempty value still renders with surrounding single quotes. | `internal/sanitize/shellquote_test.go` (`TestShellQuoteAlwaysQuoted`) | A safe-token shortcut violates the exact output predicate. |
+| S05 | 5 | AXI executable actions quote each accepted known argument through sanitize.ShellQuote. | `internal/axi/action_test.go` (`TestRenderHelpAlwaysQuoted`) | A round trip alone misses the approved quote-policy delta. |
+| S06 | 6 | Future-input slots retain their exact placeholder spelling. | `internal/axi/action_test.go` (`TestRenderHelpFutureInputs`) | Quoting a future slot changes the action grammar. |
 | S07 | 7 | A known empty AXI argument still produces the honest empty help envelope. | `internal/axi/action_test.go` (`TestRenderHelpUsesHonestEmptyForUnsupportedDisclosureValue`) | Accepting empty at this caller changes a pre-existing assertion. |
 | S08 | 8 | Unsupported AXI control runes still produce the honest empty help envelope. | `internal/axi/action_test.go` (`TestKnownArgumentRefusesUnsupportedControls`) | The accepted owner cannot replace the caller refusal policy. |
 | S09 | 9 | AXI tab, newline, and carriage-return arguments retain their exact shell values. | `internal/axi/action_test.go` (`TestKnownArgumentControlValuesRoundTripThroughTOONAndPOSIXShell`) | A line-safe filter would incorrectly remove accepted bytes. |
-| S10 | 10 | An executable action whose first known value is bench remains refused. | planned internal/axi/action_test.go (TestRenderHelpRejectsQuotedCommandSpoof) | Comparing rendered bytes misses the new quoted spelling. |
+| S10 | 10 | An executable action whose first known value is bench remains refused. | `internal/axi/action_test.go` (`TestRenderHelpRejectsQuotedCommandSpoof`) | Comparing rendered bytes misses the new quoted spelling. |
 | S11 | 11 | Identical actions still collapse without source-order changes. | `internal/axi/action_test.go` (`TestRenderHelpDeduplicatesExactTemplatesWithoutReordering`) | A formatting migration cannot change action cardinality. |
 | S12 | 12 | Harness-phase actions retain their current rendered argument bytes. | `internal/axi/action_test.go` (`TestRenderHelpRendersReusableInvocationAndHarnessPhase`) | Applying shell quotes to a harness operand changes a distinct interface. |
 | S13 | 13 | Selected-history detail operands use the surviving quote owner. | `internal/spec/history_selected_test.go` (`TestSelectedSpecDetailRoute`) | The command executes through a shell and reaches the selected history. |
 | S14 | 14 | Citation commands preserve the supplied argv through the surviving owner. | `internal/consumers/citation_test.go` (`TestCitationCmdRoundTripsThroughAPOSIXShellSplit`) | An omitted flag or bare metacharacter changes recovered argv. |
-| S15 | 15 | Tree-build refusal commands preserve the exact assignment label. | planned internal/worktree/shell_arguments_test.go (TestTreeBuildArgument) | A hostile label and shell argv oracle detect a bypass. |
-| S16 | 16 | RecoveryRoute.line quotes its path through the surviving owner. | planned internal/worktree/shell_arguments_test.go (TestRecoveryRouteArgument) | The raw refusal line must preserve argv independently of help output. |
-| S17 | 17 | Evidence commands preserve identity, source, and cursor arguments through the surviving owner. | planned internal/preflight/evidencecmd/shell_arguments_test.go (TestEvidenceArgumentCommands) | A producer-level test detects a direct helper bypass. |
+| S15 | 15 | Tree-build refusal commands preserve the exact assignment label. | `internal/worktree/shell_arguments_test.go` (`TestTreeBuildArgument`) | A hostile label and shell argv oracle detect a bypass. |
+| S16 | 16 | RecoveryRoute.line renders the same command as its help row, so its words and path quote through the surviving owner. | `internal/worktree/shell_arguments_test.go` (`TestRecoveryRouteArgument`) | The raw refusal line must preserve argv independently of help output. |
+| S17 | 17 | Evidence commands preserve identity, source, and cursor arguments through the surviving owner. | `internal/preflight/evidencecmd/shell_arguments_test.go` (`TestEvidenceArgumentCommands`) | A producer-level test detects a direct helper bypass. |
 | S18 | 18 | Freshness rebuild commands use sanitize.ShellQuote for each path. | `internal/freshness/freshness_verify_test.go` (`TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths`) | The existing real-script fixture observes cwd and both arguments. |
-| S19 | 19 | The anchors producer emits the approved quoted command shape. | planned cmd/bench/anchor_help_test.go (TestAnchorHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S20 | 20 | The coverage producer emits the approved quoted command shape. | planned internal/coverage/shell_arguments_test.go (TestCoverageHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S21 | 21 | The consumers query producer emits the approved quoted command shape. | planned internal/consumers/shell_arguments_test.go (TestConsumersQueryHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S22 | 22 | The consumers blast producer emits the approved quoted command shape. | planned internal/consumers/shell_arguments_test.go (TestConsumersBlastHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S23 | 23 | The guards producer emits the approved quoted command shape. | planned internal/guards/guards_test.go (TestGuardsHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S24 | 24 | The maps producer emits the approved quoted command shape. | planned internal/maps/maps_command_test.go (TestMapsHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S25 | 25 | The gate retry producer emits the approved quoted command shape. | planned internal/gate/run_outcomes_test.go (TestGateHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S26 | 26 | The preflight retry producer emits the approved quoted command shape. | planned internal/preflight/shell_arguments_test.go (TestPreflightHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S27 | 27 | The worktree list producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestListHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S28 | 28 | The worktree selected list producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestSelectedListHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S29 | 29 | The worktree explicit clean producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestExplicitCleanHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S30 | 30 | The worktree clean refusal producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestCleanRefusalHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S31 | 31 | The worktree landed clean producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestLandedCleanHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S32 | 32 | The worktree unclaimed clean producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestUnclaimedCleanHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
-| S33 | 33 | The worktree pool reclaim producer emits the approved quoted command shape. | planned internal/worktree/shell_arguments_test.go (TestReclaimHelpArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S19 | 19 | The anchors producer emits the approved quoted command shape. | `cmd/bench/anchor_help_test.go` (`TestAnchorHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S20 | 20 | The coverage producer emits the approved quoted command shape. | `internal/coverage/shell_arguments_test.go` (`TestCoverageHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S21 | 21 | The consumers query producer emits the approved quoted command shape. | `internal/consumers/shell_arguments_test.go` (`TestConsumersQueryHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S22 | 22 | The consumers blast producer emits the approved quoted command shape. | `internal/consumers/shell_arguments_test.go` (`TestConsumersBlastHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S23 | 23 | The guards producer emits the approved quoted command shape. | `internal/guards/guards_test.go` (`TestGuardsHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S24 | 24 | The maps producer emits the approved quoted command shape. | `internal/maps/maps_command_test.go` (`TestMapsHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S25 | 25 | The gate subject fault prints its fresh rerun as one refusal-route next line and no AXI help row. | `internal/gate/run_outcomes_test.go` (`TestGateRunRetainsSubjectConstructionCause`) | A returned AXI help row or a lost rerun route fails the existing assertion. |
+| S26 | 26 | The preflight retry producer emits the approved quoted command shape. | `internal/preflight/shell_arguments_test.go` (`TestPreflightHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S27 | 27 | The worktree list producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestListHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S28 | 28 | The worktree selected list producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestSelectedListHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S29 | 29 | The worktree explicit clean producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestExplicitCleanHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S30 | 30 | The worktree clean refusal producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestCleanRefusalHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S31 | 31 | The worktree landed clean producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestLandedCleanHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S32 | 32 | The worktree unclaimed clean producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestUnclaimedCleanHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S33 | 33 | The worktree pool reclaim producer emits the approved quoted command shape. | `internal/worktree/shell_arguments_test.go` (`TestReclaimHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
 | S34 | 34 | AXI and freshness no longer define independent shell quote algorithms. | review-owned definition and consumer census | A surviving algorithm violates the selected owner decision. |
-| S35 | 35 | Direct callers retain their current refusal or escape policy for control-bearing operands. | planned direct caller tests from the inventory | A quoted newline must not bypass a line-structured refusal. |
-| S36 | 36 | Differential fixtures change only the approved argument quote spellings. | planned domain fixtures from the output-reader inventory | The comparison detects changed schema, counts, reason text, exit codes, or command order. |
-| S37 | 37 | Fixture shell arguments use sanitize.ShellQuote instead of independent helpers. | planned migrated fixture tests from the ownership fences | A source inspection plus fixture execution detects surviving helpers or altered fixture argv. |
-| S38 | 38 | Each migrated caller family fails its declared quote-bypass mutation. | planned production caller tests from the inventory | Returning the former bare-token output turns the exact producer fixture red. |
-| S39 | 39 | All eleven affected output-reader files preserve their existing behavioral assertions with only approved quote-byte updates. | planned existing fixtures named in the changed producer-to-assertion closure | Exact commands and negative replay checks detect omissions without weakening control or authority assertions. |
+| S35 | 35 | Direct callers retain their current refusal or escape policy for control-bearing operands. | `internal/worktree/shell_arguments_test.go` (`TestRecoveryRouteArgument`) and `internal/worktree/missing_tree_recovery_test.go` (`TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot`) and `cmd/bench/planning_read_advice_test.go` (`TestRawReadAdvice`) | A quoted newline must not bypass a line-structured refusal. |
+| S36 | 36 | Differential fixtures change only the approved argument quote spellings. | `internal/guards/scan_loop_test.go` (`TestScanLoopDifferentialCommandFamilies`) and `internal/preflight/charge_legacy_pack_test.go` (`TestLegacyPreparedPackDifferential`) and `internal/worktree/list_selected_test.go` (`TestSelectedWorktreesPreserveDefault`) | The comparison detects changed schema, counts, reason text, exit codes, or command order. |
+| S37 | 37 | Fixture shell arguments use sanitize.ShellQuote instead of independent helpers. | `internal/freshness/freshness_verify_test.go` (`TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths`) and `internal/diff/identity_test.go` (`TestCommandResolvesRecordedBaseOncePerAttempt`) and `internal/preprelease/preprelease_test.go` (`TestCanaryCompatibilityShimAttributesInventoryFailures`) | A source inspection plus fixture execution detects surviving helpers or altered fixture argv. |
+| S38 | 38 | Each migrated caller family fails its declared quote-bypass mutation. | `internal/axi/action_test.go` (`TestRenderHelpAlwaysQuoted`) and `internal/responsebound/shell_arguments_test.go` (`TestReadPageArguments`) and `cmd/bench/planning_read_advice_test.go` (`TestRawReadAdviceArguments`) and `internal/worktree/shell_arguments_test.go` (`TestRecoveryRouteArgument`) | Returning the former bare-token output turns the exact producer fixture red. |
+| S40 | 40 | The spec widen rerun line quotes the slug, the ticket, and each entry through the surviving owner. | `internal/spec/widen_rerun_test.go` (`TestWidenRerunArguments`) | A reviewed exact fixture and recovered argv detect a bypass or a lost entry. |
+| S41 | 41 | The outline producers emit the approved quoted command shape. | `internal/outline/shell_arguments_test.go` (`TestOutlineHelpArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or altered arguments. |
+| S42 | 42 | The bounded read next-page action and the first-page command preserve their argv through the surviving owner. | `internal/responsebound/shell_arguments_test.go` (`TestReadPageArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or a lost operand. |
+| S43 | 43 | The worktree read action emits the approved quoted command shape with its path slot unchanged. | `internal/worktree/shell_arguments_test.go` (`TestReadActionArguments`) | A reviewed exact fixture and recovered argv detect wrong spelling or a quoted future slot. |
+| S44 | 44 | The raw read advice quotes its path through the surviving owner. | `cmd/bench/planning_read_advice_test.go` (`TestRawReadAdviceArguments`) | A reviewed exact fixture and recovered argv detect a bypass. |
+| S39 | 39 | All eleven affected output-reader files and the six build-time readers preserve their existing behavioral assertions with only approved quote-byte updates. | `internal/worktree/pool_reclaim_test.go` (`TestReclaimCommandPlansOnlyTheProvablyDeadKeys`) and `internal/worktree/clean_set_command_test.go` (`TestCleanSetHostileOperand`) and `internal/worktree/clean_unclaimed_test.go` (`TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves`) and `internal/worktree/clean_landed_hostile_test.go` (`TestCleanLandedQuotesSpaceAndGlobPaths`) and `internal/worktree/clean_set_outcomes_test.go` (`TestCleanSetStaleReplanAction`) and `internal/treetarget/run_test.go` (`TestRunRefusesBeforeChild`) | Exact commands and negative replay checks detect omissions without weakening control or authority assertions. |
 
 ### Edge inventory
 
@@ -633,12 +406,21 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 
 - `cmd/bench/anchor_help_test.go`
 - `cmd/bench/anchors_dir_test.go`
+- `cmd/bench/axi_query_cases_test.go`
+- `cmd/bench/census_output_test.go`
 - `cmd/bench/command_registry.go`
 - `cmd/bench/command_registry_test.go`
 - `cmd/bench/help_inventory_test.go`
 - `cmd/bench/main_test.go`
+- `cmd/bench/planning_read_advice.go`
+- `cmd/bench/planning_read_advice_test.go`
+- `cmd/bench/planning_reader_commands_test.go`
+- `cmd/bench/preflight_version_test.go`
+- `cmd/bench/worktree_leaves_test.go`
+- `decisions/architecture-primitives.md`
 - `internal/axi/action.go`
 - `internal/axi/action_test.go`
+- `internal/axi/axitest/help.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/consumers/blast_edges_test.go`
@@ -659,8 +441,14 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/freshness/freshness_verify_test.go`
 - `internal/gate/run_outcomes_test.go`
 - `internal/guards/guards_test.go`
+- `internal/guards/testdata/scan-family-s.golden`
 - `internal/maps/freshness_test.go`
 - `internal/maps/maps_command_test.go`
+- `internal/outline/declaration_test.go`
+- `internal/outline/outline_filter_test.go`
+- `internal/outline/outline_kinds_test.go`
+- `internal/outline/outline_test.go`
+- `internal/outline/shell_arguments_test.go`
 - `internal/preflight/evidencecmd/evidence.go`
 - `internal/preflight/evidencecmd/evidence_cleanup_test.go`
 - `internal/preflight/evidencecmd/evidence_command_test.go`
@@ -670,12 +458,22 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/preflight/evidencecmd/shell_arguments_test.go`
 - `internal/preflight/explicit_base_test.go`
 - `internal/preflight/shell_arguments_test.go`
+- `internal/preflight/testdata/legacy-charge/refusal-persistent-movement.toon`
 - `internal/preprelease/preprelease_test.go`
+- `internal/responsebound/read.go`
+- `internal/responsebound/read_test.go`
+- `internal/responsebound/shell_arguments_test.go`
 - `internal/sanitize/shellquote_test.go`
 - `internal/spec/history_selected.go`
 - `internal/spec/history_selected_test.go`
+- `internal/spec/widen.go`
+- `internal/spec/widen_test.go`
+- `internal/spec/widen_rerun_test.go`
 - `internal/systemtest/tree_target_test.go`
 - `internal/treetarget/build_test.go`
+- `internal/treetarget/family_test.go`
+- `internal/treetarget/run_test.go`
+- `internal/worktree/clean_discard_test.go`
 - `internal/worktree/clean_landed_hostile_test.go`
 - `internal/worktree/clean_landed_test.go`
 - `internal/worktree/clean_set_command_test.go`
@@ -687,12 +485,19 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/worktree/landed_test.go`
 - `internal/worktree/list.go`
 - `internal/worktree/list_actions_test.go`
+- `internal/worktree/list_selected_test.go`
+- `internal/worktree/missing_tree_recovery_test.go`
+- `internal/worktree/parallel_census_test.go`
+- `internal/worktree/path.go`
 - `internal/worktree/path_identifier_test.go`
 - `internal/worktree/pool_reclaim_test.go`
+- `internal/worktree/related_test.go`
 - `internal/worktree/shell_arguments_test.go`
 - `internal/worktree/target_refusal_test.go`
+- `internal/worktree/testdata/selected-defaults.json`
 - `internal/worktree/tree_target.go`
 - `internal/worktree/unlanded_route_test.go`
+- `internal/worktree/verb_runner_check_test.go`
 - `reviews/shell-argument-ownership.md`
 
 ## Out of scope
@@ -743,11 +548,11 @@ These estimates describe future planning units, not implementation promises.
 
 The diff identity and preprelease fixtures define independent shell-token quote helpers.
 The freshness test quoteForShell helper reproduces it too.
+The preprelease helper escapes a quote as `'"'"'`, but no preprelease fixture input holds a quote, so its script bytes and its observed argv stay the same.
 Migrate those fixture inputs to sanitize.ShellQuote.
 Keep their observed argv expectations independent.
-The systemtest shellQuoteJSON helper uses JSON string encoding for a tool envelope.
-It remains outside the shell-token algorithm inventory.
-Sources: `internal/diff/identity_test.go:272`, `internal/preprelease/preprelease_test.go:179`, and `internal/systemtest/bench_follow_on_test.go:340`.
+Sources: `internal/diff/identity_test.go:259`, `internal/preprelease/preprelease_test.go:180`, and `internal/freshness/freshness_verify_test.go:270`.
+The `.bench/lib/resolve-bench.sh` shell mirror is a non-Go kit script and stays outside this inventory.
 
 ### Evidence status and validation plan
 
@@ -784,10 +589,10 @@ The accepted product rows, exclusions, API, and failure guarantees remain unchan
 | 1. 01-quote-tree-build-arguments.md | none | Quote tree-build arguments through the existing owner |
 | 2. 02-quote-selected-history.md | 01-quote-tree-build-arguments.md | Quote selected-history command operands |
 | 3. 03-quote-citation-commands.md | 01-quote-tree-build-arguments.md | Quote citation command arguments |
-| 4. 04-quote-recovery-operands.md | 01-quote-tree-build-arguments.md, 03-quote-citation-commands.md | Quote direct recovery-route operands |
+| 4. 04-quote-recovery-operands.md | 01-quote-tree-build-arguments.md, 02-quote-selected-history.md, 03-quote-citation-commands.md, 05-quote-evidence-commands.md, 06-share-rebuild-and-fixture-quotes.md | Render the recovery line through the help-row renderer |
 | 5. 05-quote-evidence-commands.md | 01-quote-tree-build-arguments.md | Quote evidence pagination command arguments |
-| 6. 06-share-rebuild-and-fixture-quotes.md | 01-quote-tree-build-arguments.md, 04-quote-recovery-operands.md | Share rebuild and fixture shell quoting |
-| 7. 07-switch-axi-output-atomically.md | 01-quote-tree-build-arguments.md, 02-quote-selected-history.md, 03-quote-citation-commands.md, 04-quote-recovery-operands.md, 05-quote-evidence-commands.md, 06-share-rebuild-and-fixture-quotes.md | Switch AXI known arguments with their complete output closure |
+| 6. 06-share-rebuild-and-fixture-quotes.md | 01-quote-tree-build-arguments.md, 03-quote-citation-commands.md | Share rebuild and fixture shell quoting |
+| 7. 07-switch-axi-output-atomically.md | 01-quote-tree-build-arguments.md, 02-quote-selected-history.md, 03-quote-citation-commands.md, 05-quote-evidence-commands.md, 06-share-rebuild-and-fixture-quotes.md, 04-quote-recovery-operands.md | Switch AXI known arguments with their complete output closure |
 
 ### Source headroom
 

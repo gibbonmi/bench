@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -220,8 +219,8 @@ func TestRelatedWorktreeActions(t *testing.T) {
 		t.Fatalf("worktree list = %#v, %v", result, err)
 	}
 	want := helpRows(t, defaults)
-	read := map[string]any{"cmd": "bench worktree read --in " + axi.ShellQuote(active.Label) + " <path>", "why": "read a file in an active worktree by its label"}
-	if len(want) != 3 || !strings.HasPrefix(want[0].(map[string]any)["cmd"].(string), "bench worktree path ") || !strings.HasPrefix(want[1].(map[string]any)["cmd"].(string), "bench worktree exec ") || want[2].(map[string]any)["cmd"] != "bench worktree clean --landed" {
+	read := map[string]any{"cmd": "bench 'worktree' 'read' '--in' '" + active.Label + "' <path>", "why": "read a file in an active worktree by its label"}
+	if len(want) != 3 || !strings.HasPrefix(want[0].(map[string]any)["cmd"].(string), "bench 'worktree' 'path' ") || !strings.HasPrefix(want[1].(map[string]any)["cmd"].(string), "bench 'worktree' 'exec' ") || want[2].(map[string]any)["cmd"] != "bench 'worktree' 'clean' '--landed'" {
 		t.Fatalf("default actions = %#v, want path, exec, and the batch clean", want)
 	}
 	path, exec, clean := want[0], want[1], want[2]
@@ -256,7 +255,7 @@ func TestRelatedWorktreeActions(t *testing.T) {
 				t.Fatal(err)
 			}
 			other := putLinkedRelated(t, root, 102)
-			read := map[string]any{"cmd": "bench worktree read --in " + axi.ShellQuote(other.Label) + " <path>", "why": read["why"]}
+			read := map[string]any{"cmd": "bench 'worktree' 'read' '--in' '" + other.Label + "' <path>", "why": read["why"]}
 			_, related := relatedDocument(t, root, []string{"worktree", "list", "--spec", "x"})
 			if got, want := helpRows(t, related), []any{path, exec, read, clean}; fmt.Sprint(got) != fmt.Sprint(want) {
 				t.Fatalf("related actions with %s = %#v, want %#v", tc.name, got, want)

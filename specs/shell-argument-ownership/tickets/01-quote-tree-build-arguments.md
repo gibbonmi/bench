@@ -1,7 +1,7 @@
 # Quote tree-build arguments through the existing owner
 
 Blocked by: none
-Writes: internal/sanitize/shellquote_test.go (new), internal/worktree/tree_target.go, internal/worktree/shell_arguments_test.go (new), internal/treetarget/build_test.go, internal/worktree/target_refusal_test.go, internal/systemtest/tree_target_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/sanitize/shellquote_test.go (new), internal/worktree/tree_target.go, internal/worktree/shell_arguments_test.go (new), internal/treetarget/build_test.go, internal/worktree/target_refusal_test.go, internal/systemtest/tree_target_test.go, cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/parallel_census_test.go
 Covers: S01, S02, S03, S04, S15
 
 ## What to build
@@ -9,6 +9,7 @@ Covers: S01, S02, S03, S04, S15
 Use existing sanitize.ShellQuote in PrintTreeBuildRefusal and add its accepted owner oracles.
 Keep the owner algorithm unchanged and always quoted.
 Update all three tree-build readers from the accepted eleven-file closure in this same checkpoint.
+In build_test.go, the readers include TestRunReusesAMatchingBuild at its no-candidate refusal, beside the TT44-TT46 rows.
 Keep fixed command tokens, whole-line control escaping, child non-start, and destination authority.
 
 Review chunk: S-A.

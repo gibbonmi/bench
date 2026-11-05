@@ -26,7 +26,7 @@ func TestCleanLandedQuotesSpaceAndGlobPaths(t *testing.T) {
 	if plan.exit != 0 || plan.stderr != "" {
 		t.Fatalf("exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}
-	if !strings.Contains(plan.stdout, clean.Path+",remove,") || !strings.Contains(plan.stdout, "bench worktree clean '"+dirty.Path+"'") || !strings.Contains(plan.stdout, "bench worktree clean --landed --apply ") {
+	if !strings.Contains(plan.stdout, clean.Path+",remove,") || !strings.Contains(plan.stdout, "bench 'worktree' 'clean' '"+dirty.Path+"'") || !strings.Contains(plan.stdout, "bench 'worktree' 'clean' '--landed' '--apply' ") {
 		t.Fatalf("output=%q, want safe row and pasteable help", plan.stdout)
 	}
 	applied := runVerb(t, verbClean, repoHome{root, home}.call("--landed", "--apply", plan.mustFingerprint(t)))
@@ -49,7 +49,7 @@ func TestCleanLandedControlBytePathRetained(t *testing.T) {
 	landAssignment(t, root, creation, "control.txt")
 
 	plan := runVerb(t, verbClean, repoHome{root, home}.call("--landed"))
-	pointer := "bench worktree exec " + creation.Assignment.ID + " -- bench worktree clean ."
+	pointer := "bench 'worktree' 'exec' '" + creation.Assignment.ID + "' '--' 'bench' 'worktree' 'clean' '.'"
 	if plan.exit != 0 || plan.stderr != "" || strings.ContainsRune(plan.stdout, '\x1b') || !strings.Contains(plan.stdout, "sha256:") || !strings.Contains(plan.stdout, ",retain,") || !strings.Contains(plan.stdout, "unsafe control bytes") || strings.Count(plan.stdout, pointer) != 1 {
 		t.Fatalf("plan exit=%d stdout=%q stderr=%q", plan.exit, plan.stdout, plan.stderr)
 	}

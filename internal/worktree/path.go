@@ -123,15 +123,18 @@ func missingTreeLanded(run *git.Run, root string, assignment intent.Assignment) 
 	return landed
 }
 
+// requestSlot is the placeholder that a recovery prints in place of a request token.
+const requestSlot = "<request>"
+
 // missingTreeRoute is the recovery the missing-tree face prints. A value that is not
 // line-safe prints its slot placeholder, so the release keeps its command words. The
 // target resolution that raises the face holds no run, so the landed proof reads live.
 func missingTreeRoute(root string, assignment intent.Assignment) string {
-	request := assignment.RequestToken
-	if !lineSafe(request) {
-		request = "<request>"
+	request, slot := assignment.RequestToken, !lineSafe(assignment.RequestToken)
+	if slot {
+		request = requestSlot
 	}
-	route := recoverMissingTree(missingTreeLanded(nil, root, assignment), request, assignment.Worktree)
+	route := recoverMissingTree(missingTreeLanded(nil, root, assignment), request, slot, assignment.Worktree)
 	if route.path == "" || lineSafe(route.path) {
 		return route.line()
 	}

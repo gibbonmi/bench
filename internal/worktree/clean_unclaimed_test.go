@@ -299,7 +299,7 @@ func TestCleanUnclaimedPlanNamesApplyOnlyWhenARowRemoves(t *testing.T) {
 	}
 	addUnclaimedBranch(t, root, "b")
 	plan = runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
-	action := "bench worktree clean --discard-branch --unclaimed --apply " + plan.mustFingerprint(t)
+	action := "bench 'worktree' 'clean' '--discard-branch' '--unclaimed' '--apply' '" + plan.mustFingerprint(t) + "'"
 	if plan.exit != 0 || plan.stderr != "" || !strings.Contains(plan.stdout, action) {
 		t.Fatalf("landed plan exit=%d stderr=%q stdout=%q, want %q", plan.exit, plan.stderr, plan.stdout, action)
 	}
@@ -377,7 +377,7 @@ func TestCleanUnclaimedStaleClassRefusesTheOldPlan(t *testing.T) {
 			plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
 			tc.mutate(t, root, home, unique, subsumed)
 			applied := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed", "--apply", plan.mustFingerprint(t)))
-			if applied.exit != 1 || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) || !strings.Contains(applied.stdout, "bench worktree clean --discard-branch --unclaimed") {
+			if applied.exit != 1 || !strings.Contains(applied.stdout, errStaleFingerprint.Error()) || !strings.Contains(applied.stdout, "bench 'worktree' 'clean' '--discard-branch' '--unclaimed'") {
 				t.Fatalf("apply exit=%d stdout=%q, want the stale refusal and the re-plan command", applied.exit, applied.stdout)
 			}
 			if !git.OK("-C", root, "show-ref", "--verify", "--quiet", landed) || gitOutput(t, root, "rev-parse", unique) != uniqueTip {

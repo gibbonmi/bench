@@ -69,7 +69,7 @@ func TestCleanSetDiscardModifiers(t *testing.T) {
 			if plan.exit != 0 || plan.stderr != "" {
 				t.Fatalf("%s plan = (%d, %q, %q), want one applicable plan", tc.name, plan.exit, plan.stdout, plan.stderr)
 			}
-			if !strings.Contains(plan.stdout, "bench worktree clean "+tc.modifier+" --target ") {
+			if !strings.Contains(plan.stdout, "bench 'worktree' 'clean' '"+tc.modifier+"' '--target' ") {
 				t.Fatalf("%s plan = %q, want the modifier in the rendered apply command", tc.name, plan.stdout)
 			}
 			applied := runVerb(t, verbClean, f.call(tc.modifier, "--target", creation.Assignment.ID, "--apply", plan.mustFingerprint(t)))
@@ -161,7 +161,7 @@ func TestCleanSetHostileOperand(t *testing.T) {
 					t.Fatalf("hostile plan = %q, want no applicable fingerprint", plan.stdout)
 				}
 			}
-			if strings.Contains(plan.stdout, "bench worktree clean --target") {
+			if strings.Contains(plan.stdout, "bench 'worktree' 'clean' '--target'") {
 				t.Fatalf("hostile plan = %q, want no replayable action", plan.stdout)
 			}
 			if strings.ContainsRune(plan.stdout, '\x1b') || strings.Contains(plan.stdout, tc.target) && strings.ContainsAny(tc.target, "\n\x1b") {

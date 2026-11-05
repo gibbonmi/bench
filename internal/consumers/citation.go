@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -55,7 +55,7 @@ func (c citation) state() string {
 func (c citation) cmd() string {
 	parts := []string{"bench", "consumers"}
 	for _, arg := range c.args {
-		parts = append(parts, axi.ShellQuote(arg))
+		parts = append(parts, sanitize.ShellQuote(arg))
 	}
 	return strings.Join(parts, " ")
 }

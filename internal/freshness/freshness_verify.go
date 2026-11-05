@@ -8,11 +8,11 @@ import (
 	"io"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/benchhome"
 	"github.com/gibbonmi/bench/internal/poolkey"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
@@ -166,7 +166,7 @@ type Rebuild struct {
 func RebuildIn(home, root string) Rebuild {
 	checkout := CheckoutRebuildAction(root)
 	if home != "" && benchguard.PoolReference(checkout, poolkey.Pools(home)) != "" {
-		return Rebuild{Action: usage.WorktreeBuildFor(shellQuote(root)), Worktree: true}
+		return Rebuild{Action: usage.WorktreeBuildFor(sanitize.ShellQuote(root)), Worktree: true}
 	}
 	return Rebuild{Action: checkout}
 }
@@ -174,9 +174,5 @@ func RebuildIn(home, root string) Rebuild {
 // CheckoutRebuildAction returns the cd form of the rebuild remedy, which runs wherever
 // the hooks allow a cd into root. The shell copy in the hook library mirrors this form.
 func CheckoutRebuildAction(root string) string {
-	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(PublishedExecutable(root)))
-}
-
-func shellQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", sanitize.ShellQuote(root), sanitize.ShellQuote(root), sanitize.ShellQuote(PublishedExecutable(root)))
 }

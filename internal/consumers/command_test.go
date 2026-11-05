@@ -180,7 +180,7 @@ func TestOverCapDefaultAggregatesAndOffersFull(t *testing.T) {
 	if !strings.Contains(out, ",201,true\n") {
 		t.Fatalf("stdout = %q, want rows=201 and truncated=true in meta", out)
 	}
-	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench consumers target.Symbol --full,emit every consumer row\n") {
+	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench 'consumers' 'target.Symbol' '--full',emit every consumer row\n") {
 		t.Fatalf("stdout = %q, want exactly one --full action", out)
 	}
 }

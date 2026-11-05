@@ -16,7 +16,7 @@ func TestTargetRefusalEscapesOnlyAnUnsafeLine(t *testing.T) {
 		name, detail, label, want string
 	}{
 		{name: "a plain label", detail: "worktree build is missing", label: "alpha",
-			want: "bench status --in: worktree build is missing\nnext=bench worktree build alpha\n"},
+			want: "bench status --in: worktree build is missing\nnext=bench worktree build 'alpha'\n"},
 		{name: "a label with a backslash", detail: "worktree build is missing", label: `a\b`,
 			want: "bench status --in: worktree build is missing\nnext=bench worktree build 'a\\b'\n"},
 		{name: "a control byte in the detail", detail: "worktree build\x1b[2J is missing", label: `a\b`,

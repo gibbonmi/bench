@@ -59,13 +59,13 @@ func TestBareFormSummarizesTopLevelDirectories(t *testing.T) {
 	}
 	// The help narrows into each listed directory from the caller's directory. The root
 	// files have no directory to narrow into.
-	const help = "help[2]{cmd,why}:\n  bench outline a,list the symbols under this directory\n  bench outline b,list the symbols under this directory\n"
+	const help = "help[2]{cmd,why}:\n  bench 'outline' 'a',list the symbols under this directory\n  bench 'outline' 'b',list the symbols under this directory\n"
 	if !strings.HasSuffix(out, help) {
 		t.Fatalf("bare form help =\n%s\nwant suffix\n%s", out, help)
 	}
 	t.Chdir(filepath.Join(root, "a"))
 	nested, code := Command(nil)
-	const nestedHelp = "help[2]{cmd,why}:\n  bench outline .,list the symbols under this directory\n  bench outline ../b,list the symbols under this directory\n"
+	const nestedHelp = "help[2]{cmd,why}:\n  bench 'outline' '.',list the symbols under this directory\n  bench 'outline' '../b',list the symbols under this directory\n"
 	if code != 0 || !strings.HasSuffix(nested, nestedHelp) {
 		t.Fatalf("bare form from a subdirectory code=%d =\n%s\nwant suffix\n%s", code, nested, nestedHelp)
 	}

@@ -112,13 +112,13 @@ func TestCleanSetStaleReplanAction(t *testing.T) {
 				return append([]string{"--discard-ignored"}, explicitTargetArguments(c)...)
 			},
 			want: func(c []Creation) string {
-				return "bench worktree clean --discard-ignored " + strings.Join(explicitTargetArguments(c), " ")
+				return "bench 'worktree' 'clean' '--discard-ignored' '" + strings.Join(explicitTargetArguments(c), "' '") + "'"
 			},
 		},
 		{
 			name:      "landed",
 			selectors: func([]Creation) []string { return []string{"--discard-branch", "--landed"} },
-			want:      func([]Creation) string { return "bench worktree clean --discard-branch --landed" },
+			want:      func([]Creation) string { return "bench 'worktree' 'clean' '--discard-branch' '--landed'" },
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -163,7 +163,7 @@ func TestCleanSetUnclaimedStaleReplanAction(t *testing.T) {
 	if stale.exit != 1 || stale.stderr != "" {
 		t.Fatalf("stale apply = (%d, %q, %q), want a refusal", stale.exit, stale.stdout, stale.stderr)
 	}
-	if !strings.Contains(stale.stdout, "bench worktree clean --discard-branch --unclaimed") || strings.Contains(stale.stdout, "--apply") {
+	if !strings.Contains(stale.stdout, "bench 'worktree' 'clean' '--discard-branch' '--unclaimed'") || strings.Contains(stale.stdout, "--apply") {
 		t.Fatalf("stale apply = %q, want the selector-preserving re-plan command alone", stale.stdout)
 	}
 	if !git.OK("-C", root, "show-ref", "--verify", "--quiet", extra) {
@@ -324,7 +324,7 @@ func TestCleanSetApplyTimeStaleRefusal(t *testing.T) {
 		requireStaleRefusalRow(t, stale, "unknown", "unknown", digest)
 		// The renderer names members in canonical identity order, which the fixture draws at
 		// random, so the expectation reads that order from the same source the renderer uses.
-		want := "bench worktree clean " + strings.Join(set.targetSelectors(), " ")
+		want := "bench 'worktree' 'clean' '" + strings.Join(set.targetSelectors(), "' '") + "'"
 		if !strings.Contains(stale.stdout, want) {
 			t.Fatalf("late-drift apply = %q, want the re-plan command %q", stale.stdout, want)
 		}

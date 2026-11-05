@@ -231,7 +231,7 @@ func TestExplicitBasePreflightRefusesPersistentSnapshotMovement(t *testing.T) {
 			if !strings.Contains(out, "error: snapshot drift") || !strings.Contains(out, "retry the exact invocation") {
 				t.Fatalf("persistent %s movement did not return snapshot-drift refusal:\n%s", test.name, out)
 			}
-			wantHelp := "help[1]{cmd,why}:\n  bench preflight build " + slug + " --base " + base + "," + axi.RetryAfterMovement + "\n"
+			wantHelp := "help[1]{cmd,why}:\n  bench 'preflight' 'build' '" + slug + "' '--base' '" + base + "'," + axi.RetryAfterMovement + "\n"
 			if !strings.Contains(out, wantHelp) {
 				t.Fatalf("persistent %s movement did not return the exact retry action:\n%s", test.name, out)
 			}
@@ -260,7 +260,7 @@ func TestExplicitBasePreflightRetryActionPreservesArgumentOrder(t *testing.T) {
 	if code != 1 || calls != 2 {
 		t.Fatalf("noncanonical persistent movement = (%d, %d):\n%s", code, calls, out)
 	}
-	wantHelp := "help[1]{cmd,why}:\n  bench preflight --base " + base + " build " + slug + "," + axi.RetryAfterMovement + "\n"
+	wantHelp := "help[1]{cmd,why}:\n  bench 'preflight' '--base' '" + base + "' 'build' '" + slug + "'," + axi.RetryAfterMovement + "\n"
 	if !strings.Contains(out, wantHelp) {
 		t.Fatalf("retry action did not preserve argument order:\n%s", out)
 	}

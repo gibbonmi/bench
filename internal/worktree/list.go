@@ -3,7 +3,6 @@ package worktree
 import (
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
@@ -158,7 +157,7 @@ func renderListRows(j joins, run *git.Run, root string, rows []listRow, assignme
 	}
 	actions := actionsForRows(rows, readable)
 	if landed {
-		actions = append(actions, recoverMissingTree(true, "", "").action())
+		actions = append(actions, recoverMissingTree(true, "", false, "").action())
 	}
 	help, err := axi.RenderHelp(actions)
 	if err != nil {
@@ -211,7 +210,7 @@ func actionsForRows(rows []listRow, readable func(label string) bool) []axi.Acti
 			// path and exec actions both enter the tree, so neither can succeed on it.
 			if len(row.values) > listTreeCell && row.values[listTreeCell] == "missing" {
 				request, _ := row.values[listRequestCell].(string)
-				actions = append(actions, recoverMissingTree(row.cleanLanded, request, row.assignmentPath).action())
+				actions = append(actions, recoverMissingTree(row.cleanLanded, request, false, row.assignmentPath).action())
 				continue
 			}
 			actions = append(actions,
@@ -256,16 +255,17 @@ type recoveryRoute struct {
 	words []string
 	path  string
 	why   string
+	slot  bool // the last word is requestSlot, set by the caller that substituted it
 }
 
 // recoverMissingTree owns the landed rule. A landed assignment leaves with the batch
 // clean, which is the one route `list` already advertises for the whole set. Any other
 // record needs its own release, so the operator reads the request token that opened it.
-func recoverMissingTree(landed bool, request, path string) recoveryRoute {
+func recoverMissingTree(landed bool, request string, slot bool, path string) recoveryRoute {
 	if landed {
 		return recoveryRoute{words: []string{"worktree", "clean", "--landed"}, why: "clean landed assignments"}
 	}
-	return recoveryRoute{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing"}
+	return recoveryRoute{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing", slot: slot}
 }
 
 // discardUnlanded is the route out of an assignment whose branch never landed. A release
@@ -287,17 +287,28 @@ func releaseNext(reason CleanupReason, target, assignment string) string {
 		return discardUnlanded(target, assignment).line()
 	}
 	if lineSafe(target) {
-		return "bench worktree release --request <request> " + sanitize.ShellQuote(target)
+		return "bench worktree release --request " + requestSlot + " " + sanitize.ShellQuote(target)
 	}
-	return "bench worktree exec " + assignment + " -- bench worktree release --request <request> ."
+	return "bench worktree exec " + assignment + " -- bench worktree release --request " + requestSlot + " ."
 }
 
-// line renders the refusal's route. axi owns the quoting here too, so the `next=` line
-// and the help row give the operator one pasteable spelling of the same path.
+// line renders the refusal's route as the command of its help row, so the `next=` line and
+// the help row give the operator one pasteable spelling of the same arguments. A route with
+// a value that no help row discloses keeps the line's own spelling: each word and the path
+// quote, and only the slot word stays bare.
 func (r recoveryRoute) line() string {
-	line := "bench " + strings.Join(r.words, " ")
+	if command, err := r.action().Command(); err == nil {
+		return command
+	}
+	line := "bench"
+	for i, word := range r.words {
+		if !r.slot || i < len(r.words)-1 {
+			word = sanitize.ShellQuote(word)
+		}
+		line += " " + word
+	}
 	if r.path != "" {
-		line += " " + axi.ShellQuote(r.path)
+		line += " " + sanitize.ShellQuote(r.path)
 	}
 	return line
 }
