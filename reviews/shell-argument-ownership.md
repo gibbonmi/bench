@@ -972,7 +972,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "S-D1-R1-standards",
+          "performer": "ft354-review-S-D1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-D1",
+            "digest": "sha256:dc2bd303d3904cbea7e582d4508abf1f72e80917130e5e7b92703c9ad93702f6",
+            "excerpt": "## Standards\nCount: 0. Worst issue: none.\n- The diff removes freshness.shellQuote, freshness quoteForShell, the diff test shellQuote, and the preprelease shellQuote; it adds no duplicated knowledge.\n"
+          },
+          "axis": "Standards",
+          "base": "4ac0f5b42b6d39a58999544e3b7835a3d40b3009",
+          "tip": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-D1-R1-spec",
+          "performer": "ft354-review-S-D1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-D1",
+            "digest": "sha256:01907644dd38cb13324c1a91d7a85fb0cb293dcb94249d2e61891b530f6473b9",
+            "excerpt": "## Spec\nCount: 1. Worst issue: S-D1-SPEC-1.\n- S-D1-SPEC-1 (confidence 8, no-op): spec.md:530 and ticket 06 line 22 predict a preprelease script-text change, but no fixture input holds a quote (preprelease_test.go:162-163), so the escape never runs. Non-behavioral premise error; divergence 2 accepted.\n"
+          },
+          "axis": "Spec",
+          "base": "4ac0f5b42b6d39a58999544e3b7835a3d40b3009",
+          "tip": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "S-D1-R1-coverage",
+          "performer": "ft354-review-S-D1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-D1",
+            "digest": "sha256:4475439bbc3a2ca506cb36b05322792b2a52178a06a4503b93ae60f61e9f9c07",
+            "excerpt": "## Coverage\nCount: 1. Worst issue: S-D1-COV-1.\n- S-D1-COV-1 (confidence 6, no-op): the preprelease fixture never exercises quote escaping; a no-escape wrap of the shim stays green. TestShellQuoteRoundTrip and the diff and freshness hostile fixtures prove the escape, so no repair. Divergence 1 justified.\n"
+          },
+          "axis": "Coverage",
+          "base": "4ac0f5b42b6d39a58999544e3b7835a3d40b3009",
+          "tip": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1201,3 +1262,26 @@ Two divergences are flagged for reviewer veto:
 
 - The preprelease operand contains no embedded quote, so its probe removes the quotes and does not corrupt the escape. An embedded quote would change the observed argv bytes, and the acceptance forbids that change.
 - The preprelease script text changes only where the owner now builds the root operand. The removed helper's quote escape never reached the shim path, so those bytes stay the same.
+
+## S-D1 review round 1 pickup
+
+Repair allowance: S-D1 consumed 0 of 2 repair cycles. The round has no repair target, so S-D1 closes at its frozen tip.
+The frozen pair starts at the S-B4 source tip `18517a9a7`. The chunk entry names the record commit `4ac0f5b42`, and the two bases give the same code delta.
+
+### Standards
+
+Count: 0. Worst issue: none.
+
+### Spec
+
+Count: 1. Worst issue: S-D1-SPEC-1.
+
+- S-D1-SPEC-1 (confidence 8, no-op): the spec and ticket 06 predict a change of the preprelease script text, but no fixture input holds a quote. The orchestrator accepts divergence 2, and the next plan commit corrects the prose. Citation: `specs/shell-argument-ownership/spec.md:530`.
+
+### Coverage
+
+Count: 1. Worst issue: S-D1-COV-1.
+
+- S-D1-COV-1 (confidence 6, no-op): the preprelease fixture never exercises quote escaping. The owner round-trip test and the hostile diff and freshness fixtures prove the escape, so no repair is necessary. The orchestrator accepts divergence 1. Citation: `internal/preprelease/preprelease_test.go:162`.
+
+The definition census found two surviving quote algorithms: the owner and `axi.ShellQuote`, which ticket 07 owns in S-E.
