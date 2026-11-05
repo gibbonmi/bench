@@ -488,6 +488,7 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/worktree/list_selected_test.go`
 - `internal/worktree/missing_tree_recovery_test.go`
 - `internal/worktree/parallel_census_test.go`
+- `internal/worktree/path.go`
 - `internal/worktree/path_identifier_test.go`
 - `internal/worktree/pool_reclaim_test.go`
 - `internal/worktree/related_test.go`
