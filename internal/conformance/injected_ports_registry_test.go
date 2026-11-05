@@ -1,5 +1,7 @@
 package conformance
 
+import "github.com/gibbonmi/bench/internal/conformance/injectedports"
+
 // auditedPortPackages are the packages whose injected ports the registry covers, the
 // audit's inventory, no wider. A package outside it that declares a port is out of scope
 // until a reviewer binds it in. A package inside it that derives nothing fails closed.
@@ -12,59 +14,37 @@ var auditedPortPackages = []string{
 	"internal/subprocess/protection",
 }
 
-// This block names the five failure modes, each with its own message, so a red names its
-// cause without archaeology. They are constants because the canary fixture's EXPECT and
-// the bite proof both quote them. A message typed a second time drifts from the one that
-// fires.
-const (
-	unregisteredPortMessage   = "injected port has no registry row"
-	missingPortTestMessage    = "injected port registry row names a test the tree does not declare"
-	emptyPortExemptionMessage = "injected port registry row is exempt with an empty reason"
-	zeroPortInventoryMessage  = "injected port derivation found no ports"
-	orphanPortRowMessage      = "injected port registry row names a port the derivation no longer reports"
-)
-
-// injectedPortRow is one derived port's disposition. The disposition is either a real-
-// producer test or an exemption whose reason someone had to write down. A real-producer
-// test drives the actual producer through the consuming surface. A row carrying neither
-// is the empty-exemption red.
-type injectedPortRow struct {
-	pkg, port          string
-	testFile, testName string
-	exempt             string
-}
-
 // injectedPortRegistry is the advertisement half: one row per port the derivation finds
 // in auditedPortPackages. Rows are grouped by package and ordered as the derivation
 // reports them. A diff against a re-derived inventory therefore reads straight down.
-var injectedPortRegistry = []injectedPortRow{
-	{pkg: "internal/assessment", port: "FileOps", testFile: "internal/assessment/replacement_test.go", testName: "TestAssessmentReplacement"},
+var injectedPortRegistry = []injectedports.Row{
+	{Package: "internal/assessment", Port: "FileOps", TestFile: "internal/assessment/replacement_test.go", TestName: "TestAssessmentReplacement"},
 	{
-		pkg: "internal/chargeevidence", port: "ExportWrite",
-		testFile: "internal/preflight/evidencecmd/evidence_export_test.go", testName: "TestEvidenceExportWritesSources",
+		Package: "internal/chargeevidence", Port: "ExportWrite",
+		TestFile: "internal/preflight/evidencecmd/evidence_export_test.go", TestName: "TestEvidenceExportWritesSources",
 	},
 	{
-		pkg: "internal/chargeevidence", port: "SourceAt",
-		testFile: "internal/preflight/evidencecmd/evidence_export_test.go", testName: "TestEvidenceExportVerifiesBeforeWrite",
+		Package: "internal/chargeevidence", Port: "SourceAt",
+		TestFile: "internal/preflight/evidencecmd/evidence_export_test.go", TestName: "TestEvidenceExportVerifiesBeforeWrite",
 	},
 	{
-		pkg: "internal/chargeevidence", port: "StoreOptions",
-		testFile: "internal/systemtest/charge_evidence_test.go", testName: "TestEvidenceInterruptedPublication",
+		Package: "internal/chargeevidence", Port: "StoreOptions",
+		TestFile: "internal/systemtest/charge_evidence_test.go", TestName: "TestEvidenceInterruptedPublication",
 	},
 	{
-		pkg: "internal/gitguard", port: "Checker",
-		testFile: "internal/gitguard/checker_junction_test.go", testName: "TestClassifyRealCheckerResolvedComposition",
+		Package: "internal/gitguard", Port: "Checker",
+		TestFile: "internal/gitguard/checker_junction_test.go", TestName: "TestClassifyRealCheckerResolvedComposition",
 	},
 	{
-		pkg: "internal/publication", port: "Registry",
-		exempt: "a real-producer test needs a live npm registry, and NPMCLIRegistry is runbook-only: it never performs gate egress or touches a credential (the Registry port comment in internal/publication/registry.go states each adapter's gate coverage)",
+		Package: "internal/publication", Port: "Registry",
+		Exempt: "a real-producer test needs a live npm registry, and NPMCLIRegistry is runbook-only: it never performs gate egress or touches a credential (the Registry port comment in internal/publication/registry.go states each adapter's gate coverage)",
 	},
 	{
-		pkg: "internal/preflight", port: "reviewEvidenceObserver",
-		testFile: "internal/preflight/review_charge_test.go", testName: "TestEvidenceReviewCollectors",
+		Package: "internal/preflight", Port: "reviewEvidenceObserver",
+		TestFile: "internal/preflight/review_charge_test.go", TestName: "TestEvidenceReviewCollectors",
 	},
 	{
-		pkg: "internal/subprocess/protection", port: "Probe",
-		testFile: "internal/subprocess/protection/observe_test.go", testName: "TestObserveGroupPresent",
+		Package: "internal/subprocess/protection", Port: "Probe",
+		TestFile: "internal/subprocess/protection/observe_test.go", TestName: "TestObserveGroupPresent",
 	},
 }
