@@ -228,6 +228,18 @@ Their command guidance names command tokens, not the changed quote-owner return 
 They receive no rewrite authority from this spec.
 Any later exact-byte hit requires a fence and coverage amendment before slicing.
 
+#### Build-time closure amendment
+
+The ticket 07 author found five more exact-byte readers after the AXI switch. Each reader goes red only through its approved quote spelling. These five readers join the S39 closure under the same rules as the eleven readers above.
+
+| affected fixture and existing seam | producer / row | approved assertion update and preserved purpose |
+|---|---|---|
+| `internal/guards/testdata/scan-family-s.golden`, read by TestScanLoopDifferentialCommandFamilies | guards help rows / S23 | Quote the known arguments in the golden help rows. Keep the family membership and the differential comparison. |
+| `internal/preflight/testdata/legacy-charge/refusal-persistent-movement.toon`, read by TestLegacyPreparedPackDifferential | preflight retry / S26 | Quote the known arguments in the golden retry row. Keep the legacy pack refusal and its other rows. |
+| `internal/treetarget/run_test.go:192`, TestRunRefusesBeforeChild | recovery line / S16, S27 | Quote the words of the expected `next=` recovery line. Keep child non-start and the refusal reason. |
+| `internal/worktree/clean_discard_test.go:106`, TestDiscardTargetResolvesAnUnrecordedBranch | explicit clean / S29 | Quote the apply flag and the fingerprint in the expected substring. Keep branch resolution and each subtest outcome. |
+| `internal/worktree/verb_runner_check_test.go:196`, TestVerbResultFingerprintReadsTheTableCell | landed clean / S31 | Quote the landed selector, the apply flag, and the fingerprint in the expected substring. Keep the fingerprint read from the table cell. |
+
 ## Implementation chunks
 
 Each ticket is one green checkpoint on a retained integration source.
@@ -258,7 +270,7 @@ No temporary bare-versus-quoted presentation policy is permitted.
 
 Shared registries order S-A, S-B2, S-D1, and S-E.
 The approved eight clean and reclaim reader paths belong to S-E.
-All eleven reader files remain required by the final S39 reconciliation.
+All eleven reader files and the five build-time readers remain required by the final S39 reconciliation.
 
 ### Completion plan
 
@@ -358,7 +370,7 @@ The whole-project gate remains the acceptance oracle.
 | S42 | 42 | The bounded read next-page action and the first-page command preserve their argv through the surviving owner. | planned internal/responsebound/shell_arguments_test.go (TestReadPageArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or a lost operand. |
 | S43 | 43 | The worktree read action emits the approved quoted command shape with its path slot unchanged. | planned internal/worktree/shell_arguments_test.go (TestReadActionArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or a quoted future slot. |
 | S44 | 44 | The raw read advice quotes its path through the surviving owner. | planned cmd/bench/planning_read_advice_test.go (TestRawReadAdviceArguments) | A reviewed exact fixture and recovered argv detect a bypass. |
-| S39 | 39 | All eleven affected output-reader files preserve their existing behavioral assertions with only approved quote-byte updates. | planned existing fixtures named in the changed producer-to-assertion closure | Exact commands and negative replay checks detect omissions without weakening control or authority assertions. |
+| S39 | 39 | All eleven affected output-reader files and the five build-time readers preserve their existing behavioral assertions with only approved quote-byte updates. | planned existing fixtures named in the changed producer-to-assertion closure and its build-time amendment | Exact commands and negative replay checks detect omissions without weakening control or authority assertions. |
 
 ### Edge inventory
 
