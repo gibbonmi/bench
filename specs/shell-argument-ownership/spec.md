@@ -121,7 +121,7 @@ A caller or renderer change invalidates its inventory row.
 | spec.historyDetail | `internal/spec/history_selected.go:121` | The operand uses the selected always-quoted spelling. | S13 |
 | consumers.citation.cmd | `internal/consumers/citation.go:58` | Each argv value becomes always quoted. | S14 |
 | worktree.PrintTreeBuildRefusal | `internal/worktree/tree_target.go:91` | The assignment label becomes always quoted. | S15 |
-| worktree.recoveryRoute.line | `internal/worktree/list.go:300` | The line renders the command of its help row. With the S-E switch, every word and the path become always quoted. | S16 |
+| worktree.recoveryRoute.line | `internal/worktree/list.go:300` | The line renders the command of its help row. With the S-E switch, every word and the path become always quoted. When the AXI renderer refuses the route, the line still quotes each word, the path keeps its refusal escape, and the request placeholder stays bare as a future slot (reviewer decision, 2026-11-05). | S16 |
 | evidencecmd.evidenceInvocation | `internal/preflight/evidencecmd/evidence.go:233` | The identity, source, and cursor values become always quoted. The fixed tokens keep their spelling (reviewer decision, 2026-11-03). | S17 |
 | freshness.RebuildIn and CheckoutRebuildAction | `internal/freshness/freshness_verify.go:169` and `:177` | No approved byte delta. The owner changes for the pool worktree-build form and the checkout form. | S18 |
 | responsebound.firstPage | `internal/responsebound/read.go:288` | Each first-page argv value becomes always quoted. | S42 |
@@ -420,6 +420,7 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `decisions/architecture-primitives.md`
 - `internal/axi/action.go`
 - `internal/axi/action_test.go`
+- `internal/axi/axitest/help.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
 - `internal/consumers/blast_edges_test.go`
@@ -440,6 +441,7 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/freshness/freshness_verify_test.go`
 - `internal/gate/run_outcomes_test.go`
 - `internal/guards/guards_test.go`
+- `internal/guards/testdata/scan-family-s.golden`
 - `internal/maps/freshness_test.go`
 - `internal/maps/maps_command_test.go`
 - `internal/outline/declaration_test.go`
@@ -456,6 +458,7 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/preflight/evidencecmd/shell_arguments_test.go`
 - `internal/preflight/explicit_base_test.go`
 - `internal/preflight/shell_arguments_test.go`
+- `internal/preflight/testdata/legacy-charge/refusal-persistent-movement.toon`
 - `internal/preprelease/preprelease_test.go`
 - `internal/responsebound/read.go`
 - `internal/responsebound/read_test.go`
@@ -469,6 +472,8 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/systemtest/tree_target_test.go`
 - `internal/treetarget/build_test.go`
 - `internal/treetarget/family_test.go`
+- `internal/treetarget/run_test.go`
+- `internal/worktree/clean_discard_test.go`
 - `internal/worktree/clean_landed_hostile_test.go`
 - `internal/worktree/clean_landed_test.go`
 - `internal/worktree/clean_set_command_test.go`
@@ -488,8 +493,10 @@ No implementation ticket may sweep unrelated specs or future ticket folders.
 - `internal/worktree/related_test.go`
 - `internal/worktree/shell_arguments_test.go`
 - `internal/worktree/target_refusal_test.go`
+- `internal/worktree/testdata/selected-defaults.json`
 - `internal/worktree/tree_target.go`
 - `internal/worktree/unlanded_route_test.go`
+- `internal/worktree/verb_runner_check_test.go`
 - `reviews/shell-argument-ownership.md`
 
 ## Out of scope
