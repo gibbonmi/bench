@@ -17,7 +17,7 @@ The caller set covers command overrides, adoption synchronization, capability ou
 It also covers gate factories and timeouts, git bounds, guard discovery and timeout, lock windows, transcript and outline reads, refresh, roadmap, and inspection.
 Shift, skill replacement, test selection, evidence observers, and response bounds complete this set.
 
-Review the existing assessment, charge-evidence, gitguard, and publication named-port consumers without replacing sufficient real-dependency tests.
+Review the existing assessment, charge-evidence, gitguard, preflight review-observer, publication, and subprocess protection named-port consumers without replacing sufficient real-dependency tests.
 Resolve release-evidence setters and release-preflight aliases to their canonical owners, including validation exposures that are not mutable seams.
 Refresh publication's `clock` disposition through actual callers before admitting or excluding it.
 A helper name in the census is not a consumer until its top-level calling test is established.
@@ -45,6 +45,6 @@ Retain Go-only input metadata until TS3 first supplies phase registry data.
 - [ ] The owner, real conformance entry, and affected caller-package checks pass while TS3 and TS4 remain unbuilt; no temporary unregistered or malformed-row exception is installed.
 - [ ] Independent TS2 review closes before TS3 starts; shared audit, registry, command closure, and caller writes use this serial predecessor.
 
-Integration checks: run the TS2 owner, conformance, and affected caller commands from the completion plan.
+Integration checks: run the TS2 owner, conformance, and affected caller packages before the commit; the chunk checkpoint grades them again.
 Where a retained mechanism needs a new omission witness to justify its admission, establish and restore that focused red before this checkpoint.
 A later aggregate witness cannot repair an unsafe admission made here.

@@ -18,7 +18,7 @@ The spec-local review record retains the complete spec-before-ticket chronology 
 
 ## Problem
 
-The injected-port check finds named type ports in five packages.
+The injected-port check finds named type ports in six packages.
 It does not find package variable overrides, setter aliases, runtime test branches, or environment fault controls.
 A new hook can therefore alter production execution without entering the registry.
 A registry row can also name a test without explaining its failure purpose or safe isolation.
@@ -111,7 +111,7 @@ A source file reachable from a non-test command entry remains production even wh
 
 Keep the existing named-port shapes: nonempty interfaces, named function types, and structs whose fields are all functions.
 An injection site remains a parameter, pointer parameter, type assertion, or type switch.
-Apply that derivation to eligible production packages rather than a closed five-package discovery list.
+Apply that derivation to eligible production packages rather than a closed package discovery list.
 A named shape that is never injected remains a negative control.
 An ordinary function declaration is not a seam merely because its name contains `ForTest`.
 
@@ -218,20 +218,20 @@ Implementation must refresh declaration and caller identities before changing an
 
 | Source family | Observed definition and consumer | Required disposition |
 |---|---|---|
-| Existing named ports | `internal/conformance/injected_ports_registry_test.go` names seven rows in five packages | Preserve real-producer tests and the explicit publication limitation |
-| Git bounds | `internal/git/git.go` setters reach `checker_junction_test.go`, `worktree_admin_enum_test.go`, `admin_readers_test.go`, and `internal/status/status_render_test.go` | Register canonical variables and setter entries with serial cleanup evidence |
+| Existing named ports | `internal/conformance/injected_ports_registry_test.go` names eight rows in six packages | Preserve real-producer tests and the explicit publication limitation |
+| Git bounds | `internal/git/git.go` setters reach `internal/gitguard/checker_junction_test.go`, `worktree_admin_enum_test.go`, `admin_readers_test.go`, and `internal/status/status_render_test.go` | Register canonical variables and setter entries with serial cleanup evidence |
 | Snapshot movement | `internal/diff/snapshot.go` has a setter and direct assignments in diff tests, with preflight consumers | Preserve deterministic movement refusals through the real snapshot entry |
 | Evidence collection | `internal/preflight/review.go` supplies `reviewEvidenceObserved` to `review_charge_test.go` | Register the observer's counting purpose and cleanup |
 | Response bound | `internal/preflight/evidencecmd/bound.go` supplies a scalar override to `evidence_budget_test.go` | Preserve the public over-bound refusal witness |
 | Lock windows | `internal/intent/intent.go` and `internal/handoffdoc/store.go` setters reach transaction and store tests | Preserve lock timeout evidence and test environment restoration |
 | Inspection | `internal/sessioninspect/sessioninspect.go` has scalar setters plus direct `phases` and `runInspect` replacements | Register each canonical collaborator with completed-consumer evidence |
-| Release evidence | `artifact_evidence.go`, `evidence_promotion.go`, `release_index.go`, and `types.go` expose four mutable setters | Establish each actual consumer or equivalent owner failure witness before admission |
+| Release evidence | `internal/releaseevidence/` `artifact_evidence.go`, `evidence_promotion.go`, `release_index.go`, and `types.go` expose four mutable setters | Establish each actual consumer or equivalent owner failure witness before admission |
 | Release aliases | `internal/releasepreflight/types.go` forwards setter and validator exposures | Resolve canonical owners without treating an unused wrapper as a live test |
 | REF | `internal/releasepreflight/identity_test.go:43` installs the exact ref through `identityFixture` | Retain identity disagreement evidence |
 | RACE | `internal/releasepreflight/external_test.go:37` installs a real child probe | Retain child home isolation evidence |
 | Phase family | `internal/conformance/native_workflow_test.go:321` constructs overrides for gate, race, vet, vulnerability, artifacts, and smoke | Register the family through the existing phase registry |
 | VULNERABILITY | `internal/releasepreflight/vulnerability.go:27` reads its scanner override | Retain the native probe's scanner composition |
-| DATE | `internal/releasepreflight/vulnerability.go:75` reads the clock override | Retain compatibility and add an entry test for the chosen date |
+| DATE | `internal/releasepreflight/vulnerability.go:66` reads the clock override | Retain compatibility and add an entry test for the chosen date |
 | EVIDENCE_READY_FILE | `internal/releaseevidence/release_evidence.go` reads the readiness marker | Retain compatibility and add a controlled readiness entry test |
 | Telemetry runtime branch | `internal/otelrecord/provider.go:51` calls `testing.Testing`; processor tests cover fallback and explicit homes | Retain fallback-home refusal until an equivalent isolated constructor exists |
 | Link faults | `internal/adopt/transaction.go` reads `BENCH_LINK_FAULT`; system compatibility tests use interruption | Register fault and interruption purposes with child-local environment |
@@ -319,7 +319,7 @@ They cannot temporarily enable a rule that makes the real tree red.
 
 TS3 owns PS66 when it first consumes the graded-root phase registry.
 It updates the InputCatchAll binding and the profile advertisement in that same chunk.
-Its closure includes the four anchor holders, AXI command advertisement holders, and twelve complete fixture units listed in the fence.
+Its closure includes the six anchor holders, AXI command advertisement holders, and eight complete fixture units listed in the fence.
 TS4 proves the production census is not restricted to remembered registry packages.
 
 The original TS1–TS4 IDs map directly to their same-numbered ticket files.
@@ -354,12 +354,9 @@ The approved implementation line remains `gpt-5.6-sol / high`.
       ],
       "verification": [
         {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
+          "id": "wrapper-bypass",
+          "command": "bench test --package ./internal/conformance --run '^TestEveryRetainedFixtureBitesThroughRegisteredOwner$'",
+          "probe": "make checkInjectedPortRegistry return without calling the relocated owner; require the injected-ports canary bite to fail with its exact expected diagnostic"
         }
       ]
     },
@@ -368,132 +365,7 @@ The approved implementation line remains `gpt-5.6-sol / high`.
       "tickets": [
         "02-admit-variable-and-setter-callers.md"
       ],
-      "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "caller-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "caller-internal-adopt",
-          "command": "bench test --package ./internal/adopt"
-        },
-        {
-          "id": "caller-internal-assessment",
-          "command": "bench test --package ./internal/assessment"
-        },
-        {
-          "id": "caller-internal-capability",
-          "command": "bench test --package ./internal/capability"
-        },
-        {
-          "id": "caller-internal-chargeevidence",
-          "command": "bench test --package ./internal/chargeevidence"
-        },
-        {
-          "id": "caller-internal-consumers",
-          "command": "bench test --package ./internal/consumers"
-        },
-        {
-          "id": "caller-internal-coverage",
-          "command": "bench test --package ./internal/coverage"
-        },
-        {
-          "id": "caller-internal-diff",
-          "command": "bench test --package ./internal/diff"
-        },
-        {
-          "id": "caller-internal-freshness",
-          "command": "bench test --package ./internal/freshness"
-        },
-        {
-          "id": "caller-internal-gate",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "caller-internal-git",
-          "command": "bench test --package ./internal/git"
-        },
-        {
-          "id": "caller-internal-gitguard",
-          "command": "bench test --package ./internal/gitguard"
-        },
-        {
-          "id": "caller-internal-guards",
-          "command": "bench test --package ./internal/guards"
-        },
-        {
-          "id": "caller-internal-handoffdoc",
-          "command": "bench test --package ./internal/handoffdoc"
-        },
-        {
-          "id": "caller-internal-harnesstranscript",
-          "command": "bench test --package ./internal/harnesstranscript"
-        },
-        {
-          "id": "caller-internal-intent",
-          "command": "bench test --package ./internal/intent"
-        },
-        {
-          "id": "caller-internal-outline",
-          "command": "bench test --package ./internal/outline"
-        },
-        {
-          "id": "caller-internal-preflight",
-          "command": "bench test --package ./internal/preflight"
-        },
-        {
-          "id": "caller-internal-preflight-evidencecmd",
-          "command": "bench test --package ./internal/preflight/evidencecmd"
-        },
-        {
-          "id": "caller-internal-publication",
-          "command": "bench test --package ./internal/publication"
-        },
-        {
-          "id": "caller-internal-refresh",
-          "command": "bench test --package ./internal/refresh"
-        },
-        {
-          "id": "caller-internal-releaseevidence",
-          "command": "bench test --package ./internal/releaseevidence"
-        },
-        {
-          "id": "caller-internal-releasepreflight",
-          "command": "bench test --package ./internal/releasepreflight"
-        },
-        {
-          "id": "caller-internal-roadmap",
-          "command": "bench test --package ./internal/roadmap"
-        },
-        {
-          "id": "caller-internal-sessioninspect",
-          "command": "bench test --package ./internal/sessioninspect"
-        },
-        {
-          "id": "caller-internal-shift",
-          "command": "bench test --package ./internal/shift"
-        },
-        {
-          "id": "caller-internal-skillsindex",
-          "command": "bench test --package ./internal/skillsindex"
-        },
-        {
-          "id": "caller-internal-status",
-          "command": "bench test --package ./internal/status"
-        },
-        {
-          "id": "caller-internal-testreport",
-          "command": "bench test --package ./internal/testreport"
-        }
-      ]
+      "verification": []
     },
     {
       "id": "TS3",
@@ -501,62 +373,6 @@ The approved implementation line remains `gpt-5.6-sol / high`.
         "03-admit-runtime-and-environment-controls.md"
       ],
       "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "caller-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "caller-internal-anchors",
-          "command": "bench test --package ./internal/anchors"
-        },
-        {
-          "id": "caller-internal-conformance-registry",
-          "command": "bench test --package ./internal/conformance/registry"
-        },
-        {
-          "id": "caller-internal-assessment",
-          "command": "bench test --package ./internal/assessment"
-        },
-        {
-          "id": "caller-internal-diff",
-          "command": "bench test --package ./internal/diff"
-        },
-        {
-          "id": "caller-internal-guards",
-          "command": "bench test --package ./internal/guards"
-        },
-        {
-          "id": "caller-internal-bounds",
-          "command": "bench test --package ./internal/bounds"
-        },
-        {
-          "id": "caller-internal-otelrecord",
-          "command": "bench test --package ./internal/otelrecord"
-        },
-        {
-          "id": "caller-internal-releaseevidence",
-          "command": "bench test --package ./internal/releaseevidence"
-        },
-        {
-          "id": "caller-internal-releasepreflight",
-          "command": "bench test --package ./internal/releasepreflight"
-        },
-        {
-          "id": "native-phase-composition",
-          "command": "bench test --check release-evidence-probe"
-        },
-        {
-          "id": "real-interruption",
-          "command": "bench test --check system"
-        },
         {
           "id": "restore-omission",
           "command": "bench test --package ./internal/diff",
@@ -575,14 +391,6 @@ The approved implementation line remains `gpt-5.6-sol / high`.
         "04-close-census-and-omission-proof.md"
       ],
       "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        },
         {
           "id": "registry-omission",
           "command": "bench test --package ./internal/conformance",
@@ -617,20 +425,8 @@ The approved implementation line remains `gpt-5.6-sol / high`.
       "command": "bench coverage --check specs/production-test-seam-policy/spec.md"
     },
     {
-      "id": "complete-owner",
-      "command": "bench test --package ./internal/conformance/injectedports"
-    },
-    {
-      "id": "complete-conformance",
-      "command": "bench test --package ./internal/conformance"
-    },
-    {
-      "id": "registry",
-      "command": "bench test --package ./internal/conformance/registry"
-    },
-    {
-      "id": "anchors",
-      "command": "bench test --package ./internal/anchors"
+      "id": "ordinary-integration",
+      "command": "bench test --package ./..."
     },
     {
       "id": "native-phase-composition",
@@ -639,130 +435,6 @@ The approved implementation line remains `gpt-5.6-sol / high`.
     {
       "id": "interruption",
       "command": "bench test --check system"
-    },
-    {
-      "id": "caller-cmd-bench",
-      "command": "bench test --package ./cmd/bench"
-    },
-    {
-      "id": "caller-internal-adopt",
-      "command": "bench test --package ./internal/adopt"
-    },
-    {
-      "id": "caller-internal-assessment",
-      "command": "bench test --package ./internal/assessment"
-    },
-    {
-      "id": "caller-internal-capability",
-      "command": "bench test --package ./internal/capability"
-    },
-    {
-      "id": "caller-internal-chargeevidence",
-      "command": "bench test --package ./internal/chargeevidence"
-    },
-    {
-      "id": "caller-internal-consumers",
-      "command": "bench test --package ./internal/consumers"
-    },
-    {
-      "id": "caller-internal-coverage",
-      "command": "bench test --package ./internal/coverage"
-    },
-    {
-      "id": "caller-internal-diff",
-      "command": "bench test --package ./internal/diff"
-    },
-    {
-      "id": "caller-internal-freshness",
-      "command": "bench test --package ./internal/freshness"
-    },
-    {
-      "id": "caller-internal-gate",
-      "command": "bench test --package ./internal/gate"
-    },
-    {
-      "id": "caller-internal-git",
-      "command": "bench test --package ./internal/git"
-    },
-    {
-      "id": "caller-internal-gitguard",
-      "command": "bench test --package ./internal/gitguard"
-    },
-    {
-      "id": "caller-internal-guards",
-      "command": "bench test --package ./internal/guards"
-    },
-    {
-      "id": "caller-internal-handoffdoc",
-      "command": "bench test --package ./internal/handoffdoc"
-    },
-    {
-      "id": "caller-internal-harnesstranscript",
-      "command": "bench test --package ./internal/harnesstranscript"
-    },
-    {
-      "id": "caller-internal-intent",
-      "command": "bench test --package ./internal/intent"
-    },
-    {
-      "id": "caller-internal-outline",
-      "command": "bench test --package ./internal/outline"
-    },
-    {
-      "id": "caller-internal-preflight",
-      "command": "bench test --package ./internal/preflight"
-    },
-    {
-      "id": "caller-internal-preflight-evidencecmd",
-      "command": "bench test --package ./internal/preflight/evidencecmd"
-    },
-    {
-      "id": "caller-internal-publication",
-      "command": "bench test --package ./internal/publication"
-    },
-    {
-      "id": "caller-internal-refresh",
-      "command": "bench test --package ./internal/refresh"
-    },
-    {
-      "id": "caller-internal-releaseevidence",
-      "command": "bench test --package ./internal/releaseevidence"
-    },
-    {
-      "id": "caller-internal-releasepreflight",
-      "command": "bench test --package ./internal/releasepreflight"
-    },
-    {
-      "id": "caller-internal-roadmap",
-      "command": "bench test --package ./internal/roadmap"
-    },
-    {
-      "id": "caller-internal-sessioninspect",
-      "command": "bench test --package ./internal/sessioninspect"
-    },
-    {
-      "id": "caller-internal-shift",
-      "command": "bench test --package ./internal/shift"
-    },
-    {
-      "id": "caller-internal-skillsindex",
-      "command": "bench test --package ./internal/skillsindex"
-    },
-    {
-      "id": "caller-internal-status",
-      "command": "bench test --package ./internal/status"
-    },
-    {
-      "id": "caller-internal-testreport",
-      "command": "bench test --package ./internal/testreport"
-    },
-    {
-      "id": "caller-internal-bounds",
-      "command": "bench test --package ./internal/bounds"
-    },
-    {
-      "id": "caller-internal-otelrecord",
-      "command": "bench test --package ./internal/otelrecord"
     }
   ]
 }
@@ -947,9 +619,11 @@ Prospective implementation writes:
 - `internal/systemtest/compatibility_test.go`
 - `internal/testreport/`
 - `projects/benchkit.md`
+- `internal/anchors/registry_chunk_chain.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_planning_readers.go`
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
@@ -960,10 +634,6 @@ Prospective implementation writes:
 - `tests/canary/skill-description-budgets/description-missing/`
 - `tests/canary/skill-description-budgets/over-budget-command/`
 - `tests/canary/skill-description-budgets/over-budget-description/`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing/`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership/`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/`
 - `specs/production-test-seam-policy/`
 - `capture/`
@@ -989,17 +659,17 @@ The graded-root phase registry adds a data input to the broader check.
 Use the existing `InputCatchAll` classification until a narrower sound input owner exists.
 Update the profile's existing input row from `go-source` to `catch-all` in TS3, before its registry-reading consumer lands.
 
-That profile edit carries four anchor owners and the existing AXI command advertisement closure.
-The fence includes those owners and the twelve fixtures that bind or supply the profile.
+That profile edit carries six anchor owners and the existing AXI command advertisement closure.
+The fence includes those owners and the eight fixtures that bind or supply the profile.
 The fixture paths come from their BASE, MUTATE, and files trees.
 Keep their existing refusal expectations when refreshing source snapshots.
 
 The slicing headroom refresh reads `.bench/structure.budgets` and `.bench/structure-accept` at the accepted source.
-`native_workflow_test.go` is exactly 400 lines; adding logic there must first remove or relocate the same responsibility within TS3.
-`checks_test.go` has 641 lines against its 709-line grant, and `registry/registry.go` has 355 against 403.
+`native_workflow_test.go` has 399 lines against the 400-line default; adding logic there must first remove or relocate the same responsibility within TS3.
+`checks_test.go` has 712 lines against its 739-line grant, and `registry/registry.go` has 360 against 409.
 The new owner directory starts absent and has the default 12-file and 400-line caps.
 
-Several caller directories are already crowded, including assessment at 29 files and diff at 15.
+Several caller directories are already crowded, including assessment at 31 files and diff at 15.
 Use existing caller test files where they fit; a planned seam filename cannot excuse new crowding.
 Existing long caller files cannot grow past their caps without same-ticket reduction within the approved caller fence.
 No budget or grant write is authorized by this graph.
