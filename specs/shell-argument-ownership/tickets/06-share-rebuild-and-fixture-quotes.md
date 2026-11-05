@@ -19,7 +19,7 @@ Preserve all existing assertions and successful behavior outside the approved de
 
 Execute the real rebuild action against hostile paths and retain its exact cwd and arguments with no output-byte delta.
 Migrated fixture scripts preserve their observed argument bytes and count.
-The preprelease script text changes from its `'"'"'` escape, and its independent argv assertion stays the check.
+No preprelease fixture input holds a quote, so its `'"'"'` escape never runs, and its independent argv assertion stays the check.
 
 - [ ] Freshness rebuild commands use sanitize.ShellQuote for each path. (S18).
 - [ ] Fixture shell arguments use sanitize.ShellQuote instead of independent helpers. (S37).

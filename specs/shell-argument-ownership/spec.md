@@ -527,7 +527,7 @@ These estimates describe future planning units, not implementation promises.
 
 The diff identity and preprelease fixtures define independent shell-token quote helpers.
 The freshness test quoteForShell helper reproduces it too.
-The preprelease helper escapes a quote as `'"'"'`, so its script text changes while its observed argv stays the same.
+The preprelease helper escapes a quote as `'"'"'`, but no preprelease fixture input holds a quote, so its script bytes and its observed argv stay the same.
 Migrate those fixture inputs to sanitize.ShellQuote.
 Keep their observed argv expectations independent.
 Sources: `internal/diff/identity_test.go:259`, `internal/preprelease/preprelease_test.go:180`, and `internal/freshness/freshness_verify_test.go:270`.
