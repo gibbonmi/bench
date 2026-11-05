@@ -1381,3 +1381,13 @@ Count: 1. Worst issue: S-D1-COV-1.
 - S-D1-COV-1 (confidence 6, no-op): the preprelease fixture never exercises quote escaping. The owner round-trip test and the hostile diff and freshness fixtures prove the escape, so no repair is necessary. The orchestrator accepts divergence 1. Citation: `internal/preprelease/preprelease_test.go:162`.
 
 The definition census found two surviving quote algorithms: the owner and `axi.ShellQuote`, which ticket 07 owns in S-E.
+
+## S-E ticket 04 author witness reds
+
+The ticket 04 author reported one witness red apart from the plan probe. The fenced record holds the `recovery-line-agreement` probe.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S16 (refused-path branch) | The refused-path fallback appends the path with no quotes. | `TestRecoveryRouteArgument/an_angle_bracket/discard` and its missing-tree row at `shell_arguments_test.go:89` |
+
+One divergence is flagged for the S-E review. The recovery line now takes its request word from the help-row renderer. A request that passes the line-safety check but holds a space therefore prints with quotes on the line, as its help row already does. No test or fixture uses such a request.
