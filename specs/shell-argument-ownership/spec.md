@@ -230,7 +230,7 @@ Any later exact-byte hit requires a fence and coverage amendment before slicing.
 
 #### Build-time closure amendment
 
-The ticket 07 author found five more exact-byte readers after the AXI switch. Each reader goes red only through its approved quote spelling. These five readers join the S39 closure under the same rules as the eleven readers above.
+The ticket 07 author found six more exact-byte readers after the AXI switch. Each reader goes red only through its approved quote spelling. These six readers join the S39 closure under the same rules as the eleven readers above.
 
 | affected fixture and existing seam | producer / row | approved assertion update and preserved purpose |
 |---|---|---|
@@ -239,6 +239,7 @@ The ticket 07 author found five more exact-byte readers after the AXI switch. Ea
 | `internal/treetarget/run_test.go:192`, TestRunRefusesBeforeChild | recovery line / S16, S27 | Quote the words of the expected `next=` recovery line. Keep child non-start and the refusal reason. |
 | `internal/worktree/clean_discard_test.go:106`, TestDiscardTargetResolvesAnUnrecordedBranch | explicit clean / S29 | Quote the apply flag and the fingerprint in the expected substring. Keep branch resolution and each subtest outcome. |
 | `internal/worktree/verb_runner_check_test.go:196`, TestVerbResultFingerprintReadsTheTableCell | landed clean / S31 | Quote the landed selector, the apply flag, and the fingerprint in the expected substring. Keep the fingerprint read from the table cell. |
+| `internal/worktree/testdata/selected-defaults.json`, read by TestSelectedWorktreesPreserveDefault | worktree list and selected list / S27, S28 | Quote the known arguments in the stored help rows. Keep the frozen baseline of the default response and its comparison. |
 
 ## Implementation chunks
 
@@ -270,7 +271,7 @@ No temporary bare-versus-quoted presentation policy is permitted.
 
 Shared registries order S-A, S-B2, S-D1, and S-E.
 The approved eight clean and reclaim reader paths belong to S-E.
-All eleven reader files and the five build-time readers remain required by the final S39 reconciliation.
+All eleven reader files and the six build-time readers remain required by the final S39 reconciliation.
 
 ### Completion plan
 
@@ -370,7 +371,7 @@ The whole-project gate remains the acceptance oracle.
 | S42 | 42 | The bounded read next-page action and the first-page command preserve their argv through the surviving owner. | planned internal/responsebound/shell_arguments_test.go (TestReadPageArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or a lost operand. |
 | S43 | 43 | The worktree read action emits the approved quoted command shape with its path slot unchanged. | planned internal/worktree/shell_arguments_test.go (TestReadActionArguments) | A reviewed exact fixture and recovered argv detect wrong spelling or a quoted future slot. |
 | S44 | 44 | The raw read advice quotes its path through the surviving owner. | planned cmd/bench/planning_read_advice_test.go (TestRawReadAdviceArguments) | A reviewed exact fixture and recovered argv detect a bypass. |
-| S39 | 39 | All eleven affected output-reader files and the five build-time readers preserve their existing behavioral assertions with only approved quote-byte updates. | planned existing fixtures named in the changed producer-to-assertion closure and its build-time amendment | Exact commands and negative replay checks detect omissions without weakening control or authority assertions. |
+| S39 | 39 | All eleven affected output-reader files and the six build-time readers preserve their existing behavioral assertions with only approved quote-byte updates. | planned existing fixtures named in the changed producer-to-assertion closure and its build-time amendment | Exact commands and negative replay checks detect omissions without weakening control or authority assertions. |
 
 ### Edge inventory
 
