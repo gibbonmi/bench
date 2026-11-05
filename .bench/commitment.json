@@ -1820,6 +1820,18 @@
               "path": "roadmap/FT343.md",
               "identity": "sha256:8c3cc393a7090caace7ba6e649e8498c5c48630e8658c8c7df204ed2279aa0ed"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "production-test-seam-policy",
+                "path": "specs/production-test-seam-policy/spec.md",
+                "identity": "sha256:83b9b58083a8669cdf9c5e231b037fac1358a12ab2bc115663d1a491a08e2170"
+              },
+              "obligations": [
+                "FT343"
+              ]
+            }
           ]
         },
         {
