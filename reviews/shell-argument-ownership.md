@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/shell-argument-ownership/spec.md",
-  "plan_digest": "sha256:cb192f02c39a015884882b7ad75e3747b70e693f02ac4763a1ef507632a07852",
+  "plan_digest": "sha256:ba5cd9dee92e0db74c09fc55407444b2d0c5e1f094ca6df0cd67710c797db240",
   "implementation_session": "",
   "chunks": [
     {
@@ -839,6 +839,140 @@
           ]
         }
       ]
+    },
+    {
+      "id": "S-D1",
+      "base": "4ac0f5b42b6d39a58999544e3b7835a3d40b3009",
+      "tip": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+      "plan_digest": "sha256:ba5cd9dee92e0db74c09fc55407444b2d0c5e1f094ca6df0cd67710c797db240",
+      "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+      "acceptance_rows": [
+        "S18",
+        "S37"
+      ],
+      "verification": [
+        {
+          "id": "S-D1-T06-preservation",
+          "performer": "ft354-author-06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-06",
+            "digest": "sha256:d55a1b07ea3065d2a7faab7cf7ad91b797dd1ebb321a8be6aaaa99370491a190",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_verify.go,swap,failed,1,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,all,passed,95\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,546\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,10213,95\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,\"freshness_verify_test.go:267: rebuild action args = \\\"/dev/shm/5O3DCD/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths1044644491/001/root [*] with ' quote\\\\\\\\n/dev/shm/5O3DCD/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths10446… (633 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "requirement": "preservation",
+          "command": "bench test --package ./internal/freshness",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Compare real caller payload, mode, refusal, authority, and output assertions with the frozen baseline. Keep independent expected bytes and demonstrate the named omission red, restoration, and pass.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-06",
+              "digest": "sha256:d55a1b07ea3065d2a7faab7cf7ad91b797dd1ebb321a8be6aaaa99370491a190",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_verify.go,swap,failed,1,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,all,passed,95\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,546\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,10213,95\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,\"freshness_verify_test.go:267: rebuild action args = \\\"/dev/shm/5O3DCD/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths1044644491/001/root [*] with ' quote\\\\\\\\n/dev/shm/5O3DCD/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths10446… (633 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "S-D1-T06-rebuild-argument-proof",
+          "performer": "ft354-author-06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-06",
+            "digest": "sha256:ce6e4b5a586e2aefbfef36dad4d253935fe7b893146370bba2108fdcbdea5638",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_verify.go,swap,failed,1,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,all,passed,95\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,546\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,10780,95\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,\"freshness_verify_test.go:267: rebuild action args = \\\"/dev/shm/3CIPD5/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths3421749207/001/root [*] with ' quote\\\\\\\\n/dev/shm/3CIPD5/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths34217… (723 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "requirement": "rebuild-argument-proof",
+          "command": "bench test --package ./internal/freshness",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Emit a malformed quoted rebuild operand or drop a supplied rebuild operand. Its real producer fixture and independent shell argv assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-06",
+              "digest": "sha256:ce6e4b5a586e2aefbfef36dad4d253935fe7b893146370bba2108fdcbdea5638",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/freshness/freshness_verify.go,swap,failed,1,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/freshness,all,passed,95\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,546\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/freshness,fail,10780,95\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/freshness,TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths,\"freshness_verify_test.go:267: rebuild action args = \\\"/dev/shm/3CIPD5/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths3421749207/001/root [*] with ' quote\\\\\\\\n/dev/shm/3CIPD5/t/TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths34217… (723 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "S-D1-T06-diff-fixture-argument-proof",
+          "performer": "ft354-author-06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-06",
+            "digest": "sha256:2eb0921eda1b8e7fda4b9b6a7834a44cace79afc0ac263f864b55ec5e5ca68b3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/diff/identity_test.go,swap,failed,1,TestCommandResolvesRecordedBaseOncePerAttempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/diff,all,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,395\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,fail,5645,100\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/diff,TestCommandResolvesRecordedBaseOncePerAttempt,\"identity_test.go:210: recorded-base reads = 0, want one resolution plus one after-read capture per each of two attempts; trace:\",2\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "requirement": "diff-fixture-argument-proof",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt quote escaping for a hostile diff fixture operand. Its independent observed argv assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-06",
+              "digest": "sha256:2eb0921eda1b8e7fda4b9b6a7834a44cace79afc0ac263f864b55ec5e5ca68b3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/diff/identity_test.go,swap,failed,1,TestCommandResolvesRecordedBaseOncePerAttempt,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/diff,all,passed,100\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,395\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,fail,5645,100\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/diff,TestCommandResolvesRecordedBaseOncePerAttempt,\"identity_test.go:210: recorded-base reads = 0, want one resolution plus one after-read capture per each of two attempts; trace:\",2\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "S-D1-T06-release-fixture-argument-proof",
+          "performer": "ft354-author-06",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "dda393fd3e2d4e108d4f826ddfd6ad9a7f176e31",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft354-author-06",
+            "digest": "sha256:63ba74a8f3a593d0a119c26ac4bd57e328c0edf623bcdca5408ed6ce4b2b15f7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preprelease/preprelease_test.go,swap,failed,1,TestCanaryCompatibilityShimAttributesInventoryFailures/resolved_Bench,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preprelease,all,passed,15\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,401\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preprelease,fail,2030,15\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preprelease,TestCanaryCompatibilityShimAttributesInventoryFailures/resolved_Bench,\"preprelease_test.go:145: resolved Bench argv = \\\"canary \\\\\\\\n\\\", \u003cnil>; want canary fixture root\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "requirement": "release-fixture-argument-proof",
+          "command": "bench test --package ./internal/preprelease",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "Corrupt quote escaping for a hostile preprelease fixture operand. Its independent observed argv assertion must fail, then pass after source restoration.",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft354-author-06",
+              "digest": "sha256:63ba74a8f3a593d0a119c26ac4bd57e328c0edf623bcdca5408ed6ce4b2b15f7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/preprelease/preprelease_test.go,swap,failed,1,TestCanaryCompatibilityShimAttributesInventoryFailures/resolved_Bench,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/preprelease,all,passed,15\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,401\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/preprelease,fail,2030,15\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/preprelease,TestCanaryCompatibilityShimAttributesInventoryFailures/resolved_Bench,\"preprelease_test.go:145: resolved Bench argv = \\\"canary \\\\\\\\n\\\", \u003cnil>; want canary fixture root\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -903,6 +1037,24 @@
     {
       "from": "sha256:13292e498640b06e3de0bd8d00eb08d63e38c71a9b09efcbd62ea4757f71ec98",
       "to": "sha256:cb192f02c39a015884882b7ad75e3747b70e693f02ac4763a1ef507632a07852",
+      "chunk_ids": {
+        "S-A": [
+          "S-A"
+        ],
+        "S-B1": [
+          "S-B1"
+        ],
+        "S-B2": [
+          "S-B2"
+        ],
+        "S-B4": [
+          "S-B4"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cb192f02c39a015884882b7ad75e3747b70e693f02ac4763a1ef507632a07852",
+      "to": "sha256:ba5cd9dee92e0db74c09fc55407444b2d0c5e1f094ca6df0cd67710c797db240",
       "chunk_ids": {
         "S-A": [
           "S-A"
