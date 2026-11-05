@@ -341,11 +341,24 @@ The final native and system checks retain the chosen binary and the existing `BE
 Every probe must record the changed source, exact failing assertion or diagnostic, byte-identical restoration, and the same focused green after restoration.
 A setup failure, unrelated red, or failed restoration does not prove an omission.
 Before implementation dispatch, a version-2 plan must bind each ticket to its fresh author.
-The approved implementation line remains `gpt-5.6-sol / high`.
+The approved implementation line remains `gpt-5.6-sol / high`; the Claude mid binding `opus / high` runs it.
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "review_mode": "unified",
+    "run_id": "ft343-build",
+    "orchestrator_session": "ft343-orchestrator",
+    "author_limit": 1,
+    "assignments": {
+      "01-relocate-the-existing-audit.md": [],
+      "02-admit-variable-and-setter-callers.md": [],
+      "03-admit-runtime-and-environment-controls.md": [],
+      "04-close-census-and-omission-proof.md": []
+    }
+  },
   "chunks": [
     {
       "id": "TS1",
@@ -356,7 +369,8 @@ The approved implementation line remains `gpt-5.6-sol / high`.
         {
           "id": "wrapper-bypass",
           "command": "bench test --package ./internal/conformance --run '^TestEveryRetainedFixtureBitesThroughRegisteredOwner$'",
-          "probe": "make checkInjectedPortRegistry return without calling the relocated owner; require the injected-ports canary bite to fail with its exact expected diagnostic"
+          "probe": "make checkInjectedPortRegistry return without calling the relocated owner; require the injected-ports canary bite to fail with its exact expected diagnostic",
+          "ticket": "01-relocate-the-existing-audit.md"
         }
       ]
     },
@@ -376,12 +390,14 @@ The approved implementation line remains `gpt-5.6-sol / high`.
         {
           "id": "restore-omission",
           "command": "bench test --package ./internal/diff",
-          "probe": "omit failure-safe restoration; require the distinguishable installed replacement witness to fail"
+          "probe": "omit failure-safe restoration; require the distinguishable installed replacement witness to fail",
+          "ticket": "03-admit-runtime-and-environment-controls.md"
         },
         {
           "id": "join-omission",
           "command": "bench test --package ./internal/guards",
-          "probe": "remove join before restoration; require the held live consumer witness to fail"
+          "probe": "remove join before restoration; require the held live consumer witness to fail",
+          "ticket": "03-admit-runtime-and-environment-controls.md"
         }
       ]
     },
@@ -394,27 +410,32 @@ The approved implementation line remains `gpt-5.6-sol / high`.
         {
           "id": "registry-omission",
           "command": "bench test --package ./internal/conformance",
-          "probe": "delete a real registration while preserving eligible source; require unregistered refusal"
+          "probe": "delete a real registration while preserving eligible source; require unregistered refusal",
+          "ticket": "04-close-census-and-omission-proof.md"
         },
         {
           "id": "alias-omission",
           "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "disable canonical alias resolution; require the independently authored alias fixture to fail"
+          "probe": "disable canonical alias resolution; require the independently authored alias fixture to fail",
+          "ticket": "04-close-census-and-omission-proof.md"
         },
         {
           "id": "setter-omission",
           "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "disable setter discovery; require the independent setter finding to fail"
+          "probe": "disable setter discovery; require the independent setter finding to fail",
+          "ticket": "04-close-census-and-omission-proof.md"
         },
         {
           "id": "runtime-omission",
           "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "disable runtime branch discovery; require the independent runtime finding to fail"
+          "probe": "disable runtime branch discovery; require the independent runtime finding to fail",
+          "ticket": "04-close-census-and-omission-proof.md"
         },
         {
           "id": "consumer-omission",
           "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "remove required consumer evidence; require the admission refusal"
+          "probe": "remove required consumer evidence; require the admission refusal",
+          "ticket": "04-close-census-and-omission-proof.md"
         }
       ]
     }
