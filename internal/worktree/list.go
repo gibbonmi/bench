@@ -292,9 +292,14 @@ func releaseNext(reason CleanupReason, target, assignment string) string {
 	return "bench worktree exec " + assignment + " -- bench worktree release --request <request> ."
 }
 
-// line renders the refusal's route. axi owns the quoting here too, so the `next=` line
-// and the help row give the operator one pasteable spelling of the same path.
+// line renders the refusal's route as the command of its help row, so the `next=` line and
+// the help row give the operator one pasteable spelling of the same arguments. A route with
+// a value that no help row discloses keeps the line's own spelling: the words join bare and
+// the path quotes.
 func (r recoveryRoute) line() string {
+	if command, err := r.action().Command(); err == nil {
+		return command
+	}
 	line := "bench " + strings.Join(r.words, " ")
 	if r.path != "" {
 		line += " " + axi.ShellQuote(r.path)

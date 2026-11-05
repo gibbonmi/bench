@@ -131,6 +131,17 @@ func RenderHelp(actions []Action) (string, error) {
 	return toon.Table("help", []string{"cmd", "why"}, rows)
 }
 
+// Command renders the command of the help row that action gives, so a caller that prints
+// the same route on a line outside the help block prints the same bytes. An action that
+// the help block refuses to disclose refuses here too.
+func (action Action) Command() (string, error) {
+	if action.hasUnsupportedDisclosureValue() {
+		return "", errors.New("action holds a value that no help row discloses")
+	}
+	command, _, err := action.render()
+	return command, err
+}
+
 func (action Action) hasUnsupportedDisclosureValue() bool {
 	if hasUnsupportedControl(action.why) || hasUnsupportedControl(action.phaseArgument) {
 		return true

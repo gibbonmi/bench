@@ -5,7 +5,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -61,6 +64,28 @@ func shellArgv(command string) ([]string, error) {
 		argv[i] = string(parts[i])
 	}
 	return argv, nil
+}
+
+// ShellSentinel is a file that only an executed hostile value creates. A test puts Touch in
+// a hostile value, reads the rendered command back through a POSIX shell, and then calls
+// RequireUnexecuted, so a value that the shell runs instead of reading literally turns red.
+type ShellSentinel struct{ path string }
+
+// NewShellSentinel returns a sentinel in a fresh temporary directory of t.
+func NewShellSentinel(t testing.TB) ShellSentinel {
+	t.Helper()
+	return ShellSentinel{path: filepath.Join(t.TempDir(), "executed")}
+}
+
+// Touch is the shell command that creates the sentinel.
+func (s ShellSentinel) Touch() string { return "touch " + s.path }
+
+// RequireUnexecuted fails t when the sentinel exists or its state is unknown.
+func (s ShellSentinel) RequireUnexecuted(t testing.TB) {
+	t.Helper()
+	if _, err := os.Stat(s.path); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("a hostile value ran as a command: %v", err)
+	}
 }
 
 // WalkPages follows one paged read from argv, which omits the leading `bench`, through each
