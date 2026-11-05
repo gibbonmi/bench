@@ -1,7 +1,6 @@
 package coverage
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
@@ -30,18 +29,11 @@ func TestCoverageHelpArguments(t *testing.T) {
 			if code != 0 {
 				t.Fatalf("Command = (%d, %q), want exit 0", code, out)
 			}
-			document, err := axitest.DecodeDocument(out)
-			if err != nil {
-				t.Fatal(err)
-			}
-			actions, err := document.HelpActions()
-			want := []axitest.HelpAction{{Cmd: "bench 'coverage' '--check' " + quoted, Why: row.why}}
-			if err != nil || !slices.Equal(actions, want) {
-				t.Fatalf("help actions = (%q, %v), want %q", actions, err, want)
-			}
-			argv, err := actions[0].Argv()
-			if wantArgv := []string{"bench", "coverage", "--check", path}; err != nil || !slices.Equal(argv, wantArgv) {
-				t.Fatalf("argv of %q = (%q, %v), want %q", actions[0].Cmd, argv, err, wantArgv)
+			actions := axitest.RequireHelpCommands(t, out,
+				[]string{"bench 'coverage' '--check' " + quoted},
+				[][]string{{"bench", "coverage", "--check", path}})
+			if actions[0].Why != row.why {
+				t.Fatalf("help why = %q, want %q", actions[0].Why, row.why)
 			}
 		})
 	}

@@ -38,14 +38,11 @@ func TestReadPageArguments(t *testing.T) {
 		}
 		row := rows[0].(map[string]any)
 		next, source := cell(row, "next"), cell(row, "source")
-		actions, err := document.HelpActions()
-		want := []axitest.HelpAction{{Cmd: "bench 'read' " + quoted + " '--offset' '" + next + "' '--source' '" + source + "'", Why: "read the next page"}}
-		if err != nil || !slices.Equal(actions, want) {
-			t.Fatalf("help actions = (%q, %v), want %q", actions, err, want)
-		}
-		argv, err := actions[0].Argv()
-		if wantArgv := []string{"bench", "read", path, "--offset", next, "--source", source}; err != nil || !slices.Equal(argv, wantArgv) {
-			t.Fatalf("argv of %q = (%q, %v), want %q", actions[0].Cmd, argv, err, wantArgv)
+		actions := axitest.RequireHelpCommands(t, page.Output,
+			[]string{"bench 'read' " + quoted + " '--offset' '" + next + "' '--source' '" + source + "'"},
+			[][]string{{"bench", "read", path, "--offset", next, "--source", source}})
+		if actions[0].Why != "read the next page" {
+			t.Fatalf("help why = %q, want %q", actions[0].Why, "read the next page")
 		}
 	})
 	t.Run("first page", func(t *testing.T) {

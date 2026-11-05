@@ -47,7 +47,8 @@ func TestTreeBuildArgument(t *testing.T) {
 // TestRecoveryRouteArgument: each real recovery line with a hostile path equals both the
 // command authored from the path and the command of its help row, and a POSIX shell reads
 // the exact path back from the line. A path that no help row discloses keeps the line's
-// quoted path, and the help block omits that row. A sentinel file reds a path that the
+// quoted words and path, and the help block omits that row. A discard path that no line
+// can carry leaves the route to the assignment id. A sentinel file reds a path that the
 // shell executes.
 func TestRecoveryRouteArgument(t *testing.T) {
 	t.Parallel()
@@ -65,61 +66,42 @@ func TestRecoveryRouteArgument(t *testing.T) {
 	} {
 		gone := intent.Assignment{ID: "gone", RequestToken: "req-gone", Branch: "refs/heads/bench/gone", Worktree: row.path}
 		for _, route := range []struct {
-			name, line, quoted, bare string
-			words                    []string
-			help                     axi.Action
+			name, line, quoted string
+			words              []string
+			help               axi.Action
 		}{
-			{name: "discard", line: releaseNext(ReasonUnmerged, row.path, gone.ID), quoted: "bench 'worktree' 'clean' '--discard-branch'", bare: "bench worktree clean --discard-branch", words: []string{"bench", "worktree", "clean", "--discard-branch"}, help: discardUnlanded(row.path, gone.ID).action()},
-			{name: "missing tree", line: missingTreeRoute(root, gone), quoted: "bench 'worktree' 'release' '--request' 'req-gone'", bare: "bench worktree release --request req-gone", words: []string{"bench", "worktree", "release", "--request", "req-gone"}, help: recoverMissingTree(false, gone.RequestToken, row.path).action()},
+			{name: "discard", line: releaseNext(ReasonUnmerged, row.path, gone.ID), quoted: "bench 'worktree' 'clean' '--discard-branch'", words: []string{"bench", "worktree", "clean", "--discard-branch"}, help: discardUnlanded(row.path, gone.ID).action()},
+			{name: "missing tree", line: missingTreeRoute(root, gone), quoted: "bench 'worktree' 'release' '--request' 'req-gone'", words: []string{"bench", "worktree", "release", "--request", "req-gone"}, help: recoverMissingTree(false, gone.RequestToken, row.path).action()},
 		} {
 			t.Run(row.name+"/"+route.name, func(t *testing.T) {
 				rendered, err := axi.RenderHelp([]axi.Action{route.help})
 				mustNoError(t, err)
-				document, err := axitest.DecodeDocument(rendered)
-				mustNoError(t, err)
-				rows, err := document.HelpActions()
-				mustNoError(t, err)
-				var help []string
-				for _, action := range rows {
-					help = append(help, action.Cmd)
-				}
 				// A disclosed route prints its help-row command; a route that no help row
-				// discloses keeps the line's own bare words before the quoted path.
-				want := route.bare + " " + row.operand
-				wantHelp := []string(nil)
-				if row.disclosed {
-					want = route.quoted + " " + row.operand
-					wantHelp = []string{want}
-				}
-				requireTest(t, route.line == want && slices.Equal(help, wantHelp), "recovery line = %q and help commands = %q, want %q and %q", route.line, help, want, wantHelp)
-				argv, err := axitest.HelpAction{Cmd: route.line}.Argv()
+				// discloses prints the same quoted words and path, and no help row.
+				want := route.quoted + " " + row.operand
 				wantArgv := append(slices.Clone(route.words), row.path)
+				wantHelp, wantHelpArgv := []string(nil), [][]string(nil)
+				if row.disclosed {
+					wantHelp, wantHelpArgv = []string{want}, [][]string{wantArgv}
+				}
+				axitest.RequireHelpCommands(t, rendered, wantHelp, wantHelpArgv)
+				requireTest(t, route.line == want, "recovery line = %q, want %q", route.line, want)
+				argv, err := axitest.HelpAction{Cmd: route.line}.Argv()
 				requireTest(t, err == nil && slices.Equal(argv, wantArgv), "argv of %q = (%q, %v), want %q", route.line, argv, err, wantArgv)
 			})
 		}
 	}
+	t.Run("a newline/discard", func(t *testing.T) {
+		path := "/gone/a\nb"
+		line := releaseNext(ReasonUnmerged, path, "gone")
+		const want = "bench 'worktree' 'clean' '--discard-branch' '--target' 'gone'"
+		wantArgv := []string{"bench", "worktree", "clean", "--discard-branch", "--target", "gone"}
+		rendered, err := axi.RenderHelp([]axi.Action{discardUnlanded(path, "gone").action()})
+		mustNoError(t, err)
+		axitest.RequireHelpCommands(t, rendered, []string{want}, [][]string{wantArgv})
+		requireTest(t, line == want, "recovery line = %q, want %q", line, want)
+	})
 	sentinel.RequireUnexecuted(t)
-}
-
-// requireHelpCommands decodes the terminal help block of out and requires each row's command
-// to equal its hand-authored spelling. A POSIX shell then reads each command back, or only its
-// known prefix when the command holds a future slot, so a slot is never executed.
-func requireHelpCommands(t *testing.T, out string, want []string, argv [][]string) {
-	t.Helper()
-	document, err := axitest.DecodeDocument(out)
-	mustNoError(t, err)
-	actions, err := document.HelpActions()
-	mustNoError(t, err)
-	var commands []string
-	for _, action := range actions {
-		commands = append(commands, action.Cmd)
-	}
-	requireTest(t, slices.Equal(commands, want), "help commands = %q, want %q", commands, want)
-	for i, command := range commands {
-		known, _, _ := strings.Cut(command, " <")
-		got, err := axitest.HelpAction{Cmd: known}.Argv()
-		requireTest(t, err == nil && slices.Equal(got, argv[i]), "argv of %q = (%q, %v), want %q", known, got, err, argv[i])
-	}
 }
 
 // TestListHelpArguments is S27: the list actions of a cleanup-pending row, an active row, and
@@ -136,7 +118,7 @@ func TestListHelpArguments(t *testing.T) {
 	}
 	help, err := axi.RenderHelp(actionsForRows(rows, nil))
 	mustNoError(t, err)
-	requireHelpCommands(t, help, []string{
+	axitest.RequireHelpCommands(t, help, []string{
 		`bench 'worktree' 'release' '--request' 'req-p' '/gone/it'\''s; ` + sentinel.Touch() + `'`,
 		"bench 'worktree' 'path' <target>",
 		"bench 'worktree' 'exec' <target> '--' <command>",
@@ -156,7 +138,7 @@ func TestSelectedListHelpArguments(t *testing.T) {
 	t.Parallel()
 	root, assignments := selectedFixture(t, intent.StateActive)
 	r := runVerb(t, verbList, verbCall{root: root, args: []string{"--view", "paths", "--target", assignments[0].ID}})
-	requireHelpCommands(t, r.stdout, []string{"bench 'worktree' 'list'"}, [][]string{{"bench", "worktree", "list"}})
+	axitest.RequireHelpCommands(t, r.stdout, []string{"bench 'worktree' 'list'"}, [][]string{{"bench", "worktree", "list"}})
 }
 
 // TestExplicitCleanHelpArguments is S29: the apply action of an explicit set quotes the verb,
@@ -168,7 +150,7 @@ func TestExplicitCleanHelpArguments(t *testing.T) {
 	plan := runVerb(t, verbClean, f.call("--full", "--target", id))
 	requireTest(t, plan.exit == 0 && plan.stderr == "", "plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	requireHelpCommands(t, plan.stdout,
+	axitest.RequireHelpCommands(t, plan.stdout,
 		[]string{"bench 'worktree' 'clean' '--full' '--target' '" + id + "' '--apply' '" + fingerprint + "'"},
 		[][]string{{"bench", "worktree", "clean", "--full", "--target", id, "--apply", fingerprint}})
 }
@@ -183,7 +165,7 @@ func TestCleanRefusalHelpArguments(t *testing.T) {
 	var out bytes.Buffer
 	mustNoError(t, renderStale(&out, nil, cleanArguments(CleanupOptions{DiscardIgnored: true}, "--target", selector)))
 	_, help, _ := strings.Cut(out.String(), "help[")
-	requireHelpCommands(t, "help["+help,
+	axitest.RequireHelpCommands(t, "help["+help,
 		[]string{`bench 'worktree' 'clean' '--discard-ignored' '--target' 'it'\''s; ` + sentinel.Touch() + `'`},
 		[][]string{{"bench", "worktree", "clean", "--discard-ignored", "--target", selector}})
 	sentinel.RequireUnexecuted(t)
@@ -197,7 +179,7 @@ func TestLandedCleanHelpArguments(t *testing.T) {
 	plan := runVerb(t, verbClean, f.call("--landed"))
 	requireTest(t, plan.exit == 0, "plan = (%d, %q, %q), want exit 0", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	requireHelpCommands(t, plan.stdout, []string{
+	axitest.RequireHelpCommands(t, plan.stdout, []string{
 		"bench 'worktree' 'clean' '--landed' '--apply' '" + fingerprint + "'",
 		"bench 'worktree' 'clean' '" + f.dirty.Path + "'",
 	}, [][]string{
@@ -214,7 +196,7 @@ func TestUnclaimedCleanHelpArguments(t *testing.T) {
 	plan := runVerb(t, verbClean, repoHome{root, home}.call("--discard-branch", "--unclaimed"))
 	requireTest(t, plan.exit == 0 && plan.stderr == "", "plan = (%d, %q, %q), want one applicable plan", plan.exit, plan.stdout, plan.stderr)
 	fingerprint := plan.mustFingerprint(t)
-	requireHelpCommands(t, plan.stdout,
+	axitest.RequireHelpCommands(t, plan.stdout,
 		[]string{"bench 'worktree' 'clean' '--discard-branch' '--unclaimed' '--apply' '" + fingerprint + "'"},
 		[][]string{{"bench", "worktree", "clean", "--discard-branch", "--unclaimed", "--apply", fingerprint}})
 }
@@ -226,13 +208,13 @@ func TestReclaimHelpArguments(t *testing.T) {
 	fingerprint := strings.Repeat("ab", 32)
 	out, err := renderPoolReclaim(poolReclaimPlan{verdicts: []poolKeyVerdict{{Key: "dead", Verdict: reclaimpolicy.VerdictReclaim, Reason: "gone"}}, fingerprint: fingerprint})
 	mustNoError(t, err)
-	requireHelpCommands(t, out,
+	axitest.RequireHelpCommands(t, out,
 		[]string{"bench 'worktree' 'reclaim' '--apply' '" + fingerprint + "'"},
 		[][]string{{"bench", "worktree", "reclaim", "--apply", fingerprint}})
 	stale, err := renderPoolReclaimStale()
 	mustNoError(t, err)
 	_, help, _ := strings.Cut(stale, "help[")
-	requireHelpCommands(t, "help["+help, []string{"bench 'worktree' 'reclaim'"}, [][]string{{"bench", "worktree", "reclaim"}})
+	axitest.RequireHelpCommands(t, "help["+help, []string{"bench 'worktree' 'reclaim'"}, [][]string{{"bench", "worktree", "reclaim"}})
 }
 
 // TestReadActionArguments is S43: the read action quotes its words and the label, and keeps
@@ -243,7 +225,7 @@ func TestReadActionArguments(t *testing.T) {
 	label := "it's; " + sentinel.Touch()
 	help, err := axi.RenderHelp([]axi.Action{readAction(label)})
 	mustNoError(t, err)
-	requireHelpCommands(t, help,
+	axitest.RequireHelpCommands(t, help,
 		[]string{`bench 'worktree' 'read' '--in' 'it'\''s; ` + sentinel.Touch() + `' <path>`},
 		[][]string{{"bench", "worktree", "read", "--in", label}})
 	sentinel.RequireUnexecuted(t)

@@ -165,6 +165,11 @@ func TestRenderHelpUsesHonestEmptyForUnsupportedDisclosureValue(t *testing.T) {
 		if got != "help[0]{cmd,why}:\n" {
 			t.Fatalf("RenderHelp = %q, want honest empty help", got)
 		}
+		// The line outside the help block refuses each such action too, a control in the
+		// reason included, so a line never discloses what the help block withholds.
+		if line, err := action.Command(); err == nil {
+			t.Fatalf("Command = %q, want a refusal", line)
+		}
 	}
 }
 

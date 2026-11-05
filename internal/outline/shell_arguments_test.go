@@ -1,8 +1,6 @@
 package outline
 
 import (
-	"slices"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi/axitest"
@@ -37,28 +35,7 @@ func TestOutlineHelpArguments(t *testing.T) {
 	} {
 		t.Run(row.name, func(t *testing.T) {
 			out, _ := Command(row.args)
-			document, err := axitest.DecodeDocument(out)
-			if err != nil {
-				t.Fatalf("Command(%q) = %q: %v", row.args, out, err)
-			}
-			actions, err := document.HelpActions()
-			if err != nil {
-				t.Fatal(err)
-			}
-			var commands []string
-			for _, action := range actions {
-				commands = append(commands, action.Cmd)
-			}
-			if !slices.Equal(commands, row.want) {
-				t.Fatalf("help commands = %q, want %q", commands, row.want)
-			}
-			for i, command := range commands {
-				known, _, _ := strings.Cut(command, " <")
-				argv, err := axitest.HelpAction{Cmd: known}.Argv()
-				if err != nil || !slices.Equal(argv, row.argv[i]) {
-					t.Fatalf("argv of %q = (%q, %v), want %q", known, argv, err, row.argv[i])
-				}
-			}
+			axitest.RequireHelpCommands(t, out, row.want, row.argv)
 		})
 	}
 }

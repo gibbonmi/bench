@@ -3,7 +3,6 @@ package worktree
 import (
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/git"
@@ -256,6 +255,7 @@ type recoveryRoute struct {
 	words []string
 	path  string
 	why   string
+	slot  bool // the last word is the placeholder of a request that no line can carry
 }
 
 // recoverMissingTree owns the landed rule. A landed assignment leaves with the batch
@@ -265,7 +265,7 @@ func recoverMissingTree(landed bool, request, path string) recoveryRoute {
 	if landed {
 		return recoveryRoute{words: []string{"worktree", "clean", "--landed"}, why: "clean landed assignments"}
 	}
-	return recoveryRoute{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing"}
+	return recoveryRoute{words: []string{"worktree", "release", "--request", request}, path: path, why: "release the assignment whose worktree tree is missing", slot: request == "<request>"}
 }
 
 // discardUnlanded is the route out of an assignment whose branch never landed. A release
@@ -294,13 +294,19 @@ func releaseNext(reason CleanupReason, target, assignment string) string {
 
 // line renders the refusal's route as the command of its help row, so the `next=` line and
 // the help row give the operator one pasteable spelling of the same arguments. A route with
-// a value that no help row discloses keeps the line's own spelling: the words join bare and
-// the path quotes.
+// a value that no help row discloses keeps the line's own spelling: each word and the path
+// quote, and only the slot word stays bare.
 func (r recoveryRoute) line() string {
 	if command, err := r.action().Command(); err == nil {
 		return command
 	}
-	line := "bench " + strings.Join(r.words, " ")
+	line := "bench"
+	for i, word := range r.words {
+		if !r.slot || i < len(r.words)-1 {
+			word = sanitize.ShellQuote(word)
+		}
+		line += " " + word
+	}
 	if r.path != "" {
 		line += " " + sanitize.ShellQuote(r.path)
 	}

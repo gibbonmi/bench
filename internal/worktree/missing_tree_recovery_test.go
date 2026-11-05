@@ -177,7 +177,7 @@ func TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot(t *testing.T) {
 	unsafePath := filepath.Join(t.TempDir(), "gone\nline")
 	for _, tc := range []struct{ request, want string }{
 		{"req-gone", "bench 'worktree' 'release' '--request' 'req-gone' <checkout>"},
-		{"req\x1bgone", "bench worktree release --request <request> <checkout>"},
+		{"req\x1bgone", "bench 'worktree' 'release' '--request' <request> <checkout>"},
 	} {
 		gone := intent.Assignment{ID: "gone", RequestToken: tc.request, Branch: "refs/heads/bench/gone", Worktree: unsafePath}
 		var refused refusalError

@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -20,18 +19,11 @@ func TestPreflightHelpArguments(t *testing.T) {
 	if !ok {
 		t.Fatalf("refusal = %q, want an error line and a help block", out)
 	}
-	document, err := axitest.DecodeDocument(help)
-	if err != nil {
-		t.Fatal(err)
-	}
-	actions, err := document.HelpActions()
-	want := []axitest.HelpAction{{Cmd: `bench 'preflight' 'build' 'it'\''s; ` + sentinel.Touch() + `' '--base' 'HEAD~1'`, Why: axi.RetryAfterMovement}}
-	if err != nil || !slices.Equal(actions, want) {
-		t.Fatalf("help actions = (%q, %v), want %q", actions, err, want)
-	}
-	argv, err := actions[0].Argv()
-	if wantArgv := []string{"bench", "preflight", "build", slug, "--base", "HEAD~1"}; err != nil || !slices.Equal(argv, wantArgv) {
-		t.Fatalf("argv of %q = (%q, %v), want %q", actions[0].Cmd, argv, err, wantArgv)
+	actions := axitest.RequireHelpCommands(t, help,
+		[]string{`bench 'preflight' 'build' 'it'\''s; ` + sentinel.Touch() + `' '--base' 'HEAD~1'`},
+		[][]string{{"bench", "preflight", "build", slug, "--base", "HEAD~1"}})
+	if actions[0].Why != axi.RetryAfterMovement {
+		t.Fatalf("help why = %q, want %q", actions[0].Why, axi.RetryAfterMovement)
 	}
 	sentinel.RequireUnexecuted(t)
 }

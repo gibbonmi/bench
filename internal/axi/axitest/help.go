@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -42,6 +43,37 @@ func RecoverHelpCommandArgv(output string) ([]string, error) {
 		return nil, errors.New("decoded help row has no command")
 	}
 	return shellArgv(command)
+}
+
+// RequireHelpCommands decodes the terminal help block of out and requires the command of
+// each row to equal the caller's hand-authored want, in order. A POSIX shell then reads each
+// command back to argv, or only its known prefix when the command holds a future slot, so a
+// slot is never executed. It returns the decoded rows, so a caller can grade their other cells.
+func RequireHelpCommands(t testing.TB, out string, want []string, argv [][]string) []HelpAction {
+	t.Helper()
+	document, err := DecodeDocument(out)
+	if err != nil {
+		t.Fatalf("decode %q: %v", out, err)
+	}
+	actions, err := document.HelpActions()
+	if err != nil {
+		t.Fatal(err)
+	}
+	commands := make([]string, 0, len(actions))
+	for _, action := range actions {
+		commands = append(commands, action.Cmd)
+	}
+	if !slices.Equal(commands, want) || len(argv) != len(want) {
+		t.Fatalf("help commands = %q, want %q with %d argv expectations", commands, want, len(argv))
+	}
+	for i, command := range commands {
+		known, _, _ := strings.Cut(command, " <")
+		got, err := shellArgv(known)
+		if err != nil || !slices.Equal(got, argv[i]) {
+			t.Fatalf("argv of %q = (%q, %v), want %q", known, got, err, argv[i])
+		}
+	}
+	return actions
 }
 
 // Argv returns the argv that the action's rendered command expands to in a POSIX shell.
