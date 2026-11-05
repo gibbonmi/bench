@@ -1,7 +1,7 @@
 # Render the recovery line through the help-row renderer
 
 Blocked by: 01-quote-tree-build-arguments.md, 02-quote-selected-history.md, 03-quote-citation-commands.md, 05-quote-evidence-commands.md, 06-share-rebuild-and-fixture-quotes.md
-Writes: internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, internal/worktree/shell_arguments_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/unlanded_route_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/parallel_census_test.go, internal/axi/action.go, internal/axi/action_test.go, internal/worktree/missing_tree_recovery_test.go
+Writes: internal/worktree/list.go, internal/worktree/list_actions_test.go, internal/worktree/path_identifier_test.go, internal/worktree/shell_arguments_test.go (new), cmd/bench/command_registry.go, cmd/bench/command_registry_test.go, cmd/bench/help_inventory_test.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/worktree/unlanded_route_test.go, internal/worktree/identifier_operand_test.go, internal/worktree/parallel_census_test.go, internal/axi/action.go, internal/axi/action_test.go, internal/worktree/missing_tree_recovery_test.go, internal/axi/axitest/help.go
 Covers: S16
 
 ## What to build
