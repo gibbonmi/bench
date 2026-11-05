@@ -511,8 +511,15 @@ Prospective implementation writes:
 - `internal/intent/`
 - `internal/otelrecord/`
 - `internal/outline/`
+- `internal/preflight/candidate_test.go`
+- `internal/preflight/charge_legacy_pack_test.go`
+- `internal/preflight/charge_snapshot_test.go`
+- `internal/preflight/charge_test.go`
+- `internal/preflight/explicit_base_test.go`
+- `internal/preflight/ownership/source_test.go`
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
+- `internal/preflight/staleness/drift_test.go`
 - `internal/preflight/evidencecmd/`
 - `internal/publication/`
 - `internal/refresh/`
@@ -525,6 +532,7 @@ Prospective implementation writes:
 - `internal/status/status_render_test.go`
 - `internal/systemtest/compatibility_test.go`
 - `internal/testreport/`
+- `internal/worktree/list_actions_test.go`
 - `projects/benchkit.md`
 - `internal/anchors/registry_chunk_chain.go`
 - `internal/anchors/registry_data.go`
