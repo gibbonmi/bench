@@ -94,7 +94,7 @@ func TestOverCapActionRepeatsTheFilter(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; out=%q", code, out)
 	}
-	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench consumers target.Symbol --production --full,emit every consumer row\n") {
+	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench 'consumers' 'target.Symbol' '--production' '--full',emit every consumer row\n") {
 		t.Fatalf("stdout = %q, want the --full action with the filter", out)
 	}
 }
@@ -143,7 +143,7 @@ func TestSeveralSymbolsCapEachSymbol(t *testing.T) {
 			t.Errorf("stdout = %q, want %q", out, want)
 		}
 	}
-	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench consumers target.Symbol --full,emit every consumer row\n") {
+	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench 'consumers' 'target.Symbol' '--full',emit every consumer row\n") {
 		t.Fatalf("stdout = %q, want one --full action for the over-cap symbol", out)
 	}
 }

@@ -165,7 +165,7 @@ func TestDeclarationSelection(t *testing.T) {
 	out, code := Command([]string{"--symbol", "Get"})
 	first, second := strings.Index(out, "a/a.go,3,Get,func"), strings.Index(out, "b/b.go,3,Get,func")
 	if code != 1 || !strings.HasPrefix(out, "error: --symbol Get matches 2 declarations") || first < 0 || second < first || strings.Contains(out, "content[") ||
-		!strings.Contains(out, "bench outline a/a.go --symbol Get") || !strings.Contains(out, "bench outline b/b.go --symbol Get") {
+		!strings.Contains(out, "bench 'outline' 'a/a.go' '--symbol' 'Get'") || !strings.Contains(out, "bench 'outline' 'b/b.go' '--symbol' 'Get'") {
 		t.Fatalf("ambiguous Get code=%d out=%q, want both candidates in file order with their commands and no body", code, out)
 	}
 	// A bare name that no package-level declaration has lists each same-name method, and

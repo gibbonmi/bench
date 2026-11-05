@@ -54,6 +54,6 @@ Use craft-spec, craft-seams, and craft-cli for the separate specs.
   Supports: the existing always-quoted shell argument function.
   Drift: a change to ShellQuote.
 - Path: `internal/axi/action.go`
-  Supports: the differing bare-token rule.
-  Drift: a change to ShellQuote.
+  Supports: the AXI known-argument renderer, which quotes each value through ShellQuote.
+  Drift: a change to renderKnownArgument.
 

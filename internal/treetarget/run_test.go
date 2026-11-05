@@ -189,7 +189,7 @@ func TestRunRefusesBeforeChild(t *testing.T) {
 		{name: "TT34 released label", args: []string{"retired"}, code: 1, stderr: refusal("assignment " + retired.ID + " is not active")},
 		{name: "TT35 colliding label", args: []string{"twin"}, code: 1, stderr: ambiguous(twinA.ID, twinB.ID), alt: ambiguous(twinB.ID, twinA.ID)},
 		{name: "TT36 control character", args: []string{"al\x01pha"}, code: 1, stderr: refusal("target contains control characters")},
-		{name: "missing tree", args: []string{"gone"}, code: 1, stderr: "bench gate --in: worktree tree is missing\nnext=bench worktree clean --landed\n"},
+		{name: "missing tree", args: []string{"gone"}, code: 1, stderr: "bench gate --in: worktree tree is missing\nnext=bench 'worktree' 'clean' '--landed'\n"},
 		{name: "creation bundle", args: []string{"detached"}, code: 1, stderr: refusal("assignment branch is not checked out")},
 	} {
 		t.Run(row.name, func(t *testing.T) {

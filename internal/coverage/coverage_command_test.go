@@ -23,7 +23,7 @@ func TestCommandRendersShortRow(t *testing.T) {
 	mustWrite(t, "spec.md", "# t\n\n"+stories+"\n### Acceptance coverage map\n"+hdrReduced+"| 1 | does x |\n")
 
 	out, code := Command([]string{"spec.md"})
-	want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",does x,\"\"\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+	want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",does x,\"\"\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',retry after repairing coverage map\n"
 	if code != 0 || out != want {
 		t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 	}
@@ -55,7 +55,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "spec.md", body)
 
 		out, code := Command([]string{"spec.md"})
-		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',check coverage for stories 1\n"
 		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
@@ -66,7 +66,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 1 | b | s | catches one |\n| 2 | c | t | catches two |\n| 1 | b | s | catches one |\n")
 		mustWrite(t, "path with spaces/spec.md", body)
 		out, code := Command([]string{"path with spaces/spec.md"})
-		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,behavior,seam}:\n  \"1\",b,s\n  \"2\",c,t\n  \"1\",b,s\nhelp[2]{cmd,why}:\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 1\n  bench coverage --check 'path with spaces/spec.md',check coverage for stories 2\n"
+		want := "spec: path with spaces/spec.md\nstate: mapped\nrows[3]{story,behavior,seam}:\n  \"1\",b,s\n  \"2\",c,t\n  \"1\",b,s\nhelp[2]{cmd,why}:\n  bench 'coverage' '--check' 'path with spaces/spec.md',check coverage for stories 1\n  bench 'coverage' '--check' 'path with spaces/spec.md',check coverage for stories 2\n"
 		if code != 0 || out != want {
 			t.Fatalf("Command = (%d, %q), want (%d, %q)", code, out, 0, want)
 		}
@@ -77,7 +77,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 1 | b | s | catches one |\n")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		if code != 0 || !strings.Contains(out, "bench coverage --check spec.md,check coverage for stories 1") {
+		if code != 0 || !strings.Contains(out, "bench 'coverage' '--check' 'spec.md',check coverage for stories 1") {
 			t.Fatalf("Command = (%d, %q), want unchecked check action", code, out)
 		}
 	})
@@ -87,7 +87,7 @@ func TestCommand(t *testing.T) {
 		body := mapped("| 9 | b | s | catches one |\n")
 		mustWrite(t, "spec.md", body)
 		out, code := Command([]string{"spec.md"})
-		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"9\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"9\",b,s\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',retry after repairing coverage map\n"
 		if code != 0 || out != want {
 			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 		}
@@ -105,7 +105,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "spec.md", body)
 
 		out, code := Command([]string{"spec.md"})
-		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"
+		want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',retry after repairing coverage map\n"
 		if code != 0 || out != want {
 			t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 		}
@@ -149,7 +149,7 @@ func TestCommand(t *testing.T) {
 
 			out, code := Command([]string{"spec.md"})
 			want := "spec: spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n" + tc.row +
-				"help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"
+				"help[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',check coverage for stories 1\n"
 			if code != 0 || out != want {
 				t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 			}
@@ -162,7 +162,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", body)
 
 		out, code := Command([]string{"foo"})
-		want := "spec: specs/foo/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b2,s2\nhelp[1]{cmd,why}:\n  bench coverage --check specs/foo/spec.md,check coverage for stories 1\n"
+		want := "spec: specs/foo/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b2,s2\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'specs/foo/spec.md',check coverage for stories 1\n"
 		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
@@ -174,7 +174,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/bar/spec.md", body)
 
 		out, code := Command([]string{"bar.md"})
-		want := "spec: specs/bar/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b3,s3\nhelp[1]{cmd,why}:\n  bench coverage --check specs/bar/spec.md,check coverage for stories 1\n"
+		want := "spec: specs/bar/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b3,s3\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'specs/bar/spec.md',check coverage for stories 1\n"
 		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
@@ -206,7 +206,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/foo/spec.md", specsBody)
 
 		out, code := Command([]string{"foo"})
-		want := "spec: foo\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",cwd,cwd-seam\nhelp[1]{cmd,why}:\n  bench coverage --check foo,check coverage for stories 1\n"
+		want := "spec: foo\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",cwd,cwd-seam\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'foo',check coverage for stories 1\n"
 		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — the CWD file should shadow the specs/ fallback", out, code, want)
 		}
@@ -235,7 +235,7 @@ func TestCommand(t *testing.T) {
 		mustWrite(t, "specs/dist/spec.md", body)
 
 		out, code := Command([]string{"dist"})
-		want := "spec: specs/dist/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench coverage --check specs/dist/spec.md,check coverage for stories 1\n"
+		want := "spec: specs/dist/spec.md\nstate: mapped\nrows[1]{story,behavior,seam}:\n  \"1\",b,s\nhelp[1]{cmd,why}:\n  bench 'coverage' '--check' 'specs/dist/spec.md',check coverage for stories 1\n"
 		if out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — a directory is not a spec candidate", out, code, want)
 		}
@@ -282,8 +282,8 @@ func TestCommandPreservesCheckedInPreDisclosureResponses(t *testing.T) {
 	for _, tc := range []struct {
 		name, fixture, body, help string
 	}{
-		{"mapped actionable", "pre-disclosure-mapped.stdout", mapped("| 1 | b | s | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,check coverage for stories 1\n"},
-		{"repairable malformed", "pre-disclosure-malformed.stdout", mapped("| 9 | b | s | catches one |\n"), "help[1]{cmd,why}:\n  bench coverage --check spec.md,retry after repairing coverage map\n"},
+		{"mapped actionable", "pre-disclosure-mapped.stdout", mapped("| 1 | b | s | catches one |\n"), "help[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',check coverage for stories 1\n"},
+		{"repairable malformed", "pre-disclosure-malformed.stdout", mapped("| 9 | b | s | catches one |\n"), "help[1]{cmd,why}:\n  bench 'coverage' '--check' 'spec.md',retry after repairing coverage map\n"},
 		{"mapped zero-row", "pre-disclosure-zero-row.stdout", mapped(""), "help[0]{cmd,why}:\n"},
 		{"historical terminal", "pre-disclosure-historical.stdout", "# historical\n<!-- coverage-map: historical -->\n### Acceptance coverage map\n|bad|\n", "help[0]{cmd,why}:\n"},
 		{"no-map terminal", "pre-disclosure-no-map.stdout", "# no map\n", "help[0]{cmd,why}:\n"},

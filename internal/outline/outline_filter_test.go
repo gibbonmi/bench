@@ -55,15 +55,15 @@ func TestTestFilterKeepsOnlyTestFileSymbols(t *testing.T) {
 func assertFilteredForms(t *testing.T, flag, want, dirRow string) {
 	t.Helper()
 	full, code := Command([]string{"--full", flag})
-	if wantFull := want + "help[1]{cmd,why}:\n  bench outline --symbol <name> " + flag + ",read one listed Go declaration\n"; code != 0 || full != wantFull {
+	if wantFull := want + "help[1]{cmd,why}:\n  bench 'outline' '--symbol' <name> '" + flag + "',read one listed Go declaration\n"; code != 0 || full != wantFull {
 		t.Fatalf("--full %s code=%d bytes =\n%s\nwant\n%s", flag, code, full, wantFull)
 	}
 	scoped, code := Command([]string{flag, "pkg"})
-	if wantScoped := want + "help[1]{cmd,why}:\n  bench outline pkg --symbol <name> " + flag + ",read one listed Go declaration\n"; code != 0 || scoped != wantScoped {
+	if wantScoped := want + "help[1]{cmd,why}:\n  bench 'outline' 'pkg' '--symbol' <name> '" + flag + "',read one listed Go declaration\n"; code != 0 || scoped != wantScoped {
 		t.Fatalf("%s pkg code=%d bytes =\n%s\nwant\n%s", flag, code, scoped, wantScoped)
 	}
 	bare, code := Command([]string{flag})
-	if code != 0 || !strings.HasPrefix(bare, "outline_dirs[1]{dir,symbols}:\n"+dirRow+"\n") || !strings.HasSuffix(bare, "help[1]{cmd,why}:\n  bench outline pkg "+flag+",list the symbols under this directory\n") {
+	if code != 0 || !strings.HasPrefix(bare, "outline_dirs[1]{dir,symbols}:\n"+dirRow+"\n") || !strings.HasSuffix(bare, "help[1]{cmd,why}:\n  bench 'outline' 'pkg' '"+flag+"',list the symbols under this directory\n") {
 		t.Fatalf("bare %s code=%d summary:\n%s", flag, code, bare)
 	}
 }
@@ -88,7 +88,7 @@ outline_meta[1]{tracked_files,scanned_files,skipped_files,total_symbols,emitted_
   "4","4","0","10","10","0","false"
 outline_skips[0]{file,reason}:
 help[1]{cmd,why}:
-  bench outline pkg,list the symbols under this directory
+  bench 'outline' 'pkg',list the symbols under this directory
 `
 
 // OF4: without a filter flag the bare summary keeps its result bytes and ends with one

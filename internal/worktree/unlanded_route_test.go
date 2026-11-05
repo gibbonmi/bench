@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/axi"
 	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -66,7 +65,7 @@ func TestUnlandedReleaseRefusalNamesTheDiscardClean(t *testing.T) {
 		t.Run(work.name, func(t *testing.T) {
 			t.Parallel()
 			f := refusedUnlandedRelease(t, "unlanded-next", work)
-			want := "next=bench worktree clean --discard-branch " + axi.ShellQuote(f.creation.Path)
+			want := "next=bench 'worktree' 'clean' '--discard-branch' '" + f.creation.Path + "'"
 			requireTest(t, strings.Contains(f.stderr, want+"\n"), "release refusal = %q, want %q", f.stderr, want)
 			requireDiscardRoute(t, f, work.plan, f.creation.Path)
 		})

@@ -226,7 +226,7 @@ func TestActionsForRowsEnumeratesActiveAndOrphanRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "help[4]{cmd,why}:\n" + activeHelpRows + "  bench worktree clean '/tmp/orphan one',clean the orphaned worktree\n  bench worktree clean /tmp/orphan-two,clean the orphaned worktree\n"
+	want := "help[4]{cmd,why}:\n" + activeHelpRows + "  bench 'worktree' 'clean' '/tmp/orphan one',clean the orphaned worktree\n  bench 'worktree' 'clean' '/tmp/orphan-two',clean the orphaned worktree\n"
 	if help != want {
 		t.Fatalf("help = %q, want %q", help, want)
 	}
@@ -260,7 +260,7 @@ func TestListCommandPublicRowsAndDisclosure(t *testing.T) {
 		"{{PRESENT}}", present,
 		"{{MISSING}}", missing,
 	).Replace(string(primaryTemplate))
-	help := "help[4]{cmd,why}:\n" + activeHelpRows + fmt.Sprintf("  bench worktree clean '%s',clean the orphaned worktree\n  bench worktree clean --landed,clean landed assignments\n", missing)
+	help := "help[4]{cmd,why}:\n" + activeHelpRows + fmt.Sprintf("  bench 'worktree' 'clean' '%s',clean the orphaned worktree\n  bench 'worktree' 'clean' '--landed',clean landed assignments\n", missing)
 	if r.exit != 0 || r.stdout != primary+help {
 		t.Fatalf("ListCommand = (%d, %q), want materialized checked-in primary plus exactly one help block", r.exit, r.stdout)
 	}
@@ -318,8 +318,8 @@ func TestListCommandAngleBracketOrphanPathPreservesPrimaryAndHonestFallback(t *t
 // The help rows that every active row with a present tree shares. The list tests read
 // them here, so one expectation pins the text that actionsForRows renders.
 const (
-	activePathHelpRow = "  bench worktree path <target>,inspect an active worktree by its id\n"
-	activeExecHelpRow = "  bench worktree exec <target> -- <command>,run a command in an active worktree by its id\n"
+	activePathHelpRow = "  bench 'worktree' 'path' <target>,inspect an active worktree by its id\n"
+	activeExecHelpRow = "  bench 'worktree' 'exec' <target> '--' <command>,run a command in an active worktree by its id\n"
 	activeHelpRows    = activePathHelpRow + activeExecHelpRow
 )
 
@@ -347,13 +347,13 @@ func TestActionsForRowsReadsTheTreeCell(t *testing.T) {
 		{
 			name: "missing tree, not landed",
 			row:  activeListRow("gone", "req-gone", "missing", false, "/tmp/gone one"),
-			want: "help[1]{cmd,why}:\n  bench worktree release --request req-gone '/tmp/gone one',release the assignment whose worktree tree is missing\n",
+			want: "help[1]{cmd,why}:\n  bench 'worktree' 'release' '--request' 'req-gone' '/tmp/gone one',release the assignment whose worktree tree is missing\n",
 		},
 		{
 			name:        "missing tree, landed",
 			row:         activeListRow("done", "req-done", "missing", true, "/tmp/done"),
 			cleanLanded: true,
-			want:        "help[1]{cmd,why}:\n  bench worktree clean --landed,clean landed assignments\n",
+			want:        "help[1]{cmd,why}:\n  bench 'worktree' 'clean' '--landed',clean landed assignments\n",
 		},
 		{
 			name: "present tree",
@@ -388,10 +388,10 @@ func TestListCommandNamesOneCleanLandedRowForAMissingTree(t *testing.T) {
 	if r.exit != 0 {
 		t.Fatalf("ListCommand = (%d, %q), want exit 0", r.exit, r.stdout)
 	}
-	if got := strings.Count(r.stdout, "bench worktree clean --landed"); got != 1 {
+	if got := strings.Count(r.stdout, "bench 'worktree' 'clean' '--landed'"); got != 1 {
 		t.Fatalf("ListCommand printed %d clean --landed rows, want 1: %q", got, r.stdout)
 	}
-	if strings.Contains(r.stdout, "bench worktree path") || strings.Contains(r.stdout, "bench worktree exec") {
+	if strings.Contains(r.stdout, "bench 'worktree' 'path'") || strings.Contains(r.stdout, "bench 'worktree' 'exec'") {
 		t.Fatalf("ListCommand advertised an action on a missing tree: %q", r.stdout)
 	}
 }

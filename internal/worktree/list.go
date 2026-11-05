@@ -302,7 +302,7 @@ func (r recoveryRoute) line() string {
 	}
 	line := "bench " + strings.Join(r.words, " ")
 	if r.path != "" {
-		line += " " + axi.ShellQuote(r.path)
+		line += " " + sanitize.ShellQuote(r.path)
 	}
 	return line
 }

@@ -298,7 +298,7 @@ func TestSelectedWorktreeDetailRoute(t *testing.T) {
 		mustNoError(t, err)
 		actions, err := document.HelpActions()
 		mustNoError(t, err)
-		if len(actions) != 1 || actions[0].Cmd != usage.WorktreeList {
+		if len(actions) != 1 || actions[0].Cmd != "bench 'worktree' 'list'" {
 			t.Fatalf("detail actions=%#v, want complete worktree inventory", actions)
 		}
 	}

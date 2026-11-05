@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
@@ -44,9 +45,21 @@ func TestActionsForRowsDerivesEveryStaleOrUnwiredRowAndDedupes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "help[2]{cmd,why}:\n  bench link,repair stale\n  bench link,repair unwired\n"
+	want := "help[2]{cmd,why}:\n  bench 'link',repair stale\n  bench 'link',repair unwired\n"
 	if help != want {
 		t.Fatalf("help = %q, want %q", help, want)
+	}
+}
+
+// TestGuardsHelpArguments is S23: a stale guard's repair quotes its one known argument, and a
+// POSIX shell reads the hand-authored command back.
+func TestGuardsHelpArguments(t *testing.T) {
+	help, err := axi.RenderHelp(actionsForRows([][]string{{"stale", "b", "d", "", "", "stale", "claude"}}))
+	if want := "help[1]{cmd,why}:\n  bench 'link',repair stale\n"; err != nil || help != want {
+		t.Fatalf("help = (%q, %v), want %q", help, err, want)
+	}
+	if argv, err := axitest.RecoverHelpCommandArgv(help); err != nil || !reflect.DeepEqual(argv, []string{"bench", "link"}) {
+		t.Fatalf("argv of %q = (%q, %v), want [bench link]", help, argv, err)
 	}
 }
 
@@ -54,7 +67,7 @@ func TestCommandAppendsHonestEmptyHelpForCleanScan(t *testing.T) {
 	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
-	if code != 0 || !strings.HasSuffix(out, "help[0]{cmd,why}:\n") || strings.Contains(out, "bench link") {
+	if code != 0 || !strings.HasSuffix(out, "help[0]{cmd,why}:\n") || strings.Contains(out, "bench 'link'") {
 		t.Fatalf("Command = (exit %d, %q), want honest empty help", code, out)
 	}
 }
@@ -91,7 +104,7 @@ func TestCommandPreservesCheckedInStaleAndUnwiredPrimaryResponse(t *testing.T) {
 	root := gittest.Repo(t)
 	t.Chdir(root)
 	out, code := Command(nil)
-	const help = "help[2]{cmd,why}:\n  bench link,repair stale\n  bench link,repair unwired\n"
+	const help = "help[2]{cmd,why}:\n  bench 'link',repair stale\n  bench 'link',repair unwired\n"
 	if code != 0 || out != string(primary)+help {
 		t.Fatalf("Command = (%d, %q), want checked-in primary plus exactly one help block", code, out)
 	}
@@ -127,7 +140,7 @@ func TestCommandRendersRealStaleManagedPrePushHookAndRepairAction(t *testing.T) 
 		"  pre-push,pre-push,direct push to the protected branch,main,live,stale,git\n" +
 		"guard_scan[1]{status,inspected,total,omitted,reason}:\n" +
 		"  complete,\"1\",\"1\",\"0\",none\n" +
-		"help[1]{cmd,why}:\n  bench link,repair pre-push\n"
+		"help[1]{cmd,why}:\n  bench 'link',repair pre-push\n"
 	if code != 0 || out != want {
 		t.Fatalf("Command = (%d, %q), want (0, %q)", code, out, want)
 	}

@@ -15,9 +15,9 @@
         "name": "help",
         "fields": ["cmd", "why"],
         "rows": [
-          ["bench worktree path <target>", "inspect an active worktree by its id"],
-          ["bench worktree exec <target> -- <command>", "run a command in an active worktree by its id"],
-          ["bench worktree clean --landed", "clean landed assignments"]
+          ["bench 'worktree' 'path' <target>", "inspect an active worktree by its id"],
+          ["bench 'worktree' 'exec' <target> '--' <command>", "run a command in an active worktree by its id"],
+          ["bench 'worktree' 'clean' '--landed'", "clean landed assignments"]
         ]
       }
     ]
@@ -38,7 +38,7 @@
         "name": "help",
         "fields": ["cmd", "why"],
         "rows": [
-          ["bench worktree release --request request-cleanup-pending {{PATH}}", "resume the cleanup-pending assignment"]
+          ["bench 'worktree' 'release' '--request' 'request-cleanup-pending' '{{PATH}}'", "resume the cleanup-pending assignment"]
         ]
       }
     ]

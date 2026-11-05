@@ -223,7 +223,7 @@ func TestBlastOffersOneFullActionPerSymbolWithAnUntouchedConsumer(t *testing.T) 
 	if code != 0 {
 		t.Fatalf("exit = %d, want 0; out=%q", code, out)
 	}
-	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench consumers target.Changed --full,walk the consumers outside the diff\n") {
+	if !strings.HasSuffix(out, "help[1]{cmd,why}:\n  bench 'consumers' 'target.Changed' '--full',walk the consumers outside the diff\n") {
 		t.Fatalf("stdout = %q, want exactly one per-symbol walk action", out)
 	}
 }

@@ -93,8 +93,8 @@ func TestCandidatesEnvelopeOffersOneReQueryPerRow(t *testing.T) {
 		t.Fatalf("exit = %d, want 0; out=%q", code, out)
 	}
 	want := "help[2]{cmd,why}:\n" +
-		"  bench consumers alpha.Symbol,re-query the qualified symbol\n" +
-		"  bench consumers beta.Symbol,re-query the qualified symbol\n"
+		"  bench 'consumers' 'alpha.Symbol',re-query the qualified symbol\n" +
+		"  bench 'consumers' 'beta.Symbol',re-query the qualified symbol\n"
 	if !strings.HasSuffix(out, want) {
 		t.Fatalf("stdout = %q, want the envelope %q", out, want)
 	}

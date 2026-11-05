@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/benchguard"
 	"github.com/gibbonmi/bench/internal/census"
 	"github.com/gibbonmi/bench/internal/poolkey"
@@ -31,7 +33,7 @@ func TestRawReadAdvice(t *testing.T) {
 	lines := func(path string, first, last int) string {
 		return rawReadAdvice(census.Read{Path: path, First: first, Last: last})
 	}
-	if got, want := lines("notes.md", 3, 7), "bench read notes.md --lines 3:7"; !strings.Contains(got, want) {
+	if got, want := lines("notes.md", 3, 7), "bench read 'notes.md' --lines 3:7"; !strings.Contains(got, want) {
 		t.Fatalf("range advice = %q, want it to name %q", got, want)
 	}
 	if got, want := file("a b.md"), "bench read 'a b.md' "; !strings.Contains(got, want) {
@@ -130,4 +132,37 @@ func TestRawReadAdvice(t *testing.T) {
 		{name: "relative read from a subdirectory", in: envelope("cat notes.md"), message: file("notes.md")},
 		{name: "relative climb inside the repository", in: envelope("cat ../README.md"), message: file("../README.md")},
 	})
+}
+
+// TestRawReadAdviceArguments is S44: the advice names the read path as one always-quoted
+// argument, and the line flag and its range keep their bytes. The form is authored by hand,
+// a POSIX shell reads it back to the exact path, and a sentinel file reds a path that the
+// shell runs.
+func TestRawReadAdviceArguments(t *testing.T) {
+	sentinel := axitest.NewShellSentinel(t)
+	path := "it's; " + sentinel.Touch()
+	const lead, tail = "ADVICE: ", " reads the same text through the native reader. This command still runs."
+	for _, row := range []struct {
+		name        string
+		read        census.Read
+		form        string
+		first, last string
+	}{
+		{name: "whole file", read: census.Read{Path: path}, form: `bench read 'it'\''s; ` + sentinel.Touch() + `'`},
+		{name: "line range", read: census.Read{Path: path, First: 3, Last: 7}, form: `bench read 'it'\''s; ` + sentinel.Touch() + `' --lines 3:7`},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			if got, want := rawReadAdvice(row.read), lead+row.form+tail; got != want {
+				t.Fatalf("advice = %q, want %q", got, want)
+			}
+			wantArgv := []string{"bench", "read", path}
+			if row.read.Ranged() {
+				wantArgv = append(wantArgv, "--lines", "3:7")
+			}
+			if argv, err := (axitest.HelpAction{Cmd: row.form}).Argv(); err != nil || !slices.Equal(argv, wantArgv) {
+				t.Fatalf("argv of %q = (%q, %v), want %q", row.form, argv, err, wantArgv)
+			}
+		})
+	}
+	sentinel.RequireUnexecuted(t)
 }

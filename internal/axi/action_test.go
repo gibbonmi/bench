@@ -62,7 +62,7 @@ func TestRenderHelpRendersReusableInvocationAndHarnessPhase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "help[6]{cmd,why}:\n  bench maps --template,repair decisions/model.md\n  bench worktree exec alpha -- <command>,inspect active worktree\n  /bench-shape-idea,shape model\n  /bench-what-next,drain the capture inbox\n  /bench-write-spec,spec the ready map\n  /bench-write-spec decisions/my map.md,\"spec my map: Model\"\n"
+	const want = "help[6]{cmd,why}:\n  bench 'maps' '--template',repair decisions/model.md\n  bench 'worktree' 'exec' 'alpha' '--' <command>,inspect active worktree\n  /bench-shape-idea,shape model\n  /bench-what-next,drain the capture inbox\n  /bench-write-spec,spec the ready map\n  /bench-write-spec decisions/my map.md,\"spec my map: Model\"\n"
 	if got != want {
 		t.Fatalf("RenderHelp = %q, want %q", got, want)
 	}
@@ -73,7 +73,7 @@ func TestRenderHelpRendersKnownArgumentNamedUnknown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "help[1]{cmd,why}:\n  bench maps unknown,inspect an unknown-named map\n"
+	const want = "help[1]{cmd,why}:\n  bench 'maps' 'unknown',inspect an unknown-named map\n"
 	if got != want {
 		t.Fatalf("RenderHelp = %q, want %q", got, want)
 	}
@@ -110,7 +110,7 @@ func TestRenderHelpShellQuotesKnownArgumentsWithoutChangingFutureInputs(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "help[1]{cmd,why}:\n  \"bench worktree clean 'orphan pool/a*.wt' 'owner'\\\"'\\\"'s copy' <confirmation>\",clean the orphaned worktree\n"
+	const want = "help[1]{cmd,why}:\n  \"bench 'worktree' 'clean' 'orphan pool/a*.wt' 'owner'\\\\''s copy' <confirmation>\",clean the orphaned worktree\n"
 	if got != want {
 		t.Fatalf("RenderHelp = %q, want %q", got, want)
 	}
@@ -199,8 +199,70 @@ func TestRenderHelpDeduplicatesExactTemplatesWithoutReordering(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "help[2]{cmd,why}:\n  /bench-shape-idea,shape alpha\n  bench maps --template,repair decisions/broken.md\n"
+	const want = "help[2]{cmd,why}:\n  /bench-shape-idea,shape alpha\n  bench 'maps' '--template',repair decisions/broken.md\n"
 	if got != want {
 		t.Fatalf("RenderHelp = %q, want %q", got, want)
+	}
+}
+
+// TestRenderHelpAlwaysQuoted is S05: every accepted known argument renders as one
+// always-quoted token, a safe token included, so the former bare-token spelling reds the
+// exact bytes. The expected cell is authored by hand, and a POSIX shell then reads the
+// decoded cell back to the declared values. A sentinel file reds a value that the shell runs.
+func TestRenderHelpAlwaysQuoted(t *testing.T) {
+	sentinel := axitest.NewShellSentinel(t)
+	hostile := "it's $(" + sentinel.Touch() + ")"
+	action := ExecutableInvocation("clean the orphaned worktree", KnownArgument("worktree"), KnownArgument("clean"), KnownArgument("pool/a.wt"), KnownArgument(hostile))
+	got, err := RenderHelp([]Action{action})
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := `bench 'worktree' 'clean' 'pool/a.wt' 'it'\''s $(` + sentinel.Touch() + `)'`
+	want := "help[1]{cmd,why}:\n  \"" + strings.ReplaceAll(command, `\`, `\\`) + "\",clean the orphaned worktree\n"
+	if got != want {
+		t.Fatalf("RenderHelp = %q, want %q", got, want)
+	}
+	if line, err := action.Command(); err != nil || line != command {
+		t.Fatalf("Command = (%q, %v), want %q", line, err, command)
+	}
+	argv, err := axitest.RecoverHelpCommandArgv(got)
+	if wantArgv := []string{"bench", "worktree", "clean", "pool/a.wt", hostile}; err != nil || !slices.Equal(argv, wantArgv) {
+		t.Fatalf("shell argv = (%q, %v), want %q", argv, err, wantArgv)
+	}
+	sentinel.RequireUnexecuted(t)
+}
+
+// TestRenderHelpFutureInputs is S06: a future-input slot keeps its exact placeholder bytes
+// beside always-quoted known arguments. The placeholder is never executed; only the known
+// prefix before the first slot is read back through a POSIX shell.
+func TestRenderHelpFutureInputs(t *testing.T) {
+	got, err := RenderHelp([]Action{ExecutableInvocation("run a command in an active worktree by its id", KnownArgument("worktree"), KnownArgument("exec"), FutureInput("target"), KnownArgument("--"), FutureInput("command"))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "help[1]{cmd,why}:\n  bench 'worktree' 'exec' <target> '--' <command>,run a command in an active worktree by its id\n"
+	if got != want {
+		t.Fatalf("RenderHelp = %q, want %q", got, want)
+	}
+	argv, err := axitest.HelpAction{Cmd: "bench 'worktree' 'exec'"}.Argv()
+	if wantArgv := []string{"bench", "worktree", "exec"}; err != nil || !slices.Equal(argv, wantArgv) {
+		t.Fatalf("known prefix argv = (%q, %v), want %q", argv, err, wantArgv)
+	}
+}
+
+// TestRenderHelpRejectsQuotedCommandSpoof is S10: a first known value of bench stays refused
+// although its rendered word now carries quotes, so the check reads the declared value. A
+// first value that only starts with bench is a different word and still renders.
+func TestRenderHelpRejectsQuotedCommandSpoof(t *testing.T) {
+	spoof := ExecutableInvocation("spoof", KnownArgument("bench"), KnownArgument("status"))
+	if got, err := RenderHelp([]Action{spoof}); err == nil {
+		t.Fatalf("RenderHelp accepted a bench first word: %q", got)
+	}
+	if line, err := spoof.Command(); err == nil {
+		t.Fatalf("Command accepted a bench first word: %q", line)
+	}
+	got, err := RenderHelp([]Action{ExecutableInvocation("near", KnownArgument("benchmark"))})
+	if want := "help[1]{cmd,why}:\n  bench 'benchmark',near\n"; err != nil || got != want {
+		t.Fatalf("RenderHelp = (%q, %v), want %q", got, err, want)
 	}
 }

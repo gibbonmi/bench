@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/axi"
+	"github.com/gibbonmi/bench/internal/axi/axitest"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gittest"
 )
@@ -29,7 +30,7 @@ func TestCommandAppendsOnlyMapActionsToTheCapturedPrimaryResponse(t *testing.T) 
 	t.Chdir(root)
 
 	out, code := Command(nil)
-	const help = "help[3]{cmd,why}:\n  /bench-shape-idea,\"shape alpha: First\"\n  /bench-shape-idea,\"shape alpha: Second\"\n  bench maps --template,repair decisions/broken.md\n"
+	const help = "help[3]{cmd,why}:\n  /bench-shape-idea,\"shape alpha: First\"\n  /bench-shape-idea,\"shape alpha: Second\"\n  bench 'maps' '--template',repair decisions/broken.md\n"
 	if code != 1 || out != string(primary)+help {
 		t.Fatalf("Command(%v) = (exit %d, %q), want captured primary plus map actions", []string(nil), code, out)
 	}
@@ -128,9 +129,30 @@ func TestActionsForRowsCarriesTheInvalidDiagnosticPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = "help[1]{cmd,why}:\n  bench maps --template,\"repair decisions/broken: map.md\"\n"
+	const want = "help[1]{cmd,why}:\n  bench 'maps' '--template',\"repair decisions/broken: map.md\"\n"
 	if help != want {
 		t.Fatalf("actionsForRows invalid help = %q, want %q", help, want)
+	}
+}
+
+// TestMapsHelpArguments is S24: the repair action of an invalid map quotes the verb and its
+// flag. The command is authored by hand and a POSIX shell reads it back.
+func TestMapsHelpArguments(t *testing.T) {
+	row := []any{"broken", "invalid", "map", "invalid", "decisions/broken.md: missing Status"}
+	help, err := axi.RenderHelp(actionsForRows([][]any{row}, map[string]string{invalidRowKey(row): "decisions/broken.md"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := axitest.DecodeDocument(help)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actions, err := document.HelpActions()
+	if want := []axitest.HelpAction{{Cmd: "bench 'maps' '--template'", Why: "repair decisions/broken.md"}}; err != nil || !reflect.DeepEqual(actions, want) {
+		t.Fatalf("help actions = (%q, %v), want %q", actions, err, want)
+	}
+	if argv, err := actions[0].Argv(); err != nil || !reflect.DeepEqual(argv, []string{"bench", "maps", "--template"}) {
+		t.Fatalf("argv of %q = (%q, %v), want [bench maps --template]", actions[0].Cmd, argv, err)
 	}
 }
 
@@ -145,7 +167,7 @@ func TestCommandDisclosesTheFullPathForABoundsInvalidMap(t *testing.T) {
 	t.Chdir(root)
 
 	out, code := Command(nil)
-	const help = "help[1]{cmd,why}:\n  bench maps --template,repair decisions/hollow.md\n"
+	const help = "help[1]{cmd,why}:\n  bench 'maps' '--template',repair decisions/hollow.md\n"
 	if code != 1 || !strings.Contains(out, "hollow,invalid,map,invalid,\"empty: \"") || !strings.HasSuffix(out, help) {
 		t.Fatalf("Command(%v) = (exit %d, %q), want exit 1 with the bounds diagnostic and %q", []string(nil), code, out, help)
 	}
