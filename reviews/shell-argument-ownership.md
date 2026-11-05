@@ -1184,3 +1184,20 @@ The coordinator probe omitted the source validation in `operandRefusal`, and `Te
 The spec reword makes the delta more than test-only, so a three-axis confirming round closes the findings.
 
 Repair allowance: S-B4 consumed 1 of 2 repair cycles.
+
+## S-D1 author witness reds
+
+The ticket 06 author reported no witness red apart from the plan probes. The fenced record holds those four probes, and each probe went red and then passed after restoration.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S18 | The second rebuild operand takes a malformed quote around its embedded quote. | `TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths` at `freshness_verify_test.go:267` |
+| S37 | The diff fixture git path takes a malformed quote. | `TestCommandResolvesRecordedBaseOncePerAttempt` at `identity_test.go:210` |
+| S37 | The preprelease fixture root operand loses its quotes. | `TestCanaryCompatibilityShimAttributesInventoryFailures/resolved_Bench` at `preprelease_test.go:145` |
+
+The author added hostile fixture inputs so that the omission evidence can red. The diff wrapper runs git through a path with a space, a glob, a dollar sign, and a quote. The preprelease script builds its root operand through `sanitize.ShellQuote`.
+
+Two divergences are flagged for reviewer veto:
+
+- The preprelease operand contains no embedded quote, so its probe removes the quotes and does not corrupt the escape. An embedded quote would change the observed argv bytes, and the acceptance forbids that change.
+- The preprelease script text changes only where the owner now builds the root operand. The removed helper's quote escape never reached the shim path, so those bytes stay the same.
