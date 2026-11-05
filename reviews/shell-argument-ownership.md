@@ -1427,11 +1427,183 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+    "performer": "ft354-orchestrator",
+    "reconciliation": {
+      "S01": "covered",
+      "S02": "covered",
+      "S03": "covered",
+      "S04": "covered",
+      "S05": "covered",
+      "S06": "covered",
+      "S07": "covered",
+      "S08": "covered",
+      "S09": "covered",
+      "S10": "covered",
+      "S11": "covered",
+      "S12": "covered",
+      "S13": "covered",
+      "S14": "covered",
+      "S15": "covered",
+      "S16": "covered",
+      "S17": "covered",
+      "S18": "covered",
+      "S19": "covered",
+      "S20": "covered",
+      "S21": "covered",
+      "S22": "covered",
+      "S23": "covered",
+      "S24": "covered",
+      "S25": "covered",
+      "S26": "covered",
+      "S27": "covered",
+      "S28": "covered",
+      "S29": "covered",
+      "S30": "covered",
+      "S31": "covered",
+      "S32": "covered",
+      "S33": "covered",
+      "S34": "covered",
+      "S35": "covered",
+      "S36": "covered",
+      "S37": "covered",
+      "S38": "covered",
+      "S39": "covered",
+      "S40": "covered",
+      "S41": "covered",
+      "S42": "covered",
+      "S43": "covered",
+      "S44": "covered"
+    },
+    "verification": [
+      {
+        "id": "FV-ordinary-integration",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:cc1d0318c26e994d70098d5a1a86f86067b0bbb1155abdffcb516fd0d19f1de2",
+          "excerpt": "packages[142]{package,status,elapsed_ms,tests_run}: every package pass\nfailures[0]{package,test,line,lines}:\nskips: 6 capability privilege skips only\n"
+        },
+        "requirement": "ordinary-integration",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-coverage",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:5acdcd76410a8821a66406cf50ad017aed19f2f6a63ea769040506e59dbd118d",
+          "excerpt": "ok: coverage map valid — 44 row(s)\nuncited: 1 row(s) with no seam-cell citation — S34 (review-owned)\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check shell-argument-ownership",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-ticket-grammar",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:9682a308427845681c465428612a3c267f41a45298d2a77a5d6729b943c5dae8",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  ticket-grammar,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,2240,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "ticket-grammar",
+        "command": "bench test --check ticket-grammar",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-system-integration",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:f2be2382fec027f1e29dab16e3e2954cb8e8fda8ece7df82805c6b07f0ad7226",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  system,system,288,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,50412,288\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "system-integration",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-target-tests",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:84b74334ba5e6b289e4db2981bf1414e2dd02886bc8bdcbb752ca0b26b0931a8",
+          "excerpt": "packages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/treetarget,pass,2184,54\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "target-tests",
+        "command": "bench test --package ./internal/treetarget",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-axi-registry",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:a2733f789355e32d3b800d7281f4e39712ef15cbb8775f36daf95864d88f434e",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  axi-query-registry,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,10,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "axi-registry",
+        "command": "bench test --check axi-query-registry",
+        "exit_code": 0
+      },
+      {
+        "id": "FV-routing",
+        "performer": "ft354-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "unknown",
+        "source_digest": "23a2909759050ddde3715aaf3b26269143853b92",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "claude-session:ft354-orchestrator",
+          "digest": "sha256:1a56c372d519e38cbed202dacfb66d75ac4d3ee1b8b1ab04bb7e32fe13dc2acf",
+          "excerpt": "check[1]{name,kind,tests_run,subjects}:\n  subcommand-routing,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,pass,25,1\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\n"
+        },
+        "requirement": "routing",
+        "command": "bench test --check subcommand-routing",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
