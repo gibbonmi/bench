@@ -1763,3 +1763,17 @@ Count: 2. Worst issue: S-E-COV-1.
 
 The definition census found one surviving shell-quote algorithm, the `sanitize.ShellQuote` owner.
 S-E-STD-1, S-E-COV-1, and S-E-COV-2 route to one ticket 07 repair session, because ticket 07 holds most of their paths. A widen adds `internal/axi/axitest/help.go` to ticket 07.
+
+## S-E repair 1 witness reds
+
+The repair session ft354-repair-07-r1 made two repair commits in one cycle. The second commit gives the request slot one owner, because the first commit repeated the placeholder and found the slot by a string compare. The fenced record holds both refreezes.
+
+| Finding | Mutation | Red test |
+|---|---|---|
+| S-E-SPEC-1 | The fallback joins its fixed words with no quotes. | The control-byte request row at `missing_tree_recovery_test.go:185` and both angle-bracket rows of `TestRecoveryRouteArgument` |
+| S-E-STD-1 | The renderer returns the bare-token spelling through the shared helper. | 22 failures across the six producer test packages, each at its caller line |
+| S-E-COV-1 | The line-safety branch of the discard route always takes the path. | `TestRecoveryRouteArgument/a_newline/discard` |
+| S-E-COV-2 | The disclosure guard of `axi.Action.Command` is removed. | `action_test.go:171` |
+| Request slot owner | The slot comes from a string compare of the request token. | The literal `<request>` token row at `missing_tree_recovery_test.go:187` |
+
+Repair allowance: S-E consumed 1 of 2 repair cycles.
