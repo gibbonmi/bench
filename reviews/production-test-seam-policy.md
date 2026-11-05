@@ -63,7 +63,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ts1-review-standards",
+          "performer": "ft343-review-ts1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09e08a98b1a98ed7686c7fe73ebf7582a9ced4ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts1",
+            "digest": "sha256:8e17e424b12352d673152240db0d7ebd8855fe12de99136be6a455dde63a24b7",
+            "excerpt": "Standards: no findings. The relocation leaves one AST scanner in internal/conformance/injectedports, and the old file keeps only the wrapper and the legacy bite test. The tests use the shared writeFixtureFile in conformance and one local writeRoot in the owner, as the spec allows. slices.Sort/Compact replaces an unexported test helper the package cannot reach, so it is not duplicated knowledge. Advice: put the per-row mutant reds in the record so the independent-expectation exception holds.\n"
+          },
+          "axis": "Standards",
+          "base": "77de12e23e7fc3f4745ac7132e1ceeae02ce396c",
+          "tip": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ts1-review-spec",
+          "performer": "ft343-review-ts1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09e08a98b1a98ed7686c7fe73ebf7582a9ced4ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts1",
+            "digest": "sha256:1a43e6e5bfbfcf2bffe0784b5bfbbee9bd244df71035ea37485b20fbf71c96d7",
+            "excerpt": "Spec: no findings. All 16 TS1 rows map to live seams, the legacy messages stay byte-exact as exported constants, and checkInjectedPortRegistry calls Check once. Deriving only over Required follows the TS1 chunk row and ticket 04:29, and it conflicts with ticket 01:12, which goes to reviewer veto. Silence on a row outside Required stays legacy behavior until the TS4 census.\n"
+          },
+          "axis": "Spec",
+          "base": "77de12e23e7fc3f4745ac7132e1ceeae02ce396c",
+          "tip": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ts1-review-coverage",
+          "performer": "ft343-review-ts1",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "09e08a98b1a98ed7686c7fe73ebf7582a9ced4ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts1",
+            "digest": "sha256:b27ac4b95b8318a293563a59ffbc51892a22c1887f14edd53c6b981190ae46a3",
+            "excerpt": "Coverage: no findings. Every mapped row's why-clause mutation changes its fixture's diagnostic heads, and the wrapper-bypass probe bit with the canary's exact diagnostic. Advice for TS4: ENOTDIR as absence, and symlinked package directories outside the root.\n"
+          },
+          "axis": "Coverage",
+          "base": "77de12e23e7fc3f4745ac7132e1ceeae02ce396c",
+          "tip": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -75,3 +136,42 @@
   }
 }
 ```
+
+## TS1 author witness reds
+
+The author `ft343-author-01` reported these witness reds at `d626a7a`. Each mutant reported `bit`, and each file restored byte-identically.
+
+| row | file | mutation | failing test |
+|---|---|---|---|
+| PS01 | `derive.go` | the interface arm returns false | `TestSeamDerivationForms` |
+| PS02 | `derive.go` | the function-type arm returns false | `TestSeamDerivationForms` |
+| PS03 | `derive.go` | the struct arm returns false | `TestSeamDerivationForms` |
+| PS50 | `derive.go` | the pointer arm returns an empty name | `TestSeamDerivationForms` |
+| PS51 | `derive.go` | the type-assertion arm returns early | `TestSeamDerivationForms` |
+| PS52 | `derive.go` | the case-clause arm returns early | `TestSeamDerivationForms` |
+| PS53 | `derive.go` | the interface arm returns true | `TestSeamDerivationForms` |
+| PS54 | `derive.go` | a data field is skipped | `TestSeamDerivationForms` |
+| PS55 | `derive.go` | the injection test is always true | `TestSeamDerivationForms` |
+| PS12 | `derive.go` | the parse diagnostic is omitted | `TestSeamAdmissionEvidence` |
+| PS13 | `check.go` | the orphan guard is always true | `TestSeamAdmissionEvidence` |
+| PS14 | `check.go` | the zero-inventory branch is disabled | `TestSeamAdmissionEvidence` |
+| PS42 | `check.go` | the package path joins the live checkout | `TestSeamAdmissionEvidence` |
+| PS43 | `check.go` | every stat error counts as absence | `TestSeamAdmissionEvidence` |
+| PS61 | `check.go` | a blank exemption compares as valid | `TestSeamAdmissionEvidence` |
+
+## Standards
+
+Findings: 0. Worst issue: none.
+
+## Spec
+
+Findings: 0. Worst issue: none.
+The reviewer flags ticket 01 line 12 for reviewer veto: it claims the wide derivation that the chunk table gives to TS4.
+Carry to the TS4 charge: a row outside the required packages stays silent until the TS4 census grades it.
+
+## Coverage
+
+Findings: 0. Worst issue: none.
+Advice for TS4: decide ENOTDIR as absence, and decide a symlinked package directory that points outside the root.
+
+Repair cycles consumed for TS1: 0 of 2.
