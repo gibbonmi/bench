@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
@@ -166,7 +167,7 @@ func TestCheckRefusesFailingVerifiedExecutable(t *testing.T) {
 	root := writeBuildFixture(t)
 	staged := filepath.Join(root, "staged-bench")
 	sentinel := "untrusted child output"
-	program := "#!/usr/bin/env bash\nprintf '%s\\n' " + quoteForShell(sentinel) + "\nprintf '%s\\n' " + quoteForShell(sentinel) + " >&2\nexit 2\n"
+	program := "#!/usr/bin/env bash\nprintf '%s\\n' " + sanitize.ShellQuote(sentinel) + "\nprintf '%s\\n' " + sanitize.ShellQuote(sentinel) + " >&2\nexit 2\n"
 	if err := os.WriteFile(staged, []byte(program), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +251,7 @@ func TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths(t *testing.T) {
 		t.Fatal(err)
 	}
 	record := filepath.Join(t.TempDir(), "record")
-	script := "#!/usr/bin/env bash\nprintf '%s\\n%s\\n%s\\n' \"$PWD\" \"$1\" \"$2\" > " + quoteForShell(record) + "\n"
+	script := "#!/usr/bin/env bash\nprintf '%s\\n%s\\n%s\\n' \"$PWD\" \"$1\" \"$2\" > " + sanitize.ShellQuote(record) + "\n"
 	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.sh"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -265,10 +266,6 @@ func TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths(t *testing.T) {
 	if got, readErr := os.ReadFile(record); readErr != nil || string(got) != want {
 		t.Fatalf("rebuild action args = %q, %v; want %q", got, readErr, want)
 	}
-}
-
-func quoteForShell(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
 }
 
 func TestVerifyRefusesSpecialArtifactsBeforeReading(t *testing.T) {
