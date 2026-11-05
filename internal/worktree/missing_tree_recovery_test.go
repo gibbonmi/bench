@@ -170,7 +170,8 @@ func TestReleaseRetainsAMissingTreeUnderAnUnknownLease(t *testing.T) {
 
 // TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot: a missing tree whose request or
 // path is not line-safe prints the release with its command words, and the placeholder only
-// in the slot of each unsafe value, so no control byte reaches the record.
+// in the slot of each unsafe value, so no control byte reaches the record. A safe request
+// spelled as the placeholder is a value, so it prints quoted.
 func TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot(t *testing.T) {
 	t.Parallel()
 	root := newWorktreeRepo(t)
@@ -178,6 +179,7 @@ func TestMissingTreeRoutePrintsAPlaceholderInEachUnsafeSlot(t *testing.T) {
 	for _, tc := range []struct{ request, want string }{
 		{"req-gone", "bench 'worktree' 'release' '--request' 'req-gone' <checkout>"},
 		{"req\x1bgone", "bench 'worktree' 'release' '--request' <request> <checkout>"},
+		{"<request>", "bench 'worktree' 'release' '--request' '<request>' <checkout>"},
 	} {
 		gone := intent.Assignment{ID: "gone", RequestToken: tc.request, Branch: "refs/heads/bench/gone", Worktree: unsafePath}
 		var refused refusalError

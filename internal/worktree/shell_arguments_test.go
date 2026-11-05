@@ -71,7 +71,7 @@ func TestRecoveryRouteArgument(t *testing.T) {
 			help               axi.Action
 		}{
 			{name: "discard", line: releaseNext(ReasonUnmerged, row.path, gone.ID), quoted: "bench 'worktree' 'clean' '--discard-branch'", words: []string{"bench", "worktree", "clean", "--discard-branch"}, help: discardUnlanded(row.path, gone.ID).action()},
-			{name: "missing tree", line: missingTreeRoute(root, gone), quoted: "bench 'worktree' 'release' '--request' 'req-gone'", words: []string{"bench", "worktree", "release", "--request", "req-gone"}, help: recoverMissingTree(false, gone.RequestToken, row.path).action()},
+			{name: "missing tree", line: missingTreeRoute(root, gone), quoted: "bench 'worktree' 'release' '--request' 'req-gone'", words: []string{"bench", "worktree", "release", "--request", "req-gone"}, help: recoverMissingTree(false, gone.RequestToken, false, row.path).action()},
 		} {
 			t.Run(row.name+"/"+route.name, func(t *testing.T) {
 				rendered, err := axi.RenderHelp([]axi.Action{route.help})
