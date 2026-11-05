@@ -1168,7 +1168,76 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "S-E-R1-standards",
+          "performer": "ft354-review-S-E",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "550823a509956f130ffa341a162be682eda97503",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-E",
+            "digest": "sha256:7837c9e83bdacd352289bd8854c0dac64e800667285380960d4d4df5d9ff03a9",
+            "excerpt": "## Standards\nCount: 1. Worst issue: S-E-STD-1.\n- S-E-STD-1 (confidence 7, auto-fix): the help-decode, exact-Cmd, and Argv comparison harness is pasted in six new producer tests (consumers, worktree, coverage, preflight, responsebound, outline shell_arguments_test.go); one axitest owner in internal/axi/axitest/help.go removes the copies.\n"
+          },
+          "axis": "Standards",
+          "base": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "tip": "0d7cdbefe829c70614676c68c6cfd78dab3b7b3f",
+          "finding_ids": [
+            "S-E-STD-1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "S-E-R1-spec",
+          "performer": "ft354-review-S-E",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "550823a509956f130ffa341a162be682eda97503",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-E",
+            "digest": "sha256:cc72c2391ae83a9c58e8208b1c4f3d2e3713bb7964e5f837a9f5ef657a483df1",
+            "excerpt": "## Spec\nCount: 2. Worst issue: S-E-SPEC-1.\n- S-E-SPEC-1 (confidence 7, ask-user): the recoveryRoute.line fallback at internal/worktree/list.go:303 joins words bare for an angle-bracket path and for the \u003crequest> placeholder, while the S16 inventory row says every word and the path become always quoted after the S-E switch.\n- S-E-SPEC-2 (confidence 9, auto-fix): the Ownership fences union at spec.md:400-493 omits seven paths that ticket Writes lines hold after the build widens.\n"
+          },
+          "axis": "Spec",
+          "base": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "tip": "0d7cdbefe829c70614676c68c6cfd78dab3b7b3f",
+          "finding_ids": [
+            "S-E-SPEC-1",
+            "S-E-SPEC-2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "S-E-R1-coverage",
+          "performer": "ft354-review-S-E",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "550823a509956f130ffa341a162be682eda97503",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft354-review-S-E",
+            "digest": "sha256:904054b8beefbe36669c1fa97fd37e0a31aecf7951a0c0f43ea0cc11cc2be340",
+            "excerpt": "## Coverage\nCount: 2. Worst issue: S-E-COV-1.\n- S-E-COV-1 (confidence 6, auto-fix): swapping !lineSafe(path) to false in discardUnlanded (list.go:277) stays green; no row covers the --target route for a non-line-safe path.\n- S-E-COV-2 (confidence 6, auto-fix): removing the disclosure guard in axi.Action.Command (action.go:139) stays green; no row covers an unsupported control in why.\n"
+          },
+          "axis": "Coverage",
+          "base": "79c12fb863f1429d46033be7f4c7c86a2c8b034f",
+          "tip": "0d7cdbefe829c70614676c68c6cfd78dab3b7b3f",
+          "finding_ids": [
+            "S-E-COV-1",
+            "S-E-COV-2"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1499,3 +1568,30 @@ Three judgment calls are flagged for the S-E review:
 - The bare `--apply` negative searches stay, because that substring also matches the quoted flag.
 - The structure lane refused the first commit on two test-file budgets. The author compacted the guards witness and kept the reclaim apply constant with an open quote, so neither file grew.
 - Two local help-decode helpers exist, one in the consumers tests and one in the worktree tests. Their shared owner would be `axitest`, which is outside the ticket 07 fence.
+
+## S-E review round 1 pickup
+
+Repair allowance: S-E consumed 0 of 2 repair cycles before this round.
+
+### Standards
+
+Count: 1. Worst issue: S-E-STD-1.
+
+- S-E-STD-1 (confidence 7, auto-fix): six new producer tests paste one help-decode and argv comparison harness. One owner in `internal/axi/axitest/help.go` removes the copies. Citation: `internal/consumers/shell_arguments_test.go:13`.
+
+### Spec
+
+Count: 2. Worst issue: S-E-SPEC-1.
+
+- S-E-SPEC-1 (confidence 7, ask-user): the recovery line fallback joins its words with no quotes for an angle-bracket path and for the request placeholder. The S16 inventory row says that every word and the path take quotes after the switch. This finding waits for the reviewer decision. Citation: `internal/worktree/list.go:303`.
+- S-E-SPEC-2 (confidence 9, auto-fix): the ownership fence union omits seven paths that the build widened into ticket `Writes:` lines. An orchestrator plan commit corrects it. Citation: `specs/shell-argument-ownership/spec.md:400`.
+
+### Coverage
+
+Count: 2. Worst issue: S-E-COV-1.
+
+- S-E-COV-1 (confidence 6, auto-fix): no row covers the discard route for a path that is not line-safe, so a removed line-safety branch stays green. Citation: `internal/worktree/list.go:277`.
+- S-E-COV-2 (confidence 6, auto-fix): no row covers the disclosure guard of `axi.Action.Command`, so a removed guard stays green. Citation: `internal/axi/action.go:139`.
+
+The definition census found one surviving shell-quote algorithm, the `sanitize.ShellQuote` owner.
+S-E-STD-1, S-E-COV-1, and S-E-COV-2 route to one ticket 07 repair session, because ticket 07 holds most of their paths. A widen adds `internal/axi/axitest/help.go` to ticket 07.
