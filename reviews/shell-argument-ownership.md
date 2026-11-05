@@ -1475,3 +1475,27 @@ The ticket 04 author reported one witness red apart from the plan probe. The fen
 | S16 (refused-path branch) | The refused-path fallback appends the path with no quotes. | `TestRecoveryRouteArgument/an_angle_bracket/discard` and its missing-tree row at `shell_arguments_test.go:89` |
 
 One divergence is flagged for the S-E review. The recovery line now takes its request word from the help-row renderer. A request that passes the line-safety check but holds a space therefore prints with quotes on the line, as its help row already does. No test or fixture uses such a request.
+
+## S-E ticket 07 author witness reds
+
+The ticket 07 author ran sixteen mutants. Each mutant went red and then passed after restoration. The fenced record holds the `omission-proof` and `preservation` excerpts. The other reds follow.
+
+| Row | Mutation | Red test |
+|---|---|---|
+| S05, S19-S33, S41 (exact bytes) | The renderer returns the former bare-token spelling. | 38 failures, the first `TestAnchorHelpArguments` |
+| S06 | The renderer quotes a future slot at both sites. | 7 failures |
+| S10 | The spoof check compares the rendered first word. | `TestRenderHelpRejectsQuotedCommandSpoof` |
+| S09 (shell argv) | The line filter removes tab, newline, and carriage return. | `TestKnownArgumentControlValuesRoundTripThroughTOONAndPOSIXShell/line_value` |
+| S07 | The renderer accepts an empty AXI argument. | `TestRenderHelpUsesHonestEmptyForUnsupportedDisclosureValue` |
+| S16, S27 | `line()` restores the word-join spelling. | 16 failures, the first `TestRunRefusesBeforeChild/missing_tree` |
+| S35 | The fallback path takes no quotes. | `TestRecoveryRouteArgument/an_angle_bracket/discard` |
+| S42 | `firstPage` bypasses the owner. | `TestReadPageArguments/first_page` |
+| S44 | The raw read advice bypasses the owner. | `TestRawReadAdvice` and `TestRawReadAdviceArguments` |
+| S39 | One fixture update is omitted from each of two baselines. | `TestSelectedWorktreesPreserveDefault/active` and `TestScanLoopDifferentialCommandFamilies/complete` |
+| S08, S11, S12 | The preservation mutants remove the executable-name check, quote the harness operand, stop deduplication, and accept every control rune. | `TestRenderHelpRejectsLossyReusableActions/prose_as_command`, `TestRenderHelpRendersReusableInvocationAndHarnessPhase`, `TestRenderHelpDeduplicatesExactTemplatesWithoutReordering`, and `TestKnownArgumentRefusesUnsupportedControls` |
+
+Three judgment calls are flagged for the S-E review:
+
+- The bare `--apply` negative searches stay, because that substring also matches the quoted flag.
+- The structure lane refused the first commit on two test-file budgets. The author compacted the guards witness and kept the reclaim apply constant with an open quote, so neither file grew.
+- Two local help-decode helpers exist, one in the consumers tests and one in the worktree tests. Their shared owner would be `axitest`, which is outside the ticket 07 fence.
