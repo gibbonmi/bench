@@ -35,7 +35,7 @@ var Checks = []Check{
 	{Name: "axi-query-registry", Implementation: "checkAXIQueryRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "skip-ownership", Implementation: "checkSkipOwnership", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 	{Name: "decision-map-integrity", Implementation: "ValidateDecisionMapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputDecisionDocuments},
-	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "guidance-prose-budgets", Implementation: "checkGuidanceProseBudgets", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchkitProfile},
 	{Name: "skill-description-budgets", Implementation: "checkSkillDescriptionBudgets", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchkitProfile},
 	{Name: "profile-lane-table", Implementation: "checkProfileLaneTable", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchkitProfile},

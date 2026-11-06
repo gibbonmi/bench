@@ -24,9 +24,12 @@ const (
 // source of root. A seam in a package that no row names is still derived, so a new
 // replacement cannot hide behind a remembered package list. A row whose package the
 // graded tree does not hold is not graded, as for named ports.
-func seamDiags(root string, rows []Row) []string {
+func seamDiags(root string, policy Policy) []string {
+	rows := policy.Rows
 	tree, diags := loadSourceTree(root)
 	census := deriveSeams(tree)
+	controls := census.deriveControls(policy.Families)
+	diags = append(diags, controls.diags...)
 	registered := map[string]Row{}
 	for _, row := range rows {
 		registered[rowKey(row)] = row
@@ -56,6 +59,7 @@ func seamDiags(root string, rows []Row) []string {
 				UnresolvedAliasMessage, setter, row.Canonical, canonical))
 		}
 	}
+	diags = append(diags, census.controlDiags(controls, registered)...)
 	for _, row := range rows {
 		if row.Kind == KindPort || tree.packages[row.Package] == nil {
 			continue
@@ -63,17 +67,60 @@ func seamDiags(root string, rows []Row) []string {
 		identity := row.Package + "." + row.Port
 		_, variable := census.variables[identity]
 		_, setter := census.setters[identity]
-		if !(row.Kind == KindVariable && variable) && !(row.Kind == KindSetter && setter) {
+		_, branch := controls.runtime[identity]
+		derived := map[Kind]bool{KindVariable: variable, KindSetter: setter, KindRuntime: branch, KindEnvironment: controls.hooks[row.Port]}
+		if !derived[row.Kind] {
 			diags = append(diags, orphanDiag(row))
 		}
 	}
 	return diags
 }
 
+// controlDiags grades the runtime-branch and environment-hook rows. A runtime consumer
+// reaches its branch through production calls. An environment consumer sets the hook
+// itself or through a helper of its own test package.
+func (c *seamCensus) controlDiags(controls *controlCensus, registered map[string]Row) []string {
+	var diags []string
+	for _, branch := range sortedKeys(controls.runtime) {
+		row, found := registered[string(KindRuntime)+" "+branch]
+		if !found {
+			diags = append(diags, UnregisteredRuntimeMessage+": "+branch+" branches on "+controls.runtime[branch]+
+				" — add a runtime row to injectedPortRegistry naming the protection's consumer tests, failure purpose, and isolation evidence")
+			continue
+		}
+		diags = append(diags, rowEvidence(row, branch, true, func(file, test string) (bool, bool) {
+			return c.reachesControl(file, test, true, func(facts *funcFacts) bool { return facts == c.bodies[branch] })
+		})...)
+	}
+	for _, hook := range sortedKeys(controls.hooks) {
+		readers := controls.readers[hook]
+		row, found := registered[string(KindEnvironment)+" "+hook]
+		if !found {
+			first := sortedKeys(readers)[0]
+			diags = append(diags, UnregisteredHookMessage+": "+hook+" is read by "+first+" at "+readers[first]+
+				" and set by test source — add an environment row to injectedPortRegistry naming a reader, consumer tests, failure purpose, and isolation evidence")
+			continue
+		}
+		_, owns := readers[row.Package+"."+row.Owner]
+		diags = append(diags, rowEvidence(row, hook, owns, func(file, test string) (bool, bool) {
+			return c.reachesControl(file, test, false, func(facts *funcFacts) bool { return controls.sets[facts][hook] })
+		})...)
+	}
+	return diags
+}
+
 // variableRowDiags grades the policy facts of one admitted variable seam.
 func (c *seamCensus) variableRowDiags(row Row, seam string) []string {
+	return rowEvidence(row, seam, c.readers[seam][row.Owner], func(file, test string) (bool, bool) {
+		return c.reaches(file, test, seam)
+	})
+}
+
+// rowEvidence grades the evidence facts that every variable, runtime, and environment
+// row carries: its owner, purpose, isolation, and consumers that reach the seam.
+func rowEvidence(row Row, seam string, owns bool, reach func(file, test string) (declared, reached bool)) []string {
 	var diags []string
-	if !c.readers[seam][row.Owner] {
+	if !owns {
 		diags = append(diags, fmt.Sprintf("%s: %s names owner %q, which is not a production function of its package that reads it", SeamOwnerMessage, seam, row.Owner))
 	}
 	if strings.TrimSpace(row.Purpose) == "" {
@@ -87,7 +134,7 @@ func (c *seamCensus) variableRowDiags(row Row, seam string) []string {
 	}
 	for _, consumer := range row.Consumers {
 		file, test, _ := strings.Cut(consumer, "::")
-		declared, reached := c.reaches(file, test, seam)
+		declared, reached := reach(file, test)
 		switch {
 		case !declared:
 			diags = append(diags, fmt.Sprintf("%s: %s advertises %s, which is not a top-level test of that file", SeamConsumerMessage, seam, consumer))
@@ -114,6 +161,9 @@ func duplicateRows(rows []Row) []string {
 }
 
 func rowKey(row Row) string {
+	if row.Kind == KindEnvironment {
+		return string(row.Kind) + " " + row.Port
+	}
 	return string(row.Kind) + " " + row.Package + "." + row.Port
 }
 

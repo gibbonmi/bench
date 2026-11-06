@@ -39,6 +39,11 @@ const (
 // the consumer tests ("path::TestName") that install a replacement, the failure purpose,
 // and the isolation evidence. A setter row carries only Canonical, the variable seams it
 // finally replaces, and borrows every other fact from their rows.
+//
+// A runtime row names its branch function as Port and carries the same evidence; its
+// consumers reach the branch through their production calls. An environment row names
+// the hook as Port, one reader body of Package as Owner, and consumers that set the hook.
+// Its source identity is the hook name alone.
 type Row struct {
 	Kind               Kind
 	Package, Port      string
@@ -54,17 +59,25 @@ type Row struct {
 type Kind string
 
 const (
-	KindPort     Kind = ""
-	KindVariable Kind = "variable"
-	KindSetter   Kind = "setter"
+	KindPort        Kind = ""
+	KindVariable    Kind = "variable"
+	KindSetter      Kind = "setter"
+	KindRuntime     Kind = "runtime"
+	KindEnvironment Kind = "environment"
 )
 
 // Policy is the advertisement half of the audit. Rows hold one disposition per derived
 // port. Required names the packages whose source the audit derives, each of which must
 // yield ports when the graded root holds it.
+//
+// Families supplies the members of a local name that source constants cannot name, keyed
+// "pkg.owner.name", such as a phase name that a release registry of the graded root
+// lists. A caller derives each family from graded-root data. A supplied empty family
+// declares no members, so its reader reads no hook; a missing key leaves the name unresolved.
 type Policy struct {
 	Rows     []Row
 	Required []string
+	Families map[string][]string
 }
 
 // Check grades policy against a fresh derivation over root and returns the sorted,
@@ -128,7 +141,7 @@ func Check(root string, policy Policy) []string {
 		}
 		diags = append(diags, orphanDiag(row))
 	}
-	diags = append(diags, seamDiags(root, policy.Rows)...)
+	diags = append(diags, seamDiags(root, policy)...)
 	slices.Sort(diags)
 	return slices.Compact(diags)
 }

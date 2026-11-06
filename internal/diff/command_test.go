@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -114,5 +115,37 @@ func TestDiffPackageDoesNotOwnPorcelainInvocationOrParsing(t *testing.T) {
 				t.Errorf("internal/diff production file %s owns forbidden porcelain knowledge %q", file, forbidden)
 			}
 		}
+	}
+}
+
+// TestSnapshotOverrideRestoresAfterFailure proves that the movement seam's cleanup runs
+// on the path of a fatal assertion. A helper child runs this test again: its subtest
+// installs a distinguishable replacement and fails fatally, and the child then reports
+// which collaborator answers. The parent requires the failed subtest and the prior one.
+func TestSnapshotOverrideRestoresAfterFailure(t *testing.T) {
+	if os.Getenv("BENCH_DIFF_RESTORE_HELPER") == "1" {
+		prior, replacement := 0, 0
+		t.Cleanup(SetSnapshotAfterReadForTest(func() { prior++ }))
+		t.Run("fatal path", func(t *testing.T) {
+			restore := SetSnapshotAfterReadForTest(func() { replacement++ })
+			t.Cleanup(restore)
+			if restore == nil {
+				t.Fatal("the setter returned no restoration")
+			}
+			snapshotAfterRead()
+			t.Fatal("the fatal path ends the subtest")
+		})
+		snapshotAfterRead()
+		fmt.Printf("observed prior=%d replacement=%d\n", prior, replacement)
+		return
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=^TestSnapshotOverrideRestoresAfterFailure$")
+	cmd.Env = append(os.Environ(), "BENCH_DIFF_RESTORE_HELPER=1")
+	out, err := cmd.CombinedOutput()
+	if err == nil || !strings.Contains(string(out), "--- FAIL: TestSnapshotOverrideRestoresAfterFailure/fatal_path") {
+		t.Fatalf("the child's fatal path did not fail (%v):\n%s", err, out)
+	}
+	if !strings.Contains(string(out), "observed prior=1 replacement=1\n") {
+		t.Fatalf("after the fatal path the child observed, want prior=1 replacement=1:\n%s", out)
 	}
 }

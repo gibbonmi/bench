@@ -17,6 +17,37 @@ type funcFacts struct {
 	// forward is the callee that the body forwards to, when the whole body is a single
 	// call or a single return of a single call.
 	forward string
+	// ctx is the resolution context of the body. envReads are the name operands of its
+	// environment reads, envSets the name operands of its Setenv calls, and entries its
+	// outermost string expressions, any of which can be a "NAME=value" environment entry.
+	// sites are its calls with their arguments, so a parameter resolves at its callers.
+	ctx                        *funcContext
+	envReads, envSets, entries []operand
+	sites                      []callSite
+}
+
+// funcContext is where a body's names resolve: its file, its package, its owner name, and
+// its parameters in order. A package-level initializer has no owner and no parameters.
+type funcContext struct {
+	file   *sourceFile
+	pkg    string
+	owner  string
+	top    *bodyScope
+	params []string
+}
+
+// operand is one expression with the lexical scope it was written in.
+type operand struct {
+	expr  ast.Expr
+	scope *bodyScope
+	site  string
+}
+
+// callSite is one call of a resolved callee with its arguments.
+type callSite struct {
+	callee string
+	args   []ast.Expr
+	scope  *bodyScope
 }
 
 // bodyScope is one lexical scope of a function body.
@@ -49,12 +80,18 @@ type walker struct {
 // enclosing scope declares it. A selector on an import binding resolves to that package.
 func factsOf(fset *token.FileSet, file *sourceFile, pkg string, fn *ast.FuncDecl) *funcFacts {
 	w := newWalker(fset, file, pkg)
+	w.facts.ctx.owner = ownerName(fn)
 	if fn.Body == nil {
 		return w.facts
 	}
 	declareFields(w.top, fn.Recv)
 	declareFields(w.top, fn.Type.Params)
 	declareFields(w.top, fn.Type.Results)
+	for _, field := range fn.Type.Params.List {
+		for _, name := range field.Names {
+			w.facts.ctx.params = append(w.facts.ctx.params, name.Name)
+		}
+	}
 	if fun := forwardedCall(fn.Body); fun != nil {
 		w.facts.forward = w.resolve(fun)
 	}
@@ -74,18 +111,23 @@ func newWalker(fset *token.FileSet, file *sourceFile, pkg string) *walker {
 	top := &bodyScope{names: map[string]bool{}}
 	return &walker{fset: fset, file: file, pkg: pkg, top: top, scope: top, facts: &funcFacts{
 		assigns: map[string]string{}, injects: map[string]bool{}, reads: map[string]bool{}, calls: map[string]bool{},
+		ctx: &funcContext{file: file, pkg: pkg, top: top},
 	}}
 }
 
-func (w *walker) resolve(expr ast.Expr) string {
+func (w *walker) resolve(expr ast.Expr) string { return resolveName(w.file, w.pkg, w.scope, expr) }
+
+// resolveName resolves a package-level name or an import-qualified selector to its
+// identity, written "pkg.name". A name that a scope declares is local and resolves to "".
+func resolveName(file *sourceFile, pkg string, scope *bodyScope, expr ast.Expr) string {
 	switch typed := expr.(type) {
 	case *ast.Ident:
-		if typed.Name != "_" && w.scope.owner(typed.Name) == nil {
-			return w.pkg + "." + typed.Name
+		if typed.Name != "_" && scope.owner(typed.Name) == nil {
+			return pkg + "." + typed.Name
 		}
 	case *ast.SelectorExpr:
-		if binding, ok := typed.X.(*ast.Ident); ok && w.scope.owner(binding.Name) == nil {
-			if dir, imported := w.file.imports[binding.Name]; imported {
+		if binding, ok := typed.X.(*ast.Ident); ok && scope.owner(binding.Name) == nil {
+			if dir, imported := file.imports[binding.Name]; imported {
 				return dir + "." + typed.Sel.Name
 			}
 		}
@@ -141,8 +183,10 @@ func (w *walker) walk(root ast.Node) {
 		case *ast.DeclStmt:
 			declareGen(w.scope, typed.Decl)
 		case *ast.CallExpr:
-			if callee := w.resolve(typed.Fun); callee != "" {
-				w.facts.calls[callee] = true
+			w.call(typed)
+		case *ast.BasicLit, *ast.BinaryExpr:
+			if !concatOperand(stack, node) {
+				w.facts.entries = append(w.facts.entries, w.operand(node.(ast.Expr)))
 			}
 		case *ast.SelectorExpr:
 			selectors[typed.Sel] = true
@@ -156,6 +200,39 @@ func (w *walker) walk(root ast.Node) {
 		}
 		return true
 	})
+}
+
+// call records one call: its callee, its arguments for caller-side resolution, an
+// environment read, or a Setenv of any receiver.
+func (w *walker) call(call *ast.CallExpr) {
+	callee := w.resolve(call.Fun)
+	if callee != "" {
+		w.facts.calls[callee] = true
+		w.facts.sites = append(w.facts.sites, callSite{callee: callee, args: call.Args, scope: w.scope})
+	}
+	if len(call.Args) == 0 {
+		return
+	}
+	if callee == "os.Getenv" || callee == "os.LookupEnv" {
+		w.facts.envReads = append(w.facts.envReads, w.operand(call.Args[0]))
+	}
+	if sel, ok := call.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "Setenv" {
+		w.facts.envSets = append(w.facts.envSets, w.operand(call.Args[0]))
+	}
+}
+
+func (w *walker) operand(expr ast.Expr) operand {
+	return operand{expr: expr, scope: w.scope, site: fmt.Sprintf("%s:%d", w.file.rel, w.fset.Position(expr.Pos()).Line)}
+}
+
+// concatOperand reports whether node is an operand of an enclosing string concatenation,
+// so only the outermost expression of a "NAME=" + value entry is recorded.
+func concatOperand(stack []ast.Node, node ast.Node) bool {
+	if len(stack) < 2 {
+		return false
+	}
+	parent, ok := stack[len(stack)-2].(*ast.BinaryExpr)
+	return ok && parent.Op == token.ADD && (parent.X == node || parent.Y == node)
 }
 
 // assign records every target of one assignment, so the second name of a combined

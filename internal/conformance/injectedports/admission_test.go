@@ -119,4 +119,41 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			requireDiagnosticHeads(t, Check(writeRoot(t, seamTree), Policy{Rows: test.rows}), test.heads)
 		})
 	}
+
+	// The control fixture has one runtime branch that New reaches and one hook that a test
+	// sets. Its store keeps an instance-local collaborator that no row needs.
+	controlTree := map[string]string{
+		"internal/sample/sample.go":      "package sample\n\nimport (\n\t\"os\"\n\t\"testing\"\n)\n\ntype Store struct{ Rename func(string, string) error }\n\nfunc home() bool { return !testing.Testing() || os.Getenv(\"BENCH_LIMIT\") != \"\" }\n\nfunc New() bool { return home() }\n",
+		"internal/sample/sample_test.go": "package sample\n\nimport \"testing\"\n\nfunc TestNew(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\"); _ = New() }\n\nfunc TestStore(t *testing.T) { s := Store{}; s.Rename = func(string, string) error { return nil } }\n\nfunc TestUnrelated(t *testing.T) {}\n",
+	}
+	consumer := "internal/sample/sample_test.go::TestNew"
+	branch := Row{Kind: KindRuntime, Package: "internal/sample", Port: "home", Owner: "home", Purpose: "a test may not write the user's home", Isolation: "runtime state only", Consumers: []string{consumer}}
+	hookRow := func(edit func(*Row)) Row {
+		row := Row{Kind: KindEnvironment, Package: "internal/sample", Port: "BENCH_LIMIT", Owner: "home", Purpose: "a limit drives the home choice", Isolation: "t.Setenv restores it at cleanup", Consumers: []string{consumer}}
+		if edit != nil {
+			edit(&row)
+		}
+		return row
+	}
+	for _, test := range []struct {
+		row   string
+		rows  []Row
+		heads []string
+	}{
+		{row: "PS26 honest rows and an instance-local collaborator", rows: []Row{branch, hookRow(nil)}},
+		{row: "PS63 an environment exception without consumer evidence", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers, r.Exempt = nil, "no in-tree caller sets it" })},
+			heads: []string{SeamConsumerMessage + ": BENCH_LIMIT names no consumer test"}},
+		{row: "an environment consumer that never sets the hook", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestUnrelated"} })},
+			heads: []string{SeamUnreachedMessage + ": BENCH_LIMIT "}},
+		{row: "an environment owner that never reads the hook", rows: []Row{branch, hookRow(func(r *Row) { r.Owner = "New" })},
+			heads: []string{SeamOwnerMessage + ": BENCH_LIMIT "}},
+		{row: "a runtime consumer that never reaches the branch", rows: []Row{{Kind: KindRuntime, Package: "internal/sample", Port: "home", Purpose: "p", Isolation: "i", Consumers: []string{"internal/sample/sample_test.go::TestUnrelated"}}, hookRow(nil)},
+			heads: []string{SeamUnreachedMessage + ": internal/sample.home "}},
+		{row: "stale environment row in a present package", rows: []Row{branch, hookRow(nil), hookRow(func(r *Row) { r.Port = "BENCH_GONE" })},
+			heads: []string{OrphanPortRowMessage + ": internal/sample.BENCH_GONE "}},
+	} {
+		t.Run(test.row, func(t *testing.T) {
+			requireDiagnosticHeads(t, Check(writeRoot(t, controlTree), Policy{Rows: test.rows}), test.heads)
+		})
+	}
 }

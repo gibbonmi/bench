@@ -1,11 +1,18 @@
 package conformance
 
 import (
+	"bytes"
+	"errors"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/injectedports"
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // The injected-interface composition audit found the same gap at five seams at once. A
@@ -26,7 +33,102 @@ import (
 
 // checkInjectedPortRegistry grades the registry against a fresh derivation over root.
 func checkInjectedPortRegistry(root string) []string {
-	return injectedports.Check(root, injectedports.Policy{Rows: injectedPortRegistry, Required: auditedPortPackages})
+	return injectedports.Check(root, injectedports.Policy{Rows: injectedPortRegistry, Required: auditedPortPackages, Families: gradedRootFamilies(root)})
+}
+
+// gradedRootFamilies binds graded-root data to the local names that construct a hook.
+// The release phase names of root's own preflight registry bind the production reader's
+// phase parameter and the native probe's override loop. The environment names that
+// root's gate input manifest declares bind the gate's declared-environment reader. An
+// unusable source supplies no family, so its reader stays unresolved instead of grading
+// silence; a valid manifest that declares no names resolves to no hooks.
+func gradedRootFamilies(root string) map[string][]string {
+	families := map[string][]string{}
+	if registries := readReleaseRegistries(root); registries.preflightUsable && len(registries.preflight.Verify) > 0 {
+		phases := registries.preflight.Verify
+		families["internal/releasepreflight.runner.runExternal.name"] = phases
+		families["internal/conformance.preflightPhaseOverrides.phase"] = phases
+	}
+	if names, declared := gate.DeclaredEnvironment(root); declared {
+		families["internal/gate.suppliedEnvironment.name"] = append([]string{}, names...)
+	}
+	return families
+}
+
+// preflightPhaseOverrides returns one phase override entry per phase, each naming path.
+func preflightPhaseOverrides(phases []string, path string) []string {
+	var env []string
+	for _, phase := range phases {
+		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+path)
+	}
+	return env
+}
+
+// runAtEvidenceReadyPoint runs a preflight that holds at the release-evidence readiness
+// point. The observer sees the ready file that the held run writes, then removes it to
+// release the run. A run that exits without writing it never reached that point.
+func runAtEvidenceReadyPoint(cmd *exec.Cmd, ready string) ([]byte, error) {
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+	for {
+		select {
+		case err := <-exited:
+			return output.Bytes(), errors.Join(err, errors.New("the run never reached the evidence readiness point"))
+		default:
+		}
+		if _, err := os.Stat(ready); err == nil {
+			break
+		}
+		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
+	}
+	if err := os.Remove(ready); err != nil {
+		return nil, errors.Join(err, cmd.Process.Kill(), <-exited)
+	}
+	return output.Bytes(), <-exited
+}
+
+// TestInjectedPortPhaseFamilyReadsTheGradedRegistry proves that the wrapper's phase family
+// comes from the graded root's own release registry. Each case writes that registry, a
+// phase reader, and a test that sets two phase hooks. The registry alone decides which of
+// them are hooks, and an absent registry leaves the reader unresolved.
+func TestInjectedPortPhaseFamilyReadsTheGradedRegistry(t *testing.T) {
+	const hook = "environment hook has no registry row: BENCH_PREFLIGHT_"
+	for _, test := range []struct {
+		name, registry string
+		heads          []string
+	}{
+		{"the registry's vulnerability phase", `["gate", "vulnerability"]`, []string{hook + "VULNERABILITY "}},
+		{"a newly registered phase", `["gate", "vulnerability", "newphase"]`, []string{hook + "NEWPHASE ", hook + "VULNERABILITY "}},
+		{"an absent registry", "", []string{injectedports.UnresolvedHookMessage + ": internal/releasepreflight.runner.runExternal "}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			files := map[string]string{
+				"internal/releasepreflight/command.go":      "package releasepreflight\n\nimport (\n\t\"os\"\n\t\"strings\"\n)\n\ntype runner struct{}\n\nfunc (r *runner) runExternal(name string) string { return os.Getenv(\"BENCH_PREFLIGHT_\" + strings.ToUpper(name)) }\n",
+				"internal/releasepreflight/command_test.go": "package releasepreflight\n\nimport \"testing\"\n\nfunc TestPhases(t *testing.T) {\n\tt.Setenv(\"BENCH_PREFLIGHT_VULNERABILITY\", \"x\")\n\tt.Setenv(\"BENCH_PREFLIGHT_NEWPHASE\", \"x\")\n}\n",
+			}
+			if test.registry != "" {
+				files["internal/releaseevidence/registry.json"] = `{"verify": ` + test.registry + `, "publish_before": [], "publish_only": []}`
+			}
+			for rel, body := range files {
+				writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(rel)), body)
+			}
+			diags := injectedports.Check(root, injectedports.Policy{Families: gradedRootFamilies(root)})
+			if len(diags) != len(test.heads) {
+				t.Fatalf("diagnostics %q, want heads %q", diags, test.heads)
+			}
+			for i, head := range test.heads {
+				if !strings.HasPrefix(diags[i], head) {
+					t.Fatalf("diagnostic %d = %q, want head %q", i, diags[i], head)
+				}
+			}
+		})
+	}
 }
 
 // TestInjectedPortRegistryCheckBites is the recorded bite proof for
@@ -137,7 +239,8 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 
 	t.Run("a retired live-tree audit fires", func(t *testing.T) {
 		packages := append(append([]string(nil), auditedPortPackages...), "internal/canary")
-		diags := check(NewHarness(t).KitRoot, packages, injectedPortRegistry)
+		kit := NewHarness(t).KitRoot
+		diags := injectedports.Check(kit, injectedports.Policy{Rows: injectedPortRegistry, Required: packages, Families: gradedRootFamilies(kit)})
 		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.ZeroPortInventoryMessage) || !strings.Contains(diags[0], "internal/canary") {
 			t.Fatalf("a reintroduced canary audit: want its zero-port diagnostic, got %v", diags)
 		}

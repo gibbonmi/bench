@@ -2,8 +2,14 @@ package assessment
 
 import (
 	"errors"
+	"fmt"
+	"path/filepath"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/durablefile"
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
 	"github.com/gibbonmi/bench/internal/poolkey"
 )
@@ -56,6 +62,53 @@ func TestAssessmentReplacement(t *testing.T) {
   "quality": null
 }
 `)
+}
+
+// TestInstanceCollaboratorsStayLocal proves that a store's file operations belong to that
+// instance. Two stores record at the same time, each held at a shared barrier until both
+// replacements are in flight. Each must report its own injected failure and leave its own
+// trace, so no package state carries one store's collaborator into the other.
+func TestInstanceCollaboratorsStayLocal(t *testing.T) {
+	t.Parallel()
+	var entered sync.WaitGroup
+	entered.Add(2)
+	both := make(chan struct{})
+	go func() { entered.Wait(); close(both) }()
+	type instance struct {
+		store Store
+		rec   *durablefiletest.Recorder
+		cause error
+		err   error
+	}
+	instances := make([]*instance, 2)
+	for i := range instances {
+		cause := fmt.Errorf("injected directory-sync failure of store %d", i)
+		rec := &durablefiletest.Recorder{Fail: map[string]error{"directory-sync": cause}}
+		ops := recordedOps(rec)
+		createTemp := ops.CreateTemp
+		ops.CreateTemp = func(dir, pattern string) (durablefile.File, error) {
+			entered.Done()
+			select {
+			case <-both:
+			case <-time.After(bounds.TestDeadline(0)):
+				return nil, errors.New("the other store never reached its replacement")
+			}
+			return createTemp(dir, pattern)
+		}
+		instances[i] = &instance{store: Store{Home: t.TempDir(), Root: t.TempDir(), Files: ops}, rec: rec, cause: cause}
+	}
+	var done sync.WaitGroup
+	for _, in := range instances {
+		done.Add(1)
+		go func() { defer done.Done(); in.err = in.store.Record(fixtureRun(in.store.Root)) }()
+	}
+	done.Wait()
+	for i, in := range instances {
+		durablefiletest.RequireFailure(t, in.err, "directory-sync", true, in.cause)
+		if len(in.rec.Temps) != 1 || filepath.Dir(in.rec.Temps[0]) != in.store.Dir() {
+			t.Fatalf("store %d recorded temporaries %q, want one in its own directory %s", i, in.rec.Temps, in.store.Dir())
+		}
+	}
 }
 
 // D30: an invalid run and a run of a foreign repository refuse before the replacement

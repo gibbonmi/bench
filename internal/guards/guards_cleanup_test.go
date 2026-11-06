@@ -2,6 +2,7 @@ package guards
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -60,5 +61,52 @@ func TestScanWaitsForCancelledWorkerCleanup(t *testing.T) {
 	<-cleaned
 	if got.Status != "incomplete" || got.Inspected != "0" || got.Omitted != "1" || got.Reason != "timeout" {
 		t.Fatalf("Scan = %#v", got)
+	}
+}
+
+// TestScanOverrideJoinsBeforeRestore proves the join-before-restore order of a replaced
+// scan collaborator. A scan worker is held behind a barrier while the subtest leaves. The
+// subtest's join releases and waits for that worker before its earlier cleanup restores
+// the prior collaborators, so the worker still observes the replacement. Without the join,
+// the restoration runs first and the released worker observes the prior value.
+func TestScanOverrideJoinsBeforeRestore(t *testing.T) {
+	marker := func(name string) func(context.Context, string) ([]candidate, error) {
+		return func(context.Context, string) ([]candidate, error) { return []candidate{{fallback: name}}, nil }
+	}
+	installed := func() string {
+		candidates, _ := enumerateGuards(context.Background(), "")
+		return candidates[0].fallback
+	}
+	oldEnumerate, oldInspect := enumerateGuards, inspectGuard
+	t.Cleanup(func() { enumerateGuards, inspectGuard = oldEnumerate, oldInspect })
+	enumerateGuards = marker("prior")
+	started, release, finished := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	var once sync.Once
+	releaseWorker := func() { once.Do(func() { close(release) }) }
+	var observed string
+	t.Run("held worker", func(t *testing.T) {
+		priorEnumerate, priorInspect := enumerateGuards, inspectGuard
+		t.Cleanup(func() { enumerateGuards, inspectGuard = priorEnumerate, priorInspect })
+		enumerateGuards = marker("replacement")
+		inspectGuard = func(context.Context, string, candidate) [][]string {
+			close(started)
+			<-release
+			observed = installed()
+			return nil
+		}
+		go func() { defer close(finished); Scan(context.Background(), "/repo") }()
+		t.Cleanup(func() { releaseWorker(); <-finished })
+		<-started
+		if got := installed(); got != "replacement" {
+			t.Fatalf("while the worker is live the installed collaborator is %q, want the replacement", got)
+		}
+	})
+	releaseWorker()
+	<-finished
+	if observed != "replacement" {
+		t.Fatalf("the held worker observed %q after its release, want the replacement it ran with", observed)
+	}
+	if got := installed(); got != "prior" {
+		t.Fatalf("after the subtest cleanup the installed collaborator is %q, want the prior value", got)
 	}
 }

@@ -123,18 +123,23 @@ func modulePath(root string) string {
 }
 
 // moduleImports maps each local binding of a module-internal import to the imported
-// package's directory relative to the root. A blank or dot import binds no name.
+// package's directory relative to the root, and each standard-library binding to its
+// import path. An alias therefore resolves like the default name, so testing.Testing or
+// os.Getenv is found under any spelling. A blank or dot import binds no name.
 func moduleImports(file *ast.File, module string) map[string]string {
 	imports := map[string]string{}
-	if module == "" {
-		return imports
-	}
 	for _, spec := range file.Imports {
 		path, err := strconv.Unquote(spec.Path.Value)
-		if err != nil || !strings.HasPrefix(path, module+"/") {
+		if err != nil {
 			continue
 		}
-		dir := strings.TrimPrefix(path, module+"/")
+		dir := path
+		switch {
+		case module != "" && strings.HasPrefix(path, module+"/"):
+			dir = strings.TrimPrefix(path, module+"/")
+		case strings.Contains(strings.Split(path, "/")[0], "."):
+			continue
+		}
 		name := dir[strings.LastIndex(dir, "/")+1:]
 		if spec.Name != nil {
 			name = spec.Name.Name

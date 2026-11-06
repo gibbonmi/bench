@@ -1,6 +1,7 @@
 package injectedports
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -148,6 +149,65 @@ func TestSeamDerivationForms(t *testing.T) {
 	} {
 		t.Run(test.row, func(t *testing.T) {
 			requireDiagnosticHeads(t, Check(writeRoot(t, test.files), Policy{}), test.heads)
+		})
+	}
+
+	// The runtime and environment forms. A family stands in for a graded-root registry.
+	const (
+		runtime  = UnregisteredRuntimeMessage + ": internal/sample.home branches on "
+		hook     = UnregisteredHookMessage + ": "
+		phase    = "package sample\n\nimport (\n\t\"os\"\n\t\"strings\"\n)\n\nfunc run(name string) string { return os.Getenv(\"BENCH_PREFLIGHT_\" + strings.ToUpper(name)) }\n"
+		readPath = " is read by internal/sample.run at internal/sample/sample.go:8 and set by test source"
+		setGate  = "package sample\n\nimport \"testing\"\n\nfunc TestRun(t *testing.T) { t.Setenv(\"BENCH_PREFLIGHT_GATE\", \"x\") }\n"
+		declared = "package sample\n\nimport \"os\"\n\nfunc supplied(names []string) {\n\tfor _, name := range names {\n\t\t_, _ = os.LookupEnv(name)\n\t}\n}\n"
+		entry    = "package sample\n\nimport \"testing\"\n\nconst prefix = \"BENCH_PREFLIGHT_\"\n\nfunc TestRun(t *testing.T) { _ = []string{prefix + \"%s=\" + t.TempDir()} }\n"
+	)
+	family := func(phases ...string) map[string][]string {
+		return map[string][]string{"internal/sample.run.name": phases}
+	}
+	for _, test := range []struct {
+		row      string
+		files    map[string]string
+		families map[string][]string
+		heads    []string
+	}{
+		{"PS09 aliased testing.Testing branch", map[string]string{
+			prod: "package sample\n\nimport tt \"testing\"\n\nfunc home() string {\n\tif tt.Testing() {\n\t\treturn \"test\"\n\t}\n\treturn \"user\"\n}\n",
+		}, nil, []string{runtime + "testing.Testing"}},
+		{"PS56 forwarding test-runtime predicate", map[string]string{
+			prod: "package sample\n\nimport \"testing\"\n\nfunc underTest() bool { return testing.Testing() }\n\nfunc home() string {\n\tif underTest() {\n\t\treturn \"test\"\n\t}\n\treturn \"user\"\n}\n",
+		}, nil, []string{runtime + "internal/sample.underTest"}},
+		{"negative: a testing import with no runtime branch", map[string]string{
+			prod: "package sample\n\nimport \"testing\"\n\nfunc helper(t *testing.T) { t.Helper() }\n",
+		}, nil, nil},
+		{"PS10 constructed phase hook", map[string]string{prod: phase, inside: setGate}, family("gate", "vulnerability"),
+			[]string{hook + "BENCH_PREFLIGHT_GATE" + readPath}},
+		{"PS31 the family includes the vulnerability phase", map[string]string{prod: phase, inside: fmt.Sprintf(entry, "VULNERABILITY")}, family("gate", "vulnerability"),
+			[]string{hook + "BENCH_PREFLIGHT_VULNERABILITY" + readPath}},
+		{"PS32 a phase outside the registry is no hook", map[string]string{prod: phase, inside: fmt.Sprintf(entry, "PUBLISH")}, family("gate", "vulnerability"), nil},
+		{"PS32 a new phase registration changes the family", map[string]string{prod: phase, inside: fmt.Sprintf(entry, "PUBLISH")}, family("gate", "vulnerability", "publish"),
+			[]string{hook + "BENCH_PREFLIGHT_PUBLISH" + readPath}},
+		{"PS11 an unregistered family leaves the phase reader unresolved", map[string]string{prod: phase, inside: setGate}, nil,
+			[]string{UnresolvedHookMessage + ": internal/sample.run reads the environment at internal/sample/sample.go:8"}},
+		{"PS11 a reader that no caller names stays unresolved", map[string]string{
+			prod: "package sample\n\nimport \"os\"\n\nfunc read(key string) string { return os.Getenv(key) }\n",
+		}, nil, []string{UnresolvedHookMessage + ": internal/sample.read reads the environment at internal/sample/sample.go:5"}},
+		{"constant caller arguments resolve a reader parameter", map[string]string{
+			prod:   "package sample\n\nimport \"os\"\n\nfunc read(key string) string { return os.Getenv(key) }\n\nfunc Limit() string { return read(\"BENCH_LIMIT\") }\n",
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestLimit(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\") }\n",
+		}, nil, []string{hook + "BENCH_LIMIT is read by internal/sample.read at internal/sample/sample.go:5"}},
+		{"a declared empty family resolves to no hooks", map[string]string{prod: declared, inside: setGate},
+			map[string][]string{"internal/sample.supplied.name": {}}, nil},
+		{"PS11 an absent family leaves a declared-list reader unresolved", map[string]string{prod: declared, inside: setGate}, nil,
+			[]string{UnresolvedHookMessage + ": internal/sample.supplied reads the environment at internal/sample/sample.go:7"}},
+		{"negative: a test-support answer-path reader", map[string]string{
+			"go.mod":                  module,
+			"internal/probe/probe.go": "package probe\n\nimport \"os\"\n\nconst Env = \"BENCH_TEST_PROBE\"\n\nfunc Answer() string { return os.Getenv(Env) }\n",
+			inside:                    "package sample\n\nimport (\n\t\"testing\"\n\n\t\"example.com/fixture/internal/probe\"\n)\n\nfunc TestProbe(t *testing.T) { t.Setenv(probe.Env, \"x\"); _ = probe.Answer() }\n",
+		}, nil, nil},
+	} {
+		t.Run(test.row, func(t *testing.T) {
+			requireDiagnosticHeads(t, Check(writeRoot(t, test.files), Policy{Families: test.families}), test.heads)
 		})
 	}
 }

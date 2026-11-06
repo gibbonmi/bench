@@ -17,8 +17,8 @@ var auditedPortPackages = []string{
 }
 
 // injectedPortRegistry is the advertisement half: one row per port the derivation finds
-// in auditedPortPackages, then one row per variable seam and per setter that the census
-// finds anywhere in the production roots. Rows are grouped by kind and package and
+// in auditedPortPackages, then one row per variable seam, setter, test-runtime branch, and
+// environment hook that the census finds anywhere in the production roots. Rows are grouped by kind and package and
 // ordered as the derivation reports them. A diff against a re-derived inventory therefore
 // reads straight down.
 var injectedPortRegistry = append(append([]injectedports.Row{
@@ -51,7 +51,7 @@ var injectedPortRegistry = append(append([]injectedports.Row{
 		Package: "internal/subprocess/protection", Port: "Probe",
 		TestFile: "internal/subprocess/protection/observe_test.go", TestName: "TestObserveGroupPresent",
 	},
-}, variableSeams...), setterSeams...)
+}, variableSeams...), append(setterSeams, controlSeams...)...)
 
 // The isolation evidence that most variable seams share. A seam whose tests differ states
 // its own evidence.
@@ -67,6 +67,17 @@ func seamVariable(pkg, name, owner, purpose, isolation string, consumers ...stri
 	return injectedports.Row{
 		Kind: injectedports.KindVariable, Package: pkg, Port: name, Owner: owner,
 		Purpose: purpose, Isolation: isolation, Consumers: consumers,
+	}
+}
+
+// envIsolation is the isolation evidence that every environment hook shares.
+const envIsolation = "each consumer sets the hook through t.Setenv, which refuses a parallel test and restores the prior value at cleanup, or through one child process's environment entry, which ends with that child"
+
+// seamHook admits one environment hook, read by owner in pkg and set by its consumers.
+func seamHook(name, pkg, owner, purpose string, consumers ...string) injectedports.Row {
+	return injectedports.Row{
+		Kind: injectedports.KindEnvironment, Package: pkg, Port: name, Owner: owner,
+		Purpose: purpose, Isolation: envIsolation, Consumers: consumers,
 	}
 }
 
@@ -95,7 +106,8 @@ var variableSeams = []injectedports.Row{
 	seamVariable("internal/coverage", "packageLoadTimeout", "runGo", "a short package-load bound drives the citation timeout refusal", serialIsolation,
 		"internal/coverage/citation_execution_test.go::TestCitationPackageScopeTimeout"),
 	seamVariable("internal/diff", "snapshotAfterRead", "MovementChecked", "a deterministic tree movement between the two identity captures drives the retry and the drift refusal", serialIsolation,
-		"internal/diff/command_test.go::TestCommandRetriesThenRefusesSnapshotDrift", "internal/preflight/charge_test.go::TestChargeSnapshotMovement"),
+		"internal/diff/command_test.go::TestCommandRetriesThenRefusesSnapshotDrift", "internal/preflight/charge_test.go::TestChargeSnapshotMovement",
+		"internal/diff/command_test.go::TestSnapshotOverrideRestoresAfterFailure"),
 	seamVariable("internal/freshness", "publicationFlock", "lockPublicationDirectory", "an observer around the real kernel lock reports contention to the parent publication test", childIsolation,
 		"internal/freshness/publication_lock_test.go::TestPublicationProcess"),
 	seamVariable("internal/freshness", "replacePublicationFile", "writeSeal", "a forced seal promotion failure shows that the publish restores the prior executable, seal, and manifest", serialIsolation+"; the interruption and contention children install it only in their own process",
@@ -122,11 +134,11 @@ var variableSeams = []injectedports.Row{
 		"internal/git/worktree_admin_enum_test.go::TestWorktreesBoundsEachChildAndPreservesStdout", "internal/git/admin_readers_test.go::TestReadersTimeOutUnderTheWorktreeListBound",
 		"internal/status/status_render_test.go::TestAppendWorktreeRendersBoundExpiryAsTypedFailure", "internal/worktree/list_actions_test.go::TestListCommandRendersBoundExpiryAsTypedFailure"),
 	seamVariable("internal/guards", "enumerateGuards", "Scan", "a held or failing enumeration drives the incomplete scan counts and its cancellation", joinIsolation,
-		"internal/guards/guards_cleanup_test.go::TestScanWaitsForCancelledWorkerCleanup"),
+		"internal/guards/guards_cleanup_test.go::TestScanWaitsForCancelledWorkerCleanup", "internal/guards/guards_cleanup_test.go::TestScanOverrideJoinsBeforeRestore"),
 	seamVariable("internal/guards", "guardScanTimeout", "Command", "a short scan bound drives the checked-in timeout responses", serialIsolation,
 		"internal/guards/guards_test.go::TestCommandPreservesCheckedInEnumerationTimeoutPrimaryResponse"),
 	seamVariable("internal/guards", "inspectGuard", "Scan", "a held inspection shows that a cancelled scan waits for its worker cleanup", joinIsolation,
-		"internal/guards/guards_cleanup_test.go::TestScanWaitsForCancelledWorkerCleanup"),
+		"internal/guards/guards_cleanup_test.go::TestScanWaitsForCancelledWorkerCleanup", "internal/guards/guards_cleanup_test.go::TestScanOverrideJoinsBeforeRestore"),
 	seamVariable("internal/handoffdoc", "lockDeadline", "acquire", "a short lock window drives the refusal of a lock that another writer holds", serialIsolation,
 		"internal/handoffdoc/store_test.go::TestUpdateRefusesALockAnotherWriterHolds"),
 	seamVariable("internal/harnesstranscript", "maxRecordLine", "readRecordLine", "a small line bound drives the oversized-line skip", serialIsolation,
@@ -200,4 +212,115 @@ var setterSeams = []injectedports.Row{
 	seamSetter("internal/releasepreflight", "setExchangeForTesting", "internal/releaseevidence.exchangeEvidenceDirs"),
 	seamSetter("internal/releasepreflight", "setRequirementsForTesting", "internal/releaseevidence.requirements"),
 	seamSetter("internal/sessioninspect", "setWindowsForTest", "internal/sessioninspect.discoveryTimeout", "internal/sessioninspect.providerTimeout"),
+}
+
+// The release phase hooks share their reader and their native consumer.
+const (
+	phaseReader = "runner.runExternal"
+	rootProbe   = "internal/conformance/gate_entry_test.go::TestRootConformance"
+	doctorTools = "internal/adopt/compatibility_test.go::TestUpgradeHelpPrintsTheGrammar"
+	gateStream  = "internal/gate/run_stream_test.go::TestGateRunInheritsTheRecordWhenTheParentRetainedNoStream"
+)
+
+// controlSeams admits the test-runtime branches and then the environment hooks, in name order.
+var controlSeams = []injectedports.Row{
+	{
+		Kind: injectedports.KindRuntime, Package: "internal/otelrecord", Port: "recordHome", Owner: "recordHome",
+		Purpose:   "a test binary may not write a telemetry record below the user's fallback Bench home, while an isolated explicit home still records",
+		Isolation: "the branch reads only the test binary's own runtime state; each consumer names its home through t.Setenv, which restores it at cleanup",
+		Consumers: []string{"internal/otelrecord/processor_test.go::TestNewProviderRefusesTheFallbackHomeUnderTest", "internal/otelrecord/processor_test.go::TestNewProviderRefusesAnExplicitBenchHomeEqualToTheFallback", "internal/otelrecord/processor_test.go::TestNewProviderRecordsAnExplicitBenchHomeElsewhere"},
+	},
+	seamHook("ANTHROPIC_API_KEY", "internal/models", "inventory", "a present or absent provider key drives the API row and the missing-key report",
+		"internal/models/models_test.go::TestCommandEmitsCodexOpenAIAndAnthropicRows"),
+	seamHook("ASDF_DATA_DIR", "internal/adopt", "currentDoctorEnv", "an emptied tool home keeps the doctor rows off the developer's own toolchain", doctorTools),
+	seamHook("BENCH_AGENT", "internal/shift", "loop", "a named agent adapter drives the shift loop and its record attribute",
+		"internal/shift/pass_test.go::TestACommittedPassCarriesItsCommit"),
+	seamHook("BENCH_COMMAND_OBSERVE", "cmd/bench", "main", "the observation switch makes the entry print the command it routes to",
+		"internal/conformance/entry_point_parity_test.go::TestEntryPointParityAcceptsTheEnvPrefixedPreflight"),
+	seamHook("BENCH_CONFORMANCE_ROOT", "internal/gate", "createTestLog", "a graded root drives the conformance run and its test-log placement",
+		"internal/conformance/conformance_env_test.go::TestConformanceSubprocessEnvStripsConformanceControlVars"),
+	seamHook("BENCH_CONFORMANCE_TIER", "internal/gate", "coreTestStep", "a selected tier drives which conformance checks a core test step runs",
+		"internal/conformance/conformance_env_test.go::TestConformanceSubprocessEnvStripsConformanceControlVars"),
+	seamHook("BENCH_GATE", "internal/gate", "buildSubjectInMode", "an absent or named gate script drives the gate subject and its exit-three refusal",
+		"internal/gate/run_outcomes_test.go::TestGateRunWithoutGateExitsThree"),
+	seamHook("BENCH_GATE_BACKGROUND", "internal/gate", "BackgroundCommand", "the resolved background marker drives the background grade's re-entry",
+		"internal/gate/background_grade_test.go::TestBackgroundGradeRunsAsTheTargetExecutable"),
+	seamHook("BENCH_GATE_BASELINE", "internal/gate", "phasePolicyRoot", "a baseline policy root drives the phase policy that a package-scope run reads",
+		"internal/coverage/citation_execution_test.go::TestCitationPackageScope"),
+	seamHook("BENCH_GATE_DELTA", "internal/gate", "deltaScheduled", "a delta schedule drives the checkpoint's delta package set",
+		"internal/gate/delta_checkpoint_test.go::TestDeltaCheckpointRunsTheDeltaSet"),
+	seamHook("BENCH_GATE_LOG_PATH", "internal/gate", "inheritGateRunLog", "an inherited run-log path drives the child's record inheritance", gateStream),
+	seamHook("BENCH_GATE_LOG_ROOT", "internal/gate", "inheritGateRunLog", "an inherited run-log root drives the child's record inheritance", gateStream),
+	seamHook("BENCH_GATE_LOG_RUN", "internal/gate", "inheritGateRunLog", "an inherited run identity drives the child's record inheritance", gateStream),
+	seamHook("BENCH_GATE_READER", "internal/gate", "readerScheduled", "a reader schedule drives the reader set and its malformed-schedule refusal",
+		"internal/gate/reader_set_test.go::TestReaderScheduleRefusesAMalformedSchedule"),
+	seamHook("BENCH_GATE_STREAM_PATH", "internal/gate", "inheritGateStreamFile", "an inherited stream path drives whether the child reuses the parent stream", gateStream),
+	seamHook("BENCH_GATE_TESTLOG", "internal/gate", "gateGoExec", "a test-log directory drives one log per tested package",
+		"internal/gate/testlog_exec_test.go::TestWholeTestPhaseWritesOneLogPerPackage"),
+	seamHook("BENCH_GATE_WIDTH", "internal/gate", "widthFlags", "a width input drives the test argv without changing the grade key",
+		"internal/gate/width_test.go::TestWidthInputLeavesTheGradeKey"),
+	seamHook("BENCH_HOME", "internal/benchhome", "Dir", "a private Bench home isolates every record write and drives the home resolution",
+		"cmd/bench/otel_hook_seams_test.go::TestAHandedOffResolutionRecordsItsLine"),
+	seamHook("BENCH_KIT", "internal/gate", "KitValue", "a named kit drives the gate checkpoint route",
+		"cmd/bench/gate_route_test.go::TestGateCheckpointRoute"),
+	seamHook("BENCH_LINK_FAULT", "internal/adopt", "promoteWithLease", "an abrupt exit at a chosen promotion change, which a real filesystem cannot produce on demand, drives the interrupted-transaction recovery",
+		"internal/systemtest/compatibility_test.go::TestCompatibilityInterruptedRepair", "internal/systemtest/lifecycle_test.go::TestLifecycleUnlinkRemovalInterruption"),
+	seamHook("BENCH_MAX_DIR_FILES", "internal/structure", "envInt", "a directory file cap drives the structure census", "internal/structure/structure_test.go::TestSpaceDirPreserved"),
+	seamHook("BENCH_MAX_ITERS", "internal/shift", "parseBoundedInt", "an iteration bound drives the shift loop's pass count",
+		"internal/shift/pass_test.go::TestACommittedPassCarriesItsCommit"),
+	seamHook("BENCH_MAX_LINES", "internal/structure", "envInt", "a line cap drives the structure growth refusal", "internal/structure/growth_test.go::TestGrowthAcceptUnreadableIsLoud"),
+	seamHook("BENCH_MAX_WALL", "internal/shift", "parseWallDuration", "a wall bound drives the shift checkpoint teardown",
+		"internal/shift/lifetime_test.go::TestCheckpointTeardownFaultKeepsResponse"),
+	seamHook("BENCH_MODEL", "cmd/bench", "resolveModel", "a named tier drives the model resolution and its record",
+		"cmd/bench/otel_hook_seams_test.go::TestAResolutionRecordsNoOperatorText"),
+	seamHook("BENCH_OFFLINE", "internal/bounds", "Offline", "the offline switch drives the wrapper's suppressed repair",
+		"cmd/bench/main_test.go::TestShellWrapperOfflineMissingBinarySuppressesRepairBeforeStartingNode"),
+	seamHook("BENCH_OTEL_ROOT", "internal/otelrecord", "AttachHandoff", "an ambient record root shows that the gate ignores a root it was not handed",
+		"internal/systemtest/otel_gate_test.go::TestOtelGateIgnoresAnAmbientRecordRoot"),
+	seamHook("BENCH_OTEL_TRACEPARENT", "internal/otelrecord", "AttachHandoff", "an ambient trace parent shows that the gate ignores a parent it was not handed",
+		"internal/systemtest/otel_gate_test.go::TestOtelGateIgnoresAnAmbientRecordRoot"),
+	seamHook("BENCH_PREFLIGHT_ARTIFACTS", "internal/releasepreflight", phaseReader, "a fixture phase runs the artifacts phase through the chosen binary", rootProbe),
+	seamHook("BENCH_PREFLIGHT_DATE", "internal/releasepreflight", "runner.runVulnerability", "a chosen day drives the vulnerability exception expiry at the entry",
+		"internal/releasepreflight/vulnerability_test.go::TestVulnerabilityEntryDateOverride"),
+	seamHook("BENCH_PREFLIGHT_EVIDENCE_READY_FILE", "internal/releaseevidence", "waitForEvidenceProbe", "a held readiness point lets the native probe observe evidence assembly before promotion", rootProbe),
+	seamHook("BENCH_PREFLIGHT_GATE", "internal/releasepreflight", phaseReader, "a fixture gate phase drives the protected-group refusal and the chosen-binary composition",
+		"internal/releasepreflight/lifetime_test.go::TestExternalIncomplete", rootProbe),
+	seamHook("BENCH_PREFLIGHT_RACE", "internal/releasepreflight", phaseReader, "a real child probe observes the race phase's isolated home",
+		"internal/releasepreflight/external_test.go::TestExternalPhaseGitStartsNoAutoMaintenance", rootProbe),
+	seamHook("BENCH_PREFLIGHT_REF", "internal/releasepreflight", "runner.checkIdentity", "an installed release ref drives the identity agreement and disagreement",
+		"internal/releasepreflight/identity_test.go::TestCheckIdentityRefusesADisagreement"),
+	seamHook("BENCH_PREFLIGHT_SMOKE", "internal/releasepreflight", phaseReader, "a fixture phase runs the smoke phase through the chosen binary", rootProbe),
+	seamHook("BENCH_PREFLIGHT_VET", "internal/releasepreflight", phaseReader, "a fixture phase runs the vet phase through the chosen binary", rootProbe),
+	seamHook("BENCH_PREFLIGHT_VULNERABILITY", "internal/releasepreflight", "runner.runVulnerability", "a fixture scanner drives the scanner cancellation, its certification, and the native composition",
+		"internal/releasepreflight/lifetime_test.go::TestScannerCancel", rootProbe),
+	seamHook("BENCH_PROCESS_RESOURCES", "internal/subprocess/protection", "Inherited", "a malformed resource vector drives the inherited-resource refusal",
+		"internal/bounds/lifetime_test.go::TestBoundsMalformedResources"),
+	seamHook("BENCH_REQUIRE_CAPABILITIES", "internal/gate", "strict", "strict mode drives the capability skip rows",
+		"internal/gate/report_test.go::TestCapabilitySkipsInTwoClassesPrintOneLine"),
+	seamHook("BENCH_RUN_BINARY", "internal/runbinary", "Inherit", "an inherited run binary drives the background grade's executable",
+		"internal/gate/background_grade_test.go::TestBackgroundGradeRunsAsTheTargetExecutable"),
+	seamHook("BENCH_SKIP_LOG", "internal/capability", "writeSkipLine", "a skip log path shows that the capability line is written before the skip",
+		"internal/capability/capability_test.go::TestCapabilityWritesLineBeforeSkip"),
+	seamHook("BENCH_TEST_UNBOUNDED_WAITS", "internal/bounds", "VerdictWindow", "the verdict override removes a wait's own deadline while parent cancellation and fixed grace stay",
+		"internal/bounds/bounds_test.go::TestUnboundedParentCancellation", "internal/bounds/bounds_test.go::TestFixedWindowPreservesCancelGrace"),
+	seamHook("BENCH_WRAPPER", "internal/adopt", "resolvedWrapper", "a named wrapper drives the tree-target routing and the doctor's wrapper row",
+		"cmd/bench/tree_scope_test.go::TestTreeTargetOnlyAsFirstArgument"),
+	seamHook("CLAUDE_PROJECT_DIR", "internal/harness", "claudeRemove", "a project directory outside a repository drives the remove refusal",
+		"internal/harness/worktree_test.go::TestWorktreeCommandRemoveRefusesAProjectDirOutsideARepository"),
+	seamHook("CODEX_HOME", "internal/adopt", "configurationHome", "a missing configuration home drives the compatibility refusal",
+		"internal/adopt/compatibility_test.go::TestCompatibilityMissingConfigurationHome"),
+	seamHook("ENVMAN_LOAD", "internal/sessioninspect", "environmentPhase", "an absent or empty load marker drives the partial environment closure line",
+		"internal/systemtest/session_start_test.go::TestSessionStartTE5DiscoversGoWithMarkerAbsentOrEmpty"),
+	seamHook("FNM_DIR", "internal/adopt", "currentDoctorEnv", "an emptied tool home keeps the doctor rows off the developer's own toolchain", doctorTools),
+	seamHook("HOME", "internal/adopt", "currentDoctorEnv", "a private home isolates the doctor and compatibility reads from the developer's home",
+		"internal/adopt/compatibility_test.go::TestCompatibilityMissingConfigurationHome"),
+	seamHook("HOMEBREW_PREFIX", "internal/adopt", "currentDoctorEnv", "an emptied tool prefix keeps the doctor rows off the developer's own toolchain", doctorTools),
+	seamHook("NVM_DIR", "internal/adopt", "currentDoctorEnv", "an emptied tool home keeps the doctor rows off the developer's own toolchain", doctorTools),
+	seamHook("OPENAI_API_KEY", "internal/models", "inventory", "a present or absent provider key drives the API row and the missing-key report",
+		"internal/models/models_test.go::TestCommandEmitsCodexOpenAIAndAnthropicRows"),
+	seamHook("PATH", "internal/adopt", "currentDoctorEnv", "a controlled search path drives the wrapper's kit and tool resolution",
+		"cmd/bench/main_test.go::TestShellWrapperResolvesKitForTheInvocation"),
+	seamHook("SHELL", "internal/worktree", "subshellShell", "a fixture shell drives the worktree shell's signal handling",
+		"internal/worktree/subshell_lifetime_test.go::TestShellSignal"),
+	seamHook("VOLTA_HOME", "internal/adopt", "currentDoctorEnv", "an emptied tool home keeps the doctor rows off the developer's own toolchain", doctorTools),
 }
