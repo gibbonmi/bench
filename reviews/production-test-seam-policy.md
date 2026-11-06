@@ -380,7 +380,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ts3-review-standards",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9c0ab83192d6112ce19d04aa55f3ac8ed4d58768",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:71ca53e84edaa1e54bb88ebf756fd79498238cd1a952cffa26651fada45bad15",
+            "excerpt": "Standards: 0 findings. gate.DeclaredEnvironment wraps loadManifest, keeps its validation, and stays the one manifest reader. The phase family comes only from readReleaseRegistries, and the owner holds no phase list. PS66 holders agree. Advice: align or state the empty-verify versus empty-manifest asymmetry in gradedRootFamilies.\n"
+          },
+          "axis": "Standards",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "3345204ff2b51418035702472dc1efa6fbc755df",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ts3-review-spec",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9c0ab83192d6112ce19d04aa55f3ac8ed4d58768",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:732164a3bbf8f38b69636396124d20c43fb50969b6605f72b17edc0ec4b43b20",
+            "excerpt": "Spec: 1 finding. TS3-P1: the BENCH_OFFLINE and PATH rows name Go owners, but their consumers exercise only bin/bench.sh. Review-owned PS27, PS39, PS60, PS66 hold; PS38 is vacuous. Both orchestrator decisions are sound. Advice: record a PS34 omission red at final verification.\n"
+          },
+          "axis": "Spec",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "3345204ff2b51418035702472dc1efa6fbc755df",
+          "finding_ids": [
+            "TS3-P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ts3-review-coverage",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9c0ab83192d6112ce19d04aa55f3ac8ed4d58768",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:a92ebefb50c7e5e154780875794ebcb29d96885ae86ef30ddac17b6ae9215d52",
+            "excerpt": "Coverage: 1 finding. TS3-C1: an environment-row consumer passes when any outermost NAME= string appears in its body, including an assertion literal, and without reaching the owner, against spec line 181. Sampled 13 of 55 rows: 11 true, 2 fail as TS3-P1. PS22, PS23, PS24 witnesses hold.\n"
+          },
+          "axis": "Coverage",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "3345204ff2b51418035702472dc1efa6fbc755df",
+          "finding_ids": [
+            "TS3-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -543,7 +608,22 @@ TS2 findings: 1. Worst issue: TS2-C1.
 
 Advice for TS4: decide whether a production setter with no test override is a seam. Qualify the owner identity with its package, and decide a symlinked `.go` file.
 
+TS3 Standards findings: 0. Worst issue: none.
+
+TS3 Spec findings: 1. Worst issue: TS3-P1.
+
+- TS3-P1, severity 3, confidence 8, auto-fix. The `BENCH_OFFLINE` and `PATH` rows name Go owners, but their consumers run only `bin/bench.sh`.
+
+TS3 Coverage findings: 1. Worst issue: TS3-C1.
+
+- TS3-C1, severity 3, confidence 7, auto-fix by orchestrator decision under spec line 181. An environment-row consumer passes on any outermost `NAME=` string, and it need not reach the owner.
+
+The orchestrator decision for TS3-C1 has two parts. First, an environment set counts only where the value flows into an environment. Second, an in-process consumer must reach the owner through production calls. A child-process consumer stays accepted, and review owns its truth under spec lines 182 and 183.
+
+Advice for the final verification: record a PS34 readiness omission red through the ship-tier route, if a probe route exists.
+
 Repair cycles consumed for TS1: 0 of 2.
 Repair cycles consumed for TS2: 1 of 2 (repair round r1).
+Repair cycles consumed for TS3: 1 of 2 (repair round r1).
 The TS2 confirming round closes TS2-P1, TS2-P2, and TS2-C1, and it adds no new finding.
 Advice for TS4: a production store of a parameter into a package map or field now derives a setter seam without a test override. A negative control must decide it.
