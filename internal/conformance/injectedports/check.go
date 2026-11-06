@@ -28,15 +28,36 @@ const (
 	OrphanPortRowMessage      = "injected port registry row names a port the derivation no longer reports"
 )
 
-// Row is one derived port's disposition. The disposition is either a real-producer test
-// or an exemption whose reason someone had to write down. A real-producer test drives the
-// actual producer through the consuming surface. A row carrying neither is the
-// empty-exemption red.
+// Row is one derived seam's disposition. Kind, Package, and Port are its source
+// identity: Port names the port type, the package variable, or the setter function.
+//
+// A named-port row carries either a real-producer test or an exemption whose reason
+// someone had to write down. A real-producer test drives the actual producer through the
+// consuming surface. A row carrying neither is the empty-exemption red.
+//
+// A variable row carries its policy facts: the production owner that reads the variable,
+// the consumer tests ("path::TestName") that install a replacement, the failure purpose,
+// and the isolation evidence. A setter row carries only Canonical, the variable seams it
+// finally replaces, and borrows every other fact from their rows.
 type Row struct {
+	Kind               Kind
 	Package, Port      string
 	TestFile, TestName string
 	Exempt             string
+	Owner              string
+	Consumers          []string
+	Purpose, Isolation string
+	Canonical          []string
 }
+
+// Kind distinguishes the seam forms that a row admits. The zero value is a named port.
+type Kind string
+
+const (
+	KindPort     Kind = ""
+	KindVariable Kind = "variable"
+	KindSetter   Kind = "setter"
+)
 
 // Policy is the advertisement half of the audit. Rows hold one disposition per derived
 // port. Required names the packages whose source the audit derives, each of which must
@@ -61,14 +82,19 @@ type Policy struct {
 // green for as long as the package's other ports keep the inventory non-zero.
 // ZeroPortInventoryMessage closes that same silence for a package that derives nothing at
 // all.
+//
+// The variable and setter census then reads the whole production source of root, not the
+// required packages alone; see seamDiags.
 func Check(root string, policy Policy) []string {
 	registered := make(map[string]Row, len(policy.Rows))
 	for _, row := range policy.Rows {
-		registered[row.Package+"."+row.Port] = row
+		if row.Kind == KindPort {
+			registered[row.Package+"."+row.Port] = row
+		}
 	}
 	derived := make(map[string]bool, len(policy.Rows))
 	gradedNonZero := make(map[string]bool, len(policy.Required))
-	var diags []string
+	diags := duplicateRows(policy.Rows)
 	for _, pkg := range policy.Required {
 		dir := filepath.Join(root, filepath.FromSlash(pkg))
 		if absentPackage(dir) {
@@ -97,15 +123,20 @@ func Check(root string, policy Policy) []string {
 		}
 	}
 	for _, row := range policy.Rows {
-		if !gradedNonZero[row.Package] || derived[row.Package+"."+row.Port] {
+		if row.Kind != KindPort || !gradedNonZero[row.Package] || derived[row.Package+"."+row.Port] {
 			continue
 		}
-		diags = append(diags, fmt.Sprintf(
-			"%s: %s.%s is registered but the derivation no longer reports it — a stale advertisement whose port or injection arm left the tree must not stay green",
-			OrphanPortRowMessage, row.Package, row.Port))
+		diags = append(diags, orphanDiag(row))
 	}
+	diags = append(diags, seamDiags(root, policy.Rows)...)
 	slices.Sort(diags)
 	return slices.Compact(diags)
+}
+
+func orphanDiag(row Row) string {
+	return fmt.Sprintf(
+		"%s: %s.%s is registered but the derivation no longer reports it — a stale advertisement whose port or injection arm left the tree must not stay green",
+		OrphanPortRowMessage, row.Package, row.Port)
 }
 
 // rowDiags grades one row's disposition.

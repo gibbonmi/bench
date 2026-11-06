@@ -79,14 +79,25 @@ func TestActualStartRace(t *testing.T) {
 		}
 		return nil
 	})
-	done := make(chan error, 1)
-	go func() { done <- s.runAdapter(t.Context(), "objective") }()
+	done, finished := make(chan error, 1), make(chan struct{})
+	go func() { defer close(finished); done <- s.runAdapter(t.Context(), "objective") }()
+	// A failed assertion still releases the held fault and joins the run before the
+	// fault cleanup restores the production fault point. The test context is cancelled
+	// before this cleanup runs, so the run returns.
+	resumed := false
+	t.Cleanup(func() {
+		if !resumed {
+			close(resume)
+		}
+		<-finished
+	})
 	select {
 	case <-paused:
 	case <-time.After(helperWindow):
 		t.Fatal("the adapter run never reached its startup transition")
 	}
 	s.interrupt(syscall.SIGINT)
+	resumed = true
 	close(resume)
 	if err := adapterReturn(t, done, 0, "the adapter run to return after its startup cancellation"); !errors.Is(err, subprocess.ErrNoStart) {
 		t.Fatalf("adapter run = %v, want the no-start result", err)

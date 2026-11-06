@@ -65,9 +65,6 @@ func validateTarballForTesting(data []byte) error {
 func setExchangeForTesting(exchange func(string, string) error) func() {
 	return releaseevidence.SetExchangeForTesting(exchange)
 }
-func setIndexEncoderForTesting(encoder func(any) ([]byte, error)) func() {
-	return releaseevidence.SetIndexEncoderForTesting(encoder)
-}
 func setRequirementsForTesting(value requirementRegistry) func() {
 	return releaseevidence.SetRequirementsForTesting(value)
 }

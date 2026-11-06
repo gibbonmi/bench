@@ -265,6 +265,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 				preflighttest.RunGit(t, "update-index", "--refresh")
 			}
 		})
+		t.Cleanup(restore)
 		out, code := preflight.Command(args)
 		restore()
 		if code != 0 || calls != 2 || len(preflighttest.PublishedPacks(t, root)) != 1 || len(preflighttest.StagedTemps(t, root)) != 0 {
@@ -279,6 +280,7 @@ func TestEvidenceMovementPublication(t *testing.T) {
 			calls++
 			preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
 		})
+		t.Cleanup(restore)
 		out, code := preflight.Command(args)
 		restore()
 		if code != 1 || calls != 2 || !strings.Contains(out, "snapshot drift") || len(preflighttest.PublishedPacks(t, root)) != 0 || len(preflighttest.StagedTemps(t, root)) != 0 {

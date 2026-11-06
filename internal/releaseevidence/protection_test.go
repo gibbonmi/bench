@@ -67,6 +67,32 @@ func TestProtectedStageCleanup(t *testing.T) {
 	})
 }
 
+// TestExchangeFailureKeepsThePriorEvidence drives the exchange seam: a real filesystem
+// cannot fail the atomic directory exchange on demand. A failed exchange refuses the
+// promotion, keeps the prior preflight evidence, and removes the new stage.
+func TestExchangeFailureKeepsThePriorEvidence(t *testing.T) {
+	root, _ := abandonedStage(t)
+	if err := PromoteEvidence(root, ModeVerify, nil, Manifest{SchemaVersion: 1}); err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(root, "dist", "preflight", "manifest.json")
+	prior, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refused := errors.New("forced exchange failure")
+	t.Cleanup(SetExchangeForTesting(func(string, string) error { return refused }))
+	if err := PromoteEvidence(root, ModeVerify, nil, Manifest{SchemaVersion: 1, Mode: ModeVerify}); !errors.Is(err, refused) {
+		t.Fatalf("promotion over a failed exchange = %v, want the exchange failure", err)
+	}
+	if after, err := os.ReadFile(manifest); err != nil || string(after) != string(prior) {
+		t.Fatalf("prior manifest after the refusal = %q, %v; want %q", after, err, prior)
+	}
+	if stages, err := filepath.Glob(filepath.Join(root, "dist", ".preflight-stage-*")); err != nil || len(stages) != 0 {
+		t.Fatalf("stages after the refusal = %v, %v; want none", stages, err)
+	}
+}
+
 // abandonedStage plants a stage and its valid owner marker in a fresh checkout's dist.
 func abandonedStage(t *testing.T) (root, stage string) {
 	t.Helper()

@@ -28,8 +28,18 @@ func TestScanWaitsForCancelledWorkerCleanup(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	result := make(chan ScanResult, 1)
-	go func() { result <- Scan(ctx, "/repo") }()
+	result, finished := make(chan ScanResult, 1), make(chan struct{})
+	go func() { defer close(finished); result <- Scan(ctx, "/repo") }()
+	// A failed assertion still releases the held worker and joins the scan before the
+	// cleanup above restores the replaced collaborators.
+	released := false
+	t.Cleanup(func() {
+		cancel()
+		if !released {
+			close(release)
+		}
+		<-finished
+	})
 	<-started
 	cancel()
 	<-cancelled
@@ -38,6 +48,7 @@ func TestScanWaitsForCancelledWorkerCleanup(t *testing.T) {
 		t.Fatalf("Scan returned before worker cleanup: %#v", got)
 	default:
 	}
+	released = true
 	close(release)
 	window := bounds.TestDeadline(0)
 	var got ScanResult

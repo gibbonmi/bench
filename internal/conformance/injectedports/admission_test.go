@@ -76,4 +76,47 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			requireDiagnosticHeads(t, Check(root, Policy{Rows: test.rows, Required: required}), test.heads)
 		})
 	}
+
+	// The variable fixture has one seam that a setter replaces. One consumer installs it
+	// through the setter and one through a helper; a third test never installs it.
+	seamTree := map[string]string{
+		"internal/sample/sample.go":      "package sample\n\nvar hook = func() error { return nil }\n\nvar table = map[string]func() error{\"run\": func() error { return hook() }}\n\nfunc Run() error { return hook() }\n\nfunc SetHookForTest(f func() error) func() {\n\tprevious := hook\n\thook = f\n\treturn func() { hook = previous }\n}\n",
+		"internal/sample/sample_test.go": "package sample\n\nimport \"testing\"\n\nfunc TestRunThroughSetter(t *testing.T) { t.Cleanup(SetHookForTest(nil)) }\n\nfunc TestRunThroughHelper(t *testing.T) { install(t) }\n\nfunc install(t *testing.T) {\n\told := hook\n\tt.Cleanup(func() { hook = old })\n\thook = nil\n}\n\nfunc TestUnrelated(t *testing.T) {}\n",
+	}
+	variable := func(edit func(*Row)) Row {
+		row := Row{
+			Kind: KindVariable, Package: "internal/sample", Port: "hook", Owner: "Run",
+			Consumers: []string{"internal/sample/sample_test.go::TestRunThroughSetter", "internal/sample/sample_test.go::TestRunThroughHelper"},
+			Purpose:   "a failing hook drives the run refusal", Isolation: "serial installers; t.Cleanup restores before the first assertion",
+		}
+		if edit != nil {
+			edit(&row)
+		}
+		return row
+	}
+	setter := Row{Kind: KindSetter, Package: "internal/sample", Port: "SetHookForTest", Canonical: []string{"internal/sample.hook"}}
+	const hook = ": internal/sample.hook "
+	for _, test := range []struct {
+		row   string
+		rows  []Row
+		heads []string
+	}{
+		{row: "honest variable and setter rows", rows: []Row{variable(nil), setter}},
+		{row: "honest owner in a package initializer", rows: []Row{variable(func(r *Row) { r.Owner = "table" }), setter}},
+		{row: "PS15 no production owner", rows: []Row{variable(func(r *Row) { r.Owner = "" }), setter}, heads: []string{SeamOwnerMessage + hook}},
+		{row: "PS15 a setter as owner", rows: []Row{variable(func(r *Row) { r.Owner = "SetHookForTest" }), setter}, heads: []string{SeamOwnerMessage + hook}},
+		{row: "PS16 undeclared consumer", rows: []Row{variable(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestGone"} }), setter}, heads: []string{SeamConsumerMessage + hook + "advertises"}},
+		{row: "PS16 helper named as consumer", rows: []Row{variable(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::install"} }), setter}, heads: []string{SeamConsumerMessage + hook + "advertises"}},
+		{row: "PS16 no consumer", rows: []Row{variable(func(r *Row) { r.Consumers = nil }), setter}, heads: []string{SeamConsumerMessage + hook + "names no consumer"}},
+		{row: "PS17 consumer that never installs the seam", rows: []Row{variable(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestUnrelated"} }), setter}, heads: []string{SeamUnreachedMessage + hook}},
+		{row: "PS18 blank failure purpose", rows: []Row{variable(func(r *Row) { r.Purpose = " " }), setter}, heads: []string{SeamPurposeMessage + hook}},
+		{row: "PS19 blank isolation evidence", rows: []Row{variable(func(r *Row) { r.Isolation = "" }), setter}, heads: []string{SeamIsolationMessage + hook}},
+		{row: "PS20 duplicate source identity", rows: []Row{variable(nil), variable(nil), setter}, heads: []string{DuplicateRowMessage + ": variable internal/sample.hook "}},
+		{row: "PS21 unresolved alias", rows: []Row{variable(nil), {Kind: KindSetter, Package: "internal/sample", Port: "SetHookForTest", Canonical: []string{"internal/sample.gone"}}}, heads: []string{UnresolvedAliasMessage + ": internal/sample.SetHookForTest "}},
+		{row: "stale variable row in a present package", rows: []Row{variable(nil), setter, variable(func(r *Row) { r.Port = "gone" })}, heads: []string{OrphanPortRowMessage + ": internal/sample.gone "}},
+	} {
+		t.Run(test.row, func(t *testing.T) {
+			requireDiagnosticHeads(t, Check(writeRoot(t, seamTree), Policy{Rows: test.rows}), test.heads)
+		})
+	}
 }
