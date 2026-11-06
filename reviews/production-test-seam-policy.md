@@ -149,7 +149,73 @@
         "PS57"
       ],
       "verification": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ts2-review-standards",
+          "performer": "ft343-review-ts2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8534ee5c398a9f6fb2e6632a94406be03591bf1c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts2",
+            "digest": "sha256:28208e50dc5a564ff9d8401f0f57be37fe12354e71375281be21f4745ee41571",
+            "excerpt": "Standards: 0 findings. Worst: none. The whole-tree loader in source.go repeats derive.go's per-package parse and read path and its diagnostic prose. Carry it to TS4 as a scanner-copy collapse. Writes fence: every changed path is inside ticket 02's Writes: line.\n"
+          },
+          "axis": "Standards",
+          "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "tip": "cdeb6e383ca0d1e2095ea1bb1308dbe062e3a8d8",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ts2-review-spec",
+          "performer": "ft343-review-ts2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8534ee5c398a9f6fb2e6632a94406be03591bf1c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts2",
+            "digest": "sha256:9fdb799ce909cd05361eec863aacabe37e7c7cc915caa72b6670f67c9d26e00e",
+            "excerpt": "Spec: 2 findings. Worst: P2. Gate laneRunBinary and testreport runBinaryFactory are admitted while their consumers replace Verify with unconditional success, and no hook-active refusal witness exists (prospective has one at prospective_owner_test.go:98). P1: a same-package field, index, or pointer replacement of a package collaborator is not derived (scope.go assignedRoot), against spec line 119.\n"
+          },
+          "axis": "Spec",
+          "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "tip": "cdeb6e383ca0d1e2095ea1bb1308dbe062e3a8d8",
+          "finding_ids": [
+            "TS2-P1",
+            "TS2-P2"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ts2-review-coverage",
+          "performer": "ft343-review-ts2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8534ee5c398a9f6fb2e6632a94406be03591bf1c",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts2",
+            "digest": "sha256:28590579b04ae5ce0579acd6250f81ef5ebcceaeb5ebe7ce5cfd437c0d829fbc",
+            "excerpt": "Coverage: 1 finding. Worst: C1. No fixture covers a same-package field or index replacement of a package collaborator, so the P1 omission stays green. Sampled 14 of 67 rows: consumer reach, purpose, and serial isolation hold. Git join repair: still red when the bound regresses, but only at the go test timeout (600 s stub).\n"
+          },
+          "axis": "Coverage",
+          "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "tip": "cdeb6e383ca0d1e2095ea1bb1308dbe062e3a8d8",
+          "finding_ids": [
+            "TS2-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -223,17 +289,34 @@ The reviewer decided on 2026-11-06 to retire `indexEncoder`, its setter, and its
 
 ## Standards
 
-Findings: 0. Worst issue: none.
+TS1 findings: 0. Worst issue: none.
+
+TS2 findings: 0. Worst issue: none.
+Carry to TS4 (advice): `source.go` repeats the per-package parse and read path of `derive.go`; TS4 collapses the scanner copy.
 
 ## Spec
 
-Findings: 0. Worst issue: none.
+TS1 findings: 0. Worst issue: none.
 The reviewer flags ticket 01 line 12 for reviewer veto: it claims the wide derivation that the chunk table gives to TS4.
 Carry to the TS4 charge: a row outside the required packages stays silent until the TS4 census grades it.
 
+TS2 findings: 2. Worst issue: TS2-P2.
+
+- TS2-P1, severity 3, confidence 8, auto-fix: `assignedRoot` in `internal/conformance/injectedports/scope.go` drops a same-package field, index, or pointer replacement of a package variable, against spec line 119.
+- TS2-P2, severity 4, confidence 5, auto-fix under `--auto-approve` and spec line 208. The consumers of the `laneRunBinary` and `runBinaryFactory` rows replace `Verify` with unconditional success. No test keeps the real validation active with the hook installed and still observes refusal.
+
+The orchestrator also accepts three evidence corrections from the TS2 advice for the same repair. The repair records the publication `clock` exclusion that ticket 02 requires. It also corrects the `models` isolation text and the `sessioninspect.phases` purpose text.
+
 ## Coverage
 
-Findings: 0. Worst issue: none.
+TS1 findings: 0. Worst issue: none.
 Advice for TS4: decide ENOTDIR as absence, and decide a symlinked package directory that points outside the root.
 
+TS2 findings: 1. Worst issue: TS2-C1.
+
+- TS2-C1, severity 3, confidence 8, auto-fix with TS2-P1. No derivation case covers a same-package field or index replacement of a package variable.
+
+Advice for TS4: decide whether a production setter with no test override is a seam. Qualify the owner identity with its package, and decide a symlinked `.go` file.
+
 Repair cycles consumed for TS1: 0 of 2.
+Repair cycles consumed for TS2: 1 of 2 (repair round r1).
