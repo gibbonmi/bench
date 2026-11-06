@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/production-test-seam-policy/spec.md",
-  "plan_digest": "sha256:d60cbebbc23104cb18f056422e79d5ec33c22e8db5f7f151705f4e208f69a747",
+  "plan_digest": "sha256:4517bbfeca3a80a55cb305321af5ce4e7f580dc43a8d3f33d1af10f266fc08c4",
   "implementation_session": "",
   "chunks": [
     {
@@ -129,9 +129,9 @@
     {
       "id": "TS2",
       "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
-      "tip": "cdeb6e383ca0d1e2095ea1bb1308dbe062e3a8d8",
-      "plan_digest": "sha256:d60cbebbc23104cb18f056422e79d5ec33c22e8db5f7f151705f4e208f69a747",
-      "source_digest": "8534ee5c398a9f6fb2e6632a94406be03591bf1c",
+      "tip": "25f5571dd24d6232974f986c7c601153caf5349a",
+      "plan_digest": "sha256:4517bbfeca3a80a55cb305321af5ce4e7f580dc43a8d3f33d1af10f266fc08c4",
+      "source_digest": "5017bb8a031464c90a925d040c7c25c57b89b955",
       "acceptance_rows": [
         "PS04",
         "PS05",
@@ -232,6 +232,18 @@
       "chunk_ids": {
         "TS1": [
           "TS1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:d60cbebbc23104cb18f056422e79d5ec33c22e8db5f7f151705f4e208f69a747",
+      "to": "sha256:4517bbfeca3a80a55cb305321af5ce4e7f580dc43a8d3f33d1af10f266fc08c4",
+      "chunk_ids": {
+        "TS1": [
+          "TS1"
+        ],
+        "TS2": [
+          "TS2"
         ]
       }
     }
