@@ -113,6 +113,9 @@ Keep the existing named-port shapes: nonempty interfaces, named function types, 
 An injection site remains a parameter, pointer parameter, type assertion, or type switch.
 Apply that derivation to eligible production packages rather than a closed package discovery list.
 A named shape that is never injected remains a negative control.
+A named port that every production caller passes as nil is a fault port.
+Its row carries the fault-exception fields: owner, consumer, failure purpose, and isolation.
+Its consumer supplies a non-nil value at the injection site (reviewer decision, 2026-11-06).
 An ordinary function declaration is not a seam merely because its name contains `ForTest`.
 
 A mutable collaborator qualifies when a test replaces a package variable that a production path reads or calls.
@@ -535,7 +538,16 @@ Prospective implementation writes:
 - `internal/status/status_render_test.go`
 - `internal/systemtest/compatibility_test.go`
 - `internal/testreport/`
-- `internal/worktree/list_actions_test.go`
+- `internal/worktree/`
+- `internal/benchguard/`
+- `internal/commitment/`
+- `internal/durablefile/`
+- `internal/landing/`
+- `internal/maps/`
+- `internal/prose/`
+- `internal/spec/`
+- `internal/subprocess/`
+- `internal/writeguard/`
 - `projects/benchkit.md`
 - `internal/anchors/registry_chunk_chain.go`
 - `internal/anchors/registry_data.go`
