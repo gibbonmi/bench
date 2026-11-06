@@ -229,6 +229,29 @@ func TestBenchkitLaneRunsOnlyTheSelectedChecks(t *testing.T) {
 	}
 }
 
+// TestLaneRunBinaryHookKeepsFreshnessRefusal installs a build hook and keeps the real
+// verifier. The stub executable carries no seal, so the lane selection must refuse it.
+func TestLaneRunBinaryHookKeepsFreshnessRefusal(t *testing.T) {
+	t.Setenv(runbinary.Env, "")
+	if err := os.Unsetenv(runbinary.Env); err != nil {
+		t.Fatal(err)
+	}
+	previous := laneRunBinary
+	t.Cleanup(func() { laneRunBinary = previous })
+	laneRunBinary = runbinary.Factory{Build: func(_ context.Context, _, output string) error {
+		return os.WriteFile(output, []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	}}
+	checks := []Phase{{Name: "prose", Argv: []string{runBinaryArgvToken, "gate-prose"}}}
+	_, _, release, err := selectLaneRunBinary(t.Context(), LaneRequest{}, t.TempDir(), t.TempDir(), checks)
+	if err == nil {
+		t.Cleanup(func() { _ = release() })
+		t.Fatal("lane selection accepted an unsealed executable, want the freshness refusal")
+	}
+	if !strings.Contains(err.Error(), "lane Bench executable unavailable") || !strings.Contains(err.Error(), "does not match source") {
+		t.Fatalf("lane selection error = %q, want the verifier's refusal", err)
+	}
+}
+
 // laneRefusesArgv is laneRecordsArgv's red twin: the stub exits 1 for the one invocation
 // whose argv holds marker, and 0 for every other. It is the seam a row proves a red
 // document check through without paying for a real conformance run.

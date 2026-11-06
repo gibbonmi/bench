@@ -291,7 +291,7 @@ This table supplies evidence for the refresh, not automatic admission.
 This lexical sweep was a discovery aid, not a semantic completeness proof.
 It also returned strings and ordinary values that are not assignments.
 The implementation's declaration resolution and independent negative controls must remove those false candidates.
-Publication's `clock` is another function-valued candidate whose caller disposition requires the refreshed semantic census.
+The refreshed semantic census excludes publication's `clock` as ordinary data, because no test or setter replaces it.
 No claim that all present globals are safe follows from this table.
 
 No in-tree DATE or EVIDENCE_READY_FILE setter was established by the source sweep.

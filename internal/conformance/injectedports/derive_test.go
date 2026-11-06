@@ -90,6 +90,18 @@ func TestSeamDerivationForms(t *testing.T) {
 			prod:     "package sample\n\nvar Run = func() error { return nil }\n\nfunc Do() error { return Run() }\n",
 			outside:  "package sample_test\n\nimport (\n\t\"testing\"\n\n\t\"example.com/fixture/internal/sample\"\n)\n\nfunc failing() error { return nil }\n\nfunc TestDo(t *testing.T) { sample.Run = failing }\n",
 		}, []string{seam + "Run is replaced at internal/sample/external_test.go:11"}},
+		{"PS04 same-package field replacement", map[string]string{
+			prod:   "package sample\n\nvar factory = struct{ Verify func() error }{}\n\nfunc Do() error { return factory.Verify() }\n",
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestDo(t *testing.T) { factory.Verify = func() error { return nil } }\n",
+		}, []string{seam + "factory is replaced at internal/sample/sample_test.go:5"}},
+		{"PS04 index replacement", map[string]string{
+			prod:   "package sample\n\nvar table = map[string]func() error{}\n\nfunc Do() error { return table[\"k\"]() }\n",
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestDo(t *testing.T) { table[\"k\"] = func() error { return nil } }\n",
+		}, []string{seam + "table is replaced at internal/sample/sample_test.go:5"}},
+		{"PS04 pointer replacement", map[string]string{
+			prod:   "package sample\n\nvar limit = new(int)\n\nfunc Size() int { return *limit }\n",
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestSize(t *testing.T) { *limit = 1 }\n",
+		}, []string{seam + "limit is replaced at internal/sample/sample_test.go:5"}},
 		{"PS05 anonymous function replacement", map[string]string{
 			prod:   "package sample\n\nvar hook = func() {}\n\nfunc Do() { hook() }\n",
 			inside: "package sample\n\nimport \"testing\"\n\nfunc TestDo(t *testing.T) {\n\thook = func() { t.Log(\"held\") }\n}\n",

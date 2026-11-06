@@ -123,6 +123,22 @@ func TestEachExecuteBuildsItsOwnSelection(t *testing.T) {
 	}
 }
 
+// TestSelectRunBinaryHookKeepsFreshnessRefusal installs a build hook and keeps the real
+// verifier. The stub executable carries no seal, so the run-binary selection must refuse it.
+func TestSelectRunBinaryHookKeepsFreshnessRefusal(t *testing.T) {
+	installTestSelectionFactory(t, runbinary.Factory{TempRoot: t.TempDir(), Build: func(_ context.Context, _, output string) error {
+		return os.WriteFile(output, []byte("selected"), 0o755)
+	}})
+	selection, err := selectRunBinary(t.Context(), t.TempDir())
+	if err == nil {
+		t.Cleanup(func() { _ = selection.Close() })
+		t.Fatal("run-binary selection accepted an unsealed executable, want the freshness refusal")
+	}
+	if !strings.Contains(err.Error(), "does not match source") {
+		t.Fatalf("run-binary selection error = %q, want the verifier's refusal", err)
+	}
+}
+
 func installTestSelectionFactory(t *testing.T, factory runbinary.Factory) {
 	t.Helper()
 	for _, name := range []string{runbinary.Env, "BENCH_KIT"} {

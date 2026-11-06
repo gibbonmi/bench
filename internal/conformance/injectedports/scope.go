@@ -166,7 +166,7 @@ func (w *walker) assign(stmt *ast.AssignStmt) {
 		return
 	}
 	for i, target := range stmt.Lhs {
-		seam := w.resolve(assignedRoot(target))
+		seam := w.resolve(w.assignedRoot(target))
 		if seam == "" {
 			continue
 		}
@@ -184,14 +184,21 @@ func (w *walker) assign(stmt *ast.AssignStmt) {
 }
 
 // assignedRoot reduces an assignment target to the variable that holds the replaced
-// value. A field of a package collaborator struct belongs to that package variable.
-func assignedRoot(expr ast.Expr) ast.Expr {
+// value. A field, an index, or a pointer target belongs to the variable at its root. A
+// selector on an import binding is that package's variable, and any other selector
+// belongs to its operand, so a field of a same-package collaborator struct resolves to
+// that package variable.
+func (w *walker) assignedRoot(expr ast.Expr) ast.Expr {
 	for {
 		switch typed := expr.(type) {
 		case *ast.ParenExpr:
 			expr = typed.X
+		case *ast.StarExpr:
+			expr = typed.X
+		case *ast.IndexExpr:
+			expr = typed.X
 		case *ast.SelectorExpr:
-			if _, qualified := typed.X.(*ast.Ident); qualified {
+			if w.resolve(typed) != "" {
 				return typed
 			}
 			expr = typed.X
