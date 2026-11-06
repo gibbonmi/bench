@@ -501,6 +501,7 @@ Prospective implementation writes:
 - `internal/consumers/`
 - `internal/coverage/`
 - `internal/diff/`
+- `internal/env/kit_run_wait_test.go`
 - `internal/freshness/`
 - `internal/gate/`
 - `internal/git/`
