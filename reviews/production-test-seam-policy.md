@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/production-test-seam-policy/spec.md",
-  "plan_digest": "sha256:5c08a62494fc1fdd742618a16f4d9ccab37c50326fb6f594f7fef3f23db32a4b",
+  "plan_digest": "sha256:d60cbebbc23104cb18f056422e79d5ec33c22e8db5f7f151705f4e208f69a747",
   "implementation_session": "",
   "chunks": [
     {
@@ -125,6 +125,31 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "TS2",
+      "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+      "tip": "cdeb6e383ca0d1e2095ea1bb1308dbe062e3a8d8",
+      "plan_digest": "sha256:d60cbebbc23104cb18f056422e79d5ec33c22e8db5f7f151705f4e208f69a747",
+      "source_digest": "8534ee5c398a9f6fb2e6632a94406be03591bf1c",
+      "acceptance_rows": [
+        "PS04",
+        "PS05",
+        "PS06",
+        "PS07",
+        "PS08",
+        "PS15",
+        "PS16",
+        "PS17",
+        "PS18",
+        "PS19",
+        "PS20",
+        "PS21",
+        "PS44",
+        "PS57"
+      ],
+      "verification": [],
+      "reviews": []
     }
   ],
   "completion": {
@@ -133,7 +158,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:5c08a62494fc1fdd742618a16f4d9ccab37c50326fb6f594f7fef3f23db32a4b",
+      "to": "sha256:d60cbebbc23104cb18f056422e79d5ec33c22e8db5f7f151705f4e208f69a747",
+      "chunk_ids": {
+        "TS1": [
+          "TS1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
