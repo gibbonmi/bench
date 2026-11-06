@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/production-test-seam-policy/spec.md",
-  "plan_digest": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
+  "plan_digest": "sha256:7e678524a4f7c5a93e7d074c672fefdfa367d97bc7f7b34529fca1bfb6891c96",
   "implementation_session": "",
   "chunks": [
     {
@@ -642,6 +642,21 @@
     {
       "from": "sha256:f751c3cde724773c3d43fc845aaf16735229d50bb7885bfe5aecf4f35304510c",
       "to": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
+      "chunk_ids": {
+        "TS1": [
+          "TS1"
+        ],
+        "TS2": [
+          "TS2"
+        ],
+        "TS3": [
+          "TS3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
+      "to": "sha256:7e678524a4f7c5a93e7d074c672fefdfa367d97bc7f7b34529fca1bfb6891c96",
       "chunk_ids": {
         "TS1": [
           "TS1"
