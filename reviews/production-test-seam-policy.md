@@ -195,6 +195,32 @@ The author `ft343-author-01` reported these witness reds at `d626a7a`. Each muta
 | PS43 | `check.go` | every stat error counts as absence | `TestSeamAdmissionEvidence` |
 | PS61 | `check.go` | a blank exemption compares as valid | `TestSeamAdmissionEvidence` |
 
+## TS2 author witness reds
+
+The author `ft343-author-02` reported these witness reds before `cdeb6e3`. Each mutant reported `bit`, each file restored byte-identically, and each baseline was green.
+
+| file | mutation | failing case |
+|---|---|---|
+| `variables.go` | the test-replacement census is disabled | PS04, PS05, PS06, PS57 |
+| `variables.go` | cross-package forwarding is disabled | PS07 |
+| `variables.go` | same-package forwarding is disabled | PS08 |
+| `variables.go` | the reader filter is disabled | the test-support negative case |
+| `variables.go` | a `ForTest` name rule is added | PS44 |
+| `variables.go` | setter reach and helper reach are disabled | the admitted-consumer cases |
+| `variables.go` | the `Test` prefix check is omitted | the PS16 helper case |
+| `variables.go` | the setter-owner exclusion is omitted | the PS15 setter-as-owner case |
+| `variables.go` | the initializer reader is dropped | the initializer-owner case |
+| `scope.go` | the parameter test is bypassed | the production-data negative case |
+| `scope.go` | scope resolution is disabled | the shadowing negative case |
+| `scope.go` | only the first assignment target is read | PS57 |
+| `scope.go` | import resolution is disabled | PS04, PS07 |
+| `seams.go` | the owner, purpose, and isolation checks are removed one at a time | PS15, PS18, PS19 |
+| `seams.go` | the consumer checks are inverted or emptied | PS16, PS17 |
+| `seams.go` | the duplicate, alias, and orphan checks are removed one at a time | PS20, PS21, the stale-row case |
+| `seams.go` | the unregistered-setter diagnostic is removed | PS07, PS08 |
+
+The reviewer decided on 2026-11-06 to retire `indexEncoder`, its setter, and its forwarder, because the seam had no consumer and no injectable failure.
+
 ## Standards
 
 Findings: 0. Worst issue: none.
