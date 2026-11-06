@@ -784,6 +784,7 @@ Advice for the final verification: record a PS34 readiness omission red through 
 Repair cycles consumed for TS1: 0 of 2.
 Repair cycles consumed for TS2: 1 of 2 (repair round r1).
 Repair cycles consumed for TS3: 2 of 2 (repair rounds r1 and r2).
+The reviewer closed TS3-C2 on 2026-11-06 as an accepted limitation, and the spec states it as a Won't handle line. The r2 diff is discarded, and its recovery ref is kept.
 The TS3 confirming round closes TS3-P1 and TS3-C1, and it opens TS3-C2.
 
 - TS3-C2, severity 3, confidence 6, auto-fix under `--auto-approve` in repair round r2. The reach-based census fails open in two cases. One is an in-process set that reaches its reader only through a function value. The other is a child that inherits the set with no explicit entry.

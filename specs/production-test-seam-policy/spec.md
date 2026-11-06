@@ -475,6 +475,8 @@ No extra system test is needed for a pure registry field if the owner suite alre
 
 **Won't handle:** external callers outside the source tree — REF, DATE, and readiness compatibility remain preserved rather than inferred absent.
 
+**Won't handle:** an environment set that reaches its reader only through a test's function value, or through a child that inherits the set — review owns those consumers (reviewer decision, 2026-11-06).
+
 **Won't handle:** proving consumer purpose from source syntax alone — the named failure witness and review remain required.
 
 **Won't handle:** deleting telemetry's fallback-home guard during this build — its three existing processor tests remain the safety witnesses.
