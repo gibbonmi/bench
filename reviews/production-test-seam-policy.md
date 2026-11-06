@@ -438,6 +438,66 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/guards/guards_cleanup_test.go,omit,failed,1,TestScanOverrideJoinsBeforeRestore,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/guards,all,passed,57\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,374\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6343,57\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanOverrideJoinsBeforeRestore,\"guards_cleanup_test.go:106: the held worker observed \\\"prior\\\" after its release, want the replacement it ran with\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ts3-03-f-restore-omission",
+          "performer": "ft343-orchestrator",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afdb682fa5ca025aa8ad69f46dd24e2d336782f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft343-orchestrator",
+            "digest": "sha256:673f215482ba0f849bb5f40b96a7b4b772c2480065f1d7edb595a43cd0d2a3de",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/diff/command_test.go,omit,failed,1,TestSnapshotOverrideRestoresAfterFailure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/diff,all,passed,101\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,fail,5809,101\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/diff,TestSnapshotOverrideRestoresAfterFailure,\"command_test.go:149: after the fatal path the child observed, want prior=1 replacement=1:\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "requirement": "restore-omission",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit failure-safe restoration; require the distinguishable installed replacement witness to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ft343-orchestrator",
+              "digest": "sha256:673f215482ba0f849bb5f40b96a7b4b772c2480065f1d7edb595a43cd0d2a3de",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/diff/command_test.go,omit,failed,1,TestSnapshotOverrideRestoresAfterFailure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/diff,all,passed,101\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,fail,5809,101\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/diff,TestSnapshotOverrideRestoresAfterFailure,\"command_test.go:149: after the fatal path the child observed, want prior=1 replacement=1:\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ts3-03-f-join-omission",
+          "performer": "ft343-orchestrator",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "afdb682fa5ca025aa8ad69f46dd24e2d336782f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-session:ft343-orchestrator",
+            "digest": "sha256:09c682868ebbe1eacfbd4155cfe34c0ed39a8de6a78f865154c1fb875968799e",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/guards/guards_cleanup_test.go,omit,failed,1,TestScanOverrideJoinsBeforeRestore,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/guards,all,passed,57\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,374\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6342,57\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanOverrideJoinsBeforeRestore,\"guards_cleanup_test.go:107: the held worker observed \\\"prior\\\" after its release, want the replacement it ran with\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "requirement": "join-omission",
+          "command": "bench test --package ./internal/guards",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "remove join before restoration; require the held live consumer witness to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-session:ft343-orchestrator",
+              "digest": "sha256:09c682868ebbe1eacfbd4155cfe34c0ed39a8de6a78f865154c1fb875968799e",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/guards/guards_cleanup_test.go,omit,failed,1,TestScanOverrideJoinsBeforeRestore,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/guards,all,passed,57\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,374\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6342,57\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanOverrideJoinsBeforeRestore,\"guards_cleanup_test.go:107: the held worker observed \\\"prior\\\" after its release, want the replacement it ran with\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
