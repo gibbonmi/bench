@@ -286,9 +286,9 @@
     {
       "id": "TS3",
       "base": "25f5571dd24d6232974f986c7c601153caf5349a",
-      "tip": "3c4d8e1a724f262db9494d109957d78e4e944642",
-      "plan_digest": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
-      "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
+      "tip": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+      "plan_digest": "sha256:7e678524a4f7c5a93e7d074c672fefdfa367d97bc7f7b34529fca1bfb6891c96",
+      "source_digest": "afdb682fa5ca025aa8ad69f46dd24e2d336782f3",
       "acceptance_rows": [
         "PS09",
         "PS10",
@@ -593,6 +593,72 @@
           "finding_ids": [],
           "supersedes": [
             "ts3-review-coverage-r1"
+          ]
+        },
+        {
+          "id": "ts3-review-standards-r2",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afdb682fa5ca025aa8ad69f46dd24e2d336782f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:c98064070ab19e752a25e0f38fe60023511287746059daedb0fa9d61ca383a93",
+            "excerpt": "Standards pass at 25f5571..fa17d5a: the delta changes no code, only one spec line and record prose, and adds no second source of any fact.\n"
+          },
+          "axis": "Standards",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "finding_ids": [],
+          "supersedes": [
+            "ts3-review-standards-r1"
+          ]
+        },
+        {
+          "id": "ts3-review-spec-r2",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afdb682fa5ca025aa8ad69f46dd24e2d336782f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:0d8c6df05bf60bc9580bbf041f1f3b705b6fdfc964b239923b1848a54c500206",
+            "excerpt": "Spec pass at 25f5571..fa17d5a: spec.md:478 adds the reviewer-decided Won't handle line, narrows no acceptance row, and TS3-P1 stays closed.\n"
+          },
+          "axis": "Spec",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "finding_ids": [],
+          "supersedes": [
+            "ts3-review-spec-r1"
+          ]
+        },
+        {
+          "id": "ts3-review-coverage-r3",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "afdb682fa5ca025aa8ad69f46dd24e2d336782f3",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:28a5221484927f4d8e269d39cc037a481d3bf0f42b37a8a77e83deb62c48e0dd",
+            "excerpt": "Coverage pass at 25f5571..fa17d5a: spec.md:478 marks both paths as Won't handle, so TS3-C2 is closed; TS3-C1 and its witnesses are unchanged.\n"
+          },
+          "axis": "Coverage",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "finding_ids": [],
+          "supersedes": [
+            "ts3-review-coverage-r2"
           ]
         }
       ]
