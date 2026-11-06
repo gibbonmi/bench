@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/production-test-seam-policy/spec.md",
-  "plan_digest": "sha256:f751c3cde724773c3d43fc845aaf16735229d50bb7885bfe5aecf4f35304510c",
+  "plan_digest": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
   "implementation_session": "",
   "chunks": [
     {
@@ -286,9 +286,9 @@
     {
       "id": "TS3",
       "base": "25f5571dd24d6232974f986c7c601153caf5349a",
-      "tip": "3345204ff2b51418035702472dc1efa6fbc755df",
-      "plan_digest": "sha256:f751c3cde724773c3d43fc845aaf16735229d50bb7885bfe5aecf4f35304510c",
-      "source_digest": "9c0ab83192d6112ce19d04aa55f3ac8ed4d58768",
+      "tip": "3c4d8e1a724f262db9494d109957d78e4e944642",
+      "plan_digest": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
+      "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
       "acceptance_rows": [
         "PS09",
         "PS10",
@@ -376,6 +376,66 @@
               "ref": "claude-agent:ft343-author-03",
               "digest": "sha256:f4d4b060a70ae7d4b693eb66e36b43abf9394d57f576feed4808bccb8df992b7",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/guards/guards_cleanup_test.go,omit,failed,1,TestScanOverrideJoinsBeforeRestore,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/guards,all,passed,57\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,374\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6343,57\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanOverrideJoinsBeforeRestore,\"guards_cleanup_test.go:107: the held worker observed \\\"prior\\\" after its release, want the replacement it ran with\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ts3-03-r1-restore-omission",
+          "performer": "ft343-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-repair-03-r1",
+            "digest": "sha256:1136aa7548746c2ac498258ddeccd9cb7ce1794e923d74770aa465d4753ee6d7",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/diff/command_test.go,omit,failed,1,TestSnapshotOverrideRestoresAfterFailure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/diff,all,passed,101\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,fail,5988,101\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/diff,TestSnapshotOverrideRestoresAfterFailure,\"command_test.go:148: after the fatal path the child observed, want prior=1 replacement=1:\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "3c4d8e1a724f262db9494d109957d78e4e944642",
+          "requirement": "restore-omission",
+          "command": "bench test --package ./internal/diff",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "omit failure-safe restoration; require the distinguishable installed replacement witness to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft343-repair-03-r1",
+              "digest": "sha256:1136aa7548746c2ac498258ddeccd9cb7ce1794e923d74770aa465d4753ee6d7",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/diff/command_test.go,omit,failed,1,TestSnapshotOverrideRestoresAfterFailure,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/diff,all,passed,101\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,352\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/diff,fail,5988,101\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/diff,TestSnapshotOverrideRestoresAfterFailure,\"command_test.go:148: after the fatal path the child observed, want prior=1 replacement=1:\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ts3-03-r1-join-omission",
+          "performer": "ft343-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-repair-03-r1",
+            "digest": "sha256:302441baf4c856c0d0fb645f2d56f2196dd2dd3c938adeefcbb9991244a6b2a6",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/guards/guards_cleanup_test.go,omit,failed,1,TestScanOverrideJoinsBeforeRestore,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/guards,all,passed,57\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,374\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6343,57\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanOverrideJoinsBeforeRestore,\"guards_cleanup_test.go:106: the held worker observed \\\"prior\\\" after its release, want the replacement it ran with\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "3c4d8e1a724f262db9494d109957d78e4e944642",
+          "requirement": "join-omission",
+          "command": "bench test --package ./internal/guards",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "remove join before restoration; require the held live consumer witness to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "claude-agent:ft343-repair-03-r1",
+              "digest": "sha256:302441baf4c856c0d0fb645f2d56f2196dd2dd3c938adeefcbb9991244a6b2a6",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/guards/guards_cleanup_test.go,omit,failed,1,TestScanOverrideJoinsBeforeRestore,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/guards,all,passed,57\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,374\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/guards,fail,6343,57\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/guards,TestScanOverrideJoinsBeforeRestore,\"guards_cleanup_test.go:106: the held worker observed \\\"prior\\\" after its release, want the replacement it ran with\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -486,6 +546,21 @@
         ],
         "TS2": [
           "TS2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:f751c3cde724773c3d43fc845aaf16735229d50bb7885bfe5aecf4f35304510c",
+      "to": "sha256:cb88367034249883e1ef69c35305e63340bbd2ae08f03f5f2f942449807d3698",
+      "chunk_ids": {
+        "TS1": [
+          "TS1"
+        ],
+        "TS2": [
+          "TS2"
+        ],
+        "TS3": [
+          "TS3"
         ]
       }
     }
