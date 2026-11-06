@@ -214,6 +214,72 @@
             "TS2-C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ts2-review-standards-r1",
+          "performer": "ft343-review-ts2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5017bb8a031464c90a925d040c7c25c57b89b955",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts2",
+            "digest": "sha256:6438b5ef3c3fba43b6b10a4a1408697cc761f2d179fde39c3de1f7e49bd84fd8",
+            "excerpt": "Standards reaffirmed at 06ec9df: the repair delta adds no second derivation. The assignedRoot comment now states the field, index, and pointer behavior.\n"
+          },
+          "axis": "Standards",
+          "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "tip": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "finding_ids": [],
+          "supersedes": [
+            "ts2-review-standards"
+          ]
+        },
+        {
+          "id": "ts2-review-spec-r1",
+          "performer": "ft343-review-ts2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5017bb8a031464c90a925d040c7c25c57b89b955",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts2",
+            "digest": "sha256:ff8e37dac8ad7f6045c960944a7662f810ca1df50aa3cee03503dcc4332eda48",
+            "excerpt": "Spec: P1 closed (scope.go:103-112, plus three PS04 cases at derive_test.go:60-71). P2 closed (lane_run_test.go:123 and runbinary_test.go:157 keep the real verifier with the hook installed). The phases row is serial in substance, because the seam is read only on the test goroutine.\n"
+          },
+          "axis": "Spec",
+          "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "tip": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "finding_ids": [],
+          "supersedes": [
+            "ts2-review-spec"
+          ]
+        },
+        {
+          "id": "ts2-review-coverage-r1",
+          "performer": "ft343-review-ts2",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "5017bb8a031464c90a925d040c7c25c57b89b955",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts2",
+            "digest": "sha256:ca338f9995c0efd34929a1480f16ec65cc6b08a80a4feb519661ebe914a6f315",
+            "excerpt": "Coverage: C1 closed with three red-witnessed PS04 forms. Open advice for TS4: an index or field store of a parameter in production code now makes a setter-derived seam without any test override.\n"
+          },
+          "axis": "Coverage",
+          "base": "d626a7a9966a65e54e8aa17089fdaadbe5e69897",
+          "tip": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "finding_ids": [],
+          "supersedes": [
+            "ts2-review-coverage"
+          ]
         }
       ]
     }
@@ -342,3 +408,5 @@ Advice for TS4: decide whether a production setter with no test override is a se
 
 Repair cycles consumed for TS1: 0 of 2.
 Repair cycles consumed for TS2: 1 of 2 (repair round r1).
+The TS2 confirming round closes TS2-P1, TS2-P2, and TS2-C1, and it adds no new finding.
+Advice for TS4: a production store of a parameter into a package map or field now derives a setter seam without a test override. A negative control must decide it.
