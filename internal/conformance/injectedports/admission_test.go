@@ -123,8 +123,8 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 	// The control fixture has one runtime branch that New reaches and one hook that a test
 	// sets. Its store keeps an instance-local collaborator that no row needs.
 	controlTree := map[string]string{
-		"internal/sample/sample.go":      "package sample\n\nimport (\n\t\"os\"\n\t\"testing\"\n)\n\ntype Store struct{ Rename func(string, string) error }\n\nfunc home() bool { return !testing.Testing() || os.Getenv(\"BENCH_LIMIT\") != \"\" }\n\nfunc New() bool { return home() }\n",
-		"internal/sample/sample_test.go": "package sample\n\nimport \"testing\"\n\nfunc TestNew(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\"); _ = New() }\n\nfunc TestStore(t *testing.T) { s := Store{}; s.Rename = func(string, string) error { return nil } }\n\nfunc TestUnrelated(t *testing.T) {}\n",
+		"internal/sample/sample.go":      "package sample\n\nimport (\n\t\"os\"\n\t\"testing\"\n)\n\ntype Store struct{ Rename func(string, string) error }\n\nfunc (s Store) Limit() bool { return os.Getenv(\"BENCH_LIMIT\") != \"\" }\n\nfunc home() bool { return !testing.Testing() || os.Getenv(\"BENCH_LIMIT\") != \"\" }\n\nfunc New() bool { return home() }\n",
+		"internal/sample/sample_test.go": "package sample\n\nimport (\n\t\"os/exec\"\n\t\"testing\"\n)\n\nfunc TestNew(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\"); _ = New() }\n\nfunc TestStore(t *testing.T) { s := Store{}; s.Rename = func(string, string) error { return nil } }\n\nfunc TestStoreLimit(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\"); _ = Store{}.Limit() }\n\nfunc TestAssertOnly(t *testing.T) {\n\tif New() {\n\t\tt.Errorf(\"want %s\", \"BENCH_LIMIT=1\")\n\t}\n}\n\nfunc TestSetOnly(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\") }\n\nfunc TestChild(t *testing.T) {\n\tcmd := exec.Command(\"x\")\n\tcmd.Env = append(cmd.Env, \"BENCH_LIMIT=1\")\n}\n\ntype fixture struct{}\n\nfunc (fixture) start() {\n\tcmd := exec.Command(\"x\")\n\tcmd.Env = append(cmd.Env, \"BENCH_LIMIT=1\")\n}\n\nfunc TestChildMethod(t *testing.T) { fixture{}.start() }\n\nfunc TestUnrelated(t *testing.T) {}\n",
 	}
 	consumer := "internal/sample/sample_test.go::TestNew"
 	branch := Row{Kind: KindRuntime, Package: "internal/sample", Port: "home", Owner: "home", Purpose: "a test may not write the user's home", Isolation: "runtime state only", Consumers: []string{consumer}}
@@ -145,6 +145,15 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			heads: []string{SeamConsumerMessage + ": BENCH_LIMIT names no consumer test"}},
 		{row: "an environment consumer that never sets the hook", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestUnrelated"} })},
 			heads: []string{SeamUnreachedMessage + ": BENCH_LIMIT "}},
+		{row: "an environment consumer whose only entry is an assertion literal", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestAssertOnly"} })},
+			heads: []string{SeamUnreachedMessage + ": BENCH_LIMIT "}},
+		{row: "an in-process consumer that sets the hook but never reaches the owner", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestSetOnly"} })},
+			heads: []string{SeamUnreachedMessage + ": BENCH_LIMIT "}},
+		{row: "an in-process consumer reaches a method owner", rows: []Row{branch, hookRow(func(r *Row) {
+			r.Owner, r.Consumers = "Store.Limit", []string{"internal/sample/sample_test.go::TestStoreLimit"}
+		})}},
+		{row: "a child-process consumer needs no production reach", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestChild"} })}},
+		{row: "a child-process consumer sets the hook through a test method", rows: []Row{branch, hookRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestChildMethod"} })}},
 		{row: "an environment owner that never reads the hook", rows: []Row{branch, hookRow(func(r *Row) { r.Owner = "New" })},
 			heads: []string{SeamOwnerMessage + ": BENCH_LIMIT "}},
 		{row: "a runtime consumer that never reaches the branch", rows: []Row{{Kind: KindRuntime, Package: "internal/sample", Port: "home", Purpose: "p", Isolation: "i", Consumers: []string{"internal/sample/sample_test.go::TestUnrelated"}}, hookRow(nil)},

@@ -78,7 +78,9 @@ func seamDiags(root string, policy Policy) []string {
 
 // controlDiags grades the runtime-branch and environment-hook rows. A runtime consumer
 // reaches its branch through production calls. An environment consumer sets the hook
-// itself or through a helper of its own test package.
+// itself or through a helper of its own test package. A consumer that sets it for a child
+// process is accepted here, and review owns whether that child runs the owner. A consumer
+// that sets it in its own process must also reach the owner through production calls.
 func (c *seamCensus) controlDiags(controls *controlCensus, registered map[string]Row) []string {
 	var diags []string
 	for _, branch := range sortedKeys(controls.runtime) {
@@ -102,8 +104,15 @@ func (c *seamCensus) controlDiags(controls *controlCensus, registered map[string
 			continue
 		}
 		_, owns := readers[row.Package+"."+row.Owner]
+		owner := c.bodies[row.Package+"."+row.Owner]
 		diags = append(diags, rowEvidence(row, hook, owns, func(file, test string) (bool, bool) {
-			return c.reachesControl(file, test, false, func(facts *funcFacts) bool { return controls.sets[facts][hook] })
+			declared, child := c.reachesControl(file, test, false, func(facts *funcFacts) bool { return controls.children[facts][hook] })
+			if !declared || child {
+				return declared, child
+			}
+			_, setenv := c.reachesControl(file, test, false, func(facts *funcFacts) bool { return controls.setenvs[facts][hook] })
+			_, reached := c.reachesControl(file, test, true, func(facts *funcFacts) bool { return facts == owner })
+			return true, setenv && reached
 		})...)
 	}
 	return diags

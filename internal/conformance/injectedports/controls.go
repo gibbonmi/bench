@@ -32,25 +32,37 @@ var envName = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
 //
 // A runtime branch is a production body that calls testing.Testing through any import
 // binding, or calls a production predicate that forwards to it. An environment hook is an
-// identity that a production reader reads and that test source sets, through Setenv or
-// through a "NAME=value" entry. Test-support packages contribute setters, never readers
-// or branches.
+// identity that test source controls at a production reader: a "NAME=value" entry that
+// flows into a process environment controls every reader of the name, and a Setenv in a
+// test's own process controls each reader that the same test reaches through production
+// calls. Test-support packages contribute setters, never readers or branches.
 type controlCensus struct {
-	runtime map[string]string              // branch identity -> the probe or predicate it calls
-	readers map[string]map[string]string   // hook name -> reader body identity -> site
-	sets    map[*funcFacts]map[string]bool // test body -> environment names it sets
-	hooks   map[string]bool
-	diags   []string
+	runtime  map[string]string              // branch identity -> the probe or predicate it calls
+	readers  map[string]map[string]string   // hook name -> controlled reader body identity -> site
+	setenvs  map[*funcFacts]map[string]bool // setter body -> names it sets in its own process
+	children map[*funcFacts]map[string]bool // setter body -> names it sets for a child process
+	hooks    map[string]bool
+	diags    []string
 }
 
 func (c *seamCensus) deriveControls(families map[string][]string) *controlCensus {
 	c.families = families
-	cc := &controlCensus{runtime: map[string]string{}, readers: map[string]map[string]string{}, sets: map[*funcFacts]map[string]bool{}, hooks: map[string]bool{}}
-	set := map[string]bool{}
-	for _, facts := range c.testBodies {
-		cc.sets[facts] = c.namesSet(facts)
-		for name := range cc.sets[facts] {
-			set[name] = true
+	cc := &controlCensus{runtime: map[string]string{}, readers: map[string]map[string]string{}, setenvs: map[*funcFacts]map[string]bool{}, children: map[*funcFacts]map[string]bool{}, hooks: map[string]bool{}}
+	reach := c.envReach()
+	child := map[string]bool{}
+	setters := append([]*funcFacts{}, c.testBodies...)
+	for _, key := range sortedKeys(c.testMethods) {
+		setters = append(setters, c.testMethods[key]...)
+	}
+	for _, id := range sortedKeys(c.bodies) {
+		if c.support[c.bodies[id].ctx.pkg] {
+			setters = append(setters, c.bodies[id])
+		}
+	}
+	for _, facts := range setters {
+		cc.setenvs[facts], cc.children[facts] = c.setenvNames(facts), c.childNames(facts, reach)
+		for name := range cc.children[facts] {
+			child[name] = true
 		}
 	}
 	predicates := map[string]bool{}
@@ -65,9 +77,6 @@ func (c *seamCensus) deriveControls(families map[string][]string) *controlCensus
 	for _, id := range sortedKeys(c.bodies) {
 		facts := c.bodies[id]
 		if c.support[facts.ctx.pkg] {
-			for name := range c.namesSet(facts) {
-				set[name] = true
-			}
 			continue
 		}
 		for _, callee := range sortedKeys(facts.calls) {
@@ -92,16 +101,86 @@ func (c *seamCensus) deriveControls(families map[string][]string) *controlCensus
 			}
 		}
 	}
-	for name := range cc.readers {
-		if set[name] {
+	controlled := c.inProcessReaders(cc)
+	for name, byReader := range cc.readers {
+		for id := range byReader {
+			if !child[name] && !controlled[name][id] {
+				delete(byReader, id)
+			}
+		}
+		if len(byReader) > 0 {
 			cc.hooks[name] = true
 		}
 	}
 	return cc
 }
 
-// namesSet returns the environment names that one body sets.
-func (c *seamCensus) namesSet(facts *funcFacts) map[string]bool {
+// inProcessReaders returns, for each name, the readers that some top-level test both sets
+// in its own process, itself or through its test helpers and test-support calls, and
+// reaches through production calls.
+func (c *seamCensus) inProcessReaders(cc *controlCensus) map[string]map[string]bool {
+	callers := map[*funcFacts][]*funcFacts{}
+	always := func(*funcFacts) bool { return true }
+	for _, facts := range c.allBodies() {
+		for _, next := range c.successors(facts, always) {
+			callers[next] = append(callers[next], facts)
+		}
+	}
+	reachers := map[string]map[*funcFacts]bool{}
+	reachersOf := func(reader string) map[*funcFacts]bool {
+		if found, done := reachers[reader]; done {
+			return found
+		}
+		found := map[*funcFacts]bool{c.bodies[reader]: true}
+		queue := []*funcFacts{c.bodies[reader]}
+		for len(queue) > 0 {
+			facts := queue[0]
+			queue = queue[1:]
+			for _, caller := range callers[facts] {
+				if !found[caller] {
+					found[caller] = true
+					queue = append(queue, caller)
+				}
+			}
+		}
+		reachers[reader] = found
+		return found
+	}
+	support := func(facts *funcFacts) bool { return c.support[facts.ctx.pkg] }
+	controlled := map[string]map[string]bool{}
+	for _, id := range sortedKeys(c.tests) {
+		entry := c.tests[id]
+		if !strings.HasPrefix(entry.facts.ctx.owner, "Test") {
+			continue
+		}
+		visited := map[*funcFacts]bool{entry.facts: true}
+		queue := []*funcFacts{entry.facts}
+		for len(queue) > 0 {
+			facts := queue[0]
+			queue = queue[1:]
+			for name := range cc.setenvs[facts] {
+				for reader := range cc.readers[name] {
+					if reachersOf(reader)[entry.facts] {
+						if controlled[name] == nil {
+							controlled[name] = map[string]bool{}
+						}
+						controlled[name][reader] = true
+					}
+				}
+			}
+			for _, next := range c.successors(facts, support) {
+				if !visited[next] {
+					visited[next] = true
+					queue = append(queue, next)
+				}
+			}
+		}
+	}
+	return controlled
+}
+
+// setenvNames returns the environment names that one body sets through Setenv.
+func (c *seamCensus) setenvNames(facts *funcFacts) map[string]bool {
 	names := map[string]bool{}
 	for _, op := range facts.envSets {
 		values, _ := c.values(facts.ctx, op.scope, op.expr, 0)
@@ -111,8 +190,18 @@ func (c *seamCensus) namesSet(facts *funcFacts) map[string]bool {
 			}
 		}
 	}
-	for _, op := range facts.entries {
-		for _, name := range c.entryNames(facts.ctx, op) {
+	return names
+}
+
+// childNames returns the environment names of the "NAME=value" entries of one body whose
+// value reaches a process environment.
+func (c *seamCensus) childNames(facts *funcFacts, reach func(flowNode) bool) map[string]bool {
+	names := map[string]bool{}
+	for _, entry := range facts.entries {
+		if !reach(entry.to) {
+			continue
+		}
+		for _, name := range c.entryNames(facts.ctx, entry.operand) {
 			names[name] = true
 		}
 	}
@@ -247,8 +336,9 @@ func (c *seamCensus) argumentValues(ctx *funcContext, index, depth int) ([]strin
 
 // reachesControl reports whether the top-level test in file reaches a body that hit
 // accepts. It follows the test's own helpers, the test functions it names as values, and
-// the test bodies that assign a test variable it reads, such as a check table. When
-// throughProduction holds, it also follows the production calls along the way.
+// the test bodies that assign a test variable it reads, such as a check table, and the
+// test methods it calls. When throughProduction holds, it also follows the production
+// calls along the way.
 func (c *seamCensus) reachesControl(file, test string, throughProduction bool, hit func(*funcFacts) bool) (declared, reached bool) {
 	scope, known := c.testFiles[file]
 	entry := c.tests[scope+"."+test]
@@ -257,36 +347,49 @@ func (c *seamCensus) reachesControl(file, test string, throughProduction bool, h
 	}
 	visited := map[*funcFacts]bool{entry.facts: true}
 	queue := []*funcFacts{entry.facts}
-	enqueue := func(facts *funcFacts) {
-		if facts != nil && !visited[facts] {
-			visited[facts] = true
-			queue = append(queue, facts)
-		}
-	}
+	production := func(*funcFacts) bool { return throughProduction }
 	for len(queue) > 0 {
 		facts := queue[0]
 		queue = queue[1:]
 		if hit(facts) {
 			return true, true
 		}
-		for callee := range facts.calls {
-			if next := c.tests[callee]; next != nil {
-				enqueue(next.facts)
-			} else if throughProduction {
-				enqueue(c.bodies[callee])
-			}
-		}
-		if c.bodies[facts.ctx.pkg+"."+facts.ctx.owner] == facts {
-			continue
-		}
-		for read := range facts.reads {
-			if next := c.tests[read]; next != nil {
-				enqueue(next.facts)
-			}
-			for _, assigner := range c.assigners[read] {
-				enqueue(assigner)
+		for _, next := range c.successors(facts, production) {
+			if !visited[next] {
+				visited[next] = true
+				queue = append(queue, next)
 			}
 		}
 	}
 	return true, false
+}
+
+// successors returns the bodies that one body hands control to: the test functions and
+// test methods it calls, the production bodies it calls that production admits, and,
+// for a test body, the test functions it names and the test bodies that assign a test
+// variable it reads. A method call names each method of that name in the caller's package.
+func (c *seamCensus) successors(facts *funcFacts, production func(*funcFacts) bool) []*funcFacts {
+	var next []*funcFacts
+	for callee := range facts.calls {
+		if entry := c.tests[callee]; entry != nil {
+			next = append(next, entry.facts)
+			continue
+		}
+		next = append(next, c.testMethods[callee]...)
+		for _, body := range append([]*funcFacts{c.bodies[callee]}, c.methods[callee]...) {
+			if body != nil && production(body) {
+				next = append(next, body)
+			}
+		}
+	}
+	if c.bodies[facts.ctx.pkg+"."+facts.ctx.owner] == facts {
+		return next
+	}
+	for read := range facts.reads {
+		if entry := c.tests[read]; entry != nil {
+			next = append(next, entry.facts)
+		}
+		next = append(next, c.assigners[read]...)
+	}
+	return next
 }

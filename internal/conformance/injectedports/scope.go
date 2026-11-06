@@ -18,12 +18,21 @@ type funcFacts struct {
 	// call or a single return of a single call.
 	forward string
 	// ctx is the resolution context of the body. envReads are the name operands of its
-	// environment reads, envSets the name operands of its Setenv calls, and entries its
-	// outermost string expressions, any of which can be a "NAME=value" environment entry.
+	// environment reads and envSets the name operands of its Setenv calls. entries are its
+	// outermost string expressions that flow to some place, any of which can be a
+	// "NAME=value" environment entry, and flows are the places its other values flow to.
 	// sites are its calls with their arguments, so a parameter resolves at its callers.
-	ctx                        *funcContext
-	envReads, envSets, entries []operand
-	sites                      []callSite
+	ctx               *funcContext
+	envReads, envSets []operand
+	entries           []envEntry
+	flows             []flow
+	sites             []callSite
+}
+
+// envEntry is one string expression with the place its value flows to.
+type envEntry struct {
+	operand
+	to flowNode
 }
 
 // funcContext is where a body's names resolve: its file, its package, its owner name, and
@@ -34,6 +43,8 @@ type funcContext struct {
 	owner  string
 	top    *bodyScope
 	params []string
+	// variadic holds when the last parameter takes the tail arguments of a call.
+	variadic bool
 }
 
 // operand is one expression with the lexical scope it was written in.
@@ -91,6 +102,7 @@ func factsOf(fset *token.FileSet, file *sourceFile, pkg string, fn *ast.FuncDecl
 		for _, name := range field.Names {
 			w.facts.ctx.params = append(w.facts.ctx.params, name.Name)
 		}
+		_, w.facts.ctx.variadic = field.Type.(*ast.Ellipsis)
 	}
 	if fun := forwardedCall(fn.Body); fun != nil {
 		w.facts.forward = w.resolve(fun)
@@ -184,18 +196,25 @@ func (w *walker) walk(root ast.Node) {
 			declareGen(w.scope, typed.Decl)
 		case *ast.CallExpr:
 			w.call(typed)
+			if callee := w.callee(typed.Fun); callee != "" {
+				w.flowFrom(flowNode{kind: flowReturn, name: callee}, stack)
+			}
 		case *ast.BasicLit, *ast.BinaryExpr:
-			if !concatOperand(stack, node) {
-				w.facts.entries = append(w.facts.entries, w.operand(node.(ast.Expr)))
+			if to, ok := w.carrier(stack); ok && !concatOperand(stack, node) {
+				w.facts.entries = append(w.facts.entries, envEntry{operand: w.operand(node.(ast.Expr)), to: to})
 			}
 		case *ast.SelectorExpr:
 			selectors[typed.Sel] = true
 			if seam := w.resolve(typed); seam != "" {
 				w.facts.reads[seam] = true
+			} else {
+				w.flowFrom(w.field(typed.Sel.Name), stack)
 			}
 		case *ast.Ident:
 			if seam := w.resolve(typed); seam != "" && !selectors[typed] {
 				w.facts.reads[seam] = true
+			} else if owner := w.scope.owner(typed.Name); owner != nil && !selectors[typed] {
+				w.flowFrom(flowNode{kind: flowLocal, scope: owner, name: typed.Name}, stack)
 			}
 		}
 		return true
@@ -203,12 +222,15 @@ func (w *walker) walk(root ast.Node) {
 }
 
 // call records one call: its callee, its arguments for caller-side resolution, an
-// environment read, or a Setenv of any receiver.
+// environment read, or a Setenv of any receiver. A method call records the method name of
+// the walked package.
 func (w *walker) call(call *ast.CallExpr) {
 	callee := w.resolve(call.Fun)
 	if callee != "" {
 		w.facts.calls[callee] = true
 		w.facts.sites = append(w.facts.sites, callSite{callee: callee, args: call.Args, scope: w.scope})
+	} else if method := w.callee(call.Fun); method != "" {
+		w.facts.calls[method] = true
 	}
 	if len(call.Args) == 0 {
 		return

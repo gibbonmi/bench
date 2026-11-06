@@ -43,6 +43,11 @@ type seamCensus struct {
 	// assign it, so a test that reads a table reaches the functions the table names.
 	assigners  map[string][]*funcFacts
 	testBodies []*funcFacts
+	// testMethods maps a method name of a test package to the method bodies of its test
+	// files, so a consumer and an environment entry can reach through a fixture's method.
+	testMethods map[string][]*funcFacts
+	// methods maps a method name of a package to its production method bodies.
+	methods map[string][]*funcFacts
 }
 
 // constant is one constant declaration with the context its value resolves in.
@@ -60,7 +65,7 @@ func deriveSeams(tree *sourceTree) *seamCensus {
 		tests: map[string]*funcEntry{}, testFiles: map[string]string{}, setters: map[string][]string{},
 		variables: map[string]string{}, bodies: map[string]*funcFacts{}, consts: map[string]constant{},
 		imports: map[string]map[string]bool{}, tested: map[string]bool{}, mains: map[string]bool{},
-		assigners: map[string][]*funcFacts{},
+		assigners: map[string][]*funcFacts{}, methods: map[string][]*funcFacts{}, testMethods: map[string][]*funcFacts{},
 	}
 	for _, dir := range sortedKeys(tree.packages) {
 		census.indexPackage(tree.fset, tree.packages[dir])
@@ -192,6 +197,10 @@ func (c *seamCensus) indexPackage(fset *token.FileSet, pkg *sourcePackage) {
 				if typed.Name.Name != "init" {
 					c.bodies[pkg.rel+"."+ownerName(typed)] = facts
 				}
+				if typed.Recv != nil {
+					key := methodKey(pkg.rel, typed.Name.Name)
+					c.methods[key] = append(c.methods[key], facts)
+				}
 				if typed.Recv == nil && typed.Name.Name != "init" {
 					c.prod[pkg.rel+"."+typed.Name.Name] = &funcEntry{file: file, facts: facts}
 				}
@@ -214,7 +223,10 @@ func (c *seamCensus) indexPackage(fset *token.FileSet, pkg *sourcePackage) {
 			if gen, ok := decl.(*ast.GenDecl); ok {
 				c.declareConsts(file, scope, gen)
 			}
-			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Recv == nil {
+			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Recv != nil {
+				key := methodKey(scope, fn.Name.Name)
+				c.testMethods[key] = append(c.testMethods[key], factsOf(fset, file, scope, fn))
+			} else if ok {
 				facts := factsOf(fset, file, scope, fn)
 				c.tests[scope+"."+fn.Name.Name] = &funcEntry{file: file, facts: facts}
 				c.testBodies = append(c.testBodies, facts)

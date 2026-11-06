@@ -110,7 +110,7 @@ func TestInjectedPortPhaseFamilyReadsTheGradedRegistry(t *testing.T) {
 			root := t.TempDir()
 			files := map[string]string{
 				"internal/releasepreflight/command.go":      "package releasepreflight\n\nimport (\n\t\"os\"\n\t\"strings\"\n)\n\ntype runner struct{}\n\nfunc (r *runner) runExternal(name string) string { return os.Getenv(\"BENCH_PREFLIGHT_\" + strings.ToUpper(name)) }\n",
-				"internal/releasepreflight/command_test.go": "package releasepreflight\n\nimport \"testing\"\n\nfunc TestPhases(t *testing.T) {\n\tt.Setenv(\"BENCH_PREFLIGHT_VULNERABILITY\", \"x\")\n\tt.Setenv(\"BENCH_PREFLIGHT_NEWPHASE\", \"x\")\n}\n",
+				"internal/releasepreflight/command_test.go": "package releasepreflight\n\nimport \"testing\"\n\nfunc TestPhases(t *testing.T) {\n\tt.Setenv(\"BENCH_PREFLIGHT_VULNERABILITY\", \"x\")\n\tt.Setenv(\"BENCH_PREFLIGHT_NEWPHASE\", \"x\")\n\t_ = (&runner{}).runExternal(\"x\")\n}\n",
 			}
 			if test.registry != "" {
 				files["internal/releaseevidence/registry.json"] = `{"verify": ` + test.registry + `, "publish_before": [], "publish_only": []}`

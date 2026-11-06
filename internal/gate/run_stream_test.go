@@ -276,12 +276,11 @@ func TestGateRunInheritsTheRecordWhenTheParentRetainedNoStream(t *testing.T) {
 	root := newLoggingPruneRoot(t)
 	run := seededRun(0)
 	seedRecords(t, root, 0)
-	setGateLogEnv(t, []string{
-		gateLogPathEnv + "=" + gateLogRecordPath(root, run),
-		gateLogRootEnv + "=" + root,
-		gateLogRunEnv + "=" + run,
-		gateLogStreamEnv + "=",
-	})
+	setGateLogEnv(t, nil)
+	t.Setenv(gateLogPathEnv, gateLogRecordPath(root, run))
+	t.Setenv(gateLogRootEnv, root)
+	t.Setenv(gateLogRunEnv, run)
+	t.Setenv(gateLogStreamEnv, "")
 
 	childCtx, closeChild := inheritGateRunLog(context.Background(), io.Discard)
 	defer closeChild()

@@ -158,9 +158,11 @@ func TestSeamDerivationForms(t *testing.T) {
 		hook     = UnregisteredHookMessage + ": "
 		phase    = "package sample\n\nimport (\n\t\"os\"\n\t\"strings\"\n)\n\nfunc run(name string) string { return os.Getenv(\"BENCH_PREFLIGHT_\" + strings.ToUpper(name)) }\n"
 		readPath = " is read by internal/sample.run at internal/sample/sample.go:8 and set by test source"
-		setGate  = "package sample\n\nimport \"testing\"\n\nfunc TestRun(t *testing.T) { t.Setenv(\"BENCH_PREFLIGHT_GATE\", \"x\") }\n"
+		setGate  = "package sample\n\nimport \"testing\"\n\nfunc TestRun(t *testing.T) { t.Setenv(\"BENCH_PREFLIGHT_GATE\", \"x\"); _ = run(\"gate\") }\n"
 		declared = "package sample\n\nimport \"os\"\n\nfunc supplied(names []string) {\n\tfor _, name := range names {\n\t\t_, _ = os.LookupEnv(name)\n\t}\n}\n"
-		entry    = "package sample\n\nimport \"testing\"\n\nconst prefix = \"BENCH_PREFLIGHT_\"\n\nfunc TestRun(t *testing.T) { _ = []string{prefix + \"%s=\" + t.TempDir()} }\n"
+		entry    = "package sample\n\nimport (\n\t\"os/exec\"\n\t\"testing\"\n)\n\nconst prefix = \"BENCH_PREFLIGHT_\"\n\nfunc TestRun(t *testing.T) {\n\tcmd := exec.Command(\"x\")\n\tcmd.Env = append(cmd.Env, prefix+\"%s=\"+t.TempDir())\n}\n"
+		limits   = "package sample\n\nimport \"os\"\n\nfunc Limits() []string { return []string{os.Getenv(\"BENCH_A\"), os.Getenv(\"BENCH_B\"), os.Getenv(\"BENCH_C\")} }\n"
+		limitAt  = " is read by internal/sample.Limits at internal/sample/sample.go:5 and set by test source"
 	)
 	family := func(phases ...string) map[string][]string {
 		return map[string][]string{"internal/sample.run.name": phases}
@@ -194,12 +196,24 @@ func TestSeamDerivationForms(t *testing.T) {
 		}, nil, []string{UnresolvedHookMessage + ": internal/sample.read reads the environment at internal/sample/sample.go:5"}},
 		{"constant caller arguments resolve a reader parameter", map[string]string{
 			prod:   "package sample\n\nimport \"os\"\n\nfunc read(key string) string { return os.Getenv(key) }\n\nfunc Limit() string { return read(\"BENCH_LIMIT\") }\n",
-			inside: "package sample\n\nimport \"testing\"\n\nfunc TestLimit(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\") }\n",
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestLimit(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\"); _ = Limit() }\n",
 		}, nil, []string{hook + "BENCH_LIMIT is read by internal/sample.read at internal/sample/sample.go:5"}},
+		{"negative: an in-process set that reaches no reader derives no hook", map[string]string{
+			prod:   "package sample\n\nimport \"os\"\n\nfunc read(key string) string { return os.Getenv(key) }\n\nfunc Limit() string { return read(\"BENCH_LIMIT\") }\n",
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestLimit(t *testing.T) { t.Setenv(\"BENCH_LIMIT\", \"1\") }\n",
+		}, nil, nil},
 		{"a declared empty family resolves to no hooks", map[string]string{prod: declared, inside: setGate},
 			map[string][]string{"internal/sample.supplied.name": {}}, nil},
 		{"PS11 an absent family leaves a declared-list reader unresolved", map[string]string{prod: declared, inside: setGate}, nil,
 			[]string{UnresolvedHookMessage + ": internal/sample.supplied reads the environment at internal/sample/sample.go:7"}},
+		{"an entry reaches a process through a local, a helper parameter, a method, a result, and a field", map[string]string{
+			prod:   limits,
+			inside: "package sample\n\nimport (\n\t\"os/exec\"\n\t\"testing\"\n)\n\ntype fixture struct{ env []string }\n\ntype runner struct{}\n\nfunc TestRun(t *testing.T) {\n\tentries := []string{\"BENCH_A=1\"}\n\trun(entries...)\n\trunner{}.start(withB())\n\tf := fixture{env: []string{\"BENCH_C=1\"}}\n\tcmd := exec.Command(\"x\")\n\tcmd.Env = f.env\n}\n\nfunc run(env ...string) { cmd := exec.Command(\"x\"); cmd.Env = env }\n\nfunc withB() []string { return []string{\"BENCH_B=1\"} }\n\nfunc (runner) start(env []string) { _ = exec.Cmd{Env: env} }\n",
+		}, nil, []string{hook + "BENCH_A" + limitAt, hook + "BENCH_B" + limitAt, hook + "BENCH_C" + limitAt}},
+		{"negative: an entry in an assertion or a comparison sets nothing", map[string]string{
+			prod:   limits,
+			inside: "package sample\n\nimport \"testing\"\n\nfunc TestRun(t *testing.T) {\n\tif got := Limits(); got[0] == \"BENCH_A=1\" {\n\t\tt.Fatalf(\"got %q, want %q\", got, \"BENCH_B=1\")\n\t}\n\twant := []string{\"BENCH_C=1\"}\n\t_ = want\n}\n",
+		}, nil, nil},
 		{"negative: a test-support answer-path reader", map[string]string{
 			"go.mod":                  module,
 			"internal/probe/probe.go": "package probe\n\nimport \"os\"\n\nconst Env = \"BENCH_TEST_PROBE\"\n\nfunc Answer() string { return os.Getenv(Env) }\n",
