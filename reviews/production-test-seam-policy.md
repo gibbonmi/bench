@@ -648,6 +648,22 @@ The author `ft343-author-03` reported these witness reds before `3345204`. Each 
 | PS33 | `internal/releasepreflight/vulnerability.go` | the DATE read returns an empty value | `TestVulnerabilityEntryDateOverride` |
 | PS58 | `internal/bounds/bounds.go` | the context drops its parent | `TestUnboundedParentCancellation` |
 
+The repair session `ft343-repair-03-r1` reported these witness reds before `3c4d8e1`. Each mutant reported `bit`, and each file restored.
+
+| file | mutation | failing test |
+|---|---|---|
+| `internal/gate/testlog_exec.go` | the root comes from the working directory, not the environment | `TestCreateTestLogKeysThePackageByTheConformanceRoot` |
+| `controls.go` | the reader reach check is always true | `TestSeamDerivationForms` |
+| `controls.go` | the test-method successors are omitted | `TestSeamAdmissionEvidence` |
+| `controls.go` | the production method successors are dropped | `TestSeamAdmissionEvidence` |
+| `controls.go` | the entry reach filter is disabled | `TestSeamAdmissionEvidence` |
+| `envflow.go` | an unknown position counts as an environment | `TestSeamDerivationForms` |
+| `envflow.go` | a parameter slot, method key, keyed field, or return flow is dropped | `TestSeamDerivationForms` |
+| `seams.go` | the owner reach is ignored | `TestSeamAdmissionEvidence` |
+| `seams.go` | the child acceptance is dropped | `TestSeamAdmissionEvidence` |
+
+During the repair, the orchestrator made a decision under spec line 135. A hook derives only from a test set that reaches its reader, or from a child-process entry. That decision replaces the earlier literal rule, and it removed seven rows with no reaching test.
+
 The author did not demonstrate a PS34 readiness omission, because `bench probe` has no route to the ship-tier root test.
 
 The orchestrator decided two spec gaps on 2026-11-06, and the reviewer can veto both. The literal environment-hook rule of spec line 135 bounds the admission set. The readiness witness lives in the native release probe.
