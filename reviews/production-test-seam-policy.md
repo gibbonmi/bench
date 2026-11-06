@@ -297,6 +297,16 @@ The author `ft343-author-02` reported these witness reds before `cdeb6e3`. Each 
 | `seams.go` | the duplicate, alias, and orphan checks are removed one at a time | PS20, PS21, the stale-row case |
 | `seams.go` | the unregistered-setter diagnostic is removed | PS07, PS08 |
 
+The repair session `ft343-repair-02-r1` reported these witness reds at `25f5571`. Each probe row restored the file.
+
+| file | mutation | failing test |
+|---|---|---|
+| `scope.go` | the pointer case matches a different node type | `TestSeamDerivationForms/PS04_pointer_replacement` |
+| `scope.go` | the index case matches a different node type | `TestSeamDerivationForms/PS04_index_replacement` |
+| `scope.go` | the old import-only selector check returns | `TestSeamDerivationForms/PS04_same-package_field_replacement` |
+| `internal/runbinary/runbinary.go` | the verifier is forced to success | `TestLaneRunBinaryHookKeepsFreshnessRefusal` |
+| `internal/runbinary/runbinary.go` | the verifier is forced to success | `TestSelectRunBinaryHookKeepsFreshnessRefusal` |
+
 The reviewer decided on 2026-11-06 to retire `indexEncoder`, its setter, and its forwarder, because the seam had no consumer and no injectable failure.
 
 ## Standards
