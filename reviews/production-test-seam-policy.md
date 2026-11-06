@@ -504,6 +504,74 @@
             "TS3-C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ts3-review-standards-r1",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:292edd80af86116d367d206f4cda917fbbee06e273ddc08a859e35f09c90615d",
+            "excerpt": "Standards reaffirmed at d8a77f1: envflow.go is the only flow derivation, and consumer reach and hook derivation share one successors walk.\n"
+          },
+          "axis": "Standards",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "3c4d8e1a724f262db9494d109957d78e4e944642",
+          "finding_ids": [],
+          "supersedes": [
+            "ts3-review-standards"
+          ]
+        },
+        {
+          "id": "ts3-review-spec-r1",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:4eeb8d745615a26b0a66e0c7f453112c4e72fca7f41802189c04be1121c34870",
+            "excerpt": "Spec: TS3-P1 closed; BENCH_OFFLINE and PATH name consumers that reach their Go owners. The reach-based hook decision is sound against spec lines 135 and 181. Sampled 7 child-process rows; 5 confirmed, 2 likely.\n"
+          },
+          "axis": "Spec",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "3c4d8e1a724f262db9494d109957d78e4e944642",
+          "finding_ids": [],
+          "supersedes": [
+            "ts3-review-spec"
+          ]
+        },
+        {
+          "id": "ts3-review-coverage-r1",
+          "performer": "ft343-review-ts3",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "7b6cee2ad8cad7d40aedec71b95b9d3169ff942b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts3",
+            "digest": "sha256:6463811d5f9546bbd66cbf220c41cc80d88f4e53e39182a5ed528e2befaa7adc",
+            "excerpt": "Coverage: TS3-C1 closed through env-flow positions. TS3-C2 open: an in-process set reached only through a function value, or inherited by a child with no explicit entry, derives no hook and no diagnostic, so the census fails open.\n"
+          },
+          "axis": "Coverage",
+          "base": "25f5571dd24d6232974f986c7c601153caf5349a",
+          "tip": "3c4d8e1a724f262db9494d109957d78e4e944642",
+          "finding_ids": [
+            "TS3-C2"
+          ],
+          "supersedes": [
+            "ts3-review-coverage"
+          ]
         }
       ]
     }
@@ -715,6 +783,10 @@ Advice for the final verification: record a PS34 readiness omission red through 
 
 Repair cycles consumed for TS1: 0 of 2.
 Repair cycles consumed for TS2: 1 of 2 (repair round r1).
-Repair cycles consumed for TS3: 1 of 2 (repair round r1).
+Repair cycles consumed for TS3: 2 of 2 (repair rounds r1 and r2).
+The TS3 confirming round closes TS3-P1 and TS3-C1, and it opens TS3-C2.
+
+- TS3-C2, severity 3, confidence 6, auto-fix under `--auto-approve` in repair round r2. The reach-based census fails open in two cases. One is an in-process set that reaches its reader only through a function value. The other is a child that inherits the set with no explicit entry.
+
 The TS2 confirming round closes TS2-P1, TS2-P2, and TS2-C1, and it adds no new finding.
 Advice for TS4: a production store of a parameter into a package map or field now derives a setter seam without a test override. A negative control must decide it.
