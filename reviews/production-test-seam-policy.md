@@ -486,6 +486,32 @@ The repair session `ft343-repair-02-r1` reported these witness reds at `25f5571`
 
 The reviewer decided on 2026-11-06 to retire `indexEncoder`, its setter, and its forwarder, because the seam had no consumer and no injectable failure.
 
+## TS3 author witness reds
+
+The author `ft343-author-03` reported these witness reds before `3345204`. Each mutant reported `bit`, and each file restored byte-identically.
+
+| row | file | mutation | failing test |
+|---|---|---|---|
+| PS09 | `source.go` | the alias import binding is dropped | `TestSeamDerivationForms` |
+| PS56 | `controls.go` | the forwarding predicate callee is removed | `TestSeamDerivationForms` |
+| PS10 | `controls.go` | the case fold is disabled | `TestSeamDerivationForms` |
+| PS11 | `controls.go` | every identity counts as resolved | `TestSeamDerivationForms` |
+| PS31, PS32 | `controls.go` | the family lookup is disabled | `TestSeamDerivationForms` |
+| PS31, PS32 | `controls.go` | the environment entries are dropped | `TestSeamDerivationForms` |
+| PS11 | `controls.go` | the empty-family split is removed | `TestSeamDerivationForms` |
+| PS65 | `variables.go` | the test-support classification is empty | `TestSeamDerivationForms` |
+| PS26, PS63 | `controls.go` | the runtime production reach is disabled | `TestSeamAdmissionEvidence` |
+| PS22 | `internal/diff/command_test.go` | the failure-safe cleanup is omitted | `TestSnapshotOverrideRestoresAfterFailure` |
+| PS23 | `internal/guards/guards_cleanup_test.go` | the join is omitted | `TestScanOverrideJoinsBeforeRestore` |
+| PS24 | `internal/assessment/store.go` | a shared package global replaces the instance collaborator | `TestInstanceCollaboratorsStayLocal` |
+| PS25 | `internal/releasepreflight/vulnerability.go` | the scanner override returns success | `TestSeamAuthorityPreserved` |
+| PS33 | `internal/releasepreflight/vulnerability.go` | the DATE read returns an empty value | `TestVulnerabilityEntryDateOverride` |
+| PS58 | `internal/bounds/bounds.go` | the context drops its parent | `TestUnboundedParentCancellation` |
+
+The author did not demonstrate a PS34 readiness omission, because `bench probe` has no route to the ship-tier root test.
+
+The orchestrator decided two spec gaps on 2026-11-06, and the reviewer can veto both. The literal environment-hook rule of spec line 135 bounds the admission set. The readiness witness lives in the native release probe.
+
 ## Standards
 
 TS1 findings: 0. Worst issue: none.
