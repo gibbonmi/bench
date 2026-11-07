@@ -182,8 +182,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT477 (LOW, decision required) — the bounded repair policy defines its severity scale, its blocking priority, its re-review scope, and a small finding.**
 
-**FT486 (LOW) — the author charge carries the November rules for must-fail clauses, preservation rows, silent witnesses, and named input classes.**
-
 **FT487 (LOW) — `bench commitment show` prints the delivered binding record of an outcome.**
 
 **FT488 (LOW) — `bench spec widen` derives the ownership-fence union and the `(new)` marker from the ticket `Writes:` lines.**
@@ -302,6 +300,8 @@ qualification requirements are met.
 **FT465 (LOW, parked pending a linked-repo request) — a linked repository with a declared lane can opt in to the background grade.**
 
 **FT476 (LOW, parked pending a repro) — the checkout guard ignores the temporary file of a background record write.**
+
+**FT492 (LOW, parked pending a repro) — the live branch of the nested sweep validates a store record before it deletes the store.**
 
 ## Release and bank reassessment gate
 
