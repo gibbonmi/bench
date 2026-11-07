@@ -311,15 +311,16 @@ type heredoc struct {
 }
 
 // stripHeredocBodies removes each heredoc body and its delimiter line. A body starts
-// after the line on which every quote closes, so a quote that spans lines keeps its
-// lines in the command.
+// after the line on which every quote closes and no backslash-newline continues the
+// line, so a quote or a continuation that spans lines keeps its lines in the command.
 func stripHeredocBodies(s string) string {
 	lines := strings.Split(s, "\n")
 	out := make([]string, 0, len(lines))
 	var pending []heredoc
 	var quote rune
+	continued := false
 	for _, line := range lines {
-		if len(pending) > 0 && quote == 0 {
+		if len(pending) > 0 && quote == 0 && !continued {
 			candidate := line
 			if pending[0].dash {
 				candidate = strings.TrimLeft(candidate, "\t")
@@ -330,21 +331,23 @@ func stripHeredocBodies(s string) string {
 			continue
 		}
 		out = append(out, line)
-		pending, quote = scanHeredocOperators(line, quote, pending)
+		pending, quote, continued = scanHeredocOperators(line, quote, pending)
 	}
 	return strings.Join(out, "\n")
 }
 
 // scanHeredocOperators appends each heredoc that line opens outside quotes and outside
 // a backslash escape. quote is the quote that is open at the start of the line, or 0.
-// It returns the quote that is open at the end of the line, or 0.
-func scanHeredocOperators(line string, quote rune, pending []heredoc) ([]heredoc, rune) {
+// It returns the quote that is open at the end of the line, or 0. It also reports
+// whether a backslash outside quotes escapes the newline at the end of the line, so the
+// next line continues the same logical line.
+func scanHeredocOperators(line string, quote rune, pending []heredoc) ([]heredoc, rune, bool) {
 	runes := []rune(line)
 	for i := 0; i < len(runes); {
 		if quote != 0 {
 			end := closingQuote(runes, i, quote)
 			if end >= len(runes) {
-				return pending, quote
+				return pending, quote, false
 			}
 			quote, i = 0, end+1
 			continue
@@ -354,6 +357,9 @@ func scanHeredocOperators(line string, quote rune, pending []heredoc) ([]heredoc
 			quote = runes[i]
 			i++
 		case '\\':
+			if i+1 == len(runes) {
+				return pending, 0, true
+			}
 			i += 2
 		case '<':
 			match := heredocOpRe.FindStringSubmatch(string(runes[i:]))
@@ -369,5 +375,5 @@ func scanHeredocOperators(line string, quote rune, pending []heredoc) ([]heredoc
 			i++
 		}
 	}
-	return pending, quote
+	return pending, quote, false
 }

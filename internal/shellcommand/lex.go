@@ -66,6 +66,12 @@ func lex(s string) (tokens []string, marks []bool, ok bool) {
 			if i+1 >= len(runes) {
 				return nil, nil, false
 			}
+			// A backslash-newline is a line continuation: the shell removes both runes, so
+			// the words on each side join one logical line.
+			if runes[i+1] == '\n' {
+				i += 2
+				continue
+			}
 			active = true
 			current.WriteRune(runes[i+1])
 			i += 2
