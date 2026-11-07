@@ -1007,11 +1007,80 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
-    "verification": []
+    "state": "completed",
+    "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+    "performer": "ft446-orchestrator",
+    "reconciliation": {
+      "RS1": "covered",
+      "RS10": "covered",
+      "RS11": "covered",
+      "RS12": "covered",
+      "RS13": "covered",
+      "RS14": "covered",
+      "RS15": "covered",
+      "RS16": "covered",
+      "RS17": "covered",
+      "RS18": "covered",
+      "RS19": "covered",
+      "RS2": "covered",
+      "RS20": "covered",
+      "RS21": "covered",
+      "RS22": "covered",
+      "RS23": "covered",
+      "RS24": "covered",
+      "RS25": "covered",
+      "RS26": "covered",
+      "RS27": "covered",
+      "RS28": "covered",
+      "RS29": "covered",
+      "RS3": "covered",
+      "RS30": "covered",
+      "RS31": "covered",
+      "RS4": "covered",
+      "RS5": "covered",
+      "RS6": "covered",
+      "RS7": "covered",
+      "RS8": "covered",
+      "RS9": "covered"
+    },
+    "verification": [
+      {
+        "id": "final-packages",
+        "performer": "ft446-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench-test:package-all",
+          "digest": "sha256:3e5b09dbe0868baacbfcbf167e36c12453eb07c54559ce9eb56ecef1fea2c16f",
+          "excerpt": "bench test --package ./... at 98133f336: 143 packages, 0 failures, 14 environment skips (fifo, symlink, character device, and other-owner privilege classes).\n"
+        },
+        "requirement": "packages",
+        "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "final-system",
+        "performer": "ft446-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "bench-test:check-system",
+          "digest": "sha256:0cb50e7a9e1963235675bd54e1e1a9da5b466c0b5e49673e4e821006f74c3c59",
+          "excerpt": "bench test --check system at 98133f336: internal/systemtest pass, 288 tests run, 0 failures, 0 skips.\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      }
+    ]
   },
   "amendments": [
     {
