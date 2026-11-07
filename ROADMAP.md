@@ -49,14 +49,12 @@ and review cost that recent builds paid.
 ## Quality survey (2026-09-29)
 
 The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure. Its
-light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 05, 06, and 07
+light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 05, 06, 07, and 09
 and the small cuts. The rows below hold the rest.
 
 **FT446 (MEDIUM) — a retired cache store leaves with its cache, inherited registration has one owner, and the Darwin witness runs.**
 
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
-
-**FT363 (MEDIUM) — the clean modes share one member-set applier.**
 
 **FT365 (LOW) — conformance tests derive restated tables from their owners and share one Go-rule scanner.**
 
@@ -102,6 +100,16 @@ and the small cuts. The rows below hold the rest.
 
 **FT462 (MEDIUM, decision required) — `bench worktree merge --plan` discloses the merge kind and the projected grade, and a tree-neutral fold records a pass.**
 
+**FT482 (MEDIUM, decision required) — a cache release decides when a live, leaked, or dead protected user seals the generation of its HOME.**
+
+**FT483 (LOW) — a stack landing that changes a build input reports the install step, and a test pins that answer.**
+
+**FT484 (MEDIUM, decision required) — `bench test --in` and `bench probe --in` rebuild a stale worktree build once, as `bench commit` does.**
+
+**FT490 (MEDIUM) — a commit of Markdown records only starts no background grade, so a sealed cache never refuses the next lane commit.**
+
+**FT491 (LOW) — an agent stops a leaked or hung process that no live work owns, without a reviewer stop.**
+
 ## Planning, ownership, and review integrity
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
@@ -118,7 +126,7 @@ and the small cuts. The rows below hold the rest.
 
 **FT481 (LOW) — the review-implementation guidance says that the review preflight takes the record commit as its source tip.**
 
-**FT480 (LOW) — the spec-stage research fan-out reads the provider scorecard before it selects the reader line.**
+**FT480 (MEDIUM) — the spec-stage research fan-out and the build line declaration read the provider scorecard before they select a line.**
 
 **FT428 (LOW, decision required) — the phase-close guidance gives the full `bench handoff` grammar from one owner.**
 
@@ -174,6 +182,14 @@ and the small cuts. The rows below hold the rest.
 
 **FT473 (LOW, decision required) — the staleness pass can be omitted for an audit whose only diagnostic is metadata and whose drift list is empty.**
 
+**FT477 (LOW, decision required) — the bounded repair policy defines its severity scale, its blocking priority, its re-review scope, and a small finding.**
+
+**FT486 (LOW) — the author charge carries the November rules for must-fail clauses, preservation rows, silent witnesses, and named input classes.**
+
+**FT487 (LOW) — `bench commitment show` prints the delivered binding record of an outcome.**
+
+**FT488 (LOW) — `bench spec widen` derives the ownership-fence union and the `(new)` marker from the ticket `Writes:` lines.**
+
 ## Evidence, diagnostics, and maintenance
 
 **FT232 (EXPERIMENT, decision required) — the repair-evidence pilot produces the report that can justify a later tripwire.**
@@ -212,6 +228,10 @@ and the small cuts. The rows below hold the rest.
 
 **FT474 (LOW, decision required) — the private-directory rule, the wrapper path of a root, and the landing destination identity each have one leaf owner.**
 
+**FT485 (LOW, decision required) — the Bash guard shims call one shared fail-open runner, and each guard header manifest is graded against its Go deny set.**
+
+**FT489 (LOW, decision required) — `bench test` has a baseline capture mode for a reader family before a migration.**
+
 ## Release qualification
 
 Bank use, public release, and Regroup adoption stay NO-GO until the existing
@@ -243,7 +263,7 @@ qualification requirements are met.
 
 ## Parked and scheduled work
 
-**FT347 (EXPERIMENT, parked until 2026-11-03) — return to the Jev skill-relevance research.**
+**FT347 (EXPERIMENT, parked pending the reviewer's resume decision) — return to the Jev skill-relevance research.**
 
 **FT6 (LOW, parked pending evidence — leave parked) — the parked query verbs return only on demonstrated session cost.**
 
