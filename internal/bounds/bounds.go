@@ -55,6 +55,10 @@ const (
 	// GoTestTimeout is the -timeout of each test binary in a Bench-owned go test command.
 	// GateTimeout bounds the whole gate, which is a different fact.
 	GoTestTimeout = 10 * time.Minute
+	// ReleaseProbeTimeout bounds one release-preflight run that a conformance probe drives. It
+	// stays below GoTestTimeout, so the process-group owner stops the probe's group before the
+	// test binary dies and leaves that group behind.
+	ReleaseProbeTimeout = 5 * time.Minute
 	// RecordClockSkew is how far a gate record time may sit after the reader's now. A
 	// host wall clock can step back by up to a second under load, between the write and
 	// a later read.
