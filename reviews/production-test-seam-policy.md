@@ -1534,6 +1534,72 @@
           "supersedes": [
             "ts4-review-coverage"
           ]
+        },
+        {
+          "id": "ts4-review-standards-r2",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "875579615d83d21226514d02d8f1bdc2a8079b22",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:5cdfeb8fba4d9c2986477577b8d8c35cc69dc0eb0000ab87d2a590b3f95a877e",
+            "excerpt": "Standards reaffirmed at 104e27a: declaredValue is the single source for a var declaration's value, used by declareValues and returnsOnly.\n"
+          },
+          "axis": "Standards",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "a6d608b5a441ff11808f32af375795f8bbc5ec11",
+          "finding_ids": [],
+          "supersedes": [
+            "ts4-review-standards-r1"
+          ]
+        },
+        {
+          "id": "ts4-review-spec-r2",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "875579615d83d21226514d02d8f1bdc2a8079b22",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:4ec6ca032137847d7c727011731afe1cda81d47e584059b301f5ca139452c36a",
+            "excerpt": "Spec reaffirmed at 104e27a: spec line 867 holds; a var with no value gives nil and counts as nil.\n"
+          },
+          "axis": "Spec",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "a6d608b5a441ff11808f32af375795f8bbc5ec11",
+          "finding_ids": [],
+          "supersedes": [
+            "ts4-review-spec-r1"
+          ]
+        },
+        {
+          "id": "ts4-review-coverage-r2",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "875579615d83d21226514d02d8f1bdc2a8079b22",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:02b3f22dcfea4fa5ba7233a7a9cef7bc9d390775304dd363140f122ff1fa328e",
+            "excerpt": "Coverage: TS4-C2 closed. A var-declared returned error now counts as a producer, and the new admission case expects that refusal; range and type-switch bindings also refuse.\n"
+          },
+          "axis": "Coverage",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "a6d608b5a441ff11808f32af375795f8bbc5ec11",
+          "finding_ids": [],
+          "supersedes": [
+            "ts4-review-coverage-r1"
+          ]
         }
       ]
     }
@@ -1863,6 +1929,8 @@ Repair cycles consumed for TS4: 2 of 2 (repair rounds r1 and r2).
 The TS4 confirming round closes TS4-P1 and TS4-C1, and it opens TS4-C2.
 
 - TS4-C2, severity 2, confidence 7, auto-fix in repair round r2. The closure check reads returned locals only from assignments. A `var`-declared local can hide a real error, so the closure counts as nil.
+
+The TS4 final confirming round closes TS4-C2, and it adds no new finding. Every chunk is now closed with no open finding.
 
 The reviewer closed TS3-C2 on 2026-11-06 as an accepted limitation, and the spec states it as a Won't handle line. The r2 diff is discarded, and its recovery ref is kept.
 The TS3 confirming round closes TS3-P1 and TS3-C1, and it opens TS3-C2.
