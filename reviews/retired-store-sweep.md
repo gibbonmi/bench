@@ -112,7 +112,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rs-c1-review-standards",
+          "performer": "ft446-review-rs-c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e620d451fb5418cf22b640b57fbe2a3ed25619b4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c1",
+            "digest": "sha256:e9d9461e21e186d34aca206fba70a815da52eef2a4cbb6f8ee51df9ad6a8f96c",
+            "excerpt": "Standards: 0 findings. Worst issue: none. Advice: reflow the long comment at internal/worktree/protection_test.go:32; a retiredOf(d) constructor could hold the field mapping that recovery.go:67 builds by hand.\n"
+          },
+          "axis": "Standards",
+          "base": "63d5231343049fa9fb1b3b3905c395f22dc6de65",
+          "tip": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c1-review-spec",
+          "performer": "ft446-review-rs-c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e620d451fb5418cf22b640b57fbe2a3ed25619b4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c1",
+            "digest": "sha256:cb827d0ec2a1414f35ee0584269a4325dac3b827f46d4c64b3583892ad0c79b2",
+            "excerpt": "Spec: 0 findings. Worst issue: none. D1 and D7 hold; retiredRecord has schema, kind, resource_path, binding; valid reuses Descriptor.checkOwner; the publish sits after removeUser and before the resource.json removal; Recover, NoGeneration, join, and ObserveRecorded are unchanged. RS1, RS2, RS3, RS25, RS26 audited.\n"
+          },
+          "axis": "Spec",
+          "base": "63d5231343049fa9fb1b3b3905c395f22dc6de65",
+          "tip": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c1-review-coverage",
+          "performer": "ft446-review-rs-c1",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "e620d451fb5418cf22b640b57fbe2a3ed25619b4",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c1",
+            "digest": "sha256:1f83bc3cf16e3ac79e748e18284dfa13ddd664452f7796504630cccbfa6494d9",
+            "excerpt": "Coverage: 0 findings. Worst issue: none. RS26 keeps a red-capable expectation: a Recover refusal of a retired-only store bit TestCheckoutProtectionPredicate at protection_test.go:61 (restored yes). Advice: a swallowed retired-publish error stays green (probe silent); a fault-router test would pin it (hardening, severity 2-3).\n"
+          },
+          "axis": "Coverage",
+          "base": "63d5231343049fa9fb1b3b3905c395f22dc6de65",
+          "tip": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -124,3 +185,37 @@
   }
 }
 ```
+
+## RS-C1 author witness reds
+
+The ticket 01 author ft446-author-01 reported five witness reds, and each probe reported a restored subject:
+
+1. With no retired publish, TestRetiredStoreRecordsItsPath and TestRetiredStoreHasNoGeneration were red before the publish edit.
+2. With no production edit, TestCheckoutProtectionPredicate was red at its retired.json requirement.
+3. A `Recover` refusal of a store that holds retired.json made TestRetiredStoreHasNoGeneration red.
+4. The same mutation made TestProtectionCompletedHold red at the clean after the release.
+5. A `join` refusal of a store that holds retired.json made TestProtectionCompletedHold red at the next hold.
+
+The orchestrator wrote these reds after the RS-C1 review charge, not before it. The unified reviewer read the author return through the charge.
+
+## RS-C1 review pickup
+
+Unified review by ft446-review-rs-c1 on sonnet at high effort over the pair 63d5231..5ceb326. Repair cycles used: 0 of 2.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 0. Worst issue: none. The RS26 expectation is red-capable at its cleanup assertion: a `Recover` refusal of a store with only retired.json made TestCheckoutProtectionPredicate fail at that assertion.
+
+### Advice
+
+- Reflow the long comment line in the checkout protection test.
+- A constructor of the retired record from a descriptor could hold the field mapping that `SealAndObserve` builds by hand.
+- A fault-router test could pin a swallowed retired-publish error, which no test catches now. This is hardening, not a correctness defect.
