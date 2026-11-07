@@ -1145,6 +1145,25 @@ The author did not demonstrate a PS34 readiness omission, because `bench probe` 
 
 The orchestrator decided two spec gaps on 2026-11-06, and the reviewer can veto both. The literal environment-hook rule of spec line 135 bounds the admission set. The readiness witness lives in the native release probe.
 
+## TS4 author witness reds
+
+The author `ft343-author-04` reported these reds before `95cbffe` and `3c3ed81`. Each file restored byte-identically.
+
+| requirement or case | mutation | failing test |
+|---|---|---|
+| registry-omission probe | one real registry row is deleted | `TestRootConformance` reports the unregistered `internal/intent.Decision` port |
+| alias-omission probe | canonical alias resolution is disabled | `TestSeamAuditOmissions` |
+| setter-omission probe | setter discovery is disabled | `TestSeamAuditOmissions` |
+| runtime-omission probe | runtime branch discovery is disabled | `TestSeamAuditOmissions` |
+| consumer-omission probe | required consumer evidence is removed | `TestSeamAuditOmissions` |
+| fault port | a consumer that passes nil is accepted | `TestSeamAdmissionEvidence` |
+| fault port | the production-nil producer check is dropped | `TestSeamAdmissionEvidence` |
+| ENOTDIR | ENOTDIR counts as present | `TestSeamAdmissionEvidence` |
+| unsafe source | a symlinked or non-regular Go file is skipped | `TestSeamAdmissionEvidence` |
+| orphan rule | orphans are graded only in non-empty packages | `TestSeamAdmissionEvidence` |
+
+The author admitted `internal/gate.postAcquireContextArm` as a producer port, not a fault port, because production supplies `notifyGateSignals` at `internal/gate/gate.go:216`. The orchestrator accepts that correction of the earlier survey, and the reviewer can veto it. Only `shift.fault` and `worktree.Fault` are fault ports.
+
 ## Standards
 
 TS1 findings: 0. Worst issue: none.
