@@ -13,7 +13,7 @@ The retired validator follows the `resourceRecord.valid` pattern and reuses the 
 Every caller of `SealAndObserve` gets this behavior: the cache retire, `ObserveRecorded`, `Generation.Release`, and `Recover`.
 
 `Recover`, `NoGeneration`, the store join, and `ObserveRecorded` do not change. A retired store still reads as a store with no generation, and the next open still publishes a fresh generation.
-The export test file exports the retired file name for the tests.
+The export test file exports the retired file name for the protection tests. That export is not visible outside the protection package, so the checkout test names `retired.json` as a literal, as it already names its `lock` file.
 
 ## Acceptance
 

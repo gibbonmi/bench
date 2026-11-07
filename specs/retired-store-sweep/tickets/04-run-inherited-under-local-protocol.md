@@ -7,7 +7,7 @@ Covers: RS16, RS17, RS19, RS20, RS21, RS22, RS23, RS24
 ## What to build
 
 `RunInherited` takes a `Registration` in place of its variadic local descriptors.
-The registration's resources join the inherited union after the inherited resources, as today. A nil protocol means the installed protocol.
+The registration's resources join the inherited union after the inherited resources, as today. A nil protocol means the installed protocol, so that default moves from the build-script runner into `RunInherited`.
 The five production callers keep their own signatures. Each wraps its descriptors into the registration at its `RunInherited` call, and the detached launch passes an empty registration. Their test call sites do not change.
 `internal/gate/runner.go` keeps a net growth of zero or less, and `internal/testreport/command.go` stays inside its 13 lines of headroom.
 

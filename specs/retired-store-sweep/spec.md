@@ -385,7 +385,7 @@ A root-wide sweep of retired stores of every kind at each store open is a separa
 | The empty-users condition (D2) | internal/subprocess/protection/directory.go:264-281 | The current sweep deletes on an absent resource without a user check |
 | The cache release trigger (D3) | internal/gocache/lock.go:160-172 | The cache retire calls `SealAndObserve` at the last uncontended release, and no protected removal reaches a package-test cache |
 | The registration parameter (D4) | internal/subprocess/inherited.go:23-28 | `RunInherited` fixes the installed protocol, and the build-script runner takes its protocol from its caller at internal/runbinary/runbinary.go:331-333 |
-| The cache check variable (D3) | internal/conformance/injected_ports_registry_test.go:241-242 | The registry admits `storeBase` for protection tests only, and gocache tests share the real store root of the user (internal/gocache/protection_test.go:186-203) |
+| The cache check variable (D3) | internal/conformance/injected_ports_registry_test.go:241-242 | The registry admits `storeBase` for protection tests only, and gocache tests share the real store root of the user, because no gocache test replaces `storeBase` (internal/subprocess/protection/export_test.go:23 is the only replacement) |
 | The hand-built registration rule (D4) | internal/conformance/process_lifetime_test.go:24 | The census accepts `NewLifetime` or `RunInherited` by name, so it cannot see a hand-built copy |
 
 ### Reader sweep
