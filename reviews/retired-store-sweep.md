@@ -1114,3 +1114,13 @@ The repair session ft446-repair-03-r1 made a test-only repair at e6cde66. One fi
 The orchestrator probe made the shared helper retire a store without a resource deletion. TestDiscardRetired was red, and the subject was restored. The coordinator confirmation refused, because the ticket widen puts a ticket file in the chunk delta. A unified confirming round by ft446-confirm-rs-c3 then closed RS-C3-S1 with no new finding. Repair cycles used: 1 of 2.
 
 The test that grades a protected removal still builds its own protocol with another kind set. That code predates this chunk, so it stays outside the repair.
+
+## RS-C4 ticket 04 author witness reds
+
+The ticket 04 author ft446-author-04 reported three witness reds, and each probe reported a restored subject:
+
+1. RS16: when the launch used the installed protocol for every registration, TestRunInheritedRegistersOnLocalProtocol was red.
+2. RS23: when the launch ignored an unreadable inherited vector, TestBuildScriptMalformedResources was red.
+3. RS17: when the launch had no nil-protocol default, TestProcessLifetimeCacheSecondProcessClean was red.
+
+The bounds runner passes an empty registration literal, as the detached launch does under D4. The orchestrator reads the acceptance item as a ban on a hand-built inherited registration, and flags that reading for reviewer veto.
