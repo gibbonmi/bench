@@ -227,6 +227,8 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			rows: []Row{faultRow(nil)}},
 		{row: "a production closure that returns its own error", extra: composed + "\t\treturn errStop\n\t}\n\treturn hit(fault, \"wrapped\")\n}\n\nvar errStop error\n\nfunc RunWrapped() error { return Wrapped(deps{}, nil) }\n",
 			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
+		{row: "a production closure that declares its own error", extra: composed + "\t\t{\n\t\t\tvar err = errors.New(\"x\")\n\t\t\treturn err\n\t\t}\n\t}\n\treturn hit(fault, \"wrapped\")\n}\n\nfunc RunWrapped() error { return Wrapped(deps{}, nil) }\n",
+			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
 	} {
 		t.Run(test.row, func(t *testing.T) {
 			files := map[string]string{"internal/sample/sample.go": faultSource + test.extra}

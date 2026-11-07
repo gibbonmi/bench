@@ -280,8 +280,8 @@ func (t *faultTrace) forwards(id string) bool {
 
 // returnsOnly reports whether every value that a function body returns is nil or a call
 // that carries no fault, and whether any returned value is such a call. A returned local
-// counts when every assignment to it in the body is such a call. A function with named
-// results can return them bare, so it never counts.
+// counts when every assignment or var declaration of it in the body is such a value. A
+// function with named results can return them bare, so it never counts.
 //
 // A function literal composes nil faults only when it relays at least one of them. A
 // literal that returns only nil is still a value that production supplies.
@@ -300,6 +300,10 @@ func returnsOnly(fn *ast.FuncType, body *ast.BlockStmt, carries func(*ast.CallEx
 				if ident, ok := target.(*ast.Ident); ok {
 					values[ident.Name] = append(values[ident.Name], assignedValue(typed, i))
 				}
+			}
+		case *ast.ValueSpec:
+			for i, name := range typed.Names {
+				values[name.Name] = append(values[name.Name], declaredValue(typed, i))
 			}
 		case *ast.ReturnStmt:
 			results = append(results, typed.Results...)

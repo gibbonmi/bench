@@ -182,8 +182,7 @@ func (w *walker) local(owner *bodyScope, name string, value ast.Expr) {
 	w.facts.locals[owner][name] = append(w.facts.locals[owner][name], w.operand(value))
 }
 
-// declareValues records the values of a local var declaration. A name declared without a
-// value holds its zero value, which for the port type is nil.
+// declareValues records the values of a local var declaration.
 func (w *walker) declareValues(decl ast.Decl) {
 	gen, ok := decl.(*ast.GenDecl)
 	if !ok || gen.Tok != token.VAR {
@@ -192,16 +191,22 @@ func (w *walker) declareValues(decl ast.Decl) {
 	for _, spec := range gen.Specs {
 		value, ok := spec.(*ast.ValueSpec)
 		for i := 0; ok && i < len(value.Names); i++ {
-			switch {
-			case len(value.Values) == 0:
-				w.local(w.scope, value.Names[i].Name, ast.NewIdent("nil"))
-			case len(value.Values) == len(value.Names):
-				w.local(w.scope, value.Names[i].Name, value.Values[i])
-			default:
-				w.local(w.scope, value.Names[i].Name, value.Values[0])
-			}
+			w.local(w.scope, value.Names[i].Name, declaredValue(value, i))
 		}
 	}
+}
+
+// declaredValue is the value that one var declaration gives its name at index i. A name
+// declared without a value holds its zero value, which for the port type is nil. A
+// multi-value call gives every name the call.
+func declaredValue(spec *ast.ValueSpec, i int) ast.Expr {
+	switch {
+	case len(spec.Values) == 0:
+		return ast.NewIdent("nil")
+	case len(spec.Values) == len(spec.Names):
+		return spec.Values[i]
+	}
+	return spec.Values[0]
 }
 
 // composite records each element of a literal of a resolved struct as a store into a field.
