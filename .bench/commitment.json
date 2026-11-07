@@ -1848,6 +1848,18 @@
               "path": "roadmap/FT446.md",
               "identity": "sha256:cc4554566d89791bba4e369f8e60f7aa38abe1a93fbe2de313f803550cda22f5"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "retired-store-sweep",
+                "path": "specs/retired-store-sweep/spec.md",
+                "identity": "sha256:489e2d90e9ee9b29d0c4f2ba929c723115a7c1a62b83d6b6aa588625edd83821"
+              },
+              "obligations": [
+                "FT446"
+              ]
+            }
           ]
         },
         {
