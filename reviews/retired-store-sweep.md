@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/retired-store-sweep/spec.md",
-  "plan_digest": "sha256:d56366661c354b73477e981cfa5c28d2c881d5b2337c36cde8f0fc5412b7f6dc",
+  "plan_digest": "sha256:2d22011a8556aa7de0f62d1d5720662c09790fa7124e337c6d6df82185339255",
   "implementation_session": "",
   "chunks": [
     {
@@ -174,6 +174,116 @@
           "supersedes": []
         }
       ]
+    },
+    {
+      "id": "RS-C2",
+      "base": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+      "tip": "bef1597e66827888f6fbdd964ac136d50f035aed",
+      "plan_digest": "sha256:2d22011a8556aa7de0f62d1d5720662c09790fa7124e337c6d6df82185339255",
+      "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+      "acceptance_rows": [
+        "RS4",
+        "RS5",
+        "RS6",
+        "RS7",
+        "RS8",
+        "RS14",
+        "RS15",
+        "RS31"
+      ],
+      "verification": [
+        {
+          "id": "rs-c2-02-retired-sweep-omission",
+          "performer": "ft446-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-02",
+            "digest": "sha256:59585ba7aea2d654c734f26436fb27fb1c7612e80044f3f67ba8b91767208c16",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGenerationRemove,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRetiredSweepKeepsAUser,1,1,0,null,yes\n  3,bit,swap,failed,1,TestRetiredSweepSkipsALockedStore,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess/protection,^TestGenerationRemove$|^TestRetiredSweepKeepsAUser$|^TestRetiredSweepSkipsALockedStore$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "requirement": "retired-sweep-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "make discardNested skip each store with no resource.json, as it does today; require TestGenerationRemove to fail on the retired gone store",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-02",
+              "digest": "sha256:59585ba7aea2d654c734f26436fb27fb1c7612e80044f3f67ba8b91767208c16",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGenerationRemove,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRetiredSweepKeepsAUser,1,1,0,null,yes\n  3,bit,swap,failed,1,TestRetiredSweepSkipsALockedStore,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess/protection,^TestGenerationRemove$|^TestRetiredSweepKeepsAUser$|^TestRetiredSweepSkipsALockedStore$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c2-02-user-guard-omission",
+          "performer": "ft446-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-02",
+            "digest": "sha256:59585ba7aea2d654c734f26436fb27fb1c7612e80044f3f67ba8b91767208c16",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGenerationRemove,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRetiredSweepKeepsAUser,1,1,0,null,yes\n  3,bit,swap,failed,1,TestRetiredSweepSkipsALockedStore,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess/protection,^TestGenerationRemove$|^TestRetiredSweepKeepsAUser$|^TestRetiredSweepSkipsALockedStore$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "requirement": "user-guard-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-02",
+              "digest": "sha256:59585ba7aea2d654c734f26436fb27fb1c7612e80044f3f67ba8b91767208c16",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGenerationRemove,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRetiredSweepKeepsAUser,1,1,0,null,yes\n  3,bit,swap,failed,1,TestRetiredSweepSkipsALockedStore,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess/protection,^TestGenerationRemove$|^TestRetiredSweepKeepsAUser$|^TestRetiredSweepSkipsALockedStore$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c2-02-lock-skip-omission",
+          "performer": "ft446-author-02",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-02",
+            "digest": "sha256:59585ba7aea2d654c734f26436fb27fb1c7612e80044f3f67ba8b91767208c16",
+            "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGenerationRemove,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRetiredSweepKeepsAUser,1,1,0,null,yes\n  3,bit,swap,failed,1,TestRetiredSweepSkipsALockedStore,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess/protection,^TestGenerationRemove$|^TestRetiredSweepKeepsAUser$|^TestRetiredSweepSkipsALockedStore$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+          },
+          "source_commit": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "requirement": "lock-skip-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "make a contended store lock join the sweep error; require TestRetiredSweepSkipsALockedStore to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-02",
+              "digest": "sha256:59585ba7aea2d654c734f26436fb27fb1c7612e80044f3f67ba8b91767208c16",
+              "excerpt": "mutants[3]{mutant,verdict,mutation,cause,failed_tests,first_failure,ran,focused_exit_code,exit_code,first_build_line,restored}:\n  1,bit,omit,failed,1,TestGenerationRemove,1,1,0,null,yes\n  2,bit,swap,failed,1,TestRetiredSweepKeepsAUser,1,1,0,null,yes\n  3,bit,swap,failed,1,TestRetiredSweepSkipsALockedStore,1,1,0,null,yes\nselection[1]{form,target,run,baseline,builds}:\n  package,./internal/subprocess/protection,^TestGenerationRemove$|^TestRetiredSweepKeepsAUser$|^TestRetiredSweepSkipsALockedStore$,passed,4\nprobe_set_execution[1]{schema,command_exit_code,trailing_bytes}:\n  bench-probe-set-v1,0,0\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -182,7 +292,18 @@
     "performer": "",
     "reconciliation": {},
     "verification": []
-  }
+  },
+  "amendments": [
+    {
+      "from": "sha256:d56366661c354b73477e981cfa5c28d2c881d5b2337c36cde8f0fc5412b7f6dc",
+      "to": "sha256:2d22011a8556aa7de0f62d1d5720662c09790fa7124e337c6d6df82185339255",
+      "chunk_ids": {
+        "RS-C1": [
+          "RS-C1"
+        ]
+      }
+    }
+  ]
 }
 ```
 
