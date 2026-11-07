@@ -283,7 +283,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rs-c2-review-standards",
+          "performer": "ft446-review-rs-c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c2",
+            "digest": "sha256:eaa8109402c01efa8470873deaa6ce6cdf3880babf0e730464d1738e6520ce37",
+            "excerpt": "Standards: 0 findings. Worst issue: none. lock, tryLock, and lockStores share one routine; the ADR and DATA_HANDLING.md hold no path or code. Advice: the ADR line 'A retired store that names a user stays' could say 'A retired store whose users directory holds an entry stays'.\n"
+          },
+          "axis": "Standards",
+          "base": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "tip": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c2-review-spec",
+          "performer": "ft446-review-rs-c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c2",
+            "digest": "sha256:c72e63bf29e9a4a103d09f4d5e64eaba53d799868d572cfadafdd498186b3fb3",
+            "excerpt": "Spec: 0 findings. Worst issue: none. RS4-RS8, RS14, RS15, RS31 met inside the ticket 02 fence; the D2 predicate matches directory.go:68-94; discardNested adds the dir+/ prefix test; the live branch is unchanged; discardRetired(store, selected) serves ticket 03 with no second predicate.\n"
+          },
+          "axis": "Spec",
+          "base": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "tip": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c2-review-coverage",
+          "performer": "ft446-review-rs-c2",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "910b248be12293a5b95f20d1c24d6d8e144f9156",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c2",
+            "digest": "sha256:d383c8e16aae3ad1ac58c2641b83ea7a3f4fcdae473309bea3963f64615eb572",
+            "excerpt": "Coverage: 1 finding. Worst issue: RS-C2-C1. RS-C2-C1 | record_test.go and directory.go:83 | severity 3 | confidence 8 | auto-fix | no test grades a retired record that decodes but fails valid() (wrong schema, relative path, non-clean path, control byte); dropping the readRetired error check stayed silent. Add retired cases through requireRetiredKept. Safety audit held: user entry, prefix sibling, and non-blocking lock probes bit.\n"
+          },
+          "axis": "Coverage",
+          "base": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "tip": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "finding_ids": [
+            "RS-C2-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -352,3 +415,26 @@ The ticket 02 author ft446-author-02 reported these witness reds, and each probe
 5. The non-blocking lock: with a blocking lock in its place, TestRetiredSweepSkipsALockedStore timed out.
 
 The three plan probes ran as one mutant set, and each row bit with a restored subject.
+
+## RS-C2 review pickup
+
+Unified review by ft446-review-rs-c2 on sonnet at high effort over the pair 5ceb326..bef1597. Raw findings: 1. Repair targets: 1. Repair cycles used: 0 of 2 before the repair below.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 1. Worst issue: RS-C2-C1.
+
+- RS-C2-C1 (auto-fix, confidence 8): no test grades a retired record that decodes but fails its validity check. A wrong schema, a relative path, a path that is not clean, or a control byte falls in this class. The review probe that drops the retired-read error check in the predicate stayed silent. The spec's hostile-input line says that RS4 grades a relative path and control bytes. The fix adds retired-record cases to the record tests through the existing kept-store helper. The fix is test-only, and it goes to the fresh repair session ft446-repair-02-r1.
+
+### Advice
+
+- The ADR sentence about a retired store that names a user could name the users directory entry instead.
+- No test reaches the pre-lock skip of a live store or the re-check after the lock. The first is a cost contract, and the second is a race guard.
