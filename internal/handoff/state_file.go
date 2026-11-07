@@ -25,8 +25,12 @@ const (
 // Each repair ends in stateRerun. The fence and comment repairs take the fix from the
 // document parser, which owns the words. The draft and the document refuse the same fence
 // or comment for the same reason, so a reworded instruction there carries here.
+//
+// rerunSuffix owns the rerun instruction for every handoff refusal. stateRerun adds the
+// separator that comes before the quoted draft line.
 const (
-	stateRerun      = ", then rerun bench handoff: "
+	rerunSuffix     = ", then rerun bench handoff"
+	stateRerun      = rerunSuffix + ": "
 	stateFileRepair = "name a readable regular file" + stateRerun
 	stateByteRepair = "remove the control byte" + stateRerun
 )

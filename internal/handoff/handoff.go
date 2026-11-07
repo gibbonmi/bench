@@ -141,7 +141,7 @@ func resolveOwner(root string) (owner, error) {
 	primary, err := git.IsPrimaryCheckout(root)
 	if err != nil {
 		return owner{}, refusal{"checkout identity is unknown",
-			"repair Git metadata, then rerun bench handoff"}
+			"repair Git metadata" + rerunSuffix}
 	}
 	if primary {
 		return owner{Key: handoffdoc.MainKey, Worktree: root}, nil
