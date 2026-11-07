@@ -47,6 +47,13 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			required: []string{"internal/gitguard"},
 		},
 		{
+			row:      "stale named-port row in a present package with no seams and no required entry",
+			files:    map[string]string{"internal/sample/sample.go": "package sample\n\nfunc Name() string { return \"sample\" }\n"},
+			required: []string{"internal/gitguard"},
+			rows:     []Row{{Package: "internal/sample", Port: "Gone", Exempt: "covered by the runtime contract suite"}},
+			heads:    []string{OrphanPortRowMessage + ": internal/sample.Gone is registered"},
+		},
+		{
 			row:      "PS42 a required package below a non-directory is absent",
 			files:    map[string]string{"internal": "not a directory\n"},
 			required: []string{"internal/gitguard"},
@@ -198,8 +205,6 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 		{row: "a fault-port owner that does not take the port", rows: []Row{faultRow(func(r *Row) { r.Owner = "Run" })}, heads: []string{SeamOwnerMessage + fault}},
 		{row: "a fault-port owner that a production caller supplies", extra: "\nfunc Live() error { return Apply(func(string) error { return nil }) }\n",
 			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
-		{row: "a stale named-port row in a present package outside the required list", rows: []Row{faultRow(nil), {Package: "internal/sample", Port: "Gone", Exempt: "covered by the runtime contract suite"}},
-			heads: []string{OrphanPortRowMessage + ": internal/sample.Gone "}},
 	} {
 		t.Run(test.row, func(t *testing.T) {
 			files := map[string]string{"internal/sample/sample.go": faultSource + test.extra}
