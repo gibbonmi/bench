@@ -1172,3 +1172,14 @@ The ticket 04 author ft446-author-04 reported three witness reds, and each probe
 3. RS17: when the launch had no nil-protocol default, TestProcessLifetimeCacheSecondProcessClean was red.
 
 The bounds runner passes an empty registration literal, as the detached launch does under D4. The orchestrator reads the acceptance item as a ban on a hand-built inherited registration, and flags that reading for reviewer veto.
+
+## RS-C4 ticket 05 author witness reds
+
+The ticket 05 author ft446-author-05 reported these witness reds, and each probe reported a restored subject:
+
+1. The helper walk: when the rule read only the function's own body, the same-package helper case was red.
+2. The prefilter token: when the prefilter held no reader token, all four red cases were red.
+3. RS29 in the bounds runner: a hand-built inherited registration turned the live closure check red.
+4. RS29 in the build-script runner: a hand-built inherited registration turned the live closure check red.
+
+The three uncounted-reader cases stay green, and the author recorded no separate red for them.
