@@ -215,11 +215,35 @@ func TestRecordDirectory(t *testing.T) {
 }
 
 func TestRecordWrongSchema(t *testing.T) {
+	wrong := func(path, data string) { plant(t, path, strings.Replace(data, `"schema":1`, `"schema":2`, 1)) }
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d, protection.ResourceFile)
-	plant(t, path, strings.Replace(data, `"schema":1`, `"schema":2`, 1))
+	wrong(resourceRecord(t, d, protection.ResourceFile))
 	requireRefused(t, p, d)
+	requireRetiredKept(t, wrong)
+}
+
+// TestRecordRetiredPath forges the path of a retired record that the strict reader decodes.
+// The unclean and control-byte forms stay inside the removed directory and absent, so only the
+// record's path check keeps their stores.
+func TestRecordRetiredPath(t *testing.T) {
+	for name, forge := range map[string]func(string) string{
+		"relative":     func(path string) string { return strings.TrimPrefix(path, "/") },
+		"unclean":      func(path string) string { return filepath.Dir(path) + "/./" + filepath.Base(path) },
+		"control byte": func(path string) string { return path + "\n" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			requireRetiredKept(t, func(path, data string) {
+				var fields map[string]any
+				if err := json.Unmarshal([]byte(data), &fields); err != nil {
+					t.Fatal(err)
+				}
+				fields["resource_path"] = forge(fields["resource_path"].(string))
+				forged, _ := json.Marshal(fields)
+				plant(t, path, string(forged))
+			})
+		})
+	}
 }
 
 func TestRecordDuplicateField(t *testing.T) {
