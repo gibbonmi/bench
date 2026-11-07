@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/runbinary"
@@ -329,7 +330,7 @@ func main() {
 			return []string{"release evidence probe could not establish source HEAD: " + err.Error()}
 		}
 	}
-	if output, err := runAtEvidenceReadyPoint(cmd, ready); err != nil {
+	if output, err := runAtEvidenceReadyPoint(cmd, ready, bounds.ReleaseProbeTimeout); err != nil {
 		return []string{"release evidence probe failed: " + err.Error() + ": " + strings.TrimSpace(string(output))}
 	}
 	indexData, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))

@@ -1,7 +1,7 @@
 package conformance
 
 import (
-	"bytes"
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -66,19 +66,18 @@ func preflightPhaseOverrides(phases []string, path string) []string {
 
 // runAtEvidenceReadyPoint runs a preflight that holds at the release-evidence readiness
 // point. The observer sees the ready file that the held run writes, then removes it to
-// release the run. A run that exits without writing it never reached that point.
-func runAtEvidenceReadyPoint(cmd *exec.Cmd, ready string) ([]byte, error) {
-	var output bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &output, &output
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-	exited := make(chan error, 1)
-	go func() { exited <- cmd.Wait() }()
+// release the run. A run that exits without writing it never reached that point. The
+// process-group owner runs the command under limit, and every early return cancels it, so
+// no member of the run's group outlives the observer.
+func runAtEvidenceReadyPoint(cmd *exec.Cmd, ready string, limit time.Duration) ([]byte, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan bounds.ProcessResult, 1)
+	go func() { done <- bounds.Run(ctx, bounds.FixedWindow(limit), cmd) }()
 	for {
 		select {
-		case err := <-exited:
-			return output.Bytes(), errors.Join(err, errors.New("the run never reached the evidence readiness point"))
+		case result := <-done:
+			return result.Output, errors.Join(result.Err, errors.New("the run never reached the evidence readiness point"))
 		default:
 		}
 		if _, err := os.Stat(ready); err == nil {
@@ -87,9 +86,12 @@ func runAtEvidenceReadyPoint(cmd *exec.Cmd, ready string) ([]byte, error) {
 		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
 	}
 	if err := os.Remove(ready); err != nil {
-		return nil, errors.Join(err, cmd.Process.Kill(), <-exited)
+		cancel()
+		result := <-done
+		return result.Output, errors.Join(err, result.Err)
 	}
-	return output.Bytes(), <-exited
+	result := <-done
+	return result.Output, result.Err
 }
 
 // TestInjectedPortPhaseFamilyReadsTheGradedRegistry proves that the wrapper's phase family
@@ -301,4 +303,29 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 			t.Fatalf("a derived port with a stale test name beside an orphaned row: want one missing-test diagnostic for PortB and one orphan-row diagnostic for PortC, got %v", diags)
 		}
 	})
+}
+
+// TestReadinessObserverStopsAHeldGroup proves that the readiness observer owns its run's
+// whole process group. A run that never reaches the readiness point makes the observer
+// refuse within its limit, and no member of the run's group survives the refusal.
+func TestReadinessObserverStopsAHeldGroup(t *testing.T) {
+	dir := t.TempDir()
+	member := filepath.Join(dir, "member.pid")
+	cmd := exec.Command("sh", "-c", `sleep 60 & echo $! > "$1"; wait`, "sh", member)
+	limit := 300 * time.Millisecond
+	began := time.Now()
+	_, err := runAtEvidenceReadyPoint(cmd, filepath.Join(dir, "ready"), limit)
+	if elapsed, window := time.Since(began), bounds.TestDeadline(limit); elapsed > window {
+		t.Fatal(bounds.TestTimeoutVerdict("the observer to stop a held run", window))
+	}
+	if err == nil {
+		t.Fatal("runAtEvidenceReadyPoint() = nil, want a refusal for a run that never reached readiness")
+	}
+	data, readErr := os.ReadFile(member)
+	if readErr != nil {
+		t.Fatalf("read the group member pid: %v", readErr)
+	}
+	if _, statErr := os.Stat("/proc/" + strings.TrimSpace(string(data))); statErr == nil {
+		t.Fatalf("group member %s survived the observer refusal", strings.TrimSpace(string(data)))
+	}
 }
