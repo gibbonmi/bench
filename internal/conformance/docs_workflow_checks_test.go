@@ -36,7 +36,7 @@ func checkDocsCurrencyAndWorkflow(root, _ string) []string {
 	return diags
 }
 
-// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit prose. The literal command tokens `spec build` and `worktree recovery` must not reappear in any
+// checkRemovedVerbSweep keeps the deleted provisional lifecycle out of kit prose. The command tokens that removedVerbRE matches must not reappear in any
 // surface an agent reads for guidance. The stale-command and cold-pickup sweeps match
 // only slash-command and single-word `bench <cmd>` tokens. A leftover `bench spec build
 // promote` therefore passes both sweeps. Three surfaces are exempt because their job is
@@ -81,15 +81,18 @@ func checkRemovedVerbSweep(root string) []string {
 	for _, file := range files {
 		rel := slashRel(root, file)
 		for i, line := range strings.Split(readIfExists(file), "\n") {
-			for _, token := range []string{"spec build", "worktree recovery"} {
-				if strings.Contains(line, token) {
-					diags = append(diags, fmt.Sprintf("%s:%d carries removed command token %q; the spec-build lifecycle and the recovery verb are deleted", rel, i+1, token))
-				}
+			for _, token := range removedVerbRE.FindAllString(line, -1) {
+				diags = append(diags, fmt.Sprintf("%s:%d carries removed command token %q; the spec-build lifecycle and the recovery verb are deleted", rel, i+1, token))
 			}
 		}
 	}
 	return diags
 }
+
+// removedVerbRE is the one matcher for the removed command tokens. A word boundary on
+// each side keeps an inflected word such as "this spec builds" out of the sweep, and it
+// still catches the token with or without a `bench ` prefix.
+var removedVerbRE = regexp.MustCompile(`\b(?:spec build|worktree recovery)\b`)
 
 func TestRemovedVerbSweepBites(t *testing.T) {
 	write := func(t *testing.T, root, rel, content string) {
@@ -117,6 +120,9 @@ func TestRemovedVerbSweepBites(t *testing.T) {
 		{"changelog exempt", "CHANGELOG.md", "- Removed `bench spec build` and `bench worktree recovery`.\n", false},
 		{"capture exempt", "capture/learnings.md", "ran `bench spec build abandon` and it refused\n", false},
 		{"hyphenated prose is not the token", ".bench/BENCH.md", "the spec-build lifecycle was removed\n", false},
+		{"inflected prose is not the token", ".bench/BENCH.md", "this spec builds the parser; the worktree recovers\n", false},
+		{"bare command token", ".bench/BENCH.md", "run bench spec build\n", true},
+		{"bare recovery token at a boundary", ".bench/BENCH.md", "see `worktree recovery`.\n", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
