@@ -707,3 +707,19 @@ The repair session ft446-repair-02-r1 made a test-only repair at d7641b2. It rep
 3. With no retired-read error check and no inside-directory condition, TestRecordRetiredPath was red in all three subtests.
 
 The orchestrator probe made the retired validator return no error after its schema check. TestRecordRetiredPath was red, and the subject was restored. The confirmation rs-c2-confirm-r1 closes RS-C2-C1, so RS-C2 takes no confirming round. Repair cycles used: 1 of 2.
+
+## RS-C3 author witness reds
+
+The ticket 03 author ft446-author-03 reported nine witness reds, and each probe reported a restored subject:
+
+1. RS9: with a kind predicate that is always false, TestDiscardRetired was red.
+2. RS10: with no resource-absence condition, TestDiscardRetired was red.
+3. RS30: with no record kind comparison, TestDiscardRetired was red on a binary store under the cache prefix.
+4. RS30: with no store-name prefix filter, TestDiscardRetired was red on a cache store under the binary prefix.
+5. RS12: with an unreadable record that returns its error, TestDiscardRetiredFailsClosed was red.
+6. RS13: with the deletion error dropped, TestDiscardRetiredFailsClosed was red.
+7. RS13: with a root listing error dropped, TestDiscardRetiredFailsClosed was red.
+8. RS11: with a check call at the contended return, TestReleaseRunsTheRetiredCheck was red.
+9. RS28: with the check call before the retirement, TestReleaseRunsTheRetiredCheck was red.
+
+The author reported one duplicated fixture outside its fence. The new helper in the directory tests repeats two lines of the protection fixture helper.
