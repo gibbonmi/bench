@@ -1545,6 +1545,18 @@ The author `ft343-author-04` reported these reds before `95cbffe` and `3c3ed81`.
 | unsafe source | a symlinked or non-regular Go file is skipped | `TestSeamAdmissionEvidence` |
 | orphan rule | orphans are graded only in non-empty packages | `TestSeamAdmissionEvidence` |
 
+The repair session `ft343-repair-04-r1` reported these witness reds before `117afa8`. Each file restored.
+
+| mutation | failing case |
+|---|---|
+| the fault check covers only the owner | `TestSeamAdmissionEvidence`, three fault cases |
+| the struct-field loop is disabled | `TestSeamAdmissionEvidence`, the struct-field case |
+| every forwarding closure is refused | `TestSeamAdmissionEvidence`, the nil-composition case |
+| a closure that relays nothing is accepted | `TestSeamAdmissionEvidence`, three producer cases |
+| the second presence rule returns | `TestSeamAdmissionEvidence`, the no-source stale-row case |
+
+The orchestrator decided the repair's nil-forwarder rule under spec line 867, and the reviewer can veto it. A closure or forwarder that returns only nil or a nil fault's result counts as nil. A method that takes the port is reported, and `init` counts as a production caller.
+
 The author admitted `internal/gate.postAcquireContextArm` as a producer port, not a fault port, because production supplies `notifyGateSignals` at `internal/gate/gate.go:216`. The orchestrator accepts that correction of the earlier survey, and the reviewer can veto it. Only `shift.fault` and `worktree.Fault` are fault ports.
 
 ## Standards
