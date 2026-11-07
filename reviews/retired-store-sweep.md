@@ -942,7 +942,68 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rs-c4-review-standards",
+          "performer": "ft446-review-rs-c4",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c4",
+            "digest": "sha256:7734d1de9feaeaadcb2c81f9f9ad538876f2fdffb66c3126d6bc8878b9a86c58",
+            "excerpt": "Standards: 0 findings. Worst issue: none. The nil-protocol default lives only in inherited.go:28-30; the prefilter tokens derive from the reader table; the per-runner cancel rules are distinct policies; runner.go and testreport/command.go net growth zero. Advice: reword the triple-negation prefilter comment at closure_test.go:16-17.\n"
+          },
+          "axis": "Standards",
+          "base": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "tip": "efacd1bb39115a9da6ba3b5575cb6b8bdaaa4e3b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c4-review-spec",
+          "performer": "ft446-review-rs-c4",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c4",
+            "digest": "sha256:60326d330756c8485dd652fcf244e798d6d838d7fa06ec166c67e9e31cbdd32d",
+            "excerpt": "Spec: 0 findings. Worst issue: none. RS16, RS18-RS24, RS29 mapped and passing; D5 holds in bounds.go:236-244 and runbinary.go:321-326; the environment error precedes the vector error. The empty Registration literal in bounds.go:242 is allowed: D4 gives the detached launch the same form, and the acceptance means a hand-built inherited registration. Advice: ticket 04 acceptance wording is broader than the rule; a package-scope func literal escapes the rule.\n"
+          },
+          "axis": "Spec",
+          "base": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "tip": "efacd1bb39115a9da6ba3b5575cb6b8bdaaa4e3b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c4-review-coverage",
+          "performer": "ft446-review-rs-c4",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c4",
+            "digest": "sha256:762965ab36c5122fbefdfdf16ae149d845c75ca6b9014703c8beccff74b5b463",
+            "excerpt": "Coverage: 0 findings. Worst issue: none. Probes bit with restored yes: helper reach dropped, ParseVector Env test made true, prefilter tokens emptied, a hand-built copy in bounds.go (TestRootConformance). Advice: the Environ comparison has no distinguishing green fixture (probe silent, near-equivalent mutant).\n"
+          },
+          "axis": "Coverage",
+          "base": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "tip": "efacd1bb39115a9da6ba3b5575cb6b8bdaaa4e3b",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1183,3 +1244,26 @@ The ticket 05 author ft446-author-05 reported these witness reds, and each probe
 4. RS29 in the build-script runner: a hand-built inherited registration turned the live closure check red.
 
 The three uncounted-reader cases stay green, and the author recorded no separate red for them.
+
+## RS-C4 review pickup
+
+Unified review by ft446-review-rs-c4 on sonnet at high effort over the pair e6cde66..efacd1b. Raw findings: 0. Repair targets: 0. Repair cycles used: 0 of 2.
+
+### Standards
+
+Findings: 0. Worst issue: none.
+
+### Spec
+
+Findings: 0. Worst issue: none. The review confirms the empty registration literal in the bounds runner, because D4 gives the detached launch the same form. That reading stays flagged for reviewer veto.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+### Advice
+
+- Reword the prefilter comment of the closure check, which uses three negations.
+- The ticket 04 acceptance item about a built registration is broader than the closure rule. The item means a hand-built inherited registration.
+- A reader inside a function literal at package scope escapes the rule. D4 names functions, so this stays outside scope.
+- No green fixture distinguishes the process environment call from another call in the reader table.
