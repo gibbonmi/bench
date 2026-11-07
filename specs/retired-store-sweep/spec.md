@@ -175,7 +175,21 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
 
 ```bench-completion-plan
 {
-  "version": 1,
+  "version": 2,
+  "execution": {
+    "mode": "delegate",
+    "review_mode": "unified",
+    "run_id": "ft446-build",
+    "orchestrator_session": "ft446-orchestrator",
+    "author_limit": 1,
+    "assignments": {
+      "01-record-retired-store-path.md": [],
+      "02-sweep-retired-nested-stores.md": [],
+      "03-discard-gone-retired-caches.md": [],
+      "04-run-inherited-under-local-protocol.md": [],
+      "05-refuse-hand-built-inherited-registrations.md": []
+    }
+  },
   "chunks": [
     {
       "id": "RS-C1",
@@ -186,17 +200,20 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
         {
           "id": "retired-record-written",
           "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "remove the retired-record publish from SealAndObserve; require TestRetiredStoreRecordsItsPath to fail"
+          "probe": "remove the retired-record publish from SealAndObserve; require TestRetiredStoreRecordsItsPath to fail",
+          "ticket": "01-record-retired-store-path.md"
         },
         {
           "id": "cache-no-generation",
           "command": "bench test --package ./internal/gocache",
-          "probe": "make Recover return a non-ErrNotExist error when the store holds retired.json; require TestProtectionCompletedHold to fail on its clean after the release"
+          "probe": "make Recover return a non-ErrNotExist error when the store holds retired.json; require TestProtectionCompletedHold to fail on its clean after the release",
+          "ticket": "01-record-retired-store-path.md"
         },
         {
           "id": "checkout-no-generation",
           "command": "bench test --package ./internal/worktree --run '^TestCheckoutProtectionPredicate$'",
-          "probe": "make Recover return a non-ErrNotExist error when the store holds retired.json; require TestCheckoutProtectionPredicate to fail"
+          "probe": "make Recover return a non-ErrNotExist error when the store holds retired.json; require TestCheckoutProtectionPredicate to fail",
+          "ticket": "01-record-retired-store-path.md"
         }
       ]
     },
@@ -209,17 +226,20 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
         {
           "id": "retired-sweep-omission",
           "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "make discardNested skip each store with no resource.json, as it does today; require TestGenerationRemove to fail on the retired gone store"
+          "probe": "make discardNested skip each store with no resource.json, as it does today; require TestGenerationRemove to fail on the retired gone store",
+          "ticket": "02-sweep-retired-nested-stores.md"
         },
         {
           "id": "user-guard-omission",
           "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail"
+          "probe": "drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail",
+          "ticket": "02-sweep-retired-nested-stores.md"
         },
         {
           "id": "lock-skip-omission",
           "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "make a contended store lock join the sweep error; require TestRetiredSweepSkipsALockedStore to fail"
+          "probe": "make a contended store lock join the sweep error; require TestRetiredSweepSkipsALockedStore to fail",
+          "ticket": "02-sweep-retired-nested-stores.md"
         }
       ]
     },
@@ -232,17 +252,20 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
         {
           "id": "cache-check-omission",
           "command": "bench test --package ./internal/gocache",
-          "probe": "remove the absent-resource check call from the cache retire; require TestReleaseRunsTheRetiredCheck to fail"
+          "probe": "remove the absent-resource check call from the cache retire; require TestReleaseRunsTheRetiredCheck to fail",
+          "ticket": "03-discard-gone-retired-caches.md"
         },
         {
           "id": "kind-scope-omission",
           "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "drop both the store-name prefix filter and the record kind comparison from the absent-resource check; require TestDiscardRetired to fail on the retired store of another kind"
+          "probe": "drop both the store-name prefix filter and the record kind comparison from the absent-resource check; require TestDiscardRetired to fail on the retired store of another kind",
+          "ticket": "03-discard-gone-retired-caches.md"
         },
         {
           "id": "registry-row",
           "command": "bench test --package ./internal/conformance",
-          "probe": "delete the discardRetiredCaches seamVariable row from the injected-port registry; require the registry check to refuse the unregistered variable"
+          "probe": "delete the discardRetiredCaches seamVariable row from the injected-port registry; require the registry check to refuse the unregistered variable",
+          "ticket": "03-discard-gone-retired-caches.md"
         }
       ]
     },
@@ -256,22 +279,26 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
         {
           "id": "protocol-forwarding",
           "command": "bench test --package ./internal/subprocess",
-          "probe": "make RunInherited use the installed protocol whatever the registration names; require TestRunInheritedRegistersOnLocalProtocol to fail"
+          "probe": "make RunInherited use the installed protocol whatever the registration names; require TestRunInheritedRegistersOnLocalProtocol to fail",
+          "ticket": "04-run-inherited-under-local-protocol.md"
         },
         {
           "id": "build-vector-refusal",
           "command": "bench test --package ./internal/runbinary",
-          "probe": "make RunInherited ignore an unreadable inherited vector; require TestBuildScriptMalformedResources to fail"
+          "probe": "make RunInherited ignore an unreadable inherited vector; require TestBuildScriptMalformedResources to fail",
+          "ticket": "04-run-inherited-under-local-protocol.md"
         },
         {
           "id": "runner-callers",
           "command": "bench test --package ./internal/bounds --package ./internal/gate --package ./internal/preprelease --package ./internal/releasepreflight --package ./internal/testreport",
-          "probe": "make the bounds cancel request answer a deadline for a cancelled parent; require TestBoundsFixedShutdown to fail"
+          "probe": "make the bounds cancel request answer a deadline for a cancelled parent; require TestBoundsFixedShutdown to fail",
+          "ticket": "04-run-inherited-under-local-protocol.md"
         },
         {
           "id": "copy-survival",
           "command": "bench test --package ./internal/conformance --run '^TestProcessLifetime'",
-          "probe": "remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail"
+          "probe": "remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail",
+          "ticket": "05-refuse-hand-built-inherited-registrations.md"
         }
       ]
     }
