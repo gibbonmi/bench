@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"path"
 	"path/filepath"
 	"slices"
@@ -13,11 +14,67 @@ import (
 )
 
 // processLifetimePrefilter is the substring prefilter: a file that spells none of the
-// private lifetime mechanics and none of the owner calls carries neither.
-var processLifetimePrefilter = slices.Concat([]string{"Setpgid", "Kill", "Signal", "Wait"}, processLifetimeOwnerCalls)
+// private lifetime mechanics, none of the owner calls, and none of the vector readers carries none of them.
+var processLifetimePrefilter = slices.Concat([]string{"Setpgid", "Kill", "Signal", "Wait"}, processLifetimeOwnerCalls, slices.Collect(maps.Keys(processLifetimeVectorReaders)))
 
-// processLifetimeFileDiags reports each private lifetime mechanic in one production file and
-// each owner call that no census entry reaches. Comments and strings are not call sites.
+// processLifetimeProtectionImport is the import path of the protection leaf of the owner.
+const processLifetimeProtectionImport = processLifetimeOwnerImport + "/protection"
+
+// processLifetimeVectorReaders maps each protection reader to the argument test that makes the
+// call read the process vector that RunInherited reads. A read of another value is not counted.
+var processLifetimeVectorReaders = map[string]func(file *ast.File, args []ast.Expr) bool{
+	"Inherited": func(_ *ast.File, args []ast.Expr) bool { return len(args) == 0 },
+	"InheritedFrom": func(file *ast.File, args []ast.Expr) bool {
+		call, ok := processLifetimeOnlyCall(args)
+		return ok && len(call.Args) == 0 && guardProjectionImported(file, call, "os") == "Environ"
+	},
+	"ParseVector": func(file *ast.File, args []ast.Expr) bool {
+		call, ok := processLifetimeOnlyCall(args)
+		return ok && len(call.Args) == 1 && guardProjectionImported(file, call, "os") == "Getenv" &&
+			guardProjectionImported(file, &ast.CallExpr{Fun: call.Args[0]}, processLifetimeProtectionImport) == "Env"
+	},
+}
+
+// processLifetimeOnlyCall gives the call that is the one argument of args.
+func processLifetimeOnlyCall(args []ast.Expr) (*ast.CallExpr, bool) {
+	if len(args) != 1 {
+		return nil, false
+	}
+	call, ok := ast.Unparen(args[0]).(*ast.CallExpr)
+	return call, ok
+}
+
+// processLifetimeBuildsRegistration reports whether decl of the file at file, or a same-package
+// function that it calls, builds a subprocess.Registration literal.
+func processLifetimeBuildsRegistration(fset *token.FileSet, file string, decl *ast.FuncDecl) (bool, error) {
+	functions, err := processLifetimePackageFunctions(filepath.Dir(file), ".")
+	if err != nil {
+		return false, err
+	}
+	candidates := functions.named(decl.Name.Name)
+	start := slices.IndexFunc(candidates, func(candidate *packageFunc) bool {
+		return candidate.rel == filepath.Base(file) && candidate.line == fset.Position(decl.Pos()).Line
+	})
+	if start < 0 {
+		return false, nil
+	}
+	builds := func(current *packageFunc) bool {
+		found := false
+		ast.Inspect(current.body, func(node ast.Node) bool {
+			if literal, ok := node.(*ast.CompositeLit); ok && literal.Type != nil && guardProjectionImported(current.file, &ast.CallExpr{Fun: literal.Type}, processLifetimeOwnerImport) == "Registration" {
+				found = true
+			}
+			return !found
+		})
+		return found
+	}
+	from := candidates[start]
+	return builds(from) || functions.reaches(from, builds), nil
+}
+
+// processLifetimeFileDiags reports each private lifetime mechanic in one production file, each
+// owner call that no census entry reaches, and each function that reads the process vector and
+// builds a subprocess.Registration by hand. Comments and strings are not call sites.
 func processLifetimeFileDiags(file, rel string, reached map[string]bool) []string {
 	body := readIfExists(file)
 	if !slices.ContainsFunc(processLifetimePrefilter, func(token string) bool { return strings.Contains(body, token) }) {
@@ -80,6 +137,18 @@ func processLifetimeFileDiags(file, rel string, reached map[string]bool) []strin
 			caller := processLifetimeDeclName(stack)
 			if !reached[path.Dir(rel)+"#"+caller] {
 				diags = append(diags, at(call)+" calls subprocess."+name+" from "+caller+", which no process-lifetime census entry reaches")
+			}
+		}
+		name := guardProjectionImported(parsed, call, processLifetimeProtectionImport)
+		if reads, counted := processLifetimeVectorReaders[name]; counted && reads(parsed, call.Args) {
+			if decl := processLifetimeDecl(stack); decl != nil {
+				builds, err := processLifetimeBuildsRegistration(fset, file, decl)
+				switch {
+				case err != nil:
+					diags = append(diags, rel+" package cannot be parsed for the hand-built registration rule: "+err.Error())
+				case builds:
+					diags = append(diags, at(call)+" "+decl.Name.Name+" reads the process vector through protection."+name+" and builds a subprocess.Registration by hand outside "+processLifetimeOwner)
+				}
 			}
 		}
 		return true
@@ -242,12 +311,20 @@ func processLifetimeCommandCall(file *ast.File, expr ast.Expr) bool {
 // processLifetimeDeclName names the top-level function declaration on the stack, with its
 // receiver-free name, or "package scope".
 func processLifetimeDeclName(stack []ast.Node) string {
-	for _, node := range stack {
-		if fn, ok := node.(*ast.FuncDecl); ok {
-			return fn.Name.Name
-		}
+	if fn := processLifetimeDecl(stack); fn != nil {
+		return fn.Name.Name
 	}
 	return "package scope"
+}
+
+// processLifetimeDecl is the top-level function declaration on the stack, or nil at package scope.
+func processLifetimeDecl(stack []ast.Node) *ast.FuncDecl {
+	for _, node := range stack {
+		if fn, ok := node.(*ast.FuncDecl); ok {
+			return fn
+		}
+	}
+	return nil
 }
 
 // TestProcessLifetimeMigrationClosure is PL91. It grades the private-mechanics half on
