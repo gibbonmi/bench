@@ -1791,6 +1791,8 @@ The repair session `ft343-repair-04-r1` reported these witness reds before `117a
 | a closure that relays nothing is accepted | `TestSeamAdmissionEvidence`, three producer cases |
 | the second presence rule returns | `TestSeamAdmissionEvidence`, the no-source stale-row case |
 
+The repair session `ft343-repair-04-r2` reported one witness red at `a6d608b`. The probe replaced the var-declaration value record in `fault.go`, the file restored, and `TestSeamAdmissionEvidence` failed with this assertion: `admission_test.go:236: got 0 diagnostics [], want heads ["injected fault port registry row names a port that production supplies: internal/sample.Fault "]`.
+
 The orchestrator decided the repair's nil-forwarder rule under spec line 867, and the reviewer can veto it. A closure or forwarder that returns only nil or a nil fault's result counts as nil. A method that takes the port is reported, and `init` counts as a production caller.
 
 The author admitted `internal/gate.postAcquireContextArm` as a producer port, not a fault port, because production supplies `notifyGateSignals` at `internal/gate/gate.go:216`. The orchestrator accepts that correction of the earlier survey, and the reviewer can veto it. Only `shift.fault` and `worktree.Fault` are fault ports.
