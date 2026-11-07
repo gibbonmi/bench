@@ -205,6 +205,13 @@ coverage map; a class skipped here returns as a regression.
   and a control character there whatever `core.quotePath` says. A reader that
   matches header paths against the tree must unquote them first. The setting
   changes only the non-ASCII bytes
+- a predicate over a `git diff` path list: the list holds added, edited,
+  deleted, and renamed paths, and the predicate must meet each kind. A
+  porcelain `git diff` detects renames by default. Then a rename is one entry,
+  and `--name-only` shows only its new path, so the old path's deletion is
+  hidden. Read the list with `--no-renames` when the predicate needs each path
+  as its own change. `--name-only` and `--name-status` quote a path that has
+  unusual characters, so read them with `-z`
 - control bytes a sink *permits* but cannot survive: `toon.Representable` allows
   tab, newline, and return because the encoder escapes them. A line-structured
   markdown or single-line sink borrowing that predicate accepts a value that
