@@ -363,9 +363,10 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT414-preconditions
-2. FT369-charge-slicing
-3. FT365-conformance
-4. FT341-in-only
-5. FT420-concurrent-chunks
-6. FT387-overflow
+1. FT482-seal-policy
+2. FT414-preconditions
+3. FT369-charge-slicing
+4. FT365-conformance
+5. FT341-in-only
+6. FT420-concurrent-chunks
+7. FT387-overflow
