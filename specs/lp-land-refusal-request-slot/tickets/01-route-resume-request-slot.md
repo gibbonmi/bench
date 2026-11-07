@@ -1,7 +1,7 @@
 # Route the resume command's request placeholder through its owner
 
 Blocked by: none
-Writes: internal/worktree/land_refusal.go, internal/worktree/land_resume_next_test.go
+Writes: internal/worktree/land_refusal.go, internal/worktree/land_resume_next_test.go, internal/worktree/parallel_census_test.go
 Covers: none
 
 ## What to build

@@ -11,6 +11,7 @@ import (
 // placeholder: the form that quotes its values and the form that a value with a control
 // byte drops to.
 func TestLandingResumeNextNamesTheRequestSlot(t *testing.T) {
+	t.Parallel()
 	cases := map[string]landing.ReviewedResult{
 		"line-safe":     {Commit: "c1", SourceBase: "b1", SourceTip: "t1"},
 		"not-line-safe": {Commit: "c1\x1b", SourceBase: "b1", SourceTip: "t1"},
