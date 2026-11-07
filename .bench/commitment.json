@@ -1863,6 +1863,22 @@
           ]
         },
         {
+          "id": "FT482-seal-policy",
+          "criteria": [
+            {
+              "id": "FT482-seal-policy.done",
+              "text": "A cache release seals no generation while a protected user is live, a user whose actor and process group are dead on the current boot counts as released, and a Markdown-only commit starts no background grade."
+            }
+          ],
+          "sources": [
+            {
+              "id": "FT482",
+              "path": "roadmap/FT482.md",
+              "identity": "sha256:27d8d6aecfb6ddb6955eabae6425258f332ce366c0b3ef1b80a43e9f20234197"
+            }
+          ]
+        },
+        {
           "id": "FT414-preconditions",
           "criteria": [
             {
