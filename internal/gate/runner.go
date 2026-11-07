@@ -63,7 +63,7 @@ func gateCancelRequest(ctx context.Context) (subprocess.Cause, syscall.Signal) {
 // output is the only account of where the run stuck.
 func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd, local ...protection.Descriptor) processGroupResult {
 	streams := subprocess.Streams{Stdin: cmd.Stdin, Stdout: subprocess.Output{Writer: cmd.Stdout}, Stderr: subprocess.Output{Writer: cmd.Stderr}}
-	outcome, err := subprocess.RunInherited(ctx, cmd, gateProcessPolicy, streams, gateCancelRequest, local...)
+	outcome, err := subprocess.RunInherited(ctx, cmd, gateProcessPolicy, streams, gateCancelRequest, subprocess.Registration{Resources: local})
 	if err != nil {
 		return processGroupResult{Code: 1, StartErr: err}
 	}

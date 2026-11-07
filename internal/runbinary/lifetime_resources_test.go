@@ -2,6 +2,8 @@ package runbinary
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,6 +68,27 @@ func TestSelectionValidatorRefusesAForeignBinding(t *testing.T) {
 	d.Binding = "0:0"
 	if err := ValidateProtection(d); err == nil || !strings.Contains(err.Error(), "binding 0:0 does not name selection") {
 		t.Fatalf("ValidateProtection(foreign binding) = %v, want a binding refusal", err)
+	}
+}
+
+// TestBuildScriptMalformedResources is RS23. A malformed inherited vector refuses the build
+// script before it starts, so the script's marker never appears.
+func TestBuildScriptMalformedResources(t *testing.T) {
+	t.Setenv(protection.Env, "{not a vector")
+	source := t.TempDir()
+	marker := filepath.Join(t.TempDir(), "started")
+	if err := os.MkdirAll(filepath.Join(source, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(source, "scripts", "go-build.sh"), []byte("#!/usr/bin/env bash\ntouch \""+marker+"\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Factory{TempRoot: t.TempDir(), Protection: binaryProtocol()}.Own(context.Background(), source)
+	if err == nil || !strings.Contains(err.Error(), protection.Env) {
+		t.Fatalf("Own under a malformed vector = %v, want the vector refusal", err)
+	}
+	if _, statErr := os.Stat(marker); !errors.Is(statErr, fs.ErrNotExist) {
+		t.Fatalf("the build script ran under a malformed vector: %v", statErr)
 	}
 }
 

@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/subprocess"
-	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
 // The const block is the production policy registry. Callers name these entries. They do
@@ -231,27 +230,19 @@ func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout io.W
 	if err := parent.Err(); err != nil {
 		return ProcessResult{Status: ProcessCanceled, Err: err}
 	}
-	inherited, malformed := protection.Inherited()
-	if malformed != nil {
-		return ProcessResult{Status: ProcessStart, Err: malformed}
-	}
 	ctx, cancel := Context(parent, limit)
 	defer cancel()
 	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}, Stderr: subprocess.Output{Capture: true}, MergeStderr: stdout == nil}
-	registration := subprocess.Registration{Protocol: protection.Installed(), Resources: inherited}
-	lifetime := subprocess.NewLifetime(cmd, processPolicy, streams, registration)
-	if err := lifetime.Start(); err != nil {
+	request := func(context.Context) (subprocess.Cause, syscall.Signal) {
+		if parent.Err() != nil {
+			return subprocess.CauseInterruption, syscall.SIGKILL
+		}
+		return subprocess.CauseDeadline, syscall.SIGKILL
+	}
+	outcome, err := subprocess.RunInherited(ctx, cmd, processPolicy, streams, request, subprocess.Registration{})
+	if err != nil {
 		return ProcessResult{Status: ProcessStart, Err: err}
 	}
-	stop := context.AfterFunc(ctx, func() {
-		cause := subprocess.CauseDeadline
-		if parent.Err() != nil {
-			cause = subprocess.CauseInterruption
-		}
-		lifetime.Cancel(cause, syscall.SIGKILL)
-	})
-	defer stop()
-	outcome, _ := lifetime.Wait()
 	process := outcome.Process
 	output := outcome.Streams.Stderr.Data
 	if stdout == nil {
@@ -267,7 +258,7 @@ func run(parent context.Context, limit time.Duration, cmd *exec.Cmd, stdout io.W
 	case outcome.Cancellation.Cause == subprocess.CauseDeadline:
 		return ProcessResult{Status: ProcessTimeout, Output: output, Err: ctx.Err()}
 	}
-	err := process.WaitErr
+	err = process.WaitErr
 	for _, stream := range []subprocess.Stream{outcome.Streams.Stdout, outcome.Streams.Stderr} {
 		if err == nil && stream.Status != subprocess.StreamComplete && stream.Status != subprocess.StreamNone {
 			err = fmt.Errorf("process stream %s: %v", stream.Status, stream.Err)

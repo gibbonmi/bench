@@ -223,7 +223,7 @@ func startGrade(root, tip, marker string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return detached.PID(subprocess.RunInherited(ctx, detached.Cmd, subprocess.Policy{}, detached.Streams, subprocess.Interrupt(syscall.SIGKILL)))
+	return detached.PID(subprocess.RunInherited(ctx, detached.Cmd, subprocess.Policy{}, detached.Streams, subprocess.Interrupt(syscall.SIGKILL), subprocess.Registration{}))
 }
 
 // backgroundWrapper answers the wrapper of the worktree root.
