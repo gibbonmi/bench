@@ -62,7 +62,7 @@ func (a Directory) Store(path, binding string) (string, error) {
 }
 
 // storePrefix starts the name of each store of the kind. Store names a store with it, and
-// ObserveRecorded selects the stores of the kind with it.
+// ObserveRecorded and DiscardRetired select the stores of the kind with it.
 func (a Directory) storePrefix() string {
 	return string(a.Kind) + "-"
 }
@@ -281,6 +281,28 @@ func (p *Protocol) discardNested(dir string) error {
 		if inside(r.ResourcePath) && absent(r.ResourcePath) {
 			failed = append(failed, os.RemoveAll(store))
 		}
+	}
+	return errors.Join(failed...)
+}
+
+// DiscardRetired is the absent-resource check of the kind. It deletes each store of the kind
+// under the store root whose generation retired and whose recorded resource no longer exists,
+// as discardRetired decides. Both the store name and the retired record must name the kind. A
+// store root that it cannot list, or a deletion that fails, is an error. readLimit bounds each
+// record read.
+func (a Directory) DiscardRetired(readLimit int64) error {
+	root, entries, err := storeEntries()
+	if err != nil {
+		return err
+	}
+	p := &Protocol{ReadLimit: readLimit}
+	ofKind := func(retired Descriptor) bool { return retired.Kind == a.Kind }
+	var failed []error
+	for _, entry := range entries {
+		if !strings.HasPrefix(entry.Name(), a.storePrefix()) {
+			continue
+		}
+		failed = append(failed, p.discardRetired(filepath.Join(root, entry.Name()), ofKind))
 	}
 	return errors.Join(failed...)
 }

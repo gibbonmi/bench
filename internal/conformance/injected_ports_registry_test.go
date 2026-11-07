@@ -185,6 +185,8 @@ var variableSeams = []injectedports.Row{
 	seamVariable("internal/git", "worktreeListTimeout", "boundedGit", "a short discovery bound drives the typed timeout failure of each reader and its renderers", joinIsolation,
 		"internal/git/worktree_admin_enum_test.go::TestWorktreesBoundsEachChildAndPreservesStdout", "internal/git/admin_readers_test.go::TestReadersTimeOutUnderTheWorktreeListBound",
 		"internal/status/status_render_test.go::TestAppendWorktreeRendersBoundExpiryAsTypedFailure", "internal/worktree/list_actions_test.go::TestListCommandRendersBoundExpiryAsTypedFailure"),
+	seamVariable("internal/gocache", "discardRetiredCaches", "heldLock.retire", "a recording check shows that only the last uncontended release runs the absent-resource check, after its own retirement", serialIsolation,
+		"internal/gocache/protection_test.go::TestReleaseRunsTheRetiredCheck"),
 	seamVariable("internal/guards", "enumerateGuards", "Scan", "a held or failing enumeration drives the incomplete scan counts and its cancellation", joinIsolation,
 		"internal/guards/guards_cleanup_test.go::TestScanWaitsForCancelledWorkerCleanup", "internal/guards/guards_cleanup_test.go::TestScanOverrideJoinsBeforeRestore"),
 	seamVariable("internal/guards", "guardScanTimeout", "Command", "a short scan bound drives the checked-in timeout responses", serialIsolation,
