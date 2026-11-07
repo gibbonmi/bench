@@ -6,7 +6,7 @@ Roadmap: FT446
 
 Decision source: `roadmap/FT446.md`, the committed outcome FT446-cache-store that the reviewer approved, with the criterion "A retired cache store leaves with its cache, and inherited registration has one owner" (named reviewed artifact).
 
-Verification log: pending.
+Verification log: 4 iteration(s) to accept — the spec round and the ticket round each took two iterations; the spec round fixed test isolation, a misstated leak path, and missing pre-review proofs, and the ticket round split the seam chunks and the copy rule.
 
 ## Problem
 
