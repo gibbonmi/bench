@@ -1,11 +1,14 @@
 package releaseevidence
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
@@ -122,5 +125,17 @@ func discardStore(t *testing.T, root string) {
 	}
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+// TestEvidenceReadyWaitRefusesWithoutObserver proves that the readiness hold refuses when no
+// observer releases it. A run whose observer never comes, such as a probe run that inherits
+// the ready entry by mistake, must end with a named refusal and never wait without bound.
+func TestEvidenceReadyWaitRefusesWithoutObserver(t *testing.T) {
+	ready := filepath.Join(t.TempDir(), "ready")
+	t.Setenv("BENCH_PREFLIGHT_EVIDENCE_READY_FILE", ready)
+	err := waitForEvidenceProbe(context.Background(), 50*time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "readiness") {
+		t.Fatalf("waitForEvidenceProbe() = %v, want a named readiness refusal", err)
 	}
 }

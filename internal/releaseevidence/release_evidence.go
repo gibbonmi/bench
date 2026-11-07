@@ -145,7 +145,7 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	if err != nil {
 		return assembledEvidence{}, err
 	}
-	if err := waitForEvidenceProbe(ctx); err != nil {
+	if err := waitForEvidenceProbe(ctx, bounds.EvidenceReadyTimeout); err != nil {
 		return assembledEvidence{}, err
 	}
 	reproducibility, err := readReproducibility(root, artifacts)
@@ -254,7 +254,11 @@ func phaseFlags(run RunEvidence) []string {
 	return flags
 }
 
-func waitForEvidenceProbe(ctx context.Context) error {
+// waitForEvidenceProbe holds the run at the readiness point when the ready entry names a
+// file. It writes the file and waits until an observer removes it. A hold that no observer
+// releases within window refuses, so the run never waits without bound. The window is a
+// wall limit, so it stays finite when a test run removes verdict deadlines.
+func waitForEvidenceProbe(ctx context.Context, window time.Duration) error {
 	path := os.Getenv("BENCH_PREFLIGHT_EVIDENCE_READY_FILE")
 	if path == "" {
 		return nil
@@ -262,13 +266,18 @@ func waitForEvidenceProbe(ctx context.Context) error {
 	if err := os.WriteFile(path, []byte("ready\n"), 0o644); err != nil {
 		return err
 	}
+	held, cancel := bounds.Context(ctx, bounds.FixedWindow(window))
+	defer cancel()
 	for {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			return nil
 		}
 		select {
-		case <-ctx.Done():
-			return ctx.Err()
+		case <-held.Done():
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			return fmt.Errorf("release evidence readiness: no observer removed %s within %s", path, window)
 		case <-time.After(bounds.FixedWindow(10 * time.Millisecond)):
 		}
 	}
