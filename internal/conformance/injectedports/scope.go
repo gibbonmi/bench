@@ -27,6 +27,11 @@ type funcFacts struct {
 	entries           []envEntry
 	flows             []flow
 	sites             []callSite
+	// locals are the values assigned to each local of a scope, fieldSets the stores into
+	// struct fields, and callScopes the scope of each call. The fault trace reads them.
+	locals     map[*bodyScope]map[string][]operand
+	fieldSets  []fieldSet
+	callScopes map[*ast.CallExpr]*bodyScope
 }
 
 // envEntry is one string expression with the place its value flows to.
@@ -123,6 +128,7 @@ func newWalker(fset *token.FileSet, file *sourceFile, pkg string) *walker {
 	top := &bodyScope{names: map[string]bool{}}
 	return &walker{fset: fset, file: file, pkg: pkg, top: top, scope: top, facts: &funcFacts{
 		assigns: map[string]string{}, injects: map[string]bool{}, reads: map[string]bool{}, calls: map[string]bool{},
+		locals: map[*bodyScope]map[string][]operand{}, callScopes: map[*ast.CallExpr]*bodyScope{},
 		ctx: &funcContext{file: file, pkg: pkg, top: top},
 	}}
 }
@@ -194,6 +200,9 @@ func (w *walker) walk(root ast.Node) {
 			w.assign(typed)
 		case *ast.DeclStmt:
 			declareGen(w.scope, typed.Decl)
+			w.declareValues(typed.Decl)
+		case *ast.CompositeLit:
+			w.composite(typed)
 		case *ast.CallExpr:
 			w.call(typed)
 			if callee := w.callee(typed.Fun); callee != "" {
@@ -225,6 +234,7 @@ func (w *walker) walk(root ast.Node) {
 // environment read, or a Setenv of any receiver. A method call records the method name of
 // the walked package.
 func (w *walker) call(call *ast.CallExpr) {
+	w.facts.callScopes[call] = w.scope
 	callee := w.resolve(call.Fun)
 	if callee != "" {
 		w.facts.calls[callee] = true
@@ -258,23 +268,24 @@ func concatOperand(stack []ast.Node, node ast.Node) bool {
 }
 
 // assign records every target of one assignment, so the second name of a combined
-// assignment resolves as surely as the first. A definition declares instead.
+// assignment resolves as surely as the first. A definition declares instead. Every
+// target's value is also stored for the fault trace.
 func (w *walker) assign(stmt *ast.AssignStmt) {
 	if stmt.Tok == token.DEFINE {
 		declareExprs(w.scope, stmt.Lhs...)
-		return
 	}
 	for i, target := range stmt.Lhs {
-		seam := w.resolve(w.assignedRoot(target))
+		value := assignedValue(stmt, i)
+		w.store(target, value)
+		seam := ""
+		if stmt.Tok != token.DEFINE {
+			seam = w.resolve(w.assignedRoot(target))
+		}
 		if seam == "" {
 			continue
 		}
 		if _, seen := w.facts.assigns[seam]; !seen {
 			w.facts.assigns[seam] = fmt.Sprintf("%s:%d", w.file.rel, w.fset.Position(target.Pos()).Line)
-		}
-		value := stmt.Rhs[0]
-		if len(stmt.Rhs) == len(stmt.Lhs) {
-			value = stmt.Rhs[i]
 		}
 		if w.usesParameter(value) {
 			w.facts.injects[seam] = true

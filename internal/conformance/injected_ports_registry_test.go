@@ -66,8 +66,7 @@ var injectedPortRegistry = append(append([]injectedports.Row{
 		Exempt: "a real-producer test needs a live npm registry, and NPMCLIRegistry is runbook-only: it never performs gate egress or touches a credential (the Registry port comment in internal/publication/registry.go states each adapter's gate coverage)",
 	},
 	{Package: "internal/roadmap", Port: "OutlookSource", TestFile: "cmd/bench/commitment_test.go", TestName: "TestCommitmentNextProjection"},
-	faultPort("internal/shift", "fault", "hitShift", "an injected step fault drives the staging, teardown, upsert, and startup failures", joinIsolation,
-		"internal/shift/fault_test.go::TestLoopStagingFaultPreservesAndSplitsEvidence", "internal/shift/lifetime_test.go::TestActualStartRace"),
+	faultPortOf(shiftFaultSeam, "fault", "hitShift"),
 	{Package: "internal/spec", Port: "TreeReader", TestFile: "internal/landing/close_test.go", TestName: "TestTicketsOnlyInCommit"},
 	{Package: "internal/subprocess", Port: "CancelRequest", TestFile: "internal/releasepreflight/lifetime_test.go", TestName: "TestScannerCancel"},
 	{Package: "internal/subprocess", Port: "Window", TestFile: "internal/bounds/lifetime_test.go", TestName: "TestBoundsFixedShutdown"},
@@ -94,6 +93,17 @@ const (
 func faultPort(pkg, port, owner, purpose, isolation string, consumers ...string) injectedports.Row {
 	return injectedports.Row{Package: pkg, Port: port, Owner: owner, Purpose: purpose, Isolation: isolation, Consumers: consumers}
 }
+
+// faultPortOf admits the fault port that one variable seam carries. The variable is the
+// only place a value of the port enters, so the port row borrows that seam's evidence.
+func faultPortOf(seam injectedports.Row, port, owner string) injectedports.Row {
+	return faultPort(seam.Package, port, owner, seam.Purpose, seam.Isolation, seam.Consumers...)
+}
+
+// shiftFaultSeam is the one admission of the shift step fault, as a variable seam and,
+// through faultPortOf, as the fault port that the variable carries.
+var shiftFaultSeam = seamVariable("internal/shift", "shiftFault", "stageTouched", "an injected step fault drives the staging, teardown, upsert, and startup failures", joinIsolation,
+	"internal/shift/fault_test.go::TestLoopStagingFaultPreservesAndSplitsEvidence", "internal/shift/lifetime_test.go::TestActualStartRace")
 
 // The isolation evidence that most variable seams share. A seam whose tests differ states
 // its own evidence.
@@ -221,8 +231,7 @@ var variableSeams = []injectedports.Row{
 		"internal/sessioninspect/sessioninspect_test.go::TestCommandInstallsTenSecondDeadline"),
 	seamVariable("internal/sessioninspect", "runInspect", "Command", "a recording inspection shows that the command installs its ten-second deadline", serialIsolation,
 		"internal/sessioninspect/sessioninspect_test.go::TestCommandInstallsTenSecondDeadline"),
-	seamVariable("internal/shift", "shiftFault", "stageTouched", "an injected step fault drives the staging, teardown, upsert, and startup failures", joinIsolation,
-		"internal/shift/fault_test.go::TestLoopStagingFaultPreservesAndSplitsEvidence", "internal/shift/lifetime_test.go::TestActualStartRace"),
+	shiftFaultSeam,
 	seamVariable("internal/shift", "timeNow", "loop", "a fixed clock makes the branch-name collision and its retries deterministic", serialIsolation,
 		"internal/shift/shift_test.go::TestLoopRetriesBranchCreationOnCollision"),
 	seamVariable("internal/skillsindex", "preReplacementBarrier", "replaceReference", "a held barrier in a child process lets the parent observe the write before the replacement", childIsolation,

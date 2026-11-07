@@ -21,8 +21,16 @@ var productionRoots = []string{"cmd", "internal"}
 // directory. The variable and setter derivation reads it whole, so a seam in a package
 // that no registry row names is still found.
 type sourceTree struct {
+	root     string
 	fset     *token.FileSet
 	packages map[string]*sourcePackage
+}
+
+// holds reports whether the graded tree holds the directory dir, written relative to the
+// root. It is the one presence rule of every row kind and of the walk; see absentPackage.
+// A held directory with no Go source is present, so a row there is still graded.
+func (t *sourceTree) holds(dir string) bool {
+	return !absentPackage(filepath.Join(t.root, filepath.FromSlash(dir)))
 }
 
 // sourcePackage is one directory's Go source. Production files are the non-test files.
@@ -45,14 +53,14 @@ type sourceFile struct {
 // the graded tree does not hold is skipped, so a partial fixture root stays benign. A
 // directory or file the walk cannot read or parse is a diagnostic, never silence.
 func loadSourceTree(root string) (*sourceTree, []string) {
-	tree := &sourceTree{fset: token.NewFileSet(), packages: map[string]*sourcePackage{}}
+	tree := &sourceTree{root: root, fset: token.NewFileSet(), packages: map[string]*sourcePackage{}}
 	module := modulePath(root)
 	var diags []string
 	for _, top := range productionRoots {
-		base := filepath.Join(root, top)
-		if absentPackage(base) {
+		if !tree.holds(top) {
 			continue
 		}
+		base := filepath.Join(root, top)
 		err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
 			rel := relSlash(root, path)
 			if err != nil {

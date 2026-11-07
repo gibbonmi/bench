@@ -59,6 +59,13 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			required: []string{"internal/gitguard"},
 		},
 		{
+			row:      "stale variable row in a present package with no Go source",
+			files:    map[string]string{"internal/sample/README.md": "no Go source\n"},
+			required: []string{"internal/gitguard"},
+			rows:     []Row{{Kind: KindVariable, Package: "internal/sample", Port: "hook", Owner: "Run", Purpose: "p", Isolation: "i"}},
+			heads:    []string{OrphanPortRowMessage + ": internal/sample.hook is registered"},
+		},
+		{
 			row:   "PS43 unreadable present package",
 			loop:  true,
 			heads: []string{"injected port derivation cannot read internal/sample: ", empty},
@@ -193,7 +200,12 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 		}
 		return row
 	}
-	const fault = ": internal/sample.Fault "
+	// composed opens a production closure over a field and a parameter of the port; each
+	// case closes it with its last return.
+	const (
+		fault    = ": internal/sample.Fault "
+		composed = "\ntype deps struct{ fault Fault }\n\nfunc Wrapped(d deps, local Fault) error {\n\tfault := func(step string) error {\n\t\tif err := hit(local, step); err != nil {\n\t\t\treturn err\n\t\t}\n"
+	)
 	for _, test := range []struct {
 		row, extra string
 		rows       []Row
@@ -204,6 +216,16 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			heads: []string{SeamUnreachedMessage + fault}},
 		{row: "a fault-port owner that does not take the port", rows: []Row{faultRow(func(r *Row) { r.Owner = "Run" })}, heads: []string{SeamOwnerMessage + fault}},
 		{row: "a fault-port owner that a production caller supplies", extra: "\nfunc Live() error { return Apply(func(string) error { return nil }) }\n",
+			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
+		{row: "a second production function that receives a fault", extra: "\nfunc Other(fault Fault) error { return hit(fault, \"other\") }\n\nfunc Live() error { return Other(func(string) error { return nil }) }\n",
+			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
+		{row: "a struct field of the port that production sets", extra: "\ntype deps struct{ fault Fault }\n\nfunc defaults() deps { return deps{fault: func(string) error { return nil }} }\n\nfunc (d deps) run() error { return d.fault(\"run\") }\n",
+			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
+		{row: "a method that takes the port", extra: "\ntype runner struct{}\n\nfunc (runner) apply(fault Fault) error { return hit(fault, \"method\") }\n",
+			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
+		{row: "a production closure that composes only nil faults", extra: composed + "\t\treturn hit(d.fault, step)\n\t}\n\treturn hit(fault, \"wrapped\")\n}\n\nfunc RunWrapped() error { return Wrapped(deps{}, nil) }\n",
+			rows: []Row{faultRow(nil)}},
+		{row: "a production closure that returns its own error", extra: composed + "\t\treturn errStop\n\t}\n\treturn hit(fault, \"wrapped\")\n}\n\nvar errStop error\n\nfunc RunWrapped() error { return Wrapped(deps{}, nil) }\n",
 			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
 	} {
 		t.Run(test.row, func(t *testing.T) {

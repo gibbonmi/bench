@@ -21,9 +21,9 @@ import (
 // check keeps them closed. It refuses a derived port that names neither a test driving
 // its real producer nor a written reason it does not.
 //
-// The two halves are deliberately independent. The inventory is derived from the audited
-// packages' Go source, so a port added tomorrow appears without anyone remembering to say
-// so. The registry file is the advertisement, and disagreement between them is the red.
+// The two halves are deliberately independent. The inventory is derived from the Go source
+// of every production package under cmd and internal, so a port added tomorrow appears
+// without anyone remembering to say so. The registry file is the advertisement, and disagreement between them is the red.
 // A single hand-maintained list would satisfy itself.
 //
 // The named-test-exists half is a tripwire, not a behavior check. It catches a junction

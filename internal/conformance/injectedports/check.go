@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"syscall"
@@ -98,14 +97,14 @@ func Check(root string, policy Policy) []string {
 	tree, diags := loadSourceTree(root)
 	census := deriveSeams(tree)
 	diags = append(diags, duplicateRows(policy.Rows)...)
-	diags = append(diags, census.portDiags(root, tree, policy)...)
+	diags = append(diags, census.portDiags(tree, policy)...)
 	diags = append(diags, census.seamDiags(tree, policy)...)
 	slices.Sort(diags)
 	return slices.Compact(diags)
 }
 
 // portDiags grades the named-port rows against the ports of every production package.
-func (c *seamCensus) portDiags(root string, tree *sourceTree, policy Policy) []string {
+func (c *seamCensus) portDiags(tree *sourceTree, policy Policy) []string {
 	ports := c.namedPorts(tree)
 	registered := map[string]Row{}
 	for _, row := range policy.Rows {
@@ -116,7 +115,7 @@ func (c *seamCensus) portDiags(root string, tree *sourceTree, policy Policy) []s
 	var diags []string
 	empty := map[string]bool{}
 	for _, pkg := range policy.Required {
-		if len(ports[pkg]) > 0 || absentPackage(filepath.Join(root, filepath.FromSlash(pkg))) {
+		if len(ports[pkg]) > 0 || !tree.holds(pkg) {
 			continue
 		}
 		empty[pkg] = true
@@ -143,7 +142,7 @@ func (c *seamCensus) portDiags(root string, tree *sourceTree, policy Policy) []s
 		}
 	}
 	for _, row := range policy.Rows {
-		if row.Kind != KindPort || derived[row.Package+"."+row.Port] || empty[row.Package] || absentPackage(filepath.Join(root, filepath.FromSlash(row.Package))) {
+		if row.Kind != KindPort || derived[row.Package+"."+row.Port] || empty[row.Package] || !tree.holds(row.Package) {
 			continue
 		}
 		diags = append(diags, orphanDiag(row))

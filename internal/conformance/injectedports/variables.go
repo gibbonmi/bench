@@ -7,9 +7,10 @@ import (
 	"strings"
 )
 
-// funcEntry is one top-level function with its body facts.
+// funcEntry is one top-level function with its declaration and its body facts.
 type funcEntry struct {
 	file  *sourceFile
+	decl  *ast.FuncDecl
 	facts *funcFacts
 }
 
@@ -48,11 +49,20 @@ type seamCensus struct {
 	testMethods map[string][]*funcFacts
 	// methods maps a method name of a package to its production method bodies.
 	methods map[string][]*funcFacts
-	// params maps a production function to the type name of each parameter, and varTypes
-	// maps a production variable declared without a value to its type name. A fault-port
-	// row reads both; see faultDiags.
-	params   map[string][]string
-	varTypes map[string]string
+	// params maps a production function or method to the type name of each parameter, and
+	// varTypes maps a production variable declared with a type to that type name;
+	// initialized holds the variables declared with a value. fieldTypes maps each struct
+	// field, written "pkg.Struct.field", to its type name, and structFields lists the field
+	// names of each struct in order. inits are the init function bodies, which bodies does
+	// not key, and production is every production body that is not test support, init
+	// functions included. A fault-port row reads them; see faultDiags.
+	params       map[string][]string
+	varTypes     map[string]string
+	initialized  map[string]bool
+	fieldTypes   map[string]string
+	structFields map[string][]string
+	production   []*funcFacts
+	inits        []*funcFacts
 }
 
 // constant is one constant declaration with the context its value resolves in.
@@ -71,7 +81,8 @@ func deriveSeams(tree *sourceTree) *seamCensus {
 		variables: map[string]string{}, bodies: map[string]*funcFacts{}, consts: map[string]constant{},
 		imports: map[string]map[string]bool{}, tested: map[string]bool{}, mains: map[string]bool{},
 		assigners: map[string][]*funcFacts{}, methods: map[string][]*funcFacts{}, testMethods: map[string][]*funcFacts{},
-		params: map[string][]string{}, varTypes: map[string]string{},
+		params: map[string][]string{}, varTypes: map[string]string{}, initialized: map[string]bool{},
+		fieldTypes: map[string]string{}, structFields: map[string][]string{},
 	}
 	for _, dir := range sortedKeys(tree.packages) {
 		census.indexPackage(tree.fset, tree.packages[dir])
@@ -104,6 +115,15 @@ func deriveSeams(tree *sourceTree) *seamCensus {
 		}
 	}
 	census.support = census.testSupport()
+	bodies := census.inits
+	for _, id := range sortedKeys(census.bodies) {
+		bodies = append(bodies, census.bodies[id])
+	}
+	for _, facts := range bodies {
+		if !census.support[facts.ctx.pkg] {
+			census.production = append(census.production, facts)
+		}
+	}
 	return census
 }
 
@@ -184,13 +204,15 @@ func (c *seamCensus) indexPackage(fset *token.FileSet, pkg *sourcePackage) {
 			case *ast.GenDecl:
 				c.declareConsts(file, pkg.rel, typed)
 				for _, spec := range typed.Specs {
+					c.declareFields(pkg.rel, spec)
 					value, ok := spec.(*ast.ValueSpec)
 					if !ok || typed.Tok != token.VAR {
 						continue
 					}
 					for i, name := range value.Names {
 						c.vars[pkg.rel+"."+name.Name] = true
-						if value.Type != nil && len(value.Values) == 0 {
+						c.initialized[pkg.rel+"."+name.Name] = len(value.Values) > 0
+						if value.Type != nil {
 							c.varTypes[pkg.rel+"."+name.Name] = typeIdentName(value.Type)
 						}
 						if i < len(value.Values) {
@@ -203,20 +225,22 @@ func (c *seamCensus) indexPackage(fset *token.FileSet, pkg *sourcePackage) {
 			case *ast.FuncDecl:
 				facts := factsOf(fset, file, pkg.rel, typed)
 				read(ownerName(typed), facts)
-				if typed.Name.Name != "init" {
-					c.bodies[pkg.rel+"."+ownerName(typed)] = facts
-				}
 				if typed.Recv != nil {
 					key := methodKey(pkg.rel, typed.Name.Name)
 					c.methods[key] = append(c.methods[key], facts)
 				}
-				if typed.Recv == nil && typed.Name.Name != "init" {
-					c.prod[pkg.rel+"."+typed.Name.Name] = &funcEntry{file: file, facts: facts}
-					for _, field := range typed.Type.Params.List {
-						for range max(1, len(field.Names)) {
-							c.params[pkg.rel+"."+typed.Name.Name] = append(c.params[pkg.rel+"."+typed.Name.Name], typeIdentName(field.Type))
-						}
+				if typed.Name.Name == "init" {
+					c.inits = append(c.inits, facts)
+					continue
+				}
+				c.bodies[pkg.rel+"."+ownerName(typed)] = facts
+				for _, field := range typed.Type.Params.List {
+					for range max(1, len(field.Names)) {
+						c.params[pkg.rel+"."+ownerName(typed)] = append(c.params[pkg.rel+"."+ownerName(typed)], typeIdentName(field.Type))
 					}
+				}
+				if typed.Recv == nil {
+					c.prod[pkg.rel+"."+typed.Name.Name] = &funcEntry{file: file, decl: typed, facts: facts}
 				}
 			}
 		}

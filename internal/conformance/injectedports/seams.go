@@ -23,7 +23,8 @@ const (
 // seamDiags grades the variable, setter, runtime, and environment rows against the census
 // of the whole production source. A seam in a package that no row names is still derived,
 // so a new replacement cannot hide behind a remembered package list. A row whose package
-// the graded tree does not hold is not graded, as for named ports.
+// directory the graded tree does not hold is not graded; sourceTree.holds is the one
+// presence rule that the named-port rows read too.
 func (c *seamCensus) seamDiags(tree *sourceTree, policy Policy) []string {
 	rows := policy.Rows
 	controls := c.deriveControls(policy.Families)
@@ -59,7 +60,7 @@ func (c *seamCensus) seamDiags(tree *sourceTree, policy Policy) []string {
 	}
 	diags = append(diags, c.controlDiags(controls, registered)...)
 	for _, row := range rows {
-		if row.Kind == KindPort || tree.packages[row.Package] == nil {
+		if row.Kind == KindPort || !tree.holds(row.Package) {
 			continue
 		}
 		identity := row.Package + "." + row.Port

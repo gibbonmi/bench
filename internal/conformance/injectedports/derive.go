@@ -4,13 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"slices"
 	"sort"
 )
-
-// FaultProducerMessage names a fault-port row whose owner production supplies a value.
-// Such a port has a real producer, so its row names the test that drives that producer.
-const FaultProducerMessage = "injected fault port registry row names an owner that a production caller supplies"
 
 // derivedPort is one port the source sweep found, carrying the site that injected it. A
 // red then says where the port entered the package, not only that it did.
@@ -129,100 +124,101 @@ func portShapedType(expr ast.Expr) bool {
 	return false
 }
 
-// faultDiags grades a fault-port row: a named port that every production caller of its
-// owner passes as nil. Owner is the production function whose parameter takes the port.
-// Every production call of the owner passes nil there, a variable of the port type that
-// production declares without a value and never assigns, or a parameter of its own caller
-// that is nil by the same rule. A consumer supplies a non-nil value at an injection site:
-// it, or a test helper it reaches, calls a function of the package with a non-nil argument
-// for a parameter of the port type, or assigns a package variable of that type.
-func (c *seamCensus) faultDiags(row Row) []string {
-	identity := row.Package + "." + row.Port
-	owner := row.Package + "." + row.Owner
-	index := slices.Index(c.params[owner], row.Port)
-	diags := rowEvidence(row, identity, index >= 0, func(file, test string) (bool, bool) {
-		return c.reachesControl(file, test, false, func(facts *funcFacts) bool { return c.suppliesFault(facts, row.Package, row.Port) })
-	})
-	if index >= 0 && !c.nilAt(owner, index, map[string]bool{}) {
-		diags = append(diags, fmt.Sprintf("%s: %s is supplied a value by a production caller of %s — name the test that drives its real producer instead", FaultProducerMessage, identity, row.Owner))
-	}
-	return diags
-}
-
-// suppliesFault reports whether one body supplies a non-nil value of port at an injection
-// site of pkg.
-func (c *seamCensus) suppliesFault(facts *funcFacts, pkg, port string) bool {
-	for _, site := range facts.sites {
-		if packageOf(site.callee) != pkg {
-			continue
-		}
-		for index, name := range c.params[site.callee] {
-			if name == port && index < len(site.args) && !isNil(site.args[index], site.scope) {
-				return true
-			}
-		}
-	}
-	for variable := range facts.assigns {
-		if packageOf(variable) == pkg && c.varTypes[variable] == port {
-			return true
-		}
-	}
-	return false
-}
-
-// nilAt reports whether every production call of callee passes nil at parameter index. A
-// call that a test-support package makes is not production. A forwarding cycle is nil.
-func (c *seamCensus) nilAt(callee string, index int, visiting map[string]bool) bool {
-	if visiting[callee] {
-		return true
-	}
-	visiting[callee] = true
-	for _, id := range sortedKeys(c.bodies) {
-		facts := c.bodies[id]
-		if c.support[facts.ctx.pkg] {
-			continue
-		}
-		for _, site := range facts.sites {
-			if site.callee == callee && (index >= len(site.args) || !c.nilArgument(facts, site.scope, site.args[index], visiting)) {
-				return false
-			}
-		}
-	}
-	return true
-}
-
-// nilArgument reports whether one production argument is nil: the nil literal, a package
-// variable declared without a value that no production body assigns, or a parameter of the
-// calling function that every production call of it passes as nil.
-func (c *seamCensus) nilArgument(facts *funcFacts, scope *bodyScope, arg ast.Expr, visiting map[string]bool) bool {
-	ident, ok := arg.(*ast.Ident)
+// declareFields indexes the fields of one production struct declaration of pkg in order. An
+// embedded field is named by its type.
+func (c *seamCensus) declareFields(pkg string, spec ast.Spec) {
+	named, ok := spec.(*ast.TypeSpec)
 	if !ok {
-		return false
+		return
 	}
-	switch owner := scope.owner(ident.Name); {
-	case isNil(arg, scope):
-		return true
-	case owner == nil:
-		variable := facts.ctx.pkg + "." + ident.Name
-		if _, typed := c.varTypes[variable]; !typed {
-			return false
-		}
-		for _, body := range c.bodies {
-			if _, assigned := body.assigns[variable]; assigned {
-				return false
+	strct, ok := named.Type.(*ast.StructType)
+	if !ok || strct.Fields == nil {
+		return
+	}
+	id := pkg + "." + named.Name.Name
+	for _, field := range strct.Fields.List {
+		names := []string{typeIdentName(field.Type)}
+		if len(field.Names) > 0 {
+			names = names[:0]
+			for _, name := range field.Names {
+				names = append(names, name.Name)
 			}
 		}
-		return true
-	case owner == facts.ctx.top:
-		caller := facts.ctx.pkg + "." + facts.ctx.owner
-		param := slices.Index(facts.ctx.params, ident.Name)
-		return param >= 0 && c.prod[caller] != nil && c.nilAt(caller, param, visiting)
+		for _, name := range names {
+			c.structFields[id] = append(c.structFields[id], name)
+			c.fieldTypes[id+"."+name] = typeIdentName(field.Type)
+		}
 	}
-	return false
 }
 
-// isNil reports whether expr is the predeclared nil in scope.
-func isNil(expr ast.Expr, scope *bodyScope) bool {
-	ident, ok := expr.(*ast.Ident)
-	return ok && ident.Name == "nil" && scope.owner("nil") == nil
+// assignedValue is the value that one assignment gives its target at index i. A
+// multi-value call gives every target the call.
+func assignedValue(stmt *ast.AssignStmt, i int) ast.Expr {
+	if len(stmt.Rhs) == len(stmt.Lhs) {
+		return stmt.Rhs[i]
+	}
+	return stmt.Rhs[0]
+}
+
+// store records one assignment for the fault trace: a value of a local, or a store into a
+// field through a selector that names no package variable.
+func (w *walker) store(target, value ast.Expr) {
+	switch typed := target.(type) {
+	case *ast.Ident:
+		if owner := w.scope.owner(typed.Name); owner != nil {
+			w.local(owner, typed.Name, value)
+		}
+	case *ast.SelectorExpr:
+		if w.resolve(typed) == "" {
+			w.facts.fieldSets = append(w.facts.fieldSets, fieldSet{field: typed.Sel.Name, value: w.operand(value)})
+		}
+	}
+}
+
+func (w *walker) local(owner *bodyScope, name string, value ast.Expr) {
+	if w.facts.locals[owner] == nil {
+		w.facts.locals[owner] = map[string][]operand{}
+	}
+	w.facts.locals[owner][name] = append(w.facts.locals[owner][name], w.operand(value))
+}
+
+// declareValues records the values of a local var declaration. A name declared without a
+// value holds its zero value, which for the port type is nil.
+func (w *walker) declareValues(decl ast.Decl) {
+	gen, ok := decl.(*ast.GenDecl)
+	if !ok || gen.Tok != token.VAR {
+		return
+	}
+	for _, spec := range gen.Specs {
+		value, ok := spec.(*ast.ValueSpec)
+		for i := 0; ok && i < len(value.Names); i++ {
+			switch {
+			case len(value.Values) == 0:
+				w.local(w.scope, value.Names[i].Name, ast.NewIdent("nil"))
+			case len(value.Values) == len(value.Names):
+				w.local(w.scope, value.Names[i].Name, value.Values[i])
+			default:
+				w.local(w.scope, value.Names[i].Name, value.Values[0])
+			}
+		}
+	}
+}
+
+// composite records each element of a literal of a resolved struct as a store into a field.
+func (w *walker) composite(lit *ast.CompositeLit) {
+	strct := w.resolve(lit.Type)
+	if strct == "" {
+		return
+	}
+	for index, elt := range lit.Elts {
+		set := fieldSet{strct: strct, index: index, value: w.operand(elt)}
+		if pair, keyed := elt.(*ast.KeyValueExpr); keyed {
+			key, named := pair.Key.(*ast.Ident)
+			if !named {
+				continue
+			}
+			set.field, set.value = key.Name, w.operand(pair.Value)
+		}
+		w.facts.fieldSets = append(w.facts.fieldSets, set)
+	}
 }
