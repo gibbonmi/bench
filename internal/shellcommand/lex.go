@@ -34,20 +34,20 @@ func lex(s string) (tokens []string, marks []bool, ok bool) {
 			opener = false
 		case c == '\'':
 			active = true
-			i++
-			for i < len(runes) && runes[i] != '\'' {
-				current.WriteRune(runes[i])
-				i++
-			}
-			if i >= len(runes) {
+			end := closingQuote(runes, i+1, c)
+			if end >= len(runes) {
 				return nil, nil, false
 			}
-			i++
+			current.WriteString(string(runes[i+1 : end]))
+			i = end + 1
 		case c == '"':
 			active = true
-			i++
-			for i < len(runes) && runes[i] != '"' {
-				if runes[i] == '\\' && i+1 < len(runes) && (runes[i+1] == '"' || runes[i+1] == '\\') {
+			end := closingQuote(runes, i+1, c)
+			if end >= len(runes) {
+				return nil, nil, false
+			}
+			for i++; i < end; {
+				if doubleQuoteEscape(runes, i) {
 					current.WriteRune(runes[i+1])
 					i += 2
 					continue
@@ -61,10 +61,7 @@ func lex(s string) (tokens []string, marks []bool, ok bool) {
 				current.WriteRune(runes[i])
 				i++
 			}
-			if i >= len(runes) {
-				return nil, nil, false
-			}
-			i++
+			i = end + 1
 		case c == '\\':
 			if i+1 >= len(runes) {
 				return nil, nil, false
@@ -83,6 +80,27 @@ func lex(s string) (tokens []string, marks []bool, ok bool) {
 	}
 	flush()
 	return tokens, marks, true
+}
+
+// closingQuote is the one source for where a quote ends. The quoted text starts at
+// runes[i], and quote is the opening rune. It returns the index of the closing quote,
+// or len(runes) when no quote closes the text. Inside double quotes, a backslash
+// escapes a double quote or a backslash.
+func closingQuote(runes []rune, i int, quote rune) int {
+	for i < len(runes) && runes[i] != quote {
+		if quote == '"' && doubleQuoteEscape(runes, i) {
+			i += 2
+			continue
+		}
+		i++
+	}
+	return i
+}
+
+// doubleQuoteEscape reports whether runes[i] is a backslash that escapes the next
+// rune inside double quotes.
+func doubleQuoteEscape(runes []rune, i int) bool {
+	return runes[i] == '\\' && i+1 < len(runes) && (runes[i+1] == '"' || runes[i+1] == '\\')
 }
 
 func dollarParen(runes []rune, i int) bool {
