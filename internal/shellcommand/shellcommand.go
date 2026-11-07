@@ -303,18 +303,23 @@ func allPunct(token string) bool {
 	return true
 }
 
-var heredocOpRe = regexp.MustCompile(`<<<|<<(-?)[ \t]*(?:'([^']+)'|"([^"]+)"|\\?([A-Za-z0-9_][A-Za-z0-9_-]*))`)
+var heredocOpRe = regexp.MustCompile(`^(?:<<<|<<(-?)[ \t]*(?:'([^']+)'|"([^"]+)"|\\?([A-Za-z0-9_][A-Za-z0-9_-]*)))`)
 
+type heredoc struct {
+	delim string
+	dash  bool
+}
+
+// stripHeredocBodies removes each heredoc body and its delimiter line. A body starts
+// after the line on which every quote closes, so a quote that spans lines keeps its
+// lines in the command.
 func stripHeredocBodies(s string) string {
-	type opened struct {
-		delim string
-		dash  bool
-	}
 	lines := strings.Split(s, "\n")
 	out := make([]string, 0, len(lines))
-	var pending []opened
+	var pending []heredoc
+	var quote rune
 	for _, line := range lines {
-		if len(pending) > 0 {
+		if len(pending) > 0 && quote == 0 {
 			candidate := line
 			if pending[0].dash {
 				candidate = strings.TrimLeft(candidate, "\t")
@@ -325,12 +330,44 @@ func stripHeredocBodies(s string) string {
 			continue
 		}
 		out = append(out, line)
-		for _, match := range heredocOpRe.FindAllStringSubmatch(line, -1) {
-			if match[0] == "<<<" {
-				continue
-			}
-			pending = append(pending, opened{delim: match[2] + match[3] + match[4], dash: match[1] == "-"})
-		}
+		pending, quote = scanHeredocOperators(line, quote, pending)
 	}
 	return strings.Join(out, "\n")
+}
+
+// scanHeredocOperators appends each heredoc that line opens outside quotes and outside
+// a backslash escape. quote is the quote that is open at the start of the line, or 0.
+// It returns the quote that is open at the end of the line, or 0.
+func scanHeredocOperators(line string, quote rune, pending []heredoc) ([]heredoc, rune) {
+	runes := []rune(line)
+	for i := 0; i < len(runes); {
+		if quote != 0 {
+			end := closingQuote(runes, i, quote)
+			if end >= len(runes) {
+				return pending, quote
+			}
+			quote, i = 0, end+1
+			continue
+		}
+		switch runes[i] {
+		case '\'', '"':
+			quote = runes[i]
+			i++
+		case '\\':
+			i += 2
+		case '<':
+			match := heredocOpRe.FindStringSubmatch(string(runes[i:]))
+			if match == nil {
+				i++
+				continue
+			}
+			if match[0] != "<<<" {
+				pending = append(pending, heredoc{delim: match[2] + match[3] + match[4], dash: match[1] == "-"})
+			}
+			i += len([]rune(match[0]))
+		default:
+			i++
+		}
+	}
+	return pending, quote
 }

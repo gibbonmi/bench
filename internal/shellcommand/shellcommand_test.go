@@ -84,6 +84,32 @@ func TestParseKeepsLaterCommandsVisibleAfterAnUnbalancedInput(t *testing.T) {
 	}
 }
 
+// A `<<` inside quotes is data, not a heredoc operator, so Parse removes no line after
+// it. A heredoc body starts only after the line on which every quote closes. A guard
+// still sees the later command.
+func TestParseKeepsLinesAfterAQuotedHeredocOperator(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		command string
+	}{
+		{"double-quoted operator", "echo \"<<X\"\ngit reset --hard\nX"},
+		{"single-quoted operator", "echo '<<X'\ngit reset --hard\nX"},
+		{"operator in a quote that spans lines", "echo \"a\n<<X\"\ngit reset --hard\nX"},
+		{"quote open after a real operator", "cat <<X \"\n\" ; git reset --hard\nX"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stream := Parse(tc.command)
+			for _, command := range stream.Commands {
+				words := ProjectCommandWords(stream.Tokens[command.Start:command.End])
+				if reflect.DeepEqual(words, []string{"git", "reset", "--hard"}) {
+					return
+				}
+			}
+			t.Errorf("Parse(%q) = %#v, want a simple command git reset --hard", tc.command, stream)
+		})
+	}
+}
+
 func TestProjectCommandWordsDropsRedirectionsAndDescriptors(t *testing.T) {
 	stream := Parse("2>/dev/null env -u X bench help")
 	if got, want := ProjectCommandWords(stream.Tokens), []string{"env", "-u", "X", "bench", "help"}; !reflect.DeepEqual(got, want) {
