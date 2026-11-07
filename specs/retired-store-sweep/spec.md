@@ -36,8 +36,8 @@ The bounds runner and the build-script runner launch through `RunInherited`, and
 ## User stories
 
 Line: opus / high.
-Implementation-line reason: RS-C1 is the hardest chunk, because it changes a fail-closed store that every protected launch shares. The spec settles each design point, the seams are existing owners, and package tests drive each row through real stores.
-Harder chunks: RS-C1.
+Implementation-line reason: RS-C1 and RS-C2 are the hardest chunks, because they change a fail-closed store that every protected launch shares. The spec settles each design point, the seams are existing owners, and package tests drive each row through real stores.
+Harder chunks: RS-C1, RS-C2.
 
 Retired store record
 
@@ -119,7 +119,7 @@ A store root that the check cannot list, or a deletion that fails, joins the rel
 The cache owner calls the check through one package variable, `discardRetiredCaches`, so a cache test can record the call.
 The injected-port registry admits it as one `seamVariable` row: package `internal/gocache`, variable `discardRetiredCaches`, owner function `heldLock.retire`, purpose "a recording check shows that only the last uncontended release runs the absent-resource check, after its own retirement", `serialIsolation`, and consumer `internal/gocache/protection_test.go::TestReleaseRunsTheRetiredCheck`.
 That consumer does not call `t.Parallel`.
-Reason: the kit run of a system test holds each cache under its run directory, and the kit run's protected removal deletes that directory before the outer cache release. The RS-C1 sweep therefore removes the system-run leak.
+Reason: the kit run of a system test holds each cache under its run directory, and the kit run's protected removal deletes that directory before the outer cache release. The RS-C2 sweep therefore removes the system-run leak.
 A package test that holds a cache under its own temporary directory deletes that directory with no protected removal. Only a check outside `Generation.Remove` reaches the store of that cache, and the decision source names this check.
 The store root is shared by every HOME of the user in the boot. The stores of the last deleted caches stay until the next uncontended cache release by the same user in the boot.
 The check tests only the recorded path. A cache that a process creates again at the same path keeps the store of the earlier binding until that cache goes again.
@@ -161,13 +161,15 @@ No intake ledger or review record field changes, so this spec declares no persis
 
 ## Implementation chunks
 
-Each chunk is one review checkpoint. RS-C3 has no dependency on RS-C1 or RS-C2.
+Each chunk is one review checkpoint. RS-C4 has no dependency on RS-C1, RS-C2, or RS-C3.
+The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the old RS-C2 is now RS-C3, and the old RS-C3 is now RS-C4 with tickets 04 and 05.
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RS-C1 / 01-record-retired-store-path.md, 02-sweep-retired-nested-stores.md | A retired store records its resource, and a protected removal deletes the retired stores of the resources that it deleted | RS1, RS2, RS3, RS4, RS5, RS6, RS7, RS8, RS14, RS15, RS25, RS26, RS31 | TestGenerationRemove, TestRetiredStoreRecordsItsPath, TestRetiredStoreHasNoGeneration, the record tests over each record file, TestRetiredSweepKeepsAUser, TestRetiredSweepSkipsALockedStore, TestProtectionCompletedHold, TestCheckoutProtectionPredicate, the process-lifetime artifact system test | yes |
-| RS-C2 / 03-discard-gone-retired-caches.md | The last release of a cache hold deletes each retired cache store whose cache is gone | RS9, RS10, RS11, RS12, RS13, RS27, RS28, RS30 | TestDiscardRetired, TestDiscardRetiredFailsClosed, TestReleaseRunsTheRetiredCheck, the injected-port registry check | no |
-| RS-C3 / 04-run-inherited-under-local-protocol.md | Inherited registration has one owner, and both runners launch through it | RS16, RS17, RS18, RS19, RS20, RS21, RS22, RS23, RS24, RS29 | TestRunInheritedRegistersOnLocalProtocol, TestProcessLifetimeInheritedRegistrationCopy, TestBuildScriptMalformedResources, TestBoundsMalformedResources, TestBoundsCancel, TestBoundsFixedShutdown, TestBuilderCancel, TestBuilderNormalDrain, the process-lifetime closure check | no |
+| RS-C1 / 01-record-retired-store-path.md | A retired store records its resource, and every reader of a store with no generation keeps its answer | RS1, RS2, RS3, RS25, RS26 | TestRetiredStoreRecordsItsPath, TestRetiredStoreHasNoGeneration, TestProtectionCompletedHold, TestCheckoutProtectionPredicate, the process-lifetime artifact system test | yes |
+| RS-C2 / 02-sweep-retired-nested-stores.md | A protected removal deletes the retired stores of the resources that it deleted | RS4, RS5, RS6, RS7, RS8, RS14, RS15, RS31 | TestGenerationRemove, the record tests over each record file, TestRetiredSweepKeepsAUser, TestRetiredSweepSkipsALockedStore | yes |
+| RS-C3 / 03-discard-gone-retired-caches.md | The last release of a cache hold deletes each retired cache store whose cache is gone | RS9, RS10, RS11, RS12, RS13, RS27, RS28, RS30 | TestDiscardRetired, TestDiscardRetiredFailsClosed, TestReleaseRunsTheRetiredCheck, the injected-port registry check | no |
+| RS-C4 / 04-run-inherited-under-local-protocol.md, 05-refuse-hand-built-inherited-registrations.md | Inherited registration has one owner, both runners launch through it, and the closure check refuses a surviving copy | RS16, RS17, RS18, RS19, RS20, RS21, RS22, RS23, RS24, RS29 | TestRunInheritedRegistersOnLocalProtocol, TestBuildScriptMalformedResources, TestBoundsMalformedResources, TestBoundsCancel, TestBoundsFixedShutdown, TestBuilderCancel, TestBuilderNormalDrain, TestProcessLifetimeCacheSecondProcessClean, TestProcessLifetimeInheritedRegistrationCopy, the process-lifetime closure check | no |
 
 ### Completion plan
 
@@ -178,19 +180,13 @@ Each chunk is one review checkpoint. RS-C3 has no dependency on RS-C1 or RS-C2.
     {
       "id": "RS-C1",
       "tickets": [
-        "01-record-retired-store-path.md",
-        "02-sweep-retired-nested-stores.md"
+        "01-record-retired-store-path.md"
       ],
       "verification": [
         {
-          "id": "retired-record-omission",
+          "id": "retired-record-written",
           "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "remove the retired-record publish from SealAndObserve; require TestGenerationRemove to fail on the retired gone store"
-        },
-        {
-          "id": "user-guard-omission",
-          "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail"
+          "probe": "remove the retired-record publish from SealAndObserve; require TestRetiredStoreRecordsItsPath to fail"
         },
         {
           "id": "cache-no-generation",
@@ -206,6 +202,29 @@ Each chunk is one review checkpoint. RS-C3 has no dependency on RS-C1 or RS-C2.
     },
     {
       "id": "RS-C2",
+      "tickets": [
+        "02-sweep-retired-nested-stores.md"
+      ],
+      "verification": [
+        {
+          "id": "retired-sweep-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "probe": "make discardNested skip each store with no resource.json, as it does today; require TestGenerationRemove to fail on the retired gone store"
+        },
+        {
+          "id": "user-guard-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "probe": "drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail"
+        },
+        {
+          "id": "lock-skip-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "probe": "make a contended store lock join the sweep error; require TestRetiredSweepSkipsALockedStore to fail"
+        }
+      ]
+    },
+    {
+      "id": "RS-C3",
       "tickets": [
         "03-discard-gone-retired-caches.md"
       ],
@@ -228,9 +247,10 @@ Each chunk is one review checkpoint. RS-C3 has no dependency on RS-C1 or RS-C2.
       ]
     },
     {
-      "id": "RS-C3",
+      "id": "RS-C4",
       "tickets": [
-        "04-run-inherited-under-local-protocol.md"
+        "04-run-inherited-under-local-protocol.md",
+        "05-refuse-hand-built-inherited-registrations.md"
       ],
       "verification": [
         {
@@ -244,14 +264,14 @@ Each chunk is one review checkpoint. RS-C3 has no dependency on RS-C1 or RS-C2.
           "probe": "make RunInherited ignore an unreadable inherited vector; require TestBuildScriptMalformedResources to fail"
         },
         {
-          "id": "copy-survival",
-          "command": "bench test --package ./internal/conformance --run '^TestProcessLifetime'",
-          "probe": "remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail"
-        },
-        {
           "id": "runner-callers",
           "command": "bench test --package ./internal/bounds --package ./internal/gate --package ./internal/preprelease --package ./internal/releasepreflight --package ./internal/testreport",
           "probe": "make the bounds cancel request answer a deadline for a cancelled parent; require TestBoundsFixedShutdown to fail"
+        },
+        {
+          "id": "copy-survival",
+          "command": "bench test --package ./internal/conformance --run '^TestProcessLifetime'",
+          "probe": "remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail"
         }
       ]
     }
@@ -372,8 +392,8 @@ A root-wide sweep of retired stores of every kind at each store open is a separa
 
 - `resource.json` readers: each is listed under D1 as changed or unchanged.
 - The retired record is new, so it has no reader outside the protection package.
-- The injected-port registry gains one `seamVariable` row for the cache check variable in `internal/gocache`. That row names the consuming test, and the registry file joins the RS-C2 writes.
-- The closure check rule joins `internal/conformance/process_lifetime_test.go` in the RS-C3 writes.
+- The injected-port registry gains one `seamVariable` row for the cache check variable in `internal/gocache`. That row names the consuming test, and the registry file joins the RS-C3 writes.
+- The closure check rule joins `internal/conformance/process_lifetime_closure_test.go`, and its fixtures join the new `internal/conformance/process_lifetime_copy_test.go`, in the writes of ticket 05.
 - `RunInherited` callers: internal/gate/runner.go:66, internal/gate/background_launch.go:226, internal/preprelease/preprelease.go:273, internal/releasepreflight/command.go:308, internal/testreport/command.go:307. The synthetic source at internal/conformance/process_lifetime_test.go:273 is a text fixture for the census and does not compile, so it keeps its text.
 - The injected-port registry row for `BENCH_PROCESS_RESOURCES` names TestBoundsMalformedResources, which stays.
 - No golden file, testdata fixture, `.mjs` script, workflow, hook, or anchor holds a store record byte or the changed ADR sentence.
@@ -409,7 +429,7 @@ A root-wide sweep of retired stores of every kind at each store open is a separa
 - The non-blocking store lock and its prefilter (D2, RS31) keep a sweep from waiting on another process. The store owner joins the writes of ticket 02. Coordinator decision at slicing.
 - The release-error Won't handle line records that no caller reports the check's error. Coordinator decision at slicing.
 - The RS30 probe drops both kind tests. Coordinator decision at slicing.
-- The RS-C2 plan grades the registry row, and the RS-C3 plan grades the bounds runner and the five caller packages. Coordinator decision at slicing.
+- The RS-C3 plan grades the registry row, and the RS-C4 plan grades the bounds runner and the five caller packages. Coordinator decision at slicing.
 - RS13 reuses the privilege class of `internal/capability` for its root guard. Coordinator decision at slicing.
 - RS2 and RS26 first require `retired.json`, so each has a red path on the current tree. Coordinator decision at slicing.
 - RS4 runs the existing record tests over each record file name. Coordinator decision at slicing.

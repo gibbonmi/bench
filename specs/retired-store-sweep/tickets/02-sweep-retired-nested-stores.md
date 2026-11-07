@@ -1,7 +1,7 @@
 # Sweep the retired stores of the resources that a removal deleted
 
 Blocked by: 01-record-retired-store-path.md
-Writes: internal/subprocess/protection/directory.go, internal/subprocess/protection/store.go, internal/subprocess/protection/record_test.go, internal/subprocess/protection/lifecycle_test.go, internal/subprocess/protection/fixture_test.go, docs/adr/0030-one-lifetime-owner-and-process-user-protection.md, DATA_HANDLING.md
+Writes: internal/subprocess/protection/directory.go, internal/subprocess/protection/store.go, internal/subprocess/protection/export_test.go, internal/subprocess/protection/record_test.go, internal/subprocess/protection/lifecycle_test.go, internal/subprocess/protection/fixture_test.go, docs/adr/0030-one-lifetime-owner-and-process-user-protection.md, DATA_HANDLING.md
 Covers: RS4, RS5, RS6, RS7, RS8, RS14, RS15, RS31
 
 ## What to build
@@ -21,6 +21,7 @@ Under a non-blocking store lock, it requires all of these:
 The store owner's lock helper gains a non-blocking form beside its blocking form, and both share one lock routine.
 A contended lock, an unreadable retired record, or a failed lock skips the store with no error.
 
+The export test file exports the lock file name, so the locked-store test can hold the store lock from a second open file.
 The existing `TestRecord` tests in `record_test.go` run over each record file name through their record planting helpers (`plant` and `resourceRecord`). They do not paste a second harness.
 
 The protection ADR consequence states that a retired store keeps a record of its resource and that a protected removal deletes it with its resource. The sentence that keeps a retired store until the next boot goes. The ADR holds no path and no code.

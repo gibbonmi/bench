@@ -19,5 +19,6 @@ The export test file exports the retired file name for the tests.
 
 - [ ] After a safe retirement, the store holds `retired.json` with the kind, the resource path, and the binding of the retired generation, and it holds no `resource.json`.
 - [ ] A test first requires `retired.json` in a retired store, then requires that `Recover` of that store gives a result that `NoGeneration` accepts.
-- [ ] `TestProtectionCompletedHold` opens a fresh generation after the release, and a clean after the release exits zero.
+- [ ] `TestProtectionCompletedHold` opens a fresh generation after the release.
+- [ ] A clean of the cache after the release runs its release: it exits zero and removes the cache shards, so a clean that refuses or keeps the cache fails.
 - [ ] `TestCheckoutProtectionPredicate` first requires `retired.json` in the retired checkout store, then requires that the checkout cleanup finds no user.
