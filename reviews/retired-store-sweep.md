@@ -733,6 +733,72 @@
           "tip": "2220bf07a832c326e1184acb54419fc11798badb",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "rs-c3-confirm-standards",
+          "performer": "ft446-confirm-rs-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-confirm-rs-c3",
+            "digest": "sha256:d0e11dedddee4eadac4ebfe5a97db1b68606d4031c60b49e5397128e50fc4741",
+            "excerpt": "Standards (confirming round): RS-C3-S1 closed; 0 new findings. goneStore has one definition at fixture_test.go:219 and goneRetired calls it; privateProtocol at fixture_test.go:207-215 serves goneRetired, retiredCaches, and openPrivateRun; no other SetStoreBase call in the package tests.\n"
+          },
+          "axis": "Standards",
+          "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "tip": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "finding_ids": [],
+          "supersedes": [
+            "rs-c3-review-standards"
+          ]
+        },
+        {
+          "id": "rs-c3-confirm-spec",
+          "performer": "ft446-confirm-rs-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-confirm-rs-c3",
+            "digest": "sha256:0f8ce15c24939fc135344bf05e93eb6ba18480e5db41e5dc856cd9e18f7737de",
+            "excerpt": "Spec (confirming round): reaffirmed; 0 new findings. The repair delta changes no production file; the fixture_test.go widen sits in the directory of ticket 03's signed-off Writes entries; validator kinds are unchanged.\n"
+          },
+          "axis": "Spec",
+          "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "tip": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "finding_ids": [],
+          "supersedes": [
+            "rs-c3-review-spec"
+          ]
+        },
+        {
+          "id": "rs-c3-confirm-coverage",
+          "performer": "ft446-confirm-rs-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-confirm-rs-c3",
+            "digest": "sha256:f5bd471242f083759c88419b6670eb0daf8d51fd55b26af70e7f98f33f727d37",
+            "excerpt": "Coverage (confirming round): reaffirmed; 0 new findings. No assertion removed or weakened; protection package 75 tests pass; probe goneStore keeps the resource bit TestDiscardRetired at directory_test.go:235, restored yes.\n"
+          },
+          "axis": "Coverage",
+          "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "tip": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "finding_ids": [],
+          "supersedes": [
+            "rs-c3-review-coverage"
+          ]
         }
       ]
     }
@@ -913,3 +979,11 @@ Findings: 0. Worst issue: none.
 ### Advice
 
 - The unlisted-root subtest fails through the root mode check, not through the directory listing. That listing branch is hard to reach.
+
+## RS-C3 repair r1 and confirming round
+
+The repair session ft446-repair-03-r1 made a test-only repair at e6cde66. One fixture helper now owns the retire-then-delete fact, and one helper owns the private store base and protocol setup. The repair added no test expectation, so it reported no witness red.
+
+The orchestrator probe made the shared helper retire a store without a resource deletion. TestDiscardRetired was red, and the subject was restored. The coordinator confirmation refused, because the ticket widen puts a ticket file in the chunk delta. A unified confirming round by ft446-confirm-rs-c3 then closed RS-C3-S1 with no new finding. Repair cycles used: 1 of 2.
+
+The test that grades a protected removal still builds its own protocol with another kind set. That code predates this chunk, so it stays outside the repair.
