@@ -44,6 +44,7 @@ A repair charge never skips a named-check plan probe, because a named-check requ
   widening in its return.
 - A charge that asks for a commit, a commit sha, or a preflight result makes that request conditional on a committed ticket. A blocked author returns none of them and never creates a commit outside `bench commit`.
 - A charge treats a coverage-row citation in a test doc as a reference to keep.
+- A charge whose delegate must read a whole worktree file names a whole-file form, because `bench worktree read` returns one page. The forms are the file reader on the worktree path, `bench worktree show <target> HEAD:<path>`, or each `bench worktree read` continuation to the end.
 - A pure test-addition charge names the production mutation each new test is
   proven against. The delegate then cannot return a test that is green by
   construction.
