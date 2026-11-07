@@ -340,3 +340,15 @@ Findings: 0. Worst issue: none. The RS26 expectation is red-capable at its clean
 - Reflow the long comment line in the checkout protection test.
 - A constructor of the retired record from a descriptor could hold the field mapping that `SealAndObserve` builds by hand.
 - A fault-router test could pin a swallowed retired-publish error, which no test catches now. This is hardening, not a correctness defect.
+
+## RS-C2 author witness reds
+
+The ticket 02 author ft446-author-02 reported these witness reds, and each probe reported a restored subject:
+
+1. RS5: TestGenerationRemove was red before any production edit, because the retired gone store stayed.
+2. RS6: with no resource-absence condition in the predicate, TestGenerationRemove was red.
+3. RS7: with no separator in the inside test, TestGenerationRemove was red on the prefix sibling.
+4. RS4: with a lax reader in place of the strict record reader, TestRecordUnknownField was red.
+5. The non-blocking lock: with a blocking lock in its place, TestRetiredSweepSkipsALockedStore timed out.
+
+The three plan probes ran as one mutant set, and each row bit with a restored subject.
