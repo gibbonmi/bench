@@ -1,6 +1,6 @@
 # A retired protection store leaves with its resource, and inherited registration has one owner
 
-Status: staged
+Status: implemented
 
 Roadmap: FT446
 
@@ -174,119 +174,7 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
 ### Completion plan
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "RS-C1",
-      "tickets": [
-        "01-record-retired-store-path.md"
-      ],
-      "verification": [
-        {
-          "id": "retired-record-written",
-          "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "remove the retired-record publish from SealAndObserve; require TestRetiredStoreRecordsItsPath to fail"
-        },
-        {
-          "id": "cache-no-generation",
-          "command": "bench test --package ./internal/gocache",
-          "probe": "make Recover return a non-ErrNotExist error when the store holds retired.json; require TestProtectionCompletedHold to fail on its clean after the release"
-        },
-        {
-          "id": "checkout-no-generation",
-          "command": "bench test --package ./internal/worktree --run '^TestCheckoutProtectionPredicate$'",
-          "probe": "make Recover return a non-ErrNotExist error when the store holds retired.json; require TestCheckoutProtectionPredicate to fail"
-        }
-      ]
-    },
-    {
-      "id": "RS-C2",
-      "tickets": [
-        "02-sweep-retired-nested-stores.md"
-      ],
-      "verification": [
-        {
-          "id": "retired-sweep-omission",
-          "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "make discardNested skip each store with no resource.json, as it does today; require TestGenerationRemove to fail on the retired gone store"
-        },
-        {
-          "id": "user-guard-omission",
-          "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail"
-        },
-        {
-          "id": "lock-skip-omission",
-          "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "make a contended store lock join the sweep error; require TestRetiredSweepSkipsALockedStore to fail"
-        }
-      ]
-    },
-    {
-      "id": "RS-C3",
-      "tickets": [
-        "03-discard-gone-retired-caches.md"
-      ],
-      "verification": [
-        {
-          "id": "cache-check-omission",
-          "command": "bench test --package ./internal/gocache",
-          "probe": "remove the absent-resource check call from the cache retire; require TestReleaseRunsTheRetiredCheck to fail"
-        },
-        {
-          "id": "kind-scope-omission",
-          "command": "bench test --package ./internal/subprocess/protection",
-          "probe": "drop both the store-name prefix filter and the record kind comparison from the absent-resource check; require TestDiscardRetired to fail on the retired store of another kind"
-        },
-        {
-          "id": "registry-row",
-          "command": "bench test --package ./internal/conformance",
-          "probe": "delete the discardRetiredCaches seamVariable row from the injected-port registry; require the registry check to refuse the unregistered variable"
-        }
-      ]
-    },
-    {
-      "id": "RS-C4",
-      "tickets": [
-        "04-run-inherited-under-local-protocol.md",
-        "05-refuse-hand-built-inherited-registrations.md"
-      ],
-      "verification": [
-        {
-          "id": "protocol-forwarding",
-          "command": "bench test --package ./internal/subprocess",
-          "probe": "make RunInherited use the installed protocol whatever the registration names; require TestRunInheritedRegistersOnLocalProtocol to fail"
-        },
-        {
-          "id": "build-vector-refusal",
-          "command": "bench test --package ./internal/runbinary",
-          "probe": "make RunInherited ignore an unreadable inherited vector; require TestBuildScriptMalformedResources to fail"
-        },
-        {
-          "id": "runner-callers",
-          "command": "bench test --package ./internal/bounds --package ./internal/gate --package ./internal/preprelease --package ./internal/releasepreflight --package ./internal/testreport",
-          "probe": "make the bounds cancel request answer a deadline for a cancelled parent; require TestBoundsFixedShutdown to fail"
-        },
-        {
-          "id": "copy-survival",
-          "command": "bench test --package ./internal/conformance --run '^TestProcessLifetime'",
-          "probe": "remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail"
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "packages",
-      "command": "bench test --package ./..."
-    },
-    {
-      "id": "system",
-      "command": "bench test --check system"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","review_mode":"unified","run_id":"ft446-build","orchestrator_session":"ft446-orchestrator","author_limit":1,"assignments":{"01-record-retired-store-path.md":[{"session":"ft446-author-01","assignment":"ft446-author-01","model":"opus","effort":"high","source":"9d692cfba956bca51ecb3aefd4e831c6d89108c9","native_ref":"agent:ft446-author-01"}],"02-sweep-retired-nested-stores.md":[{"session":"ft446-author-02","assignment":"ft446-author-02","model":"opus","effort":"high","source":"6d485d5ff5aafea9600312bc389f4da662060405","native_ref":"agent:ft446-author-02"},{"session":"ft446-repair-02-r1","assignment":"ft446-repair-02-r1","model":"opus","effort":"high","source":"482b6d48f011e5006f65ba755eea56717b0bf9d2","native_ref":"agent:ft446-repair-02-r1","predecessor":"ft446-author-02","trigger":"user-directed","stopped":"agent:ft446-author-02","preserved":"bef1597e66827888f6fbdd964ac136d50f035aed"}],"03-discard-gone-retired-caches.md":[{"session":"ft446-author-03","assignment":"ft446-author-03","model":"opus","effort":"medium","source":"d7fd8022d9b20f5c41b27e01d3e5b281bc055906","native_ref":"agent:ft446-author-03"},{"session":"ft446-repair-03-r1","assignment":"ft446-repair-03-r1","model":"opus","effort":"medium","source":"4d37d57c4712c3b186fc722fa451f4fccd4466c5","native_ref":"agent:ft446-repair-03-r1","predecessor":"ft446-author-03","trigger":"user-directed","stopped":"agent:ft446-author-03","preserved":"2220bf07a832c326e1184acb54419fc11798badb"}],"04-run-inherited-under-local-protocol.md":[{"session":"ft446-author-04","assignment":"ft446-author-04","model":"opus","effort":"medium","source":"ef47837c63e759af3239c27ac3624f4b83eab211","native_ref":"agent:ft446-author-04"}],"05-refuse-hand-built-inherited-registrations.md":[{"session":"ft446-author-05","assignment":"ft446-author-05","model":"opus","effort":"medium","source":"5ca1566d88c2f8ffc917384e97c098f8102ad317","native_ref":"agent:ft446-author-05"}]}},"chunks":[{"id":"RS-C1","tickets":["01-record-retired-store-path.md"],"verification":[{"id":"retired-record-written","command":"bench test --package ./internal/subprocess/protection","probe":"remove the retired-record publish from SealAndObserve; require TestRetiredStoreRecordsItsPath to fail","ticket":"01-record-retired-store-path.md"},{"id":"cache-no-generation","command":"bench test --package ./internal/gocache","probe":"make Recover return a non-ErrNotExist error when the store holds retired.json; require TestProtectionCompletedHold to fail on its clean after the release","ticket":"01-record-retired-store-path.md"},{"id":"checkout-no-generation","command":"bench test --package ./internal/worktree --run '^TestCheckoutProtectionPredicate$'","probe":"make Recover return a non-ErrNotExist error when the store holds retired.json; require TestCheckoutProtectionPredicate to fail","ticket":"01-record-retired-store-path.md"}]},{"id":"RS-C2","tickets":["02-sweep-retired-nested-stores.md"],"verification":[{"id":"retired-sweep-omission","command":"bench test --package ./internal/subprocess/protection","probe":"make discardNested skip each store with no resource.json, as it does today; require TestGenerationRemove to fail on the retired gone store","ticket":"02-sweep-retired-nested-stores.md"},{"id":"user-guard-omission","command":"bench test --package ./internal/subprocess/protection","probe":"drop the empty-users condition from the retired-store predicate; require TestRetiredSweepKeepsAUser to fail","ticket":"02-sweep-retired-nested-stores.md"},{"id":"lock-skip-omission","command":"bench test --package ./internal/subprocess/protection","probe":"make a contended store lock join the sweep error; require TestRetiredSweepSkipsALockedStore to fail","ticket":"02-sweep-retired-nested-stores.md"}]},{"id":"RS-C3","tickets":["03-discard-gone-retired-caches.md"],"verification":[{"id":"cache-check-omission","command":"bench test --package ./internal/gocache","probe":"remove the absent-resource check call from the cache retire; require TestReleaseRunsTheRetiredCheck to fail","ticket":"03-discard-gone-retired-caches.md"},{"id":"kind-scope-omission","command":"bench test --package ./internal/subprocess/protection","probe":"drop both the store-name prefix filter and the record kind comparison from the absent-resource check; require TestDiscardRetired to fail on the retired store of another kind","ticket":"03-discard-gone-retired-caches.md"},{"id":"registry-row","command":"bench test --package ./internal/conformance","probe":"delete the discardRetiredCaches seamVariable row from the injected-port registry; require the registry check to refuse the unregistered variable","ticket":"03-discard-gone-retired-caches.md"}]},{"id":"RS-C4","tickets":["04-run-inherited-under-local-protocol.md","05-refuse-hand-built-inherited-registrations.md"],"verification":[{"id":"protocol-forwarding","command":"bench test --package ./internal/subprocess","probe":"make RunInherited use the installed protocol whatever the registration names; require TestRunInheritedRegistersOnLocalProtocol to fail","ticket":"04-run-inherited-under-local-protocol.md"},{"id":"build-vector-refusal","command":"bench test --package ./internal/runbinary","probe":"make RunInherited ignore an unreadable inherited vector; require TestBuildScriptMalformedResources to fail","ticket":"04-run-inherited-under-local-protocol.md"},{"id":"runner-callers","command":"bench test --package ./internal/bounds --package ./internal/gate --package ./internal/preprelease --package ./internal/releasepreflight --package ./internal/testreport","probe":"make the bounds cancel request answer a deadline for a cancelled parent; require TestBoundsFixedShutdown to fail","ticket":"04-run-inherited-under-local-protocol.md"},{"id":"copy-survival","command":"bench test --package ./internal/conformance --run '^TestProcessLifetime'","probe":"remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail","ticket":"05-refuse-hand-built-inherited-registrations.md"}]}],"final_verification":[{"id":"packages","command":"bench test --package ./..."},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -317,36 +205,36 @@ The ticket review split the chunks: the old RS-C1 is now RS-C1 and RS-C2, the ol
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| RS1 | 1 | After a safe retirement, the store holds a retired record whose kind, resource path, and binding equal the retired generation | planned TestRetiredStoreRecordsItsPath in internal/subprocess/protection/lifecycle_test.go | A retirement that writes no retired record leaves the store with no readable path |
-| RS2 | 2 | A retired store holds `retired.json`, and `Recover` of that store returns a result that `NoGeneration` accepts | planned TestRetiredStoreHasNoGeneration in internal/subprocess/protection/recovery_test.go | A reader that takes the retired record as a generation makes `NoGeneration` false |
+| RS1 | 1 | After a safe retirement, the store holds a retired record whose kind, resource path, and binding equal the retired generation | `internal/subprocess/protection/lifecycle_test.go` (`TestRetiredStoreRecordsItsPath`) | A retirement that writes no retired record leaves the store with no readable path |
+| RS2 | 2 | A retired store holds `retired.json`, and `Recover` of that store returns a result that `NoGeneration` accepts | `internal/subprocess/protection/recovery_test.go` (`TestRetiredStoreHasNoGeneration`) | A reader that takes the retired record as a generation makes `NoGeneration` false |
 | RS3 | 3 | The next hold on a retired cache store opens a generation with a new resource ID | `internal/gocache/protection_test.go` (`TestProtectionCompletedHold`) | A join that reads the retired record as a published generation refuses the open |
 | RS4 | 4 | A retired record that is malformed, a link, at another mode, or over the read limit keeps its store through a sweep | `internal/subprocess/protection/record_test.go` (`TestRecordMalformed`), with the other record tests, run over each record file name through their record planting helpers | A lax reader deletes a store on a forged or damaged path |
 | RS5 | 5 | A protected removal deletes the retired store of a nested resource that the removal deleted | `internal/subprocess/protection/lifecycle_test.go` (`TestGenerationRemove`) with a retired gone store | The current sweep skips a store with no `resource.json`, so the retired store stays |
 | RS6 | 6 | A retired nested store whose resource still exists stays after the removal | `internal/subprocess/protection/lifecycle_test.go` (`TestGenerationRemove`) with a retired kept store | A sweep that tests only the prefix deletes a store whose resource is on disk |
 | RS7 | 7 | A retired store of a sibling path that shares the prefix stays after the removal | `internal/subprocess/protection/lifecycle_test.go` (`TestGenerationRemove`) with a retired sibling store | A prefix test without the separator deletes a store outside the removed directory |
-| RS31 | 12 | A retired store whose lock another open file holds stays after a sweep, and the sweep returns no error for it | planned TestRetiredSweepSkipsALockedStore in internal/subprocess/protection/lifecycle_test.go | A blocking lock stalls the sweep, and a lock failure that joins the error fails the removal |
-| RS8 | 8 | A retired store whose users directory holds an entry stays after a sweep | planned TestRetiredSweepKeepsAUser in internal/subprocess/protection/lifecycle_test.go | A predicate without the empty-users condition deletes a store that a user names |
-| RS9 | 9 | The absent-resource check deletes a retired cache store whose cache directory is gone | planned TestDiscardRetired in internal/subprocess/protection/directory_test.go | Without the check, the retired store stays |
-| RS10 | 10 | The absent-resource check keeps a retired cache store whose cache directory exists | planned TestDiscardRetired in internal/subprocess/protection/directory_test.go with a kept cache | A check that deletes every retired store removes a reusable cache's store |
-| RS30 | 10 | The cache-kind absent-resource check keeps a retired store of another kind whose resource is gone | planned TestDiscardRetired in internal/subprocess/protection/directory_test.go with a gone binary-kind store | A check without the kind prefix test deletes the store of another kind |
-| RS11 | 11 | A contended release makes no call of the absent-resource check | planned TestReleaseRunsTheRetiredCheck in internal/gocache/protection_test.go with a second holder process | A check that runs before the contended return records a call |
-| RS12 | 12 | An unreadable retired record keeps its store, and the check returns no error for it | planned TestDiscardRetiredFailsClosed in internal/subprocess/protection/directory_test.go | A check that fails on one damaged store makes every release fail |
-| RS13 | 13 | A deletion that fails joins the error that the check returns | planned TestDiscardRetiredFailsClosed in internal/subprocess/protection/directory_test.go with a 0700 store that passes the predicate and holds a non-empty 0500 subdirectory; the test skips through the privilege class of `internal/capability` when that subdirectory stays writable, as the gate's write-denied guard does | A check that drops the deletion error hides a store that cannot go |
+| RS31 | 12 | A retired store whose lock another open file holds stays after a sweep, and the sweep returns no error for it | `internal/subprocess/protection/lifecycle_test.go` (`TestRetiredSweepSkipsALockedStore`) | A blocking lock stalls the sweep, and a lock failure that joins the error fails the removal |
+| RS8 | 8 | A retired store whose users directory holds an entry stays after a sweep | `internal/subprocess/protection/lifecycle_test.go` (`TestRetiredSweepKeepsAUser`) | A predicate without the empty-users condition deletes a store that a user names |
+| RS9 | 9 | The absent-resource check deletes a retired cache store whose cache directory is gone | `internal/subprocess/protection/directory_test.go` (`TestDiscardRetired`) | Without the check, the retired store stays |
+| RS10 | 10 | The absent-resource check keeps a retired cache store whose cache directory exists | `internal/subprocess/protection/directory_test.go` (`TestDiscardRetired`) with a kept cache | A check that deletes every retired store removes a reusable cache's store |
+| RS30 | 10 | The cache-kind absent-resource check keeps a retired store of another kind whose resource is gone | `internal/subprocess/protection/directory_test.go` (`TestDiscardRetired`) with a gone binary-kind store | A check without the kind prefix test deletes the store of another kind |
+| RS11 | 11 | A contended release makes no call of the absent-resource check | `internal/gocache/protection_test.go` (`TestReleaseRunsTheRetiredCheck`) with a second holder process | A check that runs before the contended return records a call |
+| RS12 | 12 | An unreadable retired record keeps its store, and the check returns no error for it | `internal/subprocess/protection/directory_test.go` (`TestDiscardRetiredFailsClosed`) | A check that fails on one damaged store makes every release fail |
+| RS13 | 13 | A deletion that fails joins the error that the check returns | `internal/subprocess/protection/directory_test.go` (`TestDiscardRetiredFailsClosed`) with a 0700 store that passes the predicate and holds a non-empty 0500 subdirectory; the test skips through the privilege class of `internal/capability` when that subdirectory stays writable, as the gate's write-denied guard does | A check that drops the deletion error hides a store that cannot go |
 | RS14 | 14 | The protection ADR consequence states that a retired store keeps a record of its resource and that a protected removal deletes it with its resource | review-owned: docs/adr/0030 consequence | No test reads ADR prose |
 | RS15 | 15 | The data-handling record names the retired record and states that it stays until its resource is gone | review-owned: DATA_HANDLING.md process resource protection section | No test reads that section |
-| RS16 | 16 | `RunInherited` registers the launch on the protocol that its registration names | planned TestRunInheritedRegistersOnLocalProtocol in internal/subprocess/startgate_test.go with an empty inherited vector | A `RunInherited` that uses the installed protocol, which tests leave nil, registers nothing, so the child environment lacks the resource |
+| RS16 | 16 | `RunInherited` registers the launch on the protocol that its registration names | `internal/subprocess/startgate_test.go` (`TestRunInheritedRegistersOnLocalProtocol`) with an empty inherited vector | A `RunInherited` that uses the installed protocol, which tests leave nil, registers nothing, so the child environment lacks the resource |
 | RS17 | 16 | A launch through `RunInherited` with a nil protocol registers on the installed protocol | `internal/systemtest/process_lifetime_cache_test.go` (`TestProcessLifetimeCacheSecondProcessClean`) | A nil protocol that registers nothing leaves the gate's launches unprotected, and those tests require a registered user |
-| RS18 | 17 | The closure check names each production function outside `internal/subprocess` that reads a counted process-vector reader and builds a `subprocess.Registration` | planned TestProcessLifetimeInheritedRegistrationCopy in internal/conformance/process_lifetime_copy_test.go with one synthetic fixture per counted reader, one with the `Registration` in a same-package helper, and one uncounted reader that stays green | The census accepts `NewLifetime`, so without this rule a surviving hand-built copy stays green |
+| RS18 | 17 | The closure check names each production function outside `internal/subprocess` that reads a counted process-vector reader and builds a `subprocess.Registration` | `internal/conformance/process_lifetime_copy_test.go` (`TestProcessLifetimeInheritedRegistrationCopy`) | The census accepts `NewLifetime`, so without this rule a surviving hand-built copy stays green |
 | RS19 | 18 | A malformed inherited vector makes the bounds runner return a start failure before any child starts | `internal/bounds/lifetime_test.go` (`TestBoundsMalformedResources`) | A runner that starts before the vector read returns another status or a started command |
 | RS20 | 19 | A cancelled parent makes the bounds runner return a cancellation after a KILL | `internal/bounds/lifetime_test.go` (`TestBoundsCancel`) | A cancel request that always answers a deadline returns a timeout |
 | RS21 | 20 | A cancelled build sends TERM, then KILL after its grace | `internal/runbinary/lifetime_test.go` (`TestBuilderCancel`) | A cancel request with KILL leaves no TERM line in the descendant log |
 | RS22 | 20 | A completed build drains its descendant group before the selection returns | `internal/runbinary/lifetime_test.go` (`TestBuilderNormalDrain`) | A launch under another policy returns while the descendant group lives |
-| RS23 | 21 | A malformed inherited vector refuses the build script before it starts | planned TestBuildScriptMalformedResources in internal/runbinary/lifetime_resources_test.go | A launch that ignores the vector starts the build |
+| RS23 | 21 | A malformed inherited vector refuses the build script before it starts | `internal/runbinary/lifetime_resources_test.go` (`TestBuildScriptMalformedResources`) | A launch that ignores the vector starts the build |
 | RS24 | 22 | The process-lifetime census holds both runner entries green | the process-lifetime-closure check in internal/conformance | A runner that reaches no owner call fails the closure diagnostic |
 | RS25 | 2 | The cache clean of a cache with a retired store runs its release | `internal/gocache/protection_test.go` (`TestProtectionCompletedHold`) with a clean after the release | A clean that reads the retired record as a generation refuses or keeps the cache |
 | RS26 | 2 | A retired checkout store holds `retired.json`, and the checkout cleanup of that store finds no user | `internal/worktree/protection_test.go` (`TestCheckoutProtectionPredicate`) | A cleanup that reads the retired record as a generation keeps the checkout |
 | RS27 | 14 | The protection ADR consequence states that the last uncontended release of a cache hold deletes each retired cache store whose cache is gone | review-owned: docs/adr/0030 consequence | No test reads ADR prose |
-| RS28 | 9 | The last uncontended release of a cache hold calls the absent-resource check once, after its own retirement | planned TestReleaseRunsTheRetiredCheck in internal/gocache/protection_test.go | Without the call, the recorded call count is zero |
+| RS28 | 9 | The last uncontended release of a cache hold calls the absent-resource check once, after its own retirement | `internal/gocache/protection_test.go` (`TestReleaseRunsTheRetiredCheck`) | Without the call, the recorded call count is zero |
 | RS29 | 17 | The live tree holds no hand-built inherited registration outside `internal/subprocess` | the `process-lifetime-closure` gate check over the live tree | A bounds runner or build-script runner copy that survives the change turns the live check red |
 
 ### Edge inventory
@@ -385,7 +273,7 @@ A root-wide sweep of retired stores of every kind at each store open is a separa
 | The empty-users condition (D2) | internal/subprocess/protection/directory.go:264-281 | The current sweep deletes on an absent resource without a user check |
 | The cache release trigger (D3) | internal/gocache/lock.go:160-172 | The cache retire calls `SealAndObserve` at the last uncontended release, and no protected removal reaches a package-test cache |
 | The registration parameter (D4) | internal/subprocess/inherited.go:23-28 | `RunInherited` fixes the installed protocol, and the build-script runner takes its protocol from its caller at internal/runbinary/runbinary.go:331-333 |
-| The cache check variable (D3) | internal/conformance/injected_ports_registry_test.go:241-242 | The registry admits `storeBase` for protection tests only, and gocache tests share the real store root of the user (internal/gocache/protection_test.go:186-203) |
+| The cache check variable (D3) | internal/conformance/injected_ports_registry_test.go:241-242 | The registry admits `storeBase` for protection tests only, and gocache tests share the real store root of the user, because no gocache test replaces `storeBase` (internal/subprocess/protection/export_test.go:23 is the only replacement) |
 | The hand-built registration rule (D4) | internal/conformance/process_lifetime_test.go:24 | The census accepts `NewLifetime` or `RunInherited` by name, so it cannot see a hand-built copy |
 
 ### Reader sweep

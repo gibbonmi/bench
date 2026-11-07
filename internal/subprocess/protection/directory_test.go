@@ -183,13 +183,105 @@ func TestObserveRecordedFailsClosed(t *testing.T) {
 	}
 }
 
+// cacheKind is the directory kind that the absent-resource check tests run over.
+var cacheKind = protection.Directory{Kind: protection.KindCache, Noun: "cache"}
+
+// retiredCaches returns a protocol of the cache and selection kinds under a private store base,
+// and a parent directory for the resources that it retires.
+func retiredCaches(t *testing.T) (*protection.Protocol, string) {
+	t.Helper()
+	return privateProtocol(t, cacheKind, selection), t.TempDir()
+}
+
+// renameStore renames the store of d so that the kind of to starts its name in place of the
+// kind of from. The store name and its retired record then name different kinds.
+func renameStore(t *testing.T, d protection.Descriptor, from, to protection.Directory) protection.Descriptor {
+	t.Helper()
+	name := string(to.Kind) + strings.TrimPrefix(filepath.Base(d.Store), string(from.Kind))
+	renamed := d
+	renamed.Store = filepath.Join(filepath.Dir(d.Store), name)
+	if err := os.Rename(d.Store, renamed.Store); err != nil {
+		t.Fatal(err)
+	}
+	return renamed
+}
+
+// requireCheck fails unless the cache check returns the wanted error state and leaves each
+// store of stores present exactly when kept names it.
+func requireCheck(t *testing.T, stores map[string]protection.Descriptor, kept map[string]bool, wantErr bool) {
+	t.Helper()
+	if err := cacheKind.DiscardRetired(readLimit); (err != nil) != wantErr {
+		t.Fatalf("cache check error = %v, want an error %t", err, wantErr)
+	}
+	for name, d := range stores {
+		if _, err := os.Lstat(d.Store); (err == nil) != kept[name] {
+			t.Errorf("store of %s after the cache check: %v, want present=%t", name, err, kept[name])
+		}
+	}
+}
+
+// TestDiscardRetired is RS9, RS10, and RS30. The cache check deletes the retired cache store
+// whose cache is gone. It keeps the retired cache store whose cache exists, and each retired
+// store whose resource is gone but whose store name or retired record names another kind.
+func TestDiscardRetired(t *testing.T) {
+	p, parent := retiredCaches(t)
+	stores := map[string]protection.Descriptor{
+		"gone cache":        goneStore(t, p, cacheKind, filepath.Join(parent, "gone")),
+		"kept cache":        retire(t, p, cacheKind, filepath.Join(parent, "kept")),
+		"other kind":        goneStore(t, p, selection, filepath.Join(parent, "other")),
+		"other kind named":  renameStore(t, goneStore(t, p, selection, filepath.Join(parent, "named")), selection, cacheKind),
+		"other kind record": renameStore(t, goneStore(t, p, cacheKind, filepath.Join(parent, "record")), cacheKind, selection),
+	}
+	requireCheck(t, stores, map[string]bool{"kept cache": true, "other kind": true, "other kind named": true, "other kind record": true}, false)
+}
+
+// TestDiscardRetiredFailsClosed is RS12 and RS13. A retired cache store whose record the check
+// cannot read stays, and the check returns no error for it. A store root that the check cannot
+// list, and a store that passes the predicate but cannot be deleted, each fail the check.
+func TestDiscardRetiredFailsClosed(t *testing.T) {
+	t.Run("unread record", func(t *testing.T) {
+		p, parent := retiredCaches(t)
+		d := goneStore(t, p, cacheKind, filepath.Join(parent, "gone"))
+		if err := os.Chmod(filepath.Join(d.Store, protection.RetiredFile), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		requireCheck(t, map[string]protection.Descriptor{"unread": d}, map[string]bool{"unread": true}, false)
+	})
+	t.Run("unlisted root", func(t *testing.T) {
+		p, parent := retiredCaches(t)
+		d := goneStore(t, p, cacheKind, filepath.Join(parent, "gone"))
+		root := filepath.Dir(d.Store)
+		if err := os.Chmod(root, 0o300); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(root, 0o700) })
+		requireCheck(t, nil, nil, true)
+	})
+	t.Run("failed deletion", func(t *testing.T) {
+		p, parent := retiredCaches(t)
+		d := goneStore(t, p, cacheKind, filepath.Join(parent, "gone"))
+		held := filepath.Join(d.Store, "held")
+		if err := os.Mkdir(held, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := errors.Join(os.WriteFile(filepath.Join(held, "entry"), nil, 0o600), os.Chmod(held, 0o500)); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(held, 0o700) })
+		if probe, err := os.CreateTemp(held, "writable"); err == nil {
+			_ = errors.Join(probe.Close(), os.Remove(probe.Name()))
+			capability.Capability(t, capability.Privilege, "a mode 0500 directory stays writable by this user")
+		}
+		requireCheck(t, map[string]protection.Descriptor{"undeletable": d}, map[string]bool{"undeletable": true}, true)
+	})
+}
+
 // openPrivateRun opens the generation of one run directory under a private store base, so a
 // test can change its store root.
 func openPrivateRun(t *testing.T) (protection.Directory, *protection.Protocol, string, protection.Generation) {
 	t.Helper()
-	protection.SetStoreBase(t, t.TempDir())
 	adapter := protection.Directory{Kind: protection.KindKitTest, Noun: "run"}
-	p := &protection.Protocol{Validators: protection.Validators{protection.KindKitTest: adapter.Validate}, ReadLimit: readLimit}
+	p := privateProtocol(t, adapter)
 	dir := filepath.Join(t.TempDir(), "run")
 	if err := os.Mkdir(dir, 0o700); err != nil {
 		t.Fatal(err)

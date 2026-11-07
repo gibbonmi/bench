@@ -305,7 +305,7 @@ var phasePolicy = subprocess.Policy{
 // release-evidence generation, and local. A cancellation of ctx is an interruption that sends TERM.
 func (r *runner) launch(ctx context.Context, cmd *exec.Cmd, streams subprocess.Streams, local ...protection.Descriptor) (subprocess.Outcome, error) {
 	resources := append(append([]protection.Descriptor(nil), r.evidence.Resources()...), local...)
-	return subprocess.RunInherited(ctx, cmd, phasePolicy, streams, subprocess.Interrupt(syscall.SIGTERM), resources...)
+	return subprocess.RunInherited(ctx, cmd, phasePolicy, streams, subprocess.Interrupt(syscall.SIGTERM), subprocess.Registration{Resources: resources})
 }
 
 func (r *runner) populateBaseIdentity() error {

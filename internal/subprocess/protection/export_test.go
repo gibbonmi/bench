@@ -9,9 +9,21 @@ import (
 // The store layout names, for tests that plant hostile records.
 const (
 	ResourceFile = resourceFile
+	RetiredFile  = retiredFile
+	LockFile     = lockFile
 	UsersDir     = usersDir
 	UserFile     = userFile
 )
+
+// DiscardNested runs the nested-store sweep of a removal of dir.
+func (p *Protocol) DiscardNested(dir string) error { return p.discardNested(dir) }
+
+// ReadRetired strictly reads the retired record of store and names its kind, resource path,
+// and binding.
+func ReadRetired(store string, limit int64) (Descriptor, error) {
+	r, err := readRetired(store, limit)
+	return r.resource(), err
+}
 
 // SystemBase is the system directory that holds each user's store root.
 var SystemBase = systemBase

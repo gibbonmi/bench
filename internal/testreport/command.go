@@ -304,7 +304,7 @@ var goChildPolicy = subprocess.Policy{
 // stdout is complete only when its stream status is complete.
 func runGoChild(ctx context.Context, cmd *exec.Cmd, local []protection.Descriptor) subprocess.Outcome {
 	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}}
-	outcome, err := subprocess.RunInherited(ctx, cmd, goChildPolicy, streams, subprocess.Interrupt(syscall.SIGINT), local...)
+	outcome, err := subprocess.RunInherited(ctx, cmd, goChildPolicy, streams, subprocess.Interrupt(syscall.SIGINT), subprocess.Registration{Resources: local})
 	if err != nil {
 		return subprocess.Outcome{Process: subprocess.Process{StartErr: err}}
 	}

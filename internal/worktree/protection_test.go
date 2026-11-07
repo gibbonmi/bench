@@ -29,7 +29,7 @@ func protectCheckout(t *testing.T, dir string) (protection.Descriptor, *protecti
 }
 
 // TestCheckoutProtectionPredicate covers the protected-user predicate. An absent store and a
-// retired generation name no user. A live pending user keeps the checkout and the sealed
+// retired generation name no user, and a retired store keeps its retired record. A live pending user keeps the checkout and the sealed
 // generation, and a launch after the user resolves recovers the seal. A checkout that the
 // predicate cannot describe, or a store that it cannot lock, keeps the checkout too. The
 // denied store keeps its directory and generation readable, because the store root is
@@ -56,6 +56,8 @@ func TestCheckoutProtectionPredicate(t *testing.T) {
 	_, err = checkoutObserver.Reopen(d)
 	requireTest(t, err == nil, "a launch after the user resolved = %v, want the recovered generation", err)
 	requireTest(t, checkoutUnprotected(run, root) == nil, "an unused generation kept the checkout")
+	_, err = os.Lstat(filepath.Join(d.Store, "retired.json"))
+	requireTest(t, err == nil, "the retired checkout store holds no retired record: %v", err)
 	requireTest(t, checkoutUnprotected(run, root) == nil, "a retired generation kept the checkout")
 }
 

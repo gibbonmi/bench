@@ -125,17 +125,68 @@ func requireShards(t *testing.T, fixture cacheFixture, want bool) {
 }
 
 // TestProtectionCompletedHold is PL57. The sole holder's release retires a completed
-// generation, so the next hold opens a fresh one.
+// generation. The retired store names no user, so a clean removes the shards, and the next
+// hold opens a fresh generation.
 func TestProtectionCompletedHold(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "go-build")
+	fixture := newCacheFixture(t)
 	p := cacheProtocol()
-	holder, d := protectedHold(t, dir, p)
+	holder, d := protectedHold(t, fixture.dir, p)
 	completedUser(t, p, d)
 	if err := holder.Release(); err != nil {
 		t.Fatal(err)
 	}
-	if _, next := protectedHold(t, dir, p); next.ResourceID == d.ResourceID {
+	if out, code := cleanWith(cleanEnv(fixture.home), p); code != 0 {
+		t.Fatalf("clean of a cache with a retired store = (%q, %d), want exit 0", out, code)
+	}
+	requireShards(t, fixture, false)
+	if _, next := protectedHold(t, fixture.dir, p); next.ResourceID == d.ResourceID {
 		t.Fatalf("the next hold joined the released generation %s", d.ResourceID)
+	}
+}
+
+// TestReleaseRunsTheRetiredCheck is RS28 and RS11. Only the last uncontended release of a
+// cache hold runs the absent-resource check, once, and the hold's own store already holds no
+// generation then. A release while another holder in this process or another process still
+// holds the cache runs no check.
+func TestReleaseRunsTheRetiredCheck(t *testing.T) {
+	saved := discardRetiredCaches
+	t.Cleanup(func() { discardRetiredCaches = saved })
+	var store string
+	var retired []bool
+	// A protocol with no validator recovers no generation and changes no store, so the
+	// recorder only observes whether the hold's generation retired.
+	observer := &protection.Protocol{ReadLimit: bounds.ControlRecordLimit}
+	discardRetiredCaches = func(int64) error {
+		retired = append(retired, protection.NoGeneration(observer.Recover(store, nil)))
+		return nil
+	}
+	fixture := newCacheFixture(t)
+	p := cacheProtocol()
+
+	stop := startHolderProcess(t, fixture.home)
+	holder, d := protectedHold(t, fixture.dir, p)
+	store = d.Store
+	if err := holder.Release(); err != nil {
+		t.Fatal(err)
+	}
+	stop()
+	if len(retired) != 0 {
+		t.Fatalf("a contended release ran the check %d times, want none", len(retired))
+	}
+
+	first, _ := protectedHold(t, fixture.dir, p)
+	last, _ := protectedHold(t, fixture.dir, p)
+	if err := first.Release(); err != nil {
+		t.Fatal(err)
+	}
+	if len(retired) != 0 {
+		t.Fatalf("a release beside another in-process holder ran the check %d times, want none", len(retired))
+	}
+	if err := last.Release(); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(retired, []bool{true}) {
+		t.Fatalf("the last uncontended release ran the check with retired generations %v, want one call after the retirement", retired)
 	}
 }
 

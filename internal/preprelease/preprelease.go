@@ -270,7 +270,7 @@ func runStep(ctx context.Context, root string, step Step, stderr io.Writer, reso
 	cmd.Env = append(os.Environ(), step.Env...)
 	streams := subprocess.Streams{Stdout: subprocess.Output{Writer: stderr}, MergeStderr: true}
 	// The run has no deadline, so every cancellation is an interruption.
-	outcome, err := subprocess.RunInherited(ctx, cmd, stepPolicy, streams, subprocess.Interrupt(syscall.SIGTERM), resources...)
+	outcome, err := subprocess.RunInherited(ctx, cmd, stepPolicy, streams, subprocess.Interrupt(syscall.SIGTERM), subprocess.Registration{Resources: resources})
 	if err != nil {
 		return err
 	}

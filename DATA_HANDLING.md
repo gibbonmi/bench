@@ -256,6 +256,8 @@ The reserved `BENCH_PROCESS_RESOURCES` entry gives the same resource descriptors
 The records hold resource and launch identifiers, resource paths, process identifiers, statuses, and unresolved obligation names.
 They hold no environment value, prompt, transcript, or credential.
 A record stays until its owner proves each registered launch complete, so an unresolved launch can keep its resource indefinitely.
+A retired store keeps one retired record with the kind, the path, and the binding of its resource.
+That retired record stays until its resource is gone.
 These records are local, mutable evidence inputs, not proof.
 
 ## Log and terminal output

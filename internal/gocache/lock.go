@@ -156,7 +156,8 @@ func (h *Holder) Release() error {
 
 // retire seals the protected generation before the shared lock drops, when no other process
 // holds the cache. A safe generation clears, and an unresolved user stays recorded and sealed.
-// A contended conversion keeps the generation open for the other holders.
+// After its own retirement, it deletes each retired cache store whose cache is gone. A
+// contended conversion keeps the generation open for the other holders and deletes no store.
 func (e *heldLock) retire() error {
 	if e.protocol == nil {
 		return nil
@@ -168,9 +169,14 @@ func (e *heldLock) retire() error {
 		}
 		return err
 	}
-	_, err := e.protocol.SealAndObserve(e.resource, nil)
-	return err
+	if _, err := e.protocol.SealAndObserve(e.resource, nil); err != nil {
+		return err
+	}
+	return discardRetiredCaches(e.protocol.ReadLimit)
 }
+
+// discardRetiredCaches is the absent-resource check of the cache kind that retire runs.
+var discardRetiredCaches = cacheDirectory.DiscardRetired
 
 // localHolder reports whether this process already holds the shared lock on path. A clean
 // asks first, because the kernel answers F_GETLK about other processes alone and would let

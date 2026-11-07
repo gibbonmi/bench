@@ -62,7 +62,7 @@ func (a Directory) Store(path, binding string) (string, error) {
 }
 
 // storePrefix starts the name of each store of the kind. Store names a store with it, and
-// ObserveRecorded selects the stores of the kind with it.
+// ObserveRecorded and DiscardRetired select the stores of the kind with it.
 func (a Directory) storePrefix() string {
 	return string(a.Kind) + "-"
 }
@@ -260,22 +260,82 @@ func (g Generation) Remove(name string, release, remove func() error) error {
 
 // discardNested deletes each store under the store root whose generation names a resource
 // inside dir that no longer exists. Such a resource has no user that can still reach it. A
-// store without a readable generation stays.
+// store without a readable generation goes only through discardRetired.
 func (p *Protocol) discardNested(dir string) error {
 	root, entries, err := storeEntries()
 	if err != nil {
 		return err
 	}
+	inside := func(path string) bool { return strings.HasPrefix(path, dir+string(filepath.Separator)) }
 	var failed []error
 	for _, entry := range entries {
 		store := filepath.Join(root, entry.Name())
-		var r resourceRecord
-		if !entry.IsDir() || readRecord(filepath.Join(store, resourceFile), p.ReadLimit, &r) != nil || !strings.HasPrefix(r.ResourcePath, dir+string(filepath.Separator)) {
+		if !entry.IsDir() {
 			continue
 		}
-		if absent(r.ResourcePath) {
+		var r resourceRecord
+		if readRecord(filepath.Join(store, resourceFile), p.ReadLimit, &r) != nil {
+			failed = append(failed, p.discardRetired(store, func(retired Descriptor) bool { return inside(retired.ResourcePath) }))
+			continue
+		}
+		if inside(r.ResourcePath) && absent(r.ResourcePath) {
 			failed = append(failed, os.RemoveAll(store))
 		}
 	}
 	return errors.Join(failed...)
+}
+
+// DiscardRetired is the absent-resource check of the kind. It deletes each store of the kind
+// under the store root whose generation retired and whose recorded resource no longer exists,
+// as discardRetired decides. Both the store name and the retired record must name the kind. A
+// store root that it cannot list, or a deletion that fails, is an error. readLimit bounds each
+// record read.
+func (a Directory) DiscardRetired(readLimit int64) error {
+	root, entries, err := storeEntries()
+	if err != nil {
+		return err
+	}
+	p := &Protocol{ReadLimit: readLimit}
+	ofKind := func(retired Descriptor) bool { return retired.Kind == a.Kind }
+	var failed []error
+	for _, entry := range entries {
+		if !strings.HasPrefix(entry.Name(), a.storePrefix()) {
+			continue
+		}
+		failed = append(failed, p.discardRetired(filepath.Join(root, entry.Name()), ofKind))
+	}
+	return errors.Join(failed...)
+}
+
+// discardRetired deletes store when its generation retired, its retired record names a
+// resource that selected accepts and that no longer exists, and its users directory holds no
+// entry. Each condition holds under a store lock that it never waits for, so a store that
+// another process holds, or that it cannot lock or read, stays with no error. Only a failed
+// deletion is an error.
+func (p *Protocol) discardRetired(store string, selected func(Descriptor) bool) error {
+	// Only a retired store is locked, so a live store never contends with a sweep.
+	generation := filepath.Join(store, resourceFile)
+	if !absent(generation) || absent(filepath.Join(store, retiredFile)) {
+		return nil
+	}
+	unlock, err := tryLock(store)
+	if err != nil {
+		return nil
+	}
+	defer unlock()
+	if !absent(generation) {
+		return nil
+	}
+	r, err := readRetired(store, p.ReadLimit)
+	if err != nil || !selected(r.resource()) || !absent(r.ResourcePath) {
+		return nil
+	}
+	users := filepath.Join(store, usersDir)
+	if err := checkDir(users); err != nil {
+		return nil
+	}
+	if entries, err := os.ReadDir(users); err != nil || len(entries) != 0 {
+		return nil
+	}
+	return os.RemoveAll(store)
 }

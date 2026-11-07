@@ -52,8 +52,6 @@ The 2026-09-29 `/bench-deepen` quality survey graded the test and code structure
 light paths and the worktree-seam-reduction build landed cards 01, 03, 04, 05, 06, 07, and 09
 and the small cuts. The rows below hold the rest.
 
-**FT446 (MEDIUM) — a retired cache store leaves with its cache, inherited registration has one owner, and the Darwin witness runs.**
-
 **FT364 (MEDIUM, decision required) — the release machinery that no caller reaches is cut or parked.**
 
 **FT365 (LOW) — conformance tests derive restated tables from their owners and share one Go-rule scanner.**
@@ -368,10 +366,9 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT446-cache-store
-2. FT414-preconditions
-3. FT369-charge-slicing
-4. FT365-conformance
-5. FT341-in-only
-6. FT420-concurrent-chunks
-7. FT387-overflow
+1. FT414-preconditions
+2. FT369-charge-slicing
+3. FT365-conformance
+4. FT341-in-only
+5. FT420-concurrent-chunks
+6. FT387-overflow

@@ -316,20 +316,22 @@ var builderPolicy = subprocess.Policy{
 	Poll:   bounds.ProcessPoll,
 }
 
+// builderCancelRequest answers a deadline for an expired context and an interruption
+// otherwise, each with TERM.
+func builderCancelRequest(ctx context.Context) (subprocess.Cause, syscall.Signal) {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return subprocess.CauseDeadline, syscall.SIGTERM
+	}
+	return subprocess.CauseInterruption, syscall.SIGTERM
+}
+
 // runBuildScript runs the sanctioned build script once. An empty manifestDir passes no
 // manifest-directory flag, which leaves the script its own default; a named one overrides
 // it. The callers differ only in that operand and their local resources, so they share
-// this one exec. The launch registers on the inherited union plus the local resources.
+// this one exec. The launch registers on the inherited union plus local through RunInherited.
 func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string, local subprocess.Registration) error {
 	if _, err := exec.LookPath("go"); err != nil {
 		return errors.New("Go is absent from PATH; prepend an executable Go toolchain directory to PATH and retry")
-	}
-	inherited, err := protection.Inherited()
-	if err != nil {
-		return err
-	}
-	if local.Protocol == nil {
-		local.Protocol = protection.Installed()
 	}
 	script := []string{filepath.Join(sourceRoot, "scripts", "go-build.sh")}
 	if manifestDir != "" {
@@ -344,20 +346,10 @@ func runBuildScript(ctx context.Context, sourceRoot, output, manifestDir string,
 	cmd.Env = buildEnv
 	cmd.SysProcAttr = builderProcAttr()
 	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}, MergeStderr: true}
-	registration := subprocess.Registration{Protocol: local.Protocol, Resources: append(inherited, local.Resources...)}
-	lifetime := subprocess.NewLifetime(cmd, builderPolicy, streams, registration)
-	if err := lifetime.Start(); err != nil {
+	outcome, err := subprocess.RunInherited(ctx, cmd, builderPolicy, streams, builderCancelRequest, local)
+	if err != nil {
 		return err
 	}
-	stop := context.AfterFunc(ctx, func() {
-		cause := subprocess.CauseInterruption
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			cause = subprocess.CauseDeadline
-		}
-		lifetime.Cancel(cause, syscall.SIGTERM)
-	})
-	defer stop()
-	outcome, _ := lifetime.Wait()
 	switch {
 	case outcome.Cancellation.Cause != subprocess.CauseNone:
 		return context.Cause(ctx)

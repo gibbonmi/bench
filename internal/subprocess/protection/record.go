@@ -55,6 +55,7 @@ const (
 	recordMode   = 0o600
 	dirMode      = 0o700
 	resourceFile = "resource.json"
+	retiredFile  = "retired.json"
 	lockFile     = "lock"
 	usersDir     = "users"
 	userFile     = "user.json"
@@ -87,6 +88,16 @@ type resourceRecord struct {
 	OwnerPID     int    `json:"owner_pid"`
 	Admission    string `json:"admission"`
 	UsersDir     string `json:"users_dir"`
+}
+
+// retiredRecord is retired.json, the resource of the store's last retired generation. It
+// outlives that generation, so a reader can still find the resource of a store with no
+// generation.
+type retiredRecord struct {
+	Schema       int    `json:"schema"`
+	Kind         Kind   `json:"kind"`
+	ResourcePath string `json:"resource_path"`
+	Binding      string `json:"binding"`
 }
 
 // userRecord is one launch's user.json in one resource store.
@@ -211,6 +222,31 @@ func (r resourceRecord) valid() error {
 		return fmt.Errorf("resource users directory %q is not %q", r.UsersDir, usersDir)
 	}
 	return d.check()
+}
+
+// resource names the kind, the path, and the binding of the retired resource, with no store
+// and no generation.
+func (r retiredRecord) resource() Descriptor {
+	return Descriptor{Kind: r.Kind, ResourcePath: r.ResourcePath, Binding: r.Binding}
+}
+
+// valid checks every schema value of a retired record.
+func (r retiredRecord) valid() error {
+	if r.Schema != schema {
+		return fmt.Errorf("retired schema %d is unsupported", r.Schema)
+	}
+	d := r.resource()
+	d.Store = "/"
+	return d.checkOwner()
+}
+
+// readRetired strictly reads and checks the retired record of store.
+func readRetired(store string, limit int64) (retiredRecord, error) {
+	var r retiredRecord
+	if err := readRecord(filepath.Join(store, retiredFile), limit, &r); err != nil {
+		return r, err
+	}
+	return r, r.valid()
 }
 
 // matches refuses a descriptor that names another generation, kind, path, or binding.

@@ -1,12 +1,14 @@
 package subprocess_test
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"syscall"
 	"testing"
@@ -139,6 +141,25 @@ func TestStartGateStartedFailure(t *testing.T) {
 	}
 	if o.Protection.State != protection.Uncertain || o.Process.Signal != syscall.SIGKILL {
 		t.Fatalf("process=%+v protection=%+v, want a killed gate and an uncertain user", o.Process, o.Protection)
+	}
+}
+
+// TestRunInheritedRegistersOnLocalProtocol is RS16. The inherited vector is empty and the test
+// installs no protocol, so only the protocol that the registration names can register the
+// launch, and the child environment then names the local resource.
+func TestRunInheritedRegistersOnLocalProtocol(t *testing.T) {
+	t.Setenv(protection.Env, "")
+	p := gateProtocol()
+	g := gateResource(t, p)
+	cmd := exec.Command("sh", "-c", `printf %s "$`+protection.Env+`"`)
+	streams := subprocess.Streams{Stdout: subprocess.Output{Capture: true}}
+	o, err := subprocess.RunInherited(context.Background(), cmd, policy(0, final, 0), streams, subprocess.Interrupt(syscall.SIGKILL), subprocess.Registration{Protocol: p, Resources: g.Resources()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vector, err := protection.ParseVector(string(o.Streams.Stdout.Data))
+	if err != nil || !slices.Equal(vector, g.Resources()) {
+		t.Fatalf("child vector = %+v, %v; want the local resource %+v", vector, err, g.Resources())
 	}
 }
 

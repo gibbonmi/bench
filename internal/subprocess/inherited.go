@@ -17,15 +17,18 @@ func Interrupt(signal syscall.Signal) CancelRequest {
 }
 
 // RunInherited runs cmd under policy and streams as one group that registers on the inherited
-// union plus local under the installed protocol. The cancellation of ctx requests the shutdown
-// that cancel answers. The error is an unreadable inherited vector or a refused start; every
-// later fact is in the outcome.
-func RunInherited(ctx context.Context, cmd *exec.Cmd, policy Policy, streams Streams, cancel CancelRequest, local ...protection.Descriptor) (Outcome, error) {
+// union plus the resources of local, under the protocol of local. A nil protocol means the
+// installed protocol. The cancellation of ctx requests the shutdown that cancel answers. The
+// error is an unreadable inherited vector or a refused start; every later fact is in the outcome.
+func RunInherited(ctx context.Context, cmd *exec.Cmd, policy Policy, streams Streams, cancel CancelRequest, local Registration) (Outcome, error) {
 	inherited, err := protection.Inherited()
 	if err != nil {
 		return Outcome{}, err
 	}
-	lifetime := NewLifetime(cmd, policy, streams, Registration{Protocol: protection.Installed(), Resources: append(inherited, local...)})
+	if local.Protocol == nil {
+		local.Protocol = protection.Installed()
+	}
+	lifetime := NewLifetime(cmd, policy, streams, Registration{Protocol: local.Protocol, Resources: append(inherited, local.Resources...)})
 	if err := lifetime.Start(); err != nil {
 		return Outcome{}, err
 	}

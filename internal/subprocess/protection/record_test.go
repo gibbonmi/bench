@@ -15,10 +15,10 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess/protection"
 )
 
-// resourceRecord returns the path and the bytes of d's published generation.
-func resourceRecord(t *testing.T, d protection.Descriptor) (string, string) {
+// resourceRecord returns the path and the bytes of the record file in d's store.
+func resourceRecord(t *testing.T, d protection.Descriptor, file string) (string, string) {
 	t.Helper()
-	path := filepath.Join(d.Store, protection.ResourceFile)
+	path := filepath.Join(d.Store, file)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -35,6 +35,15 @@ func plant(t *testing.T, path, data string) {
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// requireRetiredKept damages the retired record of a store whose resource a removal deleted,
+// and fails unless a sweep of that removal keeps the store with no error.
+func requireRetiredKept(t *testing.T, damage func(path, data string)) {
+	t.Helper()
+	p, d, dir := goneRetired(t)
+	damage(resourceRecord(t, d, protection.RetiredFile))
+	requireSweep(t, p, dir, d, true)
 }
 
 // noStartUser leaves one real no-start record in a store, as a failed second publication's
@@ -63,7 +72,7 @@ func TestRecordForeignBinding(t *testing.T) {
 		requireRefused(t, p, d)
 	}
 	// The validator admits first, so only the published generation's foreign binding refuses it.
-	path, data := resourceRecord(t, first)
+	path, data := resourceRecord(t, first, protection.ResourceFile)
 	plant(t, path, strings.Replace(data, first.Binding, second.Binding, 1))
 	requireRefused(t, p, first)
 	if users := len(userRecords(t, first)) + len(userRecords(t, second)); users != 0 {
@@ -81,56 +90,67 @@ func TestRecordKindWithoutValidator(t *testing.T) {
 }
 
 func TestRecordMalformed(t *testing.T) {
+	malformed := func(path, _ string) { plant(t, path, "{not json") }
 	p := newProtocol()
 	d, record := noStartUser(t, p)
-	plant(t, record, "{not json")
+	malformed(record, "")
 	requireRefused(t, p, d)
 	requireRetained(t, p, d)
+	requireRetiredKept(t, malformed)
 }
 
 func TestRecordSymlink(t *testing.T) {
+	outside := filepath.Join(t.TempDir(), "outside.json")
+	link := func(path, data string) {
+		plant(t, outside, data)
+		if err := os.Remove(path); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(outside, path); err != nil {
+			t.Fatal(err)
+		}
+	}
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d)
-	outside := filepath.Join(t.TempDir(), "outside.json")
-	plant(t, outside, data)
-	if err := os.Remove(path); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(outside, path); err != nil {
-		t.Fatal(err)
-	}
+	path, data := resourceRecord(t, d, protection.ResourceFile)
+	link(path, data)
 	requireRefused(t, p, d)
 	requireRetained(t, p, d)
 	if after, err := os.ReadFile(outside); err != nil || string(after) != data {
 		t.Fatalf("the outside sentinel changed to %q (%v)", after, err)
 	}
+	requireRetiredKept(t, link)
 }
 
 func TestRecordTrailingJSON(t *testing.T) {
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d)
+	path, data := resourceRecord(t, d, protection.ResourceFile)
 	plant(t, path, data+`{"admission":"sealed"}`)
 	requireRefused(t, p, d)
 }
 
 func TestRecordUnknownField(t *testing.T) {
+	unknown := func(path, data string) { plant(t, path, strings.Replace(data, "{", `{"authority":"granted",`, 1)) }
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d)
-	plant(t, path, strings.Replace(data, "{", `{"authority":"granted",`, 1))
+	unknown(resourceRecord(t, d, protection.ResourceFile))
 	requireRefused(t, p, d)
+	requireRetiredKept(t, unknown)
 }
 
 func TestRecordWrongMode(t *testing.T) {
+	wide := func(path, _ string) {
+		if err := os.Chmod(path, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 	p := newProtocol()
 	d, record := noStartUser(t, p)
-	if err := os.Chmod(record, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	wide(record, "")
 	requireRefused(t, p, d)
 	requireRetained(t, p, d)
+	requireRetiredKept(t, wide)
 }
 
 func TestRecordDuplicateUser(t *testing.T) {
@@ -161,7 +181,7 @@ func TestRecordDuplicateUser(t *testing.T) {
 func TestRecordMissingDescriptorTarget(t *testing.T) {
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, _ := resourceRecord(t, d)
+	path, _ := resourceRecord(t, d, protection.ResourceFile)
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +191,7 @@ func TestRecordMissingDescriptorTarget(t *testing.T) {
 func TestRecordFIFO(t *testing.T) {
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, _ := resourceRecord(t, d)
+	path, _ := resourceRecord(t, d, protection.ResourceFile)
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
@@ -195,27 +215,52 @@ func TestRecordDirectory(t *testing.T) {
 }
 
 func TestRecordWrongSchema(t *testing.T) {
+	wrong := func(path, data string) { plant(t, path, strings.Replace(data, `"schema":1`, `"schema":2`, 1)) }
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d)
-	plant(t, path, strings.Replace(data, `"schema":1`, `"schema":2`, 1))
+	wrong(resourceRecord(t, d, protection.ResourceFile))
 	requireRefused(t, p, d)
+	requireRetiredKept(t, wrong)
+}
+
+// TestRecordRetiredPath forges the path of a retired record that the strict reader decodes.
+// The unclean and control-byte forms stay inside the removed directory and absent, so only the
+// record's path check keeps their stores.
+func TestRecordRetiredPath(t *testing.T) {
+	for name, forge := range map[string]func(string) string{
+		"relative":     func(path string) string { return strings.TrimPrefix(path, "/") },
+		"unclean":      func(path string) string { return filepath.Dir(path) + "/./" + filepath.Base(path) },
+		"control byte": func(path string) string { return path + "\n" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			requireRetiredKept(t, func(path, data string) {
+				var fields map[string]any
+				if err := json.Unmarshal([]byte(data), &fields); err != nil {
+					t.Fatal(err)
+				}
+				fields["resource_path"] = forge(fields["resource_path"].(string))
+				forged, _ := json.Marshal(fields)
+				plant(t, path, string(forged))
+			})
+		})
+	}
 }
 
 func TestRecordDuplicateField(t *testing.T) {
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d)
+	path, data := resourceRecord(t, d, protection.ResourceFile)
 	plant(t, path, strings.Replace(data, `"admission":"open"`, `"admission":"sealed","admission":"open"`, 1))
 	requireRefused(t, p, d)
 }
 
 func TestRecordOversized(t *testing.T) {
+	oversized := func(path, data string) { plant(t, path, data+strings.Repeat(" ", readLimit)) }
 	p := newProtocol()
 	d := newResource(t, p, "cache")
-	path, data := resourceRecord(t, d)
-	plant(t, path, data+strings.Repeat(" ", readLimit))
+	oversized(resourceRecord(t, d, protection.ResourceFile))
 	requireRefused(t, p, d)
+	requireRetiredKept(t, oversized)
 }
 
 func TestRecordGenerationConflict(t *testing.T) {
