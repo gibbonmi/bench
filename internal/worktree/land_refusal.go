@@ -54,7 +54,7 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 	values := []string{result.Commit, result.SourceBase, result.SourceTip, specArg}
 	for _, value := range values {
 		if !lineSafe(value) {
-			return atSourceWorktree("bench worktree land --resume <full-published-commit> --request <request> --base <full-review-base> --source-tip <full-source-tip> --spec <spec>", path, assignment)
+			return atSourceWorktree("bench worktree land --resume <full-published-commit> --request "+requestSlot+" --base <full-review-base> --source-tip <full-source-tip> --spec <spec>", path, assignment)
 		}
 	}
 	// A spec-less landing resumes spec-less, so the resume command it names carries no
@@ -63,7 +63,7 @@ func landingResumeNext(result landing.ReviewedResult, specArg, path, assignment 
 	if specArg != "" {
 		specFlag = " --spec " + sanitize.ShellQuote(specArg)
 	}
-	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request <request> --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + specFlag
+	command := "bench worktree land --resume " + sanitize.ShellQuote(result.Commit) + " --request " + requestSlot + " --base " + sanitize.ShellQuote(result.SourceBase) + " --source-tip " + sanitize.ShellQuote(result.SourceTip) + specFlag
 	return atSourceWorktree(command, path, assignment)
 }
 
