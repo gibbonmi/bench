@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/retired-store-sweep/spec.md",
-  "plan_digest": "sha256:19ee2fb6487fbd0b39017eb392ac3d31bdab79d1b14798b737b4797eb880470f",
+  "plan_digest": "sha256:c10f32d8ce7a14d274b01166ca9d0f66f743e88e7d0a5fd13afa01bf51ff5af9",
   "implementation_session": "",
   "chunks": [
     {
@@ -476,9 +476,9 @@
     {
       "id": "RS-C3",
       "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
-      "tip": "2220bf07a832c326e1184acb54419fc11798badb",
-      "plan_digest": "sha256:19ee2fb6487fbd0b39017eb392ac3d31bdab79d1b14798b737b4797eb880470f",
-      "source_digest": "de044a104a19b71f6e5de1b473254b270f98bd89",
+      "tip": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+      "plan_digest": "sha256:c10f32d8ce7a14d274b01166ca9d0f66f743e88e7d0a5fd13afa01bf51ff5af9",
+      "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
       "acceptance_rows": [
         "RS9",
         "RS10",
@@ -577,6 +577,96 @@
               "ref": "agent:ft446-author-03",
               "digest": "sha256:e758ae7587cead58273837153ff99792631bf0477760840f58a3286a53c06a60",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/injected_ports_registry_test.go,omit,failed,2,TestInjectedPortRegistryCheckBites/a_retired_live-tree_audit_fires,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,all,passed,1218\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1095\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,44474,1218\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestInjectedPortRegistryCheckBites/a_retired_live-tree_audit_fires,\"injected_ports_test.go:247: a reintroduced canary audit: want its zero-port diagnostic, got [injected port derivation found no ports: internal/canary is present in the graded tree and the audit records it as declaring them, so an empty inve… (607 bytes)\",1\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: test seam has no registry row: internal/gocache.discardRetiredCaches is replaced at internal/gocache/protection_test.go:153 — add a variable row to injectedPortRegistry naming its production owner, consumer test… (284 bytes)\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c3-03-r1-cache-check-omission",
+          "performer": "ft446-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-repair-03-r1",
+            "digest": "sha256:944c857819b3e0784e31fdc4d88ed2cab7aa1ba1787665e18d45b72897bfc9ca",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gocache/lock.go,swap,failed,1,TestReleaseRunsTheRetiredCheck,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gocache,^TestReleaseRunsTheRetiredCheck$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,14,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestReleaseRunsTheRetiredCheck,\"protection_test.go:189: the last uncontended release ran the check with retired generations [], want one call after the retirement\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "requirement": "cache-check-omission",
+          "command": "bench test --package ./internal/gocache",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "remove the absent-resource check call from the cache retire; require TestReleaseRunsTheRetiredCheck to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-repair-03-r1",
+              "digest": "sha256:944c857819b3e0784e31fdc4d88ed2cab7aa1ba1787665e18d45b72897bfc9ca",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gocache/lock.go,swap,failed,1,TestReleaseRunsTheRetiredCheck,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gocache,^TestReleaseRunsTheRetiredCheck$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,385\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gocache,fail,14,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gocache,TestReleaseRunsTheRetiredCheck,\"protection_test.go:189: the last uncontended release ran the check with retired generations [], want one call after the retirement\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c3-03-r1-kind-scope-omission",
+          "performer": "ft446-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-repair-03-r1",
+            "digest": "sha256:c90788c64d491ac37b27ac87b87091a40827cb253ae8cfa99de454921068d95c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/protection/directory.go,swap,failed,1,TestDiscardRetired,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/protection,^TestDiscardRetired$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestDiscardRetired,\"directory_test.go:235: store of other kind after the cache check: lstat /dev/shm/43ZAMY/t/TestDiscardRetired4229170059/001/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c67/binary-2b11dcecaa32a7adf66bafa88d254043: no such file or dire… (264 bytes)\",3\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "requirement": "kind-scope-omission",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "drop both the store-name prefix filter and the record kind comparison from the absent-resource check; require TestDiscardRetired to fail on the retired store of another kind",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-repair-03-r1",
+              "digest": "sha256:c90788c64d491ac37b27ac87b87091a40827cb253ae8cfa99de454921068d95c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/protection/directory.go,swap,failed,1,TestDiscardRetired,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/protection,^TestDiscardRetired$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestDiscardRetired,\"directory_test.go:235: store of other kind after the cache check: lstat /dev/shm/43ZAMY/t/TestDiscardRetired4229170059/001/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c67/binary-2b11dcecaa32a7adf66bafa88d254043: no such file or dire… (264 bytes)\",3\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c3-03-r1-registry-row",
+          "performer": "ft446-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "eb2fea37d68f7aa2826ec949f44a653e2e6053cc",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-repair-03-r1",
+            "digest": "sha256:a0d732b5d6defd5d81a0f5928b6646ad341e08aa9ab7abdcb5cd6aa54bd2b2d3",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/injected_ports_registry_test.go,omit,failed,2,TestInjectedPortRegistryCheckBites/a_retired_live-tree_audit_fires,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,all,passed,1218\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1095\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,43392,1218\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestInjectedPortRegistryCheckBites/a_retired_live-tree_audit_fires,\"injected_ports_test.go:247: a reintroduced canary audit: want its zero-port diagnostic, got [injected port derivation found no ports: internal/canary is present in the graded tree and the audit records it as declaring them, so an empty inve… (607 bytes)\",1\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: test seam has no registry row: internal/gocache.discardRetiredCaches is replaced at internal/gocache/protection_test.go:153 — add a variable row to injectedPortRegistry naming its production owner, consumer test… (284 bytes)\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
+          },
+          "source_commit": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+          "requirement": "registry-row",
+          "command": "bench test --package ./internal/conformance",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "delete the discardRetiredCaches seamVariable row from the injected-port registry; require the registry check to refuse the unregistered variable",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-repair-03-r1",
+              "digest": "sha256:a0d732b5d6defd5d81a0f5928b6646ad341e08aa9ab7abdcb5cd6aa54bd2b2d3",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/injected_ports_registry_test.go,omit,failed,2,TestInjectedPortRegistryCheckBites/a_retired_live-tree_audit_fires,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,all,passed,1218\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1095\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,43392,1218\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestInjectedPortRegistryCheckBites/a_retired_live-tree_audit_fires,\"injected_ports_test.go:247: a reintroduced canary audit: want its zero-port diagnostic, got [injected port derivation found no ports: internal/canary is present in the graded tree and the audit records it as declaring them, so an empty inve… (607 bytes)\",1\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: test seam has no registry row: internal/gocache.discardRetiredCaches is replaced at internal/gocache/protection_test.go:153 — add a variable row to injectedPortRegistry naming its production owner, consumer test… (284 bytes)\",1\nskips[1]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/conformance,TestGuidanceSweepRejectsNonRegularEntriesBeforeReading/character_device,\"capability: privilege: cannot create a character device: operation not permitted\"\n"
             }
           }
         }
@@ -685,6 +775,21 @@
         ],
         "RS-C2": [
           "RS-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:19ee2fb6487fbd0b39017eb392ac3d31bdab79d1b14798b737b4797eb880470f",
+      "to": "sha256:c10f32d8ce7a14d274b01166ca9d0f66f743e88e7d0a5fd13afa01bf51ff5af9",
+      "chunk_ids": {
+        "RS-C1": [
+          "RS-C1"
+        ],
+        "RS-C2": [
+          "RS-C2"
+        ],
+        "RS-C3": [
+          "RS-C3"
         ]
       }
     }
