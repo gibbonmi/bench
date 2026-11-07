@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/retired-store-sweep/spec.md",
-  "plan_digest": "sha256:ce20aca3c19ac69f01f324f724ef82aed6df6f7437403fb7fbfdc15715ccad84",
+  "plan_digest": "sha256:efa72921a7cba7d1a06ce0713063c3bd7b60ba2a7d5c66f440d61c01f8c52092",
   "implementation_session": "",
   "chunks": [
     {
@@ -805,9 +805,9 @@
     {
       "id": "RS-C4",
       "base": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
-      "tip": "398691f9cf8dbf2bb1d60c747bc2f7585dc57b6a",
-      "plan_digest": "sha256:ce20aca3c19ac69f01f324f724ef82aed6df6f7437403fb7fbfdc15715ccad84",
-      "source_digest": "8e8882a8a7fff5820dc1d01f98d70398480d9f2d",
+      "tip": "efacd1bb39115a9da6ba3b5575cb6b8bdaaa4e3b",
+      "plan_digest": "sha256:efa72921a7cba7d1a06ce0713063c3bd7b60ba2a7d5c66f440d61c01f8c52092",
+      "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
       "acceptance_rows": [
         "RS16",
         "RS17",
@@ -910,6 +910,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,1,TestBoundsFixedShutdown,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/bounds,^TestBoundsFixedShutdown$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,319\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,fail,3014,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/bounds,TestBoundsFixedShutdown,\"lifetime_test.go:80: canceled runner status = timeout: context canceled\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "rs-c4-05-copy-survival",
+          "performer": "ft446-author-05",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "95144d6c8db89481daa77cd65a5fb9b2fad18f3c",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-05",
+            "digest": "sha256:eb27f390b82e25d63dcd6088bfb66f917f69f2dd843fac3e8a7b1e4c464ff6da",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/process_lifetime_closure_test.go,swap,failed,1,TestProcessLifetimeInheritedRegistrationCopy,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestProcessLifetime,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,502\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,12,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestProcessLifetimeInheritedRegistrationCopy,\"process_lifetime_copy_test.go:35: inherited: want \\\"internal/example/copy.go:11 register reads the process vector through protection.Inherited and builds a subprocess.Registration by hand outside internal/subprocess\\\", got []\",4\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "efacd1bb39115a9da6ba3b5575cb6b8bdaaa4e3b",
+          "requirement": "copy-survival",
+          "command": "bench test --package ./internal/conformance --run '^TestProcessLifetime'",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "remove the hand-built inherited registration rule from the closure check; require TestProcessLifetimeInheritedRegistrationCopy to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-05",
+              "digest": "sha256:eb27f390b82e25d63dcd6088bfb66f917f69f2dd843fac3e8a7b1e4c464ff6da",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/conformance/process_lifetime_closure_test.go,swap,failed,1,TestProcessLifetimeInheritedRegistrationCopy,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/conformance,^TestProcessLifetime,passed,3\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,502\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,12,3\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestProcessLifetimeInheritedRegistrationCopy,\"process_lifetime_copy_test.go:35: inherited: want \\\"internal/example/copy.go:11 register reads the process vector through protection.Inherited and builds a subprocess.Registration by hand outside internal/subprocess\\\", got []\",4\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": []
@@ -983,6 +1013,24 @@
         ],
         "RS-C3": [
           "RS-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:ce20aca3c19ac69f01f324f724ef82aed6df6f7437403fb7fbfdc15715ccad84",
+      "to": "sha256:efa72921a7cba7d1a06ce0713063c3bd7b60ba2a7d5c66f440d61c01f8c52092",
+      "chunk_ids": {
+        "RS-C1": [
+          "RS-C1"
+        ],
+        "RS-C2": [
+          "RS-C2"
+        ],
+        "RS-C3": [
+          "RS-C3"
+        ],
+        "RS-C4": [
+          "RS-C4"
         ]
       }
     }
