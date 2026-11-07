@@ -36,9 +36,9 @@ Use craft-seams, craft-spec, and craft-gate for the policy spec.
 
 ## Sources
 
-- Path: `roadmap/FT343.md`
-  Supports: the seam-policy question and stale unused-hook premise.
-  Drift: a change to the row.
+- Path: `internal/conformance/injected_ports_registry_test.go`
+  Supports: the registry rows and the audited-package inventory that the policy extends.
+  Drift: a change to injectedPortRegistry or auditedPortPackages.
 - Path: `internal/conformance/injected_ports_test.go`
   Supports: the audit's current named-type derivation.
   Drift: a change to derivedInjectedPorts.

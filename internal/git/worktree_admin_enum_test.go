@@ -205,7 +205,10 @@ func TestWorktreesBoundsEachChildAndPreservesStdout(t *testing.T) {
 					t.Fatalf("timeout refusal = %v", err)
 				}
 			case <-time.After(window):
-				t.Fatal(bounds.TestTimeoutVerdict(tc.mode+" to return under the overridden worktree-list bound", window))
+				// The enumeration still runs under the replaced bound, so it finishes before
+				// the cleanup restores that bound.
+				t.Error(bounds.TestTimeoutVerdict(tc.mode+" to return under the overridden worktree-list bound", window))
+				<-done
 			}
 		})
 	}

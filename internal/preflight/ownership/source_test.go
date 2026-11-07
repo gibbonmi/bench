@@ -198,6 +198,7 @@ func TestSourceMovement(t *testing.T) {
 			preflighttest.RunGit(t, "add", "moved.txt")
 			preflighttest.RunGit(t, "commit", "-q", "-m", "move")
 		})
+		t.Cleanup(restore)
 		out, code := preflight.Command(args)
 		restore()
 		if calls != 2 || code == 0 || !strings.Contains(out, "snapshot drift") {

@@ -1,6 +1,6 @@
 # Production test seam policy
 
-Status: staged
+Status: implemented
 
 Roadmap: FT343
 
@@ -18,7 +18,7 @@ The spec-local review record retains the complete spec-before-ticket chronology 
 
 ## Problem
 
-The injected-port check finds named type ports in five packages.
+The injected-port check finds named type ports in six packages.
 It does not find package variable overrides, setter aliases, runtime test branches, or environment fault controls.
 A new hook can therefore alter production execution without entering the registry.
 A registry row can also name a test without explaining its failure purpose or safe isolation.
@@ -111,8 +111,11 @@ A source file reachable from a non-test command entry remains production even wh
 
 Keep the existing named-port shapes: nonempty interfaces, named function types, and structs whose fields are all functions.
 An injection site remains a parameter, pointer parameter, type assertion, or type switch.
-Apply that derivation to eligible production packages rather than a closed five-package discovery list.
+Apply that derivation to eligible production packages rather than a closed package discovery list.
 A named shape that is never injected remains a negative control.
+A named port that every production caller passes as nil is a fault port.
+Its row carries the fault-exception fields: owner, consumer, failure purpose, and isolation.
+Its consumer supplies a non-nil value at the injection site (reviewer decision, 2026-11-06).
 An ordinary function declaration is not a seam merely because its name contains `ForTest`.
 
 A mutable collaborator qualifies when a test replaces a package variable that a production path reads or calls.
@@ -218,20 +221,20 @@ Implementation must refresh declaration and caller identities before changing an
 
 | Source family | Observed definition and consumer | Required disposition |
 |---|---|---|
-| Existing named ports | `internal/conformance/injected_ports_registry_test.go` names seven rows in five packages | Preserve real-producer tests and the explicit publication limitation |
-| Git bounds | `internal/git/git.go` setters reach `checker_junction_test.go`, `worktree_admin_enum_test.go`, `admin_readers_test.go`, and `internal/status/status_render_test.go` | Register canonical variables and setter entries with serial cleanup evidence |
+| Existing named ports | `internal/conformance/injected_ports_registry_test.go` names eight rows in six packages | Preserve real-producer tests and the explicit publication limitation |
+| Git bounds | `internal/git/git.go` setters reach `internal/gitguard/checker_junction_test.go`, `worktree_admin_enum_test.go`, `admin_readers_test.go`, and `internal/status/status_render_test.go` | Register canonical variables and setter entries with serial cleanup evidence |
 | Snapshot movement | `internal/diff/snapshot.go` has a setter and direct assignments in diff tests, with preflight consumers | Preserve deterministic movement refusals through the real snapshot entry |
 | Evidence collection | `internal/preflight/review.go` supplies `reviewEvidenceObserved` to `review_charge_test.go` | Register the observer's counting purpose and cleanup |
 | Response bound | `internal/preflight/evidencecmd/bound.go` supplies a scalar override to `evidence_budget_test.go` | Preserve the public over-bound refusal witness |
 | Lock windows | `internal/intent/intent.go` and `internal/handoffdoc/store.go` setters reach transaction and store tests | Preserve lock timeout evidence and test environment restoration |
 | Inspection | `internal/sessioninspect/sessioninspect.go` has scalar setters plus direct `phases` and `runInspect` replacements | Register each canonical collaborator with completed-consumer evidence |
-| Release evidence | `artifact_evidence.go`, `evidence_promotion.go`, `release_index.go`, and `types.go` expose four mutable setters | Establish each actual consumer or equivalent owner failure witness before admission |
+| Release evidence | `internal/releaseevidence/` `artifact_evidence.go`, `evidence_promotion.go`, `release_index.go`, and `types.go` expose four mutable setters | Three setters keep their consumer evidence. The reviewer retired `indexEncoder`, its setter, and its forwarder on 2026-11-06, because it had no consumer and no injectable failure. |
 | Release aliases | `internal/releasepreflight/types.go` forwards setter and validator exposures | Resolve canonical owners without treating an unused wrapper as a live test |
 | REF | `internal/releasepreflight/identity_test.go:43` installs the exact ref through `identityFixture` | Retain identity disagreement evidence |
 | RACE | `internal/releasepreflight/external_test.go:37` installs a real child probe | Retain child home isolation evidence |
 | Phase family | `internal/conformance/native_workflow_test.go:321` constructs overrides for gate, race, vet, vulnerability, artifacts, and smoke | Register the family through the existing phase registry |
 | VULNERABILITY | `internal/releasepreflight/vulnerability.go:27` reads its scanner override | Retain the native probe's scanner composition |
-| DATE | `internal/releasepreflight/vulnerability.go:75` reads the clock override | Retain compatibility and add an entry test for the chosen date |
+| DATE | `internal/releasepreflight/vulnerability.go:66` reads the clock override | Retain compatibility and add an entry test for the chosen date |
 | EVIDENCE_READY_FILE | `internal/releaseevidence/release_evidence.go` reads the readiness marker | Retain compatibility and add a controlled readiness entry test |
 | Telemetry runtime branch | `internal/otelrecord/provider.go:51` calls `testing.Testing`; processor tests cover fallback and explicit homes | Retain fallback-home refusal until an equivalent isolated constructor exists |
 | Link faults | `internal/adopt/transaction.go` reads `BENCH_LINK_FAULT`; system compatibility tests use interruption | Register fault and interruption purposes with child-local environment |
@@ -291,7 +294,7 @@ This table supplies evidence for the refresh, not automatic admission.
 This lexical sweep was a discovery aid, not a semantic completeness proof.
 It also returned strings and ordinary values that are not assignments.
 The implementation's declaration resolution and independent negative controls must remove those false candidates.
-Publication's `clock` is another function-valued candidate whose caller disposition requires the refreshed semantic census.
+The refreshed semantic census excludes publication's `clock` as ordinary data, because no test or setter replaces it.
 No claim that all present globals are safe follows from this table.
 
 No in-tree DATE or EVIDENCE_READY_FILE setter was established by the source sweep.
@@ -319,7 +322,7 @@ They cannot temporarily enable a rule that makes the real tree red.
 
 TS3 owns PS66 when it first consumes the graded-root phase registry.
 It updates the InputCatchAll binding and the profile advertisement in that same chunk.
-Its closure includes the four anchor holders, AXI command advertisement holders, and twelve complete fixture units listed in the fence.
+Its closure includes the six anchor holders, AXI command advertisement holders, and eight complete fixture units listed in the fence.
 TS4 proves the production census is not restricted to remembered registry packages.
 
 The original TS1–TS4 IDs map directly to their same-numbered ticket files.
@@ -341,431 +344,10 @@ The final native and system checks retain the chosen binary and the existing `BE
 Every probe must record the changed source, exact failing assertion or diagnostic, byte-identical restoration, and the same focused green after restoration.
 A setup failure, unrelated red, or failed restoration does not prove an omission.
 Before implementation dispatch, a version-2 plan must bind each ticket to its fresh author.
-The approved implementation line remains `gpt-5.6-sol / high`.
+The approved implementation line remains `gpt-5.6-sol / high`; the Claude mid binding `opus / high` runs it.
 
 ```bench-completion-plan
-{
-  "version": 1,
-  "chunks": [
-    {
-      "id": "TS1",
-      "tickets": [
-        "01-relocate-the-existing-audit.md"
-      ],
-      "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        }
-      ]
-    },
-    {
-      "id": "TS2",
-      "tickets": [
-        "02-admit-variable-and-setter-callers.md"
-      ],
-      "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "caller-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "caller-internal-adopt",
-          "command": "bench test --package ./internal/adopt"
-        },
-        {
-          "id": "caller-internal-assessment",
-          "command": "bench test --package ./internal/assessment"
-        },
-        {
-          "id": "caller-internal-capability",
-          "command": "bench test --package ./internal/capability"
-        },
-        {
-          "id": "caller-internal-chargeevidence",
-          "command": "bench test --package ./internal/chargeevidence"
-        },
-        {
-          "id": "caller-internal-consumers",
-          "command": "bench test --package ./internal/consumers"
-        },
-        {
-          "id": "caller-internal-coverage",
-          "command": "bench test --package ./internal/coverage"
-        },
-        {
-          "id": "caller-internal-diff",
-          "command": "bench test --package ./internal/diff"
-        },
-        {
-          "id": "caller-internal-freshness",
-          "command": "bench test --package ./internal/freshness"
-        },
-        {
-          "id": "caller-internal-gate",
-          "command": "bench test --package ./internal/gate"
-        },
-        {
-          "id": "caller-internal-git",
-          "command": "bench test --package ./internal/git"
-        },
-        {
-          "id": "caller-internal-gitguard",
-          "command": "bench test --package ./internal/gitguard"
-        },
-        {
-          "id": "caller-internal-guards",
-          "command": "bench test --package ./internal/guards"
-        },
-        {
-          "id": "caller-internal-handoffdoc",
-          "command": "bench test --package ./internal/handoffdoc"
-        },
-        {
-          "id": "caller-internal-harnesstranscript",
-          "command": "bench test --package ./internal/harnesstranscript"
-        },
-        {
-          "id": "caller-internal-intent",
-          "command": "bench test --package ./internal/intent"
-        },
-        {
-          "id": "caller-internal-outline",
-          "command": "bench test --package ./internal/outline"
-        },
-        {
-          "id": "caller-internal-preflight",
-          "command": "bench test --package ./internal/preflight"
-        },
-        {
-          "id": "caller-internal-preflight-evidencecmd",
-          "command": "bench test --package ./internal/preflight/evidencecmd"
-        },
-        {
-          "id": "caller-internal-publication",
-          "command": "bench test --package ./internal/publication"
-        },
-        {
-          "id": "caller-internal-refresh",
-          "command": "bench test --package ./internal/refresh"
-        },
-        {
-          "id": "caller-internal-releaseevidence",
-          "command": "bench test --package ./internal/releaseevidence"
-        },
-        {
-          "id": "caller-internal-releasepreflight",
-          "command": "bench test --package ./internal/releasepreflight"
-        },
-        {
-          "id": "caller-internal-roadmap",
-          "command": "bench test --package ./internal/roadmap"
-        },
-        {
-          "id": "caller-internal-sessioninspect",
-          "command": "bench test --package ./internal/sessioninspect"
-        },
-        {
-          "id": "caller-internal-shift",
-          "command": "bench test --package ./internal/shift"
-        },
-        {
-          "id": "caller-internal-skillsindex",
-          "command": "bench test --package ./internal/skillsindex"
-        },
-        {
-          "id": "caller-internal-status",
-          "command": "bench test --package ./internal/status"
-        },
-        {
-          "id": "caller-internal-testreport",
-          "command": "bench test --package ./internal/testreport"
-        }
-      ]
-    },
-    {
-      "id": "TS3",
-      "tickets": [
-        "03-admit-runtime-and-environment-controls.md"
-      ],
-      "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "caller-cmd-bench",
-          "command": "bench test --package ./cmd/bench"
-        },
-        {
-          "id": "caller-internal-anchors",
-          "command": "bench test --package ./internal/anchors"
-        },
-        {
-          "id": "caller-internal-conformance-registry",
-          "command": "bench test --package ./internal/conformance/registry"
-        },
-        {
-          "id": "caller-internal-assessment",
-          "command": "bench test --package ./internal/assessment"
-        },
-        {
-          "id": "caller-internal-diff",
-          "command": "bench test --package ./internal/diff"
-        },
-        {
-          "id": "caller-internal-guards",
-          "command": "bench test --package ./internal/guards"
-        },
-        {
-          "id": "caller-internal-bounds",
-          "command": "bench test --package ./internal/bounds"
-        },
-        {
-          "id": "caller-internal-otelrecord",
-          "command": "bench test --package ./internal/otelrecord"
-        },
-        {
-          "id": "caller-internal-releaseevidence",
-          "command": "bench test --package ./internal/releaseevidence"
-        },
-        {
-          "id": "caller-internal-releasepreflight",
-          "command": "bench test --package ./internal/releasepreflight"
-        },
-        {
-          "id": "native-phase-composition",
-          "command": "bench test --check release-evidence-probe"
-        },
-        {
-          "id": "real-interruption",
-          "command": "bench test --check system"
-        },
-        {
-          "id": "restore-omission",
-          "command": "bench test --package ./internal/diff",
-          "probe": "omit failure-safe restoration; require the distinguishable installed replacement witness to fail"
-        },
-        {
-          "id": "join-omission",
-          "command": "bench test --package ./internal/guards",
-          "probe": "remove join before restoration; require the held live consumer witness to fail"
-        }
-      ]
-    },
-    {
-      "id": "TS4",
-      "tickets": [
-        "04-close-census-and-omission-proof.md"
-      ],
-      "verification": [
-        {
-          "id": "owner",
-          "command": "bench test --package ./internal/conformance/injectedports"
-        },
-        {
-          "id": "real-check-and-canary",
-          "command": "bench test --package ./internal/conformance"
-        },
-        {
-          "id": "registry-omission",
-          "command": "bench test --package ./internal/conformance",
-          "probe": "delete a real registration while preserving eligible source; require unregistered refusal"
-        },
-        {
-          "id": "alias-omission",
-          "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "disable canonical alias resolution; require the independently authored alias fixture to fail"
-        },
-        {
-          "id": "setter-omission",
-          "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "disable setter discovery; require the independent setter finding to fail"
-        },
-        {
-          "id": "runtime-omission",
-          "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "disable runtime branch discovery; require the independent runtime finding to fail"
-        },
-        {
-          "id": "consumer-omission",
-          "command": "bench test --package ./internal/conformance/injectedports",
-          "probe": "remove required consumer evidence; require the admission refusal"
-        }
-      ]
-    }
-  ],
-  "final_verification": [
-    {
-      "id": "coverage",
-      "command": "bench coverage --check specs/production-test-seam-policy/spec.md"
-    },
-    {
-      "id": "complete-owner",
-      "command": "bench test --package ./internal/conformance/injectedports"
-    },
-    {
-      "id": "complete-conformance",
-      "command": "bench test --package ./internal/conformance"
-    },
-    {
-      "id": "registry",
-      "command": "bench test --package ./internal/conformance/registry"
-    },
-    {
-      "id": "anchors",
-      "command": "bench test --package ./internal/anchors"
-    },
-    {
-      "id": "native-phase-composition",
-      "command": "bench test --check release-evidence-probe"
-    },
-    {
-      "id": "interruption",
-      "command": "bench test --check system"
-    },
-    {
-      "id": "caller-cmd-bench",
-      "command": "bench test --package ./cmd/bench"
-    },
-    {
-      "id": "caller-internal-adopt",
-      "command": "bench test --package ./internal/adopt"
-    },
-    {
-      "id": "caller-internal-assessment",
-      "command": "bench test --package ./internal/assessment"
-    },
-    {
-      "id": "caller-internal-capability",
-      "command": "bench test --package ./internal/capability"
-    },
-    {
-      "id": "caller-internal-chargeevidence",
-      "command": "bench test --package ./internal/chargeevidence"
-    },
-    {
-      "id": "caller-internal-consumers",
-      "command": "bench test --package ./internal/consumers"
-    },
-    {
-      "id": "caller-internal-coverage",
-      "command": "bench test --package ./internal/coverage"
-    },
-    {
-      "id": "caller-internal-diff",
-      "command": "bench test --package ./internal/diff"
-    },
-    {
-      "id": "caller-internal-freshness",
-      "command": "bench test --package ./internal/freshness"
-    },
-    {
-      "id": "caller-internal-gate",
-      "command": "bench test --package ./internal/gate"
-    },
-    {
-      "id": "caller-internal-git",
-      "command": "bench test --package ./internal/git"
-    },
-    {
-      "id": "caller-internal-gitguard",
-      "command": "bench test --package ./internal/gitguard"
-    },
-    {
-      "id": "caller-internal-guards",
-      "command": "bench test --package ./internal/guards"
-    },
-    {
-      "id": "caller-internal-handoffdoc",
-      "command": "bench test --package ./internal/handoffdoc"
-    },
-    {
-      "id": "caller-internal-harnesstranscript",
-      "command": "bench test --package ./internal/harnesstranscript"
-    },
-    {
-      "id": "caller-internal-intent",
-      "command": "bench test --package ./internal/intent"
-    },
-    {
-      "id": "caller-internal-outline",
-      "command": "bench test --package ./internal/outline"
-    },
-    {
-      "id": "caller-internal-preflight",
-      "command": "bench test --package ./internal/preflight"
-    },
-    {
-      "id": "caller-internal-preflight-evidencecmd",
-      "command": "bench test --package ./internal/preflight/evidencecmd"
-    },
-    {
-      "id": "caller-internal-publication",
-      "command": "bench test --package ./internal/publication"
-    },
-    {
-      "id": "caller-internal-refresh",
-      "command": "bench test --package ./internal/refresh"
-    },
-    {
-      "id": "caller-internal-releaseevidence",
-      "command": "bench test --package ./internal/releaseevidence"
-    },
-    {
-      "id": "caller-internal-releasepreflight",
-      "command": "bench test --package ./internal/releasepreflight"
-    },
-    {
-      "id": "caller-internal-roadmap",
-      "command": "bench test --package ./internal/roadmap"
-    },
-    {
-      "id": "caller-internal-sessioninspect",
-      "command": "bench test --package ./internal/sessioninspect"
-    },
-    {
-      "id": "caller-internal-shift",
-      "command": "bench test --package ./internal/shift"
-    },
-    {
-      "id": "caller-internal-skillsindex",
-      "command": "bench test --package ./internal/skillsindex"
-    },
-    {
-      "id": "caller-internal-status",
-      "command": "bench test --package ./internal/status"
-    },
-    {
-      "id": "caller-internal-testreport",
-      "command": "bench test --package ./internal/testreport"
-    },
-    {
-      "id": "caller-internal-bounds",
-      "command": "bench test --package ./internal/bounds"
-    },
-    {
-      "id": "caller-internal-otelrecord",
-      "command": "bench test --package ./internal/otelrecord"
-    }
-  ]
-}
+{"version":2,"execution":{"mode":"delegate","review_mode":"unified","run_id":"ft343-build","orchestrator_session":"ft343-orchestrator","author_limit":1,"assignments":{"01-relocate-the-existing-audit.md":[{"session":"ft343-author-01","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"eb7ecf4622dc636ed62bd053d04a47fe7516bd0d","native_ref":"claude-agent:ft343-author-01"}],"02-admit-variable-and-setter-callers.md":[{"session":"ft343-author-02","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"6dfc0e69928facc5a8b37ac6d20a355bafcf795f","native_ref":"claude-agent:ft343-author-02"},{"session":"ft343-repair-02-r1","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"8fc4d8f901da877cb25f41f6267a0890f7c27c29","native_ref":"claude-agent:ft343-repair-02-r1","predecessor":"ft343-author-02","trigger":"user-directed","stopped":"cdeb6e383ca0d1e2095ea1bb1308dbe062e3a8d8","preserved":"8fc4d8f901da877cb25f41f6267a0890f7c27c29"}],"03-admit-runtime-and-environment-controls.md":[{"session":"ft343-author-03","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"f9f4c9f8c20fc26ae6bfd03e89933373a1d34406","native_ref":"claude-agent:ft343-author-03"},{"session":"ft343-repair-03-r1","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"1bcd4dfdb23eba859266586a484f38f5d7cd62b0","native_ref":"claude-agent:ft343-repair-03-r1","predecessor":"ft343-author-03","trigger":"user-directed","stopped":"3345204ff2b51418035702472dc1efa6fbc755df","preserved":"1bcd4dfdb23eba859266586a484f38f5d7cd62b0"},{"session":"ft343-repair-03-r2","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"8a0d9fa2e9b30b0f8f3dd5a0c98a17ac6e59dca4","native_ref":"claude-agent:ft343-repair-03-r2","predecessor":"ft343-repair-03-r1","trigger":"user-directed","stopped":"3c4d8e1a7","preserved":"8a0d9fa2e9b30b0f8f3dd5a0c98a17ac6e59dca4"}],"04-close-census-and-omission-proof.md":[{"session":"ft343-author-04","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"13667be747673aa1e655ea9354db5d4014ace240","native_ref":"claude-agent:ft343-author-04"},{"session":"ft343-repair-04-r1","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"041228f69e79c5bd38c9231a03452686bc4e6c91","native_ref":"claude-agent:ft343-repair-04-r1","predecessor":"ft343-author-04","trigger":"user-directed","stopped":"3c3ed8110","preserved":"041228f69e79c5bd38c9231a03452686bc4e6c91"},{"session":"ft343-repair-04-r2","assignment":"7a34d5e03128e15442cb067ef16298eb","model":"opus","effort":"high","source":"a075033b6ae61fb3204769d4827f1da5d8c0eb0c","native_ref":"claude-agent:ft343-repair-04-r2","predecessor":"ft343-repair-04-r1","trigger":"user-directed","stopped":"117afa88f9501516f1867fd74fd66943c4feffef","preserved":"a075033b6ae61fb3204769d4827f1da5d8c0eb0c"}]}},"chunks":[{"id":"TS1","tickets":["01-relocate-the-existing-audit.md"],"verification":[{"id":"wrapper-bypass","command":"bench test --package ./internal/conformance --run '^TestEveryRetainedFixtureBitesThroughRegisteredOwner$'","probe":"make checkInjectedPortRegistry return without calling the relocated owner; require the injected-ports canary bite to fail with its exact expected diagnostic","ticket":"01-relocate-the-existing-audit.md"}]},{"id":"TS2","tickets":["02-admit-variable-and-setter-callers.md"],"verification":[]},{"id":"TS3","tickets":["03-admit-runtime-and-environment-controls.md"],"verification":[{"id":"restore-omission","command":"bench test --package ./internal/diff","probe":"omit failure-safe restoration; require the distinguishable installed replacement witness to fail","ticket":"03-admit-runtime-and-environment-controls.md"},{"id":"join-omission","command":"bench test --package ./internal/guards","probe":"remove join before restoration; require the held live consumer witness to fail","ticket":"03-admit-runtime-and-environment-controls.md"}]},{"id":"TS4","tickets":["04-close-census-and-omission-proof.md"],"verification":[{"id":"registry-omission","command":"bench test --package ./internal/conformance","probe":"delete a real registration while preserving eligible source; require unregistered refusal","ticket":"04-close-census-and-omission-proof.md"},{"id":"alias-omission","command":"bench test --package ./internal/conformance/injectedports","probe":"disable canonical alias resolution; require the independently authored alias fixture to fail","ticket":"04-close-census-and-omission-proof.md"},{"id":"setter-omission","command":"bench test --package ./internal/conformance/injectedports","probe":"disable setter discovery; require the independent setter finding to fail","ticket":"04-close-census-and-omission-proof.md"},{"id":"runtime-omission","command":"bench test --package ./internal/conformance/injectedports","probe":"disable runtime branch discovery; require the independent runtime finding to fail","ticket":"04-close-census-and-omission-proof.md"},{"id":"consumer-omission","command":"bench test --package ./internal/conformance/injectedports","probe":"remove required consumer evidence; require the admission refusal","ticket":"04-close-census-and-omission-proof.md"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/production-test-seam-policy/spec.md"},{"id":"ordinary-integration","command":"bench test --package ./..."},{"id":"native-phase-composition","command":"bench worktree exec ft343-seam-policy --env BENCH_CONFORMANCE_TIER=ship -- go test -count=1 ./internal/conformance -run ^TestRootConformance$"},{"id":"interruption","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -808,40 +390,40 @@ No extra system test is needed for a pure registry field if the owner suite alre
 
 | row | story | behavior | seam | why it catches the failure |
 |---|---|---|---|---|
-| PS01 | 1 | An injected nonempty interface without a row emits the existing unregistered diagnostic | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Ignoring interface declarations leaves the fixture green |
-| PS02 | 1 | An injected named function type without a row emits the unregistered diagnostic | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Ignoring function types leaves the source fixture green |
-| PS03 | 1 | An injected all-function struct without a row emits the unregistered diagnostic | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Treating collaborator structs as data misses this port |
-| PS04 | 2 | A direct replacement of a production function variable requires admission | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | A setter-only scanner misses the assigned declaration |
-| PS05 | 2 | An anonymous function replacement resolves to its package variable | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Named function-type matching alone cannot find it |
-| PS06 | 3 | A replaced scalar bound requires admission | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Function-only discovery omits the duration fixture |
-| PS07 | 4 | An unregistered setter alias emits a diagnostic for its canonical seam | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | The alias mutation hides the owner from a name-only sweep |
-| PS08 | 4 | A ForTesting setter resolves through an unexported forwarding function | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | The alternate suffix defeats an exact ForTest matcher |
-| PS09 | 5 | An aliased testing.Testing branch without admission emits a diagnostic | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | An import spelling change cannot hide the runtime branch |
-| PS10 | 6 | A constructed phase hook without admission emits a diagnostic | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Literal-only environment matching misses the family |
-| PS11 | 6 | An unresolved dynamic hook identity refuses audit success | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Unsupported construction cannot become an empty result |
-| PS12 | 8 | A malformed production source file emits a parse diagnostic | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Dropping parse errors makes a damaged census green |
-| PS13 | 9 | A row whose seam disappeared from a present package emits the orphan diagnostic | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Removing the final seam cannot hide a stale row |
-| PS14 | 8 | A present required package with zero eligible seams emits the existing zero-inventory diagnostic | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Empty derivation cannot satisfy legacy required inventory |
-| PS15 | 10 | A fault admission without a production owner refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | A consumer name alone cannot certify ownership |
-| PS16 | 11 | A named consumer that the tree does not declare refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | The existing missing-test tripwire survives the move |
-| PS17 | 11 | A declared consumer that never reaches the canonical seam refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | An unrelated empty test cannot satisfy the row |
-| PS18 | 12 | A fault admission without a named failure purpose refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Convenience prose cannot replace the required purpose |
-| PS19 | 13 | A global admission without isolation evidence refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Returning a restore closure alone leaves the row incomplete |
-| PS20 | 9 | Duplicate source identities refuse admission | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Last-row overwrite cannot conceal conflicting evidence |
-| PS21 | 12 | An unresolved alias refuses admission | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | A nonexistent owner cannot borrow another row's evidence |
-| PS22 | 14 | A fatal-path cleanup restores the prior collaborator | planned TestSnapshotOverrideRestoresAfterFailure in internal/diff/seam_policy_test.go | Omitting cleanup leaves a distinguishable replacement installed |
-| PS23 | 15 | A held consumer finishes before its collaborator is restored | planned TestScanOverrideJoinsBeforeRestore in internal/guards/seam_policy_test.go | Deleting the join exposes the restored value to a live consumer |
-| PS24 | 13 | Two isolated instances retain their own collaborators during concurrent execution | planned TestInstanceCollaboratorsStayLocal in internal/assessment/seam_policy_test.go | A hidden package global cross-contaminates the observations |
-| PS25 | 16 | Invalid production input still refuses while a fault collaborator is active | planned TestSeamAuthorityPreserved in internal/releasepreflight/seam_policy_test.go | A test-only success path changes the observed refusal |
-| PS26 | 17 | A justified instance-local collaborator passes admission without a package global | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | A registry design requiring a global rejects the conformant case |
+| PS01 | 1 | An injected nonempty interface without a row emits the existing unregistered diagnostic | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Ignoring interface declarations leaves the fixture green |
+| PS02 | 1 | An injected named function type without a row emits the unregistered diagnostic | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Ignoring function types leaves the source fixture green |
+| PS03 | 1 | An injected all-function struct without a row emits the unregistered diagnostic | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Treating collaborator structs as data misses this port |
+| PS04 | 2 | A direct replacement of a production function variable requires admission | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | A setter-only scanner misses the assigned declaration |
+| PS05 | 2 | An anonymous function replacement resolves to its package variable | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Named function-type matching alone cannot find it |
+| PS06 | 3 | A replaced scalar bound requires admission | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Function-only discovery omits the duration fixture |
+| PS07 | 4 | An unregistered setter alias emits a diagnostic for its canonical seam | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | The alias mutation hides the owner from a name-only sweep |
+| PS08 | 4 | A ForTesting setter resolves through an unexported forwarding function | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | The alternate suffix defeats an exact ForTest matcher |
+| PS09 | 5 | An aliased testing.Testing branch without admission emits a diagnostic | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | An import spelling change cannot hide the runtime branch |
+| PS10 | 6 | A constructed phase hook without admission emits a diagnostic | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Literal-only environment matching misses the family |
+| PS11 | 6 | An unresolved dynamic hook identity refuses audit success | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Unsupported construction cannot become an empty result |
+| PS12 | 8 | A malformed production source file emits a parse diagnostic | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Dropping parse errors makes a damaged census green |
+| PS13 | 9 | A row whose seam disappeared from a present package emits the orphan diagnostic | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Removing the final seam cannot hide a stale row |
+| PS14 | 8 | A present required package with zero eligible seams emits the existing zero-inventory diagnostic | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Empty derivation cannot satisfy legacy required inventory |
+| PS15 | 10 | A fault admission without a production owner refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | A consumer name alone cannot certify ownership |
+| PS16 | 11 | A named consumer that the tree does not declare refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | The existing missing-test tripwire survives the move |
+| PS17 | 11 | A declared consumer that never reaches the canonical seam refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | An unrelated empty test cannot satisfy the row |
+| PS18 | 12 | A fault admission without a named failure purpose refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Convenience prose cannot replace the required purpose |
+| PS19 | 13 | A global admission without isolation evidence refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Returning a restore closure alone leaves the row incomplete |
+| PS20 | 9 | Duplicate source identities refuse admission | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Last-row overwrite cannot conceal conflicting evidence |
+| PS21 | 12 | An unresolved alias refuses admission | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | A nonexistent owner cannot borrow another row's evidence |
+| PS22 | 14 | A fatal-path cleanup restores the prior collaborator | `internal/diff/command_test.go` (`TestSnapshotOverrideRestoresAfterFailure`) | Omitting cleanup leaves a distinguishable replacement installed |
+| PS23 | 15 | A held consumer finishes before its collaborator is restored | `internal/guards/guards_cleanup_test.go` (`TestScanOverrideJoinsBeforeRestore`) | Deleting the join exposes the restored value to a live consumer |
+| PS24 | 13 | Two isolated instances retain their own collaborators during concurrent execution | `internal/assessment/replacement_test.go` (`TestInstanceCollaboratorsStayLocal`) | A hidden package global cross-contaminates the observations |
+| PS25 | 16 | Invalid production input still refuses while a fault collaborator is active | `internal/releasepreflight/vulnerability_test.go` (`TestSeamAuthorityPreserved`) | A test-only success path changes the observed refusal |
+| PS26 | 17 | A justified instance-local collaborator passes admission without a package global | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | A registry design requiring a global rejects the conformant case |
 | PS27 | 18 | A real dependency test observes the registered producer's failure | review-owned: reviewer traces the named caller tests and omission result | A fake-only consumer cannot establish that the real producer can fail |
 | PS28 | 19 | An installed REF disagreement still refuses release identity | `internal/releasepreflight/identity_test.go` (`TestCheckIdentityRefusesADisagreement`) | Removing the ref input makes the disagreement fixture agree |
 | PS29 | 20 | The RACE probe observes the isolated child home | `internal/releasepreflight/external_test.go` (`TestExternalPhaseGitStartsNoAutoMaintenance`) | Ignoring the override removes the observing child |
 | PS30 | 21 | The release probe exercises each registry phase through the chosen binary | check release-evidence-probe | Omitting an override leaves a real phase outside the controlled composition |
-| PS31 | 21, 6 | The dynamic phase family includes the registry's vulnerability phase | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Reusing a historical five-phase list omits the scanner member |
-| PS32 | 21 | A new phase registration changes the derived hook family | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | A copied member list stays unchanged and misses the new phase |
-| PS33 | 22 | A DATE override drives the vulnerability entry's selected date | planned TestVulnerabilityEntryDateOverride in internal/releasepreflight/seam_policy_test.go | Removing the reader changes the expiry result at the controlled boundary |
-| PS34 | 23 | A readiness override reaches the controlled evidence promotion point | planned TestEvidenceReadyControl in internal/releaseevidence/seam_policy_test.go | Removing the hook prevents the observer from seeing the ready point |
+| PS31 | 21, 6 | The dynamic phase family includes the registry's vulnerability phase | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Reusing a historical five-phase list omits the scanner member |
+| PS32 | 21 | A new phase registration changes the derived hook family | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | A copied member list stays unchanged and misses the new phase |
+| PS33 | 22 | A DATE override drives the vulnerability entry's selected date | `internal/releasepreflight/vulnerability_test.go` (`TestVulnerabilityEntryDateOverride`) | Removing the reader changes the expiry result at the controlled boundary |
+| PS34 | 23 | A readiness override reaches the controlled evidence promotion point | check release-evidence-probe | Removing the hook prevents the observer from seeing the ready point |
 | PS35 | 24 | A fallback-home provider under test writes no record | `internal/otelrecord/processor_test.go` (`TestNewProviderRefusesTheFallbackHomeUnderTest`) | Deleting the runtime protection creates a record in the fallback home |
 | PS36 | 24 | An explicit home equal to fallback writes no record under test | `internal/otelrecord/processor_test.go` (`TestNewProviderRefusesAnExplicitBenchHomeEqualToTheFallback`) | Checking only an empty constructor argument permits the protected write |
 | PS37 | 24 | An explicit isolated home records a span | `internal/otelrecord/processor_test.go` (`TestNewProviderRecordsAnExplicitBenchHomeElsewhere`) | Blanket suppression hides the legitimate isolated record |
@@ -849,30 +431,30 @@ No extra system test is needed for a pure registry field if the owner suite alre
 | PS39 | 22, 23 | DATE and readiness retain separate compatibility dispositions | review-owned: inspect their individual registry evidence and retained readers | A generic unused-family claim cannot authorize both removals |
 | PS40 | 16 | Link interruption still leaves recoverable production transaction state | `internal/systemtest/compatibility_test.go` (`TestCompatibilityInterruptedRepair`) | Removing the real abrupt exit removes the recovery trigger |
 | PS41 | 28 | The existing unregistered-port canary emits its exact diagnostic | check injected-port-registry through tests/canary/injected-ports/unregistered-port/ | Replacing the check wrapper with a green stub loses the fixture refusal |
-| PS42 | 30 | An absent audited package remains benign in a partial root | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Reading ambient production source invents a fixture obligation |
-| PS43 | 30 | An unreadable present source package refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Treating every stat error as absence loses the failure |
-| PS44 | 7, 26 | Ordinary functions and source examples produce no seam finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Name-only matching or testing-import matching creates false findings |
-| PS45 | 27 | Deleting a registration from conformant production source turns the audit red | planned TestSeamAuditOmissions in internal/conformance/injectedports/omissions_test.go | The production scan must discover a seam not supplied by registry iteration |
-| PS46 | 27 | Removing alias resolution makes the independent alias fixture red | planned TestSeamAuditOmissions in internal/conformance/injectedports/omissions_test.go | A registry-only inventory cannot certify alias coverage |
-| PS47 | 27 | Removing setter discovery makes the independent setter fixture red | planned TestSeamAuditOmissions in internal/conformance/injectedports/omissions_test.go | A named-type-only fallback cannot satisfy the setter assertion |
-| PS48 | 27 | Removing runtime branch discovery makes the independent runtime fixture red | planned TestSeamAuditOmissions in internal/conformance/injectedports/omissions_test.go | The negative mutation must change the branch finding |
+| PS42 | 30 | An absent audited package remains benign in a partial root | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Reading ambient production source invents a fixture obligation |
+| PS43 | 30 | An unreadable present source package refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Treating every stat error as absence loses the failure |
+| PS44 | 7, 26 | Ordinary functions and source examples produce no seam finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Name-only matching or testing-import matching creates false findings |
+| PS45 | 27 | Deleting a registration from conformant production source turns the audit red | `internal/conformance/injectedports/omissions_test.go` (`TestSeamAuditOmissions`) | The production scan must discover a seam not supplied by registry iteration |
+| PS46 | 27 | Removing alias resolution makes the independent alias fixture red | `internal/conformance/injectedports/omissions_test.go` (`TestSeamAuditOmissions`) | A registry-only inventory cannot certify alias coverage |
+| PS47 | 27 | Removing setter discovery makes the independent setter fixture red | `internal/conformance/injectedports/omissions_test.go` (`TestSeamAuditOmissions`) | A named-type-only fallback cannot satisfy the setter assertion |
+| PS48 | 27 | Removing runtime branch discovery makes the independent runtime fixture red | `internal/conformance/injectedports/omissions_test.go` (`TestSeamAuditOmissions`) | The negative mutation must change the branch finding |
 | PS49 | 29, 31 | The old audit file contains no relocated derivation implementation | review-owned: whole-tree definition and caller census after relocation | An unreachable second scanner violates the one-owner outcome |
-| PS50 | 1 | A pointer parameter retains its named-port finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Removing pointer reduction loses this injection site |
-| PS51 | 1 | A type assertion retains its named-port finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Parameter-only discovery misses the widened capability |
-| PS52 | 1 | A type switch retains its named-port finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Dropping the case arm removes its injection evidence |
-| PS53 | 7 | An empty interface produces no named-port finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Treating every interface as a port creates a false finding |
-| PS54 | 7 | A struct with a data field produces no named-port finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Ignoring field shape registers ordinary data |
-| PS55 | 7 | An unused port-shaped declaration produces no named-port finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Shape alone cannot establish an injection |
-| PS56 | 5 | A forwarding test-runtime predicate reaches its canonical branch | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Matching only direct calls hides the forwarding branch |
-| PS57 | 2 | A combined assignment resolves the eligible package variable | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Reading only the first assignment target loses the collaborator |
-| PS58 | 6 | The verdict-window control preserves parent cancellation | planned TestUnboundedParentCancellation in internal/bounds/seam_policy_test.go | An override cannot make cancellation inert |
+| PS50 | 1 | A pointer parameter retains its named-port finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Removing pointer reduction loses this injection site |
+| PS51 | 1 | A type assertion retains its named-port finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Parameter-only discovery misses the widened capability |
+| PS52 | 1 | A type switch retains its named-port finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Dropping the case arm removes its injection evidence |
+| PS53 | 7 | An empty interface produces no named-port finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Treating every interface as a port creates a false finding |
+| PS54 | 7 | A struct with a data field produces no named-port finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Ignoring field shape registers ordinary data |
+| PS55 | 7 | An unused port-shaped declaration produces no named-port finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Shape alone cannot establish an injection |
+| PS56 | 5 | A forwarding test-runtime predicate reaches its canonical branch | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Matching only direct calls hides the forwarding branch |
+| PS57 | 2 | A combined assignment resolves the eligible package variable | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Reading only the first assignment target loses the collaborator |
+| PS58 | 6 | The verdict-window control preserves parent cancellation | `internal/bounds/bounds_test.go` (`TestUnboundedParentCancellation`) | An override cannot make cancellation inert |
 | PS59 | 6 | Fixed cancellation grace remains finite under the verdict override | `internal/bounds/bounds_test.go` (`TestFixedWindowPreservesCancelGrace`) | Treating all windows as overridable weakens termination policy |
 | PS60 | 13, 15 | A global admission names serial ownership through consumer completion | review-owned: trace each retained global's tests and cleanup ordering | A restore closure cannot hide parallel consumers |
-| PS61 | 12 | A blank external exemption retains the existing exemption refusal | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Whitespace cannot certify the explicit external limitation |
-| PS62 | 7 | Ordinary mutable production data produces no test-seam finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | Registering every global would reject the negative fixture |
-| PS63 | 11, 22, 23 | An environment exception with no consumer evidence refuses | planned TestSeamAdmissionEvidence in internal/conformance/injectedports/admission_test.go | Claiming external absence cannot substitute for admission evidence |
-| PS64 | 7 | Assigning a shadowed local leaves the production variable unclassified | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | A text-name match confuses fixture state with a production override |
-| PS65 | 6 | A test-support answer-path environment reader produces no production hook finding | planned TestSeamDerivationForms in internal/conformance/injectedports/derive_test.go | An environment prefix alone cannot establish production use |
+| PS61 | 12 | A blank external exemption retains the existing exemption refusal | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Whitespace cannot certify the explicit external limitation |
+| PS62 | 7 | Ordinary mutable production data produces no test-seam finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | Registering every global would reject the negative fixture |
+| PS63 | 11, 22, 23 | An environment exception with no consumer evidence refuses | `internal/conformance/injectedports/admission_test.go` (`TestSeamAdmissionEvidence`) | Claiming external absence cannot substitute for admission evidence |
+| PS64 | 7 | Assigning a shadowed local leaves the production variable unclassified | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | A text-name match confuses fixture state with a production override |
+| PS65 | 6 | A test-support answer-path environment reader produces no production hook finding | `internal/conformance/injectedports/derive_test.go` (`TestSeamDerivationForms`) | An environment prefix alone cannot establish production use |
 | PS66 | 28, 30 | The audit input classification includes graded-root registry data | review-owned: compare InputCatchAll metadata and profile advertisement with the actual data reader | A Go-only claim omits a behavior-changing input |
 
 ### Edge inventory
@@ -895,6 +477,8 @@ No extra system test is needed for a pure registry field if the owner suite alre
 **Won't handle:** arbitrary reflection or unsafe mutation of package memory — normal callers and resolved Go assignments remain covered.
 
 **Won't handle:** external callers outside the source tree — REF, DATE, and readiness compatibility remain preserved rather than inferred absent.
+
+**Won't handle:** an environment set that reaches its reader only through a test's function value, or through a child that inherits the set — review owns those consumers (reviewer decision, 2026-11-06).
 
 **Won't handle:** proving consumer purpose from source syntax alone — the named failure witness and review remain required.
 
@@ -922,6 +506,7 @@ Prospective implementation writes:
 - `internal/consumers/`
 - `internal/coverage/`
 - `internal/diff/`
+- `internal/env/kit_run_wait_test.go`
 - `internal/freshness/`
 - `internal/gate/`
 - `internal/git/`
@@ -932,8 +517,15 @@ Prospective implementation writes:
 - `internal/intent/`
 - `internal/otelrecord/`
 - `internal/outline/`
+- `internal/preflight/candidate_test.go`
+- `internal/preflight/charge_legacy_pack_test.go`
+- `internal/preflight/charge_snapshot_test.go`
+- `internal/preflight/charge_test.go`
+- `internal/preflight/explicit_base_test.go`
+- `internal/preflight/ownership/source_test.go`
 - `internal/preflight/review.go`
 - `internal/preflight/review_charge_test.go`
+- `internal/preflight/staleness/drift_test.go`
 - `internal/preflight/evidencecmd/`
 - `internal/publication/`
 - `internal/refresh/`
@@ -946,10 +538,22 @@ Prospective implementation writes:
 - `internal/status/status_render_test.go`
 - `internal/systemtest/compatibility_test.go`
 - `internal/testreport/`
+- `internal/worktree/`
+- `internal/benchguard/`
+- `internal/commitment/`
+- `internal/durablefile/`
+- `internal/landing/`
+- `internal/maps/`
+- `internal/prose/`
+- `internal/spec/`
+- `internal/subprocess/`
+- `internal/writeguard/`
 - `projects/benchkit.md`
+- `internal/anchors/registry_chunk_chain.go`
 - `internal/anchors/registry_data.go`
 - `internal/anchors/registry_data_test.go`
 - `internal/anchors/registry_ft311_review_dispatch.go`
+- `internal/anchors/registry_planning_readers.go`
 - `internal/anchors/registry_retained_workflow.go`
 - `internal/conformance/axi_query_registry_test.go`
 - `internal/conformance/subcommand_routing_table_test.go`
@@ -960,10 +564,6 @@ Prospective implementation writes:
 - `tests/canary/skill-description-budgets/description-missing/`
 - `tests/canary/skill-description-budgets/over-budget-command/`
 - `tests/canary/skill-description-budgets/over-budget-description/`
-- `tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-owner/`
-- `tests/canary/workflow-guidance-anchors/benchkit-review-round-routing/`
-- `tests/canary/workflow-guidance-anchors/benchkit-spec-ownership/`
 - `tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/`
 - `specs/production-test-seam-policy/`
 - `capture/`
@@ -989,17 +589,17 @@ The graded-root phase registry adds a data input to the broader check.
 Use the existing `InputCatchAll` classification until a narrower sound input owner exists.
 Update the profile's existing input row from `go-source` to `catch-all` in TS3, before its registry-reading consumer lands.
 
-That profile edit carries four anchor owners and the existing AXI command advertisement closure.
-The fence includes those owners and the twelve fixtures that bind or supply the profile.
+That profile edit carries six anchor owners and the existing AXI command advertisement closure.
+The fence includes those owners and the eight fixtures that bind or supply the profile.
 The fixture paths come from their BASE, MUTATE, and files trees.
 Keep their existing refusal expectations when refreshing source snapshots.
 
 The slicing headroom refresh reads `.bench/structure.budgets` and `.bench/structure-accept` at the accepted source.
-`native_workflow_test.go` is exactly 400 lines; adding logic there must first remove or relocate the same responsibility within TS3.
-`checks_test.go` has 641 lines against its 709-line grant, and `registry/registry.go` has 355 against 403.
+`native_workflow_test.go` has 399 lines against the 400-line default; adding logic there must first remove or relocate the same responsibility within TS3.
+`checks_test.go` has 712 lines against its 739-line grant, and `registry/registry.go` has 360 against 409.
 The new owner directory starts absent and has the default 12-file and 400-line caps.
 
-Several caller directories are already crowded, including assessment at 29 files and diff at 15.
+Several caller directories are already crowded, including assessment at 31 files and diff at 15.
 Use existing caller test files where they fit; a planned seam filename cannot excuse new crowding.
 Existing long caller files cannot grow past their caps without same-ticket reduction within the approved caller fence.
 No budget or grant write is authorized by this graph.

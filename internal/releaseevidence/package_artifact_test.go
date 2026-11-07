@@ -144,6 +144,21 @@ func TestValidateTarballRejectsCorruptActiveMemberTrailer(t *testing.T) {
 	}
 }
 
+// TestValidateTarballRefusesAMemberOverTheMemberLimit drives the member bound through its
+// setter. The expanded-size bound is lower than the default member bound, so only a lowered
+// member bound reaches this refusal. A member exactly at the bound is still accepted.
+func TestValidateTarballRefusesAMemberOverTheMemberLimit(t *testing.T) {
+	archive := bufferedPackageTarball(t)
+	t.Cleanup(SetArchiveMemberLimitForTesting(95_348))
+	if err := ValidateTarballForTesting(archive); err != nil {
+		t.Fatalf("member at the bound rejected: %v", err)
+	}
+	t.Cleanup(SetArchiveMemberLimitForTesting(95_347))
+	if err := ValidateTarballForTesting(archive); err == nil || !strings.Contains(err.Error(), "archive member payload exceeds inspection limit") {
+		t.Fatalf("member over the bound error = %v, want the member limit refusal", err)
+	}
+}
+
 func bufferedPackageTarball(t *testing.T) []byte {
 	t.Helper()
 	// Keep the compressed stream across the gzip reader's internal read boundary,

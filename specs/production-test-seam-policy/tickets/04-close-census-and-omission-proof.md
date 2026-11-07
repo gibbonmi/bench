@@ -1,7 +1,7 @@
 # Close the source census and independent omission proof
 
 Blocked by: 03-admit-runtime-and-environment-controls.md
-Writes: internal/conformance/injected_ports_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/injectedports/ (new), internal/conformance/checks_test.go, tests/canary/injected-ports/
+Writes: internal/conformance/injected_ports_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/injectedports/ (new), internal/conformance/checks_test.go, tests/canary/injected-ports/, internal/adopt/, internal/bounds/, internal/capability/, internal/gate/, internal/harnesstranscript/, internal/intent/, internal/roadmap/, internal/shift/, internal/benchguard/, internal/commitment/, internal/durablefile/, internal/landing/, internal/maps/, internal/prose/, internal/spec/, internal/subprocess/, internal/worktree/, internal/writeguard/
 Covers: PS45, PS46, PS47, PS48, PS49, PS62, PS63, PS64, PS65
 
 ## What to build

@@ -1,7 +1,7 @@
 # Admit variable and setter callers with sufficient evidence
 
 Blocked by: 01-relocate-the-existing-audit.md
-Writes: internal/conformance/injected_ports_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/injectedports/ (new), internal/conformance/checks_test.go, tests/canary/injected-ports/, cmd/bench/, internal/adopt/, internal/assessment/, internal/capability/, internal/chargeevidence/, internal/consumers/, internal/coverage/, internal/diff/, internal/freshness/, internal/gate/, internal/git/, internal/gitguard/, internal/guards/, internal/handoffdoc/, internal/harnesstranscript/, internal/intent/, internal/outline/, internal/preflight/review.go, internal/preflight/review_charge_test.go, internal/preflight/evidencecmd/, internal/publication/, internal/refresh/, internal/releaseevidence/, internal/releasepreflight/, internal/roadmap/, internal/sessioninspect/, internal/shift/, internal/skillsindex/, internal/status/status_render_test.go, internal/testreport/, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go
+Writes: internal/conformance/injected_ports_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/injectedports/ (new), internal/conformance/checks_test.go, tests/canary/injected-ports/, cmd/bench/, internal/adopt/, internal/assessment/, internal/capability/, internal/chargeevidence/, internal/consumers/, internal/coverage/, internal/diff/, internal/freshness/, internal/gate/, internal/git/, internal/gitguard/, internal/guards/, internal/handoffdoc/, internal/harnesstranscript/, internal/intent/, internal/outline/, internal/preflight/review.go, internal/preflight/review_charge_test.go, internal/preflight/evidencecmd/, internal/publication/, internal/refresh/, internal/releaseevidence/, internal/releasepreflight/, internal/roadmap/, internal/sessioninspect/, internal/shift/, internal/skillsindex/, internal/status/status_render_test.go, internal/testreport/, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, internal/preflight/candidate_test.go, internal/preflight/charge_legacy_pack_test.go, internal/preflight/charge_snapshot_test.go, internal/preflight/charge_test.go, internal/preflight/explicit_base_test.go, internal/preflight/ownership/source_test.go, internal/preflight/staleness/drift_test.go, internal/worktree/list_actions_test.go
 Covers: PS04, PS05, PS06, PS07, PS08, PS15, PS16, PS17, PS18, PS19, PS20, PS21, PS44, PS57
 
 ## What to build
@@ -17,7 +17,7 @@ The caller set covers command overrides, adoption synchronization, capability ou
 It also covers gate factories and timeouts, git bounds, guard discovery and timeout, lock windows, transcript and outline reads, refresh, roadmap, and inspection.
 Shift, skill replacement, test selection, evidence observers, and response bounds complete this set.
 
-Review the existing assessment, charge-evidence, gitguard, and publication named-port consumers without replacing sufficient real-dependency tests.
+Review the existing assessment, charge-evidence, gitguard, preflight review-observer, publication, and subprocess protection named-port consumers without replacing sufficient real-dependency tests.
 Resolve release-evidence setters and release-preflight aliases to their canonical owners, including validation exposures that are not mutable seams.
 Refresh publication's `clock` disposition through actual callers before admitting or excluding it.
 A helper name in the census is not a consumer until its top-level calling test is established.
@@ -45,6 +45,6 @@ Retain Go-only input metadata until TS3 first supplies phase registry data.
 - [ ] The owner, real conformance entry, and affected caller-package checks pass while TS3 and TS4 remain unbuilt; no temporary unregistered or malformed-row exception is installed.
 - [ ] Independent TS2 review closes before TS3 starts; shared audit, registry, command closure, and caller writes use this serial predecessor.
 
-Integration checks: run the TS2 owner, conformance, and affected caller commands from the completion plan.
+Integration checks: run the TS2 owner, conformance, and affected caller packages before the commit; the chunk checkpoint grades them again.
 Where a retained mechanism needs a new omission witness to justify its admission, establish and restore that focused red before this checkpoint.
 A later aggregate witness cannot repair an unsafe admission made here.

@@ -101,11 +101,15 @@ func TestRemoveFieldsHoldsTheLedgerLockThroughItsWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	preserve := filepath.Join(t.TempDir(), "copy.json")
-	done := make(chan error, 1)
+	done, finished := make(chan error, 1), make(chan struct{})
 	go func() {
+		defer close(finished)
 		_, err := RemoveFields(root, preserve, [][]string{{"assignments"}})
 		done <- err
 	}()
+	// A failed assertion still joins the removal before the lock window is restored; the
+	// feed's close, registered later, runs first and ends the removal's read.
+	t.Cleanup(func() { <-finished })
 	type opening struct {
 		feed *os.File
 		err  error
@@ -123,6 +127,7 @@ func TestRemoveFieldsHoldsTheLedgerLockThroughItsWrite(t *testing.T) {
 			t.Fatal(open.err)
 		}
 		feed = open.feed
+		t.Cleanup(func() { _ = feed.Close() })
 	case err := <-done:
 		t.Fatalf("removal returned before it read the ledger: %v", err)
 	}

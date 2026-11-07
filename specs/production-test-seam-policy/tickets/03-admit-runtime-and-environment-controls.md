@@ -1,7 +1,7 @@
 # Admit runtime and environment controls with safe isolation
 
 Blocked by: 02-admit-variable-and-setter-callers.md
-Writes: internal/conformance/injected_ports_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/injectedports/ (new), internal/conformance/checks_test.go, internal/conformance/native_workflow_test.go, internal/conformance/registry/checks.go, internal/conformance/registry/registry.go, internal/conformance/registry/registry_test.go, tests/canary/injected-ports/, cmd/bench/, internal/adopt/, internal/assessment/, internal/bounds/, internal/diff/, internal/guards/, internal/otelrecord/, internal/releaseevidence/, internal/releasepreflight/, internal/systemtest/compatibility_test.go, projects/benchkit.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/guidance-prose-budgets/over-budget-skill/, tests/canary/line-routing/line-binding-prose-drift/, tests/canary/skill-description-budgets/budget-table-missing/, tests/canary/skill-description-budgets/description-folded/, tests/canary/skill-description-budgets/description-missing/, tests/canary/skill-description-budgets/over-budget-command/, tests/canary/skill-description-budgets/over-budget-description/, tests/canary/workflow-guidance-anchors/benchkit-hostile-input-heading/, tests/canary/workflow-guidance-anchors/benchkit-review-round-owner/, tests/canary/workflow-guidance-anchors/benchkit-review-round-routing/, tests/canary/workflow-guidance-anchors/benchkit-spec-ownership/, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/
+Writes: internal/conformance/injected_ports_test.go, internal/conformance/injected_ports_registry_test.go, internal/conformance/injectedports/ (new), internal/conformance/checks_test.go, internal/conformance/native_workflow_test.go, internal/conformance/registry/checks.go, internal/conformance/registry/registry.go, internal/conformance/registry/registry_test.go, tests/canary/injected-ports/, cmd/bench/, internal/adopt/, internal/assessment/, internal/bounds/, internal/diff/, internal/guards/, internal/otelrecord/, internal/releaseevidence/, internal/releasepreflight/, internal/systemtest/compatibility_test.go, projects/benchkit.md, internal/anchors/registry_data.go, internal/anchors/registry_data_test.go, internal/anchors/registry_ft311_review_dispatch.go, internal/anchors/registry_retained_workflow.go, internal/conformance/axi_query_registry_test.go, internal/conformance/subcommand_routing_table_test.go, tests/canary/guidance-prose-budgets/over-budget-skill/, tests/canary/line-routing/line-binding-prose-drift/, tests/canary/skill-description-budgets/budget-table-missing/, tests/canary/skill-description-budgets/description-folded/, tests/canary/skill-description-budgets/description-missing/, tests/canary/skill-description-budgets/over-budget-command/, tests/canary/skill-description-budgets/over-budget-description/, tests/canary/workflow-guidance-anchors/benchkit-system-suite-route/, internal/anchors/registry_chunk_chain.go, internal/anchors/registry_planning_readers.go, internal/handoffdoc/store_test.go, internal/intent/transaction_test.go, internal/env/kit_run_wait_test.go, internal/gate/
 Covers: PS09, PS10, PS11, PS22, PS23, PS24, PS25, PS26, PS27, PS28, PS29, PS30, PS31, PS32, PS33, PS34, PS35, PS36, PS37, PS38, PS39, PS40, PS56, PS58, PS59, PS60, PS66
 
 ## What to build
@@ -13,7 +13,7 @@ The existing release registry, not a future COF module, supplies this prerequisi
 
 This first registry-reading checkpoint owns PS66.
 Change the injected-port check's input to `InputCatchAll` and its existing profile row to `catch-all` in the same ticket.
-Co-name all four anchor holders, the command advertisement closure, and all twelve complete profile fixture units in Writes.
+Co-name all six anchor holders, the command advertisement closure, and all eight complete profile fixture units in Writes.
 Refresh only necessary source snapshots while preserving each fixture's BASE linkage, mutation meaning, EXPECT diagnostic, and refusal assertion.
 No data-consuming caller may land before its binding and profile advertisement are correct.
 
@@ -38,7 +38,7 @@ Runtime branches and environment hook enforcement become active only with the ad
 
 - [ ] Import aliases, forwarding predicates, bounded hook construction, and registry-derived phase members are found; unresolved dynamic identities refuse.
 - [ ] The wrapper reads the fixture's phase registry and invokes the owner. Changing that registry changes the family, including vulnerability, without borrowing the live checkout.
-- [ ] InputCatchAll, the catch-all profile row, four anchor holders, AXI closure, and twelve complete fixture units agree before the data reader is enabled.
+- [ ] InputCatchAll, the catch-all profile row, six anchor holders, AXI closure, and eight complete fixture units agree before the data reader is enabled.
 - [ ] Every newly admitted runtime and environment control has a reaching consumer, sufficient failure purpose, preserved validation, and completed-consumer isolation before its own green.
 - [ ] An environment exception without consumer evidence refuses, and a test-support answer-path reader remains negative now, although TS4 owns the final negative rows.
 - [ ] REF, RACE, all registry phases, DATE, and readiness keep their distinct real entry witnesses; no name-only unused claim permits removal.
@@ -49,6 +49,6 @@ Runtime branches and environment hook enforcement become active only with the ad
 - [ ] Existing 400-line native_workflow_test.go receives no net growth; every other changed file and new caller test satisfies its own headroom before this checkpoint.
 - [ ] Owner, real conformance, registry, anchors, actual caller, native phase, and system checks pass while TS4 is unbuilt; independent TS3 review closes before TS4 starts.
 
-Integration checks: the TS3 completion plan binds the actual entry suites, restoration and join omissions, and BENCH_KIT system route.
+Integration checks: the TS3 completion plan binds the restoration and join omissions, and the final plan binds the BENCH_KIT system route and the native phase check.
 Each controlled red records the exact assertion, source change, byte-identical restoration, and same focused green.
 No invalid setup or unrelated red counts as isolation evidence.

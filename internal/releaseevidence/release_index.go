@@ -95,14 +95,6 @@ type Index struct {
 	NativeProofs    []nativeProofEvidence   `json:"native_proofs"`
 }
 
-var indexEncoder = canonicalJSON
-
-func SetIndexEncoderForTesting(encoder func(any) ([]byte, error)) func() {
-	previous := indexEncoder
-	indexEncoder = encoder
-	return func() { indexEncoder = previous }
-}
-
 func canonicalJSON(value any) ([]byte, error) {
 	data, err := json.Marshal(value)
 	if err != nil {

@@ -7,7 +7,7 @@ Covers: PS01, PS02, PS03, PS12, PS13, PS14, PS41, PS42, PS43, PS50, PS51, PS52, 
 ## What to build
 
 Move the existing derivation into `internal/conformance/injectedports/` and make the actual `checkInjectedPortRegistry` wrapper call `Check(root, Policy)` once.
-Preserve the seven named-port rows, five required-package expectations, and exact legacy diagnostic projections.
+Preserve the eight named-port rows, six required-package expectations, and exact legacy diagnostic projections.
 Keep existing assertions in `TestInjectedPortRegistryCheckBites` and `TestInjectedPortDerivationSeesEveryPortShape` intact.
 Derive named shapes across eligible production packages, with the legacy partial-root contract retained.
 Do not enable variable, setter, runtime, or environment enforcement in this ticket.
@@ -29,5 +29,5 @@ No unused public boundary or second AST scanner may remain.
 - [ ] The old file loses relocated derivation and fits 400 lines. The new directory stays within 12 files and 400 lines per file.
 - [ ] The focused owner and actual conformance checks pass with every successor still unbuilt, and independent TS1 review closes before TS2 starts.
 
-Integration checks: the TS1 completion-plan commands exercise owner fixtures, the existing registered check, and its canary.
+Integration checks: the TS1 wrapper-bypass probe exercises the existing registered check and its canary, and the chunk checkpoint grades the owner fixtures.
 Record moved definitions and callers so the real wrapper is distinguishable from a helper-only proof.

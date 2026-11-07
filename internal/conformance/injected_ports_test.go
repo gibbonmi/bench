@@ -1,15 +1,18 @@
 package conformance
 
 import (
-	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
+	"bytes"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/conformance/injectedports"
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // The injected-interface composition audit found the same gap at five seams at once. A
@@ -18,9 +21,9 @@ import (
 // check keeps them closed. It refuses a derived port that names neither a test driving
 // its real producer nor a written reason it does not.
 //
-// The two halves are deliberately independent. The inventory is derived from the audited
-// packages' Go source, so a port added tomorrow appears without anyone remembering to say
-// so. The registry file is the advertisement, and disagreement between them is the red.
+// The two halves are deliberately independent. The inventory is derived from the Go source
+// of every production package under cmd and internal, so a port added tomorrow appears
+// without anyone remembering to say so. The registry file is the advertisement, and disagreement between them is the red.
 // A single hand-maintained list would satisfy itself.
 //
 // The named-test-exists half is a tripwire, not a behavior check. It catches a junction
@@ -28,235 +31,104 @@ import (
 // behavior half of the defense is the junction tests themselves and the canary fixture
 // under tests/canary/injected-ports. That fixture keeps the unregistered-port red alive.
 
-// derivedPort is one port the source sweep found, carrying the site that injected it. A
-// red then says where the port entered the package, not only that it did.
-type derivedPort struct {
-	pkg, name, site string
-}
-
 // checkInjectedPortRegistry grades the registry against a fresh derivation over root.
 func checkInjectedPortRegistry(root string) []string {
-	return injectedPortDiags(root, auditedPortPackages, injectedPortRegistry)
+	return injectedports.Check(root, injectedports.Policy{Rows: injectedPortRegistry, Required: auditedPortPackages, Families: gradedRootFamilies(root)})
 }
 
-// injectedPortDiags is the graded core. It takes the package list and the rows as
-// arguments, so the bite proof can drive a mutated registry without editing the real one.
-//
-// A package the graded tree does not hold is not graded at all. An adopting repo has none
-// of these directories, and a check that reds there is a check nobody keeps. A package
-// the tree does hold must yield ports, the fail-closed posture; see
-// zeroPortInventoryMessage.
-//
-// The registry-to-derived direction is graded here too, not only derived-to-registry.
-// Every row of a package whose derivation is non-zero must name a port that derivation
-// still reports, or it fires orphanPortRowMessage. Without this half, deleting an
-// injection arm together with its junction test leaves a green row behind. That row stays
-// green for as long as the package's other ports keep the inventory non-zero.
-// zeroPortInventoryMessage closes that same silence for a package that derives nothing at
-// all.
-func injectedPortDiags(root string, packages []string, rows []injectedPortRow) []string {
-	registered := make(map[string]injectedPortRow, len(rows))
-	for _, row := range rows {
-		registered[row.pkg+"."+row.port] = row
+// gradedRootFamilies binds graded-root data to the local names that construct a hook.
+// The release phase names of root's own preflight registry bind the production reader's
+// phase parameter and the native probe's override loop. The environment names that
+// root's gate input manifest declares bind the gate's declared-environment reader. An
+// unusable source supplies no family, so its reader stays unresolved instead of grading
+// silence; a valid manifest that declares no names resolves to no hooks.
+func gradedRootFamilies(root string) map[string][]string {
+	families := map[string][]string{}
+	if registries := readReleaseRegistries(root); registries.preflightUsable && len(registries.preflight.Verify) > 0 {
+		phases := registries.preflight.Verify
+		families["internal/releasepreflight.runner.runExternal.name"] = phases
+		families["internal/conformance.preflightPhaseOverrides.phase"] = phases
 	}
-	derived := make(map[string]bool, len(rows))
-	gradedNonZero := make(map[string]bool, len(packages))
-	var diags []string
-	for _, pkg := range packages {
-		dir := filepath.Join(root, filepath.FromSlash(pkg))
-		if !isDirectory(dir) {
-			continue
+	if names, declared := gate.DeclaredEnvironment(root); declared {
+		families["internal/gate.suppliedEnvironment.name"] = append([]string{}, names...)
+	}
+	return families
+}
+
+// preflightPhaseOverrides returns one phase override entry per phase, each naming path.
+func preflightPhaseOverrides(phases []string, path string) []string {
+	var env []string
+	for _, phase := range phases {
+		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+path)
+	}
+	return env
+}
+
+// runAtEvidenceReadyPoint runs a preflight that holds at the release-evidence readiness
+// point. The observer sees the ready file that the held run writes, then removes it to
+// release the run. A run that exits without writing it never reached that point.
+func runAtEvidenceReadyPoint(cmd *exec.Cmd, ready string) ([]byte, error) {
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+	for {
+		select {
+		case err := <-exited:
+			return output.Bytes(), errors.Join(err, errors.New("the run never reached the evidence readiness point"))
+		default:
 		}
-		ports, parseDiags := derivedInjectedPorts(dir, pkg)
-		diags = append(diags, parseDiags...)
-		if len(ports) == 0 {
-			diags = append(diags, fmt.Sprintf(
-				"%s: %s is present in the graded tree and the audit records it as declaring them, so an empty inventory would grade every registry row as satisfied — the derivation fails closed instead of reporting silence",
-				zeroPortInventoryMessage, pkg))
-			continue
+		if _, err := os.Stat(ready); err == nil {
+			break
 		}
-		gradedNonZero[pkg] = true
-		for _, port := range ports {
-			key := port.pkg + "." + port.name
-			derived[key] = true
-			row, found := registered[key]
-			if !found {
-				diags = append(diags, fmt.Sprintf(
-					"%s: %s.%s is injected at %s — add a row to injectedPortRegistry naming the test that drives its real producer, or the written reason it has none; an unregistered port is the audit's gap recurring unseen",
-					unregisteredPortMessage, port.pkg, port.name, port.site))
-				continue
+		time.Sleep(bounds.FixedWindow(10 * time.Millisecond))
+	}
+	if err := os.Remove(ready); err != nil {
+		return nil, errors.Join(err, cmd.Process.Kill(), <-exited)
+	}
+	return output.Bytes(), <-exited
+}
+
+// TestInjectedPortPhaseFamilyReadsTheGradedRegistry proves that the wrapper's phase family
+// comes from the graded root's own release registry. Each case writes that registry, a
+// phase reader, and a test that sets two phase hooks. The registry alone decides which of
+// them are hooks, and an absent registry leaves the reader unresolved.
+func TestInjectedPortPhaseFamilyReadsTheGradedRegistry(t *testing.T) {
+	const hook = "environment hook has no registry row: BENCH_PREFLIGHT_"
+	for _, test := range []struct {
+		name, registry string
+		heads          []string
+	}{
+		{"the registry's vulnerability phase", `["gate", "vulnerability"]`, []string{hook + "VULNERABILITY "}},
+		{"a newly registered phase", `["gate", "vulnerability", "newphase"]`, []string{hook + "NEWPHASE ", hook + "VULNERABILITY "}},
+		{"an absent registry", "", []string{injectedports.UnresolvedHookMessage + ": internal/releasepreflight.runner.runExternal "}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			files := map[string]string{
+				"internal/releasepreflight/command.go":      "package releasepreflight\n\nimport (\n\t\"os\"\n\t\"strings\"\n)\n\ntype runner struct{}\n\nfunc (r *runner) runExternal(name string) string { return os.Getenv(\"BENCH_PREFLIGHT_\" + strings.ToUpper(name)) }\n",
+				"internal/releasepreflight/command_test.go": "package releasepreflight\n\nimport \"testing\"\n\nfunc TestPhases(t *testing.T) {\n\tt.Setenv(\"BENCH_PREFLIGHT_VULNERABILITY\", \"x\")\n\tt.Setenv(\"BENCH_PREFLIGHT_NEWPHASE\", \"x\")\n\t_ = (&runner{}).runExternal(\"x\")\n}\n",
 			}
-			diags = append(diags, injectedPortRowDiags(root, row)...)
-		}
-	}
-	for _, row := range rows {
-		if !gradedNonZero[row.pkg] || derived[row.pkg+"."+row.port] {
-			continue
-		}
-		diags = append(diags, fmt.Sprintf(
-			"%s: %s.%s is registered but the derivation no longer reports it — a stale advertisement whose port or injection arm left the tree must not stay green",
-			orphanPortRowMessage, row.pkg, row.port))
-	}
-	return uniqueSorted(diags)
-}
-
-// injectedPortRowDiags grades one row's disposition.
-func injectedPortRowDiags(root string, row injectedPortRow) []string {
-	if row.testName == "" {
-		if strings.TrimSpace(row.exempt) == "" {
-			return []string{fmt.Sprintf(
-				"%s: %s.%s names no real-producer test and gives no reason — an exemption nobody had to write down is an unregistered port with better manners",
-				emptyPortExemptionMessage, row.pkg, row.port)}
-		}
-		return nil
-	}
-	if !fileDeclaresTest(filepath.Join(root, filepath.FromSlash(row.testFile)), row.testName) {
-		return []string{fmt.Sprintf(
-			"%s: %s.%s advertises %s:%s, which that file does not declare — a deleted or renamed junction test must not leave a green advertisement behind (tripwire: this catches removal, not a test gutted back to a fake)",
-			missingPortTestMessage, row.pkg, row.port, row.testFile, row.testName)}
-	}
-	return nil
-}
-
-// derivedInjectedPorts reports the injected ports one package's non-test source declares.
-//
-// A port is a named type whose shape is port-shaped: a non-empty interface, a func type,
-// or a struct whose every field is a func. The package must also inject it, by passing it
-// as a function parameter or by narrowing to it through a type assertion or type switch.
-//
-// The assertion arm is not decoration. A capability widened out of an already-injected
-// owner is never a parameter at all. A parameter-only rule would therefore leave exactly
-// the silently-downgradable capabilities out of the inventory. Exportedness is not part
-// of the rule either. A package main declares nothing exported, and its ports are ports
-// all the same.
-func derivedInjectedPorts(dir, pkg string) ([]derivedPort, []string) {
-	fset := token.NewFileSet()
-	shaped := map[string]bool{}
-	sites := map[string]string{}
-	var diags []string
-
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, []string{fmt.Sprintf("injected port derivation cannot read %s: %v", pkg, err)}
-	}
-	names := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
-			continue
-		}
-		names = append(names, entry.Name())
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
-		path := filepath.Join(dir, name)
-		file, err := parser.ParseFile(fset, path, nil, 0)
-		if err != nil {
-			diags = append(diags, fmt.Sprintf("injected port derivation cannot parse %s/%s: %v", pkg, name, err))
-			continue
-		}
-		rel := pkg + "/" + name
-		ast.Inspect(file, func(node ast.Node) bool {
-			switch typed := node.(type) {
-			case *ast.TypeSpec:
-				if portShapedType(typed.Type) {
-					shaped[typed.Name.Name] = true
-				}
-			case *ast.FuncDecl:
-				if typed.Type.Params == nil {
-					return true
-				}
-				for _, param := range typed.Type.Params.List {
-					recordInjectionSite(sites, param.Type, fmt.Sprintf("a parameter of %s in %s:%d", typed.Name.Name, rel, fset.Position(param.Pos()).Line))
-				}
-			case *ast.TypeAssertExpr:
-				recordInjectionSite(sites, typed.Type, fmt.Sprintf("a type assertion in %s:%d", rel, fset.Position(typed.Pos()).Line))
-			case *ast.CaseClause:
-				for _, expr := range typed.List {
-					recordInjectionSite(sites, expr, fmt.Sprintf("a type switch case in %s:%d", rel, fset.Position(expr.Pos()).Line))
+			if test.registry != "" {
+				files["internal/releaseevidence/registry.json"] = `{"verify": ` + test.registry + `, "publish_before": [], "publish_only": []}`
+			}
+			for rel, body := range files {
+				writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(rel)), body)
+			}
+			diags := injectedports.Check(root, injectedports.Policy{Families: gradedRootFamilies(root)})
+			if len(diags) != len(test.heads) {
+				t.Fatalf("diagnostics %q, want heads %q", diags, test.heads)
+			}
+			for i, head := range test.heads {
+				if !strings.HasPrefix(diags[i], head) {
+					t.Fatalf("diagnostic %d = %q, want head %q", i, diags[i], head)
 				}
 			}
-			return true
 		})
 	}
-
-	var ports []derivedPort
-	for name := range shaped {
-		if site, injected := sites[name]; injected {
-			ports = append(ports, derivedPort{pkg: pkg, name: name, site: site})
-		}
-	}
-	sort.Slice(ports, func(i, j int) bool { return ports[i].name < ports[j].name })
-	return ports, diags
-}
-
-// recordInjectionSite keeps the first site a name is injected at. A port injected twice
-// is still one port, and the first site is the stable one to name in a diagnostic.
-func recordInjectionSite(sites map[string]string, expr ast.Expr, site string) {
-	name := typeIdentName(expr)
-	if name == "" {
-		return
-	}
-	if _, seen := sites[name]; !seen {
-		sites[name] = site
-	}
-}
-
-// typeIdentName reduces a type expression to the package-local name it names, seeing
-// through a pointer. A qualified type belongs to another package and is not this
-// package's port to register.
-func typeIdentName(expr ast.Expr) string {
-	switch typed := expr.(type) {
-	case *ast.Ident:
-		return typed.Name
-	case *ast.StarExpr:
-		return typeIdentName(typed.X)
-	}
-	return ""
-}
-
-// portShapedType reports whether a type declaration has the shape of a port. An empty
-// interface constrains nothing and names no producer, so it is not one.
-func portShapedType(expr ast.Expr) bool {
-	switch typed := expr.(type) {
-	case *ast.InterfaceType:
-		return typed.Methods != nil && len(typed.Methods.List) > 0
-	case *ast.FuncType:
-		return true
-	case *ast.StructType:
-		if typed.Fields == nil || len(typed.Fields.List) == 0 {
-			return false
-		}
-		for _, field := range typed.Fields.List {
-			if _, isFunc := field.Type.(*ast.FuncType); !isFunc {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
-// fileDeclaresTest reports whether path declares a top-level func of the given name. It
-// parses rather than searches, so a name written in a comment or a string is not a match.
-// The tripwire must answer for the test the binary would run.
-func fileDeclaresTest(path, name string) bool {
-	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
-	if err != nil {
-		return false
-	}
-	for _, decl := range file.Decls {
-		fn, isFunc := decl.(*ast.FuncDecl)
-		if isFunc && fn.Recv == nil && fn.Name.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func isDirectory(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
 }
 
 // TestInjectedPortRegistryCheckBites is the recorded bite proof for
@@ -273,42 +145,39 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 		t.Helper()
 		root := t.TempDir()
 		for rel, body := range files {
-			path := filepath.Join(root, filepath.FromSlash(rel))
-			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			writeFixtureFile(t, filepath.Join(root, filepath.FromSlash(rel)), body)
 		}
 		return root
+	}
+	check := func(root string, packages []string, rows []injectedports.Row) []string {
+		return injectedports.Check(root, injectedports.Policy{Rows: rows, Required: packages})
 	}
 	sampleTree := map[string]string{
 		"internal/sample/sample.go":      portSource,
 		"internal/sample/sample_test.go": testSource,
 	}
-	honestRow := injectedPortRow{
-		pkg: "internal/sample", port: "Port",
-		testFile: "internal/sample/sample_test.go", testName: "TestRealProducer",
+	honestRow := injectedports.Row{
+		Package: "internal/sample", Port: "Port",
+		TestFile: "internal/sample/sample_test.go", TestName: "TestRealProducer",
 	}
 	packages := []string{"internal/sample"}
 
 	t.Run("an honest row is silent", func(t *testing.T) {
-		diags := injectedPortDiags(write(t, sampleTree), packages, []injectedPortRow{honestRow})
+		diags := check(write(t, sampleTree), packages, []injectedports.Row{honestRow})
 		if len(diags) != 0 {
 			t.Fatalf("a derived port with a real-producer test the tree declares: want no diagnostics, got %v", diags)
 		}
 	})
 
 	t.Run("a package the tree does not hold is not graded", func(t *testing.T) {
-		if diags := injectedPortDiags(t.TempDir(), packages, nil); len(diags) != 0 {
+		if diags := check(t.TempDir(), packages, nil); len(diags) != 0 {
 			t.Fatalf("an absent audited package: want no diagnostics, got %v", diags)
 		}
 	})
 
 	t.Run("an unregistered port fires", func(t *testing.T) {
-		diags := injectedPortDiags(write(t, sampleTree), packages, nil)
-		if len(diags) != 1 || !strings.Contains(diags[0], unregisteredPortMessage) ||
+		diags := check(write(t, sampleTree), packages, nil)
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.UnregisteredPortMessage) ||
 			!strings.Contains(diags[0], "internal/sample.Port") || !strings.Contains(diags[0], "a parameter of use in internal/sample/sample.go") {
 			t.Fatalf("a derived port with no registry row: want one unregistered diagnostic naming it and its site, got %v", diags)
 		}
@@ -316,9 +185,9 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 
 	t.Run("a row naming a test the tree lacks fires", func(t *testing.T) {
 		stale := honestRow
-		stale.testName = "TestRealProducerRenamedAway"
-		diags := injectedPortDiags(write(t, sampleTree), packages, []injectedPortRow{stale})
-		if len(diags) != 1 || !strings.Contains(diags[0], missingPortTestMessage) ||
+		stale.TestName = "TestRealProducerRenamedAway"
+		diags := check(write(t, sampleTree), packages, []injectedports.Row{stale})
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.MissingPortTestMessage) ||
 			!strings.Contains(diags[0], "TestRealProducerRenamedAway") {
 			t.Fatalf("a row advertising an absent test: want one missing-test diagnostic naming it, got %v", diags)
 		}
@@ -329,32 +198,32 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 			"internal/sample/sample.go":      portSource,
 			"internal/sample/sample_test.go": "package sample\n\n// TestRealProducer used to live here.\nconst gone = \"func TestRealProducer(t *testing.T) {}\"\n",
 		}
-		diags := injectedPortDiags(write(t, commented), packages, []injectedPortRow{honestRow})
-		if len(diags) != 1 || !strings.Contains(diags[0], missingPortTestMessage) {
+		diags := check(write(t, commented), packages, []injectedports.Row{honestRow})
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.MissingPortTestMessage) {
 			t.Fatalf("a test surviving only as prose: want one missing-test diagnostic, got %v", diags)
 		}
 	})
 
 	t.Run("an exemption with an empty reason fires", func(t *testing.T) {
-		blank := injectedPortRow{pkg: "internal/sample", port: "Port", exempt: "   "}
-		diags := injectedPortDiags(write(t, sampleTree), packages, []injectedPortRow{blank})
-		if len(diags) != 1 || !strings.Contains(diags[0], emptyPortExemptionMessage) ||
+		blank := injectedports.Row{Package: "internal/sample", Port: "Port", Exempt: "   "}
+		diags := check(write(t, sampleTree), packages, []injectedports.Row{blank})
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.EmptyPortExemptionMessage) ||
 			!strings.Contains(diags[0], "internal/sample.Port") {
 			t.Fatalf("an exemption with a blank reason: want one empty-exemption diagnostic, got %v", diags)
 		}
 	})
 
 	t.Run("a written exemption is silent", func(t *testing.T) {
-		reasoned := injectedPortRow{pkg: "internal/sample", port: "Port", exempt: "covered by the runtime contract suite"}
-		if diags := injectedPortDiags(write(t, sampleTree), packages, []injectedPortRow{reasoned}); len(diags) != 0 {
+		reasoned := injectedports.Row{Package: "internal/sample", Port: "Port", Exempt: "covered by the runtime contract suite"}
+		if diags := check(write(t, sampleTree), packages, []injectedports.Row{reasoned}); len(diags) != 0 {
 			t.Fatalf("an exemption carrying a reason: want no diagnostics, got %v", diags)
 		}
 	})
 
 	t.Run("a package present but deriving nothing fails closed", func(t *testing.T) {
 		empty := map[string]string{"internal/sample/sample.go": "package sample\n\n// Name carries no port.\nfunc Name() string { return \"sample\" }\n"}
-		diags := injectedPortDiags(write(t, empty), packages, []injectedPortRow{honestRow})
-		if len(diags) != 1 || !strings.Contains(diags[0], zeroPortInventoryMessage) ||
+		diags := check(write(t, empty), packages, []injectedports.Row{honestRow})
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.ZeroPortInventoryMessage) ||
 			!strings.Contains(diags[0], "internal/sample") {
 			t.Fatalf("an audited package deriving zero ports: want one zero-inventory diagnostic naming it, got %v", diags)
 		}
@@ -362,7 +231,7 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 
 	t.Run("a retired live-tree row is absent", func(t *testing.T) {
 		for _, row := range injectedPortRegistry {
-			if row.pkg == "internal/canary" && row.port == "Runner" {
+			if row.Package == "internal/canary" && row.Port == "Runner" {
 				t.Fatal("the retired internal/canary.Runner registry row returned")
 			}
 		}
@@ -370,17 +239,18 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 
 	t.Run("a retired live-tree audit fires", func(t *testing.T) {
 		packages := append(append([]string(nil), auditedPortPackages...), "internal/canary")
-		diags := injectedPortDiags(NewHarness(t).KitRoot, packages, injectedPortRegistry)
-		if len(diags) != 1 || !strings.Contains(diags[0], zeroPortInventoryMessage) || !strings.Contains(diags[0], "internal/canary") {
+		kit := NewHarness(t).KitRoot
+		diags := injectedports.Check(kit, injectedports.Policy{Rows: injectedPortRegistry, Required: packages, Families: gradedRootFamilies(kit)})
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.ZeroPortInventoryMessage) || !strings.Contains(diags[0], "internal/canary") {
 			t.Fatalf("a reintroduced canary audit: want its zero-port diagnostic, got %v", diags)
 		}
 	})
 
 	t.Run("unparsable audited source is reported", func(t *testing.T) {
 		broken := map[string]string{"internal/sample/sample.go": "package sample\n\nfunc Port broken {\n"}
-		diags := injectedPortDiags(write(t, broken), packages, nil)
+		diags := check(write(t, broken), packages, nil)
 		if len(diags) != 2 || !anyContains(diags, "cannot parse internal/sample/sample.go") ||
-			!anyContains(diags, zeroPortInventoryMessage) {
+			!anyContains(diags, injectedports.ZeroPortInventoryMessage) {
 			t.Fatalf("unparsable audited source: want a parse diagnostic and the fail-closed inventory red, got %v", diags)
 		}
 	})
@@ -394,22 +264,22 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 		"internal/sample2/sample2_test.go": "package sample2\n\nimport \"testing\"\n\nfunc TestRealProducerA(t *testing.T) {}\nfunc TestRealProducerB(t *testing.T) {}\n",
 	}
 	twoPortPackages := []string{"internal/sample2"}
-	portARow := injectedPortRow{
-		pkg: "internal/sample2", port: "PortA",
-		testFile: "internal/sample2/sample2_test.go", testName: "TestRealProducerA",
+	portARow := injectedports.Row{
+		Package: "internal/sample2", Port: "PortA",
+		TestFile: "internal/sample2/sample2_test.go", TestName: "TestRealProducerA",
 	}
-	portBRow := injectedPortRow{
-		pkg: "internal/sample2", port: "PortB",
-		testFile: "internal/sample2/sample2_test.go", testName: "TestRealProducerB",
+	portBRow := injectedports.Row{
+		Package: "internal/sample2", Port: "PortB",
+		TestFile: "internal/sample2/sample2_test.go", TestName: "TestRealProducerB",
 	}
-	orphanRow := injectedPortRow{
-		pkg: "internal/sample2", port: "PortC",
-		testFile: "internal/sample2/sample2_test.go", testName: "TestRealProducerC",
+	orphanRow := injectedports.Row{
+		Package: "internal/sample2", Port: "PortC",
+		TestFile: "internal/sample2/sample2_test.go", TestName: "TestRealProducerC",
 	}
 
 	t.Run("a row naming an underived port fires the orphan diagnostic alone", func(t *testing.T) {
-		diags := injectedPortDiags(write(t, twoPortTree), twoPortPackages, []injectedPortRow{portARow, portBRow, orphanRow})
-		if len(diags) != 1 || !strings.Contains(diags[0], orphanPortRowMessage) ||
+		diags := check(write(t, twoPortTree), twoPortPackages, []injectedports.Row{portARow, portBRow, orphanRow})
+		if len(diags) != 1 || !strings.Contains(diags[0], injectedports.OrphanPortRowMessage) ||
 			!strings.Contains(diags[0], "internal/sample2.PortC") {
 			t.Fatalf("PortA and PortB derived and honestly rowed, PortC registered but never derived: want exactly one orphan-row diagnostic naming PortC, got %v", diags)
 		}
@@ -420,72 +290,15 @@ func TestInjectedPortRegistryCheckBites(t *testing.T) {
 		// name the tree does not declare, so it takes the missing-test path. A row whose arm
 		// was deleted along with its test would instead fall to the orphan path above. Both
 		// cases run together to prove neither masks the other.
-		staleTestRow := injectedPortRow{
-			pkg: "internal/sample2", port: "PortB",
-			testFile: "internal/sample2/sample2_test.go", testName: "TestRealProducerBRenamedAway",
+		staleTestRow := injectedports.Row{
+			Package: "internal/sample2", Port: "PortB",
+			TestFile: "internal/sample2/sample2_test.go", TestName: "TestRealProducerBRenamedAway",
 		}
-		diags := injectedPortDiags(write(t, twoPortTree), twoPortPackages, []injectedPortRow{portARow, staleTestRow, orphanRow})
+		diags := check(write(t, twoPortTree), twoPortPackages, []injectedports.Row{portARow, staleTestRow, orphanRow})
 		if len(diags) != 2 ||
-			!anyContains(diags, missingPortTestMessage) || !anyContains(diags, "internal/sample2.PortB") ||
-			!anyContains(diags, orphanPortRowMessage) || !anyContains(diags, "internal/sample2.PortC") {
+			!anyContains(diags, injectedports.MissingPortTestMessage) || !anyContains(diags, "internal/sample2.PortB") ||
+			!anyContains(diags, injectedports.OrphanPortRowMessage) || !anyContains(diags, "internal/sample2.PortC") {
 			t.Fatalf("a derived port with a stale test name beside an orphaned row: want one missing-test diagnostic for PortB and one orphan-row diagnostic for PortC, got %v", diags)
 		}
 	})
-}
-
-// TestInjectedPortDerivationSeesEveryPortShape pins the shape and injection rules against
-// a synthetic package. The package carries every shape the audit found: interface, func
-// type, struct of func fields. The package reaches each shape by every injection route
-// the audit found. Those routes include the type assertion and type switch, the only way
-// a widened owner capability is ever named. A rule that dropped one of those routes would
-// silently shrink the inventory the registry is graded against. That is the same silence
-// the fail-closed posture refuses.
-func TestInjectedPortDerivationSeesEveryPortShape(t *testing.T) {
-	source := strings.Join([]string{
-		"package sample",
-		"",
-		"type Iface interface{ Do() error }",
-		"type Widened interface{ Do() error; More() error }",
-		"type Switched interface{ Do() error; Other() error }",
-		"type FuncPort func(string) bool",
-		"type FieldsPort struct{ A func() bool; B func() error }",
-		"type Empty interface{}",
-		"type Data struct{ Name string }",
-		"type Mixed struct{ A func() bool; Name string }",
-		"type Unused interface{ Do() error }",
-		"",
-		"func inject(i Iface, f FuncPort, s *FieldsPort, e Empty, d Data, m Mixed) {}",
-		"func widen(i Iface) (Widened, bool) { w, ok := i.(Widened); return w, ok }",
-		"func route(i Iface) string {",
-		"\tswitch i.(type) {",
-		"\tcase Switched:",
-		"\t\treturn \"switched\"",
-		"\t}",
-		"\treturn \"\"",
-		"}",
-		"",
-	}, "\n")
-	root := t.TempDir()
-	dir := filepath.Join(root, "internal", "sample")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "sample.go"), []byte(source), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	ports, diags := derivedInjectedPorts(dir, "internal/sample")
-	if len(diags) != 0 {
-		t.Fatalf("derivation reported %v", diags)
-	}
-	var names []string
-	for _, port := range ports {
-		names = append(names, port.name)
-	}
-	// Empty, Data, and Mixed are injected but not port-shaped. Unused is port-shaped but
-	// never injected. Both exclusions are the rule, not an accident of the fixture.
-	want := "FieldsPort,FuncPort,Iface,Switched,Widened"
-	if strings.Join(names, ",") != want {
-		t.Fatalf("derived %q, want %q", strings.Join(names, ","), want)
-	}
 }

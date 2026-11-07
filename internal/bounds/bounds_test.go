@@ -82,6 +82,29 @@ func TestFixedWindowPreservesCancelGrace(t *testing.T) {
 	}
 }
 
+// TestUnboundedParentCancellation proves that the verdict-window override removes only a
+// wait's own deadline. Under the override, a cancelled parent still ends the derived
+// context and stops a running child as a cancellation, not as a timeout.
+func TestUnboundedParentCancellation(t *testing.T) {
+	t.Setenv(UnboundedWaitsEnv, "1")
+	window := VerdictWindow(GateTimeout)
+	parent, cancel := context.WithCancel(context.Background())
+	derived, release := Context(parent, window)
+	defer release()
+	caused, releaseCaused := ContextCause(parent, window, errors.New("finite verdict expired"))
+	defer releaseCaused()
+	go func() { time.Sleep(100 * time.Millisecond); cancel() }()
+	result := Run(parent, window, exec.Command("sh", "-c", "sleep 5"))
+	if result.Status != ProcessCanceled {
+		t.Fatalf("unbounded child under a cancelled parent = %s: %v, want %s", result.Status, result.Err, ProcessCanceled)
+	}
+	for name, ctx := range map[string]context.Context{"Context": derived, "ContextCause": caused} {
+		if ctx.Err() != context.Canceled {
+			t.Errorf("%s under the override after parent cancellation = %v, want %v", name, ctx.Err(), context.Canceled)
+		}
+	}
+}
+
 func TestProductionPolicyValues(t *testing.T) {
 	if ProviderTimeout != 10*time.Second || EnvironmentDiscoveryTimeout != 2*time.Second || GitRefreshTimeout != 30*time.Second || GuardScanTimeout != 5*time.Second || GateTimeout != 45*time.Minute || GoTestTimeout != 10*time.Minute {
 		t.Fatalf("duration policy changed: provider=%s environment_discovery=%s refresh=%s guard=%s gate=%s go_test=%s", ProviderTimeout, EnvironmentDiscoveryTimeout, GitRefreshTimeout, GuardScanTimeout, GateTimeout, GoTestTimeout)

@@ -146,6 +146,12 @@ func TestSweepSkipsSymlinkAndFifoCandidates(t *testing.T) {
 			t.Fatalf("stdout = %q exit %d, want the language refusal at 1", got.out, got.code)
 		}
 	case <-time.After(bounds.TestDeadline(bounds.GuardScanTimeout)):
-		t.Fatal("the sweep blocked on a nonregular candidate")
+		// A sweep held in the FIFO's open still reaches the stubbed loader, so the test opens
+		// the FIFO's other end and joins the command before the loader is restored.
+		t.Error("the sweep blocked on a nonregular candidate")
+		if feed, err := os.OpenFile(fifo, os.O_WRONLY|syscall.O_NONBLOCK, 0); err == nil {
+			_ = feed.Close()
+		}
+		<-done
 	}
 }

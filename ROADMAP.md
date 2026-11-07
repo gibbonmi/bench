@@ -106,8 +106,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT333 (MEDIUM, decision required) — prepared evidence supports the tickets-only light path.**
 
-**FT343 (MEDIUM) — production test seams have one decided policy that the injected-port audit enforces.**
-
 **FT318 (MEDIUM, decision required) — the completion form records a capability-blocked row's decided value, and `bench record` closes its native-operation residuals.**
 
 **FT414 (HIGH) — the record, commit, and landing verbs state their preconditions before an attempt.**
@@ -350,11 +348,10 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT343-seam-policy
-2. FT446-cache-store
-3. FT414-preconditions
-4. FT369-charge-slicing
-5. FT365-conformance
-6. FT341-in-only
-7. FT420-concurrent-chunks
-8. FT387-overflow
+1. FT446-cache-store
+2. FT414-preconditions
+3. FT369-charge-slicing
+4. FT365-conformance
+5. FT341-in-only
+6. FT420-concurrent-chunks
+7. FT387-overflow

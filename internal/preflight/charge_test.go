@@ -47,6 +47,7 @@ func TestChargeSnapshotMovement(t *testing.T) {
 		calls++
 		preflighttest.MustWriteFile(t, "internal/example/foo.go", "package example\n// moved "+string(rune('0'+calls))+"\n")
 	})
+	t.Cleanup(restore)
 	out, code := Command(args)
 	if code != 1 || calls != 2 || !strings.Contains(out, "error: snapshot drift") || !strings.Contains(out, "retry the exact invocation") {
 		t.Fatalf("persistent charge movement = (%d, %d):\n%s", code, calls, out)
@@ -70,6 +71,7 @@ func TestChargeSnapshotMovement(t *testing.T) {
 			preflighttest.MustWriteFile(t, "specs/"+slug+"/spec.md", strings.Replace(preflighttest.SpecBody(slug), "Status: staged", "Status: draft", 1))
 		}
 	})
+	t.Cleanup(restore)
 	out, code = Command(args)
 	restore()
 	if code != 1 || calls != 2 || !strings.Contains(out, "spec not staged") || strings.Contains(out, "snapshot drift") || strings.Contains(out, "complete,next}") {

@@ -493,7 +493,7 @@ current-state advertisement of its non-meta input bindings:
 | `axi-query-registry` | `catch-all` |
 | `skip-ownership` | `go-source` |
 | `decision-map-integrity` | `decision-documents` |
-| `injected-port-registry` | `go-source` |
+| `injected-port-registry` | `catch-all` |
 | `guidance-prose-budgets` | `benchkit-profile` |
 | `skill-description-budgets` | `benchkit-profile` |
 | `profile-lane-table` | `benchkit-profile` |

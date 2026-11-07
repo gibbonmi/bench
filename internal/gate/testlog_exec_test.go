@@ -67,6 +67,25 @@ func TestGateGoExecCreatesTheLogFirst(t *testing.T) {
 	}
 }
 
+// TestCreateTestLogKeysThePackageByTheConformanceRoot requires that the root-conformance root
+// of the process names the log: the working package is keyed by its path below that root.
+func TestCreateTestLogKeysThePackageByTheConformanceRoot(t *testing.T) {
+	root, logs := t.TempDir(), t.TempDir()
+	pkg := filepath.Join(root, "internal", "sample")
+	if err := os.MkdirAll(pkg, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(pkg)
+	t.Setenv(registry.ConformanceRootEnv, root)
+	path, err := createTestLog(logs)
+	if want := filepath.Join(logs, "internal%2Fsample.log"); err != nil || path != want {
+		t.Fatalf("createTestLog = %q, %v; want %q", path, err, want)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("the keyed log was not created: %v", err)
+	}
+}
+
 // TestTestLogKeysAreDistinct requires that two directories that differ only by a separator,
 // or by an escaped separator, map to two different log names, each one path element.
 func TestTestLogKeysAreDistinct(t *testing.T) {

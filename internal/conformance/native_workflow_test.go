@@ -86,7 +86,7 @@ func checkReleaseEvidenceProbe(root string) []string {
 	if !registries.preflightUsable || !registries.requirementsUsable {
 		return nil
 	}
-	return runReleaseEvidenceProbe(root, registries.requirements.Records)
+	return runReleaseEvidenceProbe(root, registries.requirements.Records, registries.preflight.Verify)
 }
 
 func checkReleasePreflight(root string) []string {
@@ -179,7 +179,7 @@ func checkReleasePreflight(root string) []string {
 	}
 	return diags
 }
-func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) []string {
+func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord, phases []string) []string {
 	authenticatedRoot, cleanup, err := materializeAuthenticatedReleaseProbe(root)
 	if err != nil {
 		return []string{"release evidence probe could not authenticate source snapshot: " + err.Error()}
@@ -317,22 +317,20 @@ func main() {
 	if _, err := fake.WriteString(fixture); err != nil || fake.Chmod(0o755) != nil || fake.Close() != nil {
 		return []string{"release evidence probe could not prepare phase fixture"}
 	}
-	env := capability.WithoutEnvironment(os.Environ(), runbinary.Env)
-	for _, phase := range []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"} {
-		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+fakePath)
-	}
+	ready := fakePath + ".ready"
+	env := append(capability.WithoutEnvironment(os.Environ(), runbinary.Env), preflightPhaseOverrides(phases, fakePath)...)
 	if err := os.Remove(preflightBinary); err != nil && !os.IsNotExist(err) {
 		return []string{"release evidence probe could not reset the preflight command"}
 	}
 	cmd := exec.Command("bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--mode", "verify")
-	cmd.Dir, cmd.Env = root, env
+	cmd.Dir, cmd.Env = root, append(env[:len(env):len(env)], "BENCH_PREFLIGHT_EVIDENCE_READY_FILE="+ready)
 	if head, err := gittest.Run(root, "rev-parse", "--verify", "HEAD"); err != nil || head == "" {
 		if _, err := gittest.Run(root, append(gittest.IdentityArgs(), "commit", "--quiet", "--allow-empty", "-m", "release-evidence-probe")...); err != nil {
 			return []string{"release evidence probe could not establish source HEAD: " + err.Error()}
 		}
 	}
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return []string{"release evidence probe failed: " + strings.TrimSpace(string(output))}
+	if output, err := runAtEvidenceReadyPoint(cmd, ready); err != nil {
+		return []string{"release evidence probe failed: " + err.Error() + ": " + strings.TrimSpace(string(output))}
 	}
 	indexData, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
 	if err != nil {

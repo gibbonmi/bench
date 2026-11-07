@@ -33,6 +33,7 @@ func TestChargeHeadAndIndexMovementRefuseAfterOneRetry(t *testing.T) {
 					preflighttest.RunGit(t, "commit", "-q", "-m", "move head")
 				}
 			})
+			t.Cleanup(restore)
 			out, code := Command(args)
 			restore()
 			if code != 1 || calls != 2 || !strings.Contains(out, "error: snapshot drift") ||

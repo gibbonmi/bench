@@ -49,7 +49,7 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if current != built.fingerprint {
 		return errors.New("release evidence input drift detected before promotion")
 	}
-	indexBytes, err := indexEncoder(built.index)
+	indexBytes, err := canonicalJSON(built.index)
 	if err != nil {
 		return fmt.Errorf("release index encoding failed: %w", err)
 	}

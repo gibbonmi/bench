@@ -281,7 +281,10 @@ func TestReadersTimeOutUnderTheWorktreeListBound(t *testing.T) {
 					t.Fatalf("%s timeout = %v, want a typed timeout", tc.name, err)
 				}
 			case <-time.After(window):
-				t.Fatal(bounds.TestTimeoutVerdict(tc.name+" to return under the overridden worktree-list bound", window))
+				// The reader still runs under the replaced bound, so it finishes before the
+				// cleanup restores that bound.
+				t.Error(bounds.TestTimeoutVerdict(tc.name+" to return under the overridden worktree-list bound", window))
+				<-done
 			}
 		})
 	}

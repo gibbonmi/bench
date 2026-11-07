@@ -2439,6 +2439,14 @@
       "identity": "sha256:8b264be063d438132a70b624579d44022dfaf171be93737dfcd6de7b82633030",
       "source": "572f85ac3ec6b3e7302f341e48a9d8b8ef06d2f3",
       "evidence": "7b92f110b33a2a4d773a12fa4ab594ba7d097dec"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT343-seam-policy",
+      "binding": "production-test-seam-policy",
+      "identity": "sha256:83b9b58083a8669cdf9c5e231b037fac1358a12ab2bc115663d1a491a08e2170",
+      "source": "aeb25e6f289a9ebe4cf0559edfebcd2cacd49890",
+      "evidence": "a9bfaf7820ca380f0ef383099c789cb67c076ed2"
     }
   ]
 }
