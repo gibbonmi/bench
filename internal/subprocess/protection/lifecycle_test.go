@@ -59,6 +59,23 @@ func TestGenerationRemove(t *testing.T) {
 	requireStores("after a safe removal", map[string]bool{"kept": true, "sibling": true})
 }
 
+// TestRetiredStoreRecordsItsPath holds that a safe retirement leaves a retired record of the
+// retired generation's kind, resource path, and binding, and leaves no generation.
+func TestRetiredStoreRecordsItsPath(t *testing.T) {
+	p := newProtocol()
+	d := newResource(t, p, "cache")
+	if disposition, released := observe(t, p, d); disposition.State != protection.Safe || !released {
+		t.Fatalf("retirement of an unused resource = %+v released=%t, want safe", disposition, released)
+	}
+	want := protection.Descriptor{Kind: d.Kind, ResourcePath: d.ResourcePath, Binding: d.Binding}
+	if retired, err := protection.ReadRetired(d.Store, readLimit); err != nil || retired != want {
+		t.Fatalf("retired record = %+v (%v), want %+v", retired, err, want)
+	}
+	if _, err := os.Lstat(filepath.Join(d.Store, protection.ResourceFile)); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("generation after the retirement: %v, want it absent", err)
+	}
+}
+
 // TestRecoveryAbsentStore holds that an absent store names no user in the current boot.
 // Observation and recovery grade the resource safe, run release, and create no store.
 func TestRecoveryAbsentStore(t *testing.T) {

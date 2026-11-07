@@ -9,9 +9,17 @@ import (
 // The store layout names, for tests that plant hostile records.
 const (
 	ResourceFile = resourceFile
+	RetiredFile  = retiredFile
 	UsersDir     = usersDir
 	UserFile     = userFile
 )
+
+// ReadRetired strictly reads the retired record of store and names its kind, resource path,
+// and binding.
+func ReadRetired(store string, limit int64) (Descriptor, error) {
+	r, err := readRetired(store, limit)
+	return r.resource(), err
+}
 
 // SystemBase is the system directory that holds each user's store root.
 var SystemBase = systemBase

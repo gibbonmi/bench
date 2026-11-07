@@ -11,7 +11,8 @@ import (
 
 // SealAndObserve closes admission and grades every user of the resource under its protocol
 // lock. Only a safe resource runs release and retires its generation, still under that lock.
-// An absent store names no user in the current boot, so its resource is safe and SealAndObserve
+// The retired store keeps a retired record of the resource in place of the generation. An
+// absent store names no user in the current boot, so its resource is safe and SealAndObserve
 // runs release without creating the store.
 func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Disposition, error) {
 	if err := d.check(); err != nil {
@@ -60,6 +61,12 @@ func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Dispositi
 		if err := p.removeUser(d.Store, id); err != nil {
 			return uncertain(d, err)
 		}
+	}
+	// The retired record goes before the generation. A crash between the two leaves a sealed
+	// generation with no user, and the next recovery retires it again.
+	retired := retiredRecord{Schema: schema, Kind: d.Kind, ResourcePath: d.ResourcePath, Binding: d.Binding}
+	if err := p.publish(filepath.Join(d.Store, retiredFile), retired); err != nil {
+		return uncertain(d, err)
 	}
 	if err := p.remove(d.Store, filepath.Join(d.Store, resourceFile)); err != nil {
 		return uncertain(d, err)

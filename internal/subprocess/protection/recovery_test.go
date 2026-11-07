@@ -28,6 +28,22 @@ func requireRecoveredProtected(t *testing.T, p *protection.Protocol, d protectio
 	}
 }
 
+// TestRetiredStoreHasNoGeneration holds that a retired store keeps its retired record and
+// still reads as a store with no generation.
+func TestRetiredStoreHasNoGeneration(t *testing.T) {
+	p := newProtocol()
+	d := newResource(t, p, "cache")
+	if disposition, _ := observe(t, p, d); disposition.State != protection.Safe {
+		t.Fatalf("retirement of an unused resource = %+v, want safe", disposition)
+	}
+	if _, err := os.Lstat(filepath.Join(d.Store, protection.RetiredFile)); err != nil {
+		t.Fatalf("the retired store holds no retired record: %v", err)
+	}
+	if disposition, err := p.Recover(d.Store, nil); !protection.NoGeneration(disposition, err) {
+		t.Fatalf("recovery of a retired store = %+v (%v), want no generation", disposition, err)
+	}
+}
+
 // TestRecoveryPendingActorAbsent is PL25. A start gate opens only after the actor publishes the
 // known identity, so a pending user whose actor is absent never ran and resolves as no-start. A
 // pending user whose actor answers stays protected, because its PID can be a reused one.
