@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/retired-store-sweep/spec.md",
-  "plan_digest": "sha256:c10f32d8ce7a14d274b01166ca9d0f66f743e88e7d0a5fd13afa01bf51ff5af9",
+  "plan_digest": "sha256:ce20aca3c19ac69f01f324f724ef82aed6df6f7437403fb7fbfdc15715ccad84",
   "implementation_session": "",
   "chunks": [
     {
@@ -801,6 +801,118 @@
           ]
         }
       ]
+    },
+    {
+      "id": "RS-C4",
+      "base": "e6cde66c6c37581723731dc6b7c558ac8edfa7a6",
+      "tip": "398691f9cf8dbf2bb1d60c747bc2f7585dc57b6a",
+      "plan_digest": "sha256:ce20aca3c19ac69f01f324f724ef82aed6df6f7437403fb7fbfdc15715ccad84",
+      "source_digest": "8e8882a8a7fff5820dc1d01f98d70398480d9f2d",
+      "acceptance_rows": [
+        "RS16",
+        "RS17",
+        "RS19",
+        "RS20",
+        "RS21",
+        "RS22",
+        "RS23",
+        "RS24",
+        "RS18",
+        "RS29"
+      ],
+      "verification": [
+        {
+          "id": "rs-c4-04-protocol-forwarding",
+          "performer": "ft446-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8e8882a8a7fff5820dc1d01f98d70398480d9f2d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-04",
+            "digest": "sha256:9d31f833fb1481937177621ab8ce0a97480b47d6d193a2e6c03f618126bceeac",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/inherited.go,swap,failed,1,TestRunInheritedRegistersOnLocalProtocol,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess,^TestRunInheritedRegistersOnLocalProtocol$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestRunInheritedRegistersOnLocalProtocol,\"startgate_test.go:162: child vector = [], \u003cnil>; want the local resource [{Store:/dev/shm/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c67/kit-test-2d7b4f0a75140a8b8124ff82624cd749 ResourceID:530b9b53a0ae8960e06278e1673bc941 Kind:kit… (356 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "398691f9cf8dbf2bb1d60c747bc2f7585dc57b6a",
+          "requirement": "protocol-forwarding",
+          "command": "bench test --package ./internal/subprocess",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "make RunInherited use the installed protocol whatever the registration names; require TestRunInheritedRegistersOnLocalProtocol to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-04",
+              "digest": "sha256:9d31f833fb1481937177621ab8ce0a97480b47d6d193a2e6c03f618126bceeac",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/inherited.go,swap,failed,1,TestRunInheritedRegistersOnLocalProtocol,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess,^TestRunInheritedRegistersOnLocalProtocol$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,525\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess,fail,3,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess,TestRunInheritedRegistersOnLocalProtocol,\"startgate_test.go:162: child vector = [], \u003cnil>; want the local resource [{Store:/dev/shm/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c67/kit-test-2d7b4f0a75140a8b8124ff82624cd749 ResourceID:530b9b53a0ae8960e06278e1673bc941 Kind:kit… (356 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c4-04-build-vector-refusal",
+          "performer": "ft446-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8e8882a8a7fff5820dc1d01f98d70398480d9f2d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-04",
+            "digest": "sha256:b24a8d769b651a5922d46c092ddeda40b8af41bcb7d0a1479342dbe6da854908",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/inherited.go,omit,failed,1,TestBuildScriptMalformedResources,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/runbinary,^TestBuildScriptMalformedResources$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,519\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,fail,17,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/runbinary,TestBuildScriptMalformedResources,\"lifetime_resources_test.go:88: Own under a malformed vector = selected Bench executable \\\"/dev/shm/XIBFPO/t/TestBuildScriptMalformedResources258308181/003/bench-run-2517604797/bench\\\" is unavailable: lstat /dev/shm/XIBFPO/t/TestBuildScriptMal… (347 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "398691f9cf8dbf2bb1d60c747bc2f7585dc57b6a",
+          "requirement": "build-vector-refusal",
+          "command": "bench test --package ./internal/runbinary",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "make RunInherited ignore an unreadable inherited vector; require TestBuildScriptMalformedResources to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-04",
+              "digest": "sha256:b24a8d769b651a5922d46c092ddeda40b8af41bcb7d0a1479342dbe6da854908",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/inherited.go,omit,failed,1,TestBuildScriptMalformedResources,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/runbinary,^TestBuildScriptMalformedResources$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,519\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/runbinary,fail,17,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/runbinary,TestBuildScriptMalformedResources,\"lifetime_resources_test.go:88: Own under a malformed vector = selected Bench executable \\\"/dev/shm/XIBFPO/t/TestBuildScriptMalformedResources258308181/003/bench-run-2517604797/bench\\\" is unavailable: lstat /dev/shm/XIBFPO/t/TestBuildScriptMal… (347 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "rs-c4-04-runner-callers",
+          "performer": "ft446-author-04",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "8e8882a8a7fff5820dc1d01f98d70398480d9f2d",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-author-04",
+            "digest": "sha256:b1c1f2e8d136b8c33df64b2f374e905bd27889f250094fc0e60aad558132bac1",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,1,TestBoundsFixedShutdown,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/bounds,^TestBoundsFixedShutdown$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,319\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,fail,3014,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/bounds,TestBoundsFixedShutdown,\"lifetime_test.go:80: canceled runner status = timeout: context canceled\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "398691f9cf8dbf2bb1d60c747bc2f7585dc57b6a",
+          "requirement": "runner-callers",
+          "command": "bench test --package ./internal/bounds --package ./internal/gate --package ./internal/preprelease --package ./internal/releasepreflight --package ./internal/testreport",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "make the bounds cancel request answer a deadline for a cancelled parent; require TestBoundsFixedShutdown to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft446-author-04",
+              "digest": "sha256:b1c1f2e8d136b8c33df64b2f374e905bd27889f250094fc0e60aad558132bac1",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/bounds/bounds.go,swap,failed,1,TestBoundsFixedShutdown,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/bounds,^TestBoundsFixedShutdown$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,319\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/bounds,fail,3014,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/bounds,TestBoundsFixedShutdown,\"lifetime_test.go:80: canceled runner status = timeout: context canceled\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -847,6 +959,21 @@
     {
       "from": "sha256:19ee2fb6487fbd0b39017eb392ac3d31bdab79d1b14798b737b4797eb880470f",
       "to": "sha256:c10f32d8ce7a14d274b01166ca9d0f66f743e88e7d0a5fd13afa01bf51ff5af9",
+      "chunk_ids": {
+        "RS-C1": [
+          "RS-C1"
+        ],
+        "RS-C2": [
+          "RS-C2"
+        ],
+        "RS-C3": [
+          "RS-C3"
+        ]
+      }
+    },
+    {
+      "from": "sha256:c10f32d8ce7a14d274b01166ca9d0f66f743e88e7d0a5fd13afa01bf51ff5af9",
+      "to": "sha256:ce20aca3c19ac69f01f324f724ef82aed6df6f7437403fb7fbfdc15715ccad84",
       "chunk_ids": {
         "RS-C1": [
           "RS-C1"
