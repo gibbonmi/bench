@@ -436,6 +436,41 @@
           ],
           "supersedes": []
         }
+      ],
+      "confirmations": [
+        {
+          "id": "rs-c2-confirm-r1",
+          "performer": "ft446-orchestrator",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "4fedf648b82862ca8b8a15db6f224420d346c5ac",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "probe:record.go-valid-returns-nil",
+            "digest": "sha256:5587f6bc54347974137f0506ebadc8203b8fa642a8be5e1ae30d08996ffa14e5",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/protection/record.go,swap,failed,2,TestRecordRetiredPath/control_byte,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/protection,^TestRecordRetiredPath$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,890\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,fail,3,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestRecordRetiredPath/control_byte,\"record_test.go:236: store of /dev/shm/MR322K/t/TestRecordRetiredPathcontrol_byte420970758/002/gone after the sweep: lstat /dev/shm/MR322K/t/TestRecordRetiredPathcontrol_byte420970758/001/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c… (328 bytes)\",1\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestRecordRetiredPath/unclean,\"record_test.go:236: store of /dev/shm/MR322K/t/TestRecordRetiredPathunclean2460236597/002/gone after the sweep: lstat /dev/shm/MR322K/t/TestRecordRetiredPathunclean2460236597/001/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c67/binar… (320 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "5ceb326b7e240fdc1b2af3bf76b7d37a71db8d13",
+          "reviewed_tip": "bef1597e66827888f6fbdd964ac136d50f035aed",
+          "repaired_tip": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "finding_ids": [
+            "RS-C2-C1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "make retiredRecord.valid return nil after the schema check, so the path owner check never runs",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "probe:record.go-valid-returns-nil",
+              "digest": "sha256:5587f6bc54347974137f0506ebadc8203b8fa642a8be5e1ae30d08996ffa14e5",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/protection/record.go,swap,failed,2,TestRecordRetiredPath/control_byte,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/protection,^TestRecordRetiredPath$,passed,4\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,890\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,fail,3,4\nfailures[2]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestRecordRetiredPath/control_byte,\"record_test.go:236: store of /dev/shm/MR322K/t/TestRecordRetiredPathcontrol_byte420970758/002/gone after the sweep: lstat /dev/shm/MR322K/t/TestRecordRetiredPathcontrol_byte420970758/001/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c… (328 bytes)\",1\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestRecordRetiredPath/unclean,\"record_test.go:236: store of /dev/shm/MR322K/t/TestRecordRetiredPathunclean2460236597/002/gone after the sweep: lstat /dev/shm/MR322K/t/TestRecordRetiredPathunclean2460236597/001/bench-process-1000/f8cb4960-efae-461c-83a0-7bdf62294c67/binar… (320 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
       ]
     }
   ],
@@ -540,3 +575,13 @@ Findings: 1. Worst issue: RS-C2-C1.
 
 - The ADR sentence about a retired store that names a user could name the users directory entry instead.
 - No test reaches the pre-lock skip of a live store or the re-check after the lock. The first is a cost contract, and the second is a race guard.
+
+## RS-C2 repair r1
+
+The repair session ft446-repair-02-r1 made a test-only repair at d7641b2. It reported these witness reds, and each probe reported a restored subject:
+
+1. With no retired-read error check in the predicate, TestRecordWrongSchema was red.
+2. With the same mutation, TestRecordRetiredPath was red in its control-byte and unclean subtests.
+3. With no retired-read error check and no inside-directory condition, TestRecordRetiredPath was red in all three subtests.
+
+The orchestrator probe made the retired validator return no error after its schema check. TestRecordRetiredPath was red, and the subject was restored. The confirmation rs-c2-confirm-r1 closes RS-C2-C1, so RS-C2 takes no confirming round. Repair cycles used: 1 of 2.
