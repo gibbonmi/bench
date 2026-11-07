@@ -190,9 +190,22 @@ func (p *Protocol) read(d Descriptor) (view, error) {
 	return v, nil
 }
 
-// lock takes each store's protocol lock in the given order and returns the release of all.
-// An open file description owns each lock, so in-process users exclude each other too.
+// lock takes each store's protocol lock in the given order and returns the release of all. It
+// waits for each lock that another open file holds.
 func lock(stores []string) (func(), error) {
+	return lockStores(stores, syscall.LOCK_EX)
+}
+
+// tryLock takes the protocol lock of store only when no other open file holds it, so its
+// caller never waits on another process. A held lock is an error.
+func tryLock(store string) (func(), error) {
+	return lockStores([]string{store}, syscall.LOCK_EX|syscall.LOCK_NB)
+}
+
+// lockStores takes each store's protocol lock with the flock operation how and returns the
+// release of all. An open file description owns each lock, so in-process users exclude each
+// other too.
+func lockStores(stores []string, how int) (func(), error) {
 	var held []*os.File
 	release := func() {
 		for _, file := range held {
@@ -207,7 +220,7 @@ func lock(stores []string) (func(), error) {
 		file, err := os.OpenFile(filepath.Join(store, lockFile), os.O_RDWR|os.O_CREATE|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, recordMode)
 		if err == nil {
 			held = append(held, file)
-			err = lockFileOf(file)
+			err = lockFileOf(file, how)
 		}
 		if err != nil {
 			release()
@@ -217,11 +230,11 @@ func lock(stores []string) (func(), error) {
 	return release, nil
 }
 
-func lockFileOf(file *os.File) error {
+func lockFileOf(file *os.File, how int) error {
 	if info, err := file.Stat(); err != nil || !info.Mode().IsRegular() {
 		return fmt.Errorf("%s is not a regular lock file", file.Name())
 	}
-	return syscall.Flock(int(file.Fd()), syscall.LOCK_EX)
+	return syscall.Flock(int(file.Fd()), how)
 }
 
 // publish durably replaces the record at path.

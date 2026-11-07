@@ -43,5 +43,6 @@ package does not build for Windows.
 
 A killed or interrupted run leaves no resource that a live descendant still
 uses deleted under it, and a later operation removes the resource after its
-users end. A retired store of a resource that a test deleted stays in
-temporary storage until the next boot.
+users end. A retired store keeps a record of its resource. When the safe
+removal of a directory deletes a resource, the removal also deletes the
+retired store of that resource. A retired store that names a user stays.

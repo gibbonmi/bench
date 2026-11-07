@@ -10,9 +10,13 @@ import (
 const (
 	ResourceFile = resourceFile
 	RetiredFile  = retiredFile
+	LockFile     = lockFile
 	UsersDir     = usersDir
 	UserFile     = userFile
 )
+
+// DiscardNested runs the nested-store sweep of a removal of dir.
+func (p *Protocol) DiscardNested(dir string) error { return p.discardNested(dir) }
 
 // ReadRetired strictly reads the retired record of store and names its kind, resource path,
 // and binding.

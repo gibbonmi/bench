@@ -183,6 +183,52 @@ func requireRetained(t *testing.T, p *protection.Protocol, d protection.Descript
 	return disposition
 }
 
+// selection is the directory kind of each nested resource that a sweep test retires.
+var selection = protection.Directory{Kind: protection.KindBinary, Noun: "selection"}
+
+// retire opens a real store of a new directory resource at dir through adapter and retires
+// its generation, so the store keeps only its retired record.
+func retire(t *testing.T, p *protection.Protocol, adapter protection.Directory, dir string) protection.Descriptor {
+	t.Helper()
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	g, err := adapter.Open(p, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if disposition, err := p.SealAndObserve(g.Resource, nil); err != nil || disposition.State != protection.Safe {
+		t.Fatalf("retirement of %s = %+v (%v), want safe", dir, disposition, err)
+	}
+	return g.Resource
+}
+
+// goneRetired retires a real nested store under a private store base and deletes its
+// resource, as the removal of the enclosing directory does. It returns the protocol, the
+// retired resource, and the enclosing directory.
+func goneRetired(t *testing.T) (*protection.Protocol, protection.Descriptor, string) {
+	t.Helper()
+	protection.SetStoreBase(t, t.TempDir())
+	p := &protection.Protocol{Validators: protection.Validators{selection.Kind: selection.Validate}, ReadLimit: readLimit}
+	d := retire(t, p, selection, filepath.Join(t.TempDir(), "gone"))
+	if err := os.RemoveAll(d.ResourcePath); err != nil {
+		t.Fatal(err)
+	}
+	return p, d, filepath.Dir(d.ResourcePath)
+}
+
+// requireSweep fails unless a nested sweep of dir returns inside the test deadline with no
+// error, and leaves the store of d present exactly when kept.
+func requireSweep(t *testing.T, p *protection.Protocol, dir string, d protection.Descriptor, kept bool) {
+	t.Helper()
+	if err := within(t, "the nested sweep", func() error { return p.DiscardNested(dir) }); err != nil {
+		t.Fatalf("nested sweep of %s = %v, want no error", dir, err)
+	}
+	if _, err := os.Lstat(d.Store); (err == nil) != kept {
+		t.Fatalf("store of %s after the sweep: %v, want present=%t", d.ResourcePath, err, kept)
+	}
+}
+
 // user is one registered launch of a real leader in its own group.
 type user struct {
 	reg *protection.Registration

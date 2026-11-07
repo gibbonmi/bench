@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/durablefile/durablefiletest"
@@ -13,13 +14,13 @@ import (
 
 // TestGenerationRemove is the one safe removal of an owner's resource. A retained removal keeps
 // every store. A safe removal deletes the resource's store and the store of each nested resource
-// that the removal deleted. A nested resource that still exists, and a resource outside the
-// removed directory whose path shares its prefix, keep their stores.
+// that the removal deleted, whether its generation is live or retired. A nested resource that
+// still exists, and a resource outside the removed directory whose path shares its prefix, keep
+// their stores.
 func TestGenerationRemove(t *testing.T) {
 	protection.SetStoreBase(t, t.TempDir())
 	outer := protection.Directory{Kind: protection.KindKitTest, Noun: "run"}
-	inner := protection.Directory{Kind: protection.KindBinary, Noun: "selection"}
-	p := &protection.Protocol{Validators: protection.Validators{protection.KindKitTest: outer.Validate, protection.KindBinary: inner.Validate}, ReadLimit: readLimit}
+	p := &protection.Protocol{Validators: protection.Validators{protection.KindKitTest: outer.Validate, selection.Kind: selection.Validate}, ReadLimit: readLimit}
 	parent := t.TempDir()
 	open := func(adapter protection.Directory, dir string) protection.Generation {
 		t.Helper()
@@ -33,13 +34,23 @@ func TestGenerationRemove(t *testing.T) {
 		return g
 	}
 	run := open(outer, filepath.Join(parent, "run"))
-	gone := open(inner, filepath.Join(parent, "run", "gone"))
-	kept := open(inner, filepath.Join(parent, "run", "kept"))
-	sibling := open(inner, filepath.Join(parent, "run2"))
+	stores := map[string]protection.Descriptor{
+		"run":             run.Resource,
+		"gone":            open(selection, filepath.Join(parent, "run", "gone")).Resource,
+		"kept":            open(selection, filepath.Join(parent, "run", "kept")).Resource,
+		"sibling":         open(selection, filepath.Join(parent, "run2")).Resource,
+		"retired gone":    retire(t, p, selection, filepath.Join(parent, "run", "retired-gone")),
+		"retired kept":    retire(t, p, selection, filepath.Join(parent, "run", "retired-kept")),
+		"retired sibling": retire(t, p, selection, filepath.Join(parent, "run3")),
+	}
+	// The retired sibling's resource is gone too, so only its path outside the run keeps it.
+	if err := os.RemoveAll(stores["retired sibling"].ResourcePath); err != nil {
+		t.Fatal(err)
+	}
 	requireStores := func(when string, want map[string]bool) {
 		t.Helper()
-		for name, g := range map[string]protection.Generation{"run": run, "gone": gone, "kept": kept, "sibling": sibling} {
-			_, err := os.Stat(g.Resource.Store)
+		for name, d := range stores {
+			_, err := os.Stat(d.Store)
 			if present := err == nil; present != want[name] {
 				t.Errorf("%s: store of %s present=%v (%v), want %v", when, name, present, err, want[name])
 			}
@@ -49,14 +60,49 @@ func TestGenerationRemove(t *testing.T) {
 	if err := run.Remove("run", func() error { return errInjected }, func() error { return os.RemoveAll(run.Resource.ResourcePath) }); !errors.Is(err, errInjected) {
 		t.Fatalf("failed release = %v, want the release error", err)
 	}
-	requireStores("after a retained removal", map[string]bool{"run": true, "gone": true, "kept": true, "sibling": true})
+	requireStores("after a retained removal", map[string]bool{"run": true, "gone": true, "kept": true, "sibling": true, "retired gone": true, "retired kept": true, "retired sibling": true})
 
-	// The removal deletes one nested resource and leaves the other, so only the deleted one's
-	// store goes with the run's own.
-	if err := run.Remove("run", nil, func() error { return os.RemoveAll(gone.Resource.ResourcePath) }); err != nil {
+	// The removal deletes one live and one retired nested resource and leaves the others, so
+	// only the deleted ones' stores go with the run's own.
+	if err := run.Remove("run", nil, func() error {
+		return errors.Join(os.RemoveAll(stores["gone"].ResourcePath), os.RemoveAll(stores["retired gone"].ResourcePath))
+	}); err != nil {
 		t.Fatal(err)
 	}
-	requireStores("after a safe removal", map[string]bool{"kept": true, "sibling": true})
+	requireStores("after a safe removal", map[string]bool{"kept": true, "sibling": true, "retired kept": true, "retired sibling": true})
+}
+
+// TestRetiredSweepKeepsAUser holds that a retired store whose users directory holds an entry
+// stays after a sweep, although its resource is gone.
+func TestRetiredSweepKeepsAUser(t *testing.T) {
+	p, d, dir := goneRetired(t)
+	entry := filepath.Join(d.Store, protection.UsersDir, "user")
+	if err := os.Mkdir(entry, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	requireSweep(t, p, dir, d, true)
+	if err := os.Remove(entry); err != nil {
+		t.Fatal(err)
+	}
+	requireSweep(t, p, dir, d, false)
+}
+
+// TestRetiredSweepSkipsALockedStore holds that a sweep does not wait on a store lock that
+// another open file holds. The store stays, and the sweep returns no error for it.
+func TestRetiredSweepSkipsALockedStore(t *testing.T) {
+	p, d, dir := goneRetired(t)
+	holder, err := os.OpenFile(filepath.Join(d.Store, protection.LockFile), os.O_RDWR, 0)
+	if err == nil {
+		err = syscall.Flock(int(holder.Fd()), syscall.LOCK_EX)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireSweep(t, p, dir, d, true)
+	if err := holder.Close(); err != nil {
+		t.Fatal(err)
+	}
+	requireSweep(t, p, dir, d, false)
 }
 
 // TestRetiredStoreRecordsItsPath holds that a safe retirement leaves a retired record of the
