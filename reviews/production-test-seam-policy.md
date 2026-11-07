@@ -1316,6 +1316,74 @@
             "TS4-C1"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ts4-review-standards-r1",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3f2beced62cec3c2780d84ef424a10c333537382",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:65e089916dcee6f28e3322e85eaf129dd4bf5d1ec0b2e0809b26ae3182fe46f1",
+            "excerpt": "Standards reaffirmed at f50e63d: sourceTree.holds is the one presence rule, shiftFaultSeam is the single source for the shift rows, and the stale wrapper comment is fixed.\n"
+          },
+          "axis": "Standards",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "117afa88f9501516f1867fd74fd66943c4feffef",
+          "finding_ids": [],
+          "supersedes": [
+            "ts4-review-standards"
+          ]
+        },
+        {
+          "id": "ts4-review-spec-r1",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3f2beced62cec3c2780d84ef424a10c333537382",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:fc6c9d492c3bd3cfd9ff125e27377104b33479f68b187378348b0ad4132c8214",
+            "excerpt": "Spec: TS4-P1 closed; the fault trace covers every production parameter, struct field, and package variable of the port type. The nil-forwarder rule is consistent with spec line 867 for returned errors.\n"
+          },
+          "axis": "Spec",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "117afa88f9501516f1867fd74fd66943c4feffef",
+          "finding_ids": [],
+          "supersedes": [
+            "ts4-review-spec"
+          ]
+        },
+        {
+          "id": "ts4-review-coverage-r1",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "3f2beced62cec3c2780d84ef424a10c333537382",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:74cbc767a549601c1677d251cecd4665583b9162e2774431487a7b889f00843d",
+            "excerpt": "Coverage: TS4-C1 closed by five fault cases. TS4-C2 open: returnsOnly reads returned locals only from assignments, so a var-declared local hides a real error and the closure counts as nil.\n"
+          },
+          "axis": "Coverage",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "117afa88f9501516f1867fd74fd66943c4feffef",
+          "finding_ids": [
+            "TS4-C2"
+          ],
+          "supersedes": [
+            "ts4-review-coverage"
+          ]
         }
       ]
     }
@@ -1620,7 +1688,11 @@ The record paths belong to the build and to no ticket, as the tree convention st
 Repair cycles consumed for TS1: 0 of 2.
 Repair cycles consumed for TS2: 1 of 2 (repair round r1).
 Repair cycles consumed for TS3: 2 of 2 (repair rounds r1 and r2).
-Repair cycles consumed for TS4: 1 of 2 (repair round r1).
+Repair cycles consumed for TS4: 2 of 2 (repair rounds r1 and r2).
+
+The TS4 confirming round closes TS4-P1 and TS4-C1, and it opens TS4-C2.
+
+- TS4-C2, severity 2, confidence 7, auto-fix in repair round r2. The closure check reads returned locals only from assignments. A `var`-declared local can hide a real error, so the closure counts as nil.
 
 The reviewer closed TS3-C2 on 2026-11-06 as an accepted limitation, and the spec states it as a Won't handle line. The r2 diff is discarded, and its recovery ref is kept.
 The TS3 confirming round closes TS3-P1 and TS3-C1, and it opens TS3-C2.
