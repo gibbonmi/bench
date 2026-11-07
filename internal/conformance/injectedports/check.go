@@ -1,19 +1,17 @@
-// Package injectedports owns the injected-port audit. It derives the ports that the
-// required packages of a graded root inject, and it grades that inventory against the
+// Package injectedports owns the injected-port audit. It derives the test seams that the
+// production packages of a graded root declare, and it grades that inventory against the
 // admission rows its caller supplies.
 package injectedports
 
 import (
 	"errors"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 )
 
 // These prefixes name the five failure modes, so a red names its cause without
@@ -33,7 +31,9 @@ const (
 //
 // A named-port row carries either a real-producer test or an exemption whose reason
 // someone had to write down. A real-producer test drives the actual producer through the
-// consuming surface. A row carrying neither is the empty-exemption red.
+// consuming surface. A row carrying neither is the empty-exemption red. A fault port has
+// no production producer, so its row instead names Owner and the evidence fields of a
+// variable row; see faultDiags.
 //
 // A variable row carries its policy facts: the production owner that reads the variable,
 // the consumer tests ("path::TestName") that install a replacement, the failure purpose,
@@ -67,8 +67,8 @@ const (
 )
 
 // Policy is the advertisement half of the audit. Rows hold one disposition per derived
-// port. Required names the packages whose source the audit derives, each of which must
-// yield ports when the graded root holds it.
+// seam. Required names the packages that must yield named ports when the graded root holds
+// them. It does not limit discovery: the audit derives every production package.
 //
 // Families supplies the members of a local name that source constants cannot name, keyed
 // "pkg.owner.name", such as a phase name that a release registry of the graded root
@@ -80,70 +80,75 @@ type Policy struct {
 	Families map[string][]string
 }
 
-// Check grades policy against a fresh derivation over root and returns the sorted,
-// deduplicated diagnostics.
+// Check grades policy against one derivation over the production source of root and
+// returns the sorted, deduplicated diagnostics. The audit loads that source once; every
+// seam form derives from the same parse.
 //
 // A required package that the graded tree does not hold is not graded at all. An adopting
 // repo has none of these directories, and a check that reds there is a check nobody
-// keeps. A package the tree does hold must yield ports, the fail-closed posture; see
-// ZeroPortInventoryMessage.
+// keeps. A required package the tree does hold must yield ports, the fail-closed posture;
+// see ZeroPortInventoryMessage.
 //
 // The registry-to-derived direction is graded here too, not only derived-to-registry.
-// Every row of a package whose derivation is non-zero must name a port that derivation
+// Every row of a package that the graded tree holds must name a seam that the derivation
 // still reports, or it fires OrphanPortRowMessage. Without this half, deleting an
-// injection arm together with its junction test leaves a green row behind. That row stays
-// green for as long as the package's other ports keep the inventory non-zero.
-// ZeroPortInventoryMessage closes that same silence for a package that derives nothing at
-// all.
-//
-// The variable and setter census then reads the whole production source of root, not the
-// required packages alone; see seamDiags.
+// injection arm together with its junction test leaves a green row behind. A required
+// package that derives nothing reports ZeroPortInventoryMessage for its rows instead.
 func Check(root string, policy Policy) []string {
-	registered := make(map[string]Row, len(policy.Rows))
+	tree, diags := loadSourceTree(root)
+	census := deriveSeams(tree)
+	diags = append(diags, duplicateRows(policy.Rows)...)
+	diags = append(diags, census.portDiags(root, tree, policy)...)
+	diags = append(diags, census.seamDiags(tree, policy)...)
+	slices.Sort(diags)
+	return slices.Compact(diags)
+}
+
+// portDiags grades the named-port rows against the ports of every production package.
+func (c *seamCensus) portDiags(root string, tree *sourceTree, policy Policy) []string {
+	ports := c.namedPorts(tree)
+	registered := map[string]Row{}
 	for _, row := range policy.Rows {
 		if row.Kind == KindPort {
 			registered[row.Package+"."+row.Port] = row
 		}
 	}
-	derived := make(map[string]bool, len(policy.Rows))
-	gradedNonZero := make(map[string]bool, len(policy.Required))
-	diags := duplicateRows(policy.Rows)
+	var diags []string
+	empty := map[string]bool{}
 	for _, pkg := range policy.Required {
-		dir := filepath.Join(root, filepath.FromSlash(pkg))
-		if absentPackage(dir) {
+		if len(ports[pkg]) > 0 || absentPackage(filepath.Join(root, filepath.FromSlash(pkg))) {
 			continue
 		}
-		ports, parseDiags := derivedInjectedPorts(dir, pkg)
-		diags = append(diags, parseDiags...)
-		if len(ports) == 0 {
-			diags = append(diags, fmt.Sprintf(
-				"%s: %s is present in the graded tree and the audit records it as declaring them, so an empty inventory would grade every registry row as satisfied — the derivation fails closed instead of reporting silence",
-				ZeroPortInventoryMessage, pkg))
-			continue
-		}
-		gradedNonZero[pkg] = true
-		for _, port := range ports {
+		empty[pkg] = true
+		diags = append(diags, fmt.Sprintf(
+			"%s: %s is present in the graded tree and the audit records it as declaring them, so an empty inventory would grade every registry row as satisfied — the derivation fails closed instead of reporting silence",
+			ZeroPortInventoryMessage, pkg))
+	}
+	derived := map[string]bool{}
+	for _, pkg := range sortedKeys(ports) {
+		for _, port := range ports[pkg] {
 			key := port.pkg + "." + port.name
 			derived[key] = true
 			row, found := registered[key]
-			if !found {
+			switch {
+			case !found:
 				diags = append(diags, fmt.Sprintf(
 					"%s: %s.%s is injected at %s — add a row to injectedPortRegistry naming the test that drives its real producer, or the written reason it has none; an unregistered port is the audit's gap recurring unseen",
 					UnregisteredPortMessage, port.pkg, port.name, port.site))
-				continue
+			case row.Owner != "":
+				diags = append(diags, c.faultDiags(row)...)
+			default:
+				diags = append(diags, c.rowDiags(row)...)
 			}
-			diags = append(diags, rowDiags(root, row)...)
 		}
 	}
 	for _, row := range policy.Rows {
-		if row.Kind != KindPort || !gradedNonZero[row.Package] || derived[row.Package+"."+row.Port] {
+		if row.Kind != KindPort || derived[row.Package+"."+row.Port] || empty[row.Package] || absentPackage(filepath.Join(root, filepath.FromSlash(row.Package))) {
 			continue
 		}
 		diags = append(diags, orphanDiag(row))
 	}
-	diags = append(diags, seamDiags(root, policy)...)
-	slices.Sort(diags)
-	return slices.Compact(diags)
+	return diags
 }
 
 func orphanDiag(row Row) string {
@@ -152,8 +157,8 @@ func orphanDiag(row Row) string {
 		OrphanPortRowMessage, row.Package, row.Port)
 }
 
-// rowDiags grades one row's disposition.
-func rowDiags(root string, row Row) []string {
+// rowDiags grades one named-port row's disposition.
+func (c *seamCensus) rowDiags(row Row) []string {
 	if row.TestName == "" {
 		if strings.TrimSpace(row.Exempt) == "" {
 			return []string{fmt.Sprintf(
@@ -162,7 +167,7 @@ func rowDiags(root string, row Row) []string {
 		}
 		return nil
 	}
-	if !fileDeclaresTest(filepath.Join(root, filepath.FromSlash(row.TestFile)), row.TestName) {
+	if !c.declaresTest(row.TestFile, row.TestName) {
 		return []string{fmt.Sprintf(
 			"%s: %s.%s advertises %s:%s, which that file does not declare — a deleted or renamed junction test must not leave a green advertisement behind (tripwire: this catches removal, not a test gutted back to a fake)",
 			MissingPortTestMessage, row.Package, row.Port, row.TestFile, row.TestName)}
@@ -170,30 +175,22 @@ func rowDiags(root string, row Row) []string {
 	return nil
 }
 
-// absentPackage reports whether the graded tree lacks dir. Only a missing path or a
-// non-directory is absent. Any other stat failure leaves the package present, so the
-// derivation reports that it cannot read it instead of grading silence.
+// absentPackage reports whether the graded tree lacks dir. A missing path, a path below a
+// non-directory, and a non-directory are absent. Any other stat failure leaves the package
+// present, so the derivation reports that it cannot read it instead of grading silence.
 func absentPackage(dir string) bool {
 	info, err := os.Stat(dir)
 	if err != nil {
-		return errors.Is(err, fs.ErrNotExist)
+		return errors.Is(err, fs.ErrNotExist) || errors.Is(err, syscall.ENOTDIR)
 	}
 	return !info.IsDir()
 }
 
-// fileDeclaresTest reports whether path declares a top-level func of the given name. It
-// parses rather than searches, so a name written in a comment or a string is not a match.
-// The tripwire must answer for the test the binary would run.
-func fileDeclaresTest(path, name string) bool {
-	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
-	if err != nil {
-		return false
-	}
-	for _, decl := range file.Decls {
-		fn, isFunc := decl.(*ast.FuncDecl)
-		if isFunc && fn.Recv == nil && fn.Name.Name == name {
-			return true
-		}
-	}
-	return false
+// declaresTest reports whether the parsed test file declares a top-level func of the given
+// name. The census parsed it, so a name written in a comment or a string is not a match:
+// the tripwire answers for the test the binary would run.
+func (c *seamCensus) declaresTest(file, name string) bool {
+	scope, known := c.testFiles[file]
+	entry := c.tests[scope+"."+name]
+	return known && entry != nil && entry.file.rel == file
 }

@@ -20,32 +20,30 @@ const (
 	DuplicateRowMessage       = "injected port registry repeats a source identity"
 )
 
-// seamDiags grades the variable and setter rows against a census of the whole production
-// source of root. A seam in a package that no row names is still derived, so a new
-// replacement cannot hide behind a remembered package list. A row whose package the
-// graded tree does not hold is not graded, as for named ports.
-func seamDiags(root string, policy Policy) []string {
+// seamDiags grades the variable, setter, runtime, and environment rows against the census
+// of the whole production source. A seam in a package that no row names is still derived,
+// so a new replacement cannot hide behind a remembered package list. A row whose package
+// the graded tree does not hold is not graded, as for named ports.
+func (c *seamCensus) seamDiags(tree *sourceTree, policy Policy) []string {
 	rows := policy.Rows
-	tree, diags := loadSourceTree(root)
-	census := deriveSeams(tree)
-	controls := census.deriveControls(policy.Families)
-	diags = append(diags, controls.diags...)
+	controls := c.deriveControls(policy.Families)
+	diags := controls.diags
 	registered := map[string]Row{}
 	for _, row := range rows {
 		registered[rowKey(row)] = row
 	}
-	for _, seam := range sortedKeys(census.variables) {
+	for _, seam := range sortedKeys(c.variables) {
 		row, found := registered[string(KindVariable)+" "+seam]
 		if !found {
 			diags = append(diags, fmt.Sprintf(
 				"%s: %s is replaced at %s — add a variable row to injectedPortRegistry naming its production owner, consumer tests, failure purpose, and isolation evidence",
-				UnregisteredSeamMessage, seam, census.variables[seam]))
+				UnregisteredSeamMessage, seam, c.variables[seam]))
 			continue
 		}
-		diags = append(diags, census.variableRowDiags(row, seam)...)
+		diags = append(diags, c.variableRowDiags(row, seam)...)
 	}
-	for _, setter := range sortedKeys(census.setters) {
-		canonical := census.setters[setter]
+	for _, setter := range sortedKeys(c.setters) {
+		canonical := c.setters[setter]
 		row, found := registered[string(KindSetter)+" "+setter]
 		if !found {
 			diags = append(diags, fmt.Sprintf(
@@ -59,14 +57,14 @@ func seamDiags(root string, policy Policy) []string {
 				UnresolvedAliasMessage, setter, row.Canonical, canonical))
 		}
 	}
-	diags = append(diags, census.controlDiags(controls, registered)...)
+	diags = append(diags, c.controlDiags(controls, registered)...)
 	for _, row := range rows {
 		if row.Kind == KindPort || tree.packages[row.Package] == nil {
 			continue
 		}
 		identity := row.Package + "." + row.Port
-		_, variable := census.variables[identity]
-		_, setter := census.setters[identity]
+		_, variable := c.variables[identity]
+		_, setter := c.setters[identity]
 		_, branch := controls.runtime[identity]
 		derived := map[Kind]bool{KindVariable: variable, KindSetter: setter, KindRuntime: branch, KindEnvironment: controls.hooks[row.Port]}
 		if !derived[row.Kind] {

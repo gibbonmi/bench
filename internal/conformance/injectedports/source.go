@@ -65,6 +65,10 @@ func loadSourceTree(root string) (*sourceTree, []string) {
 				}
 				return nil
 			}
+			if unsafe := unsafeSource(path, entry); unsafe != "" {
+				diags = append(diags, fmt.Sprintf("injected port derivation cannot read %s: %s", rel, unsafe))
+				return nil
+			}
 			if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), ".go") {
 				return nil
 			}
@@ -92,6 +96,24 @@ func loadSourceTree(root string) (*sourceTree, []string) {
 		}
 	}
 	return tree, diags
+}
+
+// unsafeSource names why the walk refuses to read one entry as production source. The
+// walk never follows a symbolic link, because its target can leave the graded root. A link
+// that names Go source or a directory, or that does not resolve, therefore hides source and
+// is refused. A Go file that is not a regular file is refused too. Any other entry is safe.
+func unsafeSource(path string, entry fs.DirEntry) string {
+	goFile := strings.HasSuffix(entry.Name(), ".go")
+	if entry.Type()&fs.ModeSymlink != 0 {
+		if info, err := os.Stat(path); err != nil || info.IsDir() || goFile {
+			return "a symbolic link is not read as production source"
+		}
+		return ""
+	}
+	if goFile && !entry.Type().IsRegular() {
+		return "a Go source that is not a regular file is not read"
+	}
+	return ""
 }
 
 // skippedDir reports the directories that the go tool itself ignores.

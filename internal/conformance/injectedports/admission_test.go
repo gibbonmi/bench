@@ -47,6 +47,11 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			required: []string{"internal/gitguard"},
 		},
 		{
+			row:      "PS42 a required package below a non-directory is absent",
+			files:    map[string]string{"internal": "not a directory\n"},
+			required: []string{"internal/gitguard"},
+		},
+		{
 			row:   "PS43 unreadable present package",
 			loop:  true,
 			heads: []string{"injected port derivation cannot read internal/sample: ", empty},
@@ -165,4 +170,54 @@ func TestSeamAdmissionEvidence(t *testing.T) {
 			requireDiagnosticHeads(t, Check(writeRoot(t, controlTree), Policy{Rows: test.rows}), test.heads)
 		})
 	}
+
+	// The fault fixture has one port that every production caller of Apply passes as nil.
+	// One test supplies a fault at the injection site and one passes nil. No required
+	// package names it, so a stale row there must still refuse.
+	const faultSource = "package sample\n\ntype Fault func(string) error\n\nfunc hit(f Fault, step string) error {\n\tif f == nil {\n\t\treturn nil\n\t}\n\treturn f(step)\n}\n\nfunc Apply(fault Fault) error { return hit(fault, \"apply\") }\n\nfunc Run() error { return Apply(nil) }\n"
+	faultTree := map[string]string{
+		"internal/sample/sample.go":      faultSource,
+		"internal/sample/sample_test.go": "package sample\n\nimport \"testing\"\n\nfunc TestApplyFault(t *testing.T) { _ = Apply(func(string) error { return nil }) }\n\nfunc TestApplyNil(t *testing.T) { _ = Apply(nil) }\n",
+	}
+	faultRow := func(edit func(*Row)) Row {
+		row := Row{Package: "internal/sample", Port: "Fault", Owner: "Apply", Purpose: "a fault at a chosen step drives the apply refusal", Isolation: "the fault is an argument of one call", Consumers: []string{"internal/sample/sample_test.go::TestApplyFault"}}
+		if edit != nil {
+			edit(&row)
+		}
+		return row
+	}
+	const fault = ": internal/sample.Fault "
+	for _, test := range []struct {
+		row, extra string
+		rows       []Row
+		heads      []string
+	}{
+		{row: "a fault port whose consumer supplies a fault", rows: []Row{faultRow(nil)}},
+		{row: "a fault-port consumer that passes nil is refused", rows: []Row{faultRow(func(r *Row) { r.Consumers = []string{"internal/sample/sample_test.go::TestApplyNil"} })},
+			heads: []string{SeamUnreachedMessage + fault}},
+		{row: "a fault-port owner that does not take the port", rows: []Row{faultRow(func(r *Row) { r.Owner = "Run" })}, heads: []string{SeamOwnerMessage + fault}},
+		{row: "a fault-port owner that a production caller supplies", extra: "\nfunc Live() error { return Apply(func(string) error { return nil }) }\n",
+			rows: []Row{faultRow(nil)}, heads: []string{FaultProducerMessage + fault}},
+		{row: "a stale named-port row in a present package outside the required list", rows: []Row{faultRow(nil), {Package: "internal/sample", Port: "Gone", Exempt: "covered by the runtime contract suite"}},
+			heads: []string{OrphanPortRowMessage + ": internal/sample.Gone "}},
+	} {
+		t.Run(test.row, func(t *testing.T) {
+			files := map[string]string{"internal/sample/sample.go": faultSource + test.extra}
+			files["internal/sample/sample_test.go"] = faultTree["internal/sample/sample_test.go"]
+			requireDiagnosticHeads(t, Check(writeRoot(t, files), Policy{Rows: test.rows}), test.heads)
+		})
+	}
+
+	t.Run("a symbolic link to Go source outside the root is refused", func(t *testing.T) {
+		root := writeRoot(t, faultTree)
+		outside := filepath.Join(t.TempDir(), "outside.go")
+		if err := os.WriteFile(outside, []byte("package sample\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(outside, filepath.Join(root, "internal", "sample", "linked.go")); err != nil {
+			t.Fatal(err)
+		}
+		requireDiagnosticHeads(t, Check(root, Policy{Rows: []Row{faultRow(nil)}}),
+			[]string{"injected port derivation cannot read internal/sample/linked.go: a symbolic link is not read as production source"})
+	})
 }

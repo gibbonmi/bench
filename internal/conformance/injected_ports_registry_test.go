@@ -2,11 +2,9 @@ package conformance
 
 import "github.com/gibbonmi/bench/internal/conformance/injectedports"
 
-// auditedPortPackages are the packages whose injected ports the registry covers, the
-// audit's inventory, no wider. A package outside it that declares a port is out of scope
-// until a reviewer binds it in. A package inside it that derives nothing fails closed.
-// The variable and setter census is not limited to this list; it reads every production
-// root of the graded tree.
+// auditedPortPackages are the packages that must declare injected ports whenever the graded
+// tree holds them. A package inside it that derives nothing fails closed. The list does not
+// bound discovery: the audit derives the ports of every production package.
 var auditedPortPackages = []string{
 	"internal/assessment",
 	"internal/chargeevidence",
@@ -16,13 +14,18 @@ var auditedPortPackages = []string{
 	"internal/subprocess/protection",
 }
 
-// injectedPortRegistry is the advertisement half: one row per port the derivation finds
-// in auditedPortPackages, then one row per variable seam, setter, test-runtime branch, and
-// environment hook that the census finds anywhere in the production roots. Rows are grouped by kind and package and
-// ordered as the derivation reports them. A diff against a re-derived inventory therefore
-// reads straight down.
+// injectedPortRegistry is the advertisement half: one row per named port, then one row per
+// variable seam, setter, test-runtime branch, and environment hook that the census finds
+// anywhere in the production roots. Rows are grouped by kind and package and ordered as the
+// derivation reports them. A diff against a re-derived inventory therefore reads straight
+// down. A named-port row names the test that drives the port's real producer, or it is a
+// fault-port row.
 var injectedPortRegistry = append(append([]injectedports.Row{
+	{Package: "internal/adopt", Port: "compatibilityCollector", TestFile: "internal/systemtest/compatibility_test.go", TestName: "TestCompatibilityPaths"},
 	{Package: "internal/assessment", Port: "FileOps", TestFile: "internal/assessment/replacement_test.go", TestName: "TestAssessmentReplacement"},
+	{Package: "internal/benchguard", Port: "Resolver", TestFile: "internal/benchguard/benchguard_test.go", TestName: "TestClassifyResolvesBareAliasFromProcessPath"},
+	{Package: "internal/bounds", Port: "pathResolver", TestFile: "internal/bounds/classify_nofollow_test.go", TestName: "TestClassifyDirNoFollowRefusesLinkAndPreservesDefault"},
+	{Package: "internal/capability", Port: "TB", TestFile: "internal/capability/capability_test.go", TestName: "TestEnvironmentWritesLineBeforeSkip"},
 	{
 		Package: "internal/chargeevidence", Port: "ExportWrite",
 		TestFile: "internal/preflight/evidencecmd/evidence_export_test.go", TestName: "TestEvidenceExportWritesSources",
@@ -35,23 +38,62 @@ var injectedPortRegistry = append(append([]injectedports.Row{
 		Package: "internal/chargeevidence", Port: "StoreOptions",
 		TestFile: "internal/systemtest/charge_evidence_test.go", TestName: "TestEvidenceInterruptedPublication",
 	},
+	{Package: "internal/commitment", Port: "Resolver", TestFile: "internal/commitment/verification_test.go", TestName: "TestCommitmentMilestoneCompletion"},
+	{Package: "internal/durablefile", Port: "File", TestFile: "internal/durablefile/replace_test.go", TestName: "TestReplaceBytes"},
+	{Package: "internal/gate", Port: "FS", TestFile: "internal/gate/run_outcomes_test.go", TestName: "TestGateRunWithoutGateExitsThree"},
+	{Package: "internal/gate", Port: "executionEvaluation", TestFile: gateJourney, TestName: gateJourneyTest},
+	{Package: "internal/gate", Port: "postAcquireContextArm", TestFile: gateJourney, TestName: gateJourneyTest},
+	{Package: "internal/gate", Port: "runBinaryOwner", TestFile: gateJourney, TestName: gateJourneyTest},
+	{Package: "internal/gate", Port: "treeSource", TestFile: gateJourney, TestName: gateJourneyTest},
 	{
 		Package: "internal/gitguard", Port: "Checker",
 		TestFile: "internal/gitguard/checker_junction_test.go", TestName: "TestClassifyRealCheckerResolvedComposition",
 	},
-	{
-		Package: "internal/publication", Port: "Registry",
-		Exempt: "a real-producer test needs a live npm registry, and NPMCLIRegistry is runbook-only: it never performs gate egress or touches a credential (the Registry port comment in internal/publication/registry.go states each adapter's gate coverage)",
-	},
+	{Package: "internal/harnesstranscript", Port: "lineReader", TestFile: "internal/harnesstranscript/transcript_test.go", TestName: "TestCodexFixtureCountsItsPinnedShapes"},
+	{Package: "internal/intent", Port: "Compensation", TestFile: "internal/intent/transaction_test.go", TestName: "TestReauthorizeCompensatesOnTheTerminalWriteFailure"},
+	{Package: "internal/intent", Port: "Decision", TestFile: "internal/intent/transaction_test.go", TestName: "TestLedgerTransactionPreservesEveryMutatorOutcome"},
+	{Package: "internal/intent", Port: "countedDecision", TestFile: "internal/intent/purge_test.go", TestName: "TestPurgeAssignmentsDropsRecordsReadRefuses"},
+	{Package: "internal/landing", Port: "Admission", TestFile: "internal/worktree/commitment_landing_test.go", TestName: "TestCommitmentDeliveryClosure"},
+	{Package: "internal/landing", Port: "StackAdmission", TestFile: "internal/worktree/land_stack_test.go", TestName: "TestLandStackJourney"},
+	{Package: "internal/maps", Port: "SourceResolver", TestFile: "internal/preflight/map_sources_test.go", TestName: "TestMapSourcesTipExistence"},
 	{
 		Package: "internal/preflight", Port: "reviewEvidenceObserver",
 		TestFile: "internal/preflight/review_charge_test.go", TestName: "TestEvidenceReviewCollectors",
 	},
+	{Package: "internal/prose", Port: "targetLookup", TestFile: "internal/prose/subject_test.go", TestName: "TestGradeNamedHonorsExclusions"},
+	{
+		Package: "internal/publication", Port: "Registry",
+		Exempt: "a real-producer test needs a live npm registry, and NPMCLIRegistry is runbook-only: it never performs gate egress or touches a credential (the Registry port comment in internal/publication/registry.go states each adapter's gate coverage)",
+	},
+	{Package: "internal/roadmap", Port: "OutlookSource", TestFile: "cmd/bench/commitment_test.go", TestName: "TestCommitmentNextProjection"},
+	faultPort("internal/shift", "fault", "hitShift", "an injected step fault drives the staging, teardown, upsert, and startup failures", joinIsolation,
+		"internal/shift/fault_test.go::TestLoopStagingFaultPreservesAndSplitsEvidence", "internal/shift/lifetime_test.go::TestActualStartRace"),
+	{Package: "internal/spec", Port: "TreeReader", TestFile: "internal/landing/close_test.go", TestName: "TestTicketsOnlyInCommit"},
+	{Package: "internal/subprocess", Port: "CancelRequest", TestFile: "internal/releasepreflight/lifetime_test.go", TestName: "TestScannerCancel"},
+	{Package: "internal/subprocess", Port: "Window", TestFile: "internal/bounds/lifetime_test.go", TestName: "TestBoundsFixedShutdown"},
 	{
 		Package: "internal/subprocess/protection", Port: "Probe",
 		TestFile: "internal/subprocess/protection/observe_test.go", TestName: "TestObserveGroupPresent",
 	},
+	faultPort("internal/worktree", "Fault", "applyAutomaticWithTerminal", "a fault at a chosen lifecycle step drives the cleanup transaction's locked, relocked, and replayed states",
+		"each consumer passes the fault as an argument of one call, so it lives only for that call and no package state changes",
+		"internal/worktree/ownership_test.go::TestLifecycleFaultBoundariesRemainLockedOrAbsent", "internal/worktree/worktree_test.go::TestReleaseReconcilesInFlightAutomaticCleanup"),
+	{Package: "internal/worktree", Port: "cleanupPlanner", TestFile: "internal/worktree/clean_landed_apply_test.go", TestName: "TestCleanLandedApplyRemovesAndSettles"},
+	{Package: "internal/worktree", Port: "cleanupTerminal", TestFile: "internal/worktree/clean_landed_apply_test.go", TestName: "TestCleanLandedApplyRemovesAndSettles"},
+	{Package: "internal/writeguard", Port: "Checker", TestFile: "cmd/bench/guard_projection_test.go", TestName: "TestGuardWriteEnvelopePolicy"},
 }, variableSeams...), append(setterSeams, controlSeams...)...)
+
+// The gate's internal ports share one real-producer test: the wrapper runs the gate
+// through its signal arm, its production run-binary owner, and its tree evaluation.
+const (
+	gateJourney     = "internal/systemtest/otel_gate_test.go"
+	gateJourneyTest = "TestOtelGateRecordJourney"
+)
+
+// faultPort admits one fault port. The audit owner states what its owner and consumers show.
+func faultPort(pkg, port, owner, purpose, isolation string, consumers ...string) injectedports.Row {
+	return injectedports.Row{Package: pkg, Port: port, Owner: owner, Purpose: purpose, Isolation: isolation, Consumers: consumers}
+}
 
 // The isolation evidence that most variable seams share. A seam whose tests differ states
 // its own evidence.

@@ -260,10 +260,11 @@ func TestInjectedPortDerivationSeesEveryPortShape(t *testing.T) {
 	}, "\n")
 	root := writeRoot(t, map[string]string{"internal/sample/sample.go": source})
 
-	ports, diags := derivedInjectedPorts(filepath.Join(root, "internal", "sample"), "internal/sample")
+	tree, diags := loadSourceTree(root)
 	if len(diags) != 0 {
 		t.Fatalf("derivation reported %v", diags)
 	}
+	ports := packagePorts(tree.fset, tree.packages["internal/sample"])
 	var names []string
 	for _, port := range ports {
 		names = append(names, port.name)

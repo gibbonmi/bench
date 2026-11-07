@@ -48,6 +48,11 @@ type seamCensus struct {
 	testMethods map[string][]*funcFacts
 	// methods maps a method name of a package to its production method bodies.
 	methods map[string][]*funcFacts
+	// params maps a production function to the type name of each parameter, and varTypes
+	// maps a production variable declared without a value to its type name. A fault-port
+	// row reads both; see faultDiags.
+	params   map[string][]string
+	varTypes map[string]string
 }
 
 // constant is one constant declaration with the context its value resolves in.
@@ -66,6 +71,7 @@ func deriveSeams(tree *sourceTree) *seamCensus {
 		variables: map[string]string{}, bodies: map[string]*funcFacts{}, consts: map[string]constant{},
 		imports: map[string]map[string]bool{}, tested: map[string]bool{}, mains: map[string]bool{},
 		assigners: map[string][]*funcFacts{}, methods: map[string][]*funcFacts{}, testMethods: map[string][]*funcFacts{},
+		params: map[string][]string{}, varTypes: map[string]string{},
 	}
 	for _, dir := range sortedKeys(tree.packages) {
 		census.indexPackage(tree.fset, tree.packages[dir])
@@ -184,6 +190,9 @@ func (c *seamCensus) indexPackage(fset *token.FileSet, pkg *sourcePackage) {
 					}
 					for i, name := range value.Names {
 						c.vars[pkg.rel+"."+name.Name] = true
+						if value.Type != nil && len(value.Values) == 0 {
+							c.varTypes[pkg.rel+"."+name.Name] = typeIdentName(value.Type)
+						}
 						if i < len(value.Values) {
 							facts := exprFacts(fset, file, pkg.rel, value.Values[i])
 							read(name.Name, facts)
@@ -203,6 +212,11 @@ func (c *seamCensus) indexPackage(fset *token.FileSet, pkg *sourcePackage) {
 				}
 				if typed.Recv == nil && typed.Name.Name != "init" {
 					c.prod[pkg.rel+"."+typed.Name.Name] = &funcEntry{file: file, facts: facts}
+					for _, field := range typed.Type.Params.List {
+						for range max(1, len(field.Names)) {
+							c.params[pkg.rel+"."+typed.Name.Name] = append(c.params[pkg.rel+"."+typed.Name.Name], typeIdentName(field.Type))
+						}
+					}
 				}
 			}
 		}
