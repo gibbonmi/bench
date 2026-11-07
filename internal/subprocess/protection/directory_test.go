@@ -190,18 +190,7 @@ var cacheKind = protection.Directory{Kind: protection.KindCache, Noun: "cache"}
 // and a parent directory for the resources that it retires.
 func retiredCaches(t *testing.T) (*protection.Protocol, string) {
 	t.Helper()
-	protection.SetStoreBase(t, t.TempDir())
-	return &protection.Protocol{Validators: protection.Validators{cacheKind.Kind: cacheKind.Validate, selection.Kind: selection.Validate}, ReadLimit: readLimit}, t.TempDir()
-}
-
-// goneStore retires the resource dir through adapter and deletes the resource.
-func goneStore(t *testing.T, p *protection.Protocol, adapter protection.Directory, dir string) protection.Descriptor {
-	t.Helper()
-	d := retire(t, p, adapter, dir)
-	if err := os.RemoveAll(dir); err != nil {
-		t.Fatal(err)
-	}
-	return d
+	return privateProtocol(t, cacheKind, selection), t.TempDir()
 }
 
 // renameStore renames the store of d so that the kind of to starts its name in place of the
@@ -291,9 +280,8 @@ func TestDiscardRetiredFailsClosed(t *testing.T) {
 // test can change its store root.
 func openPrivateRun(t *testing.T) (protection.Directory, *protection.Protocol, string, protection.Generation) {
 	t.Helper()
-	protection.SetStoreBase(t, t.TempDir())
 	adapter := protection.Directory{Kind: protection.KindKitTest, Noun: "run"}
-	p := &protection.Protocol{Validators: protection.Validators{protection.KindKitTest: adapter.Validate}, ReadLimit: readLimit}
+	p := privateProtocol(t, adapter)
 	dir := filepath.Join(t.TempDir(), "run")
 	if err := os.Mkdir(dir, 0o700); err != nil {
 		t.Fatal(err)

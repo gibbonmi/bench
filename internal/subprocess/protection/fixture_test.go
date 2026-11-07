@@ -203,17 +203,34 @@ func retire(t *testing.T, p *protection.Protocol, adapter protection.Directory, 
 	return g.Resource
 }
 
-// goneRetired retires a real nested store under a private store base and deletes its
-// resource, as the removal of the enclosing directory does. It returns the protocol, the
-// retired resource, and the enclosing directory.
-func goneRetired(t *testing.T) (*protection.Protocol, protection.Descriptor, string) {
+// privateProtocol returns a protocol of the directory kinds under a private store base.
+func privateProtocol(t *testing.T, kinds ...protection.Directory) *protection.Protocol {
 	t.Helper()
 	protection.SetStoreBase(t, t.TempDir())
-	p := &protection.Protocol{Validators: protection.Validators{selection.Kind: selection.Validate}, ReadLimit: readLimit}
-	d := retire(t, p, selection, filepath.Join(t.TempDir(), "gone"))
-	if err := os.RemoveAll(d.ResourcePath); err != nil {
+	validators := protection.Validators{}
+	for _, kind := range kinds {
+		validators[kind.Kind] = kind.Validate
+	}
+	return &protection.Protocol{Validators: validators, ReadLimit: readLimit}
+}
+
+// goneStore retires the resource dir through adapter and deletes the resource, as the removal
+// of the enclosing directory does.
+func goneStore(t *testing.T, p *protection.Protocol, adapter protection.Directory, dir string) protection.Descriptor {
+	t.Helper()
+	d := retire(t, p, adapter, dir)
+	if err := os.RemoveAll(dir); err != nil {
 		t.Fatal(err)
 	}
+	return d
+}
+
+// goneRetired retires a real nested store under a private store base and deletes its
+// resource. It returns the protocol, the retired resource, and the enclosing directory.
+func goneRetired(t *testing.T) (*protection.Protocol, protection.Descriptor, string) {
+	t.Helper()
+	p := privateProtocol(t, selection)
+	d := goneStore(t, p, selection, filepath.Join(t.TempDir(), "gone"))
 	return p, d, filepath.Dir(d.ResourcePath)
 }
 
