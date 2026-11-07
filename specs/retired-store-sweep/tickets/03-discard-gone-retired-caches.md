@@ -1,7 +1,7 @@
 # Discard gone retired caches at the last cache release
 
 Blocked by: 01-record-retired-store-path.md, 02-sweep-retired-nested-stores.md
-Writes: internal/subprocess/protection/directory.go, internal/subprocess/protection/directory_test.go, internal/subprocess/protection/export_test.go, internal/gocache/lock.go, internal/gocache/protection.go, internal/gocache/protection_test.go, internal/conformance/injected_ports_registry_test.go, docs/adr/0030-one-lifetime-owner-and-process-user-protection.md
+Writes: internal/subprocess/protection/directory.go, internal/subprocess/protection/directory_test.go, internal/subprocess/protection/export_test.go, internal/gocache/lock.go, internal/gocache/protection.go, internal/gocache/protection_test.go, internal/conformance/injected_ports_registry_test.go, docs/adr/0030-one-lifetime-owner-and-process-user-protection.md, internal/subprocess/protection/fixture_test.go
 Covers: RS9, RS10, RS11, RS12, RS13, RS27, RS28, RS30
 
 ## What to build

@@ -581,7 +581,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "rs-c3-review-standards",
+          "performer": "ft446-review-rs-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "de044a104a19b71f6e5de1b473254b270f98bd89",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c3",
+            "digest": "sha256:5e5ebc69a6a930a0fcd2719f27e28ce889c6c5243db22f82bc3438113178dc1c",
+            "excerpt": "Standards: 0 native findings; advice item (a), severity 3, confidence 7, ask-user: goneStore (directory_test.go:197-205) repeats the retire-then-delete pair of goneRetired (fixture_test.go:209-218); retiredCaches repeats its SetStoreBase and Protocol setup; the fix is goneRetired calling goneStore, which needs fixture_test.go. The orchestrator accepts it as RS-C3-S1 (auto-fix) under the AGENTS.md one-source rule for fixture harnesses. ADR sentence and comments hold.\n"
+          },
+          "axis": "Standards",
+          "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "tip": "2220bf07a832c326e1184acb54419fc11798badb",
+          "finding_ids": [
+            "RS-C3-S1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c3-review-spec",
+          "performer": "ft446-review-rs-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "de044a104a19b71f6e5de1b473254b270f98bd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c3",
+            "digest": "sha256:ddc0dd69eec0d05c9df1ff116e65d24bb7064f4efc97824c0f4309f73b6704a7",
+            "excerpt": "Spec: 0 findings. Worst issue: none. RS9, RS10, RS30, RS11, RS12, RS13, RS27, RS28 mapped; the registry row matches D3 field for field; the release calls the check only after a nil SealAndObserve; the check keeps both kind tests; lock and read skips stay silent; a failed deletion or unlistable root joins the error.\n"
+          },
+          "axis": "Spec",
+          "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "tip": "2220bf07a832c326e1184acb54419fc11798badb",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "rs-c3-review-coverage",
+          "performer": "ft446-review-rs-c3",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "de044a104a19b71f6e5de1b473254b270f98bd89",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft446-review-rs-c3",
+            "digest": "sha256:98d9c26cfb633793c7c8d5cac619cbedcc15f659b2a19816f4cc955c4384e942",
+            "excerpt": "Coverage: 0 findings. Worst issue: none. Probes bit with restored yes: check call removed, check in the contended branch, kind comparison swapped, prefix filter swapped, registry row omitted.\n"
+          },
+          "axis": "Coverage",
+          "base": "d7641b284d3daa0e8a7a7232508b444f9990e914",
+          "tip": "2220bf07a832c326e1184acb54419fc11798badb",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -723,3 +786,25 @@ The ticket 03 author ft446-author-03 reported nine witness reds, and each probe 
 9. RS28: with the check call before the retirement, TestReleaseRunsTheRetiredCheck was red.
 
 The author reported one duplicated fixture outside its fence. The new helper in the directory tests repeats two lines of the protection fixture helper.
+
+## RS-C3 review pickup
+
+Unified review by ft446-review-rs-c3 on sonnet at high effort over the pair d7641b2..2220bf0. Raw findings: 1. Repair targets: 1. Repair cycles used: 0 of 2 before the repair below.
+
+### Standards
+
+Findings: 1. Worst issue: RS-C3-S1.
+
+- RS-C3-S1 (auto-fix, confidence 7): the new directory-test helper repeats the retire-then-delete pair of the protection fixture helper. It also repeats the store base and protocol setup. The reviewer returned this item as advice that needs a widen. The orchestrator accepts it as a finding, because the working agreement keeps each fixture harness single-sourced. The fixture file is in the directory of the ticket 03 fence, so the widen takes a plan commit and no stop. The fix is test-only and goes to the fresh repair session ft446-repair-03-r1.
+
+### Spec
+
+Findings: 0. Worst issue: none.
+
+### Coverage
+
+Findings: 0. Worst issue: none.
+
+### Advice
+
+- The unlisted-root subtest fails through the root mode check, not through the directory listing. That listing branch is hard to reach.
