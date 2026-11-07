@@ -47,7 +47,11 @@ const (
 	// backstop retires when upstream bounds those reads itself.
 	WorktreeListTimeout = 15 * time.Second
 	GuardScanTimeout    = 5 * time.Second
-	GateTimeout         = 45 * time.Minute
+	// EvidenceReadyTimeout bounds the release-evidence readiness hold. A run whose observer
+	// never releases the hold refuses after this window instead of waiting without bound. It is
+	// a wall limit, so the owner applies it through FixedWindow.
+	EvidenceReadyTimeout = 30 * time.Second
+	GateTimeout          = 45 * time.Minute
 	// GoTestTimeout is the -timeout of each test binary in a Bench-owned go test command.
 	// GateTimeout bounds the whole gate, which is a different fact.
 	GoTestTimeout = 10 * time.Minute
