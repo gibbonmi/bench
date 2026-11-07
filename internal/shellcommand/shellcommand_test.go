@@ -98,16 +98,51 @@ func TestParseKeepsLinesAfterAQuotedHeredocOperator(t *testing.T) {
 		{"quote open after a real operator", "cat <<X \"\n\" ; git reset --hard\nX"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			stream := Parse(tc.command)
-			for _, command := range stream.Commands {
-				words := ProjectCommandWords(stream.Tokens[command.Start:command.End])
-				if reflect.DeepEqual(words, []string{"git", "reset", "--hard"}) {
-					return
-				}
+			if stream := Parse(tc.command); !hasSimpleCommand(stream, "git", "reset", "--hard") {
+				t.Errorf("Parse(%q) = %#v, want a simple command git reset --hard", tc.command, stream)
 			}
-			t.Errorf("Parse(%q) = %#v, want a simple command git reset --hard", tc.command, stream)
 		})
 	}
+}
+
+// A backslash-newline outside quotes joins two lines into one logical line, so a heredoc
+// body starts after the logical operator line. The line after the continuation is a
+// command, and a guard sees it as one.
+func TestParseJoinsALineContinuationBeforeAHeredocBody(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		command string
+	}{
+		{"operator before the continuation", "cat <<EOF && \\\ngit reset --hard\nhello\nEOF"},
+		{"operator after the continuation", "cat <<EOF \\\n&& git reset --hard\nhello\nEOF"},
+		{"continuation without a heredoc", "true && \\\ngit reset --hard"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if stream := Parse(tc.command); !hasSimpleCommand(stream, "git", "reset", "--hard") {
+				t.Errorf("Parse(%q) = %#v, want a simple command git reset --hard", tc.command, stream)
+			}
+		})
+	}
+}
+
+// The body still starts after the logical operator line, so a body line after a
+// continued operator line stays heredoc data.
+func TestParseStripsTheBodyAfterAContinuedOperatorLine(t *testing.T) {
+	command := "cat <<EOF && \\\ntrue\ngit reset --hard\nEOF"
+	if stream := Parse(command); hasSimpleCommand(stream, "git", "reset", "--hard") {
+		t.Errorf("Parse(%q) = %#v, want no simple command git reset --hard", command, stream)
+	}
+}
+
+// hasSimpleCommand reports whether stream holds a simple command whose projected words
+// are exactly words.
+func hasSimpleCommand(stream Stream, words ...string) bool {
+	for _, command := range stream.Commands {
+		if reflect.DeepEqual(ProjectCommandWords(stream.Tokens[command.Start:command.End]), words) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestProjectCommandWordsDropsRedirectionsAndDescriptors(t *testing.T) {
