@@ -9,34 +9,26 @@ import (
 	"github.com/gibbonmi/bench/internal/guards"
 )
 
+// checkGuardHeaderManifests grades the manifest header of every hook-script guard that
+// guards.HookScripts finds on disk, plus the pre-push hook source. A new hook therefore
+// cannot escape the check.
 func checkGuardHeaderManifests(root string) []string {
+	all := append(guards.HookScripts(root), guards.HookScript{Name: "pre-push", Path: filepath.Join(root, "internal", "adopt", "prepush.sh")})
 	var diags []string
-	for _, guard := range []struct {
-		name string
-		path string
-	}{
-		{"block-dangerous-git", filepath.Join(root, ".bench", "hooks", "block-dangerous-git.sh")},
-		{"block-bench-follow-on", filepath.Join(root, ".bench", "hooks", "block-bench-follow-on.sh")},
-		{"block-unsafe-rg", filepath.Join(root, ".bench", "hooks", "block-unsafe-rg.sh")},
-		{"check-agent-line", filepath.Join(root, ".bench", "hooks", "check-agent-line.sh")},
-		{"stop", filepath.Join(root, ".bench", "hooks", "stop.sh")},
-		{"session-start", filepath.Join(root, ".bench", "hooks", "session-start.sh")},
-		{"worktree-lifecycle", filepath.Join(root, ".bench", "hooks", "worktree-lifecycle.sh")},
-		{"pre-push", filepath.Join(root, "internal", "adopt", "prepush.sh")},
-	} {
-		path := guard.path
+	for _, guard := range all {
+		path := guard.Path
 		if !exists(path) {
 			continue
 		}
 		fields, err := guards.HeaderFields(path)
 		if err != nil {
-			diags = append(diags, fmt.Sprintf("guard %s manifest unreadable", guard.name))
+			diags = append(diags, fmt.Sprintf("guard %s manifest unreadable", guard.Name))
 			continue
 		}
 		for _, key := range fields.MissingRequired() {
-			diags = append(diags, fmt.Sprintf("guard %s manifest missing %s key", guard.name, key))
+			diags = append(diags, fmt.Sprintf("guard %s manifest missing %s key", guard.Name, key))
 		}
-		if guard.name == "session-start" && fields["denies"] != "nothing (informational)" {
+		if guard.Name == "session-start" && fields["denies"] != "nothing (informational)" {
 			diags = append(diags, "session-start is not classified informational (denies: nothing)")
 		}
 	}
@@ -53,5 +45,17 @@ func TestGuardHeaderManifestsCoverTheRgGuard(t *testing.T) {
 
 	if want := "guard block-unsafe-rg manifest missing denies key"; !containsDiagnostic(diags, want) {
 		t.Fatalf("a rg shim without a denies key did not bite with %q:\n%s", want, strings.Join(diags, "\n"))
+	}
+}
+
+// TestGuardHeaderManifestsGradeEveryHookOnDisk proves that the check reads the guard
+// hooks from disk. A hook that no list names, with no manifest header, must red.
+func TestGuardHeaderManifestsGradeEveryHookOnDisk(t *testing.T) {
+	root := throwawayRoot{files: map[string]string{".bench/hooks/unlisted-guard.sh": "#!/usr/bin/env bash\nexit 0\n"}}.build(t)
+
+	diags := checkGuardHeaderManifests(root)
+
+	if want := "guard unlisted-guard manifest missing denies key"; !containsDiagnostic(diags, want) {
+		t.Fatalf("a hook without a manifest header escaped the check, want %q:\n%s", want, strings.Join(diags, "\n"))
 	}
 }

@@ -58,18 +58,34 @@ type ScanResult struct {
 
 var guardScanTimeout = bounds.VerdictWindow(bounds.GuardScanTimeout)
 
-var enumerateGuards = func(ctx context.Context, root string) ([]candidate, error) {
-	var candidates []candidate
+// HookScript is one hook-script guard: Name is its file name without the .sh suffix,
+// and Path is its absolute path.
+type HookScript struct{ Name, Path string }
+
+// HookScripts finds the hook-script guards under root, in directory order: each
+// .bench/hooks entry that is not a directory and has the .sh suffix. This function is
+// the one owner of the selector: guard discovery and the header-manifest conformance
+// check both call it. An unreadable hooks directory gives no guard.
+func HookScripts(root string) []HookScript {
 	hooksDir := filepath.Join(root, ".bench", "hooks")
 	entries, err := os.ReadDir(hooksDir)
-	if err == nil {
-		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), ".sh") {
-				continue
-			}
-			scriptRel := ".bench/hooks/" + e.Name()
-			candidates = append(candidates, candidate{path: filepath.Join(hooksDir, e.Name()), fallback: strings.TrimSuffix(e.Name(), ".sh"), wired: wiredHarnesses(root, scriptRel)})
+	if err != nil {
+		return nil
+	}
+	var scripts []HookScript
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".sh") {
+			scripts = append(scripts, HookScript{Name: strings.TrimSuffix(e.Name(), ".sh"), Path: filepath.Join(hooksDir, e.Name())})
 		}
+	}
+	return scripts
+}
+
+var enumerateGuards = func(ctx context.Context, root string) ([]candidate, error) {
+	var candidates []candidate
+	for _, script := range HookScripts(root) {
+		scriptRel := ".bench/hooks/" + filepath.Base(script.Path)
+		candidates = append(candidates, candidate{path: script.Path, fallback: script.Name, wired: wiredHarnesses(root, scriptRel)})
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
