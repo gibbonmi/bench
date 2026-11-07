@@ -222,7 +222,7 @@ Here, findings that prevent progression are unresolved blockers; retain optional
    Supply the performer, model, effort, and native result. The verb derives the role, the source, and each digest.
 
    `bench record confirmation` writes the coordinator confirmation of a test-only repair.
-   `bench record completion` writes the completion entry after the final verification.
+   `bench record completion` writes the completion entry, and `/bench-final-check` owns the completion order.
    Each test package that a fold brings in adds the final requirement `merged-test:<package>`, which `bench record verification --final` records.
    Each result in the failed, skipped, or pending state stays hand-written, because `bench record` has no form for it.
    A hand-written entry names its performer, role, model, effort, source digest, state, and native result.

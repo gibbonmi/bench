@@ -16,7 +16,12 @@ conformance checks.
 Before spec-backed landing, reconcile every planned acceptance row.
 The review record retains the orchestrator's final `integration-verification` results.
 Each result must name its examined source and terminal outcome.
-Obtain `bench gate --checkpoint <spec-path> --complete` on that source.
+Complete that source in this order:
+
+1. Record each final verification result with `bench record verification --final`.
+2. Write the completion entry with `bench record completion`.
+3. Commit the record, because the checkpoint refuses an uncommitted change.
+   Then obtain `bench gate --checkpoint <spec-path> --complete`.
 
 The landing carries that complete obligation into the prospective gate. The
 gate checks the composed tree against the reviewed source. It permits only

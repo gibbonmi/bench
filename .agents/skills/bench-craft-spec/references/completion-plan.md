@@ -42,7 +42,9 @@ The keys have these meanings:
 - `probe`: A named mutation. The checkpoint then also requires a `bench probe`
   result that bit, with a passed restore. A final requirement can omit it.
 - `final_verification`: The requirements that the `--complete` checkpoint
-  grades. These requirements name no ticket.
+  grades. These requirements name no ticket. Put every package test that
+  names no probe in one `bench test --package ./...` requirement, not in one
+  requirement for each package.
 
 The parser refuses an unknown key, a duplicate key, and an empty
 `final_verification` list. A chunk must not come before a chunk that holds one
