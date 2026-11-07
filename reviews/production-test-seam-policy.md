@@ -952,7 +952,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ts4-review-standards",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9671ab816edde56963125996ffa49a3774f81de7",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:a5031a0c8b28d4f996d617775101c3b141d8a784a7f4a6564f3e3496e0772c69",
+            "excerpt": "Standards: 0 findings. PS49 holds: one port scanner in injectedports, no relocated derivation in the old file. Advice: package presence has two derivations (absentPackage and the package map); the shift fault row repeats the shiftFault row evidence; a stale wrapper comment.\n"
+          },
+          "axis": "Standards",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "3c3ed8110898660bba79ed467c9e2a6e2bf33309",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ts4-review-spec",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9671ab816edde56963125996ffa49a3774f81de7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:dfbc6265ed3e0d8c22d4c7f2d87c0c4a066c64239fcc0cd95c4f9c666287ac9a",
+            "excerpt": "Spec: 1 finding. TS4-P1: the fault-port check covers only the row owner's production calls, against spec line 867; worktree.Fault also enters through Create, recoverAssignmentWithFault, and a joins struct field. The 66-row partition holds; postAcquireContextArm is correctly a producer port.\n"
+          },
+          "axis": "Spec",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "3c3ed8110898660bba79ed467c9e2a6e2bf33309",
+          "finding_ids": [
+            "TS4-P1"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ts4-review-coverage",
+          "performer": "ft343-review-ts4",
+          "role": "independent-review",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "9671ab816edde56963125996ffa49a3774f81de7",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "claude-agent:ft343-review-ts4",
+            "digest": "sha256:72c893388ef2e536459f368f2b0183f72b2b37dc6eb674d4c13dde694100b008",
+            "excerpt": "Coverage: 1 finding. TS4-C1: no fixture has a second production function that receives the port with a non-nil value, so the TS4-P1 bypass stays green. The omission fixtures are independently authored. Sampled 9 of 28 rows: all true.\n"
+          },
+          "axis": "Coverage",
+          "base": "fa17d5a5e5b31cc8b2e32b4abf7ff2a05fb169c3",
+          "tip": "3c3ed8110898660bba79ed467c9e2a6e2bf33309",
+          "finding_ids": [
+            "TS4-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -1209,9 +1274,24 @@ The orchestrator decision for TS3-C1 has two parts. First, an environment set co
 
 Advice for the final verification: record a PS34 readiness omission red through the ship-tier route, if a probe route exists.
 
+TS4 Standards findings: 0. Worst issue: none. PS49 holds.
+
+TS4 Spec findings: 1. Worst issue: TS4-P1.
+
+- TS4-P1, severity 3, confidence 8, auto-fix. The fault-port check covers only the production calls of the row owner, against spec line 867.
+
+TS4 Coverage findings: 1. Worst issue: TS4-C1.
+
+- TS4-C1, severity 3, confidence 8, auto-fix with TS4-P1. No fixture has a second production function that receives a non-nil port value.
+
+The orchestrator also accepts two one-source corrections from the TS4 advice for the same repair. Package presence must have one derivation, and the `shift.fault` row must not repeat the `shiftFault` evidence.
+The record paths belong to the build and to no ticket, as the tree convention states. The reviewer can veto that reading of the fence union.
+
 Repair cycles consumed for TS1: 0 of 2.
 Repair cycles consumed for TS2: 1 of 2 (repair round r1).
 Repair cycles consumed for TS3: 2 of 2 (repair rounds r1 and r2).
+Repair cycles consumed for TS4: 1 of 2 (repair round r1).
+
 The reviewer closed TS3-C2 on 2026-11-06 as an accepted limitation, and the spec states it as a Won't handle line. The r2 diff is discarded, and its recovery ref is kept.
 The TS3 confirming round closes TS3-P1 and TS3-C1, and it opens TS3-C2.
 
