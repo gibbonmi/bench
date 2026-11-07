@@ -14,7 +14,7 @@ Uncoordinated changes can duplicate measurement owners or hide required evidence
 
 ## Solution
 
-One coordinating spec links the two remaining child specs.
+One coordinating spec links the remaining child spec.
 Each child owns its implementation stories, acceptance rows, and ticket graph.
 This document owns their dependencies and reviewer checkpoints.
 It adds no executable orchestration layer and has no implementation tickets.

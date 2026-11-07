@@ -98,14 +98,11 @@ and the small cuts. The rows below hold the rest.
 
 **FT462 (MEDIUM, decision required) — `bench worktree merge --plan` discloses the merge kind and the projected grade, and a tree-neutral fold records a pass.**
 
-**FT482 (MEDIUM, decision required) — a cache release decides when a live, leaked, or dead protected user seals the generation of its HOME.**
+**FT482 (MEDIUM) — a cache release never seals a generation for a live protected user, and a Markdown-only commit starts no background grade.**
 
 **FT483 (LOW) — a stack landing that changes a build input reports the install step, and a test pins that answer.**
 
 **FT484 (MEDIUM, decision required) — `bench test --in` and `bench probe --in` rebuild a stale worktree build once, as `bench commit` does.**
-
-**FT490 (MEDIUM) — a commit of Markdown records only starts no background grade, so a sealed cache never refuses the next lane commit.**
-
 **FT491 (LOW) — an agent stops a leaked or hung process that no live work owns, without a reviewer stop.**
 
 ## Planning, ownership, and review integrity
