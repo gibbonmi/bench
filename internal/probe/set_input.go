@@ -13,6 +13,10 @@ import (
 // maxMutants caps the entries of one mutant set, so one call stays bounded.
 const maxMutants = 64
 
+// mutantsNote is the help note of the mutants file format that readMutantSet decodes, so the
+// help states the format beside the decoder, and the cap comes from maxMutants.
+var mutantsNote = `--mutants <path> reads one strict JSON array of 1 to ` + strconv.Itoa(maxMutants) + ` entries. Each entry is a JSON array of strings: the mutation flags of the single form and an optional --expect <test>, with no <file>. Example: [["--swap","old","--with","new","--expect","TestX"],["--delete"]].`
+
 // entryGrammar parses one mutant-set entry: the shared mutation flags and --expect, with no
 // positional. So an entry means what the same mutation argv means in the single form.
 var entryGrammar = usage.Grammar{

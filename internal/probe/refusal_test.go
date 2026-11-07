@@ -234,13 +234,14 @@ func TestProbeRefusesWhenTheMutationWriteFails(t *testing.T) {
 	requireBaselineOnly(t, f)
 }
 
-// probeHelpNotes is the three facts the help owes, spelled independently of the producer.
+// probeHelpNotes is the four facts the help owes, spelled independently of the producer.
 // A dropped, reworded, or extra note reds this row rather than passing as a fresh
 // expectation.
 var probeHelpNotes = []string{
 	"--package <expr> takes one Go package expression as one argument, so a space-separated list is not split; repeat --package to run several expressions in one call, or use a parent ./... pattern.",
 	"--check <name> names a check from the bench test --help inventory.",
 	"--expect <test> narrows a --package selection with no --run to that test and its subtests, for the baseline and for each mutated run.",
+	`--mutants <path> reads one strict JSON array of 1 to 64 entries. Each entry is a JSON array of strings: the mutation flags of the single form and an optional --expect <test>, with no <file>. Example: [["--swap","old","--with","new","--expect","TestX"],["--delete"]].`,
 }
 
 // PB30, DG4, PS35: every help spelling answers the usage line and then the notes block with
