@@ -752,6 +752,66 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133750,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ft482-03-r1-rename-detection-named-tip",
+          "performer": "ft482-orchestrator",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "session:ft482-orchestrator",
+            "digest": "sha256:20a5294bd771afe3c2f8a4585e378f660a70ef1ec04c86f3eb27ccaa2021ff79",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133750,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dd81eeb08d01f24914e7bdae392a53abcb44be01",
+          "requirement": "rename-detection",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read the change list with rename detection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "session:ft482-orchestrator",
+              "digest": "sha256:20a5294bd771afe3c2f8a4585e378f660a70ef1ec04c86f3eb27ccaa2021ff79",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133750,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft482-03-r1-rename-detection-owed",
+          "performer": "ft482-repair-03-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-repair-03-r1",
+            "digest": "sha256:a04e08752f02fc72d865170b02ba643e62da7586462987f96cb8b093f3f1e88c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,128169,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dd81eeb08d01f24914e7bdae392a53abcb44be01",
+          "requirement": "rename-detection",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read the change list with rename detection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft482-repair-03-r1",
+              "digest": "sha256:a04e08752f02fc72d865170b02ba643e62da7586462987f96cb8b093f3f1e88c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,128169,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -856,10 +916,47 @@
     }
   ],
   "completion": {
-    "state": "pending",
-    "source_digest": "",
-    "performer": "",
-    "reconciliation": {},
+    "state": "completed",
+    "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+    "performer": "ft482-orchestrator",
+    "reconciliation": {
+      "SP1": "covered",
+      "SP10": "covered",
+      "SP11": "covered",
+      "SP12": "covered",
+      "SP13": "covered",
+      "SP14": "covered",
+      "SP15": "covered",
+      "SP16": "covered",
+      "SP17": "covered",
+      "SP18": "covered",
+      "SP19": "covered",
+      "SP2": "covered",
+      "SP20": "covered",
+      "SP21": "covered",
+      "SP22": "covered",
+      "SP23": "covered",
+      "SP24": "covered",
+      "SP25": "covered",
+      "SP26": "covered",
+      "SP27": "covered",
+      "SP28": "covered",
+      "SP29": "covered",
+      "SP3": "covered",
+      "SP30": "covered",
+      "SP31": "covered",
+      "SP32": "covered",
+      "SP33": "covered",
+      "SP34": "covered",
+      "SP35": "covered",
+      "SP36": "covered",
+      "SP4": "covered",
+      "SP5": "covered",
+      "SP6": "covered",
+      "SP7": "covered",
+      "SP8": "covered",
+      "SP9": "covered"
+    },
     "verification": [
       {
         "id": "ft482-final-packages",
@@ -877,6 +974,42 @@
         },
         "requirement": "packages",
         "command": "bench test --package ./...",
+        "exit_code": 0
+      },
+      {
+        "id": "ft482-final-system",
+        "performer": "ft482-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "session:ft482-orchestrator",
+          "digest": "sha256:4265bf7f4de15558ab31b0d212dbeb65e0819572ec8d81323ad0a7c8a6e0d7a0",
+          "excerpt": "bench test --in ft482-seal-policy-build --check system at 9672064877667fb545ce95d85f5887a6f37bb4e8 (clean tree)\ncheck[1]{name,kind,tests_run,subjects}:\n  system,system,290,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/systemtest,pass,57362,290\nfailures[0]{package,test,line,lines}:\nskips[0]{package,test,reason}:\nAn earlier run at e0e004418 with the review record uncommitted failed TestLifecyclePublicationCompatibility/missing_source (\"failed publication changed the repository\"); that test passed alone on the clean tree, and this full run is green.\n"
+        },
+        "requirement": "system",
+        "command": "bench test --check system",
+        "exit_code": 0
+      },
+      {
+        "id": "ft482-final-coverage",
+        "performer": "ft482-orchestrator",
+        "role": "integration-verification",
+        "model": "opus",
+        "effort": "high",
+        "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+        "state": "completed",
+        "outcome": "pass",
+        "native_ref": {
+          "ref": "session:ft482-orchestrator",
+          "digest": "sha256:8d903d18a134e33f7d5e43e4cb2cf7e327dd2531ec2d2fa8c728e37b00f00ef9",
+          "excerpt": "bench coverage --in ft482-seal-policy-build --check specs/seal-policy/spec.md at e0e0044185a6d9a8e11e46754db792f1096d3c16\nok: coverage map valid — 36 row(s)\nNo coverage cell reads planned. SP34, SP35, and SP36 are review-owned; the SP-C1, SP-C2, and SP-C3 Spec axes confirmed each.\n"
+        },
+        "requirement": "coverage",
+        "command": "bench coverage --check specs/seal-policy/spec.md",
         "exit_code": 0
       }
     ]
