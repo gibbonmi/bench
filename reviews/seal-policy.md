@@ -366,3 +366,19 @@ Count: 0 accepted, 1 no-op. Worst issue: none.
 Repair round r1 (ft482-repair-01-r1, opus/high) closed SP-C1-S1 and SP-C1-S2 at 5698f2ebc. SP-C1 used 1 of its 2 repair cycles. The coordinator probe on focusedRun bit with 6 failed tests. The confirming round closed both findings, and Spec and Coverage reaffirmed.
 
 Advice: the env-append pattern near line 305 of `internal/systemtest/process_lifetime_callers_test.go` is outside the SP-C1 delta.
+
+## SP-C2 author witness reds
+
+The ticket 2 author ft482-author-02 observed these witness reds. Each base red came before the production edit, through `bench test --package ./internal/subprocess/protection --run <regex>`. Each mutation red came through `bench probe` on `internal/subprocess/protection/root_linux.go`, and each probe restored its subject.
+
+1. SP11: with the default observer still on `syscall.Kill`, TestReleaseObservationRetiresAZombieUser was red, because the release observation of the zombie user returned protected (`observe_linux_test.go:47`).
+2. SP12: with the default observer still on `syscall.Kill`, TestZombiePendingActorIsReleased was red, because the release observation of the zombie actor returned protected (`observe_linux_test.go:69`).
+3. SP13: with a group rule that read only the leader process, TestZombieLeaderWithALiveMemberIsProtected was red, because the release observation of the live group returned safe (`observe_linux_test.go:80`).
+4. SP14: with a process rule that read only the leader task state, TestProcLiveTaskBesideAZombieLeader was red, because the process counted as absent (`observe_linux_test.go:121`).
+5. SP15: with a parse that split at the first `)`, TestProcStatParsesAHostileCommandName was red, because the sleeping task counted as absent (`observe_linux_test.go:130`).
+6. SP16: with a task read failure that counted as a zombie, TestProcUnreadableStatKeepsPresent was red in its unreadable and malformed task record cases (`observe_linux_test.go:150`).
+7. SP16, the found branch: with a process rule that counted a process with no task as absent, TestProcUnreadableStatKeepsPresent was red in its no-task case (`observe_linux_test.go:150`).
+8. SP17: with a gone member record that kept the group present, TestProcVanishedMemberIsSkipped was red, because the group counted as present (`observe_linux_test.go:168`).
+9. SP33: before the registry held the FT482 Forbid entry, TestTicketSlicingAnchors was red, because the tree with the FT482 row raised no diagnostic (`registry_ticket_passes_test.go:37`). The row deletion came after this red.
+
+SP18, SP19, and SP20 stayed green on their existing tests.

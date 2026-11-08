@@ -9,6 +9,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 ### Cache release beside a live user
 
 - Fixed the last release of a cache hold. The release now grades every user of the cache generation before it seals. When a user is live or the probe cannot decide, the release writes nothing, so a later `bench test` or gate run on the same HOME joins the open generation. When every user is safe, the release seals and retires the generation as before. A generation that `bench cache clean` sealed stays sealed until its users end. Before, a live descendant of a `bench test` run sealed the generation, and each later run on that HOME refused with `the resource generation is sealed`.
+- Fixed the grade of a dead user on Linux. A process whose tasks are all unreaped zombies now counts as absent, and so does a process group whose members are all such processes. A record in `/proc` that the grade cannot read or parse keeps the user protected. Before, signal zero answered for a zombie, so a user whose actor or group was only zombies kept its cache generation protected until the parent reaped it.
 
 ### Commit chain before publication
 

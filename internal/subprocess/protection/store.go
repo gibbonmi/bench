@@ -48,7 +48,7 @@ func (p *Protocol) replace() durablefile.Replacer {
 
 func (p *Protocol) observer() Probe {
 	if p.probe == nil {
-		return syscall.Kill
+		return systemProbe
 	}
 	return p.probe
 }

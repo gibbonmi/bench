@@ -38,6 +38,8 @@ returns the child's exit code.
 
 The lifetime owner and the protection store serve Linux and Darwin. Darwin
 keeps its own process-group policy and gets no Linux parent-death guarantee.
+On Linux, a process whose tasks are all zombies counts as absent, and so does
+a process group whose members are all such processes.
 Native Windows lifetime semantics are out of scope, because the protection
 package does not build for Windows.
 
