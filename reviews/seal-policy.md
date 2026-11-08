@@ -100,3 +100,16 @@
   }
 }
 ```
+
+## SP-C1 author witness reds
+
+The ticket 1 author ft482-author-01 reported these witness reds. Each red came before the production edit, through `bench test --package <package> --run <regex>`:
+
+1. SP1: TestReleaseKeepsALiveUsersGenerationOpen was red on the base code, because the new hold after the release read `the resource generation is sealed` (`internal/gocache/protection_test.go:167`).
+2. SP2 and SP5: with a stub that only called SealAndObserve, TestReleaseObservationLeavesAdmissionOpen and TestReleaseObservationLeavesAdmissionOpenWhenUncertain were red, because Prepare read `the resource generation is sealed` (`recovery_test.go:108` and `:116`).
+3. SP3 and SP4: with a stub that graded no user, TestReleaseObservationNamesTheLiveUser and TestReleaseObservationRetiresASafeGeneration were red on an empty disposition.
+4. SP6: with a stub that reopened admission, TestReleaseObservationKeepsAnEarlierSeal was red, because Prepare returned nil.
+5. SP7: with a stub that removed the users before the seal, TestReleaseObservationSealFailure was red, because the store held no user after the failed seal.
+6. SP10: with the cache retire on SealAndObserve again, TestFocusedTestAfterALeakedDescendant was red, because the second focused run refused with `the resource generation is sealed` (`process_lifetime_callers_test.go:256`).
+
+The two plan probes bit, and each probe reported a restored subject.
