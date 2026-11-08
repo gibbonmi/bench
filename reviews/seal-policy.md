@@ -722,6 +722,36 @@
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,omit,failed,1,TestMarkdownOnlyCommitStartsNoGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commit,all,passed,167\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,518\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,fail,15928,167\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestMarkdownOnlyCommitStartsNoGrade,\"background_test.go:192: launches = [{PID:489656 Args:[gate-background /dev/shm/ESHPJ5/t/TestMarkdownOnlyCommitStartsNoGrade3800789562/003/worktrees/linked work tree a761dc9082a1a4dfe016e8b86bf48c140982dd94]} {PID:489744 Args:[gate-backgroun… (550 bytes)\",1\nskips[0]{package,test,reason}:\n"
             }
           }
+        },
+        {
+          "id": "ft482-03-r1-rename-detection-named",
+          "performer": "ft482-orchestrator",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "session:ft482-orchestrator",
+            "digest": "sha256:20a5294bd771afe3c2f8a4585e378f660a70ef1ec04c86f3eb27ccaa2021ff79",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133750,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "dd81eeb08d01f24914e7bdae392a53abcb44be01",
+          "requirement": "rename-detection",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read the change list with rename detection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "session:ft482-orchestrator",
+              "digest": "sha256:20a5294bd771afe3c2f8a4585e378f660a70ef1ec04c86f3eb27ccaa2021ff79",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,830\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133750,830\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ],
       "reviews": [
@@ -786,6 +816,41 @@
             "SP-C3-C1"
           ],
           "supersedes": []
+        }
+      ],
+      "confirmations": [
+        {
+          "id": "ft482-c3-confirm-r1",
+          "performer": "ft482-orchestrator",
+          "role": "coordinator-confirmation",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "a3bc074fea83dc987a553fcacd57030875017381",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "session:ft482-orchestrator",
+            "digest": "sha256:771d487b8fd0864ace1693a9e08aded2335fa6f9b2e15fae64437f5995ab60c6",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestLeadingTextPathStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLeadingTextPathStartsAGrade,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,330\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,20029,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLeadingTextPathStartsAGrade,\"background_launch_test.go:329: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "base": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "reviewed_tip": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+          "repaired_tip": "dd81eeb08d01f24914e7bdae392a53abcb44be01",
+          "finding_ids": [
+            "SP-C3-C1"
+          ],
+          "supersedes": [],
+          "probe": {
+            "mutation": "read only the last change in the markdownOnly path loop; require TestLeadingTextPathStartsAGrade to fail",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "session:ft482-orchestrator",
+              "digest": "sha256:771d487b8fd0864ace1693a9e08aded2335fa6f9b2e15fae64437f5995ab60c6",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestLeadingTextPathStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,TestLeadingTextPathStartsAGrade,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,330\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,20029,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestLeadingTextPathStartsAGrade,\"background_launch_test.go:329: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
         }
       ]
     }
@@ -993,3 +1058,9 @@ Count: 1 accepted, 1 no-op. Worst issue: SP-C3-C1.
 ## SP-C3 repair r1 witness reds
 
 The repair session ft482-repair-03-r1 added `TestLeadingTextPathStartsAGrade` for SP-C3-C1. Its tip changes `a.txt` and `z.md`, so the text path comes first in the change list. One `bench probe` call on `internal/gate/background_launch.go` changed the `markdownOnly` loop from `range changes` to `range changes[len(changes)-1:]`, so that the loop reads only the last change. With that change, the tip started no lane pass, and the new test was red (`background_launch_test.go:329`). It was the one failed test, and the probe restored its subject.
+
+### SP-C3 repair state
+
+Repair round r1 (ft482-repair-03-r1, opus/medium) closed SP-C3-C1 at dd81eeb08 with the test TestLeadingTextPathStartsAGrade. SP-C3 used 1 of its 2 repair cycles. The coordinator probe on the path loop bit, and the coordinator confirmation closed the finding.
+
+The repair session ran a substitute mutation for the rename-detection plan probe. The orchestrator then ran the named mutation, a rename-detected name list in markdownOnly. That probe bit on TestRenameToMarkdownStartsAGrade alone, and its result replaces the substitute.
