@@ -512,6 +512,72 @@
             "SP-C2-C3"
           ],
           "supersedes": []
+        },
+        {
+          "id": "ft482-c2-coverage-r1",
+          "performer": "ft482-confirm-c2-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6fbdbd9e7c00fa3c879a29dead17e6fef11ce98b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-confirm-c2-coverage",
+            "digest": "sha256:57c5a5f6729856ca03f74378772db3b0189702f2b062cfe9c327b3d2090c192e",
+            "excerpt": "Coverage axis, SP-C2 confirming round, evidence sha256:bc8df8f35e163e9047e76e76ac98410ff5ca9567c7e203d01cc23fb60b255b73 (current, tree clean). Repair delta 1bc4083c0..c2abc657d.\nSP-C2-C1 closed: the no-member row probes group -7 with only pid 9 in group 3; root_linux.go:83 keeps it present; the coordinator probe (return true) bit.\nSP-C2-C2 closed: the member-with-no-task row keeps found false; the || dead mutant is red.\nSP-C2-C3 closed: the short task record \"7 (a) Z\" fails the guard at line 117; the task-as-file row makes ReadDir return ENOTDIR at line 92; each mutant is red.\nNew findings: none. Confidence 8.\n"
+          },
+          "axis": "Coverage",
+          "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "tip": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "finding_ids": [],
+          "supersedes": [
+            "ft482-c2-coverage"
+          ]
+        },
+        {
+          "id": "ft482-c2-spec-r1",
+          "performer": "ft482-confirm-c2-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6fbdbd9e7c00fa3c879a29dead17e6fef11ce98b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-confirm-c2-spec",
+            "digest": "sha256:c8c8dda25eb6a3758385fa60ec97cdc4d00249b28fc1f52f661718970eb17a29",
+            "excerpt": "Spec axis, SP-C2 confirming round, evidence sha256:bc8df8f35e163e9047e76e76ac98410ff5ca9567c7e203d01cc23fb60b255b73 (current, head 34b2cdc1b). Repair delta 1bc4083c0..c2abc657d. Reaffirmed, no new finding.\nThe spec prose at spec.md:93 matches root_linux.go (a pid is absent only when dead and found; a group only when found and no member is present). The plan hunk adds only the repair assignment; no acceptance row changes. The four new rows agree with the spec and the code.\n"
+          },
+          "axis": "Spec",
+          "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "tip": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "finding_ids": [],
+          "supersedes": [
+            "ft482-c2-spec"
+          ]
+        },
+        {
+          "id": "ft482-c2-standards-r1",
+          "performer": "ft482-confirm-c2-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "6fbdbd9e7c00fa3c879a29dead17e6fef11ce98b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-confirm-c2-standards",
+            "digest": "sha256:051e788d8b708d858836f400eebd16eadeec9d52858bc80fad1e356c1b4da110",
+            "excerpt": "Standards axis, SP-C2 confirming round, evidence sha256:bc8df8f35e163e9047e76e76ac98410ff5ca9567c7e203d01cc23fb60b255b73 (current). Repair delta 1bc4083c0..c2abc657d.\nThe four new rows extend the existing table with no second harness; the spec prose is plain STE; the plan entry follows the assignment shape.\nOne prose finding (confidence 6, auto-fix): specs/seal-policy/tickets/2-count-a-zombie-user-as-dead.md:15 still states the old empty-set wording after the spec correction at spec.md:93. Route: a prose-only spec correction in the next plan commit before the ticket 3 dispatch, under the build rule for review prose corrections. No code or test change.\n"
+          },
+          "axis": "Standards",
+          "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "tip": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "finding_ids": [],
+          "supersedes": [
+            "ft482-c2-standards"
+          ]
         }
       ]
     }
@@ -647,3 +713,9 @@ The repair session ft482-repair-02-r1 added four rows to TestProcUnreadableStatK
 2. SP-C2-C2, the member with no task row: with the group rule changed from `found = found || member` to `found = found || member || dead`, the member with no task case was red (`observe_linux_test.go:155`).
 3. SP-C2-C3, the short task record row: with the stat guard changed from `end < 0 || len(fields) < 3` to `end < 0`, the short task record case was red (`observe_linux_test.go:155`).
 4. SP-C2-C3, the unreadable member task directory row: with `return errors.Is(err, fs.ErrNotExist), false` changed to `return true, false`, that case was red (`observe_linux_test.go:155`).
+
+### SP-C2 repair state
+
+Repair round r1 (ft482-repair-02-r1, opus/high) closed SP-C2-C1, SP-C2-C2, and SP-C2-C3 at c2abc657d with test rows only. SP-C2 used 1 of its 2 repair cycles. The coordinator probe on the empty-group branch bit with 2 failed tests. The confirming round was necessary because the spec prose correction for the empty-set reading was in the chunk delta. Coverage closed all three findings, and Spec reaffirmed.
+
+The Standards axis found that ticket 2 still states the old empty-set wording. The next plan commit corrects that ticket prose before the ticket 3 dispatch, as a prose-only spec correction.
