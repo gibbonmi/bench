@@ -566,3 +566,12 @@ Count: 3 accepted. Worst issue: SP-C2-C1.
 - SP-C2-C1 (auto-fix, confidence 8): `internal/subprocess/protection/root_linux.go:83`. No test pins that a group with no member found stays present. A probe that answers absent there is silent. Add a group row whose root holds no member of the group.
 - SP-C2-C2 (auto-fix, confidence 6): `root_linux.go:81`. No group row grades a member that has a stat record and no tasks. Add one group row with such a member.
 - SP-C2-C3 (auto-fix, confidence 5): `root_linux.go:~89` and `~110`. A combined probe of the non-ENOENT task-directory error and the short-record guard is silent. Add a short record such as `7 (a) Z`, and add an unreadable task directory of a group member where the fixture can make one.
+
+## SP-C2 repair r1 witness reds
+
+The repair session ft482-repair-02-r1 added four rows to TestProcUnreadableStatKeepsPresent and observed these witness reds. Each red came through one `bench probe --mutants` call on `internal/subprocess/protection/root_linux.go`, and each probe restored its subject.
+
+1. SP-C2-C1, the no member row: with `return found` changed to `return true`, the no member and member with no task cases were red (`observe_linux_test.go:155`).
+2. SP-C2-C2, the member with no task row: with the group rule changed from `found = found || member` to `found = found || member || dead`, the member with no task case was red (`observe_linux_test.go:155`).
+3. SP-C2-C3, the short task record row: with the stat guard changed from `end < 0 || len(fields) < 3` to `end < 0`, the short task record case was red (`observe_linux_test.go:155`).
+4. SP-C2-C3, the unreadable member task directory row: with `return errors.Is(err, fs.ErrNotExist), false` changed to `return true, false`, that case was red (`observe_linux_test.go:155`).

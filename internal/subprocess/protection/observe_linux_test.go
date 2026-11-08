@@ -132,9 +132,10 @@ func TestProcStatParsesAHostileCommandName(t *testing.T) {
 }
 
 // TestProcUnreadableStatKeepsPresent is SP16. Each tree holds a zombie beside a record that
-// the reader cannot read or parse, or holds no task at all.
+// the reader cannot read or parse, or holds no task or no member at all.
 func TestProcUnreadableStatKeepsPresent(t *testing.T) {
 	zombie := stat(7, "a", "Z", 7)
+	member := stat(8, "a", "Z", 7)
 	for _, tc := range []struct {
 		name    string
 		target  int
@@ -142,8 +143,12 @@ func TestProcUnreadableStatKeepsPresent(t *testing.T) {
 	}{
 		{"unreadable task record", 7, map[string]string{"7/task/7/stat": zombie, "7/task/8/stat/": ""}},
 		{"malformed task record", 7, map[string]string{"7/task/7/stat": zombie, "7/task/8/stat": "8 (a S 1 7"}},
+		{"short task record", 7, map[string]string{"7/task/7/stat": "7 (a) Z"}},
 		{"unreadable member record", -7, map[string]string{"7/stat": zombie, "7/task/7/stat": zombie, "8/stat/": ""}},
+		{"unreadable member task directory", -7, map[string]string{"7/stat": zombie, "7/task": "", "8/stat": member, "8/task/8/stat": member}},
 		{"no task", 7, map[string]string{"7/stat": zombie, "7/task/": ""}},
+		{"member with no task", -7, map[string]string{"7/stat": zombie, "7/task/": ""}},
+		{"no member", -7, map[string]string{"9/stat": stat(9, "b", "Z", 3), "9/task/9/stat": stat(9, "b", "Z", 3)}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if protection.ProcAbsent(procRoot(t, tc.records), tc.target) {
