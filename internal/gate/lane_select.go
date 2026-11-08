@@ -38,7 +38,7 @@ func ComposedChanges(root, base, tree string) ([]ComposedChange, error) {
 func proseSubject(changes []ComposedChange) []string {
 	var paths []string
 	for _, change := range changes {
-		if strings.HasSuffix(change.Path, ".md") && regularFile(change.DstMode) {
+		if prose.IsSubjectName(change.Path) && regularFile(change.DstMode) {
 			paths = append(paths, change.Path)
 		}
 	}
@@ -146,7 +146,7 @@ var laneClasses = append([]PathClass{
 	// Markdown change selects them. The class claims no copy of either check's file list.
 	{
 		Name:   "markdown",
-		Match:  func(path string, _ TreeFacts) bool { return strings.HasSuffix(path, ".md") },
+		Match:  func(path string, _ TreeFacts) bool { return prose.IsSubjectName(path) },
 		Checks: []string{"prose", "docs-currency-workflow", "guidance-prose-budgets"},
 	},
 	{

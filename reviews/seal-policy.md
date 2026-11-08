@@ -719,3 +719,17 @@ The repair session ft482-repair-02-r1 added four rows to TestProcUnreadableStatK
 Repair round r1 (ft482-repair-02-r1, opus/high) closed SP-C2-C1, SP-C2-C2, and SP-C2-C3 at c2abc657d with test rows only. SP-C2 used 1 of its 2 repair cycles. The coordinator probe on the empty-group branch bit with 2 failed tests. The confirming round was necessary because the spec prose correction for the empty-set reading was in the chunk delta. Coverage closed all three findings, and Spec reaffirmed.
 
 The Standards axis found that ticket 2 still states the old empty-set wording. The next plan commit corrects that ticket prose before the ticket 3 dispatch, as a prose-only spec correction.
+
+## SP-C3 author witness reds
+
+The ticket author ft482-author-03 observed these witness reds. The rows SP21, SP24, and SP26 were red on the base launch, before the production edit. Each other red came through one `bench probe` call on `internal/gate/background_launch.go`, and each probe restored its subject.
+
+1. SP21, `TestMarkdownOnlyCommitStartsNoGrade`: on the base launch, the Markdown commit and the next commit each started a lane pass (`background_test.go:187`). The duplicated-facts sweep then merged that helper into `requireOnlyHeadPass`. The `commit-markdown` plan probe shows this red again on the committed test.
+2. SP22, `TestMixedCommitStartsAGrade`: with the Markdown test changed to `!prose.IsSubjectName(change.Path) && false`, the mixed commit started no lane pass (`background_test.go:218`).
+3. SP23, `TestMarkdownOnlyMergeStartsNoGrade`: with ` || markdownOnly(root, tip)` omitted, the base rule, the Markdown merge and the next merge each started a lane pass (`markdown_merge_background_test.go:92`).
+4. SP24, `TestMarkdownDeletionStartsNoGrade`: on the base launch, the deletion tip started a lane pass before the control launch (`background_launch_test.go:250`).
+5. SP25, `TestRenameToMarkdownStartsAGrade`: with each deleted path skipped, so that only the added `notes.md` counts, the rename started no lane pass (`background_launch_test.go:262`).
+6. SP26, `TestQuotedMarkdownPathStartsNoGrade`: on the base launch, the `a "b".md` tip started a lane pass before the control launch (`background_launch_test.go:271`).
+7. SP27, `TestMarkdownBuildInputStartsAGrade`: with the build-input diff read from the tip to the tip, the build-input change started no lane pass (`background_launch_test.go:286`).
+8. SP28, `TestRootCommitStartsAGrade`: with the guard changed to `err == nil && len(changes) == 0`, so that a failed first-parent diff reads as empty, the root commit started no lane pass (`background_launch_test.go:298`).
+9. SP29, `TestUnreadableTipStartsAGrade`: with the same guard change, the tip that names no commit started no lane pass (`background_launch_test.go:306`).
