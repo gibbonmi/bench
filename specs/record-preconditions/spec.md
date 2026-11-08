@@ -164,9 +164,14 @@ Every read ends with the shared `help[N]{cmd,why}:` block that `axi.RenderHelp` 
 
 ### The next action
 
-`bench record next` runs the collector in completion mode at HEAD and takes the first finding that carries a `Repair`.
+`bench record next` selects one checkpoint mode at HEAD.
+If a planned chunk has no covering record entry, it runs the collector in chunk mode on the first such chunk in plan order.
+If the record covers every planned chunk, it runs the collector in completion mode.
+It takes the first finding in checkpoint order, and it never skips a finding.
+A first finding with a `Repair` prints that form's command.
 The command cell is the repair form's usage line with the known values, from the same `suffix(known(...))` composition that a record refusal prints today.
-A first finding with no repair prints `action[0]` and the finding in `preconditions` with the state `fails`.
+A first finding with no `Repair` prints `action[0]` and the finding in `preconditions` with the state `fails`.
+An absent record file prints the `record chunk` command of the first planned chunk, because the chunk write of an absent record starts at the current plan digest.
 A record that owes nothing prints `action[0]` and `preconditions[0]`.
 
 Each precondition row comes from a predicate that the action form's write path calls.
@@ -197,7 +202,8 @@ The dispatcher resolves a relative path against the caller's working directory b
 Before the verb runs, the dispatcher refuses at exit 1 when the path exists, when its parent directory is absent, or when the path holds a control byte.
 After the owner finishes, the dispatcher writes the owner's complete output with `O_EXCL` and `O_NOFOLLOW`, at mode 0644.
 The complete output is the one that the response retention and the spill file hold, from one exported owner accessor.
-When no complete output exists, the dispatcher writes no file, prints a named error after the response, and exits 1.
+When no complete output exists, the dispatcher writes no file and exits 1.
+It then prints `error: incomplete response — --out wrote no file, because the response has no complete copy` after the response.
 A write failure after a zero verb exit also exits 1. A nonzero verb exit stays the verb's exit.
 Stdout keeps its bounded response, so the closed bound-exemption set does not change.
 
@@ -215,9 +221,12 @@ A binding without the field stays valid.
 
 One `intent` helper answers the bound request of an assignment from the ledger. Both landing refusals read it.
 When `readyFor` finds a binding of the owner assignment with another request digest, its unbound error adds one sentence.
-The sentence names the bound token, or it names the bound digest and says that the token is unknown.
+With a token, the sentence is `; the delivery binding of assignment <id> holds the request token <token>`.
+Without a token, the sentence is `; the delivery binding of assignment <id> holds the request digest <digest>, and its token is unknown`.
 The error still wraps `errUnbound`, so the light-path fallback does not change.
-When the unknown-request refusal names one candidate assignment that holds a binding, its detail adds the same sentence. Its route does not change.
+The unknown-request refusal of a landing can name one candidate assignment in its `observed` field.
+When that assignment holds a binding, the landing caller adds the same sentence to the refusal detail. Its route does not change.
+The shared identity component does not change, so the release refusal keeps its text.
 
 The field makes this spec a declared build. Each record verb of the build therefore runs on an installed candidate.
 
@@ -225,9 +234,9 @@ The field makes this spec a declared build. Each record verb of the build theref
 
 | stable chunk ID / tickets | delivered outcome | acceptance rows | tests | harder chunk |
 | --- | --- | --- | --- | --- |
-| RP-C1 / 01-collect-record-findings.md, 02-show-record-status.md | The collector, and `bench record status` with the whole plan and the chunk view | RP1–RP21, RP25 | collector differential, status view, chain list, AXI registry | yes |
-| RP-C2 / 03-print-the-next-record-action.md | `bench record next` with its preconditions | RP22–RP27 | next action and preconditions | no |
-| RP-C3 / 04-name-exclusive-flag-conflicts.md | Named conflicts for each alternation group | RP28–RP32 | conflict refusals | no |
+| RP-C1 / 01-collect-record-findings.md, 02-show-record-status.md | The collector, and `bench record status` with the whole plan and the chunk view | RP1–RP22, RP28 | collector differential, status view, chain list, AXI registry | yes |
+| RP-C2 / 03-print-the-next-record-action.md | `bench record next` with its preconditions | RP23–RP27, RP51, RP52 | next action and preconditions | no |
+| RP-C3 / 04-name-exclusive-flag-conflicts.md | Named conflicts for each alternation group | RP29–RP32 | conflict refusals | no |
 | RP-C4 / 05-write-the-complete-response.md | `--out` on `bench probe` and `bench test` | RP33–RP41 | out file and import round trip | no |
 | RP-C5 / 06-print-every-plan-only-row.md | The full plan-only row table | RP42–RP44 | preflight render | no |
 | RP-C6 / 07-name-the-bound-request-token.md | The persisted bound token and the two landing refusals | RP45–RP50 | ledger, admission, and landing refusals | yes |
@@ -300,6 +309,8 @@ All seams marked planned are future executable evidence. No implementation red i
 | RP25 | 21 | The next chunk action lists the `required base` precondition with the `chunkBase` commit. | planned TestRecordNextListsTheChunkPreconditions in internal/reviewrecord/recordcmd/next_test.go | A verb that prints the action alone prints `preconditions[0]`. |
 | RP26 | 22 | After a plan commit, `bench record next` prints the `record amendment` command and a `fails` plan digest precondition. | planned TestRecordNextPutsTheAmendmentFirst in internal/reviewrecord/recordcmd/next_test.go | A verb that skips `currentPlan` advises the chunk write that refuses on the stale digest. |
 | RP27 | 23 | A record that owes nothing prints `action[0]` and `preconditions[0]` at exit 0. | planned TestRecordNextWithNothingOwed in internal/reviewrecord/recordcmd/next_test.go | A verb that always proposes a form prints a completion command for a completed record. |
+| RP51 | 24 | A first chunk entry with a stale source digest prints `action[0]` and that finding as a `fails` precondition, while the second chunk is unrecorded. | planned TestRecordNextStopsAtAFindingWithNoRepair in internal/reviewrecord/recordcmd/next_test.go | A verb that skips to the first finding with a repair advises the second chunk write, which the checkpoint refuses. |
+| RP52 | 20 | With no record file, `bench record next` prints the `record chunk` command of the first planned chunk. | planned TestRecordNextWithNoRecordNamesTheFirstChunk in internal/reviewrecord/recordcmd/next_test.go | A verb that reads an absent record as an empty plan digest advises the amendment, which refuses on an absent record. |
 | RP28 | 25 | The `record` row declares the approved children `status` and `next`, and the AXI registry, guidance table, and profile list agree. | `bench test --check axi-query-registry` | A registry change without the guidance or profile edit reds the check. |
 | RP29 | 26, 27 | `--excerpt` with `--probe-result` refuses at exit 2 and names both flags. | planned TestRecordConflictNamesExcerptAndProbeResult in internal/reviewrecord/recordcmd/conflict_test.go | The bare usage line holds no `conflicting flags` text. |
 | RP30 | 27 | Verification `--chunk` with `--final` refuses at exit 2 and names both flags. | planned TestRecordConflictNamesChunkAndFinal in internal/reviewrecord/recordcmd/conflict_test.go | A conflict list written for one form misses this group. |
@@ -311,17 +322,17 @@ All seams marked planned are future executable evidence. No implementation red i
 | RP36 | 33 | An existing `--out` path refuses at exit 1 before the verb runs, and the file keeps its bytes. | planned TestOutRefusesAnExistingPath in cmd/bench/out_file_test.go | A write with truncation replaces the planted bytes, and a late check runs the probe first. |
 | RP37 | 34 | A symbolic link at the `--out` path refuses, and the link target keeps its bytes. | planned TestOutRefusesASymlink in cmd/bench/out_file_test.go | A write without `O_NOFOLLOW` writes through the link into the target. |
 | RP38 | 35 | Under `--in <label>`, a relative `--out` path writes the file under the caller's working directory, not in the target tree. | planned TestOutResolvesAgainstTheCallerDirectory in cmd/bench/out_file_test.go | A child that resolves the path in the target tree writes an untracked file there. |
-| RP39 | 36 | When the owner holds no complete output, `--out` writes no file, prints a named error, and exits 1. | planned TestOutRefusesAnIncompleteResponse in cmd/bench/out_file_test.go | A write of the partial bytes leaves a file that looks complete. |
+| RP39 | 36 | When the owner holds no complete output, `--out` writes no file, prints `error: incomplete response`, and exits 1. | planned TestOutRefusesAnIncompleteResponse in cmd/bench/out_file_test.go | A write of the partial bytes leaves a file that looks complete. |
 | RP40 | 37 | The `bench help` rows of `probe` and `test` show `[--out <file>]`, and no other row does. | `cmd/bench/help_inventory_test.go` (`TestHelpInventoryIsComplete`) | A hand-edited help row drifts from the registry field and fails the exact inventory. |
 | RP41 | 30, 31 | The complete output accessor returns the same bytes for retention and for `--out`. | planned TestCompleteOutputHasOneSource in internal/responsebound/owner_test.go | A second accessor that reads only the in-memory lines loses the spilled bytes. |
 | RP42 | 38 | A green plan-only verdict prints a `checks` table with one row per check, green and not-applicable rows included. | planned TestPlanOnlyPrintsEveryRow in internal/preflight/verdict_summary_test.go | The red-only filter prints no table for a green verdict. |
 | RP43 | 39 | A green ordinary build verdict prints only the count line. | `internal/preflight/verdict_summary_test.go` (`TestPreflightGreenSummaryLine`) | A change that removes the filter for every kind prints a table here. |
 | RP44 | 40 | A plan-only verdict exits 0 when green and 1 when a row is red. | `internal/preflight/commitment_test.go` (`TestCommitmentPlanOnly`) | A render change that alters the exit rule breaks the existing exit assertions. |
 | RP45 | 41 | After `bench commitment start --request <token>`, the ledger binding holds `request_token` equal to the token. | planned TestStartKeepsTheRequestToken in internal/commitment/repository/admission_token_test.go | A Start that writes only the digest leaves the field empty. |
-| RP46 | 42 | A landing after a reauthorize to a new token refuses with a sentence that names the original bound token. | planned TestLandingNamesTheBoundToken in internal/commitment/repository/admission_token_test.go | The current unbound text names no token, and the test finds no token needle. |
+| RP46 | 42 | A landing after a reauthorize to a new token refuses with `holds the request token <original token>`. | planned TestLandingNamesTheBoundToken in internal/commitment/repository/admission_token_test.go | The current unbound text names no token, and the test finds no token needle. |
 | RP47 | 42, 46 | The refusal of RP46 still satisfies `errors.Is` with the unbound error. | planned TestBoundTokenSentenceKeepsTheUnboundError in internal/commitment/repository/admission_token_test.go | A new error kind breaks the light-path fallback that reads `errUnbound`. |
-| RP48 | 43 | An unknown-request landing whose one candidate assignment holds a binding names the bound token in its detail. | planned TestUnknownRequestNamesTheBoundToken in internal/worktree/land_reauthorization_test.go | The current detail names only `assignment:<id>`. |
-| RP49 | 44 | A binding with no `request_token` names its request digest and says that the token is unknown. | planned TestLegacyBindingNamesItsDigest in internal/commitment/repository/admission_token_test.go | A refusal that prints an empty token prints no digest. |
+| RP48 | 43 | An unknown-request landing whose one candidate assignment holds a binding names the bound token in its detail. | planned TestUnknownRequestNamesTheBoundToken in internal/worktree/land_reauthorization_test.go | The current detail is `request token matches no assignment`, and only the `observed` field names `assignment:<id>`. |
+| RP49 | 44 | A binding with no `request_token` refuses with `holds the request digest <digest>, and its token is unknown`. | planned TestLegacyBindingNamesItsDigest in internal/commitment/repository/admission_token_test.go | A refusal that prints an empty token prints no digest. |
 | RP50 | 45 | `ValidateCommitment` refuses a binding whose `request_token` digest differs from its `request`. | planned TestBindingTokenMustMatchItsDigest in internal/intent/ledger/commitment_test.go | A validator that checks only line safety accepts the mismatched fixture. |
 
 ### Edge inventory
@@ -342,7 +353,8 @@ All seams marked planned are future executable evidence. No implementation red i
 - TOON field selectors and a record reader by ID — FT125 owns them, and the paged status view serves the reads of this spec.
 - The `bench commit` change set — FT258 owns it, and this spec adds no commit candidate form.
 - A reauthorize that carries the binding to the new request — FT422 owns that binding family, and the refusals of RP46 and RP48 name the bound token instead.
-- A containment rule for the `--out` path inside a tracked tree — the `--to` precedent has none, and RP38 keeps a relative path out of the target tree.
+- A containment rule for the `--out` path inside a tracked tree — the `bench preflight evidence --to <dir>` export has none (internal/chargeevidence/export.go:140-190), and RP38 keeps a relative path out of the target tree.
+- The unknown-request refusal of `bench worktree release` — it shares the identity producer, and the landing caller adds the sentence, so `bench worktree land` keeps the RP48 behavior.
 
 ## Out of scope
 
@@ -361,6 +373,7 @@ These additions go beyond the literal row text. Each one is open to reviewer vet
 3. The unknown-request identity refusal also names the bound token (RP48). The row names one landing refusal, and FT419 reached both sites.
 4. `ValidateCommitment` checks the token against the request digest (RP50).
 5. A failed `--out` write after a zero verb exit changes the exit to 1 (RP39).
+6. The unknown-chunk refusal of the status view names each planned chunk ID (RP21), as the ticket refusal names the chunk tickets (internal/reviewrecord/ticket.go:46).
 
 ### Seams beyond the decision source
 
@@ -369,7 +382,7 @@ These additions go beyond the literal row text. Each one is open to reviewer vet
 | finding collector | internal/reviewrecord/coverage.go:17-173 | Slice B: `checkSource` returns only its first refusal, and no function lists every missing or stale entry. |
 | required base | internal/reviewrecord/ticket.go:174-188 | Slice B: `chunkBase` is the only required-base rule, and `bench record chunk` stores any base. |
 | AXI children | cmd/bench/main.go:117 | Slice A: `record` is a mutation exemption, and a read child needs `axiApprovedChildren`. |
-| RR49 form name | internal/conformance/refusal_route_bypass_test.go:32 | Slice A: recordcmd is scanned, and a bare `next` literal is a route fault. |
+| RR49 form name | internal/conformance/registry/route_bypass.go:24 | Slice A: recordcmd is scanned, and a bare `next` literal is a route fault. |
 | paged read | internal/worktree/related.go:85-96 | Slice C: `PageRead` is the precedent for a complete read-only projection. |
 | `--out` capability | cmd/bench/census_output.go:20-34 | Slice D: the owner holds the complete output that retention reads. |
 | complete accessor | internal/responsebound/owner.go:254-271 | Slice D: `completeOutput` serves retention and is unexported. |
@@ -385,7 +398,7 @@ These additions go beyond the literal row text. Each one is open to reviewer vet
 | A read-only `bench record status` lists the required chunk base. | RP15 |
 | It lists each stale or missing entry. | RP4–RP7, RP17 |
 | It lists each commit that breaks the chain. | RP18–RP20 |
-| A `bench record next` prints the next required record or plan action with its preconditions. | RP23–RP27 |
+| A `bench record next` prints the next required record or plan action with its preconditions. | RP23–RP27, RP51, RP52 |
 | `bench probe` and `bench test` take an `--out` option that writes the complete response. | RP33–RP41 |
 | `bench record status` also prints the plan rows of one chunk. | RP16, RP21 |
 | A record verb that receives two exclusive flags names the conflict. | RP29–RP32 |
@@ -414,3 +427,4 @@ These additions go beyond the literal row text. Each one is open to reviewer vet
 
 Expected repair rounds: 2 for RP-C1, 1 for RP-C6, and 1 for each other chunk / confidence 6.
 The scorecard routes a code ticket that crosses owner seams to xhigh, and RP-C1 and RP-C6 meet that condition.
+Under `craft-line`, a harder chunk keeps the declared effort, and the author of every other chunk runs the declared model at medium effort.
