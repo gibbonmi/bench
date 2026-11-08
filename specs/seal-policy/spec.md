@@ -22,7 +22,7 @@ The last release of a cache hold grades every user before it changes admission. 
 
 On Linux, the protection probe treats a zombie as dead. A process counts as present only when one of its tasks is not a zombie. A group counts as present only when one of its members counts as present. Other systems keep the signal-zero answer.
 
-A commit or a merge in a kit worktree starts no background lane pass when every path that it changes from its first parent is Markdown and it changes no build input.
+A commit or a merge in a kit worktree starts no background lane pass when it changes at least one path from its first parent, every changed path is Markdown, and it changes no build input.
 
 ## User stories
 
@@ -67,7 +67,7 @@ Harder chunks: SP-C1, SP-C2.
 27. As an agent, I want a commit of a Markdown build input to start one lane pass, so that a change to the binary keeps its background grade.
 28. As an agent, I want a root commit to start one lane pass, so that a tip with no first parent keeps the current behavior.
 29. As an agent, I want a tip that git cannot compare to start one lane pass, so that a failed read never drops a needed grade.
-30. As an agent, I want a commit with no change from its first parent to start no lane pass, so that an empty commit cannot queue a second grade of one tree.
+30. As an agent, I want a commit with no change from its first parent to start one lane pass as today, so that the queue keeps its own rule for a tip whose key it already holds.
 31. As an agent, I want a commit or a merge of a non-Markdown path to start one lane pass as before, so that the exemption changes no other commit.
 32. As a reader of `.bench/BENCH-reference.md`, I want the `Background grade` section to state the Markdown-only exemption, so that the reference matches the verbs.
 
@@ -94,15 +94,17 @@ The protocol's default observer (`internal/subprocess/protection/store.go:49-54`
 
 The probe parses the state as the first field after the last `)` of the stat record, and the process group as the third field. A record or a task directory that it cannot read or parse keeps the nil answer, so the user stays protected. An entry that is gone (ENOENT) during the scan decides nothing. The probe never sends a signal other than the one that it received.
 
-The reader takes its proc root as a parameter. Production passes `/proc`. Package tests drive the same reader over a fixture directory, so the hostile parse rows need no package variable and no injected-port row. A build-tagged file gives the other systems the plain `syscall.Kill` probe.
+The reader takes its proc root as a parameter. Production passes `/proc`. Package tests drive the same reader over a fixture directory, so the hostile parse rows need no package variable and no injected-port row. The probe and its reader live in the existing platform files of the package: `root_linux.go` holds the Linux probe, and `root_darwin.go` and `root_other.go` give the other systems the plain `syscall.Kill` probe. The package directory already holds 18 source files against a limit of 12, so SP-C2 adds only the Linux test file `observe_linux_test.go`.
+
+`Registration.Finish` also reads the default observer (`internal/subprocess/protection/registration.go:146`). With the zombie rule, `Finish` adds the group obligation only for a group that has a member that is not a zombie.
 
 `ObserveGroup`, `Classify`, and the lifetime controller keep the signal-zero answer. The controller observes a group only after it reaps the leader (`internal/subprocess/control.go:309-314`). The record schema does not change, so no persisted field joins the record.
 
 ### The Markdown-only exemption
 
-`gate.StartBackground` (`internal/gate/background_launch.go:34-41`) is the one launch of a lane pass, and both callers reach it: `internal/commit/background.go:74-79` and `internal/worktree/merge.go:135-137`. After the existing worktree check, the launch reads `git diff -z --no-renames --name-only <tip>^1 <tip>`. When every listed path is Markdown and `freshness.DiffChangesBuildInputs` answers false, the launch starts no pass and prints nothing. An empty list counts as Markdown-only. A root commit, a tip that git cannot compare, or a diff that git cannot read starts the pass as today.
+`gate.StartBackground` (`internal/gate/background_launch.go:34-41`) is the one launch of a lane pass, and both callers reach it: `internal/commit/background.go:74-79` and `internal/worktree/merge.go:135-137`. After the existing worktree check, the launch reads the change list of `<tip>^1` to `<tip>` through `benchgit.TreeChanges` (`internal/git/tree.go:301`). That helper reads `--raw --no-renames -z`, so each path is its own change and git quotes no path. When the list holds at least one change, every changed path is Markdown, and `freshness.DiffChangesBuildInputs` answers false, the launch starts no pass and prints nothing. An empty list starts the pass as today, and the queue's key rule then decides (BG45). A root commit, a tip that git cannot compare, or a list that `TreeChanges` cannot read starts the pass as today.
 
-"Markdown" has one source: the `markdown` path class of the lane (`internal/gate/lane_select.go:145-150`). Its match moves into one named predicate that the class row and the launch both call. The commit's own outcome line (`background grade: latest …`) still prints before the launch, so the author still sees the latest outcome.
+"Markdown" has one source: `prose.IsSubjectName` (`internal/prose/walk.go:27`), the `.md` rule that the prose grade keys on. The launch calls it. The lane repeats the same suffix test twice today: in `proseSubject` (`internal/gate/lane_select.go:41`) and in the `markdown` path class (`internal/gate/lane_select.go:147-151`). Both change to call `prose.IsSubjectName`. The class keeps its name and its checks, so the rendered profile lane table does not change. The commit's own outcome line (`background grade: latest …`) still prints before the launch, so the author still sees the latest outcome.
 
 A queued or running grade of an older tip of the same worktree stays in the queue after a Markdown-only commit. The exemption only starts no new pass.
 
@@ -129,7 +131,7 @@ The build runs the chunks in table order on one integration source. SP-C2 waits 
 ### Completion plan
 
 ```bench-completion-plan
-{"version":1,"chunks":[{"id":"SP-C1","tickets":["1-grade-before-the-cache-release-seals.md"],"verification":[{"id":"protection","command":"bench test --package ./internal/subprocess/protection"},{"id":"gocache","command":"bench test --package ./internal/gocache"},{"id":"release-seal-order","command":"bench test --package ./internal/gocache","probe":"seal before the grade in the release observation"}]},{"id":"SP-C2","tickets":["2-count-a-zombie-user-as-dead.md"],"verification":[{"id":"protection","command":"bench test --package ./internal/subprocess/protection"},{"id":"zombie-leader-only","command":"bench test --package ./internal/subprocess/protection","probe":"read only the leader task state"}]},{"id":"SP-C3","tickets":["3-start-no-grade-for-a-markdown-only-commit.md"],"verification":[{"id":"gate","command":"bench test --package ./internal/gate"},{"id":"commit","command":"bench test --package ./internal/commit"},{"id":"merge","command":"bench test --package ./internal/worktree"},{"id":"rename-detection","command":"bench test --package ./internal/gate","probe":"read the diff with rename detection"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/seal-policy/spec.md"},{"id":"packages","command":"bench test --package ./..."},{"id":"system","command":"bench test --check system"}]}
+{"version":1,"chunks":[{"id":"SP-C1","tickets":["1-grade-before-the-cache-release-seals.md"],"verification":[{"id":"release-seal-order","command":"bench test --package ./internal/gocache","probe":"seal before the grade in the release observation"},{"id":"protected-release-write","command":"bench test --package ./internal/subprocess/protection","probe":"write admission open on a protected release"}]},{"id":"SP-C2","tickets":["2-count-a-zombie-user-as-dead.md"],"verification":[{"id":"zombie-leader-only","command":"bench test --package ./internal/subprocess/protection","probe":"read only the leader task state"},{"id":"known-issues-row","command":"bench test --package ./internal/anchors","probe":"restore the FT482 known-issues row"}]},{"id":"SP-C3","tickets":["3-start-no-grade-for-a-markdown-only-commit.md"],"verification":[{"id":"rename-detection","command":"bench test --package ./internal/gate","probe":"read the change list with rename detection"},{"id":"commit-markdown","command":"bench test --package ./internal/commit","probe":"start the pass for every Markdown-only tip"}]}],"final_verification":[{"id":"coverage","command":"bench coverage --check specs/seal-policy/spec.md"},{"id":"packages","command":"bench test --package ./..."},{"id":"system","command":"bench test --check system"}]}
 ```
 
 ## Testing decisions
@@ -194,7 +196,7 @@ The build runs the chunks in table order on one integration source. SP-C2 waits 
 | SP27 | 27 | A launch of a tip whose only change is a Markdown file that the auxiliary build-input manifest names starts one pass | planned TestMarkdownBuildInputStartsAGrade in internal/gate/background_launch_test.go | A rule that ignores build inputs skips a binary change |
 | SP28 | 28 | A launch of a root commit that holds only Markdown starts one pass | planned TestRootCommitStartsAGrade in internal/gate/background_launch_test.go | A rule that reads a failed first-parent diff as empty skips the pass |
 | SP29 | 29 | A launch of a tip that names no commit starts one pass | planned TestUnreadableTipStartsAGrade in internal/gate/background_launch_test.go | A rule that reads a failed diff as Markdown-only skips the pass |
-| SP30 | 30 | A launch of an empty commit starts no pass | planned TestEmptyCommitStartsNoGrade in internal/gate/background_launch_test.go | A rule that needs at least one Markdown path starts a pass here |
+| SP30 | 30 | A launch of an empty commit while one grade runs queues one grade | `internal/gate/background_launch_test.go` (`TestSecondGradeStartsNoSecondOracle`) | A rule that reads an empty list as Markdown-only starts no pass, so the queue never holds the second grade |
 | SP31 | 31 | A kit-worktree commit of `tracked.txt` starts one lane pass | `internal/commit/background_test.go` (`TestCommitStartsABackgroundGrade`) | An exemption that skips each commit turns this existing pin red |
 | SP32 | 31 | A non-current merge of a `go.mod` change starts one lane pass | `internal/worktree/merge_background_test.go` (`TestMergeStartsABackgroundGrade`) | An exemption that skips each merge turns this existing pin red |
 | SP33 | 33 | `docs/known-issues.md` holds no row whose retire condition names FT482 | `internal/anchors/registry_ticket_passes_test.go` (`TestTicketSlicingAnchors`) | A new forbidden rule over the row text reds when the row stays |
@@ -206,8 +208,8 @@ The build runs the chunks in table order on one integration source. SP-C2 waits 
 
 The hostile-input checklist of `projects/benchkit.md` applies through these classes:
 
-- The predicate over a `git diff` path list meets each kind: add (SP21), edit (SP22), delete (SP24), and rename (SP25). The read uses `--no-renames` and `-z`, as `freshness.DiffChangesBuildInputs` does (`internal/freshness/freshness_buildinputs.go:132`). `TestDiffChangesBuildInputs` drives a rename and a non-ASCII path through that read (`internal/freshness/decision_test.go:56-57`), and SP25 and SP26 drive the two shapes at the new predicate.
-- Absent versus empty: an absent first parent starts a pass (SP28), and an empty change list starts none (SP30).
+- The predicate over a `git diff` path list meets each kind: add (SP21), edit (SP22), delete (SP24), and rename (SP25). The read goes through `benchgit.TreeChanges`, which uses `--no-renames` and `-z` (`internal/git/tree.go:311`), as `freshness.DiffChangesBuildInputs` does (`internal/freshness/freshness_buildinputs.go:132`). `TestDiffChangesBuildInputs` drives a rename and a non-ASCII path through that read (`internal/freshness/decision_test.go:56-57`), and SP25 and SP26 drive the two shapes at the new predicate.
+- Absent versus empty: an absent first parent starts a pass (SP28), and an empty change list starts a pass (SP30).
 - A path read out of a file: the stat record is resolved by its writer's rule, the last `)` (SP15). An unreadable record is unknown, not absent (SP16).
 - A special file in a discovered path does not apply. The reader opens only `stat` records under the proc root, and the kernel owns those entries.
 - Each fail-closed error has a row: the read failure before the seal keeps the existing return, the seal publish failure has SP7, the unreadable stat record has SP16, and the unreadable diff has SP29.
@@ -236,8 +238,8 @@ Won't handle: a Markdown name in another case, such as `README.MD` — the lane'
 | The release still retires a generation with no live user (the current safe tail). | SP4, SP7 |
 | "The protection owner treats a user as released when its actor and its process group are dead on the current boot." | SP11, SP12, SP13, SP14, SP15, SP16, SP17 |
 | The release policy is a cache release only; other observations stay. | SP8, SP9 |
-| "A commit with no graded build input needs no background grade." | SP21, SP23, SP24, SP25, SP26, SP27, SP30 |
-| The exemption changes no other commit. | SP22, SP28, SP29, SP31, SP32 |
+| "A commit with no graded build input needs no background grade." | SP21, SP23, SP24, SP25, SP26, SP27 |
+| The exemption changes no other commit. | SP22, SP28, SP29, SP30, SP31, SP32 |
 | The known-issues row names FT482 as its retire condition. | SP33 |
 
 The store root is per boot (`internal/subprocess/protection/root.go:21-34`), so a record from an earlier boot is never read. "On the current boot" therefore needs no new check.
@@ -245,7 +247,6 @@ The store root is per boot (`internal/subprocess/protection/root.go:21-34`), so 
 ### Flagged additions
 
 - SP5: a release beside an uncertain user also leaves admission open. The decision names a live protected user. An uncertain grade means that the probe cannot decide, and the release deletes nothing, so a seal buys no safety there. Reviewer veto keeps the seal for SP5.
-- SP30: an empty commit starts no pass. An empty change list holds no graded build input, and its tree keeps the key of its parent.
 - SP26 and SP15 add hostile-input rows that the checklist demands.
 - The zombie rule is Linux-only. The decision names no platform, and ADR 0030 serves Linux and Darwin. Darwin keeps the signal-zero answer, and Out of scope prices Darwin detection. Reviewer veto adds Darwin to SP-C2.
 - Consequence, not an addition: a landing whose last commits are Markdown-only finds no background green for its tip. That landing then runs its own whole gate in the foreground. The whole-gate Markdown checks, such as `prose-mechanics` and `roadmap-detail-integrity`, run there and not in the background. The lane still runs `prose`, `docs-currency-workflow`, and `guidance-prose-budgets` at each commit.
@@ -258,7 +259,8 @@ Each seam beyond the decision source cites one line and one research finding:
 - The release caller is `heldLock.retire` (`internal/gocache/lock.go:172`). The Q1 readers found that a cache-only change there reds none of the shared `ErrSealed` pins.
 - The protection probe replaces the default of `Protocol.observer` (`internal/subprocess/protection/store.go:49-54`). The scratchpad probe on 2026-11-07 showed that a zombie answers present for its pid and its group, and that both answer ESRCH after the reap.
 - The Markdown-only predicate sits in `StartBackground` (`internal/gate/background_launch.go:34`). The Q2 and Q3 readers found that both lane-pass callers reach it and that no start path reads a changed path today.
-- The Markdown path class is the lane's `markdown` row (`internal/gate/lane_select.go:145-150`). The Q3 readers found that this row is the only Markdown classifier that the gate owns.
+- The Markdown rule is `prose.IsSubjectName` (`internal/prose/walk.go:27`). The SP-C3 slicing readers found it, and found that `proseSubject` (`internal/gate/lane_select.go:41`) and the lane's `markdown` row (`internal/gate/lane_select.go:147-151`) repeat its suffix test.
+- The change list is `benchgit.TreeChanges` (`internal/git/tree.go:301`). The SP-C3 slicing reader found that it reads `--raw --no-renames -z` and fails on an unreadable range.
 
 ### Pre-review proof checklist
 
@@ -272,7 +274,7 @@ Each seam beyond the decision source cites one line and one research finding:
 - Pin operators: SP33 uses the anchor harness's forbidden rule, which reds when the needle is present.
 - Entry reads: the proc reader takes its root as a parameter, so no unexported ambient read sits below an entry.
 - Derived expectations: none. Each expectation is a fixture fact.
-- Consolidated rules: the `markdown` path match moves into one predicate that two callers use.
+- Consolidated rules: the lane's `proseSubject` and its `markdown` class drop their own `.md` suffix tests and call `prose.IsSubjectName`, which the launch also calls. Each old rule and the new rule accept the same names, so no acceptance cell changes. The class name and checks stay, so the rendered profile table stays.
 - Quantified obligations: "every user" in the release observation is the users directory of the store; "every task" is `/proc/<pid>/task`; "every member" is each `/proc/<pid>/stat` whose process group matches; "every listed path" is the NUL-separated diff list.
 - Workflow-step writes: none.
 - Anchors: `bench anchors` ran on `.bench/BENCH-reference.md`, `docs/known-issues.md`, and ADR 0030. No anchor pins the `### Background grade` section, the FT482 row, or the ADR text.
