@@ -914,3 +914,7 @@ Count: 1 accepted, 1 no-op. Worst issue: SP-C3-C1.
 
 - SP-C3-C1 (auto-fix, confidence 8): `internal/gate/background_launch.go:143-147`. Each mixed change list in the tests puts the Markdown path first, so a loop that reads only the last change is silent. Add a row with a non-Markdown path first and a Markdown path after it, and expect one pass.
 - SP-C3-C2 (no-op, confidence 5, flagged for reviewer veto): a fast-forward merge can bring a code commit and then a Markdown-only tip. The launch compares that tip with its first parent, so it starts no pass. The fold brings only commits that already passed a gate, and the landing runs its own gate. The spec states the first-parent rule, so a change to the previous tip of the merge is a reviewer decision.
+
+## SP-C3 repair r1 witness reds
+
+The repair session ft482-repair-03-r1 added `TestLeadingTextPathStartsAGrade` for SP-C3-C1. Its tip changes `a.txt` and `z.md`, so the text path comes first in the change list. One `bench probe` call on `internal/gate/background_launch.go` changed the `markdownOnly` loop from `range changes` to `range changes[len(changes)-1:]`, so that the loop reads only the last change. With that change, the tip started no lane pass, and the new test was red (`background_launch_test.go:329`). It was the one failed test, and the probe restored its subject.

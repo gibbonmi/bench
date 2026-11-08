@@ -317,3 +317,14 @@ func TestUnassignedWorktreeStartsNoGrade(t *testing.T) {
 		t.Fatalf("running grade = %+v (%v), launches = %+v; want no grade", queue.Running, err, f.launches.Launched(t))
 	}
 }
+
+// TestLeadingTextPathStartsAGrade holds every change of the list. A tip that changes a.txt and
+// z.md starts one lane pass, because the text path that sorts first is not Markdown.
+func TestLeadingTextPathStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.write(t, "a.txt", "text\n")
+	f.write(t, "z.md", "# Notes\n")
+	tip := f.tip(t)
+	f.launch(t, tip)
+	f.requirePasses(t, tip)
+}
