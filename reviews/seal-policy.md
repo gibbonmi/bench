@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/seal-policy/spec.md",
-  "plan_digest": "sha256:dbcfe96db64f0ed22730bf2af883fb1696813bffcdba233c62695e844403c29e",
+  "plan_digest": "sha256:3c1cee34c7c9a3075fef21a5195d02542c760600dc156ca41e77c174f773dea5",
   "implementation_session": "",
   "chunks": [
     {
@@ -309,9 +309,9 @@
     {
       "id": "SP-C2",
       "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
-      "tip": "1bc4083c06e409ac67ff33b5016e4a6a49f39a5b",
-      "plan_digest": "sha256:dbcfe96db64f0ed22730bf2af883fb1696813bffcdba233c62695e844403c29e",
-      "source_digest": "77a20dabbcac4ef1f232452570fb0afc20844b9b",
+      "tip": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+      "plan_digest": "sha256:3c1cee34c7c9a3075fef21a5195d02542c760600dc156ca41e77c174f773dea5",
+      "source_digest": "6fbdbd9e7c00fa3c879a29dead17e6fef11ce98b",
       "acceptance_rows": [
         "SP11",
         "SP12",
@@ -384,6 +384,66 @@
               "ref": "agent:ft482-author-02",
               "digest": "sha256:a54e7065c7be4effc05a7712c10bac852517baa1e1ae9a6d792fd6d7ebb7c6f8",
               "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,docs/known-issues.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,435\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2342,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cache release seal: the known-issues file kept a row that FT482 retires\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft482-02-r1-zombie-leader-only",
+          "performer": "ft482-repair-02-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6fbdbd9e7c00fa3c879a29dead17e6fef11ce98b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-repair-02-r1",
+            "digest": "sha256:675522a28a111189d8640f2304a4c15e5527c822d32c1f8e7ae6fa0c925f48d6",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/protection/root_linux.go,swap,failed,3,TestProcLiveTaskBesideAZombieLeader,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/protection,all,passed,96\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1135\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,fail,99,96\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestProcLiveTaskBesideAZombieLeader,\"observe_linux_test.go:121: a process with a sleeping task beside its zombie leader counts as absent, want present\",1\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestProcUnreadableStatKeepsPresent/malformed_task_record,\"observe_linux_test.go:155: target 7 counts as absent, want present\",1\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestProcUnreadableStatKeepsPresent/unreadable_task_record,\"observe_linux_test.go:155: target 7 counts as absent, want present\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+          },
+          "source_commit": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "requirement": "zombie-leader-only",
+          "command": "bench test --package ./internal/subprocess/protection",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read only the leader task state",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft482-repair-02-r1",
+              "digest": "sha256:675522a28a111189d8640f2304a4c15e5527c822d32c1f8e7ae6fa0c925f48d6",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/subprocess/protection/root_linux.go,swap,failed,3,TestProcLiveTaskBesideAZombieLeader,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/subprocess/protection,all,passed,96\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,1135\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,fail,99,96\nfailures[3]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestProcLiveTaskBesideAZombieLeader,\"observe_linux_test.go:121: a process with a sleeping task beside its zombie leader counts as absent, want present\",1\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestProcUnreadableStatKeepsPresent/malformed_task_record,\"observe_linux_test.go:155: target 7 counts as absent, want present\",1\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestProcUnreadableStatKeepsPresent/unreadable_task_record,\"observe_linux_test.go:155: target 7 counts as absent, want present\",1\nskips[2]{package,test,reason}:\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/boot_root,\"capability: privilege: only a root user can give a directory another owner\"\n  github.com/gibbonmi/bench/internal/subprocess/protection,TestStoreRootRefusal/other_owner/user_root,\"capability: privilege: only a root user can give a directory another owner\"\n"
+            }
+          }
+        },
+        {
+          "id": "ft482-02-r1-known-issues-row",
+          "performer": "ft482-repair-02-r1",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "high",
+          "source_digest": "6fbdbd9e7c00fa3c879a29dead17e6fef11ce98b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-repair-02-r1",
+            "digest": "sha256:681e0c1aea0a7fe0be17c9e88a2d36676279e8877c2c8e060856c9dc28d1a23f",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,docs/known-issues.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,435\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2355,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cache release seal: the known-issues file kept a row that FT482 retires\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "requirement": "known-issues-row",
+          "command": "bench test --check docs-currency-workflow",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "restore the FT482 known-issues row",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft482-repair-02-r1",
+              "digest": "sha256:681e0c1aea0a7fe0be17c9e88a2d36676279e8877c2c8e060856c9dc28d1a23f",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,docs/known-issues.md,insert,failed,1,TestRootConformance,yes\nselection[1]{form,target,run,baseline,ran}:\n  check,docs-currency-workflow,^TestRootConformance$,passed,1\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,435\ncheck[1]{name,kind,tests_run,subjects}:\n  docs-currency-workflow,conformance,1,0\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/conformance,fail,2355,1\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/conformance,TestRootConformance,\"gate_entry_test.go:30: gate: cache release seal: the known-issues file kept a row that FT482 retires\",1\nskips[0]{package,test,reason}:\n"
             }
           }
         }
@@ -479,6 +539,18 @@
       "chunk_ids": {
         "SP-C1": [
           "SP-C1"
+        ]
+      }
+    },
+    {
+      "from": "sha256:dbcfe96db64f0ed22730bf2af883fb1696813bffcdba233c62695e844403c29e",
+      "to": "sha256:3c1cee34c7c9a3075fef21a5195d02542c760600dc156ca41e77c174f773dea5",
+      "chunk_ids": {
+        "SP-C1": [
+          "SP-C1"
+        ],
+        "SP-C2": [
+          "SP-C2"
         ]
       }
     }
