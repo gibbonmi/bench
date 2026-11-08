@@ -237,6 +237,72 @@
           "tip": "9b21102ef8e2e2970b3bdd4eab12c7108ddc9e00",
           "finding_ids": [],
           "supersedes": []
+        },
+        {
+          "id": "ft482-c1-standards-r1",
+          "performer": "ft482-confirm-c1-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "14177f4d8269826387407edd2d0c969b34829718",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-confirm-c1-standards",
+            "digest": "sha256:ac01ba0a97a52bf831c5e7cc27cc820a1a6bb5cfe9b756612cadc54162409063",
+            "excerpt": "Standards axis, SP-C1 confirming round, evidence sha256:61c93d51f1beb6c825ceea6cd6720e80dbfdb61638add330c533a2d3b45370ed (current, head 61d7a6b8a). Repair delta 9b21102ef..5698f2ebc.\nSP-C1-S1 closed: focusedRun (internal/systemtest/process_lifetime_callers_test.go:202) owns the run body; both tests call it (:235, :256) and keep their assertions.\nSP-C1-S2 closed: the Reopen comment (internal/subprocess/protection/store.go:93-96) states in the present tense why Reopen exists.\nNew findings: none. Advice: the same env-append pattern near line 305 is outside the delta.\n"
+          },
+          "axis": "Standards",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "finding_ids": [],
+          "supersedes": [
+            "ft482-c1-standards-accepted"
+          ]
+        },
+        {
+          "id": "ft482-c1-spec-r1",
+          "performer": "ft482-confirm-c1-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "14177f4d8269826387407edd2d0c969b34829718",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-confirm-c1-spec",
+            "digest": "sha256:2c999d64c743c2dc80663dd33a05c7acd531b7bceb2f24067482f1b3c5792c7a",
+            "excerpt": "Spec axis, SP-C1 confirming round, evidence sha256:61c93d51f1beb6c825ceea6cd6720e80dbfdb61638add330c533a2d3b45370ed (current, tip 61d7a6b8a). Repair delta 9b21102ef..5698f2ebc. Reaffirmed, no new finding.\nSP10: TestFocusedTestAfterALeakedDescendant still runs two bench test calls on one HOME, leaked shape first; focusedRun proves each go test ran; the test fails on ErrSealed text.\nThe Reopen comment (store.go:93-97) agrees with the Implementation decisions \"The release observation\".\n"
+          },
+          "axis": "Spec",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "finding_ids": [],
+          "supersedes": [
+            "ft482-c1-spec"
+          ]
+        },
+        {
+          "id": "ft482-c1-coverage-r1",
+          "performer": "ft482-confirm-c1-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "14177f4d8269826387407edd2d0c969b34829718",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-confirm-c1-coverage",
+            "digest": "sha256:03858b00b45fa8f886efa2aff2092abb0109066c9cab6b2686d9744370b997c3",
+            "excerpt": "Coverage axis, SP-C1 confirming round, evidence sha256:61c93d51f1beb6c825ceea6cd6720e80dbfdb61638add330c533a2d3b45370ed (current, tree clean). Repair delta 9b21102ef..5698f2ebc. Reaffirmed.\nNo lost or weakened assertion: the mark-file check and groupOf moved into focusedRun; the exit-code check, the group checks, the shared HOME, the shape order, and the sealed-generation check stay. The coordinator probe on focusedRun bit (6 failed tests).\nResidual (no-op, confidence 9): the groupOf fatal now fires before the sealed check; ordering only.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "finding_ids": [],
+          "supersedes": [
+            "ft482-c1-coverage"
+          ]
         }
       ]
     }
@@ -294,3 +360,9 @@ Count: 0. Worst issue: none. The axis audited SP1 to SP10 and SP34, and it accep
 Count: 0 accepted, 1 no-op. Worst issue: none.
 
 - SP-C1-C1 (no-op, confidence 4): `internal/subprocess/protection/recovery.go:94-100`. A probe that removes the seal guard is silent. The guard only skips a second durable write of the same sealed state, so no test can observe it.
+
+### SP-C1 repair state
+
+Repair round r1 (ft482-repair-01-r1, opus/high) closed SP-C1-S1 and SP-C1-S2 at 5698f2ebc. SP-C1 used 1 of its 2 repair cycles. The coordinator probe on focusedRun bit with 6 failed tests. The confirming round closed both findings, and Spec and Coverage reaffirmed.
+
+Advice: the env-append pattern near line 305 of `internal/systemtest/process_lifetime_callers_test.go` is outside the SP-C1 delta.
