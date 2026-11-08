@@ -196,6 +196,24 @@ type jsonCase struct {
 	code  int
 }
 
+// focusedRun runs a focused test in fixture whose go child is the JSON shape of shape over body,
+// with env added to the fixture's environment. It returns the result, the merged output, and the
+// group that the go child published.
+func focusedRun(t *testing.T, fixture recordedPublicationRepo, shape preservationShape, body string, env ...string) (processResult, string, int) {
+	t.Helper()
+	dir := t.TempDir()
+	mark := filepath.Join(dir, "group")
+	fakeGo(t, dir, map[string]string{goTestPattern: jsonShapeScript(shape, body, mark)})
+	env = append(append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir()), env...)
+	result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
+	out := result.stdout + result.stderr
+	// The CLI has returned, so a go child that ran has published its group.
+	if _, err := os.Stat(mark); err != nil {
+		t.Fatalf("focused test over %s = (%d, %q), want the go child's run", shape.name, result.code, out)
+	}
+	return result, out, groupOf(t, mark)
+}
+
 // TestProcessLifetimeFocusedDifferential is PL98. The focused run keeps its report of a
 // complete terminal stream, marks a nonzero child red, and refuses malformed and incomplete
 // streams. A surviving descendant gets no normal-exit signal, and its protected group
@@ -214,18 +232,7 @@ func TestProcessLifetimeFocusedDifferential(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.shape.name, func(t *testing.T) {
 			t.Parallel()
-			fixture := scaffoldRecordedPublicationRepo(t)
-			dir := t.TempDir()
-			mark := filepath.Join(dir, "group")
-			fakeGo(t, dir, map[string]string{goTestPattern: jsonShapeScript(c.shape, c.body, mark)})
-			env := append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir())
-			result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
-			out := result.stdout + result.stderr
-			// The CLI has returned, so a go child that ran has published its group.
-			if _, err := os.Stat(mark); err != nil {
-				t.Fatalf("focused test over %s = (%d, %q), want the go child's run", c.shape.name, result.code, out)
-			}
-			pgid := groupOf(t, mark)
+			result, out, pgid := focusedRun(t, scaffoldRecordedPublicationRepo(t), c.shape, c.body)
 			if result.code != c.code || !strings.Contains(out, c.want) {
 				t.Fatalf("focused test over %s = (%d, %q), want %d and %q", c.shape.name, result.code, out, c.code, c.want)
 			}
@@ -243,19 +250,13 @@ func TestFocusedTestAfterALeakedDescendant(t *testing.T) {
 	t.Parallel()
 	pkg := "example.invalid/a"
 	fixture := scaffoldRecordedPublicationRepo(t)
-	home := t.TempDir()
-	for i, shape := range []preservationShape{preservationShapes[2], preservationShapes[0]} {
-		dir := t.TempDir()
-		mark := filepath.Join(dir, "group")
-		fakeGo(t, dir, map[string]string{goTestPattern: jsonShapeScript(shape, goEvents([]string{pkg}, pkg), mark)})
-		env := append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir(), "HOME="+home)
-		result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
-		out := result.stdout + result.stderr
-		// The CLI has returned, so a go child that ran has published its group.
-		if _, err := os.Stat(mark); err != nil || strings.Contains(out, protection.ErrSealed.Error()) {
-			t.Fatalf("focused run %d over %s = (%d, %q), want its go test and no sealed generation", i+1, shape.name, result.code, out)
+	home := "HOME=" + t.TempDir()
+	leaked, clean := preservationShapes[2], preservationShapes[0]
+	for i, shape := range []preservationShape{leaked, clean} {
+		result, out, _ := focusedRun(t, fixture, shape, goEvents([]string{pkg}, pkg), home)
+		if strings.Contains(out, protection.ErrSealed.Error()) {
+			t.Fatalf("focused run %d over %s = (%d, %q), want no sealed generation", i+1, shape.name, result.code, out)
 		}
-		groupOf(t, mark)
 	}
 }
 
