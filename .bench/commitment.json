@@ -1904,6 +1904,18 @@
               "path": "roadmap/FT414.md",
               "identity": "sha256:6497a1cfc88d29bee39ffc30bb7c7654a44d3e26022dc6c237f4ae3e51528eb5"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "record-preconditions",
+                "path": "specs/record-preconditions/spec.md",
+                "identity": "sha256:d0c5187be06faa7d12032b8cacd6acdb3cc7c30647b98971869ba1d0d4a43290"
+              },
+              "obligations": [
+                "FT414"
+              ]
+            }
           ]
         },
         {
