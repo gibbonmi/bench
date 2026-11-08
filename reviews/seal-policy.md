@@ -664,7 +664,70 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft482-c3-standards",
+          "performer": "ft482-review-c3-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f070262a899824ed659c0f2dd82305e5384a1d5b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-review-c3-standards",
+            "digest": "sha256:4782aeb77f8f3f3fac993c81eca272cb42fca24bb8c33177ae8723b0cd278ea1",
+            "excerpt": "Standards axis, SP-C3, evidence sha256:01d31c62e4430e351b4c9b8da8b30f93dbfb9035924d85bec04764d086dc7f37 (current at 122cac222). Pair c2abc657d..cf198b518. Raw count 1, accepted 0.\nAdvice (confidence 5): internal/commit/background_test.go:157-162 (BG5, untouched) repeats the one-HEAD-pass check that the new requireOnlyHeadPass (:197-208) holds. BG5 is outside the ticket 3 acceptance reach, so an edit there would itself be out of reach; honest repetition of a six-line test body.\nClean: prose.IsSubjectName is the one Markdown rule (background_launch.go:68, lane_select.go:41 and :149); the SP23 system test reuses copyKitRepository and the systemtest helpers; the census is derived; comments and STE prose are in order.\n"
+          },
+          "axis": "Standards",
+          "base": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "tip": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft482-c3-spec",
+          "performer": "ft482-review-c3-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f070262a899824ed659c0f2dd82305e5384a1d5b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-review-c3-spec",
+            "digest": "sha256:026e6a00a07c5e7d4cf4af3f2c045b9c3828713027d9c6e5f5653496684e1c3a",
+            "excerpt": "Spec axis, SP-C3, evidence sha256:01d31c62e4430e351b4c9b8da8b30f93dbfb9035924d85bec04764d086dc7f37 (current, head 122cac222). Pair c2abc657d..cf198b518. Accepted 0. Clean verdict confidence 8.\nSP21-SP32 and SP36 hold; every \"Markdown-only exemption\" decision holds in background_launch.go:36-74; SP23's system test observes the row (tip^1..tip is [notes.md], kind merge, recorded passes exactly [next]); the positive control merge of the prose exclusion file is not Markdown.\nAdvice (confidence 3): specs/seal-policy/tickets/3-start-no-grade-for-a-markdown-only-commit.md:21 still asks for a worktree census bump that the SP23 move made unnecessary; the code is right.\n"
+          },
+          "axis": "Spec",
+          "base": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "tip": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft482-c3-coverage",
+          "performer": "ft482-review-c3-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "f070262a899824ed659c0f2dd82305e5384a1d5b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "agent:ft482-review-c3-coverage",
+            "digest": "sha256:e0178146403ae279dad7cb14e27146de30fd6c141d8cd21c9819a42405bd589a",
+            "excerpt": "Coverage axis, SP-C3, evidence sha256:01d31c62e4430e351b4c9b8da8b30f93dbfb9035924d85bec04764d086dc7f37 (current, tree clean). Pair c2abc657d..cf198b518. Raw count 2, accepted 1. Worst SP-C3-C1.\nSP-C3-C1 internal/gate/background_launch.go:143-147 the markdownOnly path loop is tested only with the Markdown path first; probe swap \"for _, change := range changes {\" to \"... range changes[len(changes)-1:] {\" over ./internal/gate and ./internal/commit: silent; confidence 8; auto-fix: one row with a non-Markdown path sorted first and a Markdown path after it, expecting one pass.\nSP-C3-C2 internal/worktree/merge.go:135-137 with background_launch.go:139: a fast-forward merge that brings a code commit and then a Markdown-only tip compares the tip with its first parent and starts no pass; confidence 5; orchestrator disposition no-op, flagged for reviewer veto: the fold brings only commits that already passed a gate, the skipped pass is an optimization, and the spec states the first-parent rule.\nNo gap: the empty-list guard (bit, slow), the err and root paths (SP28, SP29 witnesses), the build-input check (SP27 witness), the positive control of requireNoPass, the proseSubject and lane class rewrites (behavior-identical).\n"
+          },
+          "axis": "Coverage",
+          "base": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+          "tip": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+          "finding_ids": [
+            "SP-C3-C1"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -830,3 +893,24 @@ The ticket author ft482-author-03 observed these witness reds. The rows SP21, SP
 7. SP27, `TestMarkdownBuildInputStartsAGrade`: with the build-input diff read from the tip to the tip, the build-input change started no lane pass (`background_launch_test.go:286`).
 8. SP28, `TestRootCommitStartsAGrade`: with the guard changed to `err == nil && len(changes) == 0`, so that a failed first-parent diff reads as empty, the root commit started no lane pass (`background_launch_test.go:298`).
 9. SP29, `TestUnreadableTipStartsAGrade`: with the same guard change, the tip that names no commit started no lane pass (`background_launch_test.go:306`).
+
+## SP-C3 review
+
+### Standards
+
+Count: 0 accepted. Worst issue: none.
+
+Advice: BG5 at `internal/commit/background_test.go:157-162` repeats the one-HEAD-pass check of the new `requireOnlyHeadPass`. BG5 is outside the ticket 3 acceptance reach.
+
+### Spec
+
+Count: 0 accepted. Worst issue: none. SP21 to SP32 and SP36 hold, and the SP23 system test observes its row.
+
+Advice: ticket 3 still asks for a worktree census bump that the SP23 move made unnecessary. The code is right, and the ticket folder retires with the spec.
+
+### Coverage
+
+Count: 1 accepted, 1 no-op. Worst issue: SP-C3-C1.
+
+- SP-C3-C1 (auto-fix, confidence 8): `internal/gate/background_launch.go:143-147`. Each mixed change list in the tests puts the Markdown path first, so a loop that reads only the last change is silent. Add a row with a non-Markdown path first and a Markdown path after it, and expect one pass.
+- SP-C3-C2 (no-op, confidence 5, flagged for reviewer veto): a fast-forward merge can bring a code commit and then a Markdown-only tip. The launch compares that tip with its first parent, so it starts no pass. The fold brings only commits that already passed a gate, and the landing runs its own gate. The spec states the first-parent rule, so a change to the previous tip of the merge is a reviewer decision.
