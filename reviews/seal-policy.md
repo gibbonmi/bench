@@ -4,7 +4,7 @@
 {
   "version": 2,
   "spec": "specs/seal-policy/spec.md",
-  "plan_digest": "sha256:3c1cee34c7c9a3075fef21a5195d02542c760600dc156ca41e77c174f773dea5",
+  "plan_digest": "sha256:f42ca2b6738429be3ae6004992315b8d2de8611bc1e140f2eefdccb7a262d181",
   "implementation_session": "",
   "chunks": [
     {
@@ -580,6 +580,91 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP-C3",
+      "base": "c2abc657d8eefe515a1a540861945575fcdb6b50",
+      "tip": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+      "plan_digest": "sha256:f42ca2b6738429be3ae6004992315b8d2de8611bc1e140f2eefdccb7a262d181",
+      "source_digest": "f070262a899824ed659c0f2dd82305e5384a1d5b",
+      "acceptance_rows": [
+        "SP21",
+        "SP22",
+        "SP23",
+        "SP24",
+        "SP25",
+        "SP26",
+        "SP27",
+        "SP28",
+        "SP29",
+        "SP30",
+        "SP31",
+        "SP32",
+        "SP36"
+      ],
+      "verification": [
+        {
+          "id": "ft482-03-rename-detection",
+          "performer": "ft482-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f070262a899824ed659c0f2dd82305e5384a1d5b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-author-03",
+            "digest": "sha256:de58a9b1f683550c9b19294878bd3bdedda2559f3300ed80995e11ba0f7b560c",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,829\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133479,829\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+          "requirement": "rename-detection",
+          "command": "bench test --package ./internal/gate",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "read the change list with rename detection",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft482-author-03",
+              "digest": "sha256:de58a9b1f683550c9b19294878bd3bdedda2559f3300ed80995e11ba0f7b560c",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,swap,failed,1,TestRenameToMarkdownStartsAGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/gate,all,passed,829\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,334\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/gate,fail,133479,829\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/gate,TestRenameToMarkdownStartsAGrade,\"background_launch_test.go:262: timeout: waited 20s for the wanted lane passes\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        },
+        {
+          "id": "ft482-03-commit-markdown",
+          "performer": "ft482-author-03",
+          "role": "author-verification",
+          "model": "opus",
+          "effort": "medium",
+          "source_digest": "f070262a899824ed659c0f2dd82305e5384a1d5b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-author-03",
+            "digest": "sha256:fb829e6d3a07af5dd8137e9efff78a7d58a88695457be06bd0f15109c1fdda50",
+            "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,omit,failed,1,TestMarkdownOnlyCommitStartsNoGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commit,all,passed,167\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,518\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,fail,15928,167\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestMarkdownOnlyCommitStartsNoGrade,\"background_test.go:192: launches = [{PID:489656 Args:[gate-background /dev/shm/ESHPJ5/t/TestMarkdownOnlyCommitStartsNoGrade3800789562/003/worktrees/linked work tree a761dc9082a1a4dfe016e8b86bf48c140982dd94]} {PID:489744 Args:[gate-backgroun… (550 bytes)\",1\nskips[0]{package,test,reason}:\n"
+          },
+          "source_commit": "cf198b518e8ca756f65b99eb9f5e124621f85024",
+          "requirement": "commit-markdown",
+          "command": "bench test --package ./internal/commit",
+          "exit_code": 0,
+          "probe": {
+            "mutation": "start the pass for every Markdown-only tip",
+            "outcome": "bit",
+            "exit_code": 1,
+            "restore": "pass",
+            "native_ref": {
+              "ref": "agent:ft482-author-03",
+              "digest": "sha256:fb829e6d3a07af5dd8137e9efff78a7d58a88695457be06bd0f15109c1fdda50",
+              "excerpt": "probe[1]{verdict,subject,mutation,cause,failed_tests,first_failure,restored}:\n  bit,internal/gate/background_launch.go,omit,failed,1,TestMarkdownOnlyCommitStartsNoGrade,yes\nselection[1]{form,target,run,baseline,ran}:\n  package,./internal/commit,all,passed,167\nprobe_execution[1]{schema,command_exit_code,focused_exit_code,trailing_bytes}:\n  bench-probe-result-v2,0,1,518\npackages[1]{package,status,elapsed_ms,tests_run}:\n  github.com/gibbonmi/bench/internal/commit,fail,15928,167\nfailures[1]{package,test,line,lines}:\n  github.com/gibbonmi/bench/internal/commit,TestMarkdownOnlyCommitStartsNoGrade,\"background_test.go:192: launches = [{PID:489656 Args:[gate-background /dev/shm/ESHPJ5/t/TestMarkdownOnlyCommitStartsNoGrade3800789562/003/worktrees/linked work tree a761dc9082a1a4dfe016e8b86bf48c140982dd94]} {PID:489744 Args:[gate-backgroun… (550 bytes)\",1\nskips[0]{package,test,reason}:\n"
+            }
+          }
+        }
+      ],
+      "reviews": []
     }
   ],
   "completion": {
@@ -611,6 +696,18 @@
     {
       "from": "sha256:dbcfe96db64f0ed22730bf2af883fb1696813bffcdba233c62695e844403c29e",
       "to": "sha256:3c1cee34c7c9a3075fef21a5195d02542c760600dc156ca41e77c174f773dea5",
+      "chunk_ids": {
+        "SP-C1": [
+          "SP-C1"
+        ],
+        "SP-C2": [
+          "SP-C2"
+        ]
+      }
+    },
+    {
+      "from": "sha256:3c1cee34c7c9a3075fef21a5195d02542c760600dc156ca41e77c174f773dea5",
+      "to": "sha256:f42ca2b6738429be3ae6004992315b8d2de8611bc1e140f2eefdccb7a262d181",
       "chunk_ids": {
         "SP-C1": [
           "SP-C1"
