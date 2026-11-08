@@ -16,7 +16,7 @@ In `gate.StartBackground` (`internal/gate/background_launch.go:34-41`), after th
 
 An empty list, a root commit, and a list that `TreeChanges` cannot read each start the pass as today. Both callers reach this one launch (`internal/commit/background.go:77`, `internal/worktree/merge.go:137`), so neither caller gets its own copy. Keep `startGrade` in `background_launch.go` under its name, because `internal/conformance/process_lifetime_test.go:53` pins it.
 
-Change `proseSubject` (`internal/gate/lane_select.go:41`) and the match of the lane's `markdown` class (`internal/gate/lane_select.go:147-151`) to call `prose.IsSubjectName`. Keep the class name and its checks, so the rendered profile lane table does not change. Import `internal/freshness` as `benchfreshness`, because the gate package already declares a `freshness` identifier (`internal/gate/verdict.go:25`).
+Change `proseSubject` (`internal/gate/lane_select.go:41`) and the match of the lane's `markdown` class (`internal/gate/lane_select.go:147-151`) to call `prose.IsSubjectName`. Keep the class name and its checks, so the rendered profile lane table does not change. Import `internal/freshness` as `benchfreshness`, as `internal/gate/prospective.go:10` does, because the gate package already declares a `freshness` identifier (`internal/gate/verdict.go:25`).
 
 The new merge test calls `t.Parallel()`, and the worktree package pins its test count exactly (`internal/worktree/parallel_census_test.go:926`), so raise that pin by the number of new top-level tests. Write the launch tests with `newLaunchFixture` and `gittest`, not with `exec.Command`. The SP27 test writes its own minimal module: `go.mod`, a `cmd/bench` main package, and a `scripts/go-build.inputs` line that names the Markdown file.
 

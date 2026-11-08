@@ -6,7 +6,7 @@ Roadmap: FT482
 
 Decision source: `roadmap/FT482.md` (named reviewed artifact), with the reviewer decisions of 2026-11-07 that it records. The reviewer answered one late clarification on 2026-11-07 in the spec-stage conversation: the D2 fix covers the unreaped zombie only.
 
-Verification log: pending.
+Verification log: 3 iteration(s) to accept — the spec round took two iterations, because the retirement prose and the chunk table named two owners; the ticket round accepted in one iteration and folded a same-directory test-export widen.
 
 ## Problem
 
@@ -94,7 +94,7 @@ The protocol's default observer (`internal/subprocess/protection/store.go:49-54`
 
 The probe parses the state as the first field after the last `)` of the stat record, and the process group as the third field. A record or a task directory that it cannot read or parse keeps the nil answer, so the user stays protected. An entry that is gone (ENOENT) during the scan decides nothing. The probe never sends a signal other than the one that it received.
 
-The reader takes its proc root as a parameter. Production passes `/proc`. Package tests drive the same reader over a fixture directory, so the hostile parse rows need no package variable and no injected-port row. The probe and its reader live in the existing platform files of the package: `root_linux.go` holds the Linux probe, and `root_darwin.go` and `root_other.go` give the other systems the plain `syscall.Kill` probe. The package directory already holds 18 source files against a limit of 12, so SP-C2 adds only the Linux test file `observe_linux_test.go`.
+The reader takes its proc root as a parameter. Production passes `/proc`. Package tests drive the same reader over a fixture directory, so the hostile parse rows need no package variable and no injected-port row. The probe and its reader live in the existing platform files of the package: `root_linux.go` holds the Linux probe, and `root_darwin.go` and `root_other.go` give the other systems the plain `syscall.Kill` probe. The package directory is already over its file budget, so SP-C2 adds no production file. It adds two Linux test files: `observe_linux_test.go` in the external test package, and `export_linux_test.go`, which exports the proc reader to that package.
 
 `Registration.Finish` also reads the default observer (`internal/subprocess/protection/registration.go:146`). With the zombie rule, `Finish` adds the group obligation only for a group that has a member that is not a zombie.
 

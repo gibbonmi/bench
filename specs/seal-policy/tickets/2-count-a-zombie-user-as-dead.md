@@ -1,14 +1,16 @@
 # Count a zombie actor and a zombie-only group as dead on Linux
 
 Blocked by: 1-grade-before-the-cache-release-seals.md
-Writes: internal/subprocess/protection/store.go, internal/subprocess/protection/root_linux.go, internal/subprocess/protection/root_darwin.go, internal/subprocess/protection/root_other.go, internal/subprocess/protection/observe.go, internal/subprocess/protection/observe_test.go, internal/subprocess/protection/observe_linux_test.go (new), internal/subprocess/protection/registration.go, internal/subprocess/protection/recovery_test.go, internal/conformance/injected_ports_registry_test.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, docs/known-issues.md, docs/adr/0030-one-lifetime-owner-and-process-user-protection.md, CHANGELOG.md
+Writes: internal/subprocess/protection/store.go, internal/subprocess/protection/root_linux.go, internal/subprocess/protection/root_darwin.go, internal/subprocess/protection/root_other.go, internal/subprocess/protection/observe.go, internal/subprocess/protection/observe_test.go, internal/subprocess/protection/observe_linux_test.go (new), internal/subprocess/protection/export_linux_test.go (new), internal/subprocess/protection/registration.go, internal/subprocess/protection/recovery_test.go, internal/conformance/injected_ports_registry_test.go, internal/anchors/registry_ticket_passes.go, internal/anchors/registry_ticket_passes_test.go, docs/known-issues.md, docs/adr/0030-one-lifetime-owner-and-process-user-protection.md, CHANGELOG.md
 Covers: SP11, SP12, SP13, SP14, SP15, SP16, SP17, SP18, SP19, SP20, SP33, SP35
 
 ## What to build
 
 Review chunk: SP-C2.
 
-Change the default of `Protocol.observer` (`internal/subprocess/protection/store.go:49-54`) from `syscall.Kill` to a protection-owned probe. Put the Linux probe and its proc reader in `root_linux.go`. Give `root_darwin.go` and `root_other.go` the plain `syscall.Kill` probe. Add no other production file, because the package directory already holds 18 source files against a limit of 12.
+Change the default of `Protocol.observer` (`internal/subprocess/protection/store.go:49-54`) from `syscall.Kill` to a protection-owned probe. Put the Linux probe and its proc reader in `root_linux.go`. Give `root_darwin.go` and `root_other.go` the plain `syscall.Kill` probe. Keep the probe in these platform files and add no production file, because the package directory is already over its file budget.
+
+`observe_linux_test.go` is in the external package `protection_test`, so SP11-SP13 use the package fixture (`newProtocol` and `startUser`, `fixture_test.go:41`). SP14-SP17 drive the unexported proc reader through a Linux-only test export in `export_linux_test.go` (`package protection`, tagged by its `_linux` suffix), as `export_test.go:43` exports `SetProbe`.
 
 On Linux, the probe sends the signal first. A non-nil answer returns unchanged. After a nil answer to signal zero for a pid, the reader reads `<root>/<pid>/task/*/stat`, and the pid counts as absent (ESRCH) only when every task that it finds is in state `Z`. After a nil answer to signal zero for a group, the reader scans `<root>/*/stat` for each process whose process group is that group. The group counts as absent only when no member counts as present under the pid rule. The reader parses the state as the first field after the last `)`, and the process group as the third field. A record that it cannot read or parse keeps the nil answer. An entry that is gone (ENOENT) decides nothing. The probe never sends a second signal. The reader takes its root as a parameter; production passes `/proc`.
 
