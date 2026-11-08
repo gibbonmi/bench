@@ -219,11 +219,6 @@ func TestProcessLifetimeFocusedDifferential(t *testing.T) {
 			mark := filepath.Join(dir, "group")
 			fakeGo(t, dir, map[string]string{goTestPattern: jsonShapeScript(c.shape, c.body, mark)})
 			env := append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir())
-			if c.shape.descendant {
-				// The live descendant leaves the build cache generation sealed when its CLI
-				// releases the cache, so the row keeps that cache on a HOME of its own.
-				env = append(env, "HOME="+t.TempDir())
-			}
 			result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
 			out := result.stdout + result.stderr
 			// The CLI has returned, so a go child that ran has published its group.
@@ -238,6 +233,29 @@ func TestProcessLifetimeFocusedDifferential(t *testing.T) {
 				requireGroup(t, pgid, protection.GroupPresent, "go test")
 			}
 		})
+	}
+}
+
+// TestFocusedTestAfterALeakedDescendant is SP10. The go child of a focused run leaks a live
+// descendant, so the cache release of that run grades a protected user and seals nothing. A
+// second focused run on the same HOME then joins the open generation and runs its go test.
+func TestFocusedTestAfterALeakedDescendant(t *testing.T) {
+	t.Parallel()
+	pkg := "example.invalid/a"
+	fixture := scaffoldRecordedPublicationRepo(t)
+	home := t.TempDir()
+	for i, shape := range []preservationShape{preservationShapes[2], preservationShapes[0]} {
+		dir := t.TempDir()
+		mark := filepath.Join(dir, "group")
+		fakeGo(t, dir, map[string]string{goTestPattern: jsonShapeScript(shape, goEvents([]string{pkg}, pkg), mark)})
+		env := append(fixture.environment(fixture.home), toolPath(dir), "TMPDIR="+t.TempDir(), "HOME="+home)
+		result := systemSelected(t, fixture.root, env, "test", "--package", "./...")
+		out := result.stdout + result.stderr
+		// The CLI has returned, so a go child that ran has published its group.
+		if _, err := os.Stat(mark); err != nil || strings.Contains(out, protection.ErrSealed.Error()) {
+			t.Fatalf("focused run %d over %s = (%d, %q), want its go test and no sealed generation", i+1, shape.name, result.code, out)
+		}
+		groupOf(t, mark)
 	}
 }
 

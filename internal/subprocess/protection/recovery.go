@@ -15,6 +15,19 @@ import (
 // absent store names no user in the current boot, so its resource is safe and SealAndObserve
 // runs release without creating the store.
 func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Disposition, error) {
+	return p.observe(d, release, true)
+}
+
+// ObserveRelease is SealAndObserve with the seal after the grade. A protected or uncertain
+// user makes it write no record, so an open generation stays open and a sealed one stays
+// sealed. Only a safe resource seals, runs release, and retires its generation.
+func (p *Protocol) ObserveRelease(d Descriptor, release func() error) (Disposition, error) {
+	return p.observe(d, release, false)
+}
+
+// observe is the one body of both observations. sealFirst closes admission before the grade,
+// and otherwise only a safe grade closes it.
+func (p *Protocol) observe(d Descriptor, release func() error, sealFirst bool) (Disposition, error) {
 	if err := d.check(); err != nil {
 		return uncertain(d, err)
 	}
@@ -33,9 +46,8 @@ func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Dispositi
 	if err != nil {
 		return uncertain(d, err)
 	}
-	if v.resource.Admission == admissionOpen {
-		v.resource.Admission = admissionSealed
-		if err := p.publish(filepath.Join(d.Store, resourceFile), v.resource); err != nil {
+	if sealFirst {
+		if err := p.seal(d, &v.resource); err != nil {
 			return uncertain(d, err)
 		}
 	}
@@ -51,6 +63,9 @@ func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Dispositi
 	}
 	if result.State != Safe {
 		return result, nil
+	}
+	if err := p.seal(d, &v.resource); err != nil {
+		return uncertain(d, err)
 	}
 	if release != nil {
 		if err := release(); err != nil {
@@ -72,6 +87,16 @@ func (p *Protocol) SealAndObserve(d Descriptor, release func() error) (Dispositi
 		return uncertain(d, err)
 	}
 	return result, nil
+}
+
+// seal closes the admission of the open generation r of d durably. A sealed generation stays
+// as it is, so a second seal writes nothing.
+func (p *Protocol) seal(d Descriptor, r *resourceRecord) error {
+	if r.Admission != admissionOpen {
+		return nil
+	}
+	r.Admission = admissionSealed
+	return p.publish(filepath.Join(d.Store, resourceFile), *r)
 }
 
 // Recover applies the same observation to a resource that its owner found on disk. Its

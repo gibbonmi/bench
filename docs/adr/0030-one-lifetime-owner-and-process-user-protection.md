@@ -23,7 +23,9 @@ counts as a user.
 
 Removal of a protected resource needs proof that every registered user is
 resolved. One safe removal seals the store, observes every user, removes the
-resource, and then deletes its store. An absent store names no user in the
+resource, and then deletes its store. The last release of a cache hold grades
+every user first, and it seals and retires the generation only when every
+user is safe. An absent store names no user in the
 current boot. An unreadable store or store root retains the resource. Builds,
 kit tests, caches, prospective bundles, release evidence, worktrees and shift
 scratch use this one protocol.

@@ -90,9 +90,10 @@ func (p *Protocol) OpenResource(d Descriptor) (Descriptor, error) {
 	return opened, err
 }
 
-// Reopen is OpenResource for an owner whose earlier release can leave its generation sealed.
-// A refused release, reuse, removal, or clean leaves the generation sealed. Recovery retires
-// it once every user resolves, and then Reopen opens a fresh generation.
+// Reopen is OpenResource for an owner whose generation another observation can leave sealed.
+// A refused owner release, reuse, removal, or clean leaves the generation sealed, and a refused
+// cache release leaves it as it was. Recovery retires a sealed generation once every user
+// resolves, and then Reopen opens a fresh generation.
 func (p *Protocol) Reopen(d Descriptor) (Descriptor, error) {
 	opened, err := p.OpenResource(d)
 	if errors.Is(err, ErrSealed) {

@@ -173,6 +173,14 @@ func observe(t *testing.T, p *protection.Protocol, d protection.Descriptor) (pro
 	return disposition, released
 }
 
+// observeRelease runs the release observation of d, and it reports whether release ran.
+func observeRelease(t *testing.T, p *protection.Protocol, d protection.Descriptor) (protection.Disposition, bool, error) {
+	t.Helper()
+	released := false
+	disposition, err := p.ObserveRelease(d, func() error { released = true; return nil })
+	return disposition, released, err
+}
+
 // requireRetained fails unless sealing d keeps the resource and runs no release.
 func requireRetained(t *testing.T, p *protection.Protocol, d protection.Descriptor) protection.Disposition {
 	t.Helper()

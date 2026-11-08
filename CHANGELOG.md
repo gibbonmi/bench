@@ -6,6 +6,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Cache release beside a live user
+
+- Fixed the last release of a cache hold. The release now grades every user of the cache generation before it seals. When a user is live or the probe cannot decide, the release writes nothing, so a later `bench test` or gate run on the same HOME joins the open generation. When every user is safe, the release seals and retires the generation as before. A generation that `bench cache clean` sealed stays sealed until its users end. Before, a live descendant of a `bench test` run sealed the generation, and each later run on that HOME refused with `the resource generation is sealed`.
+
 ### Commit chain before publication
 
 - Changed `bench commit --preflight-build <slug> [--base <commit>]`. The chain steps now run before publication. The commit writes the candidate commit. Then it runs `bench worktree build` and the build preflight at that candidate commit. Only a green chain moves the branch ref. A root without Bench build inputs skips the build step, and the chain line shows `build=skipped`. A red build or a red preflight publishes nothing: the commit exits 1 with the `commit-chain-red` refusal, and the chain line names no commit.
