@@ -98,8 +98,6 @@ and the small cuts. The rows below hold the rest.
 
 **FT462 (MEDIUM, decision required) — `bench worktree merge --plan` discloses the merge kind and the projected grade, and a tree-neutral fold records a pass.**
 
-**FT482 (MEDIUM) — a cache release never seals a generation for a live protected user, and a Markdown-only commit starts no background grade.**
-
 **FT483 (LOW) — a stack landing that changes a build input reports the install step, and a test pins that answer.**
 
 **FT484 (MEDIUM, decision required) — `bench test --in` and `bench probe --in` rebuild a stale worktree build once, as `bench commit` does.**
@@ -363,10 +361,9 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. FT482-seal-policy
-2. FT414-preconditions
-3. FT369-charge-slicing
-4. FT365-conformance
-5. FT341-in-only
-6. FT420-concurrent-chunks
-7. FT387-overflow
+1. FT414-preconditions
+2. FT369-charge-slicing
+3. FT365-conformance
+4. FT341-in-only
+5. FT420-concurrent-chunks
+6. FT387-overflow

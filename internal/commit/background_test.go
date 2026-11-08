@@ -162,6 +162,64 @@ func TestCommitStartsABackgroundGrade(t *testing.T) {
 	}
 }
 
+// markdownBody is the body of the Markdown file that a commit test writes. It is clean prose,
+// so the lane passes it.
+const markdownBody = "# Notes\n\nThis file holds notes.\n"
+
+// requireChanges fails t unless the tip of root changes exactly paths against its first parent.
+func requireChanges(t *testing.T, root string, paths ...string) {
+	t.Helper()
+	if got := strings.Fields(gittest.Output(t, root, "diff", "--name-only", "HEAD^1", "HEAD")); !slices.Equal(got, paths) {
+		t.Fatalf("tip changes %q, want %q", got, paths)
+	}
+}
+
+// TestMarkdownOnlyCommitStartsNoGrade is SP21. A kit-worktree commit whose only change is one
+// Markdown file starts no lane pass.
+func TestMarkdownOnlyCommitStartsNoGrade(t *testing.T) {
+	f := newLaunchFixture(t, passingCheck)
+	f.asKit(t)
+	mustWrite(t, filepath.Join(f.root, "notes.md"), markdownBody, 0o644)
+	if code, stdout, stderr := runCommand(t, f.root, "-m", "m", "notes.md"); code != 0 {
+		t.Fatalf("commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
+	}
+	requireChanges(t, f.root, "notes.md")
+	// The next commit, of tracked.txt, starts one pass, so a pass of the Markdown commit, which
+	// started first, is in the record when the test reads it.
+	if code, stdout, stderr := runCommand(t, f.root, "-m", "next", "tracked.txt"); code != 0 {
+		t.Fatalf("next commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
+	}
+	f.requireOnlyHeadPass(t)
+}
+
+// requireOnlyHeadPass waits for the lane pass of the HEAD tip of the fixture, ends the
+// stand-ins, and fails t unless that pass is the only one that started.
+func (f launchFixture) requireOnlyHeadPass(t *testing.T) {
+	t.Helper()
+	want := []string{f.root, head(t, f.root)}
+	passOf := func(launch processtest.Launch) bool {
+		return len(launch.Args) == 3 && slices.Equal(launch.Args[1:], want)
+	}
+	processtest.WaitFor(t, "the lane pass of the HEAD tip", func() bool { return slices.ContainsFunc(f.launches.Launched(t), passOf) })
+	f.launches.End(t)
+	if got := f.launches.Launched(t); len(got) != 1 || !passOf(got[0]) {
+		t.Fatalf("launches = %+v, want only the lane pass of %q", got, want)
+	}
+}
+
+// TestMixedCommitStartsAGrade is SP22. A kit-worktree commit of one Markdown file and one text
+// file starts one lane pass of its tip.
+func TestMixedCommitStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, passingCheck)
+	f.asKit(t)
+	mustWrite(t, filepath.Join(f.root, "notes.md"), markdownBody, 0o644)
+	if code, stdout, stderr := runCommand(t, f.root, "-m", "m", "notes.md", "tracked.txt"); code != 0 {
+		t.Fatalf("commit = (%d, %q, %q), want exit 0", code, stdout, stderr)
+	}
+	requireChanges(t, f.root, "notes.md", "tracked.txt")
+	f.requireOnlyHeadPass(t)
+}
+
 // TestLinkedRepoCommitStartsNoGrade is BG7. The kit of a linked repository is not the worktree,
 // so a commit that publishes there starts no grade.
 func TestLinkedRepoCommitStartsNoGrade(t *testing.T) {

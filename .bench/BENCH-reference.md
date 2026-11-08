@@ -784,9 +784,12 @@ the `.logs/gate-<run>.jsonl` progress log, under the same twenty-run retention.
 ### Background grade
 
 In a kit worktree, each lane pass of `bench commit` or `bench worktree merge` detaches one
-background pass. That pass runs through the wrapper of the target worktree, and it computes the
-grade key of its tip. That key is the key of the chunk subject of an open build, or the key of
-the landing subject. The pass queues no grade when one of these already holds that key:
+background pass. A commit or a merge whose tip changes only Markdown files against its first
+parent, and changes no Bench build input, starts no background pass. A root commit and an empty
+change still start one. A background pass runs through the wrapper of the target worktree, and
+it computes the grade key of its tip. That key is the key of the chunk subject of an open build,
+or the key of the landing subject. The pass queues no grade when one of these already holds that
+key:
 
 - a fresh green
 - a live claim

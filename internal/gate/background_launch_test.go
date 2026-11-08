@@ -14,6 +14,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/commitment/commitmenttest"
 	"github.com/gibbonmi/bench/internal/durablefile"
+	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	"github.com/gibbonmi/bench/internal/gittest"
 	"github.com/gibbonmi/bench/internal/subprocess/processtest"
@@ -188,6 +189,123 @@ func requireStoppedRecord(t *testing.T, h queueWorktree) {
 	}
 }
 
+// write writes body at name in the checkout of the fixture and stages it.
+func (f launchFixture) write(t *testing.T, name, body string) {
+	t.Helper()
+	path := filepath.Join(f.root, filepath.FromSlash(name))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gittest.Output(t, f.root, "add", "--", name)
+}
+
+// tip commits the staged change of the fixture and answers the new tip.
+func (f launchFixture) tip(t *testing.T) string {
+	t.Helper()
+	gittest.Output(t, f.root, "commit", "-qm", "change")
+	return gittest.Output(t, f.root, "rev-parse", "HEAD")
+}
+
+// requirePasses waits until a lane pass of each tip of want has started, ends the stand-ins,
+// and fails t unless the started passes are exactly those of want, in order.
+func (f launchFixture) requirePasses(t *testing.T, want ...string) {
+	t.Helper()
+	tips := func() []string {
+		var tips []string
+		for _, launch := range f.launches.Launched(t) {
+			tips = append(tips, launch.Args[len(launch.Args)-1])
+		}
+		return tips
+	}
+	processtest.WaitFor(t, "the wanted lane passes", func() bool {
+		got := tips()
+		return !slices.ContainsFunc(want, func(tip string) bool { return !slices.Contains(got, tip) })
+	})
+	f.launches.End(t)
+	if got := tips(); !slices.Equal(got, want) {
+		t.Fatalf("lane passes of %q, want %q", got, want)
+	}
+}
+
+// requireNoPass fails t if the launch before it started a lane pass. The later launch of a tip
+// that names no commit starts one pass, and the test waits for it, so a pass of the earlier
+// launch, which started first, is in the record too.
+func (f launchFixture) requireNoPass(t *testing.T) {
+	t.Helper()
+	f.launch(t, "tip")
+	f.requirePasses(t, "tip")
+}
+
+// TestMarkdownDeletionStartsNoGrade is SP24. A tip that only deletes a Markdown file starts no
+// lane pass, because the deleted path is Markdown too.
+func TestMarkdownDeletionStartsNoGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.write(t, "notes.md", "# Notes\n")
+	f.tip(t)
+	gittest.Output(t, f.root, "rm", "-q", "notes.md")
+	f.launch(t, f.tip(t))
+	f.requireNoPass(t)
+}
+
+// TestRenameToMarkdownStartsAGrade is SP25. A tip that renames notes.txt to notes.md starts
+// one lane pass, because the change list names the old text path as well as the new one.
+func TestRenameToMarkdownStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.write(t, "notes.txt", "notes\n")
+	f.tip(t)
+	gittest.Output(t, f.root, "mv", "notes.txt", "notes.md")
+	tip := f.tip(t)
+	f.launch(t, tip)
+	f.requirePasses(t, tip)
+}
+
+// TestQuotedMarkdownPathStartsNoGrade is SP26. A tip whose only change is a Markdown file whose
+// name holds a double quote starts no lane pass, because the change list keeps each path byte.
+func TestQuotedMarkdownPathStartsNoGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.write(t, `a "b".md`, "# Notes\n")
+	f.launch(t, f.tip(t))
+	f.requireNoPass(t)
+}
+
+// TestMarkdownBuildInputStartsAGrade is SP27. A tip whose only change is a Markdown file that
+// the auxiliary build-input manifest names starts one lane pass, because it changes the build.
+func TestMarkdownBuildInputStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.write(t, "go.mod", "module fixture\n\ngo 1.22\n")
+	f.write(t, "cmd/bench/main.go", "package main\n\nfunc main() {}\n")
+	f.write(t, benchfreshness.BuildInputsManifest, benchfreshness.BuildInputLine("notes", "notes.md"))
+	f.write(t, "notes.md", "# Notes\n")
+	f.tip(t)
+	f.write(t, "notes.md", "# Notes\n\nA build input.\n")
+	tip := f.tip(t)
+	f.launch(t, tip)
+	f.requirePasses(t, tip)
+}
+
+// TestRootCommitStartsAGrade is SP28. A root commit that holds only Markdown has no first
+// parent to compare, so it starts one lane pass.
+func TestRootCommitStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	gittest.Output(t, f.root, "checkout", "-q", "--orphan", "root")
+	gittest.Output(t, f.root, "rm", "-rq", "--cached", ".")
+	f.write(t, "notes.md", "# Notes\n")
+	tip := f.tip(t)
+	f.launch(t, tip)
+	f.requirePasses(t, tip)
+}
+
+// TestUnreadableTipStartsAGrade is SP29. A tip that names no commit has no change list that
+// reads, so it starts one lane pass.
+func TestUnreadableTipStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.launch(t, "tip")
+	f.requirePasses(t, "tip")
+}
+
 // TestUnassignedWorktreeStartsNoGrade holds the assignment predicate of the launch. A kit
 // checkout that no active assignment owns starts no grade and takes no slot.
 func TestUnassignedWorktreeStartsNoGrade(t *testing.T) {
@@ -198,4 +316,15 @@ func TestUnassignedWorktreeStartsNoGrade(t *testing.T) {
 	if err != nil || queue.Running != nil || len(f.launches.Launched(t)) != 0 {
 		t.Fatalf("running grade = %+v (%v), launches = %+v; want no grade", queue.Running, err, f.launches.Launched(t))
 	}
+}
+
+// TestLeadingTextPathStartsAGrade holds every change of the list. A tip that changes a.txt and
+// z.md starts one lane pass, because the text path that sorts first is not Markdown.
+func TestLeadingTextPathStartsAGrade(t *testing.T) {
+	f := newLaunchFixture(t, true)
+	f.write(t, "a.txt", "text\n")
+	f.write(t, "z.md", "# Notes\n")
+	tip := f.tip(t)
+	f.launch(t, tip)
+	f.requirePasses(t, tip)
 }

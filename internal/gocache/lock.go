@@ -154,8 +154,9 @@ func (h *Holder) Release() error {
 	return errors.Join(retireErr, err)
 }
 
-// retire seals the protected generation before the shared lock drops, when no other process
-// holds the cache. A safe generation clears, and an unresolved user stays recorded and sealed.
+// retire grades every user of the protected generation before the shared lock drops, when no
+// other process holds the cache. Only a safe generation seals and clears. An unresolved user
+// stays recorded, and the generation stays as it was, so a later hold still joins an open one.
 // After its own retirement, it deletes each retired cache store whose cache is gone. A
 // contended conversion keeps the generation open for the other holders and deletes no store.
 func (e *heldLock) retire() error {
@@ -169,7 +170,7 @@ func (e *heldLock) retire() error {
 		}
 		return err
 	}
-	if _, err := e.protocol.SealAndObserve(e.resource, nil); err != nil {
+	if _, err := e.protocol.ObserveRelease(e.resource, nil); err != nil {
 		return err
 	}
 	return discardRetiredCaches(e.protocol.ReadLimit)

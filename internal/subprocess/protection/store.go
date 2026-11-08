@@ -48,7 +48,7 @@ func (p *Protocol) replace() durablefile.Replacer {
 
 func (p *Protocol) observer() Probe {
 	if p.probe == nil {
-		return syscall.Kill
+		return systemProbe
 	}
 	return p.probe
 }
@@ -90,9 +90,11 @@ func (p *Protocol) OpenResource(d Descriptor) (Descriptor, error) {
 	return opened, err
 }
 
-// Reopen is OpenResource for an owner whose earlier release can leave its generation sealed.
-// A refused release, reuse, removal, or clean leaves the generation sealed. Recovery retires
-// it once every user resolves, and then Reopen opens a fresh generation.
+// Reopen is OpenResource for a store whose generation can be sealed. An owner release, a reuse,
+// a removal, or a clean seals the generation before it grades the users, so a refused one
+// leaves the generation sealed, and OpenResource refuses a sealed generation. Reopen recovers
+// the store, which retires the sealed generation when every user is safe, and then opens a
+// fresh generation.
 func (p *Protocol) Reopen(d Descriptor) (Descriptor, error) {
 	opened, err := p.OpenResource(d)
 	if errors.Is(err, ErrSealed) {

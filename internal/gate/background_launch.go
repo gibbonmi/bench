@@ -18,10 +18,12 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/durablefile"
+	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate/backgroundstate"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/landing/published"
+	"github.com/gibbonmi/bench/internal/prose"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -31,8 +33,9 @@ import (
 // derives no grade key, takes no queue lock, and stops no grade. The pass runs as the executable
 // that the wrapper resolves, so its key is the key of the grade. The publication stands whatever
 // the launch does, so a launch that fails prints one line to stderr and the verb keeps its exit.
+// A tip that changes only Markdown starts no pass, as markdownOnly states.
 func StartBackground(home, kit, root, tip string, stderr io.Writer) {
-	if !backgroundWorktree(kit, root) {
+	if !backgroundWorktree(kit, root) || markdownOnly(root, tip) {
 		return
 	}
 	if _, err := startGrade(root, tip, backgroundPassEnv+"="+home); err != nil {
@@ -50,6 +53,23 @@ func backgroundWorktree(kit, root string) bool {
 	}
 	_, assigned := intent.AssignmentForWorktree(root)
 	return assigned
+}
+
+// markdownOnly reports whether tip, a commit in root, needs no lane pass: its change list
+// against its first parent holds at least one change, the prose rule names every changed path,
+// and the change touches no Bench build input. A root commit, a tip that git cannot compare, an
+// unreadable change list, and an empty change list each answer false, so the pass starts.
+func markdownOnly(root, tip string) bool {
+	changes, err := benchgit.TreeChanges(root, tip+"^1", tip)
+	if err != nil || len(changes) == 0 {
+		return false
+	}
+	for _, change := range changes {
+		if !prose.IsSubjectName(change.Path) {
+			return false
+		}
+	}
+	return !benchfreshness.DiffChangesBuildInputs(root, tip+"^1", tip)
 }
 
 // passLane applies the lane pass of tip in root to the queue under home. The pass queues nothing

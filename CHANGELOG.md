@@ -6,6 +6,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ## [Unreleased]
 
+### Cache release beside a live user
+
+- Fixed the last release of a cache hold. The release now grades every user of the cache generation before it seals. When a user is live or the probe cannot decide, the release writes nothing, so a later `bench test` or gate run on the same HOME joins the open generation. When every user is safe, the release seals and retires the generation as before. A generation that `bench cache clean` sealed stays sealed until its users end. Before, a live descendant of a `bench test` run sealed the generation, and each later run on that HOME refused with `the resource generation is sealed`.
+- Changed `bench commit` and `bench worktree merge` in a kit worktree. A published tip whose changes against its first parent are all Markdown files, and that changes no Bench build input, starts no background lane pass. A root commit, an empty change, and a change list that does not read still start the pass. A queued or running grade of an older tip stays in the queue. Before, each published tip started a lane pass, and its grade could hold the cache.
+- Fixed the grade of a dead user on Linux. A process whose tasks are all unreaped zombies now counts as absent, and so does a process group whose members are all such processes. A record in `/proc` that the grade cannot read or parse keeps the user protected. Before, signal zero answered for a zombie, so a user whose actor or group was only zombies kept its cache generation protected until the parent reaped it.
+
 ### Commit chain before publication
 
 - Changed `bench commit --preflight-build <slug> [--base <commit>]`. The chain steps now run before publication. The commit writes the candidate commit. Then it runs `bench worktree build` and the build preflight at that candidate commit. Only a green chain moves the branch ref. A root without Bench build inputs skips the build step, and the chain line shows `build=skipped`. A red build or a red preflight publishes nothing: the commit exits 1 with the `commit-chain-red` refusal, and the chain line names no commit.

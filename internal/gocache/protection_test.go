@@ -144,6 +144,30 @@ func TestProtectionCompletedHold(t *testing.T) {
 	}
 }
 
+// TestReleaseKeepsALiveUsersGenerationOpen is SP1. The last release of a hold beside a live
+// pending user grades that user first and seals nothing, so a new hold of the same cache
+// joins the same generation.
+func TestReleaseKeepsALiveUsersGenerationOpen(t *testing.T) {
+	fixture := newCacheFixture(t)
+	p := cacheProtocol()
+	holder, d := protectedHold(t, fixture.dir, p)
+	// This test process is the live actor of the pending user.
+	if _, err := p.Prepare([]protection.Descriptor{d}); err != nil {
+		t.Fatal(err)
+	}
+	if err := holder.Release(); err != nil {
+		t.Fatal(err)
+	}
+	next, err := HoldDir(fixture.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = next.Release() })
+	if joined, err := next.Protect(p); err != nil || joined.ResourceID != d.ResourceID {
+		t.Fatalf("a new hold after the release = %+v (%v), want generation %s", joined, err, d.ResourceID)
+	}
+}
+
 // TestReleaseRunsTheRetiredCheck is RS28 and RS11. Only the last uncontended release of a
 // cache hold runs the absent-resource check, once, and the hold's own store already holds no
 // generation then. A release while another holder in this process or another process still
@@ -190,8 +214,9 @@ func TestReleaseRunsTheRetiredCheck(t *testing.T) {
 	}
 }
 
-// TestProtectionUnreadableProtection is PL56. A pending user keeps its sealed generation,
-// and unreadable records leave the exclusive cleaner uncertain, so go clean never starts.
+// TestProtectionUnreadableProtection is PL56. A pending user keeps its open generation after
+// the release, and unreadable records leave the exclusive cleaner uncertain, so go clean
+// never starts.
 func TestProtectionUnreadableProtection(t *testing.T) {
 	fixture := newCacheFixture(t)
 	p := cacheProtocol()

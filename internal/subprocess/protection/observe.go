@@ -27,7 +27,8 @@ type Observation struct {
 }
 
 // Probe sends a signal to a process or, with a negative target, to a process group.
-// syscall.Kill is the production probe.
+// ObserveGroup sends plain signal zero through syscall.Kill, and a protocol's default probe
+// is systemProbe.
 type Probe func(target int, signal syscall.Signal) error
 
 // ObserveGroup probes process group pgid with signal zero.

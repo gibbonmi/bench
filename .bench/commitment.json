@@ -2495,6 +2495,14 @@
       "identity": "sha256:489e2d90e9ee9b29d0c4f2ba929c723115a7c1a62b83d6b6aa588625edd83821",
       "source": "6eb405aea7009093ae2d65625773a6b7148c50fd",
       "evidence": "6950492de88d951a8b2e1600214dc13edf0ec8c6"
+    },
+    {
+      "milestone": "quality-2",
+      "outcome": "FT482-seal-policy",
+      "binding": "seal-policy",
+      "identity": "sha256:1872f701f3cd5853932af797b42fc1feb6239b2497b4d7cde359e934bb82a114",
+      "source": "8a4e546676470e7b83adda776460b60d11f7a4e0",
+      "evidence": "8d618136a602fe0a88d285ab26a6886a2d8c2a83"
     }
   ]
 }
