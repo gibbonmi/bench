@@ -12,7 +12,7 @@ When `together` (`internal/reviewrecord/recordcmd/command.go:172-181`) fails, fi
 
 Put the conflict helper in `refusal.go`, and keep the branch in `command.go` to a few lines, because `command.go` has 26 lines of headroom and tickets 02 and 04 also add to it. Use `toon.Errorf` and no route literal, so the RR49 route-bypass scan stays green.
 
-Move four existing expectations from the bare usage line to the conflict line: `review_test.go:158` (`--chunk` and `--fold`), `verification_test.go:367` (`--chunk` and `--final`), `verification_import_test.go:128-131` (`--probe-outcome` and `--probe-result`), and `verification_import_test.go:272` (`--excerpt` and `--mutant`). Add one `CHANGELOG.md` entry under `## [Unreleased]` for RP-C3.
+Move four existing expectations from the bare usage line to the conflict line: `review_test.go:158` (`--chunk` and `--fold`), `verification_test.go:367` (`--chunk` and `--final`; move this case out of its bare-usage loop into `conflict_test.go`, because `verification_test.go` has 10 lines of headroom), `verification_import_test.go:128-131` (`--probe-outcome` and `--probe-result`), and `verification_import_test.go:272` (`--excerpt` and `--mutant`). Add one `CHANGELOG.md` entry under `## [Unreleased]` for RP-C3.
 
 ## Acceptance
 
