@@ -1,7 +1,7 @@
 # Start no background lane pass for a Markdown-only commit or merge
 
 Blocked by: none
-Writes: internal/gate/background_launch.go, internal/gate/background_launch_test.go, internal/gate/background_queue_test.go, internal/gate/lane_select.go, internal/commit/background.go, internal/commit/background_test.go, internal/worktree/merge.go, internal/worktree/merge_background_test.go, internal/worktree/parallel_census_test.go, .bench/BENCH-reference.md, .bench/commitment.json, CHANGELOG.md
+Writes: internal/gate/background_launch.go, internal/gate/background_launch_test.go, internal/gate/background_queue_test.go, internal/gate/lane_select.go, internal/commit/background.go, internal/commit/background_test.go, internal/worktree/merge.go, internal/worktree/merge_background_test.go, internal/worktree/parallel_census_test.go, .bench/BENCH-reference.md, .bench/commitment.json, CHANGELOG.md, internal/systemtest/markdown_merge_background_test.go, internal/systemtest/parallel_census_test.go, internal/systemtest/parallel_census_cases_test.go, internal/systemtest/serial_census_test.go, internal/systemtest/serial_table_test.go
 Covers: SP21, SP22, SP23, SP24, SP25, SP26, SP27, SP28, SP29, SP30, SP31, SP32, SP36
 
 ## What to build
@@ -19,6 +19,8 @@ An empty list, a root commit, and a list that `TreeChanges` cannot read each sta
 Change `proseSubject` (`internal/gate/lane_select.go:41`) and the match of the lane's `markdown` class (`internal/gate/lane_select.go:147-151`) to call `prose.IsSubjectName`. Keep the class name and its checks, so the rendered profile lane table does not change. Import `internal/freshness` as `benchfreshness`, as `internal/gate/prospective.go:10` does, because the gate package already declares a `freshness` identifier (`internal/gate/verdict.go:25`).
 
 The new merge test calls `t.Parallel()`, and the worktree package pins its test count exactly (`internal/worktree/parallel_census_test.go:926`), so raise that pin by the number of new top-level tests. Write the launch tests with `newLaunchFixture` and `gittest`, not with `exec.Command`. The SP27 test writes its own minimal module: `go.mod`, a `cmd/bench` main package, and a `scripts/go-build.inputs` line that names the Markdown file.
+
+Write SP23 as a system test in `internal/systemtest/markdown_merge_background_test.go`, because a Markdown-only merge selects the kit lane, which the BG6 merge fixture cannot run. The test obeys the serial and parallel census rules of `internal/systemtest`.
 
 Add the exemption to `.bench/BENCH-reference.md` `### Background grade`, beside the sentence that each lane pass detaches one background pass. Add one `CHANGELOG.md` entry. This is the last ticket of the spec, so it alone names `.bench/commitment.json`.
 
