@@ -88,7 +88,97 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft482-c1-standards",
+          "performer": "ft482-review-c1-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "954cdf78617349760a2035f9e137c8ff35a1a043",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "agent:ft482-review-c1-standards",
+            "digest": "sha256:3a4911a26f9fcaec765e36b8af32bb1fd619688934dce0c798c8f88d7a92d767",
+            "excerpt": "Standards axis, SP-C1, evidence sha256:457286fc5169b0d8d01a67f24b07e0aab9de21b1c5180d45152fc38743762bbf (current=true, tip 0da3fab45). Count: 3, all judgment calls. Worst: SP10 test repeats the focused-run harness body (confidence 5).\nSP-C1-S1 internal/systemtest/process_lifetime_callers_test.go:242-260 TestFocusedTestAfterALeakedDescendant re-derives the per-run body of TestProcessLifetimeFocusedDifferential (:215-235) and picks shapes by bare index; confidence 5; auto-fix: extract one focused-run helper.\nSP-C1-S2 internal/subprocess/protection/store.go:93-96 Reopen comment narrates the cache-release change and is vague; confidence 4; auto-fix: state only the sealing cases.\nSP-C1-S3 internal/gocache/protection_test.go:154-157 and :224-226 inline Prepare twice with no pending-user helper; confidence 3; no-op.\n"
+          },
+          "axis": "Standards",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "9b21102ef8e2e2970b3bdd4eab12c7108ddc9e00",
+          "finding_ids": [
+            "SP-C1-S1",
+            "SP-C1-S2",
+            "SP-C1-S3"
+          ],
+          "supersedes": []
+        },
+        {
+          "id": "ft482-c1-standards-accepted",
+          "performer": "ft482-review-c1-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "954cdf78617349760a2035f9e137c8ff35a1a043",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "agent:ft482-review-c1-standards",
+            "digest": "sha256:3a4911a26f9fcaec765e36b8af32bb1fd619688934dce0c798c8f88d7a92d767",
+            "excerpt": "Standards axis, SP-C1, evidence sha256:457286fc5169b0d8d01a67f24b07e0aab9de21b1c5180d45152fc38743762bbf (current=true, tip 0da3fab45). Count: 3, all judgment calls. Worst: SP10 test repeats the focused-run harness body (confidence 5).\nSP-C1-S1 internal/systemtest/process_lifetime_callers_test.go:242-260 TestFocusedTestAfterALeakedDescendant re-derives the per-run body of TestProcessLifetimeFocusedDifferential (:215-235) and picks shapes by bare index; confidence 5; auto-fix: extract one focused-run helper.\nSP-C1-S2 internal/subprocess/protection/store.go:93-96 Reopen comment narrates the cache-release change and is vague; confidence 4; auto-fix: state only the sealing cases.\nSP-C1-S3 internal/gocache/protection_test.go:154-157 and :224-226 inline Prepare twice with no pending-user helper; confidence 3; no-op.\n"
+          },
+          "axis": "Standards",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "9b21102ef8e2e2970b3bdd4eab12c7108ddc9e00",
+          "finding_ids": [
+            "SP-C1-S1",
+            "SP-C1-S2"
+          ],
+          "supersedes": [
+            "ft482-c1-standards"
+          ]
+        },
+        {
+          "id": "ft482-c1-spec",
+          "performer": "ft482-review-c1-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "954cdf78617349760a2035f9e137c8ff35a1a043",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-review-c1-spec",
+            "digest": "sha256:8bcfc205b4d3f064a7dd4245b115ef332d74c11f7924189ce92d8cc7114a8956",
+            "excerpt": "Spec axis, SP-C1, evidence sha256:457286fc5169b0d8d01a67f24b07e0aab9de21b1c5180d45152fc38743762bbf (current=true, head 0da3fab45). Count: 0. Worst: none.\nAudited SP1-SP10 and SP34 against the spec and the code at 9b21102ef: one shared observe body with sealFirst as the only difference, one grade loop and one tail, no open-admission write, only heldLock.retire switches, every other SealAndObserve caller and its signature kept, the three named comments changed, ADR 0030 lines 26-28 state the release policy (SP34 met).\nDivergences accepted: the deadUser helper (confidence 8) and the ErrSealed.Error() comparison (confidence 8).\n"
+          },
+          "axis": "Spec",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "9b21102ef8e2e2970b3bdd4eab12c7108ddc9e00",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft482-c1-coverage",
+          "performer": "ft482-review-c1-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "954cdf78617349760a2035f9e137c8ff35a1a043",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-review-c1-coverage",
+            "digest": "sha256:f4cb94690f51ae8dd8b68ede702fbb67ffd9929d294ec5f533246687f0afc67a",
+            "excerpt": "Coverage axis, SP-C1, evidence sha256:457286fc5169b0d8d01a67f24b07e0aab9de21b1c5180d45152fc38743762bbf (current=true, tree clean after probes). Count: 1, low severity. Worst: an unpinned comment claim.\nSP-C1-C1 internal/subprocess/protection/recovery.go:94-100 the seal guard `if r.Admission != admissionOpen { return nil }` is unpinned; probe swap to false: silent (81 tests pass, subject restored); confidence 4; no-op (a repeated durable write, no observable state).\nProbe: drop the result.Users append: bit (TestReleaseObservationNamesTheLiveUser red).\nWalked: every production branch of observe is pinned by SP2-SP8; the SP10 test runs beside a live sleep descendant, and its mark file proves the go test ran.\n"
+          },
+          "axis": "Coverage",
+          "base": "ea40264fb165f257f306bb1de5e89dc0b951ccd7",
+          "tip": "9b21102ef8e2e2970b3bdd4eab12c7108ddc9e00",
+          "finding_ids": [],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -113,3 +203,23 @@ The ticket 1 author ft482-author-01 reported these witness reds. Each red came b
 6. SP10: with the cache retire on SealAndObserve again, TestFocusedTestAfterALeakedDescendant was red, because the second focused run refused with `the resource generation is sealed` (`process_lifetime_callers_test.go:256`).
 
 The two plan probes bit, and each probe reported a restored subject.
+
+## SP-C1 review
+
+### Standards
+
+Count: 2 accepted, 1 no-op. Worst issue: SP-C1-S1.
+
+- SP-C1-S1 (auto-fix, confidence 5): `internal/systemtest/process_lifetime_callers_test.go:242-260`. TestFocusedTestAfterALeakedDescendant repeats the focused-run body of TestProcessLifetimeFocusedDifferential (`:215-235`), and it selects shapes by bare index. Extract one focused-run helper that both tests call.
+- SP-C1-S2 (auto-fix, confidence 4): `internal/subprocess/protection/store.go:93-96`. The Reopen comment tells how the cache release changed, and its first clause is vague. State only the cases that seal a generation.
+- SP-C1-S3 (no-op, confidence 3): `internal/gocache/protection_test.go:154-157` and `:224-226` call Prepare inline. This is incidental text, not duplicated knowledge. The first Standards entry listed it, and the superseding entry drops it.
+
+### Spec
+
+Count: 0. Worst issue: none. The axis audited SP1 to SP10 and SP34, and it accepted the deadUser helper and the ErrSealed comparison.
+
+### Coverage
+
+Count: 0 accepted, 1 no-op. Worst issue: none.
+
+- SP-C1-C1 (no-op, confidence 4): `internal/subprocess/protection/recovery.go:94-100`. A probe that removes the seal guard is silent. The guard only skips a second durable write of the same sealed state, so no test can observe it.
