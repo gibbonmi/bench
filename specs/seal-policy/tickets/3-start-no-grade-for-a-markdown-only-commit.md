@@ -39,4 +39,4 @@ Add the exemption to `.bench/BENCH-reference.md` `### Background grade`, beside 
 
 ## Verification
 
-Run `bench test --package ./internal/gate`, `bench test --package ./internal/commit`, and `bench test --package ./internal/worktree` whole. Observe each planned row red before its production edit. Self-probe: read the change list with rename detection on, and report that SP25 goes red.
+Run `bench test --package ./internal/gate`, `bench test --package ./internal/commit`, and `bench test --package ./internal/worktree` whole. This ticket writes system-tagged test files, so `BENCH_KIT` must name the candidate kit for each system run; `bench test --check system` supplies it. Run `bench test --check system --run TestMarkdownOnlyMergeStartsNoGrade`, then `bench test --check system` once. Observe each planned row red before its production edit. Self-probe: read the change list with rename detection on, and report that SP25 goes red.
