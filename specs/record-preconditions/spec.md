@@ -8,7 +8,7 @@ Decision source: Named reviewed artifact roadmap/FT414.md (drain-reviewed row; c
 
 Persisted fields: intent-ledger:commitment.bindings.request_token
 
-Verification log: pending
+Verification log: 4 iteration(s) to accept — the spec round took 2 iterations, for two next-action rules and misplaced chunk rows, and the ticket round took 2 iterations, for a repair cell printed before its helper.
 
 ## Problem
 
