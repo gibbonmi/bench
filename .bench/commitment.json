@@ -1876,6 +1876,18 @@
               "path": "roadmap/FT482.md",
               "identity": "sha256:27d8d6aecfb6ddb6955eabae6425258f332ce366c0b3ef1b80a43e9f20234197"
             }
+          ],
+          "deliverables": [
+            {
+              "source": {
+                "id": "seal-policy",
+                "path": "specs/seal-policy/spec.md",
+                "identity": "sha256:1872f701f3cd5853932af797b42fc1feb6239b2497b4d7cde359e934bb82a114"
+              },
+              "obligations": [
+                "FT482"
+              ]
+            }
           ]
         },
         {
