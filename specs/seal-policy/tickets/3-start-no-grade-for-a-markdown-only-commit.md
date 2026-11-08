@@ -1,7 +1,7 @@
 # Start no background lane pass for a Markdown-only commit or merge
 
 Blocked by: none
-Writes: internal/gate/background_launch.go, internal/gate/background_launch_test.go, internal/gate/background_queue_test.go, internal/gate/lane_select.go, internal/commit/background.go, internal/commit/background_test.go, internal/worktree/merge.go, internal/worktree/merge_background_test.go, internal/worktree/parallel_census_test.go, .bench/BENCH-reference.md, .bench/commitment.json, CHANGELOG.md, internal/systemtest/markdown_merge_background_test.go, internal/systemtest/parallel_census_test.go, internal/systemtest/parallel_census_cases_test.go, internal/systemtest/serial_census_test.go, internal/systemtest/serial_table_test.go
+Writes: internal/gate/background_launch.go, internal/gate/background_launch_test.go, internal/gate/background_queue_test.go, internal/gate/lane_select.go, internal/commit/background.go, internal/commit/background_test.go, internal/worktree/merge.go, internal/worktree/merge_background_test.go, internal/worktree/parallel_census_test.go, .bench/BENCH-reference.md, .bench/commitment.json, CHANGELOG.md, internal/systemtest/markdown_merge_background_test.go (new), internal/systemtest/parallel_census_test.go, internal/systemtest/parallel_census_cases_test.go, internal/systemtest/serial_census_test.go, internal/systemtest/serial_table_test.go
 Covers: SP21, SP22, SP23, SP24, SP25, SP26, SP27, SP28, SP29, SP30, SP31, SP32, SP36
 
 ## What to build
