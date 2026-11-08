@@ -165,13 +165,15 @@ Every read ends with the shared `help[N]{cmd,why}:` block that `axi.RenderHelp` 
 ### The next action
 
 `bench record next` selects one checkpoint mode at HEAD.
+A record entry covers a planned chunk directly or through the amendment mapping of `mappedIDs`.
 If a planned chunk has no covering record entry, it runs the collector in chunk mode on the first such chunk in plan order.
 If the record covers every planned chunk, it runs the collector in completion mode.
 It takes the first finding in checkpoint order, and it never skips a finding.
 A first finding with a `Repair` prints that form's command.
 The command cell is the repair form's usage line with the known values, from the same `suffix(known(...))` composition that a record refusal prints today.
 A first finding with no `Repair` prints `action[0]` and the finding in `preconditions` with the state `fails`.
-An absent record file prints the `record chunk` command of the first planned chunk, because the chunk write of an absent record starts at the current plan digest.
+An absent record file prints the `record chunk` command of the first planned chunk.
+The collector seeds an absent record through `createRecord`, as the chunk write does, so the seed starts at the current plan digest.
 A record that owes nothing prints `action[0]` and `preconditions[0]`.
 
 Each precondition row comes from a predicate that the action form's write path calls.
@@ -309,7 +311,7 @@ All seams marked planned are future executable evidence. No implementation red i
 | RP25 | 21 | The next chunk action lists the `required base` precondition with the `chunkBase` commit. | planned TestRecordNextListsTheChunkPreconditions in internal/reviewrecord/recordcmd/next_test.go | A verb that prints the action alone prints `preconditions[0]`. |
 | RP26 | 22 | After a plan commit, `bench record next` prints the `record amendment` command and a `fails` plan digest precondition. | planned TestRecordNextPutsTheAmendmentFirst in internal/reviewrecord/recordcmd/next_test.go | A verb that skips `currentPlan` advises the chunk write that refuses on the stale digest. |
 | RP27 | 23 | A record that owes nothing prints `action[0]` and `preconditions[0]` at exit 0. | planned TestRecordNextWithNothingOwed in internal/reviewrecord/recordcmd/next_test.go | A verb that always proposes a form prints a completion command for a completed record. |
-| RP51 | 24 | A first chunk entry with a stale source digest prints `action[0]` and that finding as a `fails` precondition, while the second chunk is unrecorded. | planned TestRecordNextStopsAtAFindingWithNoRepair in internal/reviewrecord/recordcmd/next_test.go | A verb that skips to the first finding with a repair advises the second chunk write, which the checkpoint refuses. |
+| RP51 | 24 | In chunk mode on the second chunk, a first finding with no `Repair` prints `action[0]` and that finding as a `fails` precondition. | planned TestRecordNextStopsAtAFindingWithNoRepair in internal/reviewrecord/recordcmd/next_test.go | In a fixture with a stale first-chunk source digest and an unrecorded second chunk, a verb that skips to a repair advises the refused chunk write. |
 | RP52 | 20 | With no record file, `bench record next` prints the `record chunk` command of the first planned chunk. | planned TestRecordNextWithNoRecordNamesTheFirstChunk in internal/reviewrecord/recordcmd/next_test.go | A verb that reads an absent record as an empty plan digest advises the amendment, which refuses on an absent record. |
 | RP28 | 25 | The `record` row declares the approved children `status` and `next`, and the AXI registry, guidance table, and profile list agree. | `bench test --check axi-query-registry` | A registry change without the guidance or profile edit reds the check. |
 | RP29 | 26, 27 | `--excerpt` with `--probe-result` refuses at exit 2 and names both flags. | planned TestRecordConflictNamesExcerptAndProbeResult in internal/reviewrecord/recordcmd/conflict_test.go | The bare usage line holds no `conflicting flags` text. |
