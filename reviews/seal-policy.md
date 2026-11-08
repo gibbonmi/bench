@@ -388,7 +388,72 @@
           }
         }
       ],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "ft482-c2-standards",
+          "performer": "ft482-review-c2-standards",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "77a20dabbcac4ef1f232452570fb0afc20844b9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-review-c2-standards",
+            "digest": "sha256:7c54956830bf5fd095bdcd0890956223bf35eee7fef334f4e94b9c36e2951cd9",
+            "excerpt": "Standards axis, SP-C2, evidence sha256:ae45d5731fb62027be27d284966f527341b47b8be044c4d49fc056919e918953 (current, head 83a9121f0). Pair 5698f2ebc..ba078b819. Raw count 6, all judgment calls, no hard violation; accepted 0.\n1 reviews/seal-policy.md: the ticket commit wrote the author witness reds (conf 4). No-op: the orchestrator charge directed the author to write them; the record is the run's evidence path.\n2 specs/seal-policy/spec.md:180-186 coverage-cell citations (conf 3). No-op: the ticket-commit citation rule requires them.\n3 internal/subprocess/protection/observe.go:29-31 Probe doc restates code (conf 3). Optional advice.\n4 root_darwin.go:11-13 and root_other.go:18-20 repeat systemProbe (conf 3). No-op: honest repetition under the file budget.\n5 CHANGELOG.md:12 sentence of about 27 words (conf 3). No-op: the prose lane passed.\n6 observe_linux_test.go spec-row tags in comments (conf 3). No-op: repo convention.\nClean: one owner of the stat parse (statFields) and of the zombie rule; the test export exposes only procAbsent; independent expectations carry demonstrated reds.\n"
+          },
+          "axis": "Standards",
+          "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "tip": "1bc4083c06e409ac67ff33b5016e4a6a49f39a5b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft482-c2-spec",
+          "performer": "ft482-review-c2-spec",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "77a20dabbcac4ef1f232452570fb0afc20844b9b",
+          "state": "completed",
+          "outcome": "pass",
+          "native_ref": {
+            "ref": "agent:ft482-review-c2-spec",
+            "digest": "sha256:c5777013ee64f8d6b143e3cac197dd8d6aefe2a175df95b72657ad354b211310",
+            "excerpt": "Spec axis, SP-C2, evidence sha256:ae45d5731fb62027be27d284966f527341b47b8be044c4d49fc056919e918953 (current, head 83a9121f0). Pair 5698f2ebc..ba078b819. Count 0, worst none.\nEvery \"The zombie rule\" and \"The retirement\" decision is met; SP11-SP20 and SP33 map to named tests; SP35 met (ADR 0030 Platform scope states the Linux zombie rule).\nDivergence (a), an empty task or member set stays present: not a contradiction; the spec's unreadable-keeps-present and ENOENT sentences cover it; no-op, confidence 8. Spec wording could say \"finds at least one task\".\nDivergence (b), the actor_pid rewrite through plant: no-op, confidence 8. Divergence (c), mutation reds before the commit: no-op, confidence 7.\n"
+          },
+          "axis": "Spec",
+          "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "tip": "1bc4083c06e409ac67ff33b5016e4a6a49f39a5b",
+          "finding_ids": [],
+          "supersedes": []
+        },
+        {
+          "id": "ft482-c2-coverage",
+          "performer": "ft482-review-c2-coverage",
+          "role": "independent-review",
+          "model": "sonnet",
+          "effort": "high",
+          "source_digest": "77a20dabbcac4ef1f232452570fb0afc20844b9b",
+          "state": "completed",
+          "outcome": "fail",
+          "native_ref": {
+            "ref": "agent:ft482-review-c2-coverage",
+            "digest": "sha256:20f93d0fc86f494525b56d13b876976d5f964e0ddc0cd63ef8f067c31ebfe611",
+            "excerpt": "Coverage axis, SP-C2, evidence sha256:ae45d5731fb62027be27d284966f527341b47b8be044c4d49fc056919e918953 (current, tree clean after probes). Pair 5698f2ebc..ba078b819. Count 3, worst SP-C2-C1.\nSP-C2-C1 internal/subprocess/protection/root_linux.go:83 the empty-group case (a group with no member found stays present) has no test; probe swap \"return found\" to \"return true\": silent (92/92 pass, restored); confidence 8; auto-fix: a negative-target row whose root holds no member.\nSP-C2-C2 root_linux.go:81 no group-level witness for a member with a stat record and no tasks; probe found = true: invalid (unused variable); confidence 6; auto-fix: one group row with a stat-only member.\nSP-C2-C3 root_linux.go:~89 and ~110 the non-ENOENT ReadDir error branch and the len(fields) \u003c 3 guard: combined probe silent; a record such as \"7 (a) Z\" is untested; confidence 5; auto-fix.\nNo gap: pgrp field (fields[2] to fields[3] bit), ENOENT vs unreadable, pid-vs-group dispatch, real-zombie wait.\n"
+          },
+          "axis": "Coverage",
+          "base": "5698f2ebcaa90ef4aace6323c4c5bc4447fb161e",
+          "tip": "1bc4083c06e409ac67ff33b5016e4a6a49f39a5b",
+          "finding_ids": [
+            "SP-C2-C1",
+            "SP-C2-C2",
+            "SP-C2-C3"
+          ],
+          "supersedes": []
+        }
+      ]
     }
   ],
   "completion": {
@@ -475,3 +540,29 @@ The ticket 2 author ft482-author-02 observed these witness reds. Each base red c
 9. SP33: before the registry held the FT482 Forbid entry, TestTicketSlicingAnchors was red, because the tree with the FT482 row raised no diagnostic (`registry_ticket_passes_test.go:37`). The row deletion came after this red.
 
 SP18, SP19, and SP20 stayed green on their existing tests.
+
+## SP-C2 review
+
+### Standards
+
+Count: 0 accepted. Worst issue: none. The axis raised six judgment calls at confidence 4 or lower. Five of them are no-op:
+
+- The author wrote the witness reds because the orchestrator charge told it to.
+- The coverage-cell citations obey the ticket-commit rule.
+- The two platform probes repeat because of the file budget.
+- The CHANGELOG sentence passed the prose lane.
+- Spec-row tags in test comments are a repository convention.
+
+Advice: the `Probe` doc comment at `internal/subprocess/protection/observe.go:29-31` restates what the code shows.
+
+### Spec
+
+Count: 0. Worst issue: none. Each decision of "The zombie rule" and "The retirement" holds, and SP35 holds. The axis ruled that an empty task or member set that stays present agrees with the spec's unreadable-keeps-present and ENOENT sentences.
+
+### Coverage
+
+Count: 3 accepted. Worst issue: SP-C2-C1.
+
+- SP-C2-C1 (auto-fix, confidence 8): `internal/subprocess/protection/root_linux.go:83`. No test pins that a group with no member found stays present. A probe that answers absent there is silent. Add a group row whose root holds no member of the group.
+- SP-C2-C2 (auto-fix, confidence 6): `root_linux.go:81`. No group row grades a member that has a stat record and no tasks. Add one group row with such a member.
+- SP-C2-C3 (auto-fix, confidence 5): `root_linux.go:~89` and `~110`. A combined probe of the non-ENOENT task-directory error and the short-record guard is silent. Add a short record such as `7 (a) Z`, and add an unreadable task directory of a group member where the fixture can make one.
