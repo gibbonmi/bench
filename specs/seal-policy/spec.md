@@ -51,7 +51,7 @@ Harder chunks: SP-C1, SP-C2.
 14. As the protection owner, I want a process with a zombie leader task and one live task to count as present, so that a live thread still keeps its resource.
 15. As the protection owner, I want the state read from a stat record to come after the last `)`, so that a hostile command name cannot forge a zombie state.
 16. As the protection owner, I want an unreadable or malformed stat record to keep the signal-zero answer, so that a failed read never releases a live user.
-17. As the protection owner, I want a group member that exits during the scan to decide nothing, so that a race cannot keep a dead group present or make a live group absent.
+17. As the protection owner, I want a group member that exits during the scan to decide nothing, so that a race cannot keep a dead group present.
 18. As the protection owner, I want a live non-zombie actor to keep its user protected, so that the reused-PID rule stays in force.
 19. As the protection owner, I want a live group member to keep its user protected, so that the zombie rule changes only dead processes.
 20. As the protection owner, I want the probe to send signal zero only, so that the zombie rule adds no signal.
@@ -108,7 +108,13 @@ A queued or running grade of an older tip of the same worktree stays in the queu
 
 ### The retirement
 
-The final ticket removes the FT482 row from `docs/known-issues.md`. It adds one Forbid needle for that row's text to the ticket-slicing anchors (`internal/anchors/registry_ticket_passes.go`), with its independent rule in `TestTicketSlicingAnchors`, as the FT405, FT406, and FT438 rows do. ADR 0030 gains the release policy in its protocol paragraph and the zombie rule in its platform scope. `.bench/BENCH-reference.md` `### Background grade` gains the exemption, and `CHANGELOG.md` gains one entry for each chunk.
+The SP-C2 ticket removes the FT482 row from `docs/known-issues.md`, because that row's retire condition needs SP-C1 and SP-C2 only. It adds one Forbid entry to the ticket-slicing anchors (`internal/anchors/registry_ticket_passes.go`) whose needle is the bare token `FT482`, as the FT405, FT406, and FT438 entries do. Its independent rule in `TestTicketSlicingAnchors` uses the exact row text as its needle:
+
+```text
+| A live descendant of a `bench test` run seals the cache generation of its HOME when its CLI releases the cache. Each later `bench test` on that HOME then refuses with `the resource generation is sealed`. Under the gate, a system test that waits for a child mark can show this refusal as a 20 s timeout. | Stop the leaked descendant or wait until it exits, then run the command again. If a system test times out on a child mark, run that test alone before you run the gate again. | FT482: a cache release applies the decided seal policy for a live, leaked, or dead protected user. |
+```
+
+ADR 0030 gains the release policy in its protocol paragraph and the zombie rule in its platform scope. `.bench/BENCH-reference.md` `### Background grade` gains the exemption, and `CHANGELOG.md` gains one entry for each chunk.
 
 ## Implementation chunks
 
@@ -129,7 +135,7 @@ The build runs the chunks in table order on one integration source. SP-C2 waits 
 ## Testing decisions
 
 - A good test drives the real owner and observes durable state: the store records, a later `Prepare` or hold, or the launch count of the stand-in wrapper.
-- The protection rows use the package fixture (`internal/subprocess/protection/fixture_test.go`): `newProtocol`, `startUser`, `nestedHelper`, and `SetProbe` and `SetReplacer` from `export_test.go`. The gocache rows use `protectedHold`, `completedUser`, and `cleanWith` (`internal/gocache/protection_test.go`).
+- The protection rows use the package fixture (`internal/subprocess/protection/fixture_test.go`): `newProtocol`, `startUser`, `nestedHelper`, and `SetProbe` and `SetReplacer` from `export_test.go`. The gocache rows use `protectedHold` and `completedUser` (`internal/gocache/protection_test.go`) and `cleanWith` (`internal/gocache/clean.go:39`).
 - The real-zombie rows start a child in its own group with `Setpgid`, do not reap it, and wait until its stat record shows state `Z`. The test reaps the child at cleanup. The hostile-parse rows drive the proc reader over a fixture directory.
 - The launch rows use the stand-in wrapper of `newLaunchFixture` (`internal/gate/background_launch_test.go`) and the commit and merge fixtures that BG5 and BG6 use.
 - SP27 writes its own minimal module in the gate test: `go.mod`, a `cmd/bench` main package, and a `scripts/go-build.inputs` line that names the Markdown file. The freshness fixture helper is test-only, so the gate test does not call it.
@@ -167,15 +173,15 @@ The build runs the chunks in table order on one integration source. SP-C2 waits 
 | SP6 | 6 | After a seal-first observation and a release observation beside a live user, a `Prepare` still returns `ErrSealed` | planned TestReleaseObservationKeepsAnEarlierSeal in internal/subprocess/protection/recovery_test.go | A release that writes admission open reopens the clean's seal |
 | SP7 | 7 | A failed seal publish on the safe release path returns uncertain and leaves every user record in the store | planned TestReleaseObservationSealFailure in internal/subprocess/protection/recovery_test.go | A tail that removes users before a failed seal loses a user record |
 | SP8 | 8 | A seal-first observation beside a live pending user makes the next `Prepare` return `ErrSealed` | `internal/subprocess/protection/registration_test.go` (`TestRegistrationSealedAdmission`) | A change inside the shared seal-first body turns this existing pin red |
-| SP9 | 9 | A cache clean while the oracle group of another process lives refuses with the cache protection refusal | `internal/systemtest/process_lifetime_cache_test.go` (`TestProcessLifetimeCacheSecondProcessClean`) | A clean that adopts the release observation deletes a cache under a live user |
+| SP9 | 9 | A cache clean while the oracle group of another process lives refuses with `cache protected` | `internal/systemtest/process_lifetime_cache_test.go` (`TestProcessLifetimeCacheSecondProcessClean`) | A clean that adopts the release observation deletes a cache under a live user |
 | SP10 | 10 | A second `bench test` on the HOME of a run that leaked a live descendant runs its go test and prints no `the resource generation is sealed` | planned TestFocusedTestAfterALeakedDescendant in internal/systemtest/process_lifetime_callers_test.go | The current release seals the HOME's generation, so the second run refuses |
 | SP11 | 11 | A release observation of a known user whose actor and group leader are one unreaped zombie retires the generation on Linux | planned TestReleaseObservationRetiresAZombieUser in internal/subprocess/protection/observe_linux_test.go | Signal zero answers present for a zombie, so the user stays protected |
 | SP12 | 12 | A pending user whose actor is an unreaped zombie grades safe on Linux | planned TestZombiePendingActorIsReleased in internal/subprocess/protection/observe_linux_test.go | Signal zero answers present for the zombie actor |
 | SP13 | 13 | A user whose group leader is an unreaped zombie and whose group holds one live member grades protected | planned TestZombieLeaderWithALiveMemberIsProtected in internal/subprocess/protection/observe_linux_test.go | A rule that reads only the leader releases a live group |
 | SP14 | 14 | The proc reader counts a process present when its leader task is in state `Z` and one other task is in state `S` | planned TestProcLiveTaskBesideAZombieLeader in internal/subprocess/protection/observe_linux_test.go | A rule that reads only the leader task releases a live process |
 | SP15 | 15 | The proc reader reads state `S` from a stat record whose command name is `a) Z 1 (b` | planned TestProcStatParsesAHostileCommandName in internal/subprocess/protection/observe_linux_test.go | A parse that splits at the first `)` reads the forged `Z` |
-| SP16 | 16 | The probe answers nil for a pid whose stat record is unreadable or malformed in the fixture proc root | planned TestProcUnreadableStatKeepsPresent in internal/subprocess/protection/observe_linux_test.go | A read failure that counts as dead releases a live user |
-| SP17 | 17 | The probe answers ESRCH for a group whose only entries are one zombie member and one member whose stat record is gone | planned TestProcVanishedMemberIsSkipped in internal/subprocess/protection/observe_linux_test.go | A gone entry that counts as present keeps a dead group protected |
+| SP16 | 16 | The proc reader keeps a pid present when its stat record in the fixture proc root is unreadable or malformed | planned TestProcUnreadableStatKeepsPresent in internal/subprocess/protection/observe_linux_test.go | A read failure that counts as dead releases a live user |
+| SP17 | 17 | The proc reader counts a group absent when its only entries are one zombie member and one member whose stat record is gone | planned TestProcVanishedMemberIsSkipped in internal/subprocess/protection/observe_linux_test.go | A gone entry that counts as present keeps a dead group protected |
 | SP18 | 18 | A pending user whose actor is the live test process stays protected | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryPendingActorAbsent`) | A zombie rule that answers ESRCH for a live process releases the user |
 | SP19 | 19 | A known user whose actor is gone and whose group holds a live member stays protected | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryWorkerActorDeath`) | A group rule that ignores live members releases the user |
 | SP20 | 20 | A recovery sends signal zero only | `internal/subprocess/protection/recovery_test.go` (`TestRecoveryNoStaleSignal`) | A probe that sends a real signal fails the recorded-signal check |
@@ -200,7 +206,7 @@ The build runs the chunks in table order on one integration source. SP-C2 waits 
 
 The hostile-input checklist of `projects/benchkit.md` applies through these classes:
 
-- The predicate over a `git diff` path list meets each kind: add (SP21), edit (SP22), delete (SP24), and rename (SP25). The read uses `--no-renames` and `-z`, so SP25 and SP26 hold.
+- The predicate over a `git diff` path list meets each kind: add (SP21), edit (SP22), delete (SP24), and rename (SP25). The read uses `--no-renames` and `-z`, as `freshness.DiffChangesBuildInputs` does (`internal/freshness/freshness_buildinputs.go:132`). `TestDiffChangesBuildInputs` drives a rename and a non-ASCII path through that read (`internal/freshness/decision_test.go:56-57`), and SP25 and SP26 drive the two shapes at the new predicate.
 - Absent versus empty: an absent first parent starts a pass (SP28), and an empty change list starts none (SP30).
 - A path read out of a file: the stat record is resolved by its writer's rule, the last `)` (SP15). An unreadable record is unknown, not absent (SP16).
 - A special file in a discovered path does not apply. The reader opens only `stat` records under the proc root, and the kernel owns those entries.
@@ -208,7 +214,7 @@ The hostile-input checklist of `projects/benchkit.md` applies through these clas
 
 These behaviors serve the kit and every linked repository. A linked repository starts no grade today (`TestLinkedRepoCommitStartsNoGrade`), so SP-C3 serves the kit alone.
 
-Won't handle: a reused PID of a dead actor — `TestRecoveryPendingActorAbsent` keeps that case protected on purpose, and the next release retries after the other process exits.
+Won't handle: a reused PID of a dead actor — `TestRecoveryPendingActorAbsent` keeps a live answering actor protected, which also keeps a reused PID protected, and the next release retries after the other process exits.
 Won't handle: a zombie on Darwin or another system — the plain signal-zero probe keeps the user protected, and the next release retires the generation after the parent reaps the zombie.
 Won't handle: the seal of a refused clean or removal — `bench cache clean` and each owner's removal keep the seal-first observation, because they intend to delete the resource.
 Won't handle: an older queued or running grade of the same worktree after a Markdown-only commit — the queue keeps that grade, and `bench worktree release` still stops it.
@@ -241,6 +247,7 @@ The store root is per boot (`internal/subprocess/protection/root.go:21-34`), so 
 - SP5: a release beside an uncertain user also leaves admission open. The decision names a live protected user. An uncertain grade means that the probe cannot decide, and the release deletes nothing, so a seal buys no safety there. Reviewer veto keeps the seal for SP5.
 - SP30: an empty commit starts no pass. An empty change list holds no graded build input, and its tree keeps the key of its parent.
 - SP26 and SP15 add hostile-input rows that the checklist demands.
+- The zombie rule is Linux-only. The decision names no platform, and ADR 0030 serves Linux and Darwin. Darwin keeps the signal-zero answer, and Out of scope prices Darwin detection. Reviewer veto adds Darwin to SP-C2.
 - Consequence, not an addition: a landing whose last commits are Markdown-only finds no background green for its tip. That landing then runs its own whole gate in the foreground. The whole-gate Markdown checks, such as `prose-mechanics` and `roadmap-detail-integrity`, run there and not in the background. The lane still runs `prose`, `docs-currency-workflow`, and `guidance-prose-budgets` at each commit.
 
 ### Seam evidence
@@ -268,3 +275,4 @@ Each seam beyond the decision source cites one line and one research finding:
 - Consolidated rules: the `markdown` path match moves into one predicate that two callers use.
 - Quantified obligations: "every user" in the release observation is the users directory of the store; "every task" is `/proc/<pid>/task`; "every member" is each `/proc/<pid>/stat` whose process group matches; "every listed path" is the NUL-separated diff list.
 - Workflow-step writes: none.
+- Anchors: `bench anchors` ran on `.bench/BENCH-reference.md`, `docs/known-issues.md`, and ADR 0030. No anchor pins the `### Background grade` section, the FT482 row, or the ADR text.
